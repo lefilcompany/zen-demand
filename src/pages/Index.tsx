@@ -1,8 +1,20 @@
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LayoutDashboard, Briefcase, Users, CheckCircle2 } from "lucide-react";
+import { useDemands } from "@/hooks/useDemands";
+import { useTeams } from "@/hooks/useTeams";
 
 const Index = () => {
+  const { data: demands } = useDemands();
+  const { data: teams } = useTeams();
+
+  const totalDemands = demands?.length || 0;
+  const inProgressDemands =
+    demands?.filter((d) => d.demand_statuses?.name !== "Concluído").length || 0;
+  const completedDemands =
+    demands?.filter((d) => d.demand_statuses?.name === "Concluído").length || 0;
+  const totalTeams = teams?.length || 0;
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -22,7 +34,7 @@ const Index = () => {
               <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{totalDemands}</div>
               <p className="text-xs text-muted-foreground">
                 Demandas cadastradas
               </p>
@@ -37,7 +49,7 @@ const Index = () => {
               <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{inProgressDemands}</div>
               <p className="text-xs text-muted-foreground">
                 Demandas ativas
               </p>
@@ -52,7 +64,7 @@ const Index = () => {
               <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{completedDemands}</div>
               <p className="text-xs text-muted-foreground">
                 Demandas finalizadas
               </p>
@@ -67,7 +79,7 @@ const Index = () => {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{totalTeams}</div>
               <p className="text-xs text-muted-foreground">
                 Equipes cadastradas
               </p>
