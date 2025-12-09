@@ -4,6 +4,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useDemands, useDemandInteractions, useCreateInteraction, useUpdateDemand } from "@/hooks/useDemands";
 import { ArrowLeft, Calendar, User, MessageSquare, Archive } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -107,15 +118,32 @@ export default function DemandDetail() {
                   )}
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleArchive}
-                disabled={updateDemand.isPending}
-              >
-                <Archive className="mr-2 h-4 w-4" />
-                Arquivar
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={updateDemand.isPending}
+                  >
+                    <Archive className="mr-2 h-4 w-4" />
+                    Arquivar
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Arquivar demanda?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tem certeza que deseja arquivar esta demanda? Você poderá restaurá-la posteriormente na seção de demandas arquivadas.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleArchive}>
+                      Arquivar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
