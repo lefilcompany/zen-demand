@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
 
 interface AuthContextType {
   user: User | null;
@@ -19,7 +18,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,19 +56,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) throw error;
-
-      toast({
-        title: "Conta criada!",
-        description: "Você já pode fazer login.",
-      });
-
       navigate("/");
     } catch (error: any) {
-      toast({
-        title: "Erro ao criar conta",
-        description: error.message,
-        variant: "destructive",
-      });
       throw error;
     }
   };
@@ -83,19 +70,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) throw error;
-
-      toast({
-        title: "Bem-vindo!",
-        description: "Login realizado com sucesso.",
-      });
-
       navigate("/");
     } catch (error: any) {
-      toast({
-        title: "Erro ao fazer login",
-        description: error.message,
-        variant: "destructive",
-      });
       throw error;
     }
   };
@@ -104,19 +80,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-
-      toast({
-        title: "Até logo!",
-        description: "Logout realizado com sucesso.",
-      });
-
       navigate("/auth");
     } catch (error: any) {
-      toast({
-        title: "Erro ao fazer logout",
-        description: error.message,
-        variant: "destructive",
-      });
+      console.error("Erro ao fazer logout:", error.message);
     }
   };
 

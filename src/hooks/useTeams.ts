@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { toast } from "sonner";
 
 export function useTeams() {
   const { user } = useAuth();
@@ -60,10 +59,6 @@ export function useCreateTeam() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teams"] });
-      toast.success("Equipe criada com sucesso!");
-    },
-    onError: (error) => {
-      toast.error("Erro ao criar equipe: " + error.message);
     },
   });
 }
@@ -101,10 +96,6 @@ export function useJoinTeam() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teams"] });
-      toast.success("Você entrou na equipe com sucesso!");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
     },
   });
 }

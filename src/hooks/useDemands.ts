@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { toast } from "sonner";
 
 export function useDemands(teamId?: string) {
   const { user } = useAuth();
@@ -75,10 +74,6 @@ export function useCreateDemand() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["demands"] });
-      toast.success("Demanda criada com sucesso!");
-    },
-    onError: (error) => {
-      toast.error("Erro ao criar demanda: " + error.message);
     },
   });
 }
@@ -111,10 +106,6 @@ export function useUpdateDemand() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["demands"] });
-      toast.success("Demanda atualizada com sucesso!");
-    },
-    onError: (error) => {
-      toast.error("Erro ao atualizar demanda: " + error.message);
     },
   });
 }
