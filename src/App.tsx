@@ -12,6 +12,7 @@ import JoinTeam from "./pages/JoinTeam";
 import Demands from "./pages/Demands";
 import CreateDemand from "./pages/CreateDemand";
 import DemandDetail from "./pages/DemandDetail";
+import Kanban from "./pages/Kanban";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/demands" element={<Demands />} />
             <Route path="/demands/create" element={<CreateDemand />} />
             <Route path="/demands/:id" element={<DemandDetail />} />
+            <Route path="/kanban" element={<Kanban />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
