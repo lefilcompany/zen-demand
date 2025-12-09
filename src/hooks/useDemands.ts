@@ -8,7 +8,7 @@ export function useDemands(teamId?: string) {
   return useQuery({
     queryKey: ["demands", teamId],
     queryFn: async () => {
-      let query = supabase
+let query = supabase
         .from("demands")
         .select(`
           *,
@@ -17,6 +17,7 @@ export function useDemands(teamId?: string) {
           assigned_profile:profiles!demands_assigned_to_fkey(full_name, avatar_url),
           teams(name)
         `)
+        .eq("archived", false)
         .order("created_at", { ascending: false });
 
       if (teamId) {
@@ -93,6 +94,8 @@ export function useUpdateDemand() {
       priority?: string;
       assigned_to?: string;
       due_date?: string;
+      archived?: boolean;
+      archived_at?: string | null;
     }) => {
       const { data: demand, error } = await supabase
         .from("demands")
