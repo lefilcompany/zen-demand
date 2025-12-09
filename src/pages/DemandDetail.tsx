@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
-import { useDemands, useDemandInteractions, useCreateInteraction } from "@/hooks/useDemands";
-import { ArrowLeft, Calendar, User, MessageSquare } from "lucide-react";
+import { useDemands, useDemandInteractions, useCreateInteraction, useUpdateDemand } from "@/hooks/useDemands";
+import { ArrowLeft, Calendar, User, MessageSquare, Archive } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -17,9 +17,26 @@ export default function DemandDetail() {
   const { data: demands } = useDemands();
   const { data: interactions } = useDemandInteractions(id!);
   const createInteraction = useCreateInteraction();
+  const updateDemand = useUpdateDemand();
   const [comment, setComment] = useState("");
 
   const demand = demands?.find((d) => d.id === id);
+
+  const handleArchive = () => {
+    if (!id) return;
+    updateDemand.mutate(
+      {
+        id,
+        archived: true,
+        archived_at: new Date().toISOString(),
+      },
+      {
+        onSuccess: () => {
+          navigate("/demands");
+        },
+      }
+    );
+  };
 
   const handleAddComment = () => {
     if (!comment.trim() || !id) return;
@@ -90,6 +107,15 @@ export default function DemandDetail() {
                   )}
                 </div>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleArchive}
+                disabled={updateDemand.isPending}
+              >
+                <Archive className="mr-2 h-4 w-4" />
+                Arquivar
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">

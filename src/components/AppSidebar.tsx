@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, Settings, LogOut, LayoutGrid } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Settings, LogOut, LayoutGrid, Archive } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -18,6 +18,7 @@ const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Kanban", url: "/kanban", icon: LayoutGrid },
   { title: "Demandas", url: "/demands", icon: Briefcase },
+  { title: "Arquivadas", url: "/archived", icon: Archive },
   { title: "Equipes", url: "/teams", icon: Users },
   { title: "Configurações", url: "/settings", icon: Settings },
 ];

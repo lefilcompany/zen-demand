@@ -11,6 +11,7 @@ import Demands from "./pages/Demands";
 import CreateDemand from "./pages/CreateDemand";
 import DemandDetail from "./pages/DemandDetail";
 import Kanban from "./pages/Kanban";
+import ArchivedDemands from "./pages/ArchivedDemands";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/demands/create" element={<CreateDemand />} />
             <Route path="/demands/:id" element={<DemandDetail />} />
             <Route path="/kanban" element={<Kanban />} />
+            <Route path="/archived" element={<ArchivedDemands />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

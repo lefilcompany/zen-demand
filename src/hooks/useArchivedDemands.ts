@@ -1,0 +1,34 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
+
+export function useArchivedDemands(teamId?: string) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["archived-demands", teamId],
+    queryFn: async () => {
+      let query = supabase
+        .from("demands")
+        .select(`
+          *,
+          demand_statuses(name, color),
+          profiles!demands_created_by_fkey(full_name, avatar_url),
+          assigned_profile:profiles!demands_assigned_to_fkey(full_name, avatar_url),
+          teams(name)
+        `)
+        .eq("archived", true)
+        .order("archived_at", { ascending: false });
+
+      if (teamId) {
+        query = query.eq("team_id", teamId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+}
