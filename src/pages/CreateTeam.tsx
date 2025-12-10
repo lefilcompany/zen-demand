@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateTeam } from "@/hooks/useTeams";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useSelectedTeam } from "@/contexts/TeamContext";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -14,6 +15,7 @@ import { toast } from "sonner";
 export default function CreateTeam() {
   const navigate = useNavigate();
   const { data: userRole } = useUserRole();
+  const { setSelectedTeamId } = useSelectedTeam();
   const createTeam = useCreateTeam();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -30,11 +32,15 @@ export default function CreateTeam() {
         description: description.trim() || undefined,
       },
       {
-        onSuccess: () => {
+        onSuccess: (team) => {
+          // Auto-select the created team
+          if (team?.id) {
+            setSelectedTeamId(team.id);
+          }
           toast.success("Equipe criada com sucesso!", {
             description: "Compartilhe o código de acesso com os membros.",
           });
-          navigate("/teams");
+          navigate("/");
         },
         onError: (error: any) => {
           toast.error("Erro ao criar equipe", {
@@ -74,7 +80,7 @@ export default function CreateTeam() {
         <div>
           <Button
             variant="ghost"
-            onClick={() => navigate("/teams")}
+            onClick={() => navigate("/welcome")}
             className="mb-4"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -121,7 +127,7 @@ export default function CreateTeam() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate("/teams")}
+                  onClick={() => navigate("/welcome")}
                   className="flex-1"
                 >
                   Cancelar

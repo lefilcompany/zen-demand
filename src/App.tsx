@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth";
 import { TeamProvider } from "@/contexts/TeamContext";
+import { RequireTeam } from "@/components/RequireTeam";
 import { Toaster } from "@/components/ui/sonner";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -29,20 +30,24 @@ const App = () => (
           <TeamProvider>
             <Toaster position="top-right" richColors />
             <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/welcome" element={<Welcome />} />
-            <Route path="/teams" element={<Teams />} />
-            <Route path="/teams/:id" element={<TeamDetail />} />
-            <Route path="/teams/:id/services" element={<ServicesManagement />} />
-            <Route path="/teams/create" element={<CreateTeam />} />
-            <Route path="/teams/join" element={<JoinTeam />} />
-            <Route path="/demands" element={<Demands />} />
-            <Route path="/demands/create" element={<CreateDemand />} />
-            <Route path="/demands/:id" element={<DemandDetail />} />
-            <Route path="/kanban" element={<Kanban />} />
-            <Route path="/archived" element={<ArchivedDemands />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              {/* Public routes */}
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/welcome" element={<Welcome />} />
+              <Route path="/teams/create" element={<CreateTeam />} />
+              <Route path="/teams/join" element={<JoinTeam />} />
+              
+              {/* Protected routes - require team selection */}
+              <Route path="/" element={<RequireTeam><Index /></RequireTeam>} />
+              <Route path="/teams" element={<RequireTeam><Teams /></RequireTeam>} />
+              <Route path="/teams/:id" element={<RequireTeam><TeamDetail /></RequireTeam>} />
+              <Route path="/teams/:id/services" element={<RequireTeam><ServicesManagement /></RequireTeam>} />
+              <Route path="/demands" element={<RequireTeam><Demands /></RequireTeam>} />
+              <Route path="/demands/create" element={<RequireTeam><CreateDemand /></RequireTeam>} />
+              <Route path="/demands/:id" element={<RequireTeam><DemandDetail /></RequireTeam>} />
+              <Route path="/kanban" element={<RequireTeam><Kanban /></RequireTeam>} />
+              <Route path="/archived" element={<RequireTeam><ArchivedDemands /></RequireTeam>} />
+              
+              {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </TeamProvider>

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useJoinTeam } from "@/hooks/useTeams";
+import { useSelectedTeam } from "@/contexts/TeamContext";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -12,6 +13,7 @@ import { toast } from "sonner";
 export default function JoinTeam() {
   const navigate = useNavigate();
   const joinTeam = useJoinTeam();
+  const { setSelectedTeamId } = useSelectedTeam();
   const [accessCode, setAccessCode] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -19,9 +21,13 @@ export default function JoinTeam() {
     if (!accessCode.trim()) return;
 
     joinTeam.mutate(accessCode.trim().toUpperCase(), {
-      onSuccess: () => {
+      onSuccess: (team) => {
+        // Auto-select the joined team
+        if (team?.id) {
+          setSelectedTeamId(team.id);
+        }
         toast.success("Você entrou na equipe!");
-        navigate("/teams");
+        navigate("/");
       },
       onError: (error: any) => {
         const message = error.message?.toLowerCase() || "";
@@ -46,7 +52,7 @@ export default function JoinTeam() {
         <div>
           <Button
             variant="ghost"
-            onClick={() => navigate("/teams")}
+            onClick={() => navigate("/welcome")}
             className="mb-4"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -87,7 +93,7 @@ export default function JoinTeam() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate("/teams")}
+                  onClick={() => navigate("/welcome")}
                   className="flex-1"
                 >
                   Cancelar
