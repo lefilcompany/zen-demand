@@ -1,12 +1,14 @@
-import { LayoutDashboard, Users, Briefcase, Settings, Kanban, Archive, UserPlus } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Settings, Kanban, Archive, UserPlus, ChevronRight } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton, useSidebar } from "@/components/ui/sidebar";
 import { LogoutDialog } from "@/components/LogoutDialog";
 import { Badge } from "@/components/ui/badge";
 import { usePendingRequestsCount } from "@/hooks/useTeamJoinRequests";
 import { useIsTeamAdmin } from "@/hooks/useTeamRole";
 import { useSelectedTeam } from "@/contexts/TeamContext";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useState } from "react";
 
 const menuItems = [{
   title: "Dashboard",
@@ -25,10 +27,6 @@ const menuItems = [{
   url: "/archived",
   icon: Archive
 }, {
-  title: "Equipes",
-  url: "/teams",
-  icon: Users
-}, {
   title: "Configurações",
   url: "/settings",
   icon: Settings
@@ -42,6 +40,10 @@ export function AppSidebar() {
   const { selectedTeamId } = useSelectedTeam();
   const { isAdmin } = useIsTeamAdmin(selectedTeamId);
   const { data: pendingCount } = usePendingRequestsCount(isAdmin ? selectedTeamId : null);
+
+  // Keep teams expanded if on teams routes
+  const isOnTeamsRoute = location.pathname.startsWith("/teams");
+  const [teamsOpen, setTeamsOpen] = useState(isOnTeamsRoute);
 
   return (
     <Sidebar collapsible="icon">
@@ -76,35 +78,74 @@ export function AppSidebar() {
                 </SidebarMenuItem>
               ))}
 
-              {/* Pending Requests - only for admins */}
-              {isAdmin && (
+              {/* Equipes com sub-menu */}
+              <Collapsible
+                open={teamsOpen}
+                onOpenChange={setTeamsOpen}
+                className="group/collapsible"
+              >
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={`/teams/${selectedTeamId}/requests`}
-                      className="hover:bg-sidebar-accent transition-colors"
-                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                    >
-                      <UserPlus className="h-4 w-4" />
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton className="hover:bg-sidebar-accent transition-colors">
+                      <Users className="h-4 w-4" />
                       {!isCollapsed && (
-                        <span className="flex-1 flex items-center justify-between">
-                          Solicitações
-                          {pendingCount && pendingCount > 0 ? (
-                            <Badge variant="destructive" className="ml-2 h-5 min-w-5 flex items-center justify-center text-xs">
+                        <>
+                          <span className="flex-1">Equipes</span>
+                          {pendingCount && pendingCount > 0 && isAdmin && (
+                            <Badge variant="destructive" className="mr-1 h-5 min-w-5 flex items-center justify-center text-xs">
                               {pendingCount}
                             </Badge>
-                          ) : null}
-                        </span>
+                          )}
+                          <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                        </>
                       )}
-                      {isCollapsed && pendingCount && pendingCount > 0 ? (
+                      {isCollapsed && pendingCount && pendingCount > 0 && isAdmin && (
                         <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0">
                           {pendingCount}
                         </Badge>
-                      ) : null}
-                    </NavLink>
-                  </SidebarMenuButton>
+                      )}
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild>
+                          <NavLink
+                            to="/teams"
+                            end
+                            className="hover:bg-sidebar-accent transition-colors"
+                            activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                          >
+                            Minhas Equipes
+                          </NavLink>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      
+                      {isAdmin && selectedTeamId && (
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton asChild>
+                            <NavLink
+                              to={`/teams/${selectedTeamId}/requests`}
+                              className="hover:bg-sidebar-accent transition-colors"
+                              activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                            >
+                              <span className="flex-1 flex items-center justify-between">
+                                Solicitações
+                                {pendingCount && pendingCount > 0 && (
+                                  <Badge variant="destructive" className="ml-2 h-5 min-w-5 flex items-center justify-center text-xs">
+                                    {pendingCount}
+                                  </Badge>
+                                )}
+                              </span>
+                            </NavLink>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      )}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
                 </SidebarMenuItem>
-              )}
+              </Collapsible>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
