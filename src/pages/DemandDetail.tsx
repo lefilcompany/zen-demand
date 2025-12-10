@@ -16,7 +16,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useDemands, useDemandInteractions, useCreateInteraction, useUpdateDemand } from "@/hooks/useDemands";
-import { ArrowLeft, Calendar, User, MessageSquare, Archive } from "lucide-react";
+import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
+import { useTeamRole } from "@/hooks/useTeamRole";
+import { AssigneeAvatars } from "@/components/AssigneeAvatars";
+import { AssigneeSelector } from "@/components/AssigneeSelector";
+import { ArrowLeft, Calendar, Users, MessageSquare, Archive } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -27,11 +31,17 @@ export default function DemandDetail() {
   const navigate = useNavigate();
   const { data: demands } = useDemands();
   const { data: interactions } = useDemandInteractions(id!);
+  const { data: assignees } = useDemandAssignees(id || null);
   const createInteraction = useCreateInteraction();
   const updateDemand = useUpdateDemand();
+  const setAssignees = useSetAssignees();
   const [comment, setComment] = useState("");
+  const [editingAssignees, setEditingAssignees] = useState(false);
+  const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
 
   const demand = demands?.find((d) => d.id === id);
+  const { data: role } = useTeamRole(demand?.team_id || null);
+  const canManageAssignees = role === "admin" || role === "moderator";
 
   const handleArchive = () => {
     if (!id) return;
@@ -66,6 +76,23 @@ export default function DemandDetail() {
     );
   };
 
+  const handleEditAssignees = () => {
+    setSelectedAssignees(assignees?.map(a => a.user_id) || []);
+    setEditingAssignees(true);
+  };
+
+  const handleSaveAssignees = () => {
+    if (!id) return;
+    setAssignees.mutate(
+      { demandId: id, userIds: selectedAssignees },
+      {
+        onSuccess: () => {
+          setEditingAssignees(false);
+        },
+      }
+    );
+  };
+
   if (!demand) {
     return (
       <Layout>
@@ -78,6 +105,11 @@ export default function DemandDetail() {
       </Layout>
     );
   }
+
+  const formattedAssignees = assignees?.map(a => ({
+    user_id: a.user_id,
+    profile: a.profile,
+  })) || [];
 
   return (
     <Layout>
@@ -169,23 +201,38 @@ export default function DemandDetail() {
                 </div>
               )}
 
-              {demand.assigned_profile && (
-                <div className="flex items-center gap-2 text-sm">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Atribuído a:</span>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-5 w-5">
-                      <AvatarImage src={demand.assigned_profile.avatar_url} />
-                      <AvatarFallback>
-                        {demand.assigned_profile.full_name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium">
-                      {demand.assigned_profile.full_name}
-                    </span>
+              <div className="flex items-center gap-2 text-sm">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Responsáveis:</span>
+                {editingAssignees ? (
+                  <div className="flex items-center gap-2 flex-1">
+                    <AssigneeSelector
+                      teamId={demand.team_id}
+                      selectedUserIds={selectedAssignees}
+                      onChange={setSelectedAssignees}
+                    />
+                    <Button size="sm" onClick={handleSaveAssignees} disabled={setAssignees.isPending}>
+                      Salvar
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setEditingAssignees(false)}>
+                      Cancelar
+                    </Button>
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {formattedAssignees.length > 0 ? (
+                      <AssigneeAvatars assignees={formattedAssignees} size="md" />
+                    ) : (
+                      <span className="text-muted-foreground">Nenhum</span>
+                    )}
+                    {canManageAssignees && (
+                      <Button size="sm" variant="ghost" onClick={handleEditAssignees}>
+                        Editar
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

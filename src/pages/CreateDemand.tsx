@@ -7,9 +7,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { useTeams } from "@/hooks/useTeams";
+import { useServices } from "@/hooks/useServices";
+import { ServiceSelector } from "@/components/ServiceSelector";
+import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { addDays, format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function CreateDemand() {
   const navigate = useNavigate();
@@ -23,8 +28,32 @@ export default function CreateDemand() {
   const [statusId, setStatusId] = useState("");
   const [priority, setPriority] = useState("média");
   const [dueDate, setDueDate] = useState("");
+  const [serviceId, setServiceId] = useState("");
+  const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Set default status when statuses load
+  useEffect(() => {
+    if (statuses && statuses.length > 0 && !statusId) {
+      const defaultStatus = statuses.find(s => s.name === "A Iniciar") || statuses[0];
+      setStatusId(defaultStatus.id);
+    }
+  }, [statuses, statusId]);
+
+  const handleServiceChange = (newServiceId: string, estimatedDays?: number) => {
+    setServiceId(newServiceId);
+    if (newServiceId !== "none" && estimatedDays) {
+      const calculatedDate = addDays(new Date(), estimatedDays);
+      setDueDate(format(calculatedDate, "yyyy-MM-dd"));
+    }
+  };
+
+  const handleTeamChange = (newTeamId: string) => {
+    setTeamId(newTeamId);
+    setServiceId("");
+    setAssigneeIds([]);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !teamId || !statusId) return;
 
@@ -36,9 +65,21 @@ export default function CreateDemand() {
         status_id: statusId,
         priority,
         due_date: dueDate || undefined,
+        service_id: serviceId && serviceId !== "none" ? serviceId : undefined,
       },
       {
-        onSuccess: () => {
+        onSuccess: async (demand) => {
+          // Add assignees if any
+          if (assigneeIds.length > 0 && demand) {
+            await supabase
+              .from("demand_assignees")
+              .insert(
+                assigneeIds.map((userId) => ({
+                  demand_id: demand.id,
+                  user_id: userId,
+                }))
+              );
+          }
           navigate("/demands");
         },
       }
@@ -97,7 +138,7 @@ export default function CreateDemand() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="team">Equipe *</Label>
-                  <Select value={teamId} onValueChange={setTeamId} required>
+                  <Select value={teamId} onValueChange={handleTeamChange} required>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione uma equipe" />
                     </SelectTrigger>
@@ -128,6 +169,19 @@ export default function CreateDemand() {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <Label>Serviço</Label>
+                <ServiceSelector
+                  teamId={teamId || null}
+                  value={serviceId}
+                  onChange={handleServiceChange}
+                  disabled={!teamId}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Selecione um serviço para calcular automaticamente a data de vencimento
+                </p>
+              </div>
+
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="priority">Prioridade</Label>
@@ -152,6 +206,16 @@ export default function CreateDemand() {
                     onChange={(e) => setDueDate(e.target.value)}
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Responsáveis</Label>
+                <AssigneeSelector
+                  teamId={teamId || null}
+                  selectedUserIds={assigneeIds}
+                  onChange={setAssigneeIds}
+                  disabled={!teamId}
+                />
               </div>
 
               <div className="flex gap-2 pt-4">

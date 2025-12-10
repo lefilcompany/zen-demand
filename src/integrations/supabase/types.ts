@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      demand_assignees: {
+        Row: {
+          assigned_at: string | null
+          demand_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          demand_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          demand_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_assignees_demand_id_fkey"
+            columns: ["demand_id"]
+            isOneToOne: false
+            referencedRelation: "demands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demand_assignees_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demand_interactions: {
         Row: {
           content: string | null

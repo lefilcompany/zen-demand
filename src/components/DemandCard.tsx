@@ -1,9 +1,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, User } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AssigneeAvatars } from "@/components/AssigneeAvatars";
+
+interface Assignee {
+  user_id: string;
+  profile: {
+    full_name: string;
+    avatar_url: string | null;
+  };
+}
 
 interface DemandCardProps {
   demand: {
@@ -23,6 +31,7 @@ interface DemandCardProps {
     teams?: {
       name: string;
     };
+    demand_assignees?: Assignee[];
   };
   onClick?: () => void;
 }
@@ -34,6 +43,15 @@ const priorityColors = {
 };
 
 export function DemandCard({ demand, onClick }: DemandCardProps) {
+  const assignees = demand.demand_assignees || [];
+  
+  // Fallback to assigned_profile if no assignees
+  const displayAssignees = assignees.length > 0 
+    ? assignees 
+    : demand.assigned_profile 
+      ? [{ user_id: "legacy", profile: { full_name: demand.assigned_profile.full_name, avatar_url: demand.assigned_profile.avatar_url || null } }]
+      : [];
+
   return (
     <Card
       className="hover:shadow-lg transition-all cursor-pointer"
@@ -85,18 +103,8 @@ export function DemandCard({ demand, onClick }: DemandCardProps) {
               </div>
             )}
           </div>
-          {demand.assigned_profile && (
-            <div className="flex items-center gap-2">
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={demand.assigned_profile.avatar_url} />
-                <AvatarFallback>
-                  {demand.assigned_profile.full_name.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-sm text-muted-foreground">
-                {demand.assigned_profile.full_name}
-              </span>
-            </div>
+          {displayAssignees.length > 0 && (
+            <AssigneeAvatars assignees={displayAssignees} size="md" maxVisible={4} />
           )}
         </div>
       </CardContent>

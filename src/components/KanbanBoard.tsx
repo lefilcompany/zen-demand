@@ -1,12 +1,20 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar, Clock, GripVertical } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
+import { AssigneeAvatars } from "@/components/AssigneeAvatars";
+
+interface Assignee {
+  user_id: string;
+  profile: {
+    full_name: string;
+    avatar_url: string | null;
+  };
+}
 
 interface Demand {
   id: string;
@@ -18,6 +26,7 @@ interface Demand {
   demand_statuses?: { name: string; color: string } | null;
   assigned_profile?: { full_name: string; avatar_url?: string | null } | null;
   teams?: { name: string } | null;
+  demand_assignees?: Assignee[];
 }
 
 interface KanbanBoardProps {
@@ -107,102 +116,108 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
           </div>
 
           <div className="space-y-3">
-            {getDemandsForColumn(column.key).map((demand) => (
-              <Card
-                key={demand.id}
-                draggable={!readOnly}
-                onDragStart={(e) => handleDragStart(e, demand.id)}
-                onClick={() => onDemandClick(demand.id)}
-                className={cn(
-                  "hover:shadow-md transition-all",
-                  !readOnly && "cursor-grab active:cursor-grabbing",
-                  readOnly && "cursor-pointer",
-                  draggedId === demand.id && "opacity-50 scale-95",
-                  "group"
-                )}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-2">
-                    <GripVertical className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-1 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm line-clamp-2 mb-2">
-                        {demand.title}
-                      </h4>
-
-                      {demand.description && (
-                        <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
-                          {demand.description}
-                        </p>
+            {getDemandsForColumn(column.key).map((demand) => {
+              const assignees = demand.demand_assignees || [];
+              
+              return (
+                <Card
+                  key={demand.id}
+                  draggable={!readOnly}
+                  onDragStart={(e) => handleDragStart(e, demand.id)}
+                  onClick={() => onDemandClick(demand.id)}
+                  className={cn(
+                    "hover:shadow-md transition-all",
+                    !readOnly && "cursor-grab active:cursor-grabbing",
+                    readOnly && "cursor-pointer",
+                    draggedId === demand.id && "opacity-50 scale-95",
+                    "group"
+                  )}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-2">
+                      {!readOnly && (
+                        <GripVertical className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-1 flex-shrink-0" />
                       )}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-sm line-clamp-2 mb-2">
+                          {demand.title}
+                        </h4>
 
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {demand.priority && (
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "text-xs capitalize",
-                              priorityColors[demand.priority] ||
-                                "bg-muted text-muted-foreground"
-                            )}
-                          >
-                            {demand.priority}
-                          </Badge>
+                        {demand.description && (
+                          <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
+                            {demand.description}
+                          </p>
                         )}
 
-                        {demand.teams?.name && (
-                          <Badge variant="secondary" className="text-xs">
-                            {demand.teams.name}
-                          </Badge>
-                        )}
-                      </div>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {demand.priority && (
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "text-xs capitalize",
+                                priorityColors[demand.priority] ||
+                                  "bg-muted text-muted-foreground"
+                              )}
+                            >
+                              {demand.priority}
+                            </Badge>
+                          )}
 
-                      <div className="flex items-center justify-between">
-                        {demand.due_date && (
-                          <div
-                            className={cn(
-                              "flex items-center gap-1 text-xs",
-                              isOverdue(demand.due_date) &&
-                                column.key !== "Entregue"
-                                ? "text-destructive"
-                                : "text-muted-foreground"
-                            )}
-                          >
-                            {isOverdue(demand.due_date) &&
-                            column.key !== "Entregue" ? (
-                              <Clock className="h-3 w-3" />
-                            ) : (
-                              <Calendar className="h-3 w-3" />
-                            )}
-                            {format(new Date(demand.due_date), "dd MMM", {
-                              locale: ptBR,
-                            })}
-                          </div>
-                        )}
+                          {demand.teams?.name && (
+                            <Badge variant="secondary" className="text-xs">
+                              {demand.teams.name}
+                            </Badge>
+                          )}
+                        </div>
 
-                        {demand.assigned_profile && (
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage
-                              src={
-                                demand.assigned_profile.avatar_url || undefined
-                              }
+                        <div className="flex items-center justify-between">
+                          {demand.due_date && (
+                            <div
+                              className={cn(
+                                "flex items-center gap-1 text-xs",
+                                isOverdue(demand.due_date) &&
+                                  column.key !== "Entregue"
+                                  ? "text-destructive"
+                                  : "text-muted-foreground"
+                              )}
+                            >
+                              {isOverdue(demand.due_date) &&
+                              column.key !== "Entregue" ? (
+                                <Clock className="h-3 w-3" />
+                              ) : (
+                                <Calendar className="h-3 w-3" />
+                              )}
+                              {format(new Date(demand.due_date), "dd MMM", {
+                                locale: ptBR,
+                              })}
+                            </div>
+                          )}
+
+                          {assignees.length > 0 ? (
+                            <AssigneeAvatars assignees={assignees} size="sm" maxVisible={3} />
+                          ) : demand.assigned_profile ? (
+                            <AssigneeAvatars 
+                              assignees={[{ 
+                                user_id: "legacy", 
+                                profile: { 
+                                  full_name: demand.assigned_profile.full_name, 
+                                  avatar_url: demand.assigned_profile.avatar_url || null 
+                                } 
+                              }]} 
+                              size="sm" 
                             />
-                            <AvatarFallback className="text-xs">
-                              {demand.assigned_profile.full_name
-                                ?.charAt(0)
-                                ?.toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
+                          ) : null}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
 
             {getDemandsForColumn(column.key).length === 0 && (
               <div className="text-center py-8 text-muted-foreground text-sm border-2 border-dashed rounded-lg">
-                Arraste demandas aqui
+                {readOnly ? "Nenhuma demanda" : "Arraste demandas aqui"}
               </div>
             )}
           </div>
