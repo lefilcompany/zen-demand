@@ -22,6 +22,7 @@ import Kanban from "./pages/Kanban";
 import ArchivedDemands from "./pages/ArchivedDemands";
 import ClientDashboard from "./pages/ClientDashboard";
 import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ const App = () => (
                 <Route path="/archived" element={<ArchivedDemands />} />
                 <Route path="/client-dashboard" element={<ClientDashboard />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/settings" element={<Settings />} />
               </Route>
               
               {/* Catch-all */}
