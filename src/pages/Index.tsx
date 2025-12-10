@@ -48,7 +48,7 @@ const Index = () => {
         <Card className="border-l-4 border-l-accent hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Em Andamento</CardTitle>
-            <<ClockFading className="h-4 w-4 text-accent" />
+            <Hourglass className="h-4 w-4 text-accent" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">{inProgressDemands}</div>
