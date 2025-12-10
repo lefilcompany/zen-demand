@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateTeam, generateAccessCode } from "@/hooks/useTeams";
 import { useSelectedTeam } from "@/contexts/TeamContext";
-import { ArrowLeft, RefreshCw, Copy, Check } from "lucide-react";
+import { ArrowLeft, RefreshCw, Copy, Check, Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ export default function CreateTeam() {
   const [description, setDescription] = useState("");
   const [accessCode, setAccessCode] = useState(() => generateAccessCode());
   const [copied, setCopied] = useState(false);
+  const [showCode, setShowCode] = useState(false);
 
   const handleGenerateCode = () => {
     setAccessCode(generateAccessCode());
@@ -132,12 +133,22 @@ export default function CreateTeam() {
                 <div className="flex gap-2">
                   <Input
                     id="accessCode"
+                    type={showCode ? "text" : "password"}
                     value={accessCode}
                     onChange={handleAccessCodeChange}
                     placeholder="EX: ABC123"
                     className="font-mono text-lg tracking-widest uppercase"
                     maxLength={6}
                   />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setShowCode(!showCode)}
+                    title={showCode ? "Ocultar código" : "Mostrar código"}
+                  >
+                    {showCode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
                   <Button
                     type="button"
                     variant="outline"
