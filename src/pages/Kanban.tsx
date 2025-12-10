@@ -48,12 +48,10 @@ export default function Kanban() {
               </Button>
             </div>
 
-            {!isReadOnly && (
-              <Button onClick={() => navigate("/demands/create")} className="shadow-primary">
-                <Plus className="mr-2 h-4 w-4" />
-                Nova Demanda
-              </Button>
-            )}
+            <Button onClick={() => navigate("/demands/create")} className="shadow-primary">
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Demanda
+            </Button>
           </div>
         </div>
 
@@ -90,14 +88,12 @@ export default function Kanban() {
                   ? "Não há demandas nesta equipe"
                   : "Comece criando uma nova demanda"}
               </p>
-              {!isReadOnly && (
-                <div className="mt-6">
-                  <Button onClick={() => navigate("/demands/create")}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Criar Primeira Demanda
-                  </Button>
-                </div>
-              )}
+              <div className="mt-6">
+                <Button onClick={() => navigate("/demands/create")}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Criar Primeira Demanda
+                </Button>
+              </div>
             </div>
           )}
         </div>
