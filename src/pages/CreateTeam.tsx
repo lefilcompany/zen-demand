@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateTeam } from "@/hooks/useTeams";
-import { useUserRole } from "@/hooks/useUserRole";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -14,13 +13,10 @@ import { toast } from "sonner";
 
 export default function CreateTeam() {
   const navigate = useNavigate();
-  const { data: userRole } = useUserRole();
   const { setSelectedTeamId } = useSelectedTeam();
   const createTeam = useCreateTeam();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-
-  const isAdmin = userRole === "admin";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,29 +46,6 @@ export default function CreateTeam() {
       }
     );
   };
-
-  if (!isAdmin) {
-    return (
-      <Layout>
-        <div className="max-w-2xl mx-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle>Acesso Negado</CardTitle>
-              <CardDescription>
-                Apenas administradores podem criar equipes.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={() => navigate("/teams")}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Voltar para Equipes
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </Layout>
-    );
-  }
 
   return (
     <Layout>
