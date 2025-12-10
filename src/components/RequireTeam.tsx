@@ -1,23 +1,21 @@
 import { ReactNode } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useAuth } from "@/lib/auth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Users, UserPlus, Plus } from "lucide-react";
+import { CardDescription, CardTitle } from "@/components/ui/card";
+import { Users } from "lucide-react";
 import { TeamSelector } from "@/components/TeamSelector";
+import { TeamPromptCard } from "@/components/TeamPromptCard";
 
 interface RequireTeamProps {
   children: ReactNode;
 }
 
 function NoTeamPrompt() {
-  const navigate = useNavigate();
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-sidebar p-6">
-      <div className="w-full max-w-md bg-background rounded-2xl shadow-xl p-8">
-        <div className="text-center mb-6">
+      <div className="w-full max-w-2xl bg-background rounded-2xl shadow-xl p-8 space-y-8">
+        <div className="text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
             <Users className="h-8 w-8 text-primary" />
           </div>
@@ -26,22 +24,10 @@ function NoTeamPrompt() {
             Você precisa estar em uma equipe para acessar o sistema.
           </CardDescription>
         </div>
-        <div className="space-y-3">
-          <Button 
-            onClick={() => navigate("/teams/create")} 
-            className="w-full"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Criar Nova Equipe
-          </Button>
-          <Button 
-            onClick={() => navigate("/teams/join")} 
-            variant="outline"
-            className="w-full"
-          >
-            <UserPlus className="mr-2 h-4 w-4" />
-            Entrar em uma Equipe
-          </Button>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <TeamPromptCard variant="create" />
+          <TeamPromptCard variant="join" />
         </div>
       </div>
     </div>
