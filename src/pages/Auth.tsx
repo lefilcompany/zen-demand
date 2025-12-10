@@ -116,8 +116,26 @@ export default function Auth() {
   };
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left side - Image */}
+    <div className="flex flex-col lg:flex-row min-h-screen">
+      {/* Mobile/Tablet Header with Image */}
+      <div 
+        className="lg:hidden relative h-48 sm:h-64 md:h-72 overflow-hidden"
+        style={{
+          backgroundImage: `url(${authBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/70 via-primary/50 to-background" />
+        <div className="relative z-10 flex flex-col items-center justify-center h-full text-white px-6 text-center">
+          <img src={logoSomaDark} alt="SoMA" className="h-10 sm:h-12 w-auto mb-3" />
+          <h2 className="text-lg sm:text-xl font-semibold">
+            Gerencie suas demandas com eficiência
+          </h2>
+        </div>
+      </div>
+
+      {/* Desktop Left side - Image */}
       <div 
         className="hidden lg:flex lg:w-1/2 xl:w-3/5 relative overflow-hidden"
         style={{
@@ -126,15 +144,11 @@ export default function Auth() {
           backgroundPosition: 'center',
         }}
       >
-        {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary/50 to-transparent" />
-        
-        {/* Content over image */}
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
           <div>
             <img src={logoSomaDark} alt="SoMA" className="h-12 w-auto" />
           </div>
-          
           <div className="max-w-md">
             <h1 className="text-4xl xl:text-5xl font-bold mb-6 leading-tight">
               Gerencie suas demandas com eficiência
@@ -143,7 +157,6 @@ export default function Auth() {
               Organize, acompanhe e entregue projetos com sua equipe de forma colaborativa e transparente.
             </p>
           </div>
-          
           <div className="flex items-center gap-4">
             <div className="flex -space-x-3">
               <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur border-2 border-white/30" />
@@ -160,26 +173,20 @@ export default function Auth() {
         </div>
       </div>
 
-      {/* Right side - Form */}
-      <div className="w-full lg:w-1/2 xl:w-2/5 flex items-center justify-center p-6 sm:p-12 bg-background">
+      {/* Form Section */}
+      <div className="flex-1 lg:w-1/2 xl:w-2/5 flex items-start lg:items-center justify-center p-6 sm:p-8 md:p-12 bg-background">
         <div className="w-full max-w-md">
-          {/* Mobile logo */}
-          <div className="lg:hidden mb-8 text-center flex flex-col items-center">
-            <img src={logoSoma} alt="SoMA" className="h-14 w-auto mb-2" />
-          </div>
-
-
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
+          <div className="mb-6 sm:mb-8 text-center">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
               Bem-vindo ao SoMA
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-base text-muted-foreground">
               Acesse sua conta ou crie uma nova
             </p>
           </div>
 
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6 h-11 bg-muted/50 p-1 rounded-xl">
+            <TabsList className="grid w-full grid-cols-2 mb-5 sm:mb-6 h-10 sm:h-11 bg-muted/50 p-1 rounded-xl">
               <TabsTrigger 
                 value="login" 
                 className="text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
@@ -195,54 +202,54 @@ export default function Auth() {
             </TabsList>
 
             <TabsContent value="login" className="mt-0">
-              <form onSubmit={handleLogin} className="space-y-5">
+              <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="login-email">E-mail</Label>
                   <Input
                     id="login-email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      className="h-12"
-                      value={loginData.email}
-                      onChange={(e) =>
-                        setLoginData({ ...loginData, email: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Senha</Label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      placeholder="••••••••"
-                      className="h-12"
-                      value={loginData.password}
-                      onChange={(e) =>
-                        setLoginData({ ...loginData, password: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full h-12 text-base font-semibold"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Entrando..." : "Entrar"}
-                  </Button>
-                </form>
+                    type="email"
+                    placeholder="seu@email.com"
+                    className="h-11 sm:h-12"
+                    value={loginData.email}
+                    onChange={(e) =>
+                      setLoginData({ ...loginData, email: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="login-password">Senha</Label>
+                  <Input
+                    id="login-password"
+                    type="password"
+                    placeholder="••••••••"
+                    className="h-11 sm:h-12"
+                    value={loginData.password}
+                    onChange={(e) =>
+                      setLoginData({ ...loginData, password: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full h-11 sm:h-12 text-base font-semibold"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Entrando..." : "Entrar"}
+                </Button>
+              </form>
             </TabsContent>
 
             <TabsContent value="signup" className="mt-0">
-              <form onSubmit={handleSignup} className="space-y-4">
+              <form onSubmit={handleSignup} className="space-y-3 sm:space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-name">Nome completo</Label>
                   <Input
                     id="signup-name"
                     type="text"
                     placeholder="Seu nome"
-                    className="h-11"
+                    className="h-10 sm:h-11"
                     value={signupData.fullName}
                     onChange={(e) =>
                       setSignupData({ ...signupData, fullName: e.target.value })
@@ -256,7 +263,7 @@ export default function Auth() {
                     id="signup-email"
                     type="email"
                     placeholder="seu@email.com"
-                    className="h-11"
+                    className="h-10 sm:h-11"
                     value={signupData.email}
                     onChange={(e) =>
                       setSignupData({ ...signupData, email: e.target.value })
@@ -270,7 +277,7 @@ export default function Auth() {
                     id="signup-phone"
                     type="tel"
                     placeholder="(00) 00000-0000"
-                    className="h-11"
+                    className="h-10 sm:h-11"
                     value={signupData.phone}
                     onChange={(e) =>
                       setSignupData({ ...signupData, phone: e.target.value })
@@ -285,7 +292,7 @@ export default function Auth() {
                       id="signup-state"
                       type="text"
                       placeholder="UF"
-                      className="h-11"
+                      className="h-10 sm:h-11"
                       value={signupData.state}
                       onChange={(e) =>
                         setSignupData({ ...signupData, state: e.target.value })
@@ -299,7 +306,7 @@ export default function Auth() {
                       id="signup-city"
                       type="text"
                       placeholder="Sua cidade"
-                      className="h-11"
+                      className="h-10 sm:h-11"
                       value={signupData.city}
                       onChange={(e) =>
                         setSignupData({ ...signupData, city: e.target.value })
@@ -314,7 +321,7 @@ export default function Auth() {
                     id="signup-password"
                     type="password"
                     placeholder="••••••••"
-                    className="h-11"
+                    className="h-10 sm:h-11"
                     value={signupData.password}
                     onChange={(e) =>
                       setSignupData({ ...signupData, password: e.target.value })
@@ -324,7 +331,7 @@ export default function Auth() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full h-12 text-base font-semibold"
+                  className="w-full h-11 sm:h-12 text-base font-semibold"
                   disabled={isLoading}
                 >
                   {isLoading ? "Criando conta..." : "Criar conta"}
