@@ -12,15 +12,15 @@ export default function Welcome() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-sidebar">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
-      <div className="w-full max-w-2xl space-y-8">
+    <div className="flex min-h-screen items-center justify-center bg-sidebar p-6">
+      <div className="w-full max-w-2xl bg-background rounded-2xl shadow-xl p-8 space-y-8">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-primary mb-2">Bem-vindo ao DemandFlow!</h1>
           <p className="text-muted-foreground text-lg">
@@ -30,7 +30,7 @@ export default function Welcome() {
 
         <div className="grid gap-4 md:grid-cols-2">
           {isAdmin && (
-            <Card className="hover:shadow-lg transition-all cursor-pointer group" onClick={() => navigate("/teams/create")}>
+            <Card className="hover:shadow-lg transition-all cursor-pointer group border-border" onClick={() => navigate("/teams/create")}>
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <div className="p-3 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
@@ -55,7 +55,7 @@ export default function Welcome() {
             </Card>
           )}
 
-          <Card className="hover:shadow-lg transition-all cursor-pointer group" onClick={() => navigate("/teams/join")}>
+          <Card className="hover:shadow-lg transition-all cursor-pointer group border-border" onClick={() => navigate("/teams/join")}>
             <CardHeader>
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-lg bg-secondary text-secondary-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
