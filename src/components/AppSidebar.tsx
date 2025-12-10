@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, Settings, Kanban, Archive, ChevronRight, User } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, User } from "lucide-react";
 import logoSoma from "@/assets/logo-soma-dark.png";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -28,10 +28,6 @@ const menuItems = [{
   title: "Arquivadas",
   url: "/archived",
   icon: Archive
-}, {
-  title: "Configurações",
-  url: "/settings",
-  icon: Settings
 }];
 
 export function AppSidebar() {
