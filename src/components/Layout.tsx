@@ -25,9 +25,9 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <SidebarProvider defaultOpen>
-      <div className="flex h-screen w-full bg-sidebar p-3 overflow-hidden">
+      <div className="flex h-screen w-full bg-sidebar p-2 overflow-hidden">
         <AppSidebar />
-        <main className="flex-1 flex flex-col bg-background rounded-2xl shadow-xl overflow-hidden ml-3">
+        <main className="flex-1 flex flex-col bg-background rounded-2xl shadow-xl overflow-hidden ml-2">
           <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between gap-4 bg-background px-6">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="text-foreground hover:bg-muted" />
