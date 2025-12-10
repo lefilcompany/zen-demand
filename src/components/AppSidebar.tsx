@@ -1,5 +1,5 @@
 import { LayoutDashboard, Users, Briefcase, Settings, Kanban, Archive, ChevronRight } from "lucide-react";
-import logoSoma from "@/assets/logo-soma.png";
+import logoSoma from "@/assets/logo-soma-dark.png";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton, useSidebar } from "@/components/ui/sidebar";
