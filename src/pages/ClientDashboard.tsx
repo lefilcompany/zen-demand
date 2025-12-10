@@ -1,11 +1,16 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScopeProgressBar } from "@/components/ScopeProgressBar";
 import { DeliveryStatusChart } from "@/components/DeliveryStatusChart";
-import { useTeamScope, useMonthlyDemandCount, useDemandsByStatus } from "@/hooks/useTeamScope";
+import { PeriodFilter, type PeriodType } from "@/components/PeriodFilter";
+import { ExportReportButton } from "@/components/ExportReportButton";
+import { useTeamScope, useMonthlyDemandCount } from "@/hooks/useTeamScope";
+import { useDemandsByPeriod } from "@/hooks/useDemandsByPeriod";
 import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useTeams } from "@/hooks/useTeams";
 import { 
   FileText, 
   CheckCircle2, 
@@ -17,14 +22,23 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+const periodLabels: Record<PeriodType, string> = {
+  week: "Esta Semana",
+  month: "Este Mês",
+  quarter: "Este Trimestre"
+};
+
 export default function ClientDashboard() {
   const navigate = useNavigate();
+  const [period, setPeriod] = useState<PeriodType>("month");
   const { selectedTeamId } = useSelectedTeam();
+  const { data: teams } = useTeams();
   const { data: scope, isLoading: scopeLoading } = useTeamScope();
   const { data: monthlyCount, isLoading: countLoading } = useMonthlyDemandCount();
-  const { data: demandData, isLoading: demandsLoading } = useDemandsByStatus();
+  const { data: demandData, isLoading: demandsLoading } = useDemandsByPeriod(period);
 
   const isLoading = scopeLoading || countLoading || demandsLoading;
+  const currentTeam = teams?.find(t => t.id === selectedTeamId);
 
   // Count demands by status name
   const deliveredCount = demandData?.byStatus.find(s => 
@@ -41,6 +55,14 @@ export default function ClientDashboard() {
 
   const limit = scope?.monthly_demand_limit || 0;
   const canCreate = limit === 0 || (monthlyCount || 0) < limit;
+
+  // Prepare export data
+  const exportDemands = demandData?.demands.map((d: any) => ({
+    title: d.title,
+    status: d.demand_statuses?.name || "Sem status",
+    created_at: d.created_at,
+    priority: d.priority
+  })) || [];
 
   if (isLoading) {
     return (
@@ -59,21 +81,35 @@ export default function ClientDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Meu Painel</h1>
           <p className="text-muted-foreground">
             {format(new Date(), "MMMM 'de' yyyy", { locale: ptBR })}
           </p>
         </div>
-        <Button 
-          onClick={() => navigate("/demands/create")}
-          disabled={!canCreate}
-          className="gap-2"
-        >
-          <PlusCircle className="h-4 w-4" />
-          Nova Demanda
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <PeriodFilter value={period} onChange={setPeriod} />
+          <ExportReportButton 
+            demands={exportDemands}
+            teamName={currentTeam?.name}
+            periodLabel={periodLabels[period]}
+            stats={{
+              total: demandData?.total || 0,
+              delivered: deliveredCount,
+              inProgress: inProgressCount,
+              pending: pendingCount
+            }}
+          />
+          <Button 
+            onClick={() => navigate("/demands/create")}
+            disabled={!canCreate}
+            className="gap-2"
+          >
+            <PlusCircle className="h-4 w-4" />
+            Nova Demanda
+          </Button>
+        </div>
       </div>
 
       {/* Scope Progress */}
@@ -91,14 +127,14 @@ export default function ClientDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total do Mês
+              {periodLabels[period]}
             </CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{monthlyCount || 0}</div>
+            <div className="text-3xl font-bold">{demandData?.total || 0}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              demandas criadas
+              demandas no período
             </p>
           </CardContent>
         </Card>
