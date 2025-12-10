@@ -78,14 +78,14 @@ export default function JoinTeam() {
     <Layout>
       <div className="max-w-2xl mx-auto space-y-6">
         <div>
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/welcome")}
-            className="mb-4"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Button>
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/")}
+          className="mb-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar ao Dashboard
+        </Button>
           <h1 className="text-3xl font-bold tracking-tight">Entrar em Equipe</h1>
           <p className="text-muted-foreground">
             Use o código de acesso para solicitar entrada em uma equipe
@@ -175,7 +175,7 @@ export default function JoinTeam() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => navigate("/welcome")}
+                    onClick={() => navigate("/")}
                     className="flex-1"
                   >
                     Cancelar
@@ -196,10 +196,10 @@ export default function JoinTeam() {
               <div className="flex gap-2 pt-4">
                 <Button
                   variant="outline"
-                  onClick={() => navigate("/welcome")}
+                  onClick={() => navigate("/")}
                   className="flex-1"
                 >
-                  Voltar
+                  Voltar ao Dashboard
                 </Button>
               </div>
             )}
