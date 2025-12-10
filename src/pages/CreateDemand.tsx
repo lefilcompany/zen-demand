@@ -1,4 +1,3 @@
-import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -88,138 +87,136 @@ export default function CreateDemand() {
   };
 
   return (
-    <Layout>
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div>
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/demands")}
-            className="mb-4"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Button>
-          <h1 className="text-3xl font-bold tracking-tight">Nova Demanda</h1>
-          <p className="text-muted-foreground">
-            Criar demanda para a equipe <span className="font-medium text-primary">{selectedTeam?.name}</span>
-          </p>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Informações da Demanda</CardTitle>
-            <CardDescription>
-              Preencha os dados para criar uma nova demanda
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Título *</Label>
-                <Input
-                  id="title"
-                  placeholder="Ex: Implementar nova funcionalidade"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Descreva os detalhes da demanda..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={4}
-                />
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status *</Label>
-                  <Select value={statusId} onValueChange={setStatusId} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statuses?.map((status) => (
-                        <SelectItem key={status.id} value={status.id}>
-                          {status.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="priority">Prioridade</Label>
-                  <Select value={priority} onValueChange={setPriority}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="baixa">Baixa</SelectItem>
-                      <SelectItem value="média">Média</SelectItem>
-                      <SelectItem value="alta">Alta</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Serviço</Label>
-                <ServiceSelector
-                  teamId={selectedTeamId}
-                  value={serviceId}
-                  onChange={handleServiceChange}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Selecione um serviço para calcular automaticamente a data de vencimento
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="dueDate">Data de Vencimento</Label>
-                <Input
-                  id="dueDate"
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Responsáveis</Label>
-                <AssigneeSelector
-                  teamId={selectedTeamId}
-                  selectedUserIds={assigneeIds}
-                  onChange={setAssigneeIds}
-                />
-              </div>
-
-              <div className="flex gap-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate("/demands")}
-                  className="flex-1"
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={createDemand.isPending || !title.trim() || !statusId}
-                  className="flex-1"
-                >
-                  {createDemand.isPending ? "Criando..." : "Criar Demanda"}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div>
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/demands")}
+          className="mb-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar
+        </Button>
+        <h1 className="text-3xl font-bold tracking-tight">Nova Demanda</h1>
+        <p className="text-muted-foreground">
+          Criar demanda para a equipe <span className="font-medium text-primary">{selectedTeam?.name}</span>
+        </p>
       </div>
-    </Layout>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Informações da Demanda</CardTitle>
+          <CardDescription>
+            Preencha os dados para criar uma nova demanda
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Título *</Label>
+              <Input
+                id="title"
+                placeholder="Ex: Implementar nova funcionalidade"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Descrição</Label>
+              <Textarea
+                id="description"
+                placeholder="Descreva os detalhes da demanda..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="status">Status *</Label>
+                <Select value={statusId} onValueChange={setStatusId} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statuses?.map((status) => (
+                      <SelectItem key={status.id} value={status.id}>
+                        {status.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="priority">Prioridade</Label>
+                <Select value={priority} onValueChange={setPriority}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="baixa">Baixa</SelectItem>
+                    <SelectItem value="média">Média</SelectItem>
+                    <SelectItem value="alta">Alta</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Serviço</Label>
+              <ServiceSelector
+                teamId={selectedTeamId}
+                value={serviceId}
+                onChange={handleServiceChange}
+              />
+              <p className="text-xs text-muted-foreground">
+                Selecione um serviço para calcular automaticamente a data de vencimento
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dueDate">Data de Vencimento</Label>
+              <Input
+                id="dueDate"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Responsáveis</Label>
+              <AssigneeSelector
+                teamId={selectedTeamId}
+                selectedUserIds={assigneeIds}
+                onChange={setAssigneeIds}
+              />
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/demands")}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={createDemand.isPending || !title.trim() || !statusId}
+                className="flex-1"
+              >
+                {createDemand.isPending ? "Criando..." : "Criar Demanda"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

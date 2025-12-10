@@ -1,4 +1,3 @@
-import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useTeamByAccessCode, useCreateJoinRequest, useExistingRequest } from "@/hooks/useTeamJoinRequests";
 import { ArrowLeft, Users, Clock, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export default function JoinTeam() {
@@ -75,18 +74,18 @@ export default function JoinTeam() {
   };
 
   return (
-    <Layout>
+    <div className="min-h-screen bg-sidebar p-6">
       <div className="max-w-2xl mx-auto space-y-6">
         <div>
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/")}
-          className="mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar ao Dashboard
-        </Button>
-          <h1 className="text-3xl font-bold tracking-tight">Entrar em Equipe</h1>
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/")}
+            className="mb-4"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar ao Dashboard
+          </Button>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Entrar em Equipe</h1>
           <p className="text-muted-foreground">
             Use o código de acesso para solicitar entrada em uma equipe
           </p>
@@ -115,7 +114,6 @@ export default function JoinTeam() {
               </p>
             </div>
 
-            {/* Loading state */}
             {isLoadingTeam && accessCode.length === 6 && (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -123,7 +121,6 @@ export default function JoinTeam() {
               </div>
             )}
 
-            {/* Team not found */}
             {!isLoadingTeam && accessCode.length === 6 && !teamPreview && (
               <div className="flex items-center gap-2 text-destructive">
                 <XCircle className="h-4 w-4" />
@@ -131,7 +128,6 @@ export default function JoinTeam() {
               </div>
             )}
 
-            {/* Team preview */}
             {teamPreview && (
               <Card className="bg-muted/50">
                 <CardContent className="pt-6">
@@ -149,7 +145,6 @@ export default function JoinTeam() {
                     </div>
                   </div>
 
-                  {/* Existing request status */}
                   {!isLoadingRequest && existingRequest && (
                     <div className="mt-4">{getStatusBadge()}</div>
                   )}
@@ -157,7 +152,6 @@ export default function JoinTeam() {
               </Card>
             )}
 
-            {/* Request form - only show if team found and no existing request */}
             {teamPreview && !existingRequest && (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
@@ -191,7 +185,6 @@ export default function JoinTeam() {
               </form>
             )}
 
-            {/* Already has request - show cancel/back button */}
             {teamPreview && existingRequest && (
               <div className="flex gap-2 pt-4">
                 <Button
@@ -206,6 +199,6 @@ export default function JoinTeam() {
           </CardContent>
         </Card>
       </div>
-    </Layout>
+    </div>
   );
 }

@@ -1,4 +1,3 @@
-import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -77,7 +76,7 @@ export default function CreateTeam() {
   };
 
   return (
-    <Layout>
+    <div className="min-h-screen bg-sidebar p-6">
       <div className="max-w-2xl mx-auto space-y-6">
         <div>
           <Button
@@ -88,7 +87,7 @@ export default function CreateTeam() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar
           </Button>
-          <h1 className="text-3xl font-bold tracking-tight">Criar Nova Equipe</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Criar Nova Equipe</h1>
           <p className="text-muted-foreground">
             Crie uma equipe e convide membros usando o código de acesso
           </p>
@@ -196,6 +195,6 @@ export default function CreateTeam() {
           </CardContent>
         </Card>
       </div>
-    </Layout>
+    </div>
   );
 }
