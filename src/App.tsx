@@ -2,6 +2,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth";
+import { TeamProvider } from "@/contexts/TeamContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Teams from "./pages/Teams";
@@ -21,7 +22,8 @@ const App = () => (
     <TooltipProvider>
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
+          <TeamProvider>
+            <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/teams" element={<Teams />} />
@@ -32,9 +34,10 @@ const App = () => (
             <Route path="/demands/:id" element={<DemandDetail />} />
             <Route path="/kanban" element={<Kanban />} />
             <Route path="/archived" element={<ArchivedDemands />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </TeamProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

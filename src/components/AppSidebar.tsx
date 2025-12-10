@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, Settings, LogOut, LayoutGrid, Archive } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Settings, LayoutGrid, Archive } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -12,7 +12,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useAuth } from "@/lib/auth";
+import { LogoutDialog } from "@/components/LogoutDialog";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -26,7 +26,6 @@ const menuItems = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
-  const { signOut } = useAuth();
   const currentPath = location.pathname;
   const isCollapsed = state === "collapsed";
 
@@ -34,10 +33,19 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarContent>
         <div className="p-4">
-          {!isCollapsed && (
-            <h2 className="text-xl font-bold text-sidebar-foreground">
-              DemandFlow
-            </h2>
+          {!isCollapsed ? (
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-sm">DF</span>
+              </div>
+              <h2 className="text-xl font-bold text-sidebar-foreground">
+                DemandFlow
+              </h2>
+            </div>
+          ) : (
+            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center mx-auto">
+              <span className="text-primary-foreground font-bold text-sm">DF</span>
+            </div>
           )}
         </div>
 
@@ -50,7 +58,7 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
-                      end
+                      end={item.url === "/"}
                       className="hover:bg-sidebar-accent transition-colors"
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                     >
@@ -65,13 +73,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <div className="mt-auto p-4">
-          <SidebarMenuButton
-            onClick={() => signOut()}
-            className="w-full hover:bg-sidebar-accent transition-colors"
-          >
-            <LogOut className="h-4 w-4" />
-            {!isCollapsed && <span>Sair</span>}
-          </SidebarMenuButton>
+          <LogoutDialog isCollapsed={isCollapsed} />
         </div>
       </SidebarContent>
     </Sidebar>

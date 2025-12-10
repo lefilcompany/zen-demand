@@ -94,6 +94,7 @@ export type Database = {
           due_date: string | null
           id: string
           priority: string | null
+          service_id: string | null
           status_id: string
           team_id: string
           title: string
@@ -109,6 +110,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           priority?: string | null
+          service_id?: string | null
           status_id: string
           team_id: string
           title: string
@@ -124,6 +126,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           priority?: string | null
+          service_id?: string | null
           status_id?: string
           team_id?: string
           title?: string
@@ -142,6 +145,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demands_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
             referencedColumns: ["id"]
           },
           {
@@ -184,22 +194,66 @@ export type Database = {
         }
         Relationships: []
       }
+      services: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          estimated_days: number
+          id: string
+          name: string
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          estimated_days?: number
+          id?: string
+          name: string
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          estimated_days?: number
+          id?: string
+          name?: string
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           id: string
           joined_at: string
+          role: Database["public"]["Enums"]["team_role"]
           team_id: string
           user_id: string
         }
         Insert: {
           id?: string
           joined_at?: string
+          role?: Database["public"]["Enums"]["team_role"]
           team_id: string
           user_id: string
         }
         Update: {
           id?: string
           joined_at?: string
+          role?: Database["public"]["Enums"]["team_role"]
           team_id?: string
           user_id?: string
         }
@@ -300,6 +354,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_team_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["team_role"]
+          _team_id: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_team_admin_or_moderator: {
+        Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_team_member: {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
@@ -307,6 +373,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "member"
+      team_role: "admin" | "moderator" | "requester"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -435,6 +502,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "member"],
+      team_role: ["admin", "moderator", "requester"],
     },
   },
 } as const

@@ -23,6 +23,7 @@ interface Demand {
 interface KanbanBoardProps {
   demands: Demand[];
   onDemandClick: (id: string) => void;
+  readOnly?: boolean;
 }
 
 const priorityColors: Record<string, string> = {
@@ -37,12 +38,13 @@ const columns = [
   { key: "Entregue", label: "Entregue", color: "bg-emerald-500/10" },
 ];
 
-export function KanbanBoard({ demands, onDemandClick }: KanbanBoardProps) {
+export function KanbanBoard({ demands, onDemandClick, readOnly = false }: KanbanBoardProps) {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const { data: statuses } = useDemandStatuses();
   const updateDemand = useUpdateDemand();
 
   const handleDragStart = (e: React.DragEvent, demandId: string) => {
+    if (readOnly) return;
     setDraggedId(demandId);
     e.dataTransfer.effectAllowed = "move";
   };
@@ -108,11 +110,13 @@ export function KanbanBoard({ demands, onDemandClick }: KanbanBoardProps) {
             {getDemandsForColumn(column.key).map((demand) => (
               <Card
                 key={demand.id}
-                draggable
+                draggable={!readOnly}
                 onDragStart={(e) => handleDragStart(e, demand.id)}
                 onClick={() => onDemandClick(demand.id)}
                 className={cn(
-                  "cursor-grab active:cursor-grabbing hover:shadow-md transition-all",
+                  "hover:shadow-md transition-all",
+                  !readOnly && "cursor-grab active:cursor-grabbing",
+                  readOnly && "cursor-pointer",
                   draggedId === demand.id && "opacity-50 scale-95",
                   "group"
                 )}

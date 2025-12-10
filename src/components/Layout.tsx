@@ -1,5 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { TeamSelector } from "@/components/TeamSelector";
 import { useAuth } from "@/lib/auth";
 import { Navigate } from "react-router-dom";
 
@@ -12,8 +13,8 @@ export function Layout({ children }: LayoutProps) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -27,8 +28,11 @@ export function Layout({ children }: LayoutProps) {
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <main className="flex-1">
-          <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-6">
-            <SidebarTrigger />
+          <header className="sticky top-0 z-40 flex h-16 items-center justify-between gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger className="text-foreground hover:bg-muted" />
+            </div>
+            <TeamSelector />
           </header>
           <div className="p-6">{children}</div>
         </main>
