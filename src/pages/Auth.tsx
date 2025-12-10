@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function Auth() {
   const { user, loading, signIn, signUp } = useAuth();
@@ -34,11 +35,43 @@ export default function Auth() {
     return <Navigate to="/welcome" replace />;
   }
 
+  const getErrorMessage = (error: any): string => {
+    const message = error?.message?.toLowerCase() || "";
+    
+    if (message.includes("user already registered") || message.includes("already been registered")) {
+      return "Este e-mail já está cadastrado. Tente fazer login.";
+    }
+    if (message.includes("invalid login credentials") || message.includes("invalid credentials")) {
+      return "E-mail ou senha incorretos.";
+    }
+    if (message.includes("email not confirmed")) {
+      return "E-mail não confirmado. Verifique sua caixa de entrada.";
+    }
+    if (message.includes("password") && message.includes("weak")) {
+      return "Senha muito fraca. Use pelo menos 6 caracteres.";
+    }
+    if (message.includes("invalid email")) {
+      return "E-mail inválido. Verifique o formato.";
+    }
+    if (message.includes("too many requests") || message.includes("rate limit")) {
+      return "Muitas tentativas. Aguarde alguns minutos.";
+    }
+    
+    return error?.message || "Ocorreu um erro. Tente novamente.";
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
       await signIn(loginData.email, loginData.password);
+      toast.success("Login realizado com sucesso!", {
+        description: "Bem-vindo de volta ao DemandFlow.",
+      });
+    } catch (error: any) {
+      toast.error("Erro ao fazer login", {
+        description: getErrorMessage(error),
+      });
     } finally {
       setIsLoading(false);
     }
@@ -46,9 +79,31 @@ export default function Auth() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (signupData.password.length < 6) {
+      toast.warning("Senha muito curta", {
+        description: "A senha deve ter pelo menos 6 caracteres.",
+      });
+      return;
+    }
+
+    if (!signupData.fullName.trim()) {
+      toast.warning("Nome obrigatório", {
+        description: "Por favor, informe seu nome completo.",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       await signUp(signupData.email, signupData.password, signupData.fullName);
+      toast.success("Conta criada com sucesso!", {
+        description: "Bem-vindo ao DemandFlow!",
+      });
+    } catch (error: any) {
+      toast.error("Erro ao criar conta", {
+        description: getErrorMessage(error),
+      });
     } finally {
       setIsLoading(false);
     }
