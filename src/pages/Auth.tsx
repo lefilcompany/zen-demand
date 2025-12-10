@@ -173,17 +173,29 @@ export default function Auth() {
             </p>
           </div>
 
-          <div className="mb-6">
-            <CardTitle className="text-2xl">Bem-vindo de volta</CardTitle>
-            <CardDescription className="mt-2">
-              Faça login ou crie sua conta para acessar o sistema
-            </CardDescription>
+          <div className="mb-8 text-center">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Bem-vindo ao SoMA
+            </h1>
+            <p className="text-muted-foreground">
+              Acesse sua conta ou crie uma nova
+            </p>
           </div>
 
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8 h-12">
-              <TabsTrigger value="login" className="text-base">Login</TabsTrigger>
-              <TabsTrigger value="signup" className="text-base">Cadastrar</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 mb-6 h-11 bg-muted/50 p-1 rounded-xl">
+              <TabsTrigger 
+                value="login" 
+                className="text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+              >
+                Entrar
+              </TabsTrigger>
+              <TabsTrigger 
+                value="signup" 
+                className="text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+              >
+                Criar conta
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="login" className="mt-0">
