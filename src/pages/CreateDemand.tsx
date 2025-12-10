@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { addDays, format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function CreateDemand() {
   const navigate = useNavigate();
@@ -80,7 +81,13 @@ export default function CreateDemand() {
                 }))
               );
           }
+          toast.success("Demanda criada com sucesso!");
           navigate("/demands");
+        },
+        onError: (error: any) => {
+          toast.error("Erro ao criar demanda", {
+            description: error.message || "Tente novamente.",
+          });
         },
       }
     );

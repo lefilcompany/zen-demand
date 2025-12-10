@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,23 +48,51 @@ export default function TeamDetail() {
     if (team?.access_code) {
       navigator.clipboard.writeText(team.access_code);
       setCopied(true);
+      toast.success("Código copiado!");
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
   const handleRoleChange = (memberId: string, newRole: TeamRole) => {
-    updateRole.mutate({ memberId, newRole });
+    updateRole.mutate(
+      { memberId, newRole },
+      {
+        onSuccess: () => {
+          toast.success("Papel atualizado com sucesso!");
+        },
+        onError: (error: any) => {
+          toast.error("Erro ao atualizar papel", {
+            description: error.message || "Tente novamente.",
+          });
+        },
+      }
+    );
   };
 
   const handleRemoveMember = (memberId: string) => {
-    removeMember.mutate(memberId);
+    removeMember.mutate(memberId, {
+      onSuccess: () => {
+        toast.success("Membro removido da equipe!");
+      },
+      onError: (error: any) => {
+        toast.error("Erro ao remover membro", {
+          description: error.message || "Tente novamente.",
+        });
+      },
+    });
   };
 
   const handleDeleteTeam = () => {
     if (!id) return;
     deleteTeam.mutate(id, {
       onSuccess: () => {
+        toast.success("Equipe excluída com sucesso!");
         navigate("/teams");
+      },
+      onError: (error: any) => {
+        toast.error("Erro ao excluir equipe", {
+          description: error.message || "Tente novamente.",
+        });
       },
     });
   };

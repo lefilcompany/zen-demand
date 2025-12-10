@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -86,8 +87,14 @@ export default function ServicesManagement() {
         },
         {
           onSuccess: () => {
+            toast.success("Serviço atualizado com sucesso!");
             setDialogOpen(false);
             setEditingService(null);
+          },
+          onError: (error: any) => {
+            toast.error("Erro ao atualizar serviço", {
+              description: error.message || "Tente novamente.",
+            });
           },
         }
       );
@@ -101,7 +108,13 @@ export default function ServicesManagement() {
         },
         {
           onSuccess: () => {
+            toast.success("Serviço criado com sucesso!");
             setDialogOpen(false);
+          },
+          onError: (error: any) => {
+            toast.error("Erro ao criar serviço", {
+              description: error.message || "Tente novamente.",
+            });
           },
         }
       );
@@ -110,7 +123,19 @@ export default function ServicesManagement() {
 
   const handleDelete = (serviceId: string) => {
     if (!id) return;
-    deleteService.mutate({ id: serviceId, team_id: id });
+    deleteService.mutate(
+      { id: serviceId, team_id: id },
+      {
+        onSuccess: () => {
+          toast.success("Serviço excluído com sucesso!");
+        },
+        onError: (error: any) => {
+          toast.error("Erro ao excluir serviço", {
+            description: error.message || "Tente novamente.",
+          });
+        },
+      }
+    );
   };
 
   if (teamsLoading || servicesLoading) {

@@ -25,6 +25,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function DemandDetail() {
   const { id } = useParams<{ id: string }>();
@@ -53,7 +54,13 @@ export default function DemandDetail() {
       },
       {
         onSuccess: () => {
+          toast.success("Demanda arquivada com sucesso!");
           navigate("/demands");
+        },
+        onError: (error: any) => {
+          toast.error("Erro ao arquivar demanda", {
+            description: error.message || "Tente novamente.",
+          });
         },
       }
     );
@@ -70,7 +77,13 @@ export default function DemandDetail() {
       },
       {
         onSuccess: () => {
+          toast.success("Comentário adicionado!");
           setComment("");
+        },
+        onError: (error: any) => {
+          toast.error("Erro ao adicionar comentário", {
+            description: error.message || "Tente novamente.",
+          });
         },
       }
     );
@@ -87,7 +100,13 @@ export default function DemandDetail() {
       { demandId: id, userIds: selectedAssignees },
       {
         onSuccess: () => {
+          toast.success("Responsáveis atualizados!");
           setEditingAssignees(false);
+        },
+        onError: (error: any) => {
+          toast.error("Erro ao atualizar responsáveis", {
+            description: error.message || "Tente novamente.",
+          });
         },
       }
     );

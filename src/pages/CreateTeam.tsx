@@ -9,6 +9,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function CreateTeam() {
   const navigate = useNavigate();
@@ -30,7 +31,15 @@ export default function CreateTeam() {
       },
       {
         onSuccess: () => {
+          toast.success("Equipe criada com sucesso!", {
+            description: "Compartilhe o código de acesso com os membros.",
+          });
           navigate("/teams");
+        },
+        onError: (error: any) => {
+          toast.error("Erro ao criar equipe", {
+            description: error.message || "Tente novamente.",
+          });
         },
       }
     );
