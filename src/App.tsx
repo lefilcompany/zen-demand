@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth";
 import { TeamProvider } from "@/contexts/TeamContext";
 import { RequireTeam } from "@/components/RequireTeam";
+import { ProtectedLayout } from "@/components/ProtectedLayout";
 import { Toaster } from "@/components/ui/sonner";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -37,17 +38,19 @@ const App = () => (
               <Route path="/teams/create" element={<CreateTeam />} />
               <Route path="/teams/join" element={<JoinTeam />} />
               
-              {/* Protected routes - require team selection */}
-              <Route path="/" element={<RequireTeam><Index /></RequireTeam>} />
-              <Route path="/teams" element={<RequireTeam><Teams /></RequireTeam>} />
-              <Route path="/teams/:id" element={<RequireTeam><TeamDetail /></RequireTeam>} />
-              <Route path="/teams/:id/requests" element={<RequireTeam><TeamRequests /></RequireTeam>} />
-              <Route path="/teams/:id/services" element={<RequireTeam><ServicesManagement /></RequireTeam>} />
-              <Route path="/demands" element={<RequireTeam><Demands /></RequireTeam>} />
-              <Route path="/demands/create" element={<RequireTeam><CreateDemand /></RequireTeam>} />
-              <Route path="/demands/:id" element={<RequireTeam><DemandDetail /></RequireTeam>} />
-              <Route path="/kanban" element={<RequireTeam><Kanban /></RequireTeam>} />
-              <Route path="/archived" element={<RequireTeam><ArchivedDemands /></RequireTeam>} />
+              {/* Protected routes - require team selection, shared layout */}
+              <Route element={<RequireTeam><ProtectedLayout /></RequireTeam>}>
+                <Route path="/" element={<Index />} />
+                <Route path="/teams" element={<Teams />} />
+                <Route path="/teams/:id" element={<TeamDetail />} />
+                <Route path="/teams/:id/requests" element={<TeamRequests />} />
+                <Route path="/teams/:id/services" element={<ServicesManagement />} />
+                <Route path="/demands" element={<Demands />} />
+                <Route path="/demands/create" element={<CreateDemand />} />
+                <Route path="/demands/:id" element={<DemandDetail />} />
+                <Route path="/kanban" element={<Kanban />} />
+                <Route path="/archived" element={<ArchivedDemands />} />
+              </Route>
               
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
