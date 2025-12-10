@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateDemand, useDemandStatuses } from "@/hooks/useDemands";
-import { useTeams } from "@/hooks/useTeams";
-import { useServices } from "@/hooks/useServices";
+import { useSelectedTeam } from "@/contexts/TeamContext";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { ArrowLeft } from "lucide-react";
@@ -20,12 +19,13 @@ import { toast } from "sonner";
 export default function CreateDemand() {
   const navigate = useNavigate();
   const createDemand = useCreateDemand();
-  const { data: teams } = useTeams();
+  const { selectedTeamId, teams } = useSelectedTeam();
   const { data: statuses } = useDemandStatuses();
+
+  const selectedTeam = teams?.find(t => t.id === selectedTeamId);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [teamId, setTeamId] = useState("");
   const [statusId, setStatusId] = useState("");
   const [priority, setPriority] = useState("média");
   const [dueDate, setDueDate] = useState("");
@@ -48,21 +48,15 @@ export default function CreateDemand() {
     }
   };
 
-  const handleTeamChange = (newTeamId: string) => {
-    setTeamId(newTeamId);
-    setServiceId("");
-    setAssigneeIds([]);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !teamId || !statusId) return;
+    if (!title.trim() || !selectedTeamId || !statusId) return;
 
     createDemand.mutate(
       {
         title: title.trim(),
         description: description.trim() || undefined,
-        team_id: teamId,
+        team_id: selectedTeamId,
         status_id: statusId,
         priority,
         due_date: dueDate || undefined,
@@ -107,7 +101,7 @@ export default function CreateDemand() {
           </Button>
           <h1 className="text-3xl font-bold tracking-tight">Nova Demanda</h1>
           <p className="text-muted-foreground">
-            Crie uma nova demanda e atribua a uma equipe
+            Criar demanda para a equipe <span className="font-medium text-primary">{selectedTeam?.name}</span>
           </p>
         </div>
 
@@ -144,22 +138,6 @@ export default function CreateDemand() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="team">Equipe *</Label>
-                  <Select value={teamId} onValueChange={handleTeamChange} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma equipe" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {teams?.map((team) => (
-                        <SelectItem key={team.id} value={team.id}>
-                          {team.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
                   <Label htmlFor="status">Status *</Label>
                   <Select value={statusId} onValueChange={setStatusId} required>
                     <SelectTrigger>
@@ -174,22 +152,7 @@ export default function CreateDemand() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label>Serviço</Label>
-                <ServiceSelector
-                  teamId={teamId || null}
-                  value={serviceId}
-                  onChange={handleServiceChange}
-                  disabled={!teamId}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Selecione um serviço para calcular automaticamente a data de vencimento
-                </p>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="priority">Prioridade</Label>
                   <Select value={priority} onValueChange={setPriority}>
@@ -203,25 +166,36 @@ export default function CreateDemand() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="dueDate">Data de Vencimento</Label>
-                  <Input
-                    id="dueDate"
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label>Serviço</Label>
+                <ServiceSelector
+                  teamId={selectedTeamId}
+                  value={serviceId}
+                  onChange={handleServiceChange}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Selecione um serviço para calcular automaticamente a data de vencimento
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dueDate">Data de Vencimento</Label>
+                <Input
+                  id="dueDate"
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                />
               </div>
 
               <div className="space-y-2">
                 <Label>Responsáveis</Label>
                 <AssigneeSelector
-                  teamId={teamId || null}
+                  teamId={selectedTeamId}
                   selectedUserIds={assigneeIds}
                   onChange={setAssigneeIds}
-                  disabled={!teamId}
                 />
               </div>
 
@@ -236,7 +210,7 @@ export default function CreateDemand() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={createDemand.isPending || !title.trim() || !teamId || !statusId}
+                  disabled={createDemand.isPending || !title.trim() || !statusId}
                   className="flex-1"
                 >
                   {createDemand.isPending ? "Criando..." : "Criar Demanda"}

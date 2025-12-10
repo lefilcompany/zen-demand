@@ -1,4 +1,3 @@
-import { useTeams } from "@/hooks/useTeams";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import {
@@ -9,7 +8,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, UserPlus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const roleLabels: Record<string, string> = {
   admin: "Admin",
@@ -24,8 +25,8 @@ const roleColors: Record<string, string> = {
 };
 
 export function TeamSelector() {
-  const { data: teams, isLoading } = useTeams();
-  const { selectedTeamId, setSelectedTeamId } = useSelectedTeam();
+  const navigate = useNavigate();
+  const { teams, selectedTeamId, setSelectedTeamId, isLoading, hasTeams } = useSelectedTeam();
   const { data: role } = useTeamRole(selectedTeamId);
 
   if (isLoading) {
@@ -34,12 +35,17 @@ export function TeamSelector() {
     );
   }
 
-  if (!teams || teams.length === 0) {
+  if (!hasTeams) {
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Users className="h-4 w-4" />
-        <span>Nenhuma equipe</span>
-      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => navigate("/welcome")}
+        className="gap-2"
+      >
+        <UserPlus className="h-4 w-4" />
+        Entrar em Equipe
+      </Button>
     );
   }
 
@@ -53,7 +59,7 @@ export function TeamSelector() {
           </div>
         </SelectTrigger>
         <SelectContent>
-          {teams.map((team) => (
+          {teams?.map((team) => (
             <SelectItem key={team.id} value={team.id}>
               {team.name}
             </SelectItem>

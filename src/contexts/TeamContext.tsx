@@ -1,9 +1,22 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useTeams } from "@/hooks/useTeams";
 
+interface Team {
+  id: string;
+  name: string;
+  description: string | null;
+  access_code: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface TeamContextType {
   selectedTeamId: string | null;
   setSelectedTeamId: (id: string | null) => void;
+  teams: Team[] | undefined;
+  hasTeams: boolean;
+  isLoading: boolean;
 }
 
 const TeamContext = createContext<TeamContextType | undefined>(undefined);
@@ -12,7 +25,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(() => {
     return localStorage.getItem("selectedTeamId");
   });
-  const { data: teams } = useTeams();
+  const { data: teams, isLoading } = useTeams();
 
   useEffect(() => {
     if (selectedTeamId) {
@@ -29,8 +42,20 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     }
   }, [teams, selectedTeamId]);
 
+  // Clear selection if selected team no longer exists
+  useEffect(() => {
+    if (selectedTeamId && teams && teams.length > 0) {
+      const teamExists = teams.some(team => team.id === selectedTeamId);
+      if (!teamExists) {
+        setSelectedTeamId(teams[0].id);
+      }
+    }
+  }, [teams, selectedTeamId]);
+
+  const hasTeams = Boolean(teams && teams.length > 0);
+
   return (
-    <TeamContext.Provider value={{ selectedTeamId, setSelectedTeamId }}>
+    <TeamContext.Provider value={{ selectedTeamId, setSelectedTeamId, teams, hasTeams, isLoading }}>
       {children}
     </TeamContext.Provider>
   );
