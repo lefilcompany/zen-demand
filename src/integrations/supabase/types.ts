@@ -271,6 +271,61 @@ export type Database = {
           },
         ]
       }
+      team_join_requests: {
+        Row: {
+          id: string
+          message: string | null
+          requested_at: string
+          responded_at: string | null
+          responded_by: string | null
+          status: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          message?: string | null
+          requested_at?: string
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          message?: string | null
+          requested_at?: string
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_join_requests_responded_by_fkey"
+            columns: ["responded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_join_requests_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_join_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           id: string
@@ -382,6 +437,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_team_by_access_code: {
+        Args: { code: string }
+        Returns: {
+          created_at: string
+          description: string
+          id: string
+          name: string
+        }[]
+      }
       get_user_team_ids: { Args: { _user_id: string }; Returns: string[] }
       has_role: {
         Args: {
@@ -409,7 +473,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "member"
-      team_role: "admin" | "moderator" | "requester"
+      team_role: "admin" | "moderator" | "requester" | "executor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -538,7 +602,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "member"],
-      team_role: ["admin", "moderator", "requester"],
+      team_role: ["admin", "moderator", "requester", "executor"],
     },
   },
 } as const

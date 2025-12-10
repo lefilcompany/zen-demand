@@ -12,6 +12,7 @@ import Teams from "./pages/Teams";
 import TeamDetail from "./pages/TeamDetail";
 import CreateTeam from "./pages/CreateTeam";
 import JoinTeam from "./pages/JoinTeam";
+import TeamRequests from "./pages/TeamRequests";
 import ServicesManagement from "./pages/ServicesManagement";
 import Demands from "./pages/Demands";
 import CreateDemand from "./pages/CreateDemand";
@@ -40,6 +41,7 @@ const App = () => (
               <Route path="/" element={<RequireTeam><Index /></RequireTeam>} />
               <Route path="/teams" element={<RequireTeam><Teams /></RequireTeam>} />
               <Route path="/teams/:id" element={<RequireTeam><TeamDetail /></RequireTeam>} />
+              <Route path="/teams/:id/requests" element={<RequireTeam><TeamRequests /></RequireTeam>} />
               <Route path="/teams/:id/services" element={<RequireTeam><ServicesManagement /></RequireTeam>} />
               <Route path="/demands" element={<RequireTeam><Demands /></RequireTeam>} />
               <Route path="/demands/create" element={<RequireTeam><CreateDemand /></RequireTeam>} />
