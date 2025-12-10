@@ -107,12 +107,12 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-h-[600px]">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
       {columns.map((column) => (
         <div
           key={column.key}
           className={cn(
-            "rounded-lg p-4 transition-colors",
+            "rounded-lg p-4 transition-colors flex flex-col min-h-0",
             column.color,
             draggedId && "ring-2 ring-primary/20"
           )}
@@ -128,7 +128,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
             </Badge>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3 flex-1 overflow-y-auto">
             {getDemandsForColumn(column.key).map((demand) => {
               const assignees = demand.demand_assignees || [];
               
