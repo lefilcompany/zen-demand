@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Briefcase, Users, CheckCircle2, Clock, Hourglass } from "lucide-react";
+import { Briefcase, Users, CheckCircle2, Clock, Timer } from "lucide-react";
 import { useDemands } from "@/hooks/useDemands";
 import { useTeams } from "@/hooks/useTeams";
 import { useSelectedTeam } from "@/contexts/TeamContext";
@@ -48,7 +48,7 @@ const Index = () => {
         <Card className="border-l-4 border-l-accent hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Em Andamento</CardTitle>
-            <Hourglass className="h-4 w-4 text-accent" />
+            <Timer className="h-4 w-4 text-accent" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">{inProgressDemands}</div>
