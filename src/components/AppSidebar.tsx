@@ -37,13 +37,15 @@ export function AppSidebar() {
   const isCollapsed = state === "collapsed";
   return <Sidebar collapsible="icon">
       <SidebarContent>
-        <div className="p-4">
-          <div className="items-center justify-center gap-0 flex flex-col">
-            <h2 className="text-xl font-bold text-sidebar-foreground">
-              DemandFlow
-            </h2>
+        {!isCollapsed && (
+          <div className="p-4">
+            <div className="items-center justify-center gap-0 flex flex-col">
+              <h2 className="text-xl font-bold text-sidebar-foreground">
+                DemandFlow
+              </h2>
+            </div>
           </div>
-        </div>
+        )}
 
         <SidebarGroup>
           <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
