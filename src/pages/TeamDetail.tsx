@@ -35,10 +35,13 @@ export default function TeamDetail() {
   const { data: teams, isLoading: teamsLoading } = useTeams();
   const { data: members, isLoading: membersLoading } = useTeamMembers(id || null);
   const { isAdmin } = useIsTeamAdmin(id || null);
+  const { data: role } = useTeamRole(id || null);
   const updateRole = useUpdateMemberRole();
   const removeMember = useRemoveMember();
+  const deleteTeam = useDeleteTeam();
 
   const team = teams?.find((t) => t.id === id);
+  const canManage = role === "admin" || role === "moderator";
 
   const handleCopyCode = () => {
     if (team?.access_code) {
@@ -54,6 +57,15 @@ export default function TeamDetail() {
 
   const handleRemoveMember = (memberId: string) => {
     removeMember.mutate(memberId);
+  };
+
+  const handleDeleteTeam = () => {
+    if (!id) return;
+    deleteTeam.mutate(id, {
+      onSuccess: () => {
+        navigate("/teams");
+      },
+    });
   };
 
   if (teamsLoading) {
@@ -95,6 +107,41 @@ export default function TeamDetail() {
               <p className="text-muted-foreground">{team.description}</p>
             )}
           </div>
+          {canManage && (
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => navigate(`/teams/${id}/services`)}>
+                <Settings className="mr-2 h-4 w-4" />
+                Gerenciar Serviços
+              </Button>
+              {isAdmin && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="icon">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Excluir equipe?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja excluir a equipe "{team.name}"? 
+                        Esta ação não pode ser desfeita e todos os membros serão removidos.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDeleteTeam}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {deleteTeam.isPending ? "Excluindo..." : "Excluir Equipe"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Team Info Card */}
