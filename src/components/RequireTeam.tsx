@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Users, UserPlus, Plus } from "lucide-react";
 import { TeamSelector } from "@/components/TeamSelector";
-import { useUserRole } from "@/hooks/useUserRole";
 
 interface RequireTeamProps {
   children: ReactNode;
@@ -14,16 +13,6 @@ interface RequireTeamProps {
 
 function NoTeamPrompt() {
   const navigate = useNavigate();
-  const { data: role, isLoading } = useUserRole();
-  const isAdmin = role === "admin";
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-sidebar">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-sidebar p-6">
@@ -38,18 +27,16 @@ function NoTeamPrompt() {
           </CardDescription>
         </div>
         <div className="space-y-3">
-          {isAdmin && (
-            <Button 
-              onClick={() => navigate("/teams/create")} 
-              className="w-full"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Criar Nova Equipe
-            </Button>
-          )}
+          <Button 
+            onClick={() => navigate("/teams/create")} 
+            className="w-full"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Criar Nova Equipe
+          </Button>
           <Button 
             onClick={() => navigate("/teams/join")} 
-            variant={isAdmin ? "outline" : "default"}
+            variant="outline"
             className="w-full"
           >
             <UserPlus className="mr-2 h-4 w-4" />
