@@ -91,7 +91,7 @@ export function AppSidebar() {
                       {!isCollapsed && (
                         <>
                           <span className="flex-1">Equipes</span>
-                          {pendingCount && pendingCount > 0 && isAdmin && (
+                          {typeof pendingCount === "number" && pendingCount > 0 && isAdmin && (
                             <Badge variant="destructive" className="mr-1 h-5 min-w-5 flex items-center justify-center text-xs">
                               {pendingCount}
                             </Badge>
@@ -99,7 +99,7 @@ export function AppSidebar() {
                           <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                         </>
                       )}
-                      {isCollapsed && pendingCount && pendingCount > 0 && isAdmin && (
+                      {isCollapsed && typeof pendingCount === "number" && pendingCount > 0 && isAdmin && (
                         <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0">
                           {pendingCount}
                         </Badge>
@@ -130,14 +130,12 @@ export function AppSidebar() {
                               className="hover:bg-sidebar-accent transition-colors"
                               activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                             >
-                              <span className="flex-1 flex items-center justify-between">
-                                Solicitações
-                                {pendingCount && pendingCount > 0 && (
-                                  <Badge variant="destructive" className="ml-2 h-5 min-w-5 flex items-center justify-center text-xs">
-                                    {pendingCount}
-                                  </Badge>
-                                )}
-                              </span>
+                              Solicitações
+                              {typeof pendingCount === "number" && pendingCount > 0 && (
+                                <Badge variant="destructive" className="ml-2 h-5 min-w-5 flex items-center justify-center text-xs">
+                                  {pendingCount}
+                                </Badge>
+                              )}
                             </NavLink>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
