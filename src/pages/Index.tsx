@@ -22,6 +22,19 @@ const Index = () => {
         <p className="text-muted-foreground">Visão geral do sistema de gerenciamento de demandas</p>
       </div>
 
+      {/* Banner */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary via-primary/90 to-accent p-6 md:p-8 text-primary-foreground">
+        <div className="absolute inset-0 bg-[url('/placeholder.svg')] opacity-5"></div>
+        <div className="relative z-10">
+          <h2 className="text-xl md:text-2xl font-bold mb-2">Bem-vindo ao SoMA</h2>
+          <p className="text-primary-foreground/90 text-sm md:text-base max-w-2xl">
+            Gerencie suas demandas de forma eficiente. Acompanhe o progresso das suas equipes e mantenha tudo organizado em um só lugar.
+          </p>
+        </div>
+        <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+        <div className="absolute -right-5 -top-5 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-l-4 border-l-primary hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
