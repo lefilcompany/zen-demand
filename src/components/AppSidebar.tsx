@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, Settings, LayoutGrid, Archive } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Settings, Kanban, Archive } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
@@ -10,7 +10,7 @@ const menuItems = [{
 }, {
   title: "Kanban",
   url: "/kanban",
-  icon: LayoutGrid
+  icon: Kanban
 }, {
   title: "Demandas",
   url: "/demands",
