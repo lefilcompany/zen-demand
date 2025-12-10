@@ -64,7 +64,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
@@ -86,7 +86,7 @@ export function AppSidebar() {
               >
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className="hover:bg-sidebar-accent transition-colors">
+                    <SidebarMenuButton tooltip="Equipes" className="hover:bg-sidebar-accent transition-colors">
                       <Users className="h-4 w-4" />
                       {!isCollapsed && (
                         <>
