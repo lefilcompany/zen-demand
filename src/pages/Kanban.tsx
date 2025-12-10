@@ -2,53 +2,35 @@ import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { useDemands } from "@/hooks/useDemands";
-import { useTeams } from "@/hooks/useTeams";
+import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useTeamRole } from "@/hooks/useTeamRole";
 import { Plus, LayoutGrid, List } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useState } from "react";
 
 export default function Kanban() {
   const navigate = useNavigate();
-  const [selectedTeam, setSelectedTeam] = useState<string>("all");
-  const { data: demands, isLoading } = useDemands(
-    selectedTeam !== "all" ? selectedTeam : undefined
-  );
-  const { data: teams } = useTeams();
+  const { selectedTeamId } = useSelectedTeam();
+  const { data: demands, isLoading } = useDemands(selectedTeamId || undefined);
+  const { data: role } = useTeamRole(selectedTeamId);
+
+  // Requesters can only view, not edit
+  const isReadOnly = role === "requester";
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Kanban</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Kanban</h1>
             <p className="text-muted-foreground">
-              Visualize e gerencie o progresso das demandas
+              {isReadOnly 
+                ? "Visualize o progresso das demandas" 
+                : "Visualize e gerencie o progresso das demandas"}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filtrar por equipe" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as equipes</SelectItem>
-                {teams?.map((team) => (
-                  <SelectItem key={team.id} value={team.id}>
-                    {team.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <div className="flex items-center border rounded-md">
+            <div className="flex items-center border border-border rounded-md">
               <Button
                 variant="ghost"
                 size="icon"
@@ -60,43 +42,61 @@ export default function Kanban() {
               <Button
                 variant="secondary"
                 size="icon"
-                className="rounded-l-none"
+                className="rounded-l-none bg-primary text-primary-foreground"
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
             </div>
 
-            <Button onClick={() => navigate("/demands/create")}>
-              <Plus className="mr-2 h-4 w-4" />
-              Nova Demanda
-            </Button>
+            {!isReadOnly && (
+              <Button onClick={() => navigate("/demands/create")} className="shadow-primary">
+                <Plus className="mr-2 h-4 w-4" />
+                Nova Demanda
+              </Button>
+            )}
           </div>
         </div>
 
-        {isLoading ? (
+        {!selectedTeamId ? (
+          <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
+            <LayoutGrid className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h3 className="mt-4 text-lg font-semibold text-foreground">
+              Selecione uma equipe
+            </h3>
+            <p className="text-muted-foreground mt-2">
+              Use o seletor no menu superior para escolher uma equipe
+            </p>
+          </div>
+        ) : isLoading ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Carregando demandas...</p>
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
+            <p className="text-muted-foreground mt-4">Carregando demandas...</p>
           </div>
         ) : demands && demands.length > 0 ? (
           <KanbanBoard
             demands={demands}
             onDemandClick={(id) => navigate(`/demands/${id}`)}
+            readOnly={isReadOnly}
           />
         ) : (
-          <div className="text-center py-12 border-2 border-dashed rounded-lg">
+          <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
             <LayoutGrid className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h3 className="mt-4 text-lg font-semibold">
+            <h3 className="mt-4 text-lg font-semibold text-foreground">
               Nenhuma demanda encontrada
             </h3>
             <p className="text-muted-foreground mt-2">
-              Comece criando uma nova demanda
+              {isReadOnly 
+                ? "Não há demandas nesta equipe"
+                : "Comece criando uma nova demanda"}
             </p>
-            <div className="mt-6">
-              <Button onClick={() => navigate("/demands/create")}>
-                <Plus className="mr-2 h-4 w-4" />
-                Criar Primeira Demanda
-              </Button>
-            </div>
+            {!isReadOnly && (
+              <div className="mt-6">
+                <Button onClick={() => navigate("/demands/create")}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Criar Primeira Demanda
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

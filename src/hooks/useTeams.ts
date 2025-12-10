@@ -31,6 +31,7 @@ export function useCreateTeam() {
     mutationFn: async (data: { name: string; description?: string }) => {
       // Generate random access code
       const accessCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const userId = (await supabase.auth.getUser()).data.user!.id;
 
       const { data: team, error: teamError } = await supabase
         .from("teams")
@@ -38,19 +39,20 @@ export function useCreateTeam() {
           name: data.name,
           description: data.description,
           access_code: accessCode,
-          created_by: (await supabase.auth.getUser()).data.user!.id,
+          created_by: userId,
         })
         .select()
         .single();
 
       if (teamError) throw teamError;
 
-      // Add creator as team member
+      // Add creator as team member with admin role
       const { error: memberError } = await supabase
         .from("team_members")
         .insert({
           team_id: team.id,
-          user_id: (await supabase.auth.getUser()).data.user!.id,
+          user_id: userId,
+          role: "admin" as const,
         });
 
       if (memberError) throw memberError;
@@ -77,12 +79,13 @@ export function useJoinTeam() {
 
       if (teamError) throw new Error("Código de acesso inválido");
 
-      // Add user as team member
+      // Add user as team member with requester role
       const { error: memberError } = await supabase
         .from("team_members")
         .insert({
           team_id: team.id,
           user_id: (await supabase.auth.getUser()).data.user!.id,
+          role: "requester" as const,
         });
 
       if (memberError) {
