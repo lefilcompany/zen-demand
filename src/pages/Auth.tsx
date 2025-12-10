@@ -173,6 +173,13 @@ export default function Auth() {
             </p>
           </div>
 
+          <div className="mb-6">
+            <CardTitle className="text-2xl">Bem-vindo de volta</CardTitle>
+            <CardDescription className="mt-2">
+              Faça login ou crie sua conta para acessar o sistema
+            </CardDescription>
+          </div>
+
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-8 h-12">
               <TabsTrigger value="login" className="text-base">Login</TabsTrigger>
@@ -180,18 +187,11 @@ export default function Auth() {
             </TabsList>
 
             <TabsContent value="login" className="mt-0">
-              <div className="space-y-6">
-                <div>
-                  <CardTitle className="text-2xl">Bem-vindo de volta</CardTitle>
-                  <CardDescription className="mt-2">
-                    Faça login para acessar o sistema
-                  </CardDescription>
-                </div>
-                <form onSubmit={handleLogin} className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">E-mail</Label>
-                    <Input
-                      id="login-email"
+              <form onSubmit={handleLogin} className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="login-email">E-mail</Label>
+                  <Input
+                    id="login-email"
                       type="email"
                       placeholder="seu@email.com"
                       className="h-12"
@@ -224,18 +224,10 @@ export default function Auth() {
                     {isLoading ? "Entrando..." : "Entrar"}
                   </Button>
                 </form>
-              </div>
             </TabsContent>
 
             <TabsContent value="signup" className="mt-0">
-              <div className="space-y-6">
-                <div>
-                  <CardTitle className="text-2xl">Criar conta</CardTitle>
-                  <CardDescription className="mt-2">
-                    Preencha os dados para criar sua conta
-                  </CardDescription>
-                </div>
-                <form onSubmit={handleSignup} className="space-y-5">
+              <form onSubmit={handleSignup} className="space-y-5">
                   <div className="space-y-2">
                     <Label htmlFor="signup-name">Nome completo</Label>
                     <Input
@@ -286,7 +278,6 @@ export default function Auth() {
                     {isLoading ? "Criando conta..." : "Criar conta"}
                   </Button>
                 </form>
-              </div>
             </TabsContent>
           </Tabs>
         </div>
