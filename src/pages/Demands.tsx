@@ -1,10 +1,12 @@
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { DemandCard } from "@/components/DemandCard";
 import { useDemands } from "@/hooks/useDemands";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useAuth } from "@/lib/auth";
-import { Plus, Briefcase, LayoutGrid, List } from "lucide-react";
+import { Plus, Briefcase, LayoutGrid, List, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -14,15 +16,29 @@ export default function Demands() {
   const { selectedTeamId } = useSelectedTeam();
   const { data: demands, isLoading } = useDemands(selectedTeamId || undefined);
   const { data: role } = useTeamRole(selectedTeamId);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const isReadOnly = role === "requester";
   
-  const myDemands = demands?.filter((d) => d.assigned_to === user?.id);
-  const createdByMe = demands?.filter((d) => d.created_by === user?.id);
+  // Filter demands by search query
+  const filteredDemands = useMemo(() => {
+    if (!demands) return [];
+    if (!searchQuery.trim()) return demands;
+    
+    const query = searchQuery.toLowerCase();
+    return demands.filter((d) =>
+      d.title.toLowerCase().includes(query) ||
+      d.description?.toLowerCase().includes(query) ||
+      d.priority?.toLowerCase().includes(query)
+    );
+  }, [demands, searchQuery]);
+  
+  const myDemands = filteredDemands.filter((d) => d.assigned_to === user?.id);
+  const createdByMe = filteredDemands.filter((d) => d.created_by === user?.id);
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Demandas</h1>
           <p className="text-muted-foreground">
@@ -32,6 +48,15 @@ export default function Demands() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar demandas..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 w-[200px] md:w-[250px]"
+            />
+          </div>
           <div className="flex items-center border border-border rounded-md">
             <Button
               variant="secondary"
@@ -80,15 +105,25 @@ export default function Demands() {
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
                 <p className="text-muted-foreground mt-4">Carregando demandas...</p>
               </div>
-            ) : demands && demands.length > 0 ? (
+            ) : filteredDemands.length > 0 ? (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {demands.map((demand) => (
+                {filteredDemands.map((demand) => (
                   <DemandCard
                     key={demand.id}
                     demand={demand}
                     onClick={() => navigate(`/demands/${demand.id}`)}
                   />
                 ))}
+              </div>
+            ) : searchQuery ? (
+              <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
+                <Search className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-4 text-lg font-semibold text-foreground">
+                  Nenhum resultado encontrado
+                </h3>
+                <p className="text-muted-foreground mt-2">
+                  Tente buscar por outro termo
+                </p>
               </div>
             ) : (
               <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
@@ -110,7 +145,6 @@ export default function Demands() {
               </div>
             )}
           </TabsContent>
-
           <TabsContent value="mine" className="space-y-4">
             {isLoading ? (
               <div className="text-center py-12">

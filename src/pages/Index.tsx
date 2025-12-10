@@ -3,6 +3,8 @@ import { Briefcase, Users, CheckCircle2, Clock, Timer } from "lucide-react";
 import { useDemands } from "@/hooks/useDemands";
 import { useTeams } from "@/hooks/useTeams";
 import { useSelectedTeam } from "@/contexts/TeamContext";
+import { DemandTrendChart } from "@/components/DemandTrendChart";
+import { RecentActivities } from "@/components/RecentActivities";
 
 const Index = () => {
   const { selectedTeamId } = useSelectedTeam();
@@ -98,7 +100,7 @@ const Index = () => {
 
         <Card className="bg-gradient-to-br from-primary/10 to-accent/10 border-primary/20 hover:shadow-md transition-shadow">
           <CardHeader>
-            <CardTitle>Bem-vindo ao DemandFlow</CardTitle>
+            <CardTitle>Bem-vindo ao SoMA</CardTitle>
             <CardDescription>Sistema completo de gerenciamento de demandas para equipes</CardDescription>
           </CardHeader>
           <CardContent>
@@ -109,6 +111,14 @@ const Index = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Trend Chart */}
+      {selectedTeamId && demands && demands.length > 0 && (
+        <DemandTrendChart demands={demands} />
+      )}
+
+      {/* Recent Activities */}
+      <RecentActivities />
     </div>
   );
 };
