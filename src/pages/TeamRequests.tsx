@@ -18,18 +18,18 @@ import { ptBR } from "date-fns/locale";
 const roleOptions: { value: ExtendedTeamRole; label: string; description: string }[] = [
   {
     value: "moderator",
-    label: "Moderador",
-    description: "Pode gerenciar demandas, serviços e aprovar solicitações",
+    label: "Coordenador",
+    description: "Gerencia demandas, serviços e aprova solicitações",
+  },
+  {
+    value: "executor",
+    label: "Agente",
+    description: "Visualiza, executa demandas e atualiza o Kanban",
   },
   {
     value: "requester",
     label: "Solicitante",
-    description: "Pode criar demandas e acompanhar o progresso",
-  },
-  {
-    value: "executor",
-    label: "Executor",
-    description: "Recebe demandas para executar e atualiza o status",
+    description: "Apenas cria demandas e acompanha o progresso (Kanban somente leitura)",
   },
 ];
 
