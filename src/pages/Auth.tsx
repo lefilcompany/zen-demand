@@ -21,9 +21,12 @@ export default function Auth() {
   });
 
   const [signupData, setSignupData] = useState({
-    email: "",
-    password: "",
     fullName: "",
+    email: "",
+    phone: "",
+    state: "",
+    city: "",
+    password: "",
   });
 
   if (loading) {
@@ -239,57 +242,101 @@ export default function Auth() {
             </TabsContent>
 
             <TabsContent value="signup" className="mt-0">
-              <form onSubmit={handleSignup} className="space-y-5">
+              <form onSubmit={handleSignup} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-name">Nome completo</Label>
+                  <Input
+                    id="signup-name"
+                    type="text"
+                    placeholder="Seu nome"
+                    className="h-11"
+                    value={signupData.fullName}
+                    onChange={(e) =>
+                      setSignupData({ ...signupData, fullName: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">E-mail</Label>
+                  <Input
+                    id="signup-email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    className="h-11"
+                    value={signupData.email}
+                    onChange={(e) =>
+                      setSignupData({ ...signupData, email: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-phone">Telefone</Label>
+                  <Input
+                    id="signup-phone"
+                    type="tel"
+                    placeholder="(00) 00000-0000"
+                    className="h-11"
+                    value={signupData.phone}
+                    onChange={(e) =>
+                      setSignupData({ ...signupData, phone: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-name">Nome completo</Label>
+                    <Label htmlFor="signup-state">Estado</Label>
                     <Input
-                      id="signup-name"
+                      id="signup-state"
                       type="text"
-                      placeholder="Seu nome"
-                      className="h-12"
-                      value={signupData.fullName}
+                      placeholder="UF"
+                      className="h-11"
+                      value={signupData.state}
                       onChange={(e) =>
-                        setSignupData({ ...signupData, fullName: e.target.value })
+                        setSignupData({ ...signupData, state: e.target.value })
                       }
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">E-mail</Label>
+                    <Label htmlFor="signup-city">Cidade</Label>
                     <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      className="h-12"
-                      value={signupData.email}
+                      id="signup-city"
+                      type="text"
+                      placeholder="Sua cidade"
+                      className="h-11"
+                      value={signupData.city}
                       onChange={(e) =>
-                        setSignupData({ ...signupData, email: e.target.value })
+                        setSignupData({ ...signupData, city: e.target.value })
                       }
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Senha</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="••••••••"
-                      className="h-12"
-                      value={signupData.password}
-                      onChange={(e) =>
-                        setSignupData({ ...signupData, password: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full h-12 text-base font-semibold"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Criando conta..." : "Criar conta"}
-                  </Button>
-                </form>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Senha</Label>
+                  <Input
+                    id="signup-password"
+                    type="password"
+                    placeholder="••••••••"
+                    className="h-11"
+                    value={signupData.password}
+                    onChange={(e) =>
+                      setSignupData({ ...signupData, password: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full h-12 text-base font-semibold"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Criando conta..." : "Criar conta"}
+                </Button>
+              </form>
             </TabsContent>
           </Tabs>
         </div>
