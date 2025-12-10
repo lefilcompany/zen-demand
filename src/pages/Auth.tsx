@@ -168,13 +168,6 @@ export default function Auth() {
             <img src={logoSoma} alt="SoMA" className="h-14 w-auto mb-2" />
           </div>
 
-          {/* Desktop heading */}
-          <div className="hidden lg:block mb-8">
-            <img src={logoSoma} alt="SoMA" className="h-10 w-auto mb-6" />
-            <p className="text-muted-foreground">
-              Sistema de Gerenciamento de Demandas
-            </p>
-          </div>
 
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-bold text-foreground mb-2">
