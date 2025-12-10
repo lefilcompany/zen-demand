@@ -30,7 +30,7 @@ export default function JoinTeam() {
           toast.success("Solicitação enviada!", {
             description: "Aguarde a aprovação do administrador da equipe.",
           });
-          navigate("/welcome");
+          navigate("/teams");
         },
         onError: (error: any) => {
           const msg = error.message?.toLowerCase() || "";
