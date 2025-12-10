@@ -24,13 +24,21 @@ export function useTeams() {
   });
 }
 
+export function generateAccessCode(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
 export function useCreateTeam() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { name: string; description?: string }) => {
-      // Generate random access code
-      const accessCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    mutationFn: async (data: { name: string; description?: string; accessCode?: string }) => {
+      const accessCode = data.accessCode || generateAccessCode();
       const userId = (await supabase.auth.getUser()).data.user!.id;
 
       const { data: team, error: teamError } = await supabase
