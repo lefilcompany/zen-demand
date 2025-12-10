@@ -38,7 +38,7 @@ export function AppSidebar() {
   return <Sidebar collapsible="icon">
       <SidebarContent>
         <div className="p-4">
-          {!isCollapsed ? <div className="flex items-center gap-2">
+          {!isCollapsed ? <div className="items-center justify-center gap-0 flex flex-col">
               
               <h2 className="text-xl font-bold text-sidebar-foreground">
                 DemandFlow
