@@ -30,7 +30,7 @@ export function LogoutDialog({ isCollapsed }: LogoutDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <SidebarMenuButton className="w-full hover:bg-sidebar-accent transition-colors">
+        <SidebarMenuButton tooltip="Sair" className="w-full hover:bg-sidebar-accent transition-colors">
           <LogOut className="h-4 w-4" />
           {!isCollapsed && <span>Sair</span>}
         </SidebarMenuButton>
