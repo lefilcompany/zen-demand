@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
-export type TeamRole = "admin" | "moderator" | "requester";
+export type TeamRole = "admin" | "moderator" | "requester" | "executor";
 
 export function useTeamRole(teamId: string | null) {
   const { user } = useAuth();
@@ -40,6 +40,15 @@ export function useIsTeamAdminOrModerator(teamId: string | null) {
     canManage: role === "admin" || role === "moderator", 
     isAdmin: role === "admin",
     isModerator: role === "moderator",
+    isLoading 
+  };
+}
+
+export function useCanInteractKanban(teamId: string | null) {
+  const { data: role, isLoading } = useTeamRole(teamId);
+  // Apenas requester é read-only no Kanban
+  return { 
+    canInteract: role === "admin" || role === "moderator" || role === "executor",
     isLoading 
   };
 }

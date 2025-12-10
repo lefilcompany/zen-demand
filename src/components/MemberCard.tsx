@@ -19,7 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2, Shield, ShieldCheck, User } from "lucide-react";
+import { Trash2, Shield, ShieldCheck, User, Zap } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { TeamMember } from "@/hooks/useTeamMembers";
@@ -42,9 +42,14 @@ const roleConfig: Record<TeamRole, { label: string; color: string; icon: React.R
     icon: <ShieldCheck className="h-3 w-3" />,
   },
   moderator: {
-    label: "Moderador",
-    color: "bg-secondary text-secondary-foreground",
+    label: "Coordenador",
+    color: "bg-blue-600 text-white",
     icon: <Shield className="h-3 w-3" />,
+  },
+  executor: {
+    label: "Agente",
+    color: "bg-emerald-600 text-white",
+    icon: <Zap className="h-3 w-3" />,
   },
   requester: {
     label: "Solicitante",
@@ -119,7 +124,13 @@ export function MemberCard({
               <SelectItem value="moderator">
                 <div className="flex items-center gap-2">
                   <Shield className="h-4 w-4" />
-                  Moderador
+                  Coordenador
+                </div>
+              </SelectItem>
+              <SelectItem value="executor">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4" />
+                  Agente
                 </div>
               </SelectItem>
               <SelectItem value="requester">
