@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
+import logoSoma from "@/assets/logo-soma.png";
 
 export default function Auth() {
   const { user, loading, signIn, signUp } = useAuth();
@@ -66,7 +67,7 @@ export default function Auth() {
     try {
       await signIn(loginData.email, loginData.password);
       toast.success("Login realizado com sucesso!", {
-        description: "Bem-vindo de volta ao DemandFlow.",
+        description: "Bem-vindo de volta ao SoMA!",
       });
     } catch (error: any) {
       toast.error("Erro ao fazer login", {
@@ -98,7 +99,7 @@ export default function Auth() {
     try {
       await signUp(signupData.email, signupData.password, signupData.fullName);
       toast.success("Conta criada com sucesso!", {
-        description: "Bem-vindo ao DemandFlow!",
+        description: "Bem-vindo ao SoMA!",
       });
     } catch (error: any) {
       toast.error("Erro ao criar conta", {
@@ -112,8 +113,8 @@ export default function Auth() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-sidebar p-6">
       <div className="w-full max-w-md bg-background rounded-2xl shadow-xl p-8">
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-primary">DemandFlow</h1>
+        <div className="mb-8 text-center flex flex-col items-center">
+          <img src={logoSoma} alt="SoMA" className="h-16 w-auto mb-2" />
           <p className="mt-2 text-muted-foreground">
             Sistema de Gerenciamento de Demandas
           </p>
