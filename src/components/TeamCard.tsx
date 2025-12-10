@@ -1,6 +1,7 @@
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Calendar } from "lucide-react";
+import { Users, Calendar, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -15,24 +16,31 @@ interface TeamCardProps {
       full_name: string;
     };
   };
-  onClick?: () => void;
 }
 
-export function TeamCard({ team, onClick }: TeamCardProps) {
+export function TeamCard({ team }: TeamCardProps) {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(`/teams/${team.id}`);
+  };
   return (
     <Card
-      className="hover:shadow-lg transition-all cursor-pointer"
-      onClick={onClick}
+      className="hover:shadow-lg transition-all cursor-pointer group"
+      onClick={handleClick}
     >
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="space-y-1 flex-1">
-            <CardTitle className="text-xl">{team.name}</CardTitle>
+            <CardTitle className="text-xl flex items-center gap-2">
+              {team.name}
+              <ChevronRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </CardTitle>
             {team.description && (
               <CardDescription>{team.description}</CardDescription>
             )}
           </div>
-          <Badge variant="secondary" className="ml-2">
+          <Badge variant="secondary" className="ml-2 font-mono">
             {team.access_code}
           </Badge>
         </div>
