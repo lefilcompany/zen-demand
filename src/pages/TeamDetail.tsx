@@ -4,14 +4,25 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Users, Calendar, Key, Copy, Check } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, Users, Calendar, Key, Copy, Check, Settings, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { useTeams } from "@/hooks/useTeams";
+import { useTeams, useDeleteTeam } from "@/hooks/useTeams";
 import { useTeamMembers, useUpdateMemberRole, useRemoveMember } from "@/hooks/useTeamMembers";
-import { useIsTeamAdmin } from "@/hooks/useTeamRole";
+import { useIsTeamAdmin, useTeamRole } from "@/hooks/useTeamRole";
 import { MemberCard } from "@/components/MemberCard";
 import { TeamRole } from "@/hooks/useTeamRole";
 
