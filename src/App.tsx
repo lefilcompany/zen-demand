@@ -21,6 +21,7 @@ import DemandDetail from "./pages/DemandDetail";
 import Kanban from "./pages/Kanban";
 import ArchivedDemands from "./pages/ArchivedDemands";
 import ClientDashboard from "./pages/ClientDashboard";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ const App = () => (
                 <Route path="/kanban" element={<Kanban />} />
                 <Route path="/archived" element={<ArchivedDemands />} />
                 <Route path="/client-dashboard" element={<ClientDashboard />} />
+                <Route path="/profile" element={<Profile />} />
               </Route>
               
               {/* Catch-all */}
