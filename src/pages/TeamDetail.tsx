@@ -23,7 +23,9 @@ import { useAuth } from "@/lib/auth";
 import { useTeams, useDeleteTeam } from "@/hooks/useTeams";
 import { useTeamMembers, useUpdateMemberRole, useRemoveMember } from "@/hooks/useTeamMembers";
 import { useIsTeamAdmin, useTeamRole } from "@/hooks/useTeamRole";
+import { useTeamScope } from "@/hooks/useTeamScope";
 import { MemberCard } from "@/components/MemberCard";
+import { TeamScopeConfig } from "@/components/TeamScopeConfig";
 import { TeamRole } from "@/hooks/useTeamRole";
 
 export default function TeamDetail() {
@@ -36,6 +38,7 @@ export default function TeamDetail() {
   const { data: members, isLoading: membersLoading } = useTeamMembers(id || null);
   const { isAdmin } = useIsTeamAdmin(id || null);
   const { data: role } = useTeamRole(id || null);
+  const { data: scope } = useTeamScope(id || undefined);
   const updateRole = useUpdateMemberRole();
   const removeMember = useRemoveMember();
   const deleteTeam = useDeleteTeam();
@@ -226,6 +229,11 @@ export default function TeamDetail() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Scope Configuration - Only for Admins */}
+      {isAdmin && id && (
+        <TeamScopeConfig teamId={id} currentScope={scope || null} />
+      )}
 
       {/* Members List */}
       <Card>

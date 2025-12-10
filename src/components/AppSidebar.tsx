@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, Settings, Kanban, Archive, ChevronRight } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Settings, Kanban, Archive, ChevronRight, User } from "lucide-react";
 import logoSoma from "@/assets/logo-soma-dark.png";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -6,7 +6,7 @@ import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGrou
 import { LogoutDialog } from "@/components/LogoutDialog";
 import { Badge } from "@/components/ui/badge";
 import { usePendingRequestsCount } from "@/hooks/useTeamJoinRequests";
-import { useIsTeamAdmin } from "@/hooks/useTeamRole";
+import { useIsTeamAdmin, useTeamRole } from "@/hooks/useTeamRole";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
@@ -41,7 +41,10 @@ export function AppSidebar() {
   
   const { selectedTeamId } = useSelectedTeam();
   const { isAdmin } = useIsTeamAdmin(selectedTeamId);
+  const { data: role } = useTeamRole(selectedTeamId);
   const { data: pendingCount } = usePendingRequestsCount(isAdmin ? selectedTeamId : null);
+  
+  const isRequester = role === "requester";
 
   // Keep teams expanded if on teams routes
   const isOnTeamsRoute = location.pathname.startsWith("/teams");
@@ -63,6 +66,22 @@ export function AppSidebar() {
           <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              {/* Meu Painel - Only for Requesters */}
+              {isRequester && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Meu Painel">
+                    <NavLink
+                      to="/client-dashboard"
+                      className="hover:bg-sidebar-accent transition-colors"
+                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                    >
+                      <User className="h-4 w-4" />
+                      {!isCollapsed && <span>Meu Painel</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.title}>

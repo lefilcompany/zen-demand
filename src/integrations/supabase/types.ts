@@ -368,29 +368,44 @@ export type Database = {
       teams: {
         Row: {
           access_code: string
+          active: boolean | null
+          contract_end_date: string | null
+          contract_start_date: string | null
           created_at: string
           created_by: string
           description: string | null
           id: string
+          monthly_demand_limit: number | null
           name: string
+          scope_description: string | null
           updated_at: string
         }
         Insert: {
           access_code: string
+          active?: boolean | null
+          contract_end_date?: string | null
+          contract_start_date?: string | null
           created_at?: string
           created_by: string
           description?: string | null
           id?: string
+          monthly_demand_limit?: number | null
           name: string
+          scope_description?: string | null
           updated_at?: string
         }
         Update: {
           access_code?: string
+          active?: boolean | null
+          contract_end_date?: string | null
+          contract_start_date?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
           id?: string
+          monthly_demand_limit?: number | null
           name?: string
+          scope_description?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -437,6 +452,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_create_demand: { Args: { _team_id: string }; Returns: boolean }
+      get_monthly_demand_count: {
+        Args: { _month: number; _team_id: string; _year: number }
+        Returns: number
+      }
       get_team_by_access_code: {
         Args: { code: string }
         Returns: {

@@ -4,11 +4,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCreateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useCanCreateDemand, useMonthlyDemandCount, useTeamScope } from "@/hooks/useTeamScope";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
-import { ArrowLeft } from "lucide-react";
+import { ScopeProgressBar } from "@/components/ScopeProgressBar";
+import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { addDays, format } from "date-fns";
@@ -20,8 +23,12 @@ export default function CreateDemand() {
   const createDemand = useCreateDemand();
   const { selectedTeamId, teams } = useSelectedTeam();
   const { data: statuses } = useDemandStatuses();
+  const { data: canCreate } = useCanCreateDemand();
+  const { data: monthlyCount } = useMonthlyDemandCount();
+  const { data: scope } = useTeamScope();
 
   const selectedTeam = teams?.find(t => t.id === selectedTeamId);
+  const limit = scope?.monthly_demand_limit || 0;
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -102,6 +109,25 @@ export default function CreateDemand() {
           Criar demanda para a equipe <span className="font-medium text-primary">{selectedTeam?.name}</span>
         </p>
       </div>
+
+      {/* Limit Warning */}
+      {limit > 0 && (
+        <Card>
+          <CardContent className="pt-6">
+            <ScopeProgressBar used={monthlyCount || 0} limit={limit} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Limit Reached Alert */}
+      {canCreate === false && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            O limite mensal de demandas foi atingido. Entre em contato com o administrador da equipe para mais informações.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Card>
         <CardHeader>
@@ -208,7 +234,7 @@ export default function CreateDemand() {
               </Button>
               <Button
                 type="submit"
-                disabled={createDemand.isPending || !title.trim() || !statusId}
+                disabled={createDemand.isPending || !title.trim() || !statusId || canCreate === false}
                 className="flex-1"
               >
                 {createDemand.isPending ? "Criando..." : "Criar Demanda"}
