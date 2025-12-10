@@ -38,14 +38,11 @@ export function AppSidebar() {
   return <Sidebar collapsible="icon">
       <SidebarContent>
         <div className="p-4">
-          {!isCollapsed ? <div className="items-center justify-center gap-0 flex flex-col">
-              
-              <h2 className="text-xl font-bold text-sidebar-foreground">
-                DemandFlow
-              </h2>
-            </div> : <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center mx-auto">
-              <span className="text-primary-foreground font-bold text-sm">DF</span>
-            </div>}
+          <div className="items-center justify-center gap-0 flex flex-col">
+            <h2 className="text-xl font-bold text-sidebar-foreground">
+              DemandFlow
+            </h2>
+          </div>
         </div>
 
         <SidebarGroup>
