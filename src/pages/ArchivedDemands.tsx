@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 export default function ArchivedDemands() {
   const navigate = useNavigate();
@@ -17,11 +18,23 @@ export default function ArchivedDemands() {
 
   const handleRestore = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    updateDemand.mutate({
-      id,
-      archived: false,
-      archived_at: null,
-    });
+    updateDemand.mutate(
+      {
+        id,
+        archived: false,
+        archived_at: null,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Demanda restaurada com sucesso!");
+        },
+        onError: (error: any) => {
+          toast.error("Erro ao restaurar demanda", {
+            description: error.message || "Tente novamente.",
+          });
+        },
+      }
+    );
   };
 
   return (

@@ -7,6 +7,7 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
+import { toast } from "sonner";
 
 interface Assignee {
   user_id: string;
@@ -76,10 +77,22 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
       return;
     }
 
-    updateDemand.mutate({
-      id: draggedId,
-      status_id: targetStatus.id,
-    });
+    updateDemand.mutate(
+      {
+        id: draggedId,
+        status_id: targetStatus.id,
+      },
+      {
+        onSuccess: () => {
+          toast.success(`Status alterado para "${columnKey}"`);
+        },
+        onError: (error: any) => {
+          toast.error("Erro ao alterar status", {
+            description: error.message || "Tente novamente.",
+          });
+        },
+      }
+    );
 
     setDraggedId(null);
   };

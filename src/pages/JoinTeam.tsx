@@ -7,6 +7,7 @@ import { useJoinTeam } from "@/hooks/useTeams";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function JoinTeam() {
   const navigate = useNavigate();
@@ -19,7 +20,22 @@ export default function JoinTeam() {
 
     joinTeam.mutate(accessCode.trim().toUpperCase(), {
       onSuccess: () => {
+        toast.success("Você entrou na equipe!");
         navigate("/teams");
+      },
+      onError: (error: any) => {
+        const message = error.message?.toLowerCase() || "";
+        if (message.includes("not found") || message.includes("no rows")) {
+          toast.error("Código inválido", {
+            description: "Nenhuma equipe encontrada com este código.",
+          });
+        } else if (message.includes("already a member") || message.includes("duplicate")) {
+          toast.warning("Você já faz parte desta equipe.");
+        } else {
+          toast.error("Erro ao entrar na equipe", {
+            description: error.message || "Verifique o código e tente novamente.",
+          });
+        }
       },
     });
   };
