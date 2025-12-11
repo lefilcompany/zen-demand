@@ -21,6 +21,23 @@ export default function CreateTeam() {
   const [copied, setCopied] = useState(false);
   const [showCode, setShowCode] = useState(false);
 
+  const getCodeStrength = (code: string) => {
+    if (code.length < 6) return { level: 0, label: "Muito fraco", color: "bg-destructive" };
+    
+    const hasLetters = /[A-Z]/.test(code);
+    const hasNumbers = /[0-9]/.test(code);
+    const isMixed = hasLetters && hasNumbers;
+    
+    if (code.length >= 10 && isMixed) return { level: 4, label: "Excelente", color: "bg-emerald-500" };
+    if (code.length >= 8 && isMixed) return { level: 3, label: "Forte", color: "bg-emerald-400" };
+    if (code.length >= 6 && isMixed) return { level: 2, label: "Bom", color: "bg-amber-500" };
+    if (code.length >= 6) return { level: 1, label: "Fraco", color: "bg-amber-400" };
+    
+    return { level: 0, label: "Muito fraco", color: "bg-destructive" };
+  };
+
+  const codeStrength = getCodeStrength(accessCode);
+
   const handleGenerateCode = () => {
     setAccessCode(generateAccessCode());
     toast.info("Novo código gerado");
@@ -253,6 +270,28 @@ export default function CreateTeam() {
                   )}
                 </Button>
               </div>
+
+              {/* Strength Indicator */}
+              {accessCode.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Força do código</span>
+                    <span className={`font-medium ${codeStrength.level >= 3 ? 'text-emerald-500' : codeStrength.level >= 2 ? 'text-amber-500' : 'text-destructive'}`}>
+                      {codeStrength.label}
+                    </span>
+                  </div>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4].map((level) => (
+                      <div
+                        key={level}
+                        className={`h-1.5 flex-1 rounded-full transition-colors ${
+                          level <= codeStrength.level ? codeStrength.color : 'bg-muted'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {accessCode.length > 0 && accessCode.length < 6 && (
                 <p className="text-sm text-destructive">
