@@ -62,10 +62,10 @@ export default function DemandDetail() {
   const canEdit = role === "admin" || role === "moderator" || demand?.created_by === user?.id;
   const isCreator = demand?.created_by === user?.id;
 
-  // Check if demand is delivered and user is creator
+  // Check if demand is delivered - any team member can request adjustment
   const deliveredStatusId = statuses?.find((s) => s.name === "Entregue")?.id;
   const adjustmentStatusId = statuses?.find((s) => s.name === "Em Ajuste")?.id;
-  const canRequestAdjustment = isCreator && demand?.status_id === deliveredStatusId;
+  const canRequestAdjustment = demand?.status_id === deliveredStatusId;
 
   const filteredInteractions = useMemo(() => {
     if (!interactions) return [];
