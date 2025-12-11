@@ -9,6 +9,7 @@ import { useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { toast } from "sonner";
 import { useAdjustmentCounts } from "@/hooks/useAdjustmentCount";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Assignee {
   user_id: string;
@@ -25,6 +26,7 @@ interface Demand {
   due_date?: string | null;
   priority?: string | null;
   status_id: string;
+  created_by?: string;
   demand_statuses?: { name: string; color: string } | null;
   assigned_profile?: { full_name: string; avatar_url?: string | null } | null;
   teams?: { name: string } | null;
@@ -69,7 +71,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
     e.dataTransfer.dropEffect = "move";
   };
 
-  const handleDrop = (e: React.DragEvent, columnKey: string) => {
+  const handleDrop = async (e: React.DragEvent, columnKey: string) => {
     e.preventDefault();
     if (!draggedId || !statuses) return;
 
@@ -77,10 +79,15 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
     if (!targetStatus) return;
 
     const demand = demands.find((d) => d.id === draggedId);
-    if (demand?.demand_statuses?.name === columnKey) {
+    const previousStatusName = demand?.demand_statuses?.name;
+    
+    if (previousStatusName === columnKey) {
       setDraggedId(null);
       return;
     }
+
+    // Check if this is an adjustment completion (Em Ajuste -> Entregue)
+    const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && columnKey === "Entregue";
 
     updateDemand.mutate(
       {
@@ -88,8 +95,31 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
         status_id: targetStatus.id,
       },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
           toast.success(`Status alterado para "${columnKey}"`);
+          
+          // Send email notification when adjustment is completed
+          if (isAdjustmentCompletion && demand) {
+            try {
+              await supabase.functions.invoke("send-email", {
+                body: {
+                  to: demand.created_by,
+                  subject: `Ajuste concluído: ${demand.title}`,
+                  template: "notification",
+                  templateData: {
+                    title: "Ajuste Concluído",
+                    message: `O ajuste solicitado na demanda "${demand.title}" foi finalizado com sucesso. A demanda voltou para o status Entregue.`,
+                    actionUrl: `${window.location.origin}/demands/${demand.id}`,
+                    actionText: "Ver Demanda",
+                    type: "success",
+                  },
+                },
+              });
+              console.log("Email de ajuste concluído enviado");
+            } catch (emailError) {
+              console.error("Erro ao enviar email de ajuste concluído:", emailError);
+            }
+          }
         },
         onError: (error: any) => {
           toast.error("Erro ao alterar status", {
