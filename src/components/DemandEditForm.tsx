@@ -5,6 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDemandStatuses, useUpdateDemand } from "@/hooks/useDemands";
 import { ServiceSelector } from "@/components/ServiceSelector";
+import { AssigneeSelector } from "@/components/AssigneeSelector";
+import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
 import { addDays, format } from "date-fns";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -26,7 +28,9 @@ interface DemandEditFormProps {
 
 export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormProps) {
   const updateDemand = useUpdateDemand();
+  const setAssignees = useSetAssignees();
   const { data: statuses } = useDemandStatuses();
+  const { data: currentAssignees } = useDemandAssignees(demand.id);
 
   const [title, setTitle] = useState(demand.title);
   const [description, setDescription] = useState(demand.description || "");
@@ -36,6 +40,13 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
     demand.due_date ? format(new Date(demand.due_date), "yyyy-MM-dd") : ""
   );
   const [serviceId, setServiceId] = useState(demand.service_id || "");
+  const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (currentAssignees) {
+      setSelectedAssignees(currentAssignees.map(a => a.user_id));
+    }
+  }, [currentAssignees]);
 
   const handleServiceChange = (newServiceId: string, estimatedDays?: number) => {
     setServiceId(newServiceId);
@@ -45,12 +56,12 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !statusId) return;
 
-    updateDemand.mutate(
-      {
+    try {
+      await updateDemand.mutateAsync({
         id: demand.id,
         title: title.trim(),
         description: description.trim() || null,
@@ -58,19 +69,20 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
         priority,
         due_date: dueDate || null,
         service_id: serviceId && serviceId !== "none" ? serviceId : null,
-      },
-      {
-        onSuccess: () => {
-          toast.success("Demanda atualizada com sucesso!");
-          onSuccess();
-        },
-        onError: (error: any) => {
-          toast.error("Erro ao atualizar demanda", {
-            description: error.message || "Tente novamente.",
-          });
-        },
-      }
-    );
+      });
+
+      await setAssignees.mutateAsync({
+        demandId: demand.id,
+        userIds: selectedAssignees,
+      });
+
+      toast.success("Demanda atualizada com sucesso!");
+      onSuccess();
+    } catch (error: any) {
+      toast.error("Erro ao atualizar demanda", {
+        description: error.message || "Tente novamente.",
+      });
+    }
   };
 
   return (
@@ -139,6 +151,15 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
       </div>
 
       <div className="space-y-2">
+        <Label>Responsáveis</Label>
+        <AssigneeSelector
+          teamId={demand.team_id}
+          selectedUserIds={selectedAssignees}
+          onChange={setSelectedAssignees}
+        />
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="edit-dueDate">Data de Vencimento</Label>
         <Input
           id="edit-dueDate"
@@ -159,10 +180,10 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
         </Button>
         <Button
           type="submit"
-          disabled={updateDemand.isPending || !title.trim() || !statusId}
+          disabled={updateDemand.isPending || setAssignees.isPending || !title.trim() || !statusId}
           className="flex-1"
         >
-          {updateDemand.isPending ? "Salvando..." : "Salvar Alterações"}
+          {updateDemand.isPending || setAssignees.isPending ? "Salvando..." : "Salvar Alterações"}
         </Button>
       </div>
     </form>
