@@ -4,11 +4,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateTeam, generateAccessCode } from "@/hooks/useTeams";
 import { useSelectedTeam } from "@/contexts/TeamContext";
-import { ArrowLeft, RefreshCw, Copy, Check, Eye, EyeOff, Users, Loader2, Shield, Sparkles } from "lucide-react";
+import { ArrowLeft, RefreshCw, Copy, Check, Eye, EyeOff, Users, Loader2, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
-import logoSoma from "@/assets/logo-soma.png";
+import logoSomaDark from "@/assets/logo-soma-dark.png";
+import authBackground from "@/assets/auth-background.jpg";
 
 export default function CreateTeam() {
   const navigate = useNavigate();
@@ -79,40 +80,78 @@ export default function CreateTeam() {
   const isFormValid = name.trim().length > 0 && accessCode.length === 10;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sidebar via-sidebar to-background flex items-center justify-center p-4 md:p-6">
-      <div className="w-full max-w-xl">
-        {/* Main Card */}
-        <div className="bg-background/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-border/50 overflow-hidden">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 md:p-8 relative overflow-hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_-20%,hsl(var(--primary)/0.15),transparent_50%)]" />
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/welcome")}
-                className="absolute -top-2 -left-2 text-muted-foreground hover:text-foreground"
-              >
-                <ArrowLeft className="mr-1 h-4 w-4" />
-                Voltar
-              </Button>
-              
-              <div className="text-center pt-6">
-                <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-primary/10 text-primary mb-4">
-                  <Users className="h-8 w-8" />
-                </div>
-                <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                  Criar Nova Equipe
-                </h1>
-                <p className="text-muted-foreground">
-                  Configure sua equipe e convide membros
-                </p>
-              </div>
+    <div className="flex flex-col lg:flex-row min-h-screen">
+      {/* Mobile/Tablet Header with Image */}
+      <div 
+        className="lg:hidden relative h-40 sm:h-48 overflow-hidden"
+        style={{
+          backgroundImage: `url(${authBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/70 via-primary/50 to-background" />
+        <div className="relative z-10 flex flex-col items-center justify-center h-full text-white px-6 text-center">
+          <img src={logoSomaDark} alt="SoMA" className="h-8 sm:h-10 w-auto mb-2" />
+          <h2 className="text-lg font-semibold">Criar Nova Equipe</h2>
+        </div>
+      </div>
+
+      {/* Desktop Left side - Image */}
+      <div 
+        className="hidden lg:flex lg:w-1/2 xl:w-3/5 relative overflow-hidden"
+        style={{
+          backgroundImage: `url(${authBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary/50 to-transparent" />
+        <div className="relative z-10 flex flex-col justify-between p-12 text-white">
+          <div>
+            <img src={logoSomaDark} alt="SoMA" className="h-12 w-auto" />
+          </div>
+          <div className="max-w-md">
+            <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-white/10 backdrop-blur mb-6">
+              <Users className="h-8 w-8" />
             </div>
+            <h1 className="text-4xl xl:text-5xl font-bold mb-6 leading-tight">
+              Crie sua Equipe
+            </h1>
+            <p className="text-lg xl:text-xl text-white/90 leading-relaxed">
+              Configure sua equipe, defina um código de acesso e convide seus membros para colaborar.
+            </p>
+          </div>
+          <div className="text-white/60 text-sm">
+            Você será o administrador da equipe com controle total
+          </div>
+        </div>
+      </div>
+
+      {/* Form Section */}
+      <div className="flex-1 lg:w-1/2 xl:w-2/5 flex items-start lg:items-center justify-center p-6 sm:p-8 md:p-12 bg-background overflow-y-auto">
+        <div className="w-full max-w-md">
+          {/* Back button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/welcome")}
+            className="mb-6 -ml-2 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="mr-1 h-4 w-4" />
+            Voltar
+          </Button>
+
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+              Nova Equipe
+            </h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              Preencha os dados para criar sua equipe
+            </p>
           </div>
 
-          {/* Content */}
-          <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Team Name */}
             <div className="space-y-2">
               <Label htmlFor="name" className="text-base font-medium">
@@ -136,7 +175,7 @@ export default function CreateTeam() {
               </Label>
               <Textarea
                 id="description"
-                placeholder="Descreva o propósito e objetivos da equipe..."
+                placeholder="Descreva o propósito da equipe..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
@@ -153,7 +192,7 @@ export default function CreateTeam() {
                 </Label>
               </div>
               <p className="text-sm text-muted-foreground -mt-1">
-                Membros usarão este código para solicitar entrada na equipe
+                Membros usarão este código para entrar
               </p>
               
               <div className="flex gap-2">
@@ -164,7 +203,7 @@ export default function CreateTeam() {
                     value={accessCode}
                     onChange={handleAccessCodeChange}
                     placeholder="ABC1234XYZ"
-                    className="h-12 text-lg font-mono tracking-[0.2em] uppercase text-center bg-muted/50 border-2 focus:border-primary transition-colors pr-12"
+                    className="h-12 text-base font-mono tracking-[0.15em] uppercase text-center bg-muted/50 border-2 focus:border-primary transition-colors pr-14"
                     maxLength={10}
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium">
@@ -177,7 +216,7 @@ export default function CreateTeam() {
                   size="icon"
                   onClick={() => setShowCode(!showCode)}
                   className="h-12 w-12 flex-shrink-0"
-                  title={showCode ? "Ocultar código" : "Mostrar código"}
+                  title={showCode ? "Ocultar" : "Mostrar"}
                 >
                   {showCode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
@@ -216,23 +255,14 @@ export default function CreateTeam() {
               </div>
 
               {accessCode.length > 0 && accessCode.length < 10 && (
-                <p className="text-sm text-destructive flex items-center gap-1">
+                <p className="text-sm text-destructive">
                   O código deve ter 10 caracteres
                 </p>
               )}
             </div>
 
-            {/* Info Box */}
-            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-start gap-3">
-              <Sparkles className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-muted-foreground">
-                <p className="font-medium text-foreground mb-1">Você será o Administrador</p>
-                <p>Como criador da equipe, você terá controle total para gerenciar membros, serviços e configurações.</p>
-              </div>
-            </div>
-
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-3 pt-4">
               <Button
                 type="button"
                 variant="outline"
@@ -261,11 +291,6 @@ export default function CreateTeam() {
             </div>
           </form>
         </div>
-
-        {/* Footer hint */}
-        <p className="text-center text-muted-foreground/60 text-sm mt-6">
-          Após criar a equipe, compartilhe o código de acesso com os membros
-        </p>
       </div>
     </div>
   );

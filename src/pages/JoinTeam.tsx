@@ -8,7 +8,8 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import logoSoma from "@/assets/logo-soma.png";
+import logoSomaDark from "@/assets/logo-soma-dark.png";
+import authBackground from "@/assets/auth-background.jpg";
 
 export default function JoinTeam() {
   const navigate = useNavigate();
@@ -75,61 +76,99 @@ export default function JoinTeam() {
     return (
       <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${config.className}`}>
         <Icon className="h-5 w-5 flex-shrink-0" />
-        <span className="font-medium">{config.text}</span>
+        <span className="font-medium text-sm">{config.text}</span>
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sidebar via-sidebar to-background flex items-center justify-center p-4 md:p-6">
-      <div className="w-full max-w-xl">
-        {/* Main Card */}
-        <div className="bg-background/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-border/50 overflow-hidden">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 md:p-8 relative overflow-hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_-20%,hsl(var(--primary)/0.15),transparent_50%)]" />
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/welcome")}
-                className="absolute -top-2 -left-2 text-muted-foreground hover:text-foreground"
-              >
-                <ArrowLeft className="mr-1 h-4 w-4" />
-                Voltar
-              </Button>
-              
-              <div className="text-center pt-6">
-                <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-primary/10 text-primary mb-4">
-                  <KeyRound className="h-8 w-8" />
-                </div>
-                <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                  Entrar em Equipe
-                </h1>
-                <p className="text-muted-foreground">
-                  Digite o código de acesso para encontrar a equipe
-                </p>
-              </div>
+    <div className="flex flex-col lg:flex-row min-h-screen">
+      {/* Mobile/Tablet Header with Image */}
+      <div 
+        className="lg:hidden relative h-40 sm:h-48 overflow-hidden"
+        style={{
+          backgroundImage: `url(${authBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/70 via-primary/50 to-background" />
+        <div className="relative z-10 flex flex-col items-center justify-center h-full text-white px-6 text-center">
+          <img src={logoSomaDark} alt="SoMA" className="h-8 sm:h-10 w-auto mb-2" />
+          <h2 className="text-lg font-semibold">Entrar em Equipe</h2>
+        </div>
+      </div>
+
+      {/* Desktop Left side - Image */}
+      <div 
+        className="hidden lg:flex lg:w-1/2 xl:w-3/5 relative overflow-hidden"
+        style={{
+          backgroundImage: `url(${authBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary/50 to-transparent" />
+        <div className="relative z-10 flex flex-col justify-between p-12 text-white">
+          <div>
+            <img src={logoSomaDark} alt="SoMA" className="h-12 w-auto" />
+          </div>
+          <div className="max-w-md">
+            <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-white/10 backdrop-blur mb-6">
+              <KeyRound className="h-8 w-8" />
             </div>
+            <h1 className="text-4xl xl:text-5xl font-bold mb-6 leading-tight">
+              Entrar em uma Equipe
+            </h1>
+            <p className="text-lg xl:text-xl text-white/90 leading-relaxed">
+              Use o código de acesso fornecido pelo administrador para solicitar entrada na equipe.
+            </p>
+          </div>
+          <div className="text-white/60 text-sm">
+            O código de acesso tem 10 caracteres alfanuméricos
+          </div>
+        </div>
+      </div>
+
+      {/* Form Section */}
+      <div className="flex-1 lg:w-1/2 xl:w-2/5 flex items-start lg:items-center justify-center p-6 sm:p-8 md:p-12 bg-background overflow-y-auto">
+        <div className="w-full max-w-md">
+          {/* Back button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/welcome")}
+            className="mb-6 -ml-2 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="mr-1 h-4 w-4" />
+            Voltar
+          </Button>
+
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+              Código de Acesso
+            </h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              Digite o código para encontrar a equipe
+            </p>
           </div>
 
-          {/* Content */}
-          <div className="p-6 md:p-8 space-y-6">
+          <div className="space-y-5">
             {/* Access Code Input */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label htmlFor="accessCode" className="text-base font-medium">
-                Código de Acesso
+                Código
               </Label>
               <div className="relative">
                 <Input
                   id="accessCode"
-                  placeholder="Digite o código de 10 caracteres"
+                  placeholder="ABC1234XYZ"
                   value={accessCode}
                   onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
                   maxLength={10}
-                  className="h-14 text-lg font-mono tracking-[0.3em] uppercase text-center bg-muted/50 border-2 focus:border-primary transition-colors"
+                  className="h-14 text-xl font-mono tracking-[0.3em] uppercase text-center bg-muted/50 border-2 focus:border-primary transition-colors"
                 />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium">
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium bg-background px-1">
                   {accessCode.length}/10
                 </div>
               </div>
@@ -137,7 +176,7 @@ export default function JoinTeam() {
 
             {/* Loading State */}
             {isLoadingTeam && accessCode.length === 10 && (
-              <div className="flex items-center justify-center gap-3 py-6 text-muted-foreground">
+              <div className="flex items-center justify-center gap-3 py-4 text-muted-foreground">
                 <Loader2 className="h-5 w-5 animate-spin" />
                 <span>Buscando equipe...</span>
               </div>
@@ -147,26 +186,26 @@ export default function JoinTeam() {
             {!isLoadingTeam && accessCode.length === 10 && !teamPreview && (
               <div className="flex items-center gap-3 p-4 rounded-xl bg-destructive/10 text-destructive border border-destructive/20">
                 <XCircle className="h-5 w-5 flex-shrink-0" />
-                <span className="font-medium">Nenhuma equipe encontrada com este código</span>
+                <span className="font-medium">Nenhuma equipe encontrada</span>
               </div>
             )}
 
             {/* Team Preview */}
             {teamPreview && (
-              <div className="animate-in slide-in-from-bottom-4 duration-300">
-                <div className="bg-gradient-to-br from-primary/5 to-transparent border-2 border-primary/20 rounded-2xl p-5">
+              <div className="animate-in slide-in-from-bottom-4 duration-300 space-y-4">
+                <div className="bg-gradient-to-r from-primary/10 to-primary/5 border-2 border-primary/20 rounded-2xl p-5">
                   <div className="flex items-start gap-4">
-                    <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Users className="h-7 w-7 text-primary" />
+                    <div className="h-12 w-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0">
+                      <Users className="h-6 w-6" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <Sparkles className="h-4 w-4 text-primary" />
+                        <Sparkles className="h-3 w-3 text-primary" />
                         <span className="text-xs font-medium text-primary uppercase tracking-wide">
                           Equipe Encontrada
                         </span>
                       </div>
-                      <h3 className="text-xl font-bold text-foreground truncate">
+                      <h3 className="text-lg font-bold text-foreground truncate">
                         {teamPreview.name}
                       </h3>
                       {teamPreview.description && (
@@ -181,74 +220,69 @@ export default function JoinTeam() {
                     <div className="mt-4">{getStatusBadge()}</div>
                   )}
                 </div>
-              </div>
-            )}
 
-            {/* Request Form */}
-            {teamPreview && !existingRequest && (
-              <form onSubmit={handleSubmit} className="space-y-5 animate-in slide-in-from-bottom-4 duration-300 delay-100">
-                <div className="space-y-2">
-                  <Label htmlFor="message" className="text-base font-medium">
-                    Mensagem para o administrador
-                    <span className="text-muted-foreground font-normal ml-1">(opcional)</span>
-                  </Label>
-                  <Textarea
-                    id="message"
-                    placeholder="Apresente-se ou explique por que deseja entrar na equipe..."
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    rows={3}
-                    className="resize-none bg-muted/50 border-2 focus:border-primary transition-colors"
-                  />
-                </div>
+                {/* Request Form */}
+                {!existingRequest && (
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="message" className="text-base font-medium">
+                        Mensagem
+                        <span className="text-muted-foreground font-normal ml-1">(opcional)</span>
+                      </Label>
+                      <Textarea
+                        id="message"
+                        placeholder="Apresente-se ou explique por que deseja entrar..."
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        rows={3}
+                        className="resize-none bg-muted/50 border-2 focus:border-primary transition-colors"
+                      />
+                    </div>
 
-                <div className="flex gap-3 pt-2">
+                    <div className="flex gap-3 pt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => navigate("/welcome")}
+                        className="flex-1 h-12"
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={createRequest.isPending}
+                        className="flex-1 h-12 gap-2"
+                      >
+                        {createRequest.isPending ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Enviando...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4" />
+                            Solicitar Entrada
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                )}
+
+                {/* Back Button for existing request */}
+                {existingRequest && (
                   <Button
-                    type="button"
                     variant="outline"
-                    onClick={() => navigate("/welcome")}
-                    className="flex-1 h-12"
+                    onClick={() => navigate("/")}
+                    className="w-full h-12"
                   >
-                    Cancelar
+                    Voltar ao Dashboard
                   </Button>
-                  <Button
-                    type="submit"
-                    disabled={createRequest.isPending}
-                    className="flex-1 h-12 gap-2"
-                  >
-                    {createRequest.isPending ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Enviando...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4" />
-                        Solicitar Entrada
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            )}
-
-            {/* Back Button for existing request */}
-            {teamPreview && existingRequest && (
-              <Button
-                variant="outline"
-                onClick={() => navigate("/")}
-                className="w-full h-12"
-              >
-                Voltar ao Dashboard
-              </Button>
+                )}
+              </div>
             )}
           </div>
         </div>
-
-        {/* Footer hint */}
-        <p className="text-center text-muted-foreground/60 text-sm mt-6">
-          O código de acesso é fornecido pelo administrador da equipe
-        </p>
       </div>
     </div>
   );
