@@ -45,7 +45,7 @@ export function ProtectedLayout() {
 
   return (
     <SidebarProvider defaultOpen>
-      <div className="flex h-screen w-full bg-sidebar p-2 overflow-hidden">
+      <div className="flex h-screen w-full bg-sidebar p-3 overflow-hidden">
         <AppSidebar />
         <main className="flex-1 flex flex-col bg-background rounded-xl shadow-xl min-h-0">
           <header className="flex h-16 shrink-0 items-center justify-between gap-4 bg-background px-6 border-b border-border rounded-t-xl">
