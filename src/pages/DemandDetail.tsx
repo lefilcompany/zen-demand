@@ -90,6 +90,29 @@ export default function DemandDetail() {
             }));
             
             await supabase.from("notifications").insert(notifications);
+            
+            // Send email notifications to assignees
+            for (const assignee of assignees) {
+              try {
+                await supabase.functions.invoke("send-email", {
+                  body: {
+                    to: assignee.user_id, // Edge function will lookup user email by UUID
+                    subject: `Ajuste solicitado: ${demand?.title}`,
+                    template: "notification",
+                    templateData: {
+                      title: "Ajuste Solicitado",
+                      message: `O cliente solicitou um ajuste na demanda "${demand?.title}".\n\nMotivo: ${adjustmentReason.trim()}`,
+                      actionUrl: `${window.location.origin}/demands/${id}`,
+                      actionText: "Ver Demanda",
+                      userName: assignee.profile?.full_name || "Responsável",
+                      type: "warning" as const,
+                    },
+                  },
+                });
+              } catch (emailError) {
+                console.error("Error sending adjustment email:", emailError);
+              }
+            }
           }
           
           setAdjustmentReason("");
