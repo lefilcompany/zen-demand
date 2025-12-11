@@ -492,7 +492,7 @@ export default function DemandDetail() {
                     </div>
                   </div>
                 );
-              }))
+              })
             ) : (
               <p className="text-center text-muted-foreground py-6 md:py-8 text-sm">
                 Nenhuma interação ainda. Seja o primeiro a comentar!
