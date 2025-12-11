@@ -14,8 +14,7 @@ export interface DemandTableRow {
   description?: string | null;
   priority?: string | null;
   due_date?: string | null;
-  status?: {
-    id: string;
+  demand_statuses?: {
     name: string;
     color: string;
   } | null;
@@ -99,7 +98,7 @@ function AssigneeCell({ row }: { row: { original: DemandTableRow } }) {
 
 // Cell component for status
 function StatusCell({ row }: { row: { original: DemandTableRow } }) {
-  const status = row.original.status;
+  const status = row.original.demand_statuses;
   if (!status) {
     return <span className="text-muted-foreground text-sm">—</span>;
   }
