@@ -449,38 +449,50 @@ export default function DemandDetail() {
 
           <div className="space-y-3 md:space-y-4 pt-4">
             {interactions && interactions.length > 0 ? (
-              interactions.map((interaction) => (
-                <div
-                  key={interaction.id}
-                  className="flex gap-2 md:gap-3 p-3 md:p-4 rounded-lg bg-muted/50"
-                >
-                  <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
-                    <AvatarImage src={interaction.profiles?.avatar_url} />
-                    <AvatarFallback className="text-xs">
-                      {interaction.profiles?.full_name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 space-y-1 min-w-0">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                      <span className="font-semibold text-xs md:text-sm truncate">
-                        {interaction.profiles?.full_name}
-                      </span>
-                      <span className="text-[10px] md:text-xs text-muted-foreground">
-                        {format(
-                          new Date(interaction.created_at),
-                          "dd/MM/yyyy 'às' HH:mm",
-                          { locale: ptBR }
+              interactions.map((interaction) => {
+                const isAdjustmentRequest = interaction.interaction_type === 'adjustment_request';
+                return (
+                  <div
+                    key={interaction.id}
+                    className={`flex gap-2 md:gap-3 p-3 md:p-4 rounded-lg ${
+                      isAdjustmentRequest 
+                        ? 'bg-purple-500/10 border border-purple-500/30' 
+                        : 'bg-muted/50'
+                    }`}
+                  >
+                    <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
+                      <AvatarImage src={interaction.profiles?.avatar_url} />
+                      <AvatarFallback className="text-xs">
+                        {interaction.profiles?.full_name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 space-y-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                        <span className="font-semibold text-xs md:text-sm truncate">
+                          {interaction.profiles?.full_name}
+                        </span>
+                        {isAdjustmentRequest && (
+                          <span className="text-[10px] md:text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-500/20 px-1.5 py-0.5 rounded">
+                            Solicitação de Ajuste
+                          </span>
                         )}
-                      </span>
+                        <span className="text-[10px] md:text-xs text-muted-foreground">
+                          {format(
+                            new Date(interaction.created_at),
+                            "dd/MM/yyyy 'às' HH:mm",
+                            { locale: ptBR }
+                          )}
+                        </span>
+                      </div>
+                      {interaction.content && (
+                        <p className="text-xs md:text-sm whitespace-pre-wrap break-words">
+                          {interaction.content}
+                        </p>
+                      )}
                     </div>
-                    {interaction.content && (
-                      <p className="text-xs md:text-sm whitespace-pre-wrap break-words">
-                        {interaction.content}
-                      </p>
-                    )}
                   </div>
-                </div>
-              ))
+                );
+              }))
             ) : (
               <p className="text-center text-muted-foreground py-6 md:py-8 text-sm">
                 Nenhuma interação ainda. Seja o primeiro a comentar!
