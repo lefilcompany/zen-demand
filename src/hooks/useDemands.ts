@@ -94,14 +94,14 @@ export function useUpdateDemand() {
     }: {
       id: string;
       title?: string;
-      description?: string;
+      description?: string | null;
       status_id?: string;
       priority?: string;
       assigned_to?: string;
-      due_date?: string;
+      due_date?: string | null;
       archived?: boolean;
       archived_at?: string | null;
-      service_id?: string;
+      service_id?: string | null;
     }) => {
       const { data: demand, error } = await supabase
         .from("demands")
