@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, User, Wrench } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, User, Wrench, Settings2 } from "lucide-react";
 import logoSoma from "@/assets/logo-soma-dark.png";
 import logoSomaIcon from "@/assets/logo-soma-icon.png";
 import { NavLink } from "@/components/NavLink";
@@ -57,6 +57,7 @@ export function AppSidebar() {
   } = usePendingRequestsCount(isAdmin ? selectedTeamId : null);
   const adjustmentCount = useAdjustmentCount(selectedTeamId);
   const isRequester = role === "requester";
+  const isAdminOrModerator = role === "admin" || role === "moderator";
 
   // Keep teams expanded if on teams routes
   const isOnTeamsRoute = location.pathname.startsWith("/teams");
@@ -130,6 +131,11 @@ export function AppSidebar() {
                                 {pendingCount}
                               </Badge>}
                           </NavLink>}
+                        
+                        {isAdminOrModerator && selectedTeamId && <NavLink to={`/teams/${selectedTeamId}/services`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                            <Settings2 className="h-4 w-4" />
+                            Serviços
+                          </NavLink>}
                       </div>
                     </PopoverContent>
                   </Popover>
@@ -163,6 +169,15 @@ export function AppSidebar() {
                                 {typeof pendingCount === "number" && pendingCount > 0 && <Badge variant="destructive" className="ml-2 h-5 min-w-5 flex items-center justify-center text-xs">
                                     {pendingCount}
                                   </Badge>}
+                              </NavLink>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>}
+                        
+                        {isAdminOrModerator && selectedTeamId && <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild>
+                              <NavLink to={`/teams/${selectedTeamId}/services`} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                                <Settings2 className="h-4 w-4 mr-2" />
+                                Serviços
                               </NavLink>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>}
