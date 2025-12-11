@@ -21,14 +21,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useDemands, useDemandInteractions, useCreateInteraction, useUpdateDemand } from "@/hooks/useDemands";
+import { useDemands, useDemandInteractions, useCreateInteraction, useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useAuth } from "@/lib/auth";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { DemandEditForm } from "@/components/DemandEditForm";
-import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil } from "lucide-react";
+import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -42,6 +42,7 @@ export default function DemandDetail() {
   const { data: demands } = useDemands();
   const { data: interactions } = useDemandInteractions(id!);
   const { data: assignees } = useDemandAssignees(id || null);
+  const { data: statuses } = useDemandStatuses();
   const createInteraction = useCreateInteraction();
   const updateDemand = useUpdateDemand();
   const setAssignees = useSetAssignees();
@@ -54,6 +55,34 @@ export default function DemandDetail() {
   const { data: role } = useTeamRole(demand?.team_id || null);
   const canManageAssignees = role === "admin" || role === "moderator";
   const canEdit = role === "admin" || role === "moderator" || demand?.created_by === user?.id;
+  const isCreator = demand?.created_by === user?.id;
+
+  // Check if demand is delivered and user is creator
+  const deliveredStatusId = statuses?.find((s) => s.name === "Entregue")?.id;
+  const adjustmentStatusId = statuses?.find((s) => s.name === "Em Ajuste")?.id;
+  const canRequestAdjustment = isCreator && demand?.status_id === deliveredStatusId;
+
+  const handleRequestAdjustment = () => {
+    if (!id || !adjustmentStatusId) return;
+    updateDemand.mutate(
+      { id, status_id: adjustmentStatusId },
+      {
+        onSuccess: () => {
+          toast.success("Ajuste solicitado com sucesso!");
+          createInteraction.mutate({
+            demand_id: id,
+            interaction_type: "adjustment_request",
+            content: "Solicitou ajuste na demanda",
+          });
+        },
+        onError: (error: any) => {
+          toast.error("Erro ao solicitar ajuste", {
+            description: error.message || "Tente novamente.",
+          });
+        },
+      }
+    );
+  };
 
   const handleArchive = () => {
     if (!id) return;
@@ -178,6 +207,34 @@ export default function DemandDetail() {
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              {canRequestAdjustment && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full sm:w-auto border-purple-500/30 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950"
+                    >
+                      <Wrench className="mr-2 h-4 w-4" />
+                      Solicitar Ajuste
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="max-w-[90vw] sm:max-w-lg">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Solicitar ajuste?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja solicitar um ajuste nesta demanda? Ela voltará para a equipe para correção.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                      <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleRequestAdjustment} className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700">
+                        Solicitar Ajuste
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
               {canEdit && (
                 <Button
                   variant="outline"
