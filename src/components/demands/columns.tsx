@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useNavigate } from "react-router-dom";
 
 // Define the demand type based on what useDemands returns
 export interface DemandTableRow {
@@ -46,16 +45,12 @@ const priorityConfig: Record<string, { label: string; className: string }> = {
   },
 };
 
-// Cell component for clickable title
+// Cell component for title (no longer clickable, row handles click)
 function TitleCell({ row }: { row: { original: DemandTableRow } }) {
-  const navigate = useNavigate();
   return (
-    <button
-      onClick={() => navigate(`/demands/${row.original.id}`)}
-      className="text-left font-medium text-foreground hover:text-primary hover:underline transition-colors"
-    >
+    <span className="font-medium text-foreground">
       {row.original.title}
-    </button>
+    </span>
   );
 }
 
