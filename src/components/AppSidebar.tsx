@@ -1,5 +1,6 @@
 import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, User } from "lucide-react";
 import logoSoma from "@/assets/logo-soma-dark.png";
+import logoSomaIcon from "@/assets/logo-soma-icon.png";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton, useSidebar } from "@/components/ui/sidebar";
@@ -52,7 +53,7 @@ export function AppSidebar() {
       <SidebarContent>
         <div className="p-4 flex items-center justify-center">
           {isCollapsed ? (
-            <span className="text-primary font-bold text-2xl">+</span>
+            <img src={logoSomaIcon} alt="SoMA" className="h-8 w-8" />
           ) : (
             <img src={logoSoma} alt="SoMA" className="h-10 w-auto" />
           )}
