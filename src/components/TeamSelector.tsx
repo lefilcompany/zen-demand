@@ -20,10 +20,10 @@ const roleLabels: Record<string, string> = {
 };
 
 const roleColors: Record<string, string> = {
-  admin: "bg-primary text-primary-foreground",
-  moderator: "bg-secondary text-secondary-foreground",
-  requester: "bg-muted text-muted-foreground",
-  executor: "bg-accent text-accent-foreground",
+  admin: "bg-primary/20 border border-primary/30 text-foreground",
+  moderator: "bg-blue-500/20 border border-blue-500/30 text-foreground",
+  requester: "bg-emerald-500/20 border border-emerald-500/30 text-foreground",
+  executor: "bg-amber-500/20 border border-amber-500/30 text-foreground",
 };
 
 export function TeamSelector() {
