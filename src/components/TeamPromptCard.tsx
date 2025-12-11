@@ -1,6 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Users, Plus, ArrowRight } from "lucide-react";
 
 interface TeamPromptCardProps {
@@ -10,63 +8,45 @@ interface TeamPromptCardProps {
 export function TeamPromptCard({ variant }: TeamPromptCardProps) {
   const navigate = useNavigate();
 
-  if (variant === "create") {
-    return (
-      <Card 
-        className="hover:shadow-lg transition-all cursor-pointer group border-border" 
-        onClick={() => navigate("/teams/create")}
-      >
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-              <Plus className="h-6 w-6" />
-            </div>
-            <div>
-              <CardTitle>Criar Nova Equipe</CardTitle>
-              <CardDescription>
-                Crie sua equipe e convide membros
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Crie uma equipe, defina serviços e gerencie membros. Você será o administrador da equipe.
-          </p>
-          <Button variant="link" className="p-0 mt-2 group-hover:text-primary">
-            Criar equipe <ArrowRight className="ml-1 h-4 w-4" />
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
+  const config = {
+    create: {
+      icon: Plus,
+      title: "Criar Nova Equipe",
+      description: "Crie sua equipe e gerencie demandas. Você será o administrador.",
+      path: "/teams/create",
+      iconBg: "bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground",
+      cardBg: "from-primary/5 to-transparent border-primary/20 hover:border-primary/50 hover:shadow-primary/10",
+    },
+    join: {
+      icon: Users,
+      title: "Entrar em Equipe",
+      description: "Use um código de acesso para solicitar entrada em uma equipe.",
+      path: "/teams/join",
+      iconBg: "bg-secondary text-secondary-foreground group-hover:bg-primary group-hover:text-primary-foreground",
+      cardBg: "from-secondary/10 to-transparent border-border hover:border-primary/30",
+    },
+  };
+
+  const { icon: Icon, title, description, path, iconBg, cardBg } = config[variant];
 
   return (
-    <Card 
-      className="hover:shadow-lg transition-all cursor-pointer group border-border" 
-      onClick={() => navigate("/teams/join")}
+    <button
+      onClick={() => navigate(path)}
+      className={`group relative bg-gradient-to-br ${cardBg} border-2 rounded-2xl p-6 text-left transition-all duration-300 hover:shadow-lg hover:-translate-y-1 w-full`}
     >
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-lg bg-secondary text-secondary-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-            <Users className="h-6 w-6" />
-          </div>
-          <div>
-            <CardTitle>Entrar em uma Equipe</CardTitle>
-            <CardDescription>
-              Use um código de acesso
-            </CardDescription>
-          </div>
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
+      <div className="relative">
+        <div className={`inline-flex items-center justify-center h-12 w-12 rounded-xl ${iconBg} mb-4 transition-colors duration-300`}>
+          <Icon className="h-6 w-6" />
         </div>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          Entre em uma equipe existente usando o código de acesso fornecido pelo administrador.
+        <h3 className="text-lg font-semibold text-foreground mb-1 flex items-center gap-2">
+          {title}
+          <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+        </h3>
+        <p className="text-muted-foreground text-sm leading-relaxed">
+          {description}
         </p>
-        <Button variant="link" className="p-0 mt-2 group-hover:text-primary">
-          Entrar em equipe <ArrowRight className="ml-1 h-4 w-4" />
-        </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </button>
   );
 }
