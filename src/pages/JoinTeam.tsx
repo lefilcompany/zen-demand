@@ -125,7 +125,7 @@ export default function JoinTeam() {
             </p>
           </div>
           <div className="text-white/60 text-sm">
-            O código de acesso tem 10 caracteres alfanuméricos
+            O código de acesso tem entre 6 e 10 caracteres
           </div>
         </div>
       </div>
@@ -162,20 +162,20 @@ export default function JoinTeam() {
               <div className="relative">
                 <Input
                   id="accessCode"
-                  placeholder="ABC1234XYZ"
+                  placeholder="ABC123"
                   value={accessCode}
-                  onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+                  onChange={(e) => setAccessCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10))}
                   maxLength={10}
                   className="h-14 text-xl font-mono tracking-[0.3em] uppercase text-center bg-muted/50 border-2 focus:border-primary transition-colors"
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium bg-background px-1">
-                  {accessCode.length}/10
+                  {accessCode.length}/6-10
                 </div>
               </div>
             </div>
 
             {/* Loading State */}
-            {isLoadingTeam && accessCode.length === 10 && (
+            {isLoadingTeam && accessCode.length >= 6 && (
               <div className="flex items-center justify-center gap-3 py-4 text-muted-foreground">
                 <Loader2 className="h-5 w-5 animate-spin" />
                 <span>Buscando equipe...</span>
@@ -183,7 +183,7 @@ export default function JoinTeam() {
             )}
 
             {/* Not Found State */}
-            {!isLoadingTeam && accessCode.length === 10 && !teamPreview && (
+            {!isLoadingTeam && accessCode.length >= 6 && !teamPreview && (
               <div className="flex items-center gap-3 p-4 rounded-xl bg-destructive/10 text-destructive border border-destructive/20">
                 <XCircle className="h-5 w-5 flex-shrink-0" />
                 <span className="font-medium">Nenhuma equipe encontrada</span>

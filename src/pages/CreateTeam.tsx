@@ -41,8 +41,8 @@ export default function CreateTeam() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    if (accessCode.length < 10) {
-      toast.error("Código de acesso deve ter 10 caracteres");
+    if (accessCode.length < 6) {
+      toast.error("Código de acesso deve ter no mínimo 6 caracteres");
       return;
     }
 
@@ -77,7 +77,7 @@ export default function CreateTeam() {
     );
   };
 
-  const isFormValid = name.trim().length > 0 && accessCode.length === 10;
+  const isFormValid = name.trim().length > 0 && accessCode.length >= 6 && accessCode.length <= 10;
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen">
@@ -123,7 +123,7 @@ export default function CreateTeam() {
             </p>
           </div>
           <div className="text-white/60 text-sm">
-            Você será o administrador da equipe com controle total
+            O código de acesso deve ter entre 6 e 10 caracteres
           </div>
         </div>
       </div>
@@ -254,9 +254,9 @@ export default function CreateTeam() {
                 </Button>
               </div>
 
-              {accessCode.length > 0 && accessCode.length < 10 && (
+              {accessCode.length > 0 && accessCode.length < 6 && (
                 <p className="text-sm text-destructive">
-                  O código deve ter 10 caracteres
+                  O código deve ter no mínimo 6 caracteres
                 </p>
               )}
             </div>
