@@ -89,7 +89,13 @@ export default function Demands() {
     }
 
     if (viewMode === "table") {
-      return <DataTable columns={demandColumns} data={demandList as unknown as DemandTableRow[]} />;
+      return (
+        <DataTable
+          columns={demandColumns}
+          data={demandList as unknown as DemandTableRow[]}
+          onRowClick={(row) => navigate(`/demands/${row.id}`)}
+        />
+      );
     }
 
     return (
