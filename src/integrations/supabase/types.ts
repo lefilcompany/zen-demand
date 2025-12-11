@@ -50,6 +50,54 @@ export type Database = {
           },
         ]
       }
+      demand_attachments: {
+        Row: {
+          created_at: string
+          demand_id: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          demand_id: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          demand_id?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_attachments_demand_id_fkey"
+            columns: ["demand_id"]
+            isOneToOne: false
+            referencedRelation: "demands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demand_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demand_interactions: {
         Row: {
           content: string | null
@@ -118,6 +166,105 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      demand_subtasks: {
+        Row: {
+          completed: boolean
+          created_at: string
+          demand_id: string
+          id: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          demand_id: string
+          id?: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          demand_id?: string
+          id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_subtasks_demand_id_fkey"
+            columns: ["demand_id"]
+            isOneToOne: false
+            referencedRelation: "demands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      demand_templates: {
+        Row: {
+          created_at: string
+          created_by: string
+          description_template: string | null
+          id: string
+          name: string
+          priority: string | null
+          service_id: string | null
+          team_id: string
+          title_template: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description_template?: string | null
+          id?: string
+          name: string
+          priority?: string | null
+          service_id?: string | null
+          team_id: string
+          title_template?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description_template?: string | null
+          id?: string
+          name?: string
+          priority?: string | null
+          service_id?: string | null
+          team_id?: string
+          title_template?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demand_templates_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demand_templates_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       demands: {
         Row: {

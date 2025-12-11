@@ -7,6 +7,8 @@ import { TeamProvider } from "@/contexts/TeamContext";
 import { RequireTeam } from "@/components/RequireTeam";
 import { ProtectedLayout } from "@/components/ProtectedLayout";
 import { Toaster } from "@/components/ui/sonner";
+import { CommandMenu } from "@/components/CommandMenu";
+import { KeyboardShortcutsProvider } from "@/components/KeyboardShortcuts";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Welcome from "./pages/Welcome";
@@ -22,6 +24,7 @@ import DemandDetail from "./pages/DemandDetail";
 import Kanban from "./pages/Kanban";
 import ArchivedDemands from "./pages/ArchivedDemands";
 import ClientDashboard from "./pages/ClientDashboard";
+import Reports from "./pages/Reports";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -35,34 +38,38 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <TeamProvider>
-              <Toaster position="top-right" richColors />
-              <Routes>
-                {/* Public routes */}
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/welcome" element={<Welcome />} />
-                <Route path="/teams/create" element={<CreateTeam />} />
-                <Route path="/teams/join" element={<JoinTeam />} />
-                
-                {/* Protected routes - require team selection, shared layout */}
-                <Route element={<RequireTeam><ProtectedLayout /></RequireTeam>}>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/teams" element={<Teams />} />
-                  <Route path="/teams/:id" element={<TeamDetail />} />
-                  <Route path="/teams/:id/requests" element={<TeamRequests />} />
-                  <Route path="/teams/:id/services" element={<ServicesManagement />} />
-                  <Route path="/demands" element={<Demands />} />
-                  <Route path="/demands/create" element={<CreateDemand />} />
-                  <Route path="/demands/:id" element={<DemandDetail />} />
-                  <Route path="/kanban" element={<Kanban />} />
-                  <Route path="/archived" element={<ArchivedDemands />} />
-                  <Route path="/client-dashboard" element={<ClientDashboard />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/settings" element={<Settings />} />
-                </Route>
-                
-                {/* Catch-all */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <KeyboardShortcutsProvider>
+                <Toaster position="top-right" richColors />
+                <CommandMenu />
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/welcome" element={<Welcome />} />
+                  <Route path="/teams/create" element={<CreateTeam />} />
+                  <Route path="/teams/join" element={<JoinTeam />} />
+                  
+                  {/* Protected routes - require team selection, shared layout */}
+                  <Route element={<RequireTeam><ProtectedLayout /></RequireTeam>}>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/teams" element={<Teams />} />
+                    <Route path="/teams/:id" element={<TeamDetail />} />
+                    <Route path="/teams/:id/requests" element={<TeamRequests />} />
+                    <Route path="/teams/:id/services" element={<ServicesManagement />} />
+                    <Route path="/demands" element={<Demands />} />
+                    <Route path="/demands/create" element={<CreateDemand />} />
+                    <Route path="/demands/:id" element={<DemandDetail />} />
+                    <Route path="/kanban" element={<Kanban />} />
+                    <Route path="/archived" element={<ArchivedDemands />} />
+                    <Route path="/client-dashboard" element={<ClientDashboard />} />
+                    <Route path="/reports" element={<Reports />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/settings" element={<Settings />} />
+                  </Route>
+                  
+                  {/* Catch-all */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </KeyboardShortcutsProvider>
             </TeamProvider>
           </AuthProvider>
         </BrowserRouter>
