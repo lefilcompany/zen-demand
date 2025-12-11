@@ -8,6 +8,7 @@ import { ArrowLeft, Users, Clock, CheckCircle, XCircle, Loader2 } from "lucide-r
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function JoinTeam() {
   const navigate = useNavigate();
@@ -25,19 +26,21 @@ export default function JoinTeam() {
     createRequest.mutate(
       { teamId: teamPreview.id, message: message.trim() || undefined },
       {
-        onSuccess: () => {
-          toast.success("Solicitação enviada!", {
-            description: "Aguarde a aprovação do administrador da equipe.",
+        onSuccess: async () => {
+          toast.success("Solicitação enviada com sucesso!", {
+            description: "Aguarde a aprovação do administrador da equipe. Você será notificado quando sua solicitação for analisada.",
           });
-          navigate("/teams");
+          // Logout silencioso e redirecionar para login
+          await supabase.auth.signOut();
+          navigate("/auth");
         },
         onError: (error: any) => {
           const msg = error.message?.toLowerCase() || "";
           if (msg.includes("duplicate") || msg.includes("unique")) {
-            toast.warning("Você já solicitou entrada nesta equipe.");
+            toast.warning("Você já possui uma solicitação pendente para esta equipe.");
           } else {
             toast.error("Erro ao enviar solicitação", {
-              description: error.message || "Tente novamente.",
+              description: error.message || "Ocorreu um erro inesperado. Tente novamente.",
             });
           }
         },
@@ -95,7 +98,7 @@ export default function JoinTeam() {
           <CardHeader>
             <CardTitle>Código de Acesso</CardTitle>
             <CardDescription>
-              Digite o código de 6 caracteres fornecido pelo administrador da equipe
+              Digite o código de 10 caracteres fornecido pelo administrador da equipe
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -103,25 +106,25 @@ export default function JoinTeam() {
               <Label htmlFor="accessCode">Código de Acesso *</Label>
               <Input
                 id="accessCode"
-                placeholder="Ex: ABC123"
+                placeholder="Ex: ABC1234XYZ"
                 value={accessCode}
                 onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
-                maxLength={6}
+                maxLength={10}
                 className="uppercase font-mono text-lg tracking-wider"
               />
               <p className="text-xs text-muted-foreground">
-                O código deve ter 6 caracteres
+                O código deve ter 10 caracteres
               </p>
             </div>
 
-            {isLoadingTeam && accessCode.length === 6 && (
+            {isLoadingTeam && accessCode.length === 10 && (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span>Buscando equipe...</span>
               </div>
             )}
 
-            {!isLoadingTeam && accessCode.length === 6 && !teamPreview && (
+            {!isLoadingTeam && accessCode.length === 10 && !teamPreview && (
               <div className="flex items-center gap-2 text-destructive">
                 <XCircle className="h-4 w-4" />
                 <span>Nenhuma equipe encontrada com este código</span>
