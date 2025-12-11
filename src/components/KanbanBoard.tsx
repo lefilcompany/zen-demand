@@ -45,6 +45,7 @@ const priorityColors: Record<string, string> = {
 const columns = [
   { key: "A Iniciar", label: "A Iniciar", color: "bg-muted" },
   { key: "Fazendo", label: "Fazendo", color: "bg-blue-500/10" },
+  { key: "Em Ajuste", label: "Em Ajuste", color: "bg-purple-500/10" },
   { key: "Entregue", label: "Entregue", color: "bg-emerald-500/10" },
 ];
 
@@ -107,7 +108,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 h-full">
       {columns.map((column) => (
         <div
           key={column.key}
