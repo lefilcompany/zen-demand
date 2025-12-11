@@ -1,11 +1,21 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, GripVertical, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Calendar, Clock, GripVertical, RefreshCw, Wrench } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
+import { useUpdateDemand, useDemandStatuses, useCreateInteraction } from "@/hooks/useDemands";
+import { useDemandAssignees } from "@/hooks/useDemandAssignees";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { toast } from "sonner";
 import { useAdjustmentCounts } from "@/hooks/useAdjustmentCount";
@@ -54,11 +64,19 @@ const columns = [
 
 export function KanbanBoard({ demands, onDemandClick, readOnly = false }: KanbanBoardProps) {
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
+  const [adjustmentDemandId, setAdjustmentDemandId] = useState<string | null>(null);
+  const [adjustmentReason, setAdjustmentReason] = useState("");
   const { data: statuses } = useDemandStatuses();
   const updateDemand = useUpdateDemand();
+  const createInteraction = useCreateInteraction();
   
   const demandIds = useMemo(() => demands.map(d => d.id), [demands]);
   const { data: adjustmentCounts } = useAdjustmentCounts(demandIds);
+  
+  const adjustmentDemand = demands.find(d => d.id === adjustmentDemandId);
+  const { data: adjustmentAssignees } = useDemandAssignees(adjustmentDemandId);
+  const adjustmentStatusId = statuses?.find((s) => s.name === "Em Ajuste")?.id;
 
   const handleDragStart = (e: React.DragEvent, demandId: string) => {
     if (readOnly) return;
@@ -139,6 +157,76 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
   const isOverdue = (dueDate: string | null | undefined) => {
     if (!dueDate) return false;
     return new Date(dueDate) < new Date();
+  };
+
+  const handleOpenAdjustmentDialog = (e: React.MouseEvent, demandId: string) => {
+    e.stopPropagation();
+    setAdjustmentDemandId(demandId);
+    setAdjustmentReason("");
+    setAdjustmentDialogOpen(true);
+  };
+
+  const handleRequestAdjustment = async () => {
+    if (!adjustmentDemandId || !adjustmentStatusId || !adjustmentReason.trim()) return;
+    
+    updateDemand.mutate(
+      { id: adjustmentDemandId, status_id: adjustmentStatusId },
+      {
+        onSuccess: async () => {
+          toast.success("Ajuste solicitado com sucesso!");
+          createInteraction.mutate({
+            demand_id: adjustmentDemandId,
+            interaction_type: "adjustment_request",
+            content: `Solicitou ajuste: ${adjustmentReason.trim()}`,
+          });
+          
+          // Notify all assignees about the adjustment request
+          if (adjustmentAssignees && adjustmentAssignees.length > 0) {
+            const notifications = adjustmentAssignees.map((assignee) => ({
+              user_id: assignee.user_id,
+              title: "Ajuste solicitado",
+              message: `Foi solicitado ajuste na demanda "${adjustmentDemand?.title}": ${adjustmentReason.trim().substring(0, 100)}${adjustmentReason.length > 100 ? '...' : ''}`,
+              type: "warning",
+              link: `/demands/${adjustmentDemandId}`,
+            }));
+            
+            await supabase.from("notifications").insert(notifications);
+            
+            // Send email notifications to assignees
+            for (const assignee of adjustmentAssignees) {
+              try {
+                await supabase.functions.invoke("send-email", {
+                  body: {
+                    to: assignee.user_id,
+                    subject: `Ajuste solicitado: ${adjustmentDemand?.title}`,
+                    template: "notification",
+                    templateData: {
+                      title: "Ajuste Solicitado",
+                      message: `Foi solicitado um ajuste na demanda "${adjustmentDemand?.title}".\n\nMotivo: ${adjustmentReason.trim()}`,
+                      actionUrl: `${window.location.origin}/demands/${adjustmentDemandId}`,
+                      actionText: "Ver Demanda",
+                      userName: assignee.profile?.full_name || "Responsável",
+                      type: "warning" as const,
+                    },
+                  },
+                });
+              } catch (emailError) {
+                console.error("Error sending adjustment email:", emailError);
+              }
+            }
+          }
+          
+          setAdjustmentReason("");
+          setAdjustmentDialogOpen(false);
+          setAdjustmentDemandId(null);
+        },
+        onError: (error: any) => {
+          toast.error("Erro ao solicitar ajuste", {
+            description: error.message || "Tente novamente.",
+          });
+        },
+      }
+    );
   };
 
   return (
@@ -229,6 +317,19 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
                           )}
                         </div>
 
+                        {/* Adjustment button for delivered demands */}
+                        {column.key === "Entregue" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => handleOpenAdjustmentDialog(e, demand.id)}
+                            className="w-full mt-2 border-purple-500/30 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950 text-xs"
+                          >
+                            <Wrench className="h-3 w-3 mr-1" />
+                            Solicitar Ajuste
+                          </Button>
+                        )}
+
                         <div className="flex items-center justify-between">
                           {demand.due_date && (
                             <div
@@ -282,6 +383,62 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
           </div>
         </div>
       ))}
+
+      {/* Adjustment Request Dialog */}
+      <Dialog open={adjustmentDialogOpen} onOpenChange={(open) => {
+        setAdjustmentDialogOpen(open);
+        if (!open) {
+          setAdjustmentReason("");
+          setAdjustmentDemandId(null);
+        }
+      }}>
+        <DialogContent className="max-w-[90vw] sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Solicitar ajuste</DialogTitle>
+            <DialogDescription>
+              Descreva o que precisa ser ajustado na demanda "{adjustmentDemand?.title}".
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="kanban-adjustment-reason" className="text-sm font-medium">
+                Motivo do ajuste <span className="text-destructive">*</span>
+              </label>
+              <Textarea
+                id="kanban-adjustment-reason"
+                placeholder="Descreva o que precisa ser corrigido ou alterado..."
+                value={adjustmentReason}
+                onChange={(e) => setAdjustmentReason(e.target.value)}
+                rows={4}
+                maxLength={1000}
+                className="resize-none"
+              />
+              <p className="text-xs text-muted-foreground text-right">
+                {adjustmentReason.length}/1000
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setAdjustmentDialogOpen(false);
+                setAdjustmentReason("");
+                setAdjustmentDemandId(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleRequestAdjustment}
+              disabled={!adjustmentReason.trim() || updateDemand.isPending}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              {updateDemand.isPending ? "Enviando..." : "Solicitar Ajuste"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
