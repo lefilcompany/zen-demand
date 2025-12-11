@@ -55,7 +55,7 @@ export function AppSidebar() {
   const [popoverOpen, setPopoverOpen] = useState(false);
   return <Sidebar collapsible="icon">
       <SidebarContent>
-        <div className="p-4 flex items-center justify-center px-0 py-0 mx-0 my-[25px]">
+        <div className="p-4 items-center justify-center px-0 py-0 mx-0 my-[24px] flex flex-col">
           {isCollapsed ? <img alt="SoMA" src="/lovable-uploads/8967ad53-156a-4e31-a5bd-b472b7cde839.png" className="h-5 w-5 object-scale-down" /> : <img src={logoSoma} alt="SoMA" className="h-10 w-auto" />}
         </div>
 
