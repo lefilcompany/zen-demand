@@ -9,6 +9,10 @@ import { useAuth } from "@/lib/auth";
 import { Plus, Briefcase, LayoutGrid, List, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DataTable } from "@/components/ui/data-table";
+import { demandColumns, DemandTableRow } from "@/components/demands/columns";
+
+type ViewMode = "table" | "grid";
 
 export default function Demands() {
   const navigate = useNavigate();
@@ -17,6 +21,7 @@ export default function Demands() {
   const { data: demands, isLoading } = useDemands(selectedTeamId || undefined);
   const { data: role } = useTeamRole(selectedTeamId);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>("table");
 
   const isReadOnly = role === "requester";
   
@@ -35,6 +40,70 @@ export default function Demands() {
   
   const myDemands = filteredDemands.filter((d) => d.assigned_to === user?.id);
   const createdByMe = filteredDemands.filter((d) => d.created_by === user?.id);
+
+  const renderDemandList = (demandList: typeof filteredDemands) => {
+    if (isLoading) {
+      return (
+        <div className="text-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
+          <p className="text-muted-foreground mt-4">Carregando demandas...</p>
+        </div>
+      );
+    }
+
+    if (demandList.length === 0) {
+      if (searchQuery) {
+        return (
+          <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
+            <Search className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h3 className="mt-4 text-lg font-semibold text-foreground">
+              Nenhum resultado encontrado
+            </h3>
+            <p className="text-muted-foreground mt-2">
+              Tente buscar por outro termo
+            </p>
+          </div>
+        );
+      }
+      return (
+        <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
+          <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
+          <h3 className="mt-4 text-lg font-semibold text-foreground">
+            Nenhuma demanda encontrada
+          </h3>
+          <p className="text-muted-foreground mt-2">
+            {isReadOnly
+              ? "Não há demandas nesta equipe"
+              : "Comece criando uma nova demanda"}
+          </p>
+          {!isReadOnly && (
+            <div className="mt-6">
+              <Button onClick={() => navigate("/demands/create")}>
+                <Plus className="mr-2 h-4 w-4" />
+                Criar Primeira Demanda
+              </Button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (viewMode === "table") {
+      return <DataTable columns={demandColumns} data={demandList as unknown as DemandTableRow[]} />;
+    }
+
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {demandList.map((demand) => (
+          <DemandCard
+            key={demand.id}
+            demand={demand}
+            onClick={() => navigate(`/demands/${demand.id}`)}
+          />
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -59,17 +128,18 @@ export default function Demands() {
           </div>
           <div className="flex items-center border border-border rounded-md">
             <Button
-              variant="secondary"
+              variant={viewMode === "table" ? "secondary" : "ghost"}
               size="icon"
-              className="rounded-r-none bg-primary text-primary-foreground"
+              className={viewMode === "table" ? "rounded-r-none bg-primary text-primary-foreground" : "rounded-r-none"}
+              onClick={() => setViewMode("table")}
             >
               <List className="h-4 w-4" />
             </Button>
             <Button
-              variant="ghost"
+              variant={viewMode === "grid" ? "secondary" : "ghost"}
               size="icon"
-              className="rounded-l-none"
-              onClick={() => navigate("/kanban")}
+              className={viewMode === "grid" ? "rounded-l-none bg-primary text-primary-foreground" : "rounded-l-none"}
+              onClick={() => setViewMode("grid")}
             >
               <LayoutGrid className="h-4 w-4" />
             </Button>
@@ -100,105 +170,15 @@ export default function Demands() {
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">
-            {isLoading ? (
-              <div className="text-center py-12">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
-                <p className="text-muted-foreground mt-4">Carregando demandas...</p>
-              </div>
-            ) : filteredDemands.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredDemands.map((demand) => (
-                  <DemandCard
-                    key={demand.id}
-                    demand={demand}
-                    onClick={() => navigate(`/demands/${demand.id}`)}
-                  />
-                ))}
-              </div>
-            ) : searchQuery ? (
-              <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
-                <Search className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-semibold text-foreground">
-                  Nenhum resultado encontrado
-                </h3>
-                <p className="text-muted-foreground mt-2">
-                  Tente buscar por outro termo
-                </p>
-              </div>
-            ) : (
-              <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
-                <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-semibold text-foreground">
-                  Nenhuma demanda encontrada
-                </h3>
-                <p className="text-muted-foreground mt-2">
-                  {isReadOnly
-                    ? "Não há demandas nesta equipe"
-                    : "Comece criando uma nova demanda"}
-                </p>
-                <div className="mt-6">
-                  <Button onClick={() => navigate("/demands/create")}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Criar Primeira Demanda
-                  </Button>
-                </div>
-              </div>
-            )}
+            {renderDemandList(filteredDemands)}
           </TabsContent>
+
           <TabsContent value="mine" className="space-y-4">
-            {isLoading ? (
-              <div className="text-center py-12">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
-              </div>
-            ) : myDemands && myDemands.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {myDemands.map((demand) => (
-                  <DemandCard
-                    key={demand.id}
-                    demand={demand}
-                    onClick={() => navigate(`/demands/${demand.id}`)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
-                <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-semibold text-foreground">
-                  Nenhuma demanda atribuída
-                </h3>
-                <p className="text-muted-foreground mt-2">
-                  Você não possui demandas atribuídas no momento
-                </p>
-              </div>
-            )}
+            {renderDemandList(myDemands)}
           </TabsContent>
 
           <TabsContent value="created" className="space-y-4">
-            {isLoading ? (
-              <div className="text-center py-12">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
-              </div>
-            ) : createdByMe && createdByMe.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {createdByMe.map((demand) => (
-                  <DemandCard
-                    key={demand.id}
-                    demand={demand}
-                    onClick={() => navigate(`/demands/${demand.id}`)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
-                <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-semibold text-foreground">
-                  Nenhuma demanda criada
-                </h3>
-                <p className="text-muted-foreground mt-2">
-                  Você não criou nenhuma demanda ainda
-                </p>
-              </div>
-            )}
+            {renderDemandList(createdByMe)}
           </TabsContent>
         </Tabs>
       )}
