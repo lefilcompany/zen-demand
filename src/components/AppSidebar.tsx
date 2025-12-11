@@ -12,7 +12,6 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-
 const menuItems = [{
   title: "Dashboard",
   url: "/",
@@ -30,33 +29,34 @@ const menuItems = [{
   url: "/archived",
   icon: Archive
 }];
-
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const {
+    state
+  } = useSidebar();
   const location = useLocation();
   const isCollapsed = state === "collapsed";
-  
-  const { selectedTeamId } = useSelectedTeam();
-  const { isAdmin } = useIsTeamAdmin(selectedTeamId);
-  const { data: role } = useTeamRole(selectedTeamId);
-  const { data: pendingCount } = usePendingRequestsCount(isAdmin ? selectedTeamId : null);
-  
+  const {
+    selectedTeamId
+  } = useSelectedTeam();
+  const {
+    isAdmin
+  } = useIsTeamAdmin(selectedTeamId);
+  const {
+    data: role
+  } = useTeamRole(selectedTeamId);
+  const {
+    data: pendingCount
+  } = usePendingRequestsCount(isAdmin ? selectedTeamId : null);
   const isRequester = role === "requester";
 
   // Keep teams expanded if on teams routes
   const isOnTeamsRoute = location.pathname.startsWith("/teams");
   const [teamsOpen, setTeamsOpen] = useState(isOnTeamsRoute);
   const [popoverOpen, setPopoverOpen] = useState(false);
-
-  return (
-    <Sidebar collapsible="icon">
+  return <Sidebar collapsible="icon">
       <SidebarContent>
         <div className="p-4 flex items-center justify-center">
-          {isCollapsed ? (
-            <img src={logoSomaIcon} alt="SoMA" className="h-10 w-10 object-contain" />
-          ) : (
-            <img src={logoSoma} alt="SoMA" className="h-10 w-auto" />
-          )}
+          {isCollapsed ? <img alt="SoMA" src="/lovable-uploads/8967ad53-156a-4e31-a5bd-b472b7cde839.png" className="h-10 w-10 object-scale-down" /> : <img src={logoSoma} alt="SoMA" className="h-10 w-auto" />}
         </div>
 
         <SidebarGroup>
@@ -64,111 +64,64 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {/* Meu Painel - Only for Requesters */}
-              {isRequester && (
-                <SidebarMenuItem>
+              {isRequester && <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Meu Painel">
-                    <NavLink
-                      to="/client-dashboard"
-                      className="hover:bg-sidebar-accent transition-colors"
-                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                    >
+                    <NavLink to="/client-dashboard" className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                       <User className="h-4 w-4" />
                       {!isCollapsed && <span>Meu Painel</span>}
                     </NavLink>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
+                </SidebarMenuItem>}
 
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+              {menuItems.map(item => <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === "/"}
-                      className="hover:bg-sidebar-accent transition-colors"
-                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                    >
+                    <NavLink to={item.url} end={item.url === "/"} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                       <item.icon className="h-4 w-4" />
                       {!isCollapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                </SidebarMenuItem>)}
 
               {/* Equipes - Popover quando colapsado, Collapsible quando expandido */}
-              {isCollapsed ? (
-                <SidebarMenuItem>
+              {isCollapsed ? <SidebarMenuItem>
                   <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                     <PopoverTrigger asChild>
-                      <SidebarMenuButton 
-                        tooltip="Equipes" 
-                        className="hover:bg-sidebar-accent transition-colors relative"
-                      >
+                      <SidebarMenuButton tooltip="Equipes" className="hover:bg-sidebar-accent transition-colors relative">
                         <Users className="h-4 w-4" />
-                        {typeof pendingCount === "number" && pendingCount > 0 && isAdmin && (
-                          <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0">
+                        {typeof pendingCount === "number" && pendingCount > 0 && isAdmin && <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0">
                             {pendingCount}
-                          </Badge>
-                        )}
+                          </Badge>}
                       </SidebarMenuButton>
                     </PopoverTrigger>
-                    <PopoverContent 
-                      side="right" 
-                      align="start" 
-                      sideOffset={8}
-                      className="w-48 p-2 bg-sidebar border-sidebar-border z-50"
-                    >
+                    <PopoverContent side="right" align="start" sideOffset={8} className="w-48 p-2 bg-sidebar border-sidebar-border z-50">
                       <div className="flex flex-col gap-1">
                         <span className="text-xs font-medium text-sidebar-foreground/70 px-2 py-1">
                           Equipes
                         </span>
-                        <NavLink
-                          to="/teams"
-                          end
-                          onClick={() => setPopoverOpen(false)}
-                          className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
-                          activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                        >
+                        <NavLink to="/teams" end onClick={() => setPopoverOpen(false)} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                           <Users className="h-4 w-4" />
                           Minhas Equipes
                         </NavLink>
                         
-                        {isAdmin && selectedTeamId && (
-                          <NavLink
-                            to={`/teams/${selectedTeamId}/requests`}
-                            onClick={() => setPopoverOpen(false)}
-                            className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
-                            activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                          >
+                        {isAdmin && selectedTeamId && <NavLink to={`/teams/${selectedTeamId}/requests`} onClick={() => setPopoverOpen(false)} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                             <Users className="h-4 w-4" />
                             Solicitações
-                            {typeof pendingCount === "number" && pendingCount > 0 && (
-                              <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs">
+                            {typeof pendingCount === "number" && pendingCount > 0 && <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs">
                                 {pendingCount}
-                              </Badge>
-                            )}
-                          </NavLink>
-                        )}
+                              </Badge>}
+                          </NavLink>}
                       </div>
                     </PopoverContent>
                   </Popover>
-                </SidebarMenuItem>
-              ) : (
-                <Collapsible
-                  open={teamsOpen}
-                  onOpenChange={setTeamsOpen}
-                  className="group/collapsible"
-                >
+                </SidebarMenuItem> : <Collapsible open={teamsOpen} onOpenChange={setTeamsOpen} className="group/collapsible">
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton tooltip="Equipes" className="hover:bg-sidebar-accent transition-colors">
                         <Users className="h-4 w-4" />
                         <span className="flex-1">Equipes</span>
-                        {typeof pendingCount === "number" && pendingCount > 0 && isAdmin && (
-                          <Badge variant="destructive" className="mr-1 h-5 min-w-5 flex items-center justify-center text-xs">
+                        {typeof pendingCount === "number" && pendingCount > 0 && isAdmin && <Badge variant="destructive" className="mr-1 h-5 min-w-5 flex items-center justify-center text-xs">
                             {pendingCount}
-                          </Badge>
-                        )}
+                          </Badge>}
                         <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
@@ -177,40 +130,26 @@ export function AppSidebar() {
                       <SidebarMenuSub>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
-                            <NavLink
-                              to="/teams"
-                              end
-                              className="hover:bg-sidebar-accent transition-colors"
-                              activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                            >
+                            <NavLink to="/teams" end className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                               Minhas Equipes
                             </NavLink>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         
-                        {isAdmin && selectedTeamId && (
-                          <SidebarMenuSubItem>
+                        {isAdmin && selectedTeamId && <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
-                              <NavLink
-                                to={`/teams/${selectedTeamId}/requests`}
-                                className="hover:bg-sidebar-accent transition-colors"
-                                activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                              >
+                              <NavLink to={`/teams/${selectedTeamId}/requests`} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                                 Solicitações
-                                {typeof pendingCount === "number" && pendingCount > 0 && (
-                                  <Badge variant="destructive" className="ml-2 h-5 min-w-5 flex items-center justify-center text-xs">
+                                {typeof pendingCount === "number" && pendingCount > 0 && <Badge variant="destructive" className="ml-2 h-5 min-w-5 flex items-center justify-center text-xs">
                                     {pendingCount}
-                                  </Badge>
-                                )}
+                                  </Badge>}
                               </NavLink>
                             </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        )}
+                          </SidebarMenuSubItem>}
                       </SidebarMenuSub>
                     </CollapsibleContent>
                   </SidebarMenuItem>
-                </Collapsible>
-              )}
+                </Collapsible>}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -225,6 +164,5 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-    </Sidebar>
-  );
+    </Sidebar>;
 }
