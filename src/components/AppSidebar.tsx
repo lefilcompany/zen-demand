@@ -53,7 +53,7 @@ export function AppSidebar() {
       <SidebarContent>
         <div className="p-4 flex items-center justify-center">
           {isCollapsed ? (
-            <img src={logoSomaIcon} alt="SoMA" className="h-8 w-8" />
+            <img src={logoSomaIcon} alt="SoMA" className="h-10 w-10 object-contain" />
           ) : (
             <img src={logoSoma} alt="SoMA" className="h-10 w-auto" />
           )}
