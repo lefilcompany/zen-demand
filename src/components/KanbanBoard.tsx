@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, GripVertical } from "lucide-react";
+import { Calendar, Clock, GripVertical, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { toast } from "sonner";
+import { useAdjustmentCounts } from "@/hooks/useAdjustmentCount";
 
 interface Assignee {
   user_id: string;
@@ -53,6 +54,9 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const { data: statuses } = useDemandStatuses();
   const updateDemand = useUpdateDemand();
+  
+  const demandIds = useMemo(() => demands.map(d => d.id), [demands]);
+  const { data: adjustmentCounts } = useAdjustmentCounts(demandIds);
 
   const handleDragStart = (e: React.DragEvent, demandId: string) => {
     if (readOnly) return;
@@ -132,6 +136,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
           <div className="space-y-3 flex-1 overflow-y-auto">
             {getDemandsForColumn(column.key).map((demand) => {
               const assignees = demand.demand_assignees || [];
+              const adjustmentCount = adjustmentCounts?.[demand.id] || 0;
               
               return (
                 <Card
@@ -174,6 +179,16 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
                               )}
                             >
                               {demand.priority}
+                            </Badge>
+                          )}
+
+                          {adjustmentCount > 0 && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/20"
+                            >
+                              <RefreshCw className="h-3 w-3 mr-1" />
+                              {adjustmentCount} {adjustmentCount === 1 ? "ajuste" : "ajustes"}
                             </Badge>
                           )}
 
