@@ -13,7 +13,8 @@ import { RecentActivities } from "@/components/RecentActivities";
 import { AdjustmentTrendChart } from "@/components/AdjustmentTrendChart";
 import { PriorityDistributionChart } from "@/components/PriorityDistributionChart";
 import { AverageCompletionTime } from "@/components/AverageCompletionTime";
-import { DashboardCustomizer, useDashboardWidgets } from "@/components/DashboardCustomizer";
+import { DashboardCustomizer } from "@/components/DashboardCustomizer";
+import { useDashboardWidgets } from "@/hooks/useDashboardWidgets";
 import { ScopeProgressBar } from "@/components/ScopeProgressBar";
 import { DeliveryStatusChart } from "@/components/DeliveryStatusChart";
 import { PeriodFilter, type PeriodType } from "@/components/PeriodFilter";
@@ -40,7 +41,7 @@ const Index = () => {
   const { data: scope, isLoading: scopeLoading } = useTeamScope();
   const { data: monthlyCount, isLoading: countLoading } = useMonthlyDemandCount();
   const { data: demandData, isLoading: demandsLoading } = useDemandsByPeriod(period);
-  const { widgets, setWidgets } = useDashboardWidgets();
+  const { widgets, setWidgets, isSaving } = useDashboardWidgets();
 
   const isRequester = role === "requester";
   const currentTeam = teams?.find(t => t.id === selectedTeamId);
@@ -315,7 +316,7 @@ const Index = () => {
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
           <p className="text-sm md:text-base text-muted-foreground">Visão geral do sistema de gerenciamento de demandas</p>
         </div>
-        <DashboardCustomizer widgets={widgets} onChange={setWidgets} />
+        <DashboardCustomizer widgets={widgets} onChange={setWidgets} isSaving={isSaving} />
       </div>
 
       {/* Banner */}

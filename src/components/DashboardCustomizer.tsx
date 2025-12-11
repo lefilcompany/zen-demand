@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -11,29 +11,8 @@ import {
   SheetTrigger,
   SheetFooter,
 } from "@/components/ui/sheet";
-import { Settings2 } from "lucide-react";
-
-export interface DashboardWidgets {
-  statsCards: boolean;
-  teamsCard: boolean;
-  welcomeCard: boolean;
-  demandTrend: boolean;
-  adjustmentTrend: boolean;
-  priorityChart: boolean;
-  completionTime: boolean;
-  recentActivities: boolean;
-}
-
-const DEFAULT_WIDGETS: DashboardWidgets = {
-  statsCards: true,
-  teamsCard: true,
-  welcomeCard: true,
-  demandTrend: true,
-  adjustmentTrend: true,
-  priorityChart: true,
-  completionTime: true,
-  recentActivities: true,
-};
+import { Settings2, Loader2, Cloud } from "lucide-react";
+import { DashboardWidgets, DEFAULT_WIDGETS } from "@/hooks/useDashboardWidgets";
 
 const WIDGET_LABELS: Record<keyof DashboardWidgets, string> = {
   statsCards: "Cards de Estatísticas",
@@ -46,28 +25,13 @@ const WIDGET_LABELS: Record<keyof DashboardWidgets, string> = {
   recentActivities: "Atividades Recentes",
 };
 
-const STORAGE_KEY = "dashboard-widgets-config";
-
-export function useDashboardWidgets() {
-  const [widgets, setWidgets] = useState<DashboardWidgets>(() => {
-    if (typeof window === "undefined") return DEFAULT_WIDGETS;
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? { ...DEFAULT_WIDGETS, ...JSON.parse(saved) } : DEFAULT_WIDGETS;
-  });
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(widgets));
-  }, [widgets]);
-
-  return { widgets, setWidgets };
-}
-
 interface DashboardCustomizerProps {
   widgets: DashboardWidgets;
   onChange: (widgets: DashboardWidgets) => void;
+  isSaving?: boolean;
 }
 
-export function DashboardCustomizer({ widgets, onChange }: DashboardCustomizerProps) {
+export function DashboardCustomizer({ widgets, onChange, isSaving }: DashboardCustomizerProps) {
   const [open, setOpen] = useState(false);
   const [tempWidgets, setTempWidgets] = useState(widgets);
 
@@ -95,15 +59,22 @@ export function DashboardCustomizer({ widgets, onChange }: DashboardCustomizerPr
     <Sheet open={open} onOpenChange={handleOpen}>
       <SheetTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
-          <Settings2 className="h-4 w-4" />
+          {isSaving ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Settings2 className="h-4 w-4" />
+          )}
           <span className="hidden sm:inline">Personalizar</span>
         </Button>
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>Personalizar Dashboard</SheetTitle>
+          <SheetTitle className="flex items-center gap-2">
+            Personalizar Dashboard
+            <Cloud className="h-4 w-4 text-muted-foreground" />
+          </SheetTitle>
           <SheetDescription>
-            Escolha quais widgets deseja visualizar no seu dashboard.
+            Suas preferências são sincronizadas automaticamente entre dispositivos.
           </SheetDescription>
         </SheetHeader>
         
@@ -129,7 +100,8 @@ export function DashboardCustomizer({ widgets, onChange }: DashboardCustomizerPr
           <Button variant="outline" onClick={handleReset} className="w-full sm:w-auto">
             Restaurar Padrão
           </Button>
-          <Button onClick={handleSave} className="w-full sm:w-auto">
+          <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto gap-2">
+            {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
             Salvar Alterações
           </Button>
         </SheetFooter>
@@ -137,3 +109,7 @@ export function DashboardCustomizer({ widgets, onChange }: DashboardCustomizerPr
     </Sheet>
   );
 }
+
+// Re-export types and hook for convenience
+export type { DashboardWidgets };
+export { useDashboardWidgets } from "@/hooks/useDashboardWidgets";
