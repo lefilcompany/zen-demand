@@ -6,45 +6,10 @@ import { CardDescription, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, LogOut } from "lucide-react";
 import { TeamSelector } from "@/components/TeamSelector";
-import { TeamPromptCard } from "@/components/TeamPromptCard";
 import { supabase } from "@/integrations/supabase/client";
 
 interface RequireTeamProps {
   children: ReactNode;
-}
-
-function NoTeamPrompt() {
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-sidebar p-6">
-      <div className="w-full max-w-2xl bg-background rounded-2xl shadow-xl p-8 space-y-8">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-primary mb-2">Bem-vindo ao SoMA!</h1>
-          <p className="text-muted-foreground text-lg">
-            Para começar, crie ou entre em uma equipe.
-          </p>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <TeamPromptCard variant="create" />
-          <TeamPromptCard variant="join" />
-        </div>
-
-        <div className="text-center">
-          <Button variant="ghost" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Sair da Conta
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function SelectTeamPrompt() {
@@ -97,9 +62,9 @@ export function RequireTeam({ children }: RequireTeamProps) {
     return <Navigate to="/auth" replace />;
   }
 
-  // Show no team prompt if user has no teams
+  // Redirect to welcome if user has no teams
   if (!hasTeams) {
-    return <NoTeamPrompt />;
+    return <Navigate to="/welcome" replace />;
   }
 
   // Show select team prompt if no team selected
