@@ -29,12 +29,13 @@ import { useAuth } from "@/lib/auth";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { DemandEditForm } from "@/components/DemandEditForm";
-import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench } from "lucide-react";
+import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export default function DemandDetail() {
   const { id } = useParams<{ id: string }>();
@@ -53,6 +54,7 @@ export default function DemandDetail() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAdjustmentDialogOpen, setIsAdjustmentDialogOpen] = useState(false);
   const [adjustmentReason, setAdjustmentReason] = useState("");
+  const [interactionFilter, setInteractionFilter] = useState<string>("all");
 
   const demand = demands?.find((d) => d.id === id);
   const { data: role } = useTeamRole(demand?.team_id || null);
@@ -64,6 +66,12 @@ export default function DemandDetail() {
   const deliveredStatusId = statuses?.find((s) => s.name === "Entregue")?.id;
   const adjustmentStatusId = statuses?.find((s) => s.name === "Em Ajuste")?.id;
   const canRequestAdjustment = isCreator && demand?.status_id === deliveredStatusId;
+
+  const filteredInteractions = useMemo(() => {
+    if (!interactions) return [];
+    if (interactionFilter === "all") return interactions;
+    return interactions.filter((i) => i.interaction_type === interactionFilter);
+  }, [interactions, interactionFilter]);
 
   const handleRequestAdjustment = async () => {
     if (!id || !adjustmentStatusId || !adjustmentReason.trim()) return;
@@ -421,13 +429,39 @@ export default function DemandDetail() {
 
       <Card>
         <CardHeader className="p-4 md:p-6">
-          <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-            <MessageSquare className="h-4 w-4 md:h-5 md:w-5" />
-            Histórico de Interações
-          </CardTitle>
-          <CardDescription className="text-xs md:text-sm">
-            Comentários e atualizações da demanda
-          </CardDescription>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                <MessageSquare className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                Histórico
+              </CardTitle>
+              <CardDescription className="text-xs md:text-sm mt-1">
+                Comentários e atividades da demanda
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <ToggleGroup
+                type="single"
+                value={interactionFilter}
+                onValueChange={(value) => value && setInteractionFilter(value)}
+                className="justify-start"
+              >
+                <ToggleGroupItem value="all" size="sm" className="text-xs px-2 py-1 h-7">
+                  Todos
+                </ToggleGroupItem>
+                <ToggleGroupItem value="comment" size="sm" className="text-xs px-2 py-1 h-7">
+                  Comentários
+                </ToggleGroupItem>
+                <ToggleGroupItem value="adjustment_request" size="sm" className="text-xs px-2 py-1 h-7 data-[state=on]:bg-purple-500/20 data-[state=on]:text-purple-600">
+                  Ajustes
+                </ToggleGroupItem>
+                <ToggleGroupItem value="status_change" size="sm" className="text-xs px-2 py-1 h-7">
+                  Status
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4 p-4 md:p-6 pt-0 md:pt-0">
           <div className="space-y-2">
@@ -448,8 +482,8 @@ export default function DemandDetail() {
           </div>
 
           <div className="space-y-3 md:space-y-4 pt-4">
-            {interactions && interactions.length > 0 ? (
-              interactions.map((interaction) => {
+            {filteredInteractions && filteredInteractions.length > 0 ? (
+              filteredInteractions.map((interaction) => {
                 const isAdjustmentRequest = interaction.interaction_type === 'adjustment_request';
                 return (
                   <div
@@ -495,7 +529,9 @@ export default function DemandDetail() {
               })
             ) : (
               <p className="text-center text-muted-foreground py-6 md:py-8 text-sm">
-                Nenhuma interação ainda. Seja o primeiro a comentar!
+                {interactionFilter === "all" 
+                  ? "Nenhuma interação ainda. Seja o primeiro a comentar!" 
+                  : `Nenhum ${interactionFilter === "comment" ? "comentário" : interactionFilter === "adjustment_request" ? "ajuste" : "status"} encontrado.`}
               </p>
             )}
           </div>
