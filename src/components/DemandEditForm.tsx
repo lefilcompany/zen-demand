@@ -1,0 +1,170 @@
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useDemandStatuses, useUpdateDemand } from "@/hooks/useDemands";
+import { ServiceSelector } from "@/components/ServiceSelector";
+import { addDays, format } from "date-fns";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+
+interface DemandEditFormProps {
+  demand: {
+    id: string;
+    title: string;
+    description: string | null;
+    status_id: string;
+    priority: string | null;
+    due_date: string | null;
+    service_id: string | null;
+    team_id: string;
+  };
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormProps) {
+  const updateDemand = useUpdateDemand();
+  const { data: statuses } = useDemandStatuses();
+
+  const [title, setTitle] = useState(demand.title);
+  const [description, setDescription] = useState(demand.description || "");
+  const [statusId, setStatusId] = useState(demand.status_id);
+  const [priority, setPriority] = useState(demand.priority || "média");
+  const [dueDate, setDueDate] = useState(
+    demand.due_date ? format(new Date(demand.due_date), "yyyy-MM-dd") : ""
+  );
+  const [serviceId, setServiceId] = useState(demand.service_id || "");
+
+  const handleServiceChange = (newServiceId: string, estimatedDays?: number) => {
+    setServiceId(newServiceId);
+    if (newServiceId !== "none" && estimatedDays) {
+      const calculatedDate = addDays(new Date(), estimatedDays);
+      setDueDate(format(calculatedDate, "yyyy-MM-dd"));
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim() || !statusId) return;
+
+    updateDemand.mutate(
+      {
+        id: demand.id,
+        title: title.trim(),
+        description: description.trim() || null,
+        status_id: statusId,
+        priority,
+        due_date: dueDate || null,
+        service_id: serviceId && serviceId !== "none" ? serviceId : null,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Demanda atualizada com sucesso!");
+          onSuccess();
+        },
+        onError: (error: any) => {
+          toast.error("Erro ao atualizar demanda", {
+            description: error.message || "Tente novamente.",
+          });
+        },
+      }
+    );
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="edit-title">Título *</Label>
+        <Input
+          id="edit-title"
+          placeholder="Ex: Implementar nova funcionalidade"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="edit-description">Descrição</Label>
+        <Textarea
+          id="edit-description"
+          placeholder="Descreva os detalhes da demanda..."
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={4}
+        />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="edit-status">Status *</Label>
+          <Select value={statusId} onValueChange={setStatusId} required>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione um status" />
+            </SelectTrigger>
+            <SelectContent>
+              {statuses?.map((status) => (
+                <SelectItem key={status.id} value={status.id}>
+                  {status.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="edit-priority">Prioridade</Label>
+          <Select value={priority} onValueChange={setPriority}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="baixa">Baixa</SelectItem>
+              <SelectItem value="média">Média</SelectItem>
+              <SelectItem value="alta">Alta</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Serviço</Label>
+        <ServiceSelector
+          teamId={demand.team_id}
+          value={serviceId}
+          onChange={handleServiceChange}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="edit-dueDate">Data de Vencimento</Label>
+        <Input
+          id="edit-dueDate"
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+        />
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-2 pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onClose}
+          className="flex-1"
+        >
+          Cancelar
+        </Button>
+        <Button
+          type="submit"
+          disabled={updateDemand.isPending || !title.trim() || !statusId}
+          className="flex-1"
+        >
+          {updateDemand.isPending ? "Salvando..." : "Salvar Alterações"}
+        </Button>
+      </div>
+    </form>
+  );
+}

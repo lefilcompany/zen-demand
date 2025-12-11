@@ -14,12 +14,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useDemands, useDemandInteractions, useCreateInteraction, useUpdateDemand } from "@/hooks/useDemands";
 import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
 import { useTeamRole } from "@/hooks/useTeamRole";
+import { useAuth } from "@/lib/auth";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
-import { ArrowLeft, Calendar, Users, MessageSquare, Archive } from "lucide-react";
+import { DemandEditForm } from "@/components/DemandEditForm";
+import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -29,6 +38,7 @@ import { toast } from "sonner";
 export default function DemandDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: demands } = useDemands();
   const { data: interactions } = useDemandInteractions(id!);
   const { data: assignees } = useDemandAssignees(id || null);
@@ -38,10 +48,12 @@ export default function DemandDetail() {
   const [comment, setComment] = useState("");
   const [editingAssignees, setEditingAssignees] = useState(false);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const demand = demands?.find((d) => d.id === id);
   const { data: role } = useTeamRole(demand?.team_id || null);
   const canManageAssignees = role === "admin" || role === "moderator";
+  const canEdit = role === "admin" || role === "moderator" || demand?.created_by === user?.id;
 
   const handleArchive = () => {
     if (!id) return;
@@ -165,33 +177,46 @@ export default function DemandDetail() {
                 )}
               </div>
             </div>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              {canEdit && (
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={updateDemand.isPending}
+                  onClick={() => setIsEditDialogOpen(true)}
                   className="w-full sm:w-auto"
                 >
-                  <Archive className="mr-2 h-4 w-4" />
-                  Arquivar
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Editar
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="max-w-[90vw] sm:max-w-lg">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Arquivar demanda?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Tem certeza que deseja arquivar esta demanda? Você poderá restaurá-la posteriormente na seção de demandas arquivadas.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-                  <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleArchive} className="w-full sm:w-auto">
+              )}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={updateDemand.isPending}
+                    className="w-full sm:w-auto"
+                  >
+                    <Archive className="mr-2 h-4 w-4" />
                     Arquivar
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="max-w-[90vw] sm:max-w-lg">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Arquivar demanda?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tem certeza que deseja arquivar esta demanda? Você poderá restaurá-la posteriormente na seção de demandas arquivadas.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                    <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleArchive} className="w-full sm:w-auto">
+                      Arquivar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6 pt-0 md:pt-0">
@@ -329,6 +354,32 @@ export default function DemandDetail() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Demanda</DialogTitle>
+            <DialogDescription>
+              Atualize as informações da demanda
+            </DialogDescription>
+          </DialogHeader>
+          <DemandEditForm
+            demand={{
+              id: demand.id,
+              title: demand.title,
+              description: demand.description,
+              status_id: demand.status_id,
+              priority: demand.priority,
+              due_date: demand.due_date,
+              service_id: demand.service_id,
+              team_id: demand.team_id,
+            }}
+            onClose={() => setIsEditDialogOpen(false)}
+            onSuccess={() => setIsEditDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
