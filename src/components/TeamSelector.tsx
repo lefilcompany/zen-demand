@@ -13,15 +13,17 @@ import { Users, UserPlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const roleLabels: Record<string, string> = {
-  admin: "Admin",
-  moderator: "Moderador",
+  admin: "Administrador",
+  moderator: "Coordenador",
   requester: "Solicitante",
+  executor: "Agente",
 };
 
 const roleColors: Record<string, string> = {
   admin: "bg-primary text-primary-foreground",
   moderator: "bg-secondary text-secondary-foreground",
   requester: "bg-muted text-muted-foreground",
+  executor: "bg-accent text-accent-foreground",
 };
 
 export function TeamSelector() {
