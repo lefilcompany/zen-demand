@@ -1,10 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Briefcase, Users, CheckCircle2, Clock, Timer } from "lucide-react";
+import { Briefcase, Users, CheckCircle2, Clock, Timer, RefreshCw } from "lucide-react";
 import { useDemands } from "@/hooks/useDemands";
 import { useTeams } from "@/hooks/useTeams";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { DemandTrendChart } from "@/components/DemandTrendChart";
 import { RecentActivities } from "@/components/RecentActivities";
+import { AdjustmentTrendChart } from "@/components/AdjustmentTrendChart";
 
 const Index = () => {
   const { selectedTeamId } = useSelectedTeam();
@@ -15,6 +16,7 @@ const Index = () => {
   const inProgressDemands = demands?.filter((d) => d.demand_statuses?.name === "Fazendo").length || 0;
   const completedDemands = demands?.filter((d) => d.demand_statuses?.name === "Entregue").length || 0;
   const pendingDemands = demands?.filter((d) => d.demand_statuses?.name === "A Iniciar").length || 0;
+  const adjustmentDemands = demands?.filter((d) => d.demand_statuses?.name === "Em Ajuste").length || 0;
   const totalTeams = teams?.length || 0;
 
   return (
@@ -37,7 +39,7 @@ const Index = () => {
         <div className="absolute -right-5 -top-5 w-16 md:w-24 h-16 md:h-24 bg-white/10 rounded-full blur-xl"></div>
       </div>
 
-      <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-5">
         <Card className="border-l-4 border-l-primary hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
             <CardTitle className="text-xs md:text-sm font-medium">Total de Demandas</CardTitle>
@@ -68,6 +70,17 @@ const Index = () => {
           <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
             <div className="text-xl md:text-2xl font-bold text-foreground">{inProgressDemands}</div>
             <p className="text-[10px] md:text-xs text-muted-foreground">Demandas ativas</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-purple-500 hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium">Em Ajuste</CardTitle>
+            <RefreshCw className="h-3 w-3 md:h-4 md:w-4 text-purple-500" />
+          </CardHeader>
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <div className="text-xl md:text-2xl font-bold text-foreground">{adjustmentDemands}</div>
+            <p className="text-[10px] md:text-xs text-muted-foreground">Aguardando ajustes</p>
           </CardContent>
         </Card>
 
@@ -112,9 +125,14 @@ const Index = () => {
         </Card>
       </div>
 
-      {/* Trend Chart */}
-      {selectedTeamId && demands && demands.length > 0 && (
-        <DemandTrendChart demands={demands} />
+      {/* Trend Charts */}
+      {selectedTeamId && (
+        <div className="grid gap-4 md:grid-cols-2">
+          {demands && demands.length > 0 && (
+            <DemandTrendChart demands={demands} />
+          )}
+          <AdjustmentTrendChart teamId={selectedTeamId} />
+        </div>
       )}
 
       {/* Recent Activities */}
