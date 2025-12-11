@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { useDemands, useDemandInteractions, useCreateInteraction, useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
+import { supabase } from "@/integrations/supabase/client";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useAuth } from "@/lib/auth";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
@@ -64,18 +65,33 @@ export default function DemandDetail() {
   const adjustmentStatusId = statuses?.find((s) => s.name === "Em Ajuste")?.id;
   const canRequestAdjustment = isCreator && demand?.status_id === deliveredStatusId;
 
-  const handleRequestAdjustment = () => {
+  const handleRequestAdjustment = async () => {
     if (!id || !adjustmentStatusId || !adjustmentReason.trim()) return;
+    
     updateDemand.mutate(
       { id, status_id: adjustmentStatusId },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
           toast.success("Ajuste solicitado com sucesso!");
           createInteraction.mutate({
             demand_id: id,
             interaction_type: "adjustment_request",
             content: `Solicitou ajuste: ${adjustmentReason.trim()}`,
           });
+          
+          // Notify all assignees about the adjustment request
+          if (assignees && assignees.length > 0) {
+            const notifications = assignees.map((assignee) => ({
+              user_id: assignee.user_id,
+              title: "Ajuste solicitado",
+              message: `O cliente solicitou ajuste na demanda "${demand?.title}": ${adjustmentReason.trim().substring(0, 100)}${adjustmentReason.length > 100 ? '...' : ''}`,
+              type: "warning",
+              link: `/demands/${id}`,
+            }));
+            
+            await supabase.from("notifications").insert(notifications);
+          }
+          
           setAdjustmentReason("");
           setIsAdjustmentDialogOpen(false);
         },
