@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, User } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, User, Wrench } from "lucide-react";
 import logoSoma from "@/assets/logo-soma-dark.png";
 import logoSomaIcon from "@/assets/logo-soma-icon.png";
 import { NavLink } from "@/components/NavLink";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { usePendingRequestsCount } from "@/hooks/useTeamJoinRequests";
 import { useIsTeamAdmin, useTeamRole } from "@/hooks/useTeamRole";
 import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useAdjustmentCount } from "@/hooks/useAdjustmentCount";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -24,6 +25,11 @@ const menuItems = [{
   title: "Demandas",
   url: "/demands",
   icon: Briefcase
+}, {
+  title: "Ajustes",
+  url: "/adjustments",
+  icon: Wrench,
+  showBadge: true
 }, {
   title: "Arquivadas",
   url: "/archived",
@@ -49,6 +55,7 @@ export function AppSidebar() {
   const {
     data: pendingCount
   } = usePendingRequestsCount(isAdmin ? selectedTeamId : null);
+  const adjustmentCount = useAdjustmentCount(selectedTeamId);
   const isRequester = role === "requester";
 
   // Keep teams expanded if on teams routes
@@ -83,9 +90,14 @@ export function AppSidebar() {
 
               {menuItems.map(item => <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink to={item.url} end={item.url === "/"} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                    <NavLink to={item.url} end={item.url === "/"} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors relative" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                       <item.icon className="h-4 w-4" />
                       {!isCollapsed && <span>{item.title}</span>}
+                      {(item as any).showBadge && adjustmentCount > 0 && (
+                        <Badge variant="destructive" className={isCollapsed ? "absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0" : "ml-auto h-5 min-w-5 flex items-center justify-center text-xs"}>
+                          {adjustmentCount}
+                        </Badge>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>)}
