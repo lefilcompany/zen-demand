@@ -106,48 +106,51 @@ export default function Demands() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div className="space-y-4 md:space-y-6 animate-fade-in">
+      <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Demandas</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Demandas</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             {isReadOnly
               ? "Visualize as demandas da sua equipe"
               : "Gerencie todas as demandas das suas equipes"}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="relative flex-1 sm:flex-none">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar demandas..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-[200px] md:w-[250px]"
+              className="pl-9 w-full sm:w-[200px] md:w-[250px]"
             />
           </div>
-          <div className="flex items-center border border-border rounded-md">
-            <Button
-              variant={viewMode === "table" ? "secondary" : "ghost"}
-              size="icon"
-              className={viewMode === "table" ? "rounded-r-none bg-primary text-primary-foreground" : "rounded-r-none"}
-              onClick={() => setViewMode("table")}
-            >
-              <List className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "grid" ? "secondary" : "ghost"}
-              size="icon"
-              className={viewMode === "grid" ? "rounded-l-none bg-primary text-primary-foreground" : "rounded-l-none"}
-              onClick={() => setViewMode("grid")}
-            >
-              <LayoutGrid className="h-4 w-4" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center border border-border rounded-md">
+              <Button
+                variant={viewMode === "table" ? "secondary" : "ghost"}
+                size="icon"
+                className={viewMode === "table" ? "rounded-r-none bg-primary text-primary-foreground" : "rounded-r-none"}
+                onClick={() => setViewMode("table")}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === "grid" ? "secondary" : "ghost"}
+                size="icon"
+                className={viewMode === "grid" ? "rounded-l-none bg-primary text-primary-foreground" : "rounded-l-none"}
+                onClick={() => setViewMode("grid")}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button onClick={() => navigate("/demands/create")} className="shadow-primary flex-1 sm:flex-none">
+              <Plus className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Nova Demanda</span>
+              <span className="sm:hidden">Nova</span>
             </Button>
           </div>
-          <Button onClick={() => navigate("/demands/create")} className="shadow-primary">
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Demanda
-          </Button>
         </div>
       </div>
 
@@ -163,10 +166,10 @@ export default function Demands() {
         </div>
       ) : (
         <Tabs defaultValue="all" className="space-y-4">
-          <TabsList className="bg-muted">
-            <TabsTrigger value="all">Todas</TabsTrigger>
-            <TabsTrigger value="mine">Atribuídas a Mim</TabsTrigger>
-            <TabsTrigger value="created">Criadas por Mim</TabsTrigger>
+          <TabsList className="bg-muted w-full sm:w-auto grid grid-cols-3 sm:inline-flex">
+            <TabsTrigger value="all" className="text-xs sm:text-sm">Todas</TabsTrigger>
+            <TabsTrigger value="mine" className="text-xs sm:text-sm">Atribuídas</TabsTrigger>
+            <TabsTrigger value="created" className="text-xs sm:text-sm">Criadas</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">

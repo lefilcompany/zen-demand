@@ -13,23 +13,25 @@ export default function Teams() {
   const isAdmin = userRole === "admin";
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Equipes</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Equipes</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             Gerencie suas equipes e membros
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => navigate("/teams/join")} variant="outline">
+          <Button onClick={() => navigate("/teams/join")} variant="outline" className="flex-1 sm:flex-none">
             <UsersIcon className="mr-2 h-4 w-4" />
-            Entrar em Equipe
+            <span className="hidden sm:inline">Entrar em Equipe</span>
+            <span className="sm:hidden">Entrar</span>
           </Button>
           {isAdmin && (
-            <Button onClick={() => navigate("/teams/create")}>
+            <Button onClick={() => navigate("/teams/create")} className="flex-1 sm:flex-none">
               <Plus className="mr-2 h-4 w-4" />
-              Criar Equipe
+              <span className="hidden sm:inline">Criar Equipe</span>
+              <span className="sm:hidden">Criar</span>
             </Button>
           )}
         </div>

@@ -21,25 +21,19 @@ export default function Kanban() {
   // Requesters can only view, not edit
   const isReadOnly = role === "requester";
   return <div className="flex flex-col h-full animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0 pb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between shrink-0 pb-4 md:pb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Kanban</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Kanban</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             {isReadOnly ? "Visualize o progresso das demandas" : "Visualize e gerencie o progresso das demandas"}
           </p>
         </div>
 
-        <div className="flex items-center gap-0">
-          <div className="flex items-center border border-border rounded-md">
-            
-            
-          </div>
-
-          <Button onClick={() => navigate("/demands/create")} className="shadow-primary">
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Demanda
-          </Button>
-        </div>
+        <Button onClick={() => navigate("/demands/create")} className="shadow-primary w-full sm:w-auto">
+          <Plus className="mr-2 h-4 w-4" />
+          <span className="sm:hidden">Nova</span>
+          <span className="hidden sm:inline">Nova Demanda</span>
+        </Button>
       </div>
 
       <div className="flex-1 min-h-0 overflow-hidden">
