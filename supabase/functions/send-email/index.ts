@@ -2,8 +2,11 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import React from "https://esm.sh/react@18.3.1";
 import { render } from "https://esm.sh/@react-email/render@0.0.12";
 import { NotificationEmail } from "./_templates/notification.tsx";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,7 +15,7 @@ const corsHeaders = {
 };
 
 interface EmailRequest {
-  to: string;
+  to: string; // Can be email or user_id (UUID)
   subject: string;
   html?: string;
   from?: string;
@@ -26,6 +29,12 @@ interface EmailRequest {
     userName?: string;
     type?: 'info' | 'success' | 'warning' | 'error';
   };
+}
+
+// Check if string is a valid UUID
+function isUUID(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -45,6 +54,47 @@ const handler = async (req: Request): Promise<Response> => {
           headers: { "Content-Type": "application/json", ...corsHeaders },
         }
       );
+    }
+
+    let recipientEmail = to;
+
+    // If 'to' is a UUID, lookup the user's email from Supabase Auth
+    if (isUUID(to)) {
+      console.log(`Looking up email for user_id: ${to}`);
+      
+      if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+        console.error("Missing Supabase credentials for user lookup");
+        return new Response(
+          JSON.stringify({ error: "Server configuration error" }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+
+      const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      });
+
+      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(to);
+      
+      if (userError || !userData?.user?.email) {
+        console.error("Error fetching user email:", userError);
+        return new Response(
+          JSON.stringify({ error: "Could not find user email", details: userError?.message }),
+          {
+            status: 404,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+
+      recipientEmail = userData.user.email;
+      console.log(`Found email for user: ${recipientEmail}`);
     }
 
     let emailHtml = html;
@@ -74,7 +124,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log(`Sending email to ${to} with subject: ${subject}`);
+    console.log(`Sending email to ${recipientEmail} with subject: ${subject}`);
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -84,7 +134,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: from || "SoMA+ <onboarding@resend.dev>",
-        to: [to],
+        to: [recipientEmail],
         subject,
         html: emailHtml,
       }),
