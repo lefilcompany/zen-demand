@@ -50,6 +50,8 @@ export default function DemandDetail() {
   const [editingAssignees, setEditingAssignees] = useState(false);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isAdjustmentDialogOpen, setIsAdjustmentDialogOpen] = useState(false);
+  const [adjustmentReason, setAdjustmentReason] = useState("");
 
   const demand = demands?.find((d) => d.id === id);
   const { data: role } = useTeamRole(demand?.team_id || null);
@@ -63,7 +65,7 @@ export default function DemandDetail() {
   const canRequestAdjustment = isCreator && demand?.status_id === deliveredStatusId;
 
   const handleRequestAdjustment = () => {
-    if (!id || !adjustmentStatusId) return;
+    if (!id || !adjustmentStatusId || !adjustmentReason.trim()) return;
     updateDemand.mutate(
       { id, status_id: adjustmentStatusId },
       {
@@ -72,8 +74,10 @@ export default function DemandDetail() {
           createInteraction.mutate({
             demand_id: id,
             interaction_type: "adjustment_request",
-            content: "Solicitou ajuste na demanda",
+            content: `Solicitou ajuste: ${adjustmentReason.trim()}`,
           });
+          setAdjustmentReason("");
+          setIsAdjustmentDialogOpen(false);
         },
         onError: (error: any) => {
           toast.error("Erro ao solicitar ajuste", {
@@ -208,32 +212,67 @@ export default function DemandDetail() {
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               {canRequestAdjustment && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full sm:w-auto border-purple-500/30 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950"
-                    >
-                      <Wrench className="mr-2 h-4 w-4" />
-                      Solicitar Ajuste
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent className="max-w-[90vw] sm:max-w-lg">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Solicitar ajuste?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Tem certeza que deseja solicitar um ajuste nesta demanda? Ela voltará para a equipe para correção.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-                      <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleRequestAdjustment} className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700">
-                        Solicitar Ajuste
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsAdjustmentDialogOpen(true)}
+                    className="w-full sm:w-auto border-purple-500/30 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950"
+                  >
+                    <Wrench className="mr-2 h-4 w-4" />
+                    Solicitar Ajuste
+                  </Button>
+                  <Dialog open={isAdjustmentDialogOpen} onOpenChange={(open) => {
+                    setIsAdjustmentDialogOpen(open);
+                    if (!open) setAdjustmentReason("");
+                  }}>
+                    <DialogContent className="max-w-[90vw] sm:max-w-lg">
+                      <DialogHeader>
+                        <DialogTitle>Solicitar ajuste</DialogTitle>
+                        <DialogDescription>
+                          Descreva o que precisa ser ajustado nesta demanda. A equipe receberá sua solicitação.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <label htmlFor="adjustment-reason" className="text-sm font-medium">
+                            Motivo do ajuste <span className="text-destructive">*</span>
+                          </label>
+                          <Textarea
+                            id="adjustment-reason"
+                            placeholder="Descreva o que precisa ser corrigido ou alterado..."
+                            value={adjustmentReason}
+                            onChange={(e) => setAdjustmentReason(e.target.value)}
+                            rows={4}
+                            maxLength={1000}
+                            className="resize-none"
+                          />
+                          <p className="text-xs text-muted-foreground text-right">
+                            {adjustmentReason.length}/1000
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setIsAdjustmentDialogOpen(false);
+                            setAdjustmentReason("");
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          onClick={handleRequestAdjustment}
+                          disabled={!adjustmentReason.trim() || updateDemand.isPending}
+                          className="bg-purple-600 hover:bg-purple-700"
+                        >
+                          {updateDemand.isPending ? "Enviando..." : "Solicitar Ajuste"}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </>
               )}
               {canEdit && (
                 <Button
