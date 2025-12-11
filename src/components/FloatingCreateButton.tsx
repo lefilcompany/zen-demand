@@ -3,6 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function FloatingCreateButton() {
   const navigate = useNavigate();
@@ -12,12 +17,19 @@ export function FloatingCreateButton() {
   if (!isMobile || !selectedTeamId) return null;
 
   return (
-    <Button
-      onClick={() => navigate("/demands/create")}
-      className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg animate-scale-in"
-      size="icon"
-    >
-      <Plus className="h-6 w-6" />
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          onClick={() => navigate("/demands/create")}
+          className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg animate-scale-in"
+          size="icon"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="left">
+        Nova Demanda
+      </TooltipContent>
+    </Tooltip>
   );
 }
