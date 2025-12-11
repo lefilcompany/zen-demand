@@ -56,7 +56,7 @@ export function AppSidebar() {
   return <Sidebar collapsible="icon">
       <SidebarContent>
         <div className="p-4 flex items-center justify-center">
-          {isCollapsed ? <img alt="SoMA" src="/lovable-uploads/8967ad53-156a-4e31-a5bd-b472b7cde839.png" className="h-10 w-10 object-scale-down" /> : <img src={logoSoma} alt="SoMA" className="h-10 w-auto" />}
+          {isCollapsed ? <img alt="SoMA" src="/lovable-uploads/8967ad53-156a-4e31-a5bd-b472b7cde839.png" className="h-5 w-5 object-scale-down" /> : <img src={logoSoma} alt="SoMA" className="h-10 w-auto" />}
         </div>
 
         <SidebarGroup>
