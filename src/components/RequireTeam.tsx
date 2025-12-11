@@ -1,22 +1,31 @@
 import { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useAuth } from "@/lib/auth";
 import { CardDescription, CardTitle } from "@/components/ui/card";
-import { Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, LogOut } from "lucide-react";
 import { TeamSelector } from "@/components/TeamSelector";
 import { TeamPromptCard } from "@/components/TeamPromptCard";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RequireTeamProps {
   children: ReactNode;
 }
 
 function NoTeamPrompt() {
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-sidebar p-6">
       <div className="w-full max-w-2xl bg-background rounded-2xl shadow-xl p-8 space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-primary mb-2">Bem-vindo ao DemandFlow!</h1>
+          <h1 className="text-4xl font-bold text-primary mb-2">Bem-vindo ao SoMA!</h1>
           <p className="text-muted-foreground text-lg">
             Para começar, crie ou entre em uma equipe.
           </p>
@@ -26,12 +35,26 @@ function NoTeamPrompt() {
           <TeamPromptCard variant="create" />
           <TeamPromptCard variant="join" />
         </div>
+
+        <div className="text-center">
+          <Button variant="ghost" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Sair da Conta
+          </Button>
+        </div>
       </div>
     </div>
   );
 }
 
 function SelectTeamPrompt() {
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-sidebar p-6">
       <div className="w-full max-w-md bg-background rounded-2xl shadow-xl p-8">
@@ -44,8 +67,12 @@ function SelectTeamPrompt() {
             Escolha com qual equipe deseja trabalhar.
           </CardDescription>
         </div>
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center gap-4">
           <TeamSelector />
+          <Button variant="ghost" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Sair da Conta
+          </Button>
         </div>
       </div>
     </div>

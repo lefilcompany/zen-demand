@@ -32,15 +32,15 @@ export default function CreateTeam() {
   };
 
   const handleAccessCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+    const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
     setAccessCode(value);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    if (accessCode.length < 6) {
-      toast.error("Código de acesso deve ter 6 caracteres");
+    if (accessCode.length < 10) {
+      toast.error("Código de acesso deve ter 10 caracteres");
       return;
     }
 
@@ -129,15 +129,15 @@ export default function CreateTeam() {
                 <p className="text-sm text-muted-foreground">
                   Membros usarão este código para entrar na equipe
                 </p>
-                <div className="flex gap-2">
+              <div className="flex gap-2">
                   <Input
                     id="accessCode"
                     type={showCode ? "text" : "password"}
                     value={accessCode}
                     onChange={handleAccessCodeChange}
-                    placeholder="EX: ABC123"
+                    placeholder="EX: ABC1234XYZ"
                     className="font-mono text-lg tracking-widest uppercase"
-                    maxLength={6}
+                    maxLength={10}
                   />
                   <Button
                     type="button"
@@ -167,9 +167,9 @@ export default function CreateTeam() {
                     {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
-                {accessCode.length > 0 && accessCode.length < 6 && (
+                {accessCode.length > 0 && accessCode.length < 10 && (
                   <p className="text-sm text-destructive">
-                    O código deve ter 6 caracteres ({accessCode.length}/6)
+                    O código deve ter 10 caracteres ({accessCode.length}/10)
                   </p>
                 )}
               </div>
@@ -185,7 +185,7 @@ export default function CreateTeam() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={createTeam.isPending || !name.trim() || accessCode.length < 6}
+                  disabled={createTeam.isPending || !name.trim() || accessCode.length < 10}
                   className="flex-1"
                 >
                   {createTeam.isPending ? "Criando..." : "Criar Equipe"}
