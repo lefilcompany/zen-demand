@@ -31,7 +31,9 @@ const menuItems = [{
 }];
 export function AppSidebar() {
   const {
-    state
+    state,
+    setOpenMobile,
+    isMobile
   } = useSidebar();
   const location = useLocation();
   const isCollapsed = state === "collapsed";
@@ -53,6 +55,12 @@ export function AppSidebar() {
   const isOnTeamsRoute = location.pathname.startsWith("/teams");
   const [teamsOpen, setTeamsOpen] = useState(isOnTeamsRoute);
   const [popoverOpen, setPopoverOpen] = useState(false);
+
+  const closeMobileSidebar = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
   return <Sidebar collapsible="icon">
       <SidebarContent>
         <div className="p-4 items-center justify-center px-0 py-0 mx-0 my-[24px] flex flex-col">
@@ -66,7 +74,7 @@ export function AppSidebar() {
               {/* Meu Painel - Only for Requesters */}
               {isRequester && <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Meu Painel">
-                    <NavLink to="/client-dashboard" className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                    <NavLink to="/client-dashboard" onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                       <User className="h-4 w-4" />
                       {!isCollapsed && <span>Meu Painel</span>}
                     </NavLink>
@@ -75,7 +83,7 @@ export function AppSidebar() {
 
               {menuItems.map(item => <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink to={item.url} end={item.url === "/"} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                    <NavLink to={item.url} end={item.url === "/"} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                       <item.icon className="h-4 w-4" />
                       {!isCollapsed && <span>{item.title}</span>}
                     </NavLink>
@@ -98,12 +106,12 @@ export function AppSidebar() {
                         <span className="text-xs font-medium text-sidebar-foreground/70 px-2 py-1">
                           Equipes
                         </span>
-                        <NavLink to="/teams" end onClick={() => setPopoverOpen(false)} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                        <NavLink to="/teams" end onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                           <Users className="h-4 w-4" />
                           Minhas Equipes
                         </NavLink>
                         
-                        {isAdmin && selectedTeamId && <NavLink to={`/teams/${selectedTeamId}/requests`} onClick={() => setPopoverOpen(false)} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                        {isAdmin && selectedTeamId && <NavLink to={`/teams/${selectedTeamId}/requests`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                             <Users className="h-4 w-4" />
                             Solicitações
                             {typeof pendingCount === "number" && pendingCount > 0 && <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs">
@@ -130,7 +138,7 @@ export function AppSidebar() {
                       <SidebarMenuSub>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
-                            <NavLink to="/teams" end className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                            <NavLink to="/teams" end onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                               Minhas Equipes
                             </NavLink>
                           </SidebarMenuSubButton>
@@ -138,7 +146,7 @@ export function AppSidebar() {
                         
                         {isAdmin && selectedTeamId && <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
-                              <NavLink to={`/teams/${selectedTeamId}/requests`} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                              <NavLink to={`/teams/${selectedTeamId}/requests`} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                                 Solicitações
                                 {typeof pendingCount === "number" && pendingCount > 0 && <Badge variant="destructive" className="ml-2 h-5 min-w-5 flex items-center justify-center text-xs">
                                     {pendingCount}
