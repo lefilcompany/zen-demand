@@ -11,6 +11,7 @@ export interface DashboardWidgets {
   priorityChart: boolean;
   completionTime: boolean;
   recentActivities: boolean;
+  workloadDistribution: boolean;
 }
 
 export const DEFAULT_WIDGETS: DashboardWidgets = {
@@ -22,6 +23,7 @@ export const DEFAULT_WIDGETS: DashboardWidgets = {
   priorityChart: true,
   completionTime: true,
   recentActivities: true,
+  workloadDistribution: true,
 };
 
 const PREFERENCE_KEY = "dashboard_widgets";

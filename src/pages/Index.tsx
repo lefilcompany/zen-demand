@@ -13,6 +13,7 @@ import { RecentActivities } from "@/components/RecentActivities";
 import { AdjustmentTrendChart } from "@/components/AdjustmentTrendChart";
 import { PriorityDistributionChart } from "@/components/PriorityDistributionChart";
 import { AverageCompletionTime } from "@/components/AverageCompletionTime";
+import { WorkloadDistributionChart } from "@/components/WorkloadDistributionChart";
 import { DashboardCustomizer } from "@/components/DashboardCustomizer";
 import { useDashboardWidgets } from "@/hooks/useDashboardWidgets";
 import { ScopeProgressBar } from "@/components/ScopeProgressBar";
@@ -21,6 +22,7 @@ import { PeriodFilter, type PeriodType } from "@/components/PeriodFilter";
 import { ExportReportButton } from "@/components/ExportReportButton";
 import { useTeamScope, useMonthlyDemandCount } from "@/hooks/useTeamScope";
 import { useDemandsByPeriod } from "@/hooks/useDemandsByPeriod";
+import { useDemandAssignees } from "@/hooks/useDemandAssignees";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -450,6 +452,11 @@ const Index = () => {
             <AdjustmentTrendChart teamId={selectedTeamId} />
           )}
         </div>
+      )}
+
+      {/* Workload Distribution */}
+      {widgets.workloadDistribution && selectedTeamId && demands && demands.length > 0 && (
+        <WorkloadDistributionChart demands={demands} />
       )}
 
       {/* Recent Activities */}

@@ -23,6 +23,7 @@ const WIDGET_LABELS: Record<keyof DashboardWidgets, string> = {
   priorityChart: "Gráfico de Prioridades",
   completionTime: "Tempo Médio de Conclusão",
   recentActivities: "Atividades Recentes",
+  workloadDistribution: "Carga de Trabalho por Membro",
 };
 
 interface DashboardCustomizerProps {
