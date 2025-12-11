@@ -1,4 +1,4 @@
-import { useSelectedTeam } from "@/contexts/TeamContext";
+groundimport { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,7 @@ const roleColors: Record<string, string> = {
   admin: "bg-primary/20 border border-primary/30 text-foreground",
   moderator: "bg-blue-500/20 border border-blue-500/30 text-foreground",
   requester: "bg-emerald-500/20 border border-emerald-500/30 text-foreground",
-  executor: "bg-amber-500/20 border border-amber-500/30 text-white",
+  executor: "bg-amber-500/20 border border-amber-500/30 text-muted-foreground",
 };
 
 export function TeamSelector() {
