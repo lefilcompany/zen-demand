@@ -61,30 +61,29 @@ function TitleCell({ row }: { row: { original: DemandTableRow } }) {
 
 // Cell component for assignees
 function AssigneeCell({ row }: { row: { original: DemandTableRow } }) {
-  const assignees: { user_id: string; profile: { full_name: string; avatar_url: string | null } }[] = [];
+  const demandAssignees = row.original.demand_assignees;
+  const assignedProfile = row.original.assigned_profile;
 
-  // Get assignees from demand_assignees
-  if (row.original.demand_assignees?.length) {
-    row.original.demand_assignees.forEach((a) => {
-      if (a.profile) {
-        assignees.push({
-          user_id: a.user_id,
-          profile: {
-            full_name: a.profile.full_name,
-            avatar_url: a.profile.avatar_url,
-          },
-        });
-      }
-    });
-  }
-
-  // Fallback to assigned_profile if no demand_assignees
-  if (assignees.length === 0 && row.original.assigned_profile) {
-    assignees.push({
-      user_id: row.original.id, // Use demand id as fallback
+  // Mapear assignees de demand_assignees (filtrando os que têm profile)
+  const assignees = (demandAssignees || [])
+    .filter((a): a is typeof a & { profile: NonNullable<typeof a.profile> } => 
+      a.profile !== null && a.profile !== undefined
+    )
+    .map((a) => ({
+      user_id: a.user_id,
       profile: {
-        full_name: row.original.assigned_profile.full_name,
-        avatar_url: row.original.assigned_profile.avatar_url,
+        full_name: a.profile.full_name,
+        avatar_url: a.profile.avatar_url,
+      },
+    }));
+
+  // Fallback para assigned_profile (sistema legado)
+  if (assignees.length === 0 && assignedProfile) {
+    assignees.push({
+      user_id: "legacy",
+      profile: {
+        full_name: assignedProfile.full_name,
+        avatar_url: assignedProfile.avatar_url,
       },
     });
   }
