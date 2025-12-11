@@ -20,10 +20,12 @@ const sizeClasses = {
 };
 
 export function AssigneeAvatars({ assignees, maxVisible = 3, size = "md" }: AssigneeAvatarsProps) {
-  if (!assignees || assignees.length === 0) return null;
+  // Filter out any assignees with missing profile data
+  const validAssignees = assignees?.filter(a => a?.profile) || [];
+  if (validAssignees.length === 0) return null;
 
-  const visible = assignees.slice(0, maxVisible);
-  const remaining = assignees.length - maxVisible;
+  const visible = validAssignees.slice(0, maxVisible);
+  const remaining = validAssignees.length - maxVisible;
 
   const getInitials = (name: string) => {
     return name
@@ -61,7 +63,7 @@ export function AssigneeAvatars({ assignees, maxVisible = 3, size = "md" }: Assi
             </Avatar>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{assignees.slice(maxVisible).map(a => a.profile.full_name).join(", ")}</p>
+            <p>{validAssignees.slice(maxVisible).map(a => a.profile.full_name).join(", ")}</p>
           </TooltipContent>
         </Tooltip>
       )}
