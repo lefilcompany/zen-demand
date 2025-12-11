@@ -79,16 +79,16 @@ export default function ClientDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Meu Painel</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">Meu Painel</h1>
+          <p className="text-sm text-muted-foreground">
             {format(new Date(), "MMMM 'de' yyyy", { locale: ptBR })}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <PeriodFilter value={period} onChange={setPeriod} />
           <ExportReportButton 
             demands={exportDemands}
@@ -107,14 +107,15 @@ export default function ClientDashboard() {
             className="gap-2"
           >
             <PlusCircle className="h-4 w-4" />
-            Nova Demanda
+            <span className="hidden sm:inline">Nova Demanda</span>
+            <span className="sm:hidden">Nova</span>
           </Button>
         </div>
       </div>
 
       {/* Scope Progress */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-4 md:pt-6">
           <ScopeProgressBar 
             used={monthlyCount || 0} 
             limit={limit}
@@ -123,62 +124,62 @@ export default function ClientDashboard() {
       </Card>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
               {periodLabels[period]}
             </CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <FileText className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{demandData?.total || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <div className="text-2xl md:text-3xl font-bold">{demandData?.total || 0}</div>
+            <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
               demandas no período
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
               Entregues
             </CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4 text-green-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-green-600">{deliveredCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <div className="text-2xl md:text-3xl font-bold text-green-600">{deliveredCount}</div>
+            <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
               concluídas
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
               Em Andamento
             </CardTitle>
-            <Clock className="h-4 w-4 text-primary" />
+            <Clock className="h-3 w-3 md:h-4 md:w-4 text-primary" />
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-primary">{inProgressCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <div className="text-2xl md:text-3xl font-bold text-primary">{inProgressCount}</div>
+            <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
               em execução
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
+            <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
               A Iniciar
             </CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{pendingCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">
+          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+            <div className="text-2xl md:text-3xl font-bold">{pendingCount}</div>
+            <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
               aguardando
             </p>
           </CardContent>
@@ -186,46 +187,47 @@ export default function ClientDashboard() {
       </div>
 
       {/* Chart and Recent Demands */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
         {/* Status Chart */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Entregas por Status</CardTitle>
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle className="text-base md:text-lg">Entregas por Status</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
             <DeliveryStatusChart data={demandData?.byStatus || []} />
           </CardContent>
         </Card>
 
         {/* Recent Demands */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">Últimas Demandas</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
+            <CardTitle className="text-base md:text-lg">Últimas Demandas</CardTitle>
             <Button 
               variant="ghost" 
               size="sm" 
-              className="gap-1"
+              className="gap-1 text-xs md:text-sm"
               onClick={() => navigate("/demands")}
             >
               Ver todas
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-3 w-3 md:h-4 md:w-4" />
             </Button>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
+            <div className="space-y-3">
               {demandData?.demands.slice(0, 5).map((demand: any) => (
                 <div 
                   key={demand.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+                  className="flex items-center justify-between p-2 md:p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer gap-2"
                   onClick={() => navigate(`/demands/${demand.id}`)}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{demand.title}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="font-medium truncate text-sm md:text-base">{demand.title}</p>
+                    <p className="text-[10px] md:text-xs text-muted-foreground">
                       {format(new Date(demand.created_at), "dd/MM/yyyy")}
                     </p>
                   </div>
                   <Badge
+                    className="text-[10px] md:text-xs flex-shrink-0"
                     style={{ 
                       backgroundColor: demand.demand_statuses?.color || "#6B7280",
                       color: "white"
@@ -237,12 +239,12 @@ export default function ClientDashboard() {
               ))}
 
               {(!demandData?.demands || demandData.demands.length === 0) && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>Nenhuma demanda encontrada</p>
+                <div className="text-center py-6 md:py-8 text-muted-foreground">
+                  <FileText className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Nenhuma demanda encontrada</p>
                   <Button 
                     variant="link" 
-                    className="mt-2"
+                    className="mt-2 text-sm"
                     onClick={() => navigate("/demands/create")}
                   >
                     Criar primeira demanda
@@ -257,13 +259,13 @@ export default function ClientDashboard() {
       {/* Contract Info */}
       {scope?.scope_description && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Escopo do Contrato</CardTitle>
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle className="text-base md:text-lg">Escopo do Contrato</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground">{scope.scope_description}</p>
+          <CardContent className="space-y-4 p-4 md:p-6 pt-0 md:pt-0">
+            <p className="text-sm md:text-base text-muted-foreground">{scope.scope_description}</p>
             {(scope.contract_start_date || scope.contract_end_date) && (
-              <div className="flex gap-4 text-sm">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs md:text-sm">
                 {scope.contract_start_date && (
                   <div>
                     <span className="text-muted-foreground">Início: </span>

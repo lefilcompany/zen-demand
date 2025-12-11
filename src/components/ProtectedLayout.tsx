@@ -45,34 +45,34 @@ export function ProtectedLayout() {
 
   return (
     <SidebarProvider defaultOpen>
-      <div className="flex h-screen w-full bg-sidebar p-3 overflow-hidden">
+      <div className="flex h-screen w-full bg-sidebar p-2 md:p-3 overflow-hidden">
         <AppSidebar />
-        <main className="flex-1 flex flex-col bg-background rounded-xl shadow-xl min-h-0">
-          <header className="flex h-16 shrink-0 items-center justify-between gap-4 bg-background px-6 border-b border-border rounded-t-xl">
-            <div className="flex items-center gap-4">
+        <main className="flex-1 flex flex-col bg-background rounded-xl shadow-xl min-h-0 overflow-hidden">
+          <header className="flex h-auto min-h-14 md:h-16 shrink-0 items-center justify-between gap-2 md:gap-4 bg-background px-3 md:px-6 py-2 md:py-0 border-b border-border rounded-t-xl flex-wrap">
+            <div className="flex items-center gap-2 md:gap-4">
               <SidebarTrigger className="text-foreground hover:bg-muted" />
               <TeamSelector />
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 md:gap-2">
               {/* Theme Toggle */}
               <ThemeToggle />
 
               {/* Notifications */}
               <NotificationDropdown />
 
-              {/* Settings */}
-              <Button variant="ghost" size="icon" onClick={() => navigate("/settings")}>
+              {/* Settings - Hidden on mobile */}
+              <Button variant="ghost" size="icon" onClick={() => navigate("/settings")} className="hidden sm:flex">
                 <Settings className="h-5 w-5" />
               </Button>
 
               {/* Profile */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                    <Avatar className="h-9 w-9">
+                  <Button variant="ghost" className="relative h-8 w-8 md:h-9 md:w-9 rounded-full">
+                    <Avatar className="h-8 w-8 md:h-9 md:w-9">
                       <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || "Perfil"} />
-                      <AvatarFallback className="bg-primary text-primary-foreground">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs md:text-sm">
                         {initials}
                       </AvatarFallback>
                     </Avatar>
@@ -88,7 +88,7 @@ export function ProtectedLayout() {
                     </Avatar>
                     <div className="flex flex-col">
                       <span className="text-sm font-medium">{profile?.full_name || "Usuário"}</span>
-                      <span className="text-xs text-muted-foreground">{user?.email}</span>
+                      <span className="text-xs text-muted-foreground truncate max-w-[160px]">{user?.email}</span>
                     </div>
                   </div>
                   <DropdownMenuSeparator />
@@ -102,7 +102,7 @@ export function ProtectedLayout() {
               </DropdownMenu>
             </div>
           </header>
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-3 md:p-6">
             <Outlet />
           </div>
         </main>

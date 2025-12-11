@@ -39,12 +39,12 @@ export function TeamSelector() {
   }
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2 md:gap-3">
       <Select value={selectedTeamId || ""} onValueChange={setSelectedTeamId}>
-        <SelectTrigger className="w-52 border-border bg-background">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-primary" />
-            <SelectValue placeholder="Selecione uma equipe" />
+        <SelectTrigger className="w-32 sm:w-40 md:w-52 border-border bg-background text-xs sm:text-sm">
+          <div className="flex items-center gap-1 md:gap-2">
+            <Users className="h-3 w-3 md:h-4 md:w-4 text-primary flex-shrink-0" />
+            <SelectValue placeholder="Equipe" className="truncate" />
           </div>
         </SelectTrigger>
         <SelectContent>
@@ -56,7 +56,7 @@ export function TeamSelector() {
         </SelectContent>
       </Select>
       {role && (
-        <Badge variant="secondary" className={roleColors[role]}>
+        <Badge variant="secondary" className={`${roleColors[role]} hidden sm:flex text-xs`}>
           {roleLabels[role]}
         </Badge>
       )}

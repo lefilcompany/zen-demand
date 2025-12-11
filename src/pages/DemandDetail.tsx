@@ -128,12 +128,12 @@ export default function DemandDetail() {
   })) || [];
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
       <div>
         <Button
           variant="ghost"
           onClick={() => navigate("/demands")}
-          className="mb-4"
+          className="mb-2 md:mb-4"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar
@@ -141,10 +141,10 @@ export default function DemandDetail() {
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between gap-4">
+        <CardHeader className="p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="space-y-2 flex-1">
-              <CardTitle className="text-2xl">{demand.title}</CardTitle>
+              <CardTitle className="text-xl md:text-2xl">{demand.title}</CardTitle>
               <div className="flex flex-wrap items-center gap-2">
                 {demand.demand_statuses && (
                   <Badge
@@ -171,21 +171,22 @@ export default function DemandDetail() {
                   variant="outline"
                   size="sm"
                   disabled={updateDemand.isPending}
+                  className="w-full sm:w-auto"
                 >
                   <Archive className="mr-2 h-4 w-4" />
                   Arquivar
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className="max-w-[90vw] sm:max-w-lg">
                 <AlertDialogHeader>
                   <AlertDialogTitle>Arquivar demanda?</AlertDialogTitle>
                   <AlertDialogDescription>
                     Tem certeza que deseja arquivar esta demanda? Você poderá restaurá-la posteriormente na seção de demandas arquivadas.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleArchive}>
+                <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                  <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleArchive} className="w-full sm:w-auto">
                     Arquivar
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -193,11 +194,11 @@ export default function DemandDetail() {
             </AlertDialog>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6 pt-0 md:pt-0">
           {demand.description && (
             <div>
-              <h3 className="font-semibold mb-2">Descrição</h3>
-              <p className="text-muted-foreground whitespace-pre-wrap">
+              <h3 className="font-semibold mb-2 text-sm md:text-base">Descrição</h3>
+              <p className="text-sm md:text-base text-muted-foreground whitespace-pre-wrap">
                 {demand.description}
               </p>
             </div>
@@ -206,7 +207,7 @@ export default function DemandDetail() {
           <div className="grid gap-4 md:grid-cols-2">
             {demand.due_date && (
               <div className="flex items-center gap-2 text-sm">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <span className="text-muted-foreground">Vencimento:</span>
                 <span className="font-medium">
                   {format(new Date(demand.due_date), "dd/MM/yyyy", {
@@ -216,22 +217,28 @@ export default function DemandDetail() {
               </div>
             )}
 
-            <div className="flex items-center gap-2 text-sm">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Responsáveis:</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-muted-foreground">Responsáveis:</span>
+              </div>
               {editingAssignees ? (
-                <div className="flex items-center gap-2 flex-1">
-                  <AssigneeSelector
-                    teamId={demand.team_id}
-                    selectedUserIds={selectedAssignees}
-                    onChange={setSelectedAssignees}
-                  />
-                  <Button size="sm" onClick={handleSaveAssignees} disabled={setAssignees.isPending}>
-                    Salvar
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setEditingAssignees(false)}>
-                    Cancelar
-                  </Button>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
+                  <div className="flex-1">
+                    <AssigneeSelector
+                      teamId={demand.team_id}
+                      selectedUserIds={selectedAssignees}
+                      onChange={setSelectedAssignees}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleSaveAssignees} disabled={setAssignees.isPending} className="flex-1 sm:flex-none">
+                      Salvar
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setEditingAssignees(false)} className="flex-1 sm:flex-none">
+                      Cancelar
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
@@ -253,50 +260,52 @@ export default function DemandDetail() {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
+        <CardHeader className="p-4 md:p-6">
+          <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+            <MessageSquare className="h-4 w-4 md:h-5 md:w-5" />
             Histórico de Interações
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-xs md:text-sm">
             Comentários e atualizações da demanda
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 p-4 md:p-6 pt-0 md:pt-0">
           <div className="space-y-2">
             <Textarea
               placeholder="Adicionar um comentário..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows={3}
+              className="text-sm md:text-base"
             />
             <Button
               onClick={handleAddComment}
               disabled={!comment.trim() || createInteraction.isPending}
+              className="w-full sm:w-auto"
             >
               {createInteraction.isPending ? "Enviando..." : "Enviar Comentário"}
             </Button>
           </div>
 
-          <div className="space-y-4 pt-4">
+          <div className="space-y-3 md:space-y-4 pt-4">
             {interactions && interactions.length > 0 ? (
               interactions.map((interaction) => (
                 <div
                   key={interaction.id}
-                  className="flex gap-3 p-4 rounded-lg bg-muted/50"
+                  className="flex gap-2 md:gap-3 p-3 md:p-4 rounded-lg bg-muted/50"
                 >
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
                     <AvatarImage src={interaction.profiles?.avatar_url} />
-                    <AvatarFallback>
+                    <AvatarFallback className="text-xs">
                       {interaction.profiles?.full_name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm">
+                  <div className="flex-1 space-y-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <span className="font-semibold text-xs md:text-sm truncate">
                         {interaction.profiles?.full_name}
                       </span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-[10px] md:text-xs text-muted-foreground">
                         {format(
                           new Date(interaction.created_at),
                           "dd/MM/yyyy 'às' HH:mm",
@@ -305,7 +314,7 @@ export default function DemandDetail() {
                       </span>
                     </div>
                     {interaction.content && (
-                      <p className="text-sm whitespace-pre-wrap">
+                      <p className="text-xs md:text-sm whitespace-pre-wrap break-words">
                         {interaction.content}
                       </p>
                     )}
@@ -313,7 +322,7 @@ export default function DemandDetail() {
                 </div>
               ))
             ) : (
-              <p className="text-center text-muted-foreground py-8">
+              <p className="text-center text-muted-foreground py-6 md:py-8 text-sm">
                 Nenhuma interação ainda. Seja o primeiro a comentar!
               </p>
             )}
