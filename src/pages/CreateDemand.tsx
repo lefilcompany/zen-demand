@@ -72,7 +72,7 @@ export default function CreateDemand() {
         onSuccess: async (demand) => {
           // Add assignees if any
           if (assigneeIds.length > 0 && demand) {
-            await supabase
+            const { error: assignError } = await supabase
               .from("demand_assignees")
               .insert(
                 assigneeIds.map((userId) => ({
@@ -80,6 +80,15 @@ export default function CreateDemand() {
                   user_id: userId,
                 }))
               );
+            
+            if (assignError) {
+              console.error("Erro ao atribuir responsáveis:", assignError);
+              toast.warning("Demanda criada, mas houve um erro ao atribuir responsáveis", {
+                description: "Você pode atribuir responsáveis na tela de detalhes.",
+              });
+              navigate("/demands");
+              return;
+            }
           }
           toast.success("Demanda criada com sucesso!");
           navigate("/demands");
