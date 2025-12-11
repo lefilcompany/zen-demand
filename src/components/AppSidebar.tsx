@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, User, Wrench, Settings2 } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, Wrench, Settings2 } from "lucide-react";
 import logoSoma from "@/assets/logo-soma-dark.png";
 import logoSomaIcon from "@/assets/logo-soma-icon.png";
 import { NavLink } from "@/components/NavLink";
@@ -56,7 +56,6 @@ export function AppSidebar() {
     data: pendingCount
   } = usePendingRequestsCount(isAdmin ? selectedTeamId : null);
   const adjustmentCount = useAdjustmentCount(selectedTeamId);
-  const isRequester = role === "requester";
   const isAdminOrModerator = role === "admin" || role === "moderator";
 
   // Keep teams expanded if on teams routes
@@ -79,16 +78,6 @@ export function AppSidebar() {
           <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* Meu Painel - Only for Requesters */}
-              {isRequester && <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Meu Painel">
-                    <NavLink to="/client-dashboard" onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                      <User className="h-4 w-4" />
-                      {!isCollapsed && <span>Meu Painel</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>}
-
               {menuItems.map(item => <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink to={item.url} end={item.url === "/"} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors relative" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
