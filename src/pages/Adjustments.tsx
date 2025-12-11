@@ -103,10 +103,12 @@ export default function Adjustments() {
                   </div>
                   {demand.demand_assignees && demand.demand_assignees.length > 0 && (
                     <AssigneeAvatars
-                      assignees={demand.demand_assignees.map((a: any) => ({
-                        user_id: a.user_id,
-                        profile: a.profiles,
-                      }))}
+                      assignees={demand.demand_assignees
+                        .filter((a: any) => a.profiles)
+                        .map((a: any) => ({
+                          user_id: a.user_id,
+                          profile: a.profiles,
+                        }))}
                       size="sm"
                     />
                   )}
