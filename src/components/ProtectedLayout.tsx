@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { FloatingCreateButton } from "@/components/FloatingCreateButton";
 
 export function ProtectedLayout() {
   const { user } = useAuth();
@@ -105,6 +106,7 @@ export function ProtectedLayout() {
           <div className="flex-1 overflow-y-auto p-3 md:p-6">
             <Outlet />
           </div>
+          <FloatingCreateButton />
         </main>
       </div>
     </SidebarProvider>
