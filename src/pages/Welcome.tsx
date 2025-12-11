@@ -1,10 +1,17 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { TeamPromptCard } from "@/components/TeamPromptCard";
+import { supabase } from "@/integrations/supabase/client";
+import { LogOut } from "lucide-react";
 import logoSoma from "@/assets/logo-soma.png";
 
 export default function Welcome() {
   const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-sidebar p-6">
@@ -23,8 +30,9 @@ export default function Welcome() {
         </div>
 
         <div className="text-center">
-          <Button variant="ghost" onClick={() => navigate("/")}>
-            Ir para o Dashboard
+          <Button variant="ghost" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Sair da Conta
           </Button>
         </div>
       </div>

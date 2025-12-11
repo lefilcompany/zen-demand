@@ -82,11 +82,11 @@ export default function JoinTeam() {
         <div>
           <Button
             variant="ghost"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/welcome")}
             className="mb-4"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar ao Dashboard
+            Voltar
           </Button>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Entrar em Equipe</h1>
           <p className="text-muted-foreground">
