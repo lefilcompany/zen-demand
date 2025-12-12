@@ -16,34 +16,17 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-
-interface NotificationPreferences {
-  emailNotifications: boolean;
-  pushNotifications: boolean;
-  demandUpdates: boolean;
-  teamUpdates: boolean;
-  deadlineReminders: boolean;
-}
-
-const defaultNotificationPrefs: NotificationPreferences = {
-  emailNotifications: true,
-  pushNotifications: true,
-  demandUpdates: true,
-  teamUpdates: true,
-  deadlineReminders: true,
-};
+import { useNotificationPreferences, NotificationPreferences } from "@/hooks/useNotificationPreferences";
 
 export default function Settings() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { t, i18n } = useTranslation();
   const [mounted, setMounted] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationPreferences>(defaultNotificationPrefs);
+  const { preferences, updatePreferences, isLoading } = useNotificationPreferences();
 
   useEffect(() => {
     setMounted(true);
-    const savedNotifications = localStorage.getItem("notification-preferences");
-    if (savedNotifications) setNotifications(JSON.parse(savedNotifications));
   }, []);
 
   const handleThemeChange = (newTheme: string) => {
@@ -59,9 +42,8 @@ export default function Settings() {
   };
 
   const handleNotificationChange = (key: keyof NotificationPreferences, value: boolean) => {
-    const newPrefs = { ...notifications, [key]: value };
-    setNotifications(newPrefs);
-    localStorage.setItem("notification-preferences", JSON.stringify(newPrefs));
+    const newPrefs = { ...preferences, [key]: value };
+    updatePreferences(newPrefs);
     toast.success(t("toast.settingsSaved"));
   };
 
@@ -193,8 +175,9 @@ export default function Settings() {
                 </div>
                 <Switch
                   id="email-notifications"
-                  checked={notifications.emailNotifications}
+                  checked={preferences.emailNotifications}
                   onCheckedChange={(checked) => handleNotificationChange("emailNotifications", checked)}
+                  disabled={isLoading}
                 />
               </div>
 
@@ -212,8 +195,9 @@ export default function Settings() {
                 </div>
                 <Switch
                   id="push-notifications"
-                  checked={notifications.pushNotifications}
+                  checked={preferences.pushNotifications}
                   onCheckedChange={(checked) => handleNotificationChange("pushNotifications", checked)}
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -235,8 +219,9 @@ export default function Settings() {
                 </div>
                 <Switch
                   id="demand-updates"
-                  checked={notifications.demandUpdates}
+                  checked={preferences.demandUpdates}
                   onCheckedChange={(checked) => handleNotificationChange("demandUpdates", checked)}
+                  disabled={isLoading}
                 />
               </div>
 
@@ -251,8 +236,9 @@ export default function Settings() {
                 </div>
                 <Switch
                   id="team-updates"
-                  checked={notifications.teamUpdates}
+                  checked={preferences.teamUpdates}
                   onCheckedChange={(checked) => handleNotificationChange("teamUpdates", checked)}
+                  disabled={isLoading}
                 />
               </div>
 
@@ -267,8 +253,9 @@ export default function Settings() {
                 </div>
                 <Switch
                   id="deadline-reminders"
-                  checked={notifications.deadlineReminders}
+                  checked={preferences.deadlineReminders}
                   onCheckedChange={(checked) => handleNotificationChange("deadlineReminders", checked)}
+                  disabled={isLoading}
                 />
               </div>
             </div>
