@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import {
 } from "@/components/ui/tooltip";
 
 export function FloatingCreateButton() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { selectedTeamId } = useSelectedTeam();
   const isMobile = useIsMobile();
@@ -28,7 +30,7 @@ export function FloatingCreateButton() {
         </Button>
       </TooltipTrigger>
       <TooltipContent side="left">
-        Nova Demanda
+        {t("demands.newDemand")}
       </TooltipContent>
     </Tooltip>
   );

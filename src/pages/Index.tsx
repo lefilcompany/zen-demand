@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,18 +23,12 @@ import { PeriodFilter, type PeriodType } from "@/components/PeriodFilter";
 import { ExportReportButton } from "@/components/ExportReportButton";
 import { useTeamScope, useMonthlyDemandCount } from "@/hooks/useTeamScope";
 import { useDemandsByPeriod } from "@/hooks/useDemandsByPeriod";
-import { useDemandAssignees } from "@/hooks/useDemandAssignees";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-
-const periodLabels: Record<PeriodType, string> = {
-  week: "Esta Semana",
-  month: "Este Mês",
-  quarter: "Este Trimestre"
-};
+import { ptBR, enUS, es } from "date-fns/locale";
 
 const Index = () => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [period, setPeriod] = useState<PeriodType>("month");
   const { selectedTeamId } = useSelectedTeam();
@@ -47,6 +42,18 @@ const Index = () => {
 
   const isRequester = role === "requester";
   const currentTeam = teams?.find(t => t.id === selectedTeamId);
+
+  const getLocale = () => {
+    if (i18n.language === "en-US") return enUS;
+    if (i18n.language === "es") return es;
+    return ptBR;
+  };
+
+  const periodLabels: Record<PeriodType, string> = {
+    week: t("reports.week"),
+    month: t("reports.month"),
+    quarter: t("reports.quarter")
+  };
 
   // Stats for all roles
   const totalDemands = demands?.length || 0;
@@ -75,7 +82,7 @@ const Index = () => {
   // Prepare export data
   const exportDemands = demandData?.demands.map((d: any) => ({
     title: d.title,
-    status: d.demand_statuses?.name || "Sem status",
+    status: d.demand_statuses?.name || t("common.status"),
     created_at: d.created_at,
     priority: d.priority
   })) || [];
@@ -102,9 +109,9 @@ const Index = () => {
         {/* Header */}
         <div className="flex flex-col gap-3 sm:gap-4">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-foreground">Dashboard</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("dashboard.title")}</h1>
             <p className="text-sm text-muted-foreground">
-              {format(new Date(), "MMMM 'de' yyyy", { locale: ptBR })}
+              {format(new Date(), "MMMM yyyy", { locale: getLocale() })}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -126,8 +133,8 @@ const Index = () => {
               className="gap-2"
             >
               <PlusCircle className="h-4 w-4" />
-              <span className="hidden sm:inline">Nova Demanda</span>
-              <span className="sm:hidden">Nova</span>
+              <span className="hidden sm:inline">{t("demands.newDemand")}</span>
+              <span className="sm:hidden">{t("demands.newDemand").split(" ")[0]}</span>
             </Button>
           </div>
         </div>
@@ -154,7 +161,7 @@ const Index = () => {
             <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
               <div className="text-2xl md:text-3xl font-bold">{demandData?.total || 0}</div>
               <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-                demandas no período
+                {t("demands.title").toLowerCase()}
               </p>
             </CardContent>
           </Card>
@@ -162,14 +169,14 @@ const Index = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
               <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                Entregues
+                {t("dashboard.delivered")}
               </CardTitle>
               <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4 text-green-500" />
             </CardHeader>
             <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
               <div className="text-2xl md:text-3xl font-bold text-green-600">{deliveredCount}</div>
               <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-                concluídas
+                {t("kanban.delivered").toLowerCase()}
               </p>
             </CardContent>
           </Card>
@@ -177,14 +184,14 @@ const Index = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
               <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                Em Andamento
+                {t("dashboard.inProgress")}
               </CardTitle>
               <Clock className="h-3 w-3 md:h-4 md:w-4 text-primary" />
             </CardHeader>
             <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
               <div className="text-2xl md:text-3xl font-bold text-primary">{clientInProgressCount}</div>
               <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-                em execução
+                {t("kanban.doing").toLowerCase()}
               </p>
             </CardContent>
           </Card>
@@ -192,14 +199,14 @@ const Index = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
               <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                A Iniciar
+                {t("kanban.toStart")}
               </CardTitle>
               <Clock className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
               <div className="text-2xl md:text-3xl font-bold">{clientPendingCount}</div>
               <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-                aguardando
+                {t("common.loading").split("...")[0]}
               </p>
             </CardContent>
           </Card>
@@ -210,7 +217,7 @@ const Index = () => {
           {/* Status Chart */}
           <Card>
             <CardHeader className="p-4 md:p-6">
-              <CardTitle className="text-base md:text-lg">Entregas por Status</CardTitle>
+              <CardTitle className="text-base md:text-lg">{t("dashboard.deliveryStatus")}</CardTitle>
             </CardHeader>
             <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
               <DeliveryStatusChart data={demandData?.byStatus || []} />
@@ -220,14 +227,14 @@ const Index = () => {
           {/* Recent Demands */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
-              <CardTitle className="text-base md:text-lg">Últimas Demandas</CardTitle>
+              <CardTitle className="text-base md:text-lg">{t("dashboard.recentActivities")}</CardTitle>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 className="gap-1 text-xs md:text-sm"
                 onClick={() => navigate("/demands")}
               >
-                Ver todas
+                {t("common.view")}
                 <ArrowRight className="h-3 w-3 md:h-4 md:w-4" />
               </Button>
             </CardHeader>
@@ -252,7 +259,7 @@ const Index = () => {
                         color: "white"
                       }}
                     >
-                      {demand.demand_statuses?.name || "Sem status"}
+                      {demand.demand_statuses?.name || t("common.status")}
                     </Badge>
                   </div>
                 ))}
@@ -260,13 +267,13 @@ const Index = () => {
                 {(!demandData?.demands || demandData.demands.length === 0) && (
                   <div className="text-center py-6 md:py-8 text-muted-foreground">
                     <FileText className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">Nenhuma demanda encontrada</p>
+                    <p className="text-sm">{t("demands.noDemands")}</p>
                     <Button 
                       variant="link" 
                       className="mt-2 text-sm"
                       onClick={() => navigate("/demands/create")}
                     >
-                      Criar primeira demanda
+                      {t("demands.createFirst")}
                     </Button>
                   </div>
                 )}
@@ -279,7 +286,7 @@ const Index = () => {
         {scope?.scope_description && (
           <Card>
             <CardHeader className="p-4 md:p-6">
-              <CardTitle className="text-base md:text-lg">Escopo do Contrato</CardTitle>
+              <CardTitle className="text-base md:text-lg">{t("teams.scopeConfig")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 p-4 md:p-6 pt-0 md:pt-0">
               <p className="text-sm md:text-base text-muted-foreground">{scope.scope_description}</p>
@@ -287,7 +294,7 @@ const Index = () => {
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs md:text-sm">
                   {scope.contract_start_date && (
                     <div>
-                      <span className="text-muted-foreground">Início: </span>
+                      <span className="text-muted-foreground">{t("common.date")}: </span>
                       <span className="font-medium">
                         {format(new Date(scope.contract_start_date), "dd/MM/yyyy")}
                       </span>
@@ -295,7 +302,7 @@ const Index = () => {
                   )}
                   {scope.contract_end_date && (
                     <div>
-                      <span className="text-muted-foreground">Término: </span>
+                      <span className="text-muted-foreground">{t("common.date")}: </span>
                       <span className="font-medium">
                         {format(new Date(scope.contract_end_date), "dd/MM/yyyy")}
                       </span>
@@ -315,8 +322,8 @@ const Index = () => {
     <div className="space-y-4 md:space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
-          <p className="text-sm md:text-base text-muted-foreground">Visão geral do sistema de gerenciamento de demandas</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">{t("dashboard.title")}</h1>
+          <p className="text-sm md:text-base text-muted-foreground">{t("settings.description")}</p>
         </div>
         <DashboardCustomizer widgets={widgets} onChange={setWidgets} isSaving={isSaving} />
       </div>
@@ -325,9 +332,9 @@ const Index = () => {
       <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary via-primary/90 to-accent p-4 md:p-6 lg:p-8 text-primary-foreground">
         <div className="absolute inset-0 bg-[url('/placeholder.svg')] opacity-5"></div>
         <div className="relative z-10">
-          <h2 className="text-lg md:text-xl lg:text-2xl font-bold mb-2">Bem-vindo ao SoMA</h2>
+          <h2 className="text-lg md:text-xl lg:text-2xl font-bold mb-2">{t("welcome.title")}</h2>
           <p className="text-primary-foreground/90 text-xs md:text-sm lg:text-base max-w-2xl">
-            Gerencie suas demandas de forma eficiente. Acompanhe o progresso das suas equipes e mantenha tudo organizado em um só lugar.
+            {t("settings.description")}
           </p>
         </div>
         <div className="absolute -right-10 -bottom-10 w-24 md:w-40 h-24 md:h-40 bg-white/10 rounded-full blur-2xl"></div>
@@ -339,56 +346,56 @@ const Index = () => {
         <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-5">
           <Card className="border-l-4 border-l-primary hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium">Total de Demandas</CardTitle>
+              <CardTitle className="text-xs md:text-sm font-medium">{t("dashboard.totalDemands")}</CardTitle>
               <Briefcase className="h-3 w-3 md:h-4 md:w-4 text-primary" />
             </CardHeader>
             <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
               <div className="text-xl md:text-2xl font-bold text-foreground">{totalDemands}</div>
-              <p className="text-[10px] md:text-xs text-muted-foreground">Demandas cadastradas</p>
+              <p className="text-[10px] md:text-xs text-muted-foreground">{t("demands.title")}</p>
             </CardContent>
           </Card>
 
           <Card className="border-l-4 border-l-warning hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium">A Iniciar</CardTitle>
+              <CardTitle className="text-xs md:text-sm font-medium">{t("kanban.toStart")}</CardTitle>
               <Clock className="h-3 w-3 md:h-4 md:w-4 text-warning" />
             </CardHeader>
             <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
               <div className="text-xl md:text-2xl font-bold text-foreground">{pendingDemands}</div>
-              <p className="text-[10px] md:text-xs text-muted-foreground">Aguardando início</p>
+              <p className="text-[10px] md:text-xs text-muted-foreground">{t("common.loading").split("...")[0]}</p>
             </CardContent>
           </Card>
 
           <Card className="border-l-4 border-l-accent hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium">Em Andamento</CardTitle>
+              <CardTitle className="text-xs md:text-sm font-medium">{t("dashboard.inProgress")}</CardTitle>
               <Timer className="h-3 w-3 md:h-4 md:w-4 text-accent" />
             </CardHeader>
             <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
               <div className="text-xl md:text-2xl font-bold text-foreground">{inProgressDemands}</div>
-              <p className="text-[10px] md:text-xs text-muted-foreground">Demandas ativas</p>
+              <p className="text-[10px] md:text-xs text-muted-foreground">{t("kanban.doing")}</p>
             </CardContent>
           </Card>
 
           <Card className="border-l-4 border-l-purple-500 hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium">Em Ajuste</CardTitle>
+              <CardTitle className="text-xs md:text-sm font-medium">{t("dashboard.adjustments")}</CardTitle>
               <RefreshCw className="h-3 w-3 md:h-4 md:w-4 text-purple-500" />
             </CardHeader>
             <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
               <div className="text-xl md:text-2xl font-bold text-foreground">{adjustmentDemands}</div>
-              <p className="text-[10px] md:text-xs text-muted-foreground">Aguardando ajustes</p>
+              <p className="text-[10px] md:text-xs text-muted-foreground">{t("kanban.inAdjustment")}</p>
             </CardContent>
           </Card>
 
           <Card className="border-l-4 border-l-success hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium">Concluídas</CardTitle>
+              <CardTitle className="text-xs md:text-sm font-medium">{t("dashboard.delivered")}</CardTitle>
               <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4 text-success" />
             </CardHeader>
             <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
               <div className="text-xl md:text-2xl font-bold text-foreground">{completedDemands}</div>
-              <p className="text-[10px] md:text-xs text-muted-foreground">Demandas finalizadas</p>
+              <p className="text-[10px] md:text-xs text-muted-foreground">{t("kanban.delivered")}</p>
             </CardContent>
           </Card>
         </div>
@@ -402,13 +409,13 @@ const Index = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-primary" />
-                  Equipes
+                  {t("teams.title")}
                 </CardTitle>
-                <CardDescription>Equipes que você participa</CardDescription>
+                <CardDescription>{t("teams.myTeams")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-primary">{totalTeams}</div>
-                <p className="text-sm text-muted-foreground mt-2">equipes cadastradas</p>
+                <p className="text-sm text-muted-foreground mt-2">{t("teams.title").toLowerCase()}</p>
               </CardContent>
             </Card>
           )}
@@ -416,13 +423,12 @@ const Index = () => {
           {widgets.welcomeCard && (
             <Card className="bg-gradient-to-br from-primary/10 to-accent/10 border-primary/20 hover:shadow-md transition-shadow">
               <CardHeader>
-                <CardTitle>Bem-vindo ao SoMA</CardTitle>
-                <CardDescription>Sistema completo de gerenciamento de demandas para equipes</CardDescription>
+                <CardTitle>{t("welcome.title")}</CardTitle>
+                <CardDescription>{t("settings.description")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Selecione uma equipe no menu superior para visualizar as demandas. Use o Kanban para acompanhar o
-                  progresso das suas demandas.
+                  {t("welcome.subtitle")}
                 </p>
               </CardContent>
             </Card>

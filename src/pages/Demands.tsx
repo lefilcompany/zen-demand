@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DemandCard } from "@/components/DemandCard";
@@ -15,6 +16,7 @@ import { demandColumns, DemandTableRow } from "@/components/demands/columns";
 type ViewMode = "table" | "grid";
 
 export default function Demands() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { selectedTeamId } = useSelectedTeam();
@@ -25,7 +27,6 @@ export default function Demands() {
 
   const isReadOnly = role === "requester";
   
-  // Filter demands by search query
   const filteredDemands = useMemo(() => {
     if (!demands) return [];
     if (!searchQuery.trim()) return demands;
@@ -46,7 +47,7 @@ export default function Demands() {
       return (
         <div className="text-center py-12">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
-          <p className="text-muted-foreground mt-4">Carregando demandas...</p>
+          <p className="text-muted-foreground mt-4">{t("common.loading")}</p>
         </div>
       );
     }
@@ -57,10 +58,10 @@ export default function Demands() {
           <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
             <Search className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold text-foreground">
-              Nenhum resultado encontrado
+              {t("common.noResults")}
             </h3>
             <p className="text-muted-foreground mt-2">
-              Tente buscar por outro termo
+              {t("common.search")}
             </p>
           </div>
         );
@@ -69,18 +70,16 @@ export default function Demands() {
         <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
           <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-lg font-semibold text-foreground">
-            Nenhuma demanda encontrada
+            {t("demands.noDemands")}
           </h3>
           <p className="text-muted-foreground mt-2">
-            {isReadOnly
-              ? "Não há demandas nesta equipe"
-              : "Comece criando uma nova demanda"}
+            {isReadOnly ? t("common.noResults") : t("demands.createFirst")}
           </p>
           {!isReadOnly && (
             <div className="mt-6">
               <Button onClick={() => navigate("/demands/create")}>
                 <Plus className="mr-2 h-4 w-4" />
-                Criar Primeira Demanda
+                {t("demands.createFirst")}
               </Button>
             </div>
           )}
@@ -115,18 +114,18 @@ export default function Demands() {
     <div className="space-y-4 md:space-y-6 animate-fade-in">
       <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Demandas</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+            {t("demands.title")}
+          </h1>
           <p className="text-sm md:text-base text-muted-foreground">
-            {isReadOnly
-              ? "Visualize as demandas da sua equipe"
-              : "Gerencie todas as demandas das suas equipes"}
+            {isReadOnly ? t("common.view") : t("common.actions")}
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div className="relative flex-1 sm:flex-none">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar demandas..."
+              placeholder={t("common.search")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 w-full sm:w-[200px] md:w-[250px]"
@@ -139,6 +138,7 @@ export default function Demands() {
                 size="icon"
                 className={viewMode === "table" ? "rounded-r-none bg-primary text-primary-foreground" : "rounded-r-none"}
                 onClick={() => setViewMode("table")}
+                title={t("demands.tableView")}
               >
                 <List className="h-4 w-4" />
               </Button>
@@ -147,14 +147,15 @@ export default function Demands() {
                 size="icon"
                 className={viewMode === "grid" ? "rounded-l-none bg-primary text-primary-foreground" : "rounded-l-none"}
                 onClick={() => setViewMode("grid")}
+                title={t("demands.gridView")}
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
             </div>
             <Button onClick={() => navigate("/demands/create")} className="shadow-primary flex-1 sm:flex-none">
               <Plus className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Nova Demanda</span>
-              <span className="sm:hidden">Nova</span>
+              <span className="hidden sm:inline">{t("demands.newDemand")}</span>
+              <span className="sm:hidden">{t("demands.newDemand").split(" ")[0]}</span>
             </Button>
           </div>
         </div>
@@ -164,18 +165,18 @@ export default function Demands() {
         <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
           <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-lg font-semibold text-foreground">
-            Selecione uma equipe
+            {t("teams.title")}
           </h3>
           <p className="text-muted-foreground mt-2">
-            Use o seletor no menu superior para escolher uma equipe
+            {t("common.noResults")}
           </p>
         </div>
       ) : (
         <Tabs defaultValue="all" className="space-y-4">
           <TabsList className="bg-muted w-full sm:w-auto grid grid-cols-3 sm:inline-flex">
-            <TabsTrigger value="all" className="text-xs sm:text-sm">Todas</TabsTrigger>
-            <TabsTrigger value="mine" className="text-xs sm:text-sm">Atribuídas</TabsTrigger>
-            <TabsTrigger value="created" className="text-xs sm:text-sm">Criadas</TabsTrigger>
+            <TabsTrigger value="all" className="text-xs sm:text-sm">{t("common.all")}</TabsTrigger>
+            <TabsTrigger value="mine" className="text-xs sm:text-sm">{t("demands.assignees")}</TabsTrigger>
+            <TabsTrigger value="created" className="text-xs sm:text-sm">{t("demands.createdAt")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">
