@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { SubtaskCreateSchema, SubtaskUpdateSchema, validateData } from "@/lib/validations";
 
 interface Subtask {
   id: string;
@@ -31,10 +32,13 @@ export function useCreateSubtask() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ demandId, title }: { demandId: string; title: string }) => {
+      // Validate input data before database operation
+      const validatedData = validateData(SubtaskCreateSchema, { demandId, title });
+      
       const { data: existing } = await supabase
         .from("demand_subtasks")
         .select("sort_order")
-        .eq("demand_id", demandId)
+        .eq("demand_id", validatedData.demandId)
         .order("sort_order", { ascending: false })
         .limit(1);
       
@@ -42,7 +46,7 @@ export function useCreateSubtask() {
       
       const { data, error } = await supabase
         .from("demand_subtasks")
-        .insert({ demand_id: demandId, title, sort_order: nextOrder })
+        .insert({ demand_id: validatedData.demandId, title: validatedData.title, sort_order: nextOrder })
         .select()
         .single();
       if (error) throw error;
@@ -58,14 +62,17 @@ export function useUpdateSubtask() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, completed, title }: { id: string; completed?: boolean; title?: string }) => {
+      // Validate input data before database operation
+      const validatedData = validateData(SubtaskUpdateSchema, { id, completed, title });
+      
       const updates: Partial<Subtask> = {};
-      if (completed !== undefined) updates.completed = completed;
-      if (title !== undefined) updates.title = title;
+      if (validatedData.completed !== undefined) updates.completed = validatedData.completed;
+      if (validatedData.title !== undefined) updates.title = validatedData.title;
       
       const { data, error } = await supabase
         .from("demand_subtasks")
         .update(updates)
-        .eq("id", id)
+        .eq("id", validatedData.id)
         .select()
         .single();
       if (error) throw error;
