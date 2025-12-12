@@ -128,7 +128,7 @@ export default function TeamRequests() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
       <div>
         <Button
           variant="ghost"

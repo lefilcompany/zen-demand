@@ -225,7 +225,7 @@ export default function DemandDetail() {
   })) || [];
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4 md:space-y-6 animate-fade-in">
+    <div className="space-y-4 md:space-y-6 animate-fade-in">
       <div>
         <Button
           variant="ghost"
