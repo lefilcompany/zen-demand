@@ -31,6 +31,7 @@ import Adjustments from "./pages/Adjustments";
 import Reports from "./pages/Reports";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
                 <Routes>
                   {/* Public routes */}
                   <Route path="/auth" element={<Auth />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/welcome" element={<Welcome />} />
                   <Route path="/teams/create" element={<CreateTeam />} />
                   <Route path="/teams/join" element={<JoinTeam />} />
