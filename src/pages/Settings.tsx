@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Moon, Sun, Monitor, Bell, Mail, Smartphone, Loader2 } from "lucide-react";
+import { ArrowLeft, Moon, Sun, Monitor, Bell, Mail, Smartphone, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -18,12 +18,16 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useNotificationPreferences, NotificationPreferences } from "@/hooks/useNotificationPreferences";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Settings() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { t, i18n } = useTranslation();
+  const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
+  const [isSendingTest, setIsSendingTest] = useState(false);
   const { preferences, updatePreferences, isLoading } = useNotificationPreferences();
   const { 
     isSupported: isPushSupported, 
@@ -33,6 +37,31 @@ export default function Settings() {
     enablePushNotifications, 
     disablePushNotifications 
   } = usePushNotifications();
+
+  const sendTestNotification = async () => {
+    if (!user?.id) return;
+    
+    setIsSendingTest(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-push-notification", {
+        body: {
+          userId: user.id,
+          title: "🎉 Teste de Notificação",
+          body: "Se você está vendo isso, as notificações push estão funcionando!",
+          link: "/settings",
+        },
+      });
+
+      if (error) throw error;
+      
+      toast.success("Notificação de teste enviada!");
+    } catch (error: any) {
+      console.error("Error sending test notification:", error);
+      toast.error("Erro ao enviar notificação de teste");
+    } finally {
+      setIsSendingTest(false);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -229,26 +258,43 @@ export default function Settings() {
                       </p>
                     </div>
                   </div>
-                  {isPushEnabled ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={disablePushNotifications}
-                      disabled={isPushLoading}
-                    >
-                      {isPushLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Desativar
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      onClick={enablePushNotifications}
-                      disabled={isPushLoading || permissionStatus === "denied"}
-                    >
-                      {isPushLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Ativar
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {isPushEnabled && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={sendTestNotification}
+                        disabled={isSendingTest}
+                      >
+                        {isSendingTest ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="mr-2 h-4 w-4" />
+                        )}
+                        Testar
+                      </Button>
+                    )}
+                    {isPushEnabled ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={disablePushNotifications}
+                        disabled={isPushLoading}
+                      >
+                        {isPushLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Desativar
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={enablePushNotifications}
+                        disabled={isPushLoading || permissionStatus === "denied"}
+                      >
+                        {isPushLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Ativar
+                      </Button>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
