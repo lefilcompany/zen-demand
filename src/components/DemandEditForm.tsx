@@ -10,6 +10,7 @@ import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees"
 import { addDays, format } from "date-fns";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errorUtils";
 
 interface DemandEditFormProps {
   demand: {
@@ -80,7 +81,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
       onSuccess();
     } catch (error: any) {
       toast.error("Erro ao atualizar demanda", {
-        description: error.message || "Tente novamente.",
+        description: getErrorMessage(error),
       });
     }
   };

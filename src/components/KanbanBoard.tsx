@@ -14,6 +14,7 @@ import { Calendar, Clock, GripVertical, RefreshCw, Wrench } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { getErrorMessage } from "@/lib/errorUtils";
 import { useUpdateDemand, useDemandStatuses, useCreateInteraction } from "@/hooks/useDemands";
 import { useDemandAssignees } from "@/hooks/useDemandAssignees";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
@@ -141,7 +142,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
         },
         onError: (error: any) => {
           toast.error("Erro ao alterar status", {
-            description: error.message || "Tente novamente.",
+            description: getErrorMessage(error),
           });
         },
       }
@@ -222,7 +223,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
         },
         onError: (error: any) => {
           toast.error("Erro ao solicitar ajuste", {
-            description: error.message || "Tente novamente.",
+            description: getErrorMessage(error),
           });
         },
       }

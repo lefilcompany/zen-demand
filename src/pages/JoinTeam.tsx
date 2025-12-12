@@ -7,6 +7,7 @@ import { ArrowLeft, Users, Clock, CheckCircle, XCircle, Loader2, KeyRound, Send,
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errorUtils";
 import { supabase } from "@/integrations/supabase/client";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
@@ -40,7 +41,7 @@ export default function JoinTeam() {
             toast.warning("Você já possui uma solicitação pendente para esta equipe.");
           } else {
             toast.error("Erro ao enviar solicitação", {
-              description: error.message || "Ocorreu um erro inesperado.",
+              description: getErrorMessage(error),
             });
           }
         },

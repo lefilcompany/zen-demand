@@ -35,6 +35,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errorUtils";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export default function DemandDetail() {
@@ -128,7 +129,7 @@ export default function DemandDetail() {
         },
         onError: (error: any) => {
           toast.error("Erro ao solicitar ajuste", {
-            description: error.message || "Tente novamente.",
+            description: getErrorMessage(error),
           });
         },
       }
@@ -150,7 +151,7 @@ export default function DemandDetail() {
         },
         onError: (error: any) => {
           toast.error("Erro ao arquivar demanda", {
-            description: error.message || "Tente novamente.",
+            description: getErrorMessage(error),
           });
         },
       }
@@ -173,7 +174,7 @@ export default function DemandDetail() {
         },
         onError: (error: any) => {
           toast.error("Erro ao adicionar comentário", {
-            description: error.message || "Tente novamente.",
+            description: getErrorMessage(error),
           });
         },
       }
@@ -196,7 +197,7 @@ export default function DemandDetail() {
         },
         onError: (error: any) => {
           toast.error("Erro ao atualizar responsáveis", {
-            description: error.message || "Tente novamente.",
+            description: getErrorMessage(error),
           });
         },
       }

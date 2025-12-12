@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errorUtils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -92,7 +93,7 @@ export default function ServicesManagement() {
           },
           onError: (error: any) => {
             toast.error("Erro ao atualizar serviço", {
-              description: error.message || "Tente novamente.",
+              description: getErrorMessage(error),
             });
           },
         }
@@ -112,7 +113,7 @@ export default function ServicesManagement() {
           },
           onError: (error: any) => {
             toast.error("Erro ao criar serviço", {
-              description: error.message || "Tente novamente.",
+              description: getErrorMessage(error),
             });
           },
         }
@@ -130,7 +131,7 @@ export default function ServicesManagement() {
         },
         onError: (error: any) => {
           toast.error("Erro ao excluir serviço", {
-            description: error.message || "Tente novamente.",
+            description: getErrorMessage(error),
           });
         },
       }

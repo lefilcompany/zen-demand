@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errorUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,7 +62,9 @@ export default function Profile() {
       toast.success("Perfil atualizado com sucesso!");
     },
     onError: (error) => {
-      toast.error("Erro ao atualizar perfil: " + error.message);
+      toast.error("Erro ao atualizar perfil", {
+        description: getErrorMessage(error),
+      });
     },
   });
 
@@ -103,7 +106,9 @@ export default function Profile() {
       setAvatarUrl(publicUrl);
       toast.success("Imagem carregada com sucesso!");
     } catch (error: any) {
-      toast.error("Erro ao fazer upload: " + error.message);
+      toast.error("Erro ao fazer upload", {
+        description: getErrorMessage(error),
+      });
     } finally {
       setIsUploading(false);
     }

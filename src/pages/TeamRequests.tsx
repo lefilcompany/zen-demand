@@ -11,6 +11,7 @@ import { ArrowLeft, Clock, CheckCircle, XCircle, UserPlus, Loader2 } from "lucid
 import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errorUtils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -67,7 +68,7 @@ export default function TeamRequests() {
         },
         onError: (error: any) => {
           toast.error("Erro ao aprovar solicitação", {
-            description: error.message || "Tente novamente.",
+            description: getErrorMessage(error),
           });
         },
       }
@@ -90,7 +91,7 @@ export default function TeamRequests() {
         },
         onError: (error: any) => {
           toast.error("Erro ao rejeitar solicitação", {
-            description: error.message || "Tente novamente.",
+            description: getErrorMessage(error),
           });
         },
       }
