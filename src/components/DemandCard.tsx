@@ -1,9 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar } from "lucide-react";
+import { Calendar, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
+import { cn } from "@/lib/utils";
 
 interface Assignee {
   user_id: string;
@@ -44,6 +45,7 @@ const priorityColors = {
 
 export function DemandCard({ demand, onClick }: DemandCardProps) {
   const assignees = demand.demand_assignees || [];
+  const isHighPriority = demand.priority === "alta";
   
   // Fallback to assigned_profile if no assignees
   const displayAssignees = assignees.length > 0 
@@ -54,13 +56,21 @@ export function DemandCard({ demand, onClick }: DemandCardProps) {
 
   return (
     <Card
-      className="hover:shadow-lg transition-all cursor-pointer"
+      className={cn(
+        "hover:shadow-lg transition-all cursor-pointer",
+        isHighPriority && "border-l-4 border-l-destructive"
+      )}
       onClick={onClick}
     >
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1 flex-1">
-            <CardTitle className="text-lg">{demand.title}</CardTitle>
+            <div className="flex items-center gap-2">
+              {isHighPriority && (
+                <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
+              )}
+              <CardTitle className="text-lg">{demand.title}</CardTitle>
+            </div>
             {demand.description && (
               <CardDescription className="line-clamp-2">
                 {demand.description}
