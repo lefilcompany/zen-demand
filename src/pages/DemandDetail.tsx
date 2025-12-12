@@ -70,8 +70,9 @@ export default function DemandDetail() {
 
   const demand = demands?.find((d) => d.id === id);
   const { data: role } = useTeamRole(demand?.team_id || null);
+  const isAssignee = assignees?.some(a => a.user_id === user?.id) || false;
   const canManageAssignees = role === "admin" || role === "moderator";
-  const canEdit = role === "admin" || role === "moderator" || demand?.created_by === user?.id;
+  const canEdit = role === "admin" || role === "moderator" || role === "executor" || demand?.created_by === user?.id;
   const isCreator = demand?.created_by === user?.id;
 
   // Check if demand is delivered or in progress
