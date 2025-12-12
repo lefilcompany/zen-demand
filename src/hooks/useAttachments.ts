@@ -94,7 +94,29 @@ export function useDeleteAttachment() {
   });
 }
 
-export function getAttachmentUrl(filePath: string) {
-  const { data } = supabase.storage.from("demand-attachments").getPublicUrl(filePath);
-  return data.publicUrl;
+export async function getAttachmentUrl(filePath: string): Promise<string | null> {
+  // Use signed URLs for private bucket (4 hour expiration)
+  const { data, error } = await supabase.storage
+    .from("demand-attachments")
+    .createSignedUrl(filePath, 14400); // 4 hours
+  
+  if (error) {
+    console.error("Error creating signed URL:", error);
+    return null;
+  }
+  
+  return data.signedUrl;
+}
+
+// Synchronous version for immediate use (creates signed URL in background)
+export function useAttachmentUrl(filePath: string | null) {
+  return useQuery({
+    queryKey: ["attachment-url", filePath],
+    queryFn: async () => {
+      if (!filePath) return null;
+      return getAttachmentUrl(filePath);
+    },
+    enabled: !!filePath,
+    staleTime: 1000 * 60 * 60 * 3, // Cache for 3 hours (less than signed URL expiration)
+  });
 }

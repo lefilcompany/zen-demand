@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Paperclip, X, Download, FileText, Image, File, Trash2 } from "lucide-react";
+import { Paperclip, X, Download, FileText, Image, File, Trash2, Loader2 } from "lucide-react";
 import { useAttachments, useUploadAttachment, useDeleteAttachment, getAttachmentUrl } from "@/hooks/useAttachments";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -12,6 +12,103 @@ interface AttachmentUploaderProps {
 }
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+
+interface AttachmentItemProps {
+  attachment: {
+    id: string;
+    file_name: string;
+    file_path: string;
+    file_type: string;
+    file_size: number;
+    created_at: string;
+  };
+  readOnly: boolean;
+  onDelete: (id: string, filePath: string) => void;
+}
+
+function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    
+    getAttachmentUrl(attachment.file_path).then((signedUrl) => {
+      if (mounted) {
+        setUrl(signedUrl);
+        setLoading(false);
+      }
+    });
+    
+    return () => { mounted = false; };
+  }, [attachment.file_path]);
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith("image/")) return Image;
+    if (type.includes("pdf") || type.includes("document")) return FileText;
+    return File;
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const Icon = getFileIcon(attachment.file_type);
+  const isImage = attachment.file_type.startsWith("image/");
+
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 group">
+      {loading ? (
+        <div className="h-10 w-10 flex items-center justify-center">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+      ) : isImage && url ? (
+        <img
+          src={url}
+          alt={attachment.file_name}
+          className="h-10 w-10 object-cover rounded"
+        />
+      ) : (
+        <Icon className="h-10 w-10 p-2 bg-background rounded" />
+      )}
+      
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{attachment.file_name}</p>
+        <p className="text-xs text-muted-foreground">
+          {formatSize(attachment.file_size)} • {format(new Date(attachment.created_at), "dd/MM/yyyy", { locale: ptBR })}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-1">
+        {url && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            asChild
+          >
+            <a href={url} download={attachment.file_name} target="_blank" rel="noopener noreferrer">
+              <Download className="h-4 w-4" />
+            </a>
+          </Button>
+        )}
+        
+        {!readOnly && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 opacity-0 group-hover:opacity-100"
+            onClick={() => onDelete(attachment.id, attachment.file_path)}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function AttachmentUploader({ demandId, readOnly = false }: AttachmentUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
@@ -50,18 +147,6 @@ export function AttachmentUploader({ demandId, readOnly = false }: AttachmentUpl
     } catch {
       toast.error("Erro ao remover anexo");
     }
-  };
-
-  const getFileIcon = (type: string) => {
-    if (type.startsWith("image/")) return Image;
-    if (type.includes("pdf") || type.includes("document")) return FileText;
-    return File;
-  };
-
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   if (isLoading) {
@@ -103,59 +188,14 @@ export function AttachmentUploader({ demandId, readOnly = false }: AttachmentUpl
 
       {attachments && attachments.length > 0 && (
         <div className="space-y-2">
-          {attachments.map((attachment) => {
-            const Icon = getFileIcon(attachment.file_type);
-            const url = getAttachmentUrl(attachment.file_path);
-            const isImage = attachment.file_type.startsWith("image/");
-
-            return (
-              <div
-                key={attachment.id}
-                className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 group"
-              >
-                {isImage ? (
-                  <img
-                    src={url}
-                    alt={attachment.file_name}
-                    className="h-10 w-10 object-cover rounded"
-                  />
-                ) : (
-                  <Icon className="h-10 w-10 p-2 bg-background rounded" />
-                )}
-                
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{attachment.file_name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatSize(attachment.file_size)} • {format(new Date(attachment.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    asChild
-                  >
-                    <a href={url} download={attachment.file_name} target="_blank" rel="noopener noreferrer">
-                      <Download className="h-4 w-4" />
-                    </a>
-                  </Button>
-                  
-                  {!readOnly && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 opacity-0 group-hover:opacity-100"
-                      onClick={() => handleDelete(attachment.id, attachment.file_path)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+          {attachments.map((attachment) => (
+            <AttachmentItem
+              key={attachment.id}
+              attachment={attachment}
+              readOnly={readOnly}
+              onDelete={handleDelete}
+            />
+          ))}
         </div>
       )}
     </div>
