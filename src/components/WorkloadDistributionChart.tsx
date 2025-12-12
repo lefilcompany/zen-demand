@@ -72,24 +72,7 @@ export function WorkloadDistributionChart({ demands }: WorkloadDistributionChart
     .slice(0, 6); // Top 6 members
 
   const maxTotal = Math.max(...workloadData.map((m) => m.total), 1);
-
-  if (workloadData.length === 0) {
-    return (
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base font-medium flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            Carga de Trabalho
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground text-center py-8">
-            Nenhum membro com demandas atribuídas
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const hasData = workloadData.length > 0;
 
   return (
     <Card>
@@ -99,40 +82,51 @@ export function WorkloadDistributionChart({ demands }: WorkloadDistributionChart
           Carga de Trabalho
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {workloadData.map((member) => {
-          const progressPercent = (member.total / maxTotal) * 100;
-          const initials = member.name
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .slice(0, 2)
-            .toUpperCase();
+      <CardContent>
+        {hasData ? (
+          <div className="space-y-4">
+            {workloadData.map((member) => {
+              const progressPercent = (member.total / maxTotal) * 100;
+              const initials = member.name
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase();
 
-          return (
-            <div key={member.id} className="space-y-2">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={member.avatar || undefined} />
-                  <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{member.name}</p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>{member.total} demandas</span>
-                    <span>•</span>
-                    <span className="text-emerald-600">{member.delivered} entregues</span>
-                    <span>•</span>
-                    <span className="text-amber-600">{member.inProgress} em andamento</span>
+              return (
+                <div key={member.id} className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={member.avatar || undefined} />
+                      <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{member.name}</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{member.total} demandas</span>
+                        <span>•</span>
+                        <span className="text-emerald-600">{member.delivered} entregues</span>
+                        <span>•</span>
+                        <span className="text-amber-600">{member.inProgress} em andamento</span>
+                      </div>
+                    </div>
                   </div>
+                  <Progress value={progressPercent} className="h-2" />
                 </div>
-              </div>
-              <Progress value={progressPercent} className="h-2" />
-            </div>
-          );
-        })}
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <Users className="h-12 w-12 text-muted-foreground/30 mb-3" />
+            <p className="text-sm text-muted-foreground">
+              Nenhum membro com demandas atribuídas
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

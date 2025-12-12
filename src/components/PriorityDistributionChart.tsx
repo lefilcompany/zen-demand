@@ -35,27 +35,20 @@ export function PriorityDistributionChart({ demands }: PriorityDistributionChart
     return acc;
   }, {} as Record<string, number>);
 
-  const data = Object.entries(priorityCounts).map(([priority, count]) => ({
+  const rawData = Object.entries(priorityCounts).map(([priority, count]) => ({
     name: PRIORITY_LABELS[priority] || priority,
     value: count,
     color: PRIORITY_COLORS[priority] || "#6b7280"
   }));
 
-  if (data.length === 0) {
-    return (
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base md:text-lg flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-primary" />
-            Distribuição por Prioridade
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center h-48 text-muted-foreground">
-          Nenhuma demanda encontrada
-        </CardContent>
-      </Card>
-    );
-  }
+  const hasData = rawData.length > 0;
+  
+  // Empty state data
+  const emptyData = [
+    { name: "Sem dados", value: 1, color: "#e5e7eb" }
+  ];
+
+  const data = hasData ? rawData : emptyData;
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -66,36 +59,49 @@ export function PriorityDistributionChart({ demands }: PriorityDistributionChart
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={200}>
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={50}
-              outerRadius={70}
-              paddingAngle={2}
-              dataKey="value"
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip 
-              formatter={(value: number) => [`${value} demandas`, '']}
-              contentStyle={{ 
-                backgroundColor: 'hsl(var(--background))', 
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px'
-              }}
-            />
-            <Legend 
-              verticalAlign="bottom" 
-              height={36}
-              formatter={(value) => <span className="text-xs text-foreground">{value}</span>}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+        <div className="relative">
+          {!hasData && (
+            <div className="absolute inset-0 flex items-center justify-center z-10">
+              <span className="text-muted-foreground text-sm bg-background/80 px-3 py-1 rounded-md">
+                Sem demandas
+              </span>
+            </div>
+          )}
+          <ResponsiveContainer width="100%" height={200}>
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius={50}
+                outerRadius={70}
+                paddingAngle={hasData ? 2 : 0}
+                dataKey="value"
+              >
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} opacity={hasData ? 1 : 0.3} />
+                ))}
+              </Pie>
+              {hasData && (
+                <Tooltip 
+                  formatter={(value: number) => [`${value} demandas`, '']}
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--background))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                />
+              )}
+              {hasData && (
+                <Legend 
+                  verticalAlign="bottom" 
+                  height={36}
+                  formatter={(value) => <span className="text-xs text-foreground">{value}</span>}
+                />
+              )}
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );
