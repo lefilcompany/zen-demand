@@ -18,6 +18,7 @@ import { getErrorMessage } from "@/lib/errorUtils";
 import { useUpdateDemand, useDemandStatuses, useCreateInteraction } from "@/hooks/useDemands";
 import { useDemandAssignees } from "@/hooks/useDemandAssignees";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
+import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
 import { toast } from "sonner";
 import { useAdjustmentCounts } from "@/hooks/useAdjustmentCount";
 import { supabase } from "@/integrations/supabase/client";
@@ -164,29 +165,6 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
     return new Date(dueDate) < new Date();
   };
 
-  const formatTime = (totalSeconds: number) => {
-    if (totalSeconds <= 0) return null;
-    
-    const days = Math.floor(totalSeconds / (24 * 60 * 60));
-    const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
-    const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
-    const seconds = totalSeconds % 60;
-    
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    return `${pad(days)}:${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-  };
-
-  const getTotalTime = (createdAt?: string, updatedAt?: string) => {
-    if (!createdAt || !updatedAt) return null;
-    const diffMs = new Date(updatedAt).getTime() - new Date(createdAt).getTime();
-    if (diffMs < 0) return null;
-    return formatTime(Math.floor(diffMs / 1000));
-  };
-
-  const getExecutionTime = (demand: Demand) => {
-    const totalSeconds = demand.time_in_progress_seconds || 0;
-    return formatTime(totalSeconds);
-  };
 
   const handleOpenAdjustmentDialog = (e: React.MouseEvent, demandId: string) => {
     e.stopPropagation();
@@ -346,30 +324,17 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
                           )}
                         </div>
 
-                        {/* Time display for delivered demands */}
-                        {column.key === "Entregue" && (getTotalTime(demand.created_at, demand.updated_at) || getExecutionTime(demand)) && (
-                          <div className="flex flex-col gap-1 mb-2">
-                            {/* Total time since creation */}
-                            {getTotalTime(demand.created_at, demand.updated_at) && (
-                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 rounded-md px-2 py-1">
-                                <Calendar className="h-3 w-3" />
-                                <span className="text-[10px] uppercase font-medium">Total:</span>
-                                <span className="font-mono font-medium">
-                                  {getTotalTime(demand.created_at, demand.updated_at)}
-                                </span>
-                              </div>
-                            )}
-                            {/* Execution time (time in "Fazendo" status) */}
-                            {getExecutionTime(demand) && (
-                              <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded-md px-2 py-1">
-                                <Clock className="h-3 w-3" />
-                                <span className="text-[10px] uppercase font-medium">Execução:</span>
-                                <span className="font-mono font-medium">
-                                  {getExecutionTime(demand)}
-                                </span>
-                              </div>
-                            )}
-                          </div>
+                        {/* Time display for demands */}
+                        {(column.key === "Entregue" || column.key === "Fazendo") && (
+                          <DemandTimeDisplay
+                            createdAt={demand.created_at}
+                            updatedAt={demand.updated_at}
+                            timeInProgressSeconds={demand.time_in_progress_seconds}
+                            lastStartedAt={demand.last_started_at}
+                            isInProgress={column.key === "Fazendo"}
+                            isDelivered={column.key === "Entregue"}
+                            variant="card"
+                          />
                         )}
 
                         {/* Adjustment button for delivered demands */}
