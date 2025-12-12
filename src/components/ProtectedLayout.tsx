@@ -2,7 +2,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { TeamSelector } from "@/components/TeamSelector";
 import { Outlet, useNavigate } from "react-router-dom";
-import { Settings } from "lucide-react";
+import { Settings, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
@@ -18,10 +18,13 @@ import { useQuery } from "@tanstack/react-query";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { FloatingCreateButton } from "@/components/FloatingCreateButton";
+import { OnboardingTour } from "@/components/OnboardingTour";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 export function ProtectedLayout() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { isOpen, steps, closeTour, completeOnboarding, resetOnboarding, hasCompleted } = useOnboarding();
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -60,7 +63,9 @@ export function ProtectedLayout() {
               <ThemeToggle />
 
               {/* Notifications */}
-              <NotificationDropdown />
+              <div data-tour="notifications-btn">
+                <NotificationDropdown />
+              </div>
 
               {/* Settings - Hidden on mobile */}
               <Button variant="ghost" size="icon" onClick={() => navigate("/settings")} className="hidden sm:flex">
@@ -99,6 +104,12 @@ export function ProtectedLayout() {
                   <DropdownMenuItem onClick={() => navigate("/settings")}>
                     Configurações
                   </DropdownMenuItem>
+                  {hasCompleted && (
+                    <DropdownMenuItem onClick={resetOnboarding}>
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Rever Tour Guiado
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -109,6 +120,14 @@ export function ProtectedLayout() {
           <FloatingCreateButton />
         </main>
       </div>
+      
+      {/* Onboarding Tour */}
+      <OnboardingTour
+        steps={steps}
+        isOpen={isOpen}
+        onClose={closeTour}
+        onComplete={completeOnboarding}
+      />
     </SidebarProvider>
   );
 }

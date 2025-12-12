@@ -108,7 +108,7 @@ const Index = () => {
       <div className="space-y-4 md:space-y-6 animate-fade-in">
         {/* Header */}
         <div className="flex flex-col gap-3 sm:gap-4">
-          <div>
+          <div data-tour="dashboard-title">
             <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("dashboard.title")}</h1>
             <p className="text-sm text-muted-foreground">
               {format(new Date(), "MMMM yyyy", { locale: getLocale() })}
@@ -131,6 +131,7 @@ const Index = () => {
               onClick={() => navigate("/demands/create")}
               disabled={!canCreate}
               className="gap-2"
+              data-tour="new-demand-btn"
             >
               <PlusCircle className="h-4 w-4" />
               <span className="hidden sm:inline">{t("demands.newDemand")}</span>
@@ -140,7 +141,7 @@ const Index = () => {
         </div>
 
         {/* Scope Progress */}
-        <Card>
+        <Card data-tour="scope-progress">
           <CardContent className="pt-4 md:pt-6">
             <ScopeProgressBar 
               used={monthlyCount || 0} 
@@ -321,7 +322,7 @@ const Index = () => {
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
+        <div data-tour="dashboard-title">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">{t("dashboard.title")}</h1>
           <p className="text-sm md:text-base text-muted-foreground">{t("settings.description")}</p>
         </div>

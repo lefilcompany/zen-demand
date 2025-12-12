@@ -71,7 +71,7 @@ export function AppSidebar() {
       setOpenMobile(false);
     }
   };
-  return <Sidebar collapsible="icon">
+  return <Sidebar collapsible="icon" data-tour="sidebar">
       <SidebarContent>
         <div className="p-4 items-center justify-center px-0 py-0 mx-0 my-[24px] flex flex-col">
           {isCollapsed ? <img alt="SoMA" src="/lovable-uploads/8967ad53-156a-4e31-a5bd-b472b7cde839.png" className="h-5 w-5 object-scale-down" /> : <img src={logoSoma} alt="SoMA" className="h-10 w-auto" />}
@@ -81,27 +81,38 @@ export function AppSidebar() {
           <SidebarGroupLabel>{t("common.actions")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map(item => <SidebarMenuItem key={item.title} className="relative">
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink to={item.url} end={item.url === "/"} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                      <item.icon className="h-4 w-4" />
-                      {!isCollapsed && <span>{item.title}</span>}
-                      {!isCollapsed && (item as any).showBadge && adjustmentCount > 0 && (
-                        <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs">
-                          {adjustmentCount}
-                        </Badge>
-                      )}
-                    </NavLink>
-                  </SidebarMenuButton>
-                  {isCollapsed && (item as any).showBadge && adjustmentCount > 0 && (
-                    <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1">
-                      {adjustmentCount}
-                    </Badge>
-                  )}
-                </SidebarMenuItem>)}
+              {menuItems.map(item => {
+                const tourId = item.url === "/" ? "dashboard-link" 
+                  : item.url === "/kanban" ? "kanban-link"
+                  : item.url === "/demands" ? "demands-link"
+                  : item.url === "/adjustments" ? "adjustments-link"
+                  : item.url === "/archived" ? "archived-link"
+                  : undefined;
+                
+                return (
+                  <SidebarMenuItem key={item.title} className="relative" data-tour={tourId}>
+                    <SidebarMenuButton asChild tooltip={item.title}>
+                      <NavLink to={item.url} end={item.url === "/"} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                        <item.icon className="h-4 w-4" />
+                        {!isCollapsed && <span>{item.title}</span>}
+                        {!isCollapsed && (item as any).showBadge && adjustmentCount > 0 && (
+                          <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs">
+                            {adjustmentCount}
+                          </Badge>
+                        )}
+                      </NavLink>
+                    </SidebarMenuButton>
+                    {isCollapsed && (item as any).showBadge && adjustmentCount > 0 && (
+                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1">
+                        {adjustmentCount}
+                      </Badge>
+                    )}
+                  </SidebarMenuItem>
+                );
+              })}
 
               {/* Equipes - Popover quando colapsado, Collapsible quando expandido */}
-              {isCollapsed ? <SidebarMenuItem>
+              {isCollapsed ? <SidebarMenuItem data-tour="teams-link">
                   <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                     <PopoverTrigger asChild>
                       <SidebarMenuButton tooltip={t("teams.title")} className="hover:bg-sidebar-accent transition-colors relative">
@@ -137,7 +148,7 @@ export function AppSidebar() {
                     </PopoverContent>
                   </Popover>
                 </SidebarMenuItem> : <Collapsible open={teamsOpen} onOpenChange={setTeamsOpen} className="group/collapsible">
-                  <SidebarMenuItem>
+                  <SidebarMenuItem data-tour="teams-link">
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton tooltip={t("teams.title")} className="hover:bg-sidebar-accent transition-colors">
                         <Users className="h-4 w-4" />
@@ -170,7 +181,7 @@ export function AppSidebar() {
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>}
                         
-                        {isAdminOrModerator && selectedTeamId && <SidebarMenuSubItem>
+                        {isAdminOrModerator && selectedTeamId && <SidebarMenuSubItem data-tour="services-link">
                             <SidebarMenuSubButton asChild>
                               <NavLink to={`/teams/${selectedTeamId}/services`} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                                 <Settings2 className="h-4 w-4 mr-2" />
