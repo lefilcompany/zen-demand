@@ -78,18 +78,23 @@ export function AppSidebar() {
           <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map(item => <SidebarMenuItem key={item.title}>
+              {menuItems.map(item => <SidebarMenuItem key={item.title} className="relative">
                   <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink to={item.url} end={item.url === "/"} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors relative" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                    <NavLink to={item.url} end={item.url === "/"} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                       <item.icon className="h-4 w-4" />
                       {!isCollapsed && <span>{item.title}</span>}
-                      {(item as any).showBadge && adjustmentCount > 0 && (
-                        <Badge variant="destructive" className={isCollapsed ? "absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0" : "ml-auto h-5 min-w-5 flex items-center justify-center text-xs"}>
+                      {!isCollapsed && (item as any).showBadge && adjustmentCount > 0 && (
+                        <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs">
                           {adjustmentCount}
                         </Badge>
                       )}
                     </NavLink>
                   </SidebarMenuButton>
+                  {isCollapsed && (item as any).showBadge && adjustmentCount > 0 && (
+                    <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1">
+                      {adjustmentCount}
+                    </Badge>
+                  )}
                 </SidebarMenuItem>)}
 
               {/* Equipes - Popover quando colapsado, Collapsible quando expandido */}
