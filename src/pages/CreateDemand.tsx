@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCreateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useCanCreateDemand, useMonthlyDemandCount, useTeamScope } from "@/hooks/useTeamScope";
+import { useTeamRole } from "@/hooks/useTeamRole";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { ScopeProgressBar } from "@/components/ScopeProgressBar";
@@ -27,8 +28,10 @@ export default function CreateDemand() {
   const { data: canCreate } = useCanCreateDemand();
   const { data: monthlyCount } = useMonthlyDemandCount();
   const { data: scope } = useTeamScope();
+  const { data: role } = useTeamRole(selectedTeamId);
 
   const selectedTeam = teams?.find(t => t.id === selectedTeamId);
+  const canAssignResponsibles = role !== "requester";
   const limit = scope?.monthly_demand_limit || 0;
 
   const [title, setTitle] = useState("");
@@ -224,14 +227,16 @@ export default function CreateDemand() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Responsáveis</Label>
-              <AssigneeSelector
-                teamId={selectedTeamId}
-                selectedUserIds={assigneeIds}
-                onChange={setAssigneeIds}
-              />
-            </div>
+            {canAssignResponsibles && (
+              <div className="space-y-2">
+                <Label>Responsáveis</Label>
+                <AssigneeSelector
+                  teamId={selectedTeamId}
+                  selectedUserIds={assigneeIds}
+                  onChange={setAssigneeIds}
+                />
+              </div>
+            )}
 
             <div className="flex gap-2 pt-4">
               <Button
