@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { differenceInDays, differenceInHours } from "date-fns";
+import { differenceInHours } from "date-fns";
 
 interface Demand {
   created_at: string;
@@ -82,6 +82,7 @@ export function AverageCompletionTime({ demands }: AverageCompletionTimeProps) {
   };
 
   const trend = calculateTrend();
+  const hasData = completedDemands.length > 0;
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -121,8 +122,8 @@ export function AverageCompletionTime({ demands }: AverageCompletionTimeProps) {
             </>
           ) : (
             <span className="text-sm text-muted-foreground">
-              {completedDemands.length === 0 
-                ? "Nenhuma demanda concluída" 
+              {!hasData 
+                ? "Aguardando demandas concluídas" 
                 : `${completedDemands.length} demandas concluídas`}
             </span>
           )}
