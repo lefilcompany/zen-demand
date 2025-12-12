@@ -45,7 +45,7 @@ export default function Adjustments() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in">
       <div className="flex items-center gap-3">
         <Wrench className="h-6 w-6 text-primary" />
         <h1 className="text-2xl font-bold">Ajustes</h1>
