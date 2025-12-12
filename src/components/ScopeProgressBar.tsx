@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
@@ -8,14 +9,16 @@ interface ScopeProgressBarProps {
 }
 
 export function ScopeProgressBar({ used, limit, className }: ScopeProgressBarProps) {
+  const { t } = useTranslation();
+
   if (limit === 0) {
     return (
       <div className={cn("space-y-2", className)}>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Demandas este mês</span>
-          <span className="font-medium">{used} demandas</span>
+          <span className="text-muted-foreground">{t("scope.demandsThisMonth")}</span>
+          <span className="font-medium">{used} {t("demands.title").toLowerCase()}</span>
         </div>
-        <div className="text-xs text-muted-foreground">Sem limite definido</div>
+        <div className="text-xs text-muted-foreground">{t("scope.noLimitDefined")}</div>
       </div>
     );
   }
@@ -31,9 +34,9 @@ export function ScopeProgressBar({ used, limit, className }: ScopeProgressBarPro
   };
 
   const getStatusText = () => {
-    if (percentage >= 100) return "Limite atingido";
-    if (percentage >= 80) return "Próximo do limite";
-    return `Restam ${remaining} demandas`;
+    if (percentage >= 100) return t("scope.limitReached");
+    if (percentage >= 80) return t("scope.nearLimit");
+    return t("scope.remaining", { count: remaining });
   };
 
   const getStatusColor = () => {
@@ -46,9 +49,9 @@ export function ScopeProgressBar({ used, limit, className }: ScopeProgressBarPro
   return (
     <div className={cn("space-y-2", className)}>
       <div className="flex items-center justify-between text-sm">
-        <span className="text-muted-foreground">Uso do plano mensal</span>
+        <span className="text-muted-foreground">{t("scope.monthlyUsage")}</span>
         <span className="font-medium">
-          {used}/{limit} demandas ({Math.round(percentage)}%)
+          {used}/{limit} {t("demands.title").toLowerCase()} ({Math.round(percentage)}%)
         </span>
       </div>
       <div className="relative">

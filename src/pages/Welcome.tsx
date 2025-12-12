@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +7,7 @@ import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
 
 export default function Welcome() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -28,7 +30,7 @@ export default function Welcome() {
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-white px-6 text-center">
           <img src={logoSomaDark} alt="SoMA" className="h-10 sm:h-12 w-auto mb-3" />
           <h2 className="text-lg sm:text-xl font-semibold">
-            Bem-vindo ao SoMA!
+            {t("welcome.title")}
           </h2>
         </div>
       </div>
@@ -50,13 +52,13 @@ export default function Welcome() {
           <div className="max-w-md">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="h-5 w-5" />
-              <span className="text-sm font-medium uppercase tracking-wide">Conta criada com sucesso</span>
+              <span className="text-sm font-medium uppercase tracking-wide">{t("toast.success")}</span>
             </div>
             <h1 className="text-4xl xl:text-5xl font-bold mb-6 leading-tight">
-              Bem-vindo ao SoMA!
+              {t("welcome.title")}
             </h1>
             <p className="text-lg xl:text-xl text-white/90 leading-relaxed">
-              Escolha como você deseja começar sua jornada de gestão de demandas.
+              {t("welcome.subtitle")}
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -69,7 +71,7 @@ export default function Welcome() {
               </div>
             </div>
             <p className="text-white/80 text-sm">
-              Empresas já utilizam o SoMA
+              {t("teams.title")}
             </p>
           </div>
         </div>
@@ -80,10 +82,10 @@ export default function Welcome() {
         <div className="w-full max-w-md">
           <div className="mb-6 sm:mb-8 text-center lg:text-left">
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
-              O que você deseja fazer?
+              {t("welcome.subtitle")}
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground">
-              Escolha uma opção para começar
+              {t("common.actions")}
             </p>
           </div>
 
@@ -99,11 +101,11 @@ export default function Welcome() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-semibold text-foreground mb-1 flex items-center gap-2">
-                    Criar Nova Equipe
+                    {t("welcome.createTeamOption")}
                     <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Crie sua equipe e gerencie demandas. Você será o administrador com controle total.
+                    {t("welcome.createTeamDesc")}
                   </p>
                 </div>
               </div>
@@ -120,11 +122,11 @@ export default function Welcome() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-semibold text-foreground mb-1 flex items-center gap-2">
-                    Entrar em Equipe
+                    {t("welcome.joinTeamOption")}
                     <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Use um código de acesso para solicitar entrada em uma equipe existente.
+                    {t("welcome.joinTeamDesc")}
                   </p>
                 </div>
               </div>
@@ -139,7 +141,7 @@ export default function Welcome() {
               className="text-muted-foreground hover:text-foreground"
             >
               <LogOut className="mr-2 h-4 w-4" />
-              Sair da Conta
+              {t("auth.logout")}
             </Button>
           </div>
         </div>
