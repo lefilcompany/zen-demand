@@ -139,7 +139,7 @@ export default function Auth() {
               <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur border-2 border-white/30" />
               <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur border-2 border-white/30" />
               <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur border-2 border-white/30 flex items-center justify-center text-sm font-medium">
-                +50
+                +30
               </div>
             </div>
             <p className="text-white/80 text-sm">Empresas já utilizam o SoMA</p>
