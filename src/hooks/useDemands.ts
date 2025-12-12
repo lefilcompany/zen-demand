@@ -9,6 +9,33 @@ import {
   validateData 
 } from "@/lib/validations";
 
+// Priority order: alta (high) = 1, média (medium) = 2, baixa (low) = 3
+const priorityOrder: Record<string, number> = {
+  alta: 1,
+  média: 2,
+  baixa: 3,
+};
+
+export function sortDemandsByPriorityAndDueDate<T extends { priority?: string | null; due_date?: string | null }>(
+  demands: T[]
+): T[] {
+  return [...demands].sort((a, b) => {
+    // First sort by priority (alta > média > baixa)
+    const priorityA = priorityOrder[a.priority || "média"] || 2;
+    const priorityB = priorityOrder[b.priority || "média"] || 2;
+    
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+    
+    // Then sort by due date (earliest first, null dates at the end)
+    const dateA = a.due_date ? new Date(a.due_date).getTime() : Infinity;
+    const dateB = b.due_date ? new Date(b.due_date).getTime() : Infinity;
+    
+    return dateA - dateB;
+  });
+}
+
 export function useDemands(teamId?: string) {
   const { user } = useAuth();
 
@@ -28,8 +55,7 @@ export function useDemands(teamId?: string) {
             profile:profiles(full_name, avatar_url)
           )
         `)
-        .eq("archived", false)
-        .order("created_at", { ascending: false });
+        .eq("archived", false);
 
       if (teamId) {
         query = query.eq("team_id", teamId);
@@ -38,7 +64,9 @@ export function useDemands(teamId?: string) {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data;
+      
+      // Sort by priority then due date
+      return sortDemandsByPriorityAndDueDate(data || []);
     },
     enabled: !!user,
   });
