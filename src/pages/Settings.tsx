@@ -76,11 +76,11 @@ export default function Settings() {
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
-          size="icon"
           onClick={() => navigate(-1)}
           className="shrink-0"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar
         </Button>
         <div>
           <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
