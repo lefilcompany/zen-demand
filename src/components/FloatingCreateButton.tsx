@@ -25,6 +25,7 @@ export function FloatingCreateButton() {
           onClick={() => navigate("/demands/create")}
           className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg animate-scale-in"
           size="icon"
+          data-tour="new-demand-btn"
         >
           <Plus className="h-6 w-6" />
         </Button>
