@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Moon, Sun, Monitor, Bell, Mail } from "lucide-react";
+import { ArrowLeft, Moon, Sun, Monitor, Bell, Mail, Smartphone, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -17,6 +17,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useNotificationPreferences, NotificationPreferences } from "@/hooks/useNotificationPreferences";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -24,6 +25,14 @@ export default function Settings() {
   const { t, i18n } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const { preferences, updatePreferences, isLoading } = useNotificationPreferences();
+  const { 
+    isSupported: isPushSupported, 
+    isEnabled: isPushEnabled, 
+    isLoading: isPushLoading,
+    permissionStatus,
+    enablePushNotifications, 
+    disablePushNotifications 
+  } = usePushNotifications();
 
   useEffect(() => {
     setMounted(true);
@@ -200,6 +209,48 @@ export default function Settings() {
                   disabled={isLoading}
                 />
               </div>
+
+              {/* Push Notifications Activation */}
+              {isPushSupported && (
+                <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <Smartphone className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <Label className="cursor-pointer font-medium">
+                        Notificações do Navegador
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        {isPushEnabled 
+                          ? "Notificações push estão ativas neste dispositivo" 
+                          : permissionStatus === "denied"
+                          ? "Permissão negada. Habilite nas configurações do navegador."
+                          : "Receba notificações mesmo quando o navegador estiver minimizado"
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  {isPushEnabled ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={disablePushNotifications}
+                      disabled={isPushLoading}
+                    >
+                      {isPushLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Desativar
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={enablePushNotifications}
+                      disabled={isPushLoading || permissionStatus === "denied"}
+                    >
+                      {isPushLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Ativar
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
 
             <Separator />
