@@ -1,15 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
+
+interface IBGEState {
+  id: number;
+  sigla: string;
+  nome: string;
+}
+
+interface IBGECity {
+  id: number;
+  nome: string;
+}
 
 export default function Auth() {
   const { t } = useTranslation();
@@ -18,6 +30,10 @@ export default function Auth() {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [states, setStates] = useState<IBGEState[]>([]);
+  const [cities, setCities] = useState<IBGECity[]>([]);
+  const [loadingStates, setLoadingStates] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(false);
   const [loginData, setLoginData] = useState({
     email: "",
     password: ""
@@ -31,6 +47,47 @@ export default function Auth() {
     password: "",
     confirmPassword: ""
   });
+
+  // Fetch states from IBGE API
+  useEffect(() => {
+    const fetchStates = async () => {
+      setLoadingStates(true);
+      try {
+        const response = await fetch("https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome");
+        const data = await response.json();
+        setStates(data);
+      } catch (error) {
+        console.error("Error fetching states:", error);
+      } finally {
+        setLoadingStates(false);
+      }
+    };
+    fetchStates();
+  }, []);
+
+  // Fetch cities when state changes
+  useEffect(() => {
+    if (!signupData.state) {
+      setCities([]);
+      return;
+    }
+    
+    const fetchCities = async () => {
+      setLoadingCities(true);
+      setCities([]);
+      setSignupData(prev => ({ ...prev, city: "" }));
+      try {
+        const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${signupData.state}/municipios?orderBy=nome`);
+        const data = await response.json();
+        setCities(data);
+      } catch (error) {
+        console.error("Error fetching cities:", error);
+      } finally {
+        setLoadingCities(false);
+      }
+    };
+    fetchCities();
+  }, [signupData.state]);
 
   if (loading) {
     return (
@@ -268,27 +325,52 @@ export default function Auth() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label htmlFor="signup-state">{t("common.state")}</Label>
-                    <Input 
-                      id="signup-state" 
-                      type="text" 
-                      placeholder="UF" 
-                      className="h-10 sm:h-11" 
-                      value={signupData.state} 
-                      onChange={e => setSignupData({...signupData, state: e.target.value})} 
-                      required 
-                    />
+                    <Select
+                      value={signupData.state}
+                      onValueChange={(value) => setSignupData({...signupData, state: value})}
+                    >
+                      <SelectTrigger className="h-10 sm:h-11">
+                        <SelectValue placeholder={loadingStates ? "Carregando..." : "Selecione"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {loadingStates ? (
+                          <div className="flex items-center justify-center p-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          </div>
+                        ) : (
+                          states.map((state) => (
+                            <SelectItem key={state.id} value={state.sigla}>
+                              {state.sigla} - {state.nome}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-city">{t("common.city")}</Label>
-                    <Input 
-                      id="signup-city" 
-                      type="text" 
-                      placeholder={t("common.city")} 
-                      className="h-10 sm:h-11" 
-                      value={signupData.city} 
-                      onChange={e => setSignupData({...signupData, city: e.target.value})} 
-                      required 
-                    />
+                    <Select
+                      value={signupData.city}
+                      onValueChange={(value) => setSignupData({...signupData, city: value})}
+                      disabled={!signupData.state || loadingCities}
+                    >
+                      <SelectTrigger className="h-10 sm:h-11">
+                        <SelectValue placeholder={loadingCities ? "Carregando..." : "Selecione"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {loadingCities ? (
+                          <div className="flex items-center justify-center p-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          </div>
+                        ) : (
+                          cities.map((city) => (
+                            <SelectItem key={city.id} value={city.nome}>
+                              {city.nome}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <div className="space-y-2">
