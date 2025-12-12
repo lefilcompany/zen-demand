@@ -38,7 +38,7 @@ export default function ArchivedDemands() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
           <Archive className="h-8 w-8" />
