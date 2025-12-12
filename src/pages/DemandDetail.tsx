@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useDemands, useDemandInteractions, useCreateInteraction, useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
+import { useDemands, useDemandInteractions, useCreateInteraction, useUpdateInteraction, useDeleteInteraction, useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
 import { supabase } from "@/integrations/supabase/client";
 import { useTeamRole } from "@/hooks/useTeamRole";
@@ -29,7 +29,7 @@ import { useAuth } from "@/lib/auth";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { DemandEditForm } from "@/components/DemandEditForm";
-import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter } from "lucide-react";
+import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter, MoreHorizontal, Trash2 } from "lucide-react";
 import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
 import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
@@ -38,6 +38,12 @@ import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function DemandDetail() {
   const { id } = useParams<{ id: string }>();
@@ -48,6 +54,8 @@ export default function DemandDetail() {
   const { data: assignees } = useDemandAssignees(id || null);
   const { data: statuses } = useDemandStatuses();
   const createInteraction = useCreateInteraction();
+  const updateInteraction = useUpdateInteraction();
+  const deleteInteraction = useDeleteInteraction();
   const updateDemand = useUpdateDemand();
   const setAssignees = useSetAssignees();
   const [comment, setComment] = useState("");
@@ -57,6 +65,8 @@ export default function DemandDetail() {
   const [isAdjustmentDialogOpen, setIsAdjustmentDialogOpen] = useState(false);
   const [adjustmentReason, setAdjustmentReason] = useState("");
   const [interactionFilter, setInteractionFilter] = useState<string>("all");
+  const [editingInteractionId, setEditingInteractionId] = useState<string | null>(null);
+  const [editingInteractionContent, setEditingInteractionContent] = useState("");
 
   const demand = demands?.find((d) => d.id === id);
   const { data: role } = useTeamRole(demand?.team_id || null);
@@ -178,6 +188,49 @@ export default function DemandDetail() {
         },
         onError: (error: any) => {
           toast.error("Erro ao adicionar comentário", {
+            description: getErrorMessage(error),
+          });
+        },
+      }
+    );
+  };
+
+  const handleEditInteraction = (interactionId: string, content: string) => {
+    setEditingInteractionId(interactionId);
+    setEditingInteractionContent(content);
+  };
+
+  const handleSaveInteraction = () => {
+    if (!id || !editingInteractionId || !editingInteractionContent.trim()) return;
+    
+    updateInteraction.mutate(
+      { id: editingInteractionId, demandId: id, content: editingInteractionContent.trim() },
+      {
+        onSuccess: () => {
+          toast.success("Comentário atualizado!");
+          setEditingInteractionId(null);
+          setEditingInteractionContent("");
+        },
+        onError: (error: any) => {
+          toast.error("Erro ao atualizar comentário", {
+            description: getErrorMessage(error),
+          });
+        },
+      }
+    );
+  };
+
+  const handleDeleteInteraction = (interactionId: string) => {
+    if (!id) return;
+    
+    deleteInteraction.mutate(
+      { id: interactionId, demandId: id },
+      {
+        onSuccess: () => {
+          toast.success("Comentário excluído!");
+        },
+        onError: (error: any) => {
+          toast.error("Erro ao excluir comentário", {
             description: getErrorMessage(error),
           });
         },
@@ -506,6 +559,10 @@ export default function DemandDetail() {
             {filteredInteractions && filteredInteractions.length > 0 ? (
               filteredInteractions.map((interaction) => {
                 const isAdjustmentRequest = interaction.interaction_type === 'adjustment_request';
+                const isOwnInteraction = interaction.user_id === user?.id;
+                const canEditInteraction = isOwnInteraction && interaction.interaction_type === 'comment';
+                const isEditing = editingInteractionId === interaction.id;
+                
                 return (
                   <div
                     key={interaction.id}
@@ -522,27 +579,81 @@ export default function DemandDetail() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 space-y-1 min-w-0">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                        <span className="font-semibold text-xs md:text-sm truncate">
-                          {interaction.profiles?.full_name}
-                        </span>
-                        {isAdjustmentRequest && (
-                          <span className="text-[10px] md:text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-500/20 px-1.5 py-0.5 rounded">
-                            Solicitação de Ajuste
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 flex-1 min-w-0">
+                          <span className="font-semibold text-xs md:text-sm truncate">
+                            {interaction.profiles?.full_name}
                           </span>
-                        )}
-                        <span className="text-[10px] md:text-xs text-muted-foreground">
-                          {format(
-                            new Date(interaction.created_at),
-                            "dd/MM/yyyy 'às' HH:mm",
-                            { locale: ptBR }
+                          {isAdjustmentRequest && (
+                            <span className="text-[10px] md:text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-500/20 px-1.5 py-0.5 rounded">
+                              Solicitação de Ajuste
+                            </span>
                           )}
-                        </span>
+                          <span className="text-[10px] md:text-xs text-muted-foreground">
+                            {format(
+                              new Date(interaction.created_at),
+                              "dd/MM/yyyy 'às' HH:mm",
+                              { locale: ptBR }
+                            )}
+                          </span>
+                        </div>
+                        {canEditInteraction && !isEditing && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0">
+                                <MoreHorizontal className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEditInteraction(interaction.id, interaction.content || "")}>
+                                <Pencil className="h-3 w-3 mr-2" />
+                                Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleDeleteInteraction(interaction.id)}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="h-3 w-3 mr-2" />
+                                Excluir
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </div>
-                      {interaction.content && (
-                        <p className="text-xs md:text-sm whitespace-pre-wrap break-words">
-                          {interaction.content}
-                        </p>
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <Textarea
+                            value={editingInteractionContent}
+                            onChange={(e) => setEditingInteractionContent(e.target.value)}
+                            rows={2}
+                            className="text-xs md:text-sm"
+                          />
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              onClick={handleSaveInteraction}
+                              disabled={updateInteraction.isPending || !editingInteractionContent.trim()}
+                            >
+                              {updateInteraction.isPending ? "Salvando..." : "Salvar"}
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => {
+                                setEditingInteractionId(null);
+                                setEditingInteractionContent("");
+                              }}
+                            >
+                              Cancelar
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        interaction.content && (
+                          <p className="text-xs md:text-sm whitespace-pre-wrap break-words">
+                            {interaction.content}
+                          </p>
+                        )
                       )}
                     </div>
                   </div>
