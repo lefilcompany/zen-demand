@@ -25,14 +25,22 @@ export function ScopeProgressBar({ used, limit, className }: ScopeProgressBarPro
   
   const getProgressColor = () => {
     if (percentage >= 100) return "bg-destructive";
-    if (percentage >= 80) return "bg-orange-500";
-    return "bg-primary";
+    if (percentage >= 80) return "bg-warning";
+    if (percentage >= 50) return "bg-amber-400";
+    return "bg-success";
   };
 
   const getStatusText = () => {
     if (percentage >= 100) return "Limite atingido";
     if (percentage >= 80) return "Próximo do limite";
     return `Restam ${remaining} demandas`;
+  };
+
+  const getStatusColor = () => {
+    if (percentage >= 100) return "text-destructive font-medium";
+    if (percentage >= 80) return "text-warning";
+    if (percentage >= 50) return "text-amber-500";
+    return "text-success";
   };
 
   return (
@@ -46,7 +54,7 @@ export function ScopeProgressBar({ used, limit, className }: ScopeProgressBarPro
       <div className="relative">
         <Progress 
           value={percentage} 
-          className="h-3"
+          className="h-3 bg-muted"
         />
         <div 
           className={cn(
@@ -56,11 +64,7 @@ export function ScopeProgressBar({ used, limit, className }: ScopeProgressBarPro
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <div className={cn(
-        "text-xs",
-        percentage >= 100 ? "text-destructive font-medium" : 
-        percentage >= 80 ? "text-orange-500" : "text-muted-foreground"
-      )}>
+      <div className={cn("text-xs", getStatusColor())}>
         {getStatusText()}
       </div>
     </div>
