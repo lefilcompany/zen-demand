@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
+import { AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -50,12 +51,19 @@ const priorityConfig: Record<string, { label: string; className: string }> = {
   },
 };
 
-// Cell component for title (no longer clickable, row handles click)
+// Cell component for title with high priority indicator
 function TitleCell({ row }: { row: { original: DemandTableRow } }) {
+  const isHighPriority = row.original.priority?.toLowerCase() === "alta";
+  
   return (
-    <span className="font-medium text-foreground">
-      {row.original.title}
-    </span>
+    <div className="flex items-center gap-2">
+      {isHighPriority && (
+        <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
+      )}
+      <span className="font-medium text-foreground">
+        {row.original.title}
+      </span>
+    </div>
   );
 }
 
