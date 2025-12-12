@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail } from "lucide-react";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
 
@@ -25,8 +26,11 @@ interface IBGECity {
 
 export default function Auth() {
   const { t } = useTranslation();
-  const { user, loading, signIn, signUp } = useAuth();
+  const { user, loading, signIn, signUp, resetPassword } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [isResetLoading, setIsResetLoading] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -141,6 +145,31 @@ export default function Auth() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail.trim()) {
+      toast.warning("Informe o email", {
+        description: "Digite o email associado à sua conta.",
+      });
+      return;
+    }
+    setIsResetLoading(true);
+    try {
+      await resetPassword(resetEmail.trim());
+      toast.success("Email enviado!", {
+        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+      });
+      setResetDialogOpen(false);
+      setResetEmail("");
+    } catch (error: any) {
+      toast.error("Erro ao enviar email", {
+        description: getErrorMessage(error),
+      });
+    } finally {
+      setIsResetLoading(false);
     }
   };
 
@@ -290,6 +319,53 @@ export default function Auth() {
                     </Button>
                   </div>
                 </div>
+                
+                <div className="flex justify-end">
+                  <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button type="button" variant="link" className="p-0 h-auto text-sm text-muted-foreground hover:text-primary">
+                        Esqueceu a senha?
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                          <Mail className="h-5 w-5" />
+                          Recuperar Senha
+                        </DialogTitle>
+                        <DialogDescription>
+                          Digite seu email e enviaremos um link para redefinir sua senha.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handleResetPassword} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="reset-email">Email</Label>
+                          <Input 
+                            id="reset-email" 
+                            type="email" 
+                            placeholder="seu@email.com"
+                            value={resetEmail}
+                            onChange={e => setResetEmail(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => setResetDialogOpen(false)}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button type="submit" disabled={isResetLoading}>
+                            {isResetLoading ? "Enviando..." : "Enviar Link"}
+                          </Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                
                 <Button type="submit" className="w-full h-11 sm:h-12 text-base font-semibold" disabled={isLoading}>
                   {isLoading ? t("common.loading") : t("auth.login")}
                 </Button>
