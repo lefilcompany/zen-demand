@@ -9,13 +9,19 @@ interface PriorityDistributionChartProps {
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
-  high: "#ef4444",
-  medium: "#f59e0b", 
-  low: "#22c55e",
-  null: "#6b7280"
+  alta: "#dc2626",      // Vermelho vibrante
+  média: "#f97316",     // Laranja (primário do sistema)
+  baixa: "#10b981",     // Verde esmeralda
+  high: "#dc2626",
+  medium: "#f97316", 
+  low: "#10b981",
+  null: "#94a3b8"       // Cinza slate
 };
 
 const PRIORITY_LABELS: Record<string, string> = {
+  alta: "Alta",
+  média: "Média",
+  baixa: "Baixa",
   high: "Alta",
   medium: "Média",
   low: "Baixa",
