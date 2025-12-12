@@ -214,14 +214,16 @@ const Index = () => {
         </div>
 
         {/* Chart and Recent Demands */}
-        <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
+        <div className="grid gap-4 md:gap-6 lg:grid-cols-2 items-stretch">
           {/* Status Chart */}
-          <Card>
+          <Card className="flex flex-col h-full">
             <CardHeader className="p-4 md:p-6">
               <CardTitle className="text-base md:text-lg">{t("dashboard.deliveryStatus")}</CardTitle>
             </CardHeader>
-            <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
-              <DeliveryStatusChart data={demandData?.byStatus || []} />
+            <CardContent className="p-4 md:p-6 pt-0 md:pt-0 flex-1 flex items-center justify-center">
+              <div className="w-full">
+                <DeliveryStatusChart data={demandData?.byStatus || []} />
+              </div>
             </CardContent>
           </Card>
 
