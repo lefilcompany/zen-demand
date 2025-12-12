@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { ServiceCreateSchema, ServiceUpdateSchema, validateData } from "@/lib/validations";
 
 export function useServices(teamId: string | null) {
   const { user } = useAuth();
@@ -33,11 +34,18 @@ export function useCreateService() {
       team_id: string;
       estimated_days: number;
     }) => {
+      // Validate input data before database operation
+      const validatedData = validateData(ServiceCreateSchema, data);
+      const userId = (await supabase.auth.getUser()).data.user!.id;
+      
       const { data: service, error } = await supabase
         .from("services")
         .insert({
-          ...data,
-          created_by: (await supabase.auth.getUser()).data.user!.id,
+          name: validatedData.name,
+          description: validatedData.description,
+          team_id: validatedData.team_id,
+          estimated_days: validatedData.estimated_days,
+          created_by: userId,
         })
         .select()
         .single();
@@ -66,10 +74,14 @@ export function useUpdateService() {
       description?: string;
       estimated_days?: number;
     }) => {
+      // Validate input data before database operation
+      const validatedData = validateData(ServiceUpdateSchema, { id, team_id, ...data });
+      const { id: validatedId, team_id: validatedTeamId, ...updateData } = validatedData;
+      
       const { data: service, error } = await supabase
         .from("services")
-        .update(data)
-        .eq("id", id)
+        .update(updateData)
+        .eq("id", validatedId)
         .select()
         .single();
 

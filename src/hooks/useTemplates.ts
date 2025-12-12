@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { TemplateCreateSchema, TemplateUpdateSchema, validateData } from "@/lib/validations";
 
 interface Template {
   id: string;
@@ -49,9 +50,20 @@ export function useCreateTemplate() {
     }) => {
       if (!user) throw new Error("User not authenticated");
       
+      // Validate input data before database operation
+      const validatedData = validateData(TemplateCreateSchema, template);
+      
       const { data, error } = await supabase
         .from("demand_templates")
-        .insert({ ...template, created_by: user.id })
+        .insert({
+          team_id: validatedData.team_id,
+          name: validatedData.name,
+          title_template: validatedData.title_template,
+          description_template: validatedData.description_template,
+          priority: validatedData.priority,
+          service_id: validatedData.service_id,
+          created_by: user.id,
+        })
         .select()
         .single();
       if (error) throw error;
@@ -75,10 +87,14 @@ export function useUpdateTemplate() {
       priority?: string;
       service_id?: string | null;
     }) => {
+      // Validate input data before database operation
+      const validatedData = validateData(TemplateUpdateSchema, { id, ...updates });
+      const { id: validatedId, ...updateFields } = validatedData;
+      
       const { data, error } = await supabase
         .from("demand_templates")
-        .update(updates)
-        .eq("id", id)
+        .update(updateFields)
+        .eq("id", validatedId)
         .select()
         .single();
       if (error) throw error;

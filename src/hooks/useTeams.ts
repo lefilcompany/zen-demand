@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { TeamCreateSchema, AccessCodeSchema, validateData } from "@/lib/validations";
 
 export function useTeams() {
   const { user } = useAuth();
@@ -39,14 +40,16 @@ export function useCreateTeam() {
 
   return useMutation({
     mutationFn: async (data: { name: string; description?: string; accessCode?: string }) => {
-      const accessCode = data.accessCode || generateAccessCode();
+      // Validate input data before database operation
+      const validatedData = validateData(TeamCreateSchema, data);
+      const accessCode = validatedData.accessCode || generateAccessCode();
       const userId = (await supabase.auth.getUser()).data.user!.id;
 
       const { data: team, error: teamError } = await supabase
         .from("teams")
         .insert({
-          name: data.name,
-          description: data.description,
+          name: validatedData.name,
+          description: validatedData.description,
           access_code: accessCode,
           created_by: userId,
         })
@@ -79,11 +82,14 @@ export function useJoinTeam() {
 
   return useMutation({
     mutationFn: async (accessCode: string) => {
+      // Validate access code format
+      const validatedCode = validateData(AccessCodeSchema, accessCode.toUpperCase());
+      
       // Find team by access code
       const { data: team, error: teamError } = await supabase
         .from("teams")
         .select("id")
-        .eq("access_code", accessCode)
+        .eq("access_code", validatedCode)
         .single();
 
       if (teamError) throw new Error("Código de acesso inválido");
