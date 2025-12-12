@@ -40,6 +40,8 @@ interface Demand {
   created_by?: string;
   created_at?: string;
   updated_at?: string;
+  time_in_progress_seconds?: number | null;
+  last_started_at?: string | null;
   demand_statuses?: { name: string; color: string } | null;
   assigned_profile?: { full_name: string; avatar_url?: string | null } | null;
   teams?: { name: string } | null;
@@ -162,16 +164,12 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
     return new Date(dueDate) < new Date();
   };
 
-  const formatCompletionTime = (createdAt?: string, updatedAt?: string) => {
-    if (!createdAt || !updatedAt) return null;
+  const formatCompletionTime = (demand: Demand) => {
+    // Use time_in_progress_seconds which only counts time in "Fazendo" status
+    const totalSeconds = demand.time_in_progress_seconds || 0;
     
-    const start = new Date(createdAt).getTime();
-    const end = new Date(updatedAt).getTime();
-    const diffMs = end - start;
+    if (totalSeconds === 0) return null;
     
-    if (diffMs < 0) return null;
-    
-    const totalSeconds = Math.floor(diffMs / 1000);
     const days = Math.floor(totalSeconds / (24 * 60 * 60));
     const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
     const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
@@ -339,12 +337,12 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
                           )}
                         </div>
 
-                        {/* Completion time for delivered demands */}
-                        {column.key === "Entregue" && demand.created_at && demand.updated_at && (
+                        {/* Completion time for delivered demands - only counts time in "Fazendo" */}
+                        {column.key === "Entregue" && formatCompletionTime(demand) && (
                           <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded-md px-2 py-1 mb-2">
                             <Clock className="h-3 w-3" />
                             <span className="font-mono font-medium">
-                              {formatCompletionTime(demand.created_at, demand.updated_at)}
+                              {formatCompletionTime(demand)}
                             </span>
                           </div>
                         )}
