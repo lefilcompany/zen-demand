@@ -218,12 +218,12 @@ export default function CreateDemand() {
                 onChange={handleServiceChange}
               />
               <p className="text-xs text-muted-foreground">
-                Selecione um serviço para calcular automaticamente a data de entrega
+                Selecione um serviço para calcular automaticamente a data de vencimento
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dueDate">Data de Entrega</Label>
+              <Label htmlFor="dueDate">Data de Vencimento</Label>
               <Input
                 id="dueDate"
                 type="date"
