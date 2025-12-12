@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2, Mail } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
 
@@ -38,6 +39,9 @@ export default function Auth() {
   const [cities, setCities] = useState<IBGECity[]>([]);
   const [loadingStates, setLoadingStates] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => {
+    return localStorage.getItem("rememberMe") === "true";
+  });
   const [loginData, setLoginData] = useState({
     email: "",
     password: ""
@@ -135,6 +139,15 @@ export default function Auth() {
     e.preventDefault();
     setIsLoading(true);
     try {
+      // Store remember me preference
+      if (rememberMe) {
+        localStorage.setItem("rememberMe", "true");
+        sessionStorage.removeItem("sessionOnly");
+      } else {
+        localStorage.removeItem("rememberMe");
+        sessionStorage.setItem("sessionOnly", "true");
+      }
+      
       await signIn(loginData.email, loginData.password);
       toast.success(t("toast.success"), {
         description: t("auth.welcomeBack")
@@ -320,7 +333,20 @@ export default function Auth() {
                   </div>
                 </div>
                 
-                <div className="flex justify-end">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="remember-me" 
+                      checked={rememberMe}
+                      onCheckedChange={(checked) => setRememberMe(checked === true)}
+                    />
+                    <Label 
+                      htmlFor="remember-me" 
+                      className="text-sm text-muted-foreground cursor-pointer"
+                    >
+                      Manter conectado
+                    </Label>
+                  </div>
                   <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
                     <DialogTrigger asChild>
                       <Button type="button" variant="link" className="p-0 h-auto text-sm text-muted-foreground hover:text-primary">

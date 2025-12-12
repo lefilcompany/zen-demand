@@ -25,6 +25,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check if user should be logged out (session only, no remember me)
+    const shouldLogout = sessionStorage.getItem("sessionOnly") === null && 
+                         localStorage.getItem("rememberMe") !== "true";
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -36,6 +40,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      // If there's a session but "remember me" was not checked and this is a new browser session
+      if (session && shouldLogout && !sessionStorage.getItem("sessionChecked")) {
+        sessionStorage.setItem("sessionChecked", "true");
+        // User didn't check "remember me" and this is a fresh browser session - log them out
+        supabase.auth.signOut().then(() => {
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+        });
+        return;
+      }
+      
+      sessionStorage.setItem("sessionChecked", "true");
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -82,6 +99,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
+      // Clear remember me preferences on logout
+      localStorage.removeItem("rememberMe");
+      sessionStorage.removeItem("sessionOnly");
+      sessionStorage.removeItem("sessionChecked");
+      
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       toast.success("Logout realizado com sucesso!");
