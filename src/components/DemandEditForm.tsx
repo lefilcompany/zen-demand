@@ -7,6 +7,7 @@ import { useDemandStatuses, useUpdateDemand } from "@/hooks/useDemands";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
+import { useTeamRole } from "@/hooks/useTeamRole";
 import { addDays, format } from "date-fns";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -32,6 +33,9 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
   const setAssignees = useSetAssignees();
   const { data: statuses } = useDemandStatuses();
   const { data: currentAssignees } = useDemandAssignees(demand.id);
+  const { data: role } = useTeamRole(demand.team_id);
+
+  const canAssignResponsibles = role !== "requester";
 
   const [title, setTitle] = useState(demand.title);
   const [description, setDescription] = useState(demand.description || "");
@@ -151,14 +155,16 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
         />
       </div>
 
-      <div className="space-y-2">
-        <Label>Responsáveis</Label>
-        <AssigneeSelector
-          teamId={demand.team_id}
-          selectedUserIds={selectedAssignees}
-          onChange={setSelectedAssignees}
-        />
-      </div>
+      {canAssignResponsibles && (
+        <div className="space-y-2">
+          <Label>Responsáveis</Label>
+          <AssigneeSelector
+            teamId={demand.team_id}
+            selectedUserIds={selectedAssignees}
+            onChange={setSelectedAssignees}
+          />
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="edit-dueDate">Data de Vencimento</Label>
