@@ -1,0 +1,253 @@
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useMyDemandRequests, useUpdateDemandRequest, useDeleteDemandRequest } from "@/hooks/useDemandRequests";
+import { ArrowLeft, Clock, CheckCircle, XCircle, RotateCcw, Edit, Trash2, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ServiceSelector } from "@/components/ServiceSelector";
+import { getErrorMessage } from "@/lib/errorUtils";
+
+const statusConfig = {
+  pending: { label: "Pendente", icon: Clock, color: "bg-yellow-500/20 text-yellow-700 border-yellow-500/30" },
+  approved: { label: "Aprovada", icon: CheckCircle, color: "bg-emerald-500/20 text-emerald-700 border-emerald-500/30" },
+  rejected: { label: "Rejeitada", icon: XCircle, color: "bg-destructive/20 text-destructive border-destructive/30" },
+  returned: { label: "Devolvida", icon: RotateCcw, color: "bg-orange-500/20 text-orange-700 border-orange-500/30" },
+};
+
+export default function MyDemandRequests() {
+  const navigate = useNavigate();
+  const { data: requests, isLoading } = useMyDemandRequests();
+  const updateRequest = useUpdateDemandRequest();
+  const deleteRequest = useDeleteDemandRequest();
+
+  const [editingRequest, setEditingRequest] = useState<any | null>(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState("média");
+  const [serviceId, setServiceId] = useState("");
+
+  const openEditDialog = (request: any) => {
+    setEditingRequest(request);
+    setTitle(request.title);
+    setDescription(request.description || "");
+    setPriority(request.priority || "média");
+    setServiceId(request.service_id || "");
+  };
+
+  const handleResubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRequest || !title.trim()) return;
+
+    updateRequest.mutate(
+      {
+        id: editingRequest.id,
+        title: title.trim(),
+        description: description.trim() || undefined,
+        priority,
+        service_id: serviceId && serviceId !== "none" ? serviceId : undefined,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Solicitação reenviada com sucesso!");
+          setEditingRequest(null);
+        },
+        onError: (error: any) => {
+          toast.error("Erro ao reenviar", { description: getErrorMessage(error) });
+        },
+      }
+    );
+  };
+
+  const handleDelete = (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir esta solicitação?")) return;
+    
+    deleteRequest.mutate(id, {
+      onSuccess: () => toast.success("Solicitação excluída"),
+      onError: (error: any) => toast.error("Erro ao excluir", { description: getErrorMessage(error) }),
+    });
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <Button variant="ghost" onClick={() => navigate("/")} className="mb-2">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar
+          </Button>
+          <h1 className="text-3xl font-bold tracking-tight">Minhas Solicitações</h1>
+          <p className="text-muted-foreground">Acompanhe o status das suas solicitações de demanda</p>
+        </div>
+        <Button onClick={() => navigate("/demands/request")}>
+          <Plus className="mr-2 h-4 w-4" />
+          Nova Solicitação
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+      ) : requests && requests.length > 0 ? (
+        <div className="grid gap-4">
+          {requests.map((request) => {
+            const status = statusConfig[request.status as keyof typeof statusConfig];
+            const StatusIcon = status.icon;
+            const canEdit = request.status === "returned" || request.status === "pending";
+
+            return (
+              <Card key={request.id}>
+                <CardHeader className="pb-3">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg">{request.title}</CardTitle>
+                      <CardDescription>
+                        Criada em {format(new Date(request.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                      </CardDescription>
+                    </div>
+                    <Badge className={`${status.color} border`}>
+                      <StatusIcon className="h-3 w-3 mr-1" />
+                      {status.label}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {request.description && (
+                    <p className="text-sm text-muted-foreground mb-3">{request.description}</p>
+                  )}
+
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <Badge variant="outline">
+                      Prioridade: {request.priority || "média"}
+                    </Badge>
+                    {request.service && (
+                      <Badge variant="outline">
+                        Serviço: {request.service.name}
+                      </Badge>
+                    )}
+                  </div>
+
+                  {request.rejection_reason && (
+                    <div className="p-3 rounded-md bg-muted mb-3">
+                      <p className="text-sm font-medium mb-1">
+                        {request.status === "returned" ? "Motivo da devolução:" : "Motivo da rejeição:"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{request.rejection_reason}</p>
+                      {request.responder && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Por {request.responder.full_name} em{" "}
+                          {request.responded_at && format(new Date(request.responded_at), "dd/MM/yyyy 'às' HH:mm")}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {canEdit && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEditDialog(request)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        {request.status === "returned" ? "Editar e Reenviar" : "Editar"}
+                      </Button>
+                      {request.status === "pending" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive"
+                          onClick={() => handleDelete(request.id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Excluir
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            <p>Você ainda não tem solicitações</p>
+            <Button className="mt-4" onClick={() => navigate("/demands/request")}>
+              <Plus className="mr-2 h-4 w-4" />
+              Criar Solicitação
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Edit/Resubmit Dialog */}
+      <Dialog open={!!editingRequest} onOpenChange={() => setEditingRequest(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editingRequest?.status === "returned" ? "Editar e Reenviar Solicitação" : "Editar Solicitação"}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleResubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Título *</Label>
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Descrição</Label>
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Prioridade</Label>
+                <Select value={priority} onValueChange={setPriority}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="baixa">Baixa</SelectItem>
+                    <SelectItem value="média">Média</SelectItem>
+                    <SelectItem value="alta">Alta</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Serviço</Label>
+                <ServiceSelector
+                  teamId={editingRequest?.team_id}
+                  value={serviceId}
+                  onChange={setServiceId}
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setEditingRequest(null)} className="flex-1">
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={updateRequest.isPending} className="flex-1">
+                {updateRequest.isPending ? "Salvando..." : editingRequest?.status === "returned" ? "Reenviar" : "Salvar"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

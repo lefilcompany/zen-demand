@@ -143,6 +143,83 @@ export type Database = {
           },
         ]
       }
+      demand_requests: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          priority: string | null
+          rejection_reason: string | null
+          responded_at: string | null
+          responded_by: string | null
+          service_id: string | null
+          status: string
+          team_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          priority?: string | null
+          rejection_reason?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          service_id?: string | null
+          status?: string
+          team_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          priority?: string | null
+          rejection_reason?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          service_id?: string | null
+          status?: string
+          team_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_requests_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demand_requests_responded_by_fkey"
+            columns: ["responded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demand_requests_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demand_requests_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demand_statuses: {
         Row: {
           color: string
