@@ -276,10 +276,12 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          last_started_at: string | null
           priority: string | null
           service_id: string | null
           status_id: string
           team_id: string
+          time_in_progress_seconds: number | null
           title: string
           updated_at: string
         }
@@ -292,10 +294,12 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          last_started_at?: string | null
           priority?: string | null
           service_id?: string | null
           status_id: string
           team_id: string
+          time_in_progress_seconds?: number | null
           title: string
           updated_at?: string
         }
@@ -308,10 +312,12 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          last_started_at?: string | null
           priority?: string | null
           service_id?: string | null
           status_id?: string
           team_id?: string
+          time_in_progress_seconds?: number | null
           title?: string
           updated_at?: string
         }
