@@ -25,7 +25,7 @@ export const DemandCreateSchema = z.object({
   status_id: z.string().uuid("ID do status inválido"),
   priority: z.enum(priorityValues).optional().default("média"),
   assigned_to: z.string().uuid("ID do responsável inválido").optional().nullable(),
-  due_date: z.string().datetime().optional().nullable(),
+  due_date: z.string().optional().nullable(),
   service_id: z.string().uuid("ID do serviço inválido").optional().nullable(),
 });
 
@@ -41,9 +41,9 @@ export const DemandUpdateSchema = z.object({
   status_id: z.string().uuid("ID do status inválido").optional(),
   priority: z.enum(priorityValues).optional(),
   assigned_to: z.string().uuid("ID do responsável inválido").optional().nullable(),
-  due_date: z.string().datetime().optional().nullable(),
+  due_date: z.string().optional().nullable(),
   archived: z.boolean().optional(),
-  archived_at: z.string().datetime().optional().nullable(),
+  archived_at: z.string().optional().nullable(),
   service_id: z.string().uuid("ID do serviço inválido").optional().nullable(),
 });
 
