@@ -38,6 +38,8 @@ interface Demand {
   priority?: string | null;
   status_id: string;
   created_by?: string;
+  created_at?: string;
+  updated_at?: string;
   demand_statuses?: { name: string; color: string } | null;
   assigned_profile?: { full_name: string; avatar_url?: string | null } | null;
   teams?: { name: string } | null;
@@ -158,6 +160,25 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
   const isOverdue = (dueDate: string | null | undefined) => {
     if (!dueDate) return false;
     return new Date(dueDate) < new Date();
+  };
+
+  const formatCompletionTime = (createdAt?: string, updatedAt?: string) => {
+    if (!createdAt || !updatedAt) return null;
+    
+    const start = new Date(createdAt).getTime();
+    const end = new Date(updatedAt).getTime();
+    const diffMs = end - start;
+    
+    if (diffMs < 0) return null;
+    
+    const totalSeconds = Math.floor(diffMs / 1000);
+    const days = Math.floor(totalSeconds / (24 * 60 * 60));
+    const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
+    const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+    const seconds = totalSeconds % 60;
+    
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${pad(days)}:${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
   };
 
   const handleOpenAdjustmentDialog = (e: React.MouseEvent, demandId: string) => {
@@ -317,6 +338,16 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
                             </Badge>
                           )}
                         </div>
+
+                        {/* Completion time for delivered demands */}
+                        {column.key === "Entregue" && demand.created_at && demand.updated_at && (
+                          <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded-md px-2 py-1 mb-2">
+                            <Clock className="h-3 w-3" />
+                            <span className="font-mono font-medium">
+                              {formatCompletionTime(demand.created_at, demand.updated_at)}
+                            </span>
+                          </div>
+                        )}
 
                         {/* Adjustment button for delivered demands */}
                         {column.key === "Entregue" && (
