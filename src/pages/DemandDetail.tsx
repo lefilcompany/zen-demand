@@ -91,63 +91,78 @@ export default function DemandDetail() {
   const handleRequestAdjustment = async () => {
     if (!id || !adjustmentStatusId || !adjustmentReason.trim()) return;
     
-    updateDemand.mutate(
-      { id, status_id: adjustmentStatusId },
-      {
-        onSuccess: async () => {
-          toast.success("Ajuste solicitado com sucesso!");
-          createInteraction.mutate({
+    try {
+      // First create the interaction record
+      await new Promise<void>((resolve, reject) => {
+        createInteraction.mutate(
+          {
             demand_id: id,
             interaction_type: "adjustment_request",
             content: `Solicitou ajuste: ${adjustmentReason.trim()}`,
-          });
-          
-          // Notify all assignees about the adjustment request
-          if (assignees && assignees.length > 0) {
-            const notifications = assignees.map((assignee) => ({
-              user_id: assignee.user_id,
-              title: "Ajuste solicitado",
-              message: `O cliente solicitou ajuste na demanda "${demand?.title}": ${adjustmentReason.trim().substring(0, 100)}${adjustmentReason.length > 100 ? '...' : ''}`,
-              type: "warning",
-              link: `/demands/${id}`,
-            }));
-            
-            await supabase.from("notifications").insert(notifications);
-            
-            // Send email notifications to assignees
-            for (const assignee of assignees) {
-              try {
-                await supabase.functions.invoke("send-email", {
-                  body: {
-                    to: assignee.user_id, // Edge function will lookup user email by UUID
-                    subject: `Ajuste solicitado: ${demand?.title}`,
-                    template: "notification",
-                    templateData: {
-                      title: "Ajuste Solicitado",
-                      message: `O cliente solicitou um ajuste na demanda "${demand?.title}".\n\nMotivo: ${adjustmentReason.trim()}`,
-                      actionUrl: `${window.location.origin}/demands/${id}`,
-                      actionText: "Ver Demanda",
-                      userName: assignee.profile?.full_name || "Responsável",
-                      type: "warning" as const,
-                    },
-                  },
-                });
-              } catch (emailError) {
-                console.error("Error sending adjustment email:", emailError);
-              }
-            }
+          },
+          {
+            onSuccess: () => resolve(),
+            onError: (error) => reject(error),
           }
-          
-          setAdjustmentReason("");
-          setIsAdjustmentDialogOpen(false);
-        },
-        onError: (error: any) => {
-          toast.error("Erro ao solicitar ajuste", {
-            description: getErrorMessage(error),
-          });
-        },
+        );
+      });
+      
+      // Then update the demand status
+      await new Promise<void>((resolve, reject) => {
+        updateDemand.mutate(
+          { id, status_id: adjustmentStatusId },
+          {
+            onSuccess: () => resolve(),
+            onError: (error) => reject(error),
+          }
+        );
+      });
+      
+      toast.success("Ajuste solicitado com sucesso!");
+      
+      // Notify all assignees about the adjustment request
+      if (assignees && assignees.length > 0) {
+        const notifications = assignees.map((assignee) => ({
+          user_id: assignee.user_id,
+          title: "Ajuste solicitado",
+          message: `O cliente solicitou ajuste na demanda "${demand?.title}": ${adjustmentReason.trim().substring(0, 100)}${adjustmentReason.length > 100 ? '...' : ''}`,
+          type: "warning",
+          link: `/demands/${id}`,
+        }));
+        
+        await supabase.from("notifications").insert(notifications);
+        
+        // Send email notifications to assignees
+        for (const assignee of assignees) {
+          try {
+            await supabase.functions.invoke("send-email", {
+              body: {
+                to: assignee.user_id,
+                subject: `Ajuste solicitado: ${demand?.title}`,
+                template: "notification",
+                templateData: {
+                  title: "Ajuste Solicitado",
+                  message: `O cliente solicitou um ajuste na demanda "${demand?.title}".\n\nMotivo: ${adjustmentReason.trim()}`,
+                  actionUrl: `${window.location.origin}/demands/${id}`,
+                  actionText: "Ver Demanda",
+                  userName: assignee.profile?.full_name || "Responsável",
+                  type: "warning" as const,
+                },
+              },
+            });
+          } catch (emailError) {
+            console.error("Error sending adjustment email:", emailError);
+          }
+        }
       }
-    );
+      
+      setAdjustmentReason("");
+      setIsAdjustmentDialogOpen(false);
+    } catch (error: any) {
+      toast.error("Erro ao solicitar ajuste", {
+        description: getErrorMessage(error),
+      });
+    }
   };
 
   const handleArchive = () => {

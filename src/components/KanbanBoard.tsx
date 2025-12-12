@@ -176,64 +176,79 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
   const handleRequestAdjustment = async () => {
     if (!adjustmentDemandId || !adjustmentStatusId || !adjustmentReason.trim()) return;
     
-    updateDemand.mutate(
-      { id: adjustmentDemandId, status_id: adjustmentStatusId },
-      {
-        onSuccess: async () => {
-          toast.success("Ajuste solicitado com sucesso!");
-          createInteraction.mutate({
+    try {
+      // First create the interaction record
+      await new Promise<void>((resolve, reject) => {
+        createInteraction.mutate(
+          {
             demand_id: adjustmentDemandId,
             interaction_type: "adjustment_request",
             content: `Solicitou ajuste: ${adjustmentReason.trim()}`,
-          });
-          
-          // Notify all assignees about the adjustment request
-          if (adjustmentAssignees && adjustmentAssignees.length > 0) {
-            const notifications = adjustmentAssignees.map((assignee) => ({
-              user_id: assignee.user_id,
-              title: "Ajuste solicitado",
-              message: `Foi solicitado ajuste na demanda "${adjustmentDemand?.title}": ${adjustmentReason.trim().substring(0, 100)}${adjustmentReason.length > 100 ? '...' : ''}`,
-              type: "warning",
-              link: `/demands/${adjustmentDemandId}`,
-            }));
-            
-            await supabase.from("notifications").insert(notifications);
-            
-            // Send email notifications to assignees
-            for (const assignee of adjustmentAssignees) {
-              try {
-                await supabase.functions.invoke("send-email", {
-                  body: {
-                    to: assignee.user_id,
-                    subject: `Ajuste solicitado: ${adjustmentDemand?.title}`,
-                    template: "notification",
-                    templateData: {
-                      title: "Ajuste Solicitado",
-                      message: `Foi solicitado um ajuste na demanda "${adjustmentDemand?.title}".\n\nMotivo: ${adjustmentReason.trim()}`,
-                      actionUrl: `${window.location.origin}/demands/${adjustmentDemandId}`,
-                      actionText: "Ver Demanda",
-                      userName: assignee.profile?.full_name || "Responsável",
-                      type: "warning" as const,
-                    },
-                  },
-                });
-              } catch (emailError) {
-                console.error("Error sending adjustment email:", emailError);
-              }
-            }
+          },
+          {
+            onSuccess: () => resolve(),
+            onError: (error) => reject(error),
           }
-          
-          setAdjustmentReason("");
-          setAdjustmentDialogOpen(false);
-          setAdjustmentDemandId(null);
-        },
-        onError: (error: any) => {
-          toast.error("Erro ao solicitar ajuste", {
-            description: getErrorMessage(error),
-          });
-        },
+        );
+      });
+      
+      // Then update the demand status
+      await new Promise<void>((resolve, reject) => {
+        updateDemand.mutate(
+          { id: adjustmentDemandId, status_id: adjustmentStatusId },
+          {
+            onSuccess: () => resolve(),
+            onError: (error) => reject(error),
+          }
+        );
+      });
+      
+      toast.success("Ajuste solicitado com sucesso!");
+      
+      // Notify all assignees about the adjustment request
+      if (adjustmentAssignees && adjustmentAssignees.length > 0) {
+        const notifications = adjustmentAssignees.map((assignee) => ({
+          user_id: assignee.user_id,
+          title: "Ajuste solicitado",
+          message: `Foi solicitado ajuste na demanda "${adjustmentDemand?.title}": ${adjustmentReason.trim().substring(0, 100)}${adjustmentReason.length > 100 ? '...' : ''}`,
+          type: "warning",
+          link: `/demands/${adjustmentDemandId}`,
+        }));
+        
+        await supabase.from("notifications").insert(notifications);
+        
+        // Send email notifications to assignees
+        for (const assignee of adjustmentAssignees) {
+          try {
+            await supabase.functions.invoke("send-email", {
+              body: {
+                to: assignee.user_id,
+                subject: `Ajuste solicitado: ${adjustmentDemand?.title}`,
+                template: "notification",
+                templateData: {
+                  title: "Ajuste Solicitado",
+                  message: `Foi solicitado um ajuste na demanda "${adjustmentDemand?.title}".\n\nMotivo: ${adjustmentReason.trim()}`,
+                  actionUrl: `${window.location.origin}/demands/${adjustmentDemandId}`,
+                  actionText: "Ver Demanda",
+                  userName: assignee.profile?.full_name || "Responsável",
+                  type: "warning" as const,
+                },
+              },
+            });
+          } catch (emailError) {
+            console.error("Error sending adjustment email:", emailError);
+          }
+        }
       }
-    );
+      
+      setAdjustmentReason("");
+      setAdjustmentDialogOpen(false);
+      setAdjustmentDemandId(null);
+    } catch (error: any) {
+      toast.error("Erro ao solicitar ajuste", {
+        description: getErrorMessage(error),
+      });
+    }
   };
 
   return (
