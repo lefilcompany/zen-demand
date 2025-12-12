@@ -164,7 +164,9 @@
     "teamUpdates": "Team Updates",
     "teamUpdatesDesc": "New members and join requests",
     "deadlineReminders": "Deadline Reminders",
-    "deadlineRemindersDesc": "Alerts about upcoming deadlines"
+    "deadlineRemindersDesc": "Alerts about upcoming deadlines",
+    "adjustmentRequests": "Adjustment Requests",
+    "adjustmentRequestsDesc": "Notifications when adjustments are requested on demands"
   },
   "profile": {
     "title": "Profile",

@@ -164,7 +164,9 @@
     "teamUpdates": "Actualizaciones de Equipo",
     "teamUpdatesDesc": "Nuevos miembros y solicitudes de entrada",
     "deadlineReminders": "Recordatorios de Plazo",
-    "deadlineRemindersDesc": "Alertas sobre plazos próximos"
+    "deadlineRemindersDesc": "Alertas sobre plazos próximos",
+    "adjustmentRequests": "Solicitudes de Ajuste",
+    "adjustmentRequestsDesc": "Notificaciones cuando se solicitan ajustes en demandas"
   },
   "profile": {
     "title": "Perfil",
