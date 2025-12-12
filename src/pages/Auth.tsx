@@ -101,6 +101,18 @@ export default function Auth() {
     return <Navigate to="/welcome" replace />;
   }
 
+  const formatPhone = (value: string): string => {
+    const digits = value.replace(/\D/g, "").slice(0, 11);
+    if (digits.length <= 2) return digits.length ? `(${digits}` : "";
+    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhone(e.target.value);
+    setSignupData({ ...signupData, phone: formatted });
+  };
+
   const getErrorMessage = (error: any): string => {
     const message = error?.message?.toLowerCase() || "";
     if (message.includes("user already registered") || message.includes("already been registered")) {
@@ -318,7 +330,8 @@ export default function Auth() {
                     placeholder="(00) 00000-0000" 
                     className="h-10 sm:h-11" 
                     value={signupData.phone} 
-                    onChange={e => setSignupData({...signupData, phone: e.target.value})} 
+                    onChange={handlePhoneChange}
+                    maxLength={16}
                     required 
                   />
                 </div>
