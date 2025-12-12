@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter } from "date-fns";
 import type { PeriodType } from "@/components/PeriodFilter";
+import { sortDemandsByPriorityAndDueDate } from "./useDemands";
 
 function getPeriodRange(period: PeriodType): { start: Date; end: Date } {
   const now = new Date();
@@ -41,21 +42,24 @@ export function useDemandsByPeriod(period: PeriodType, teamId?: string) {
           title,
           created_at,
           priority,
+          due_date,
           status_id,
           demand_statuses!inner(name, color)
         `)
         .eq("team_id", id!)
         .eq("archived", false)
         .gte("created_at", start.toISOString())
-        .lte("created_at", end.toISOString())
-        .order("created_at", { ascending: false });
+        .lte("created_at", end.toISOString());
 
       if (error) throw error;
+      
+      // Sort by priority then due date
+      const sortedData = sortDemandsByPriorityAndDueDate(data || []);
 
       // Group by status
       const byStatus: Record<string, { count: number; name: string; color: string }> = {};
       
-      data.forEach((demand: any) => {
+      sortedData.forEach((demand: any) => {
         const statusName = demand.demand_statuses?.name || "Sem status";
         const statusColor = demand.demand_statuses?.color || "#6B7280";
         
@@ -66,9 +70,9 @@ export function useDemandsByPeriod(period: PeriodType, teamId?: string) {
       });
 
       return {
-        demands: data,
+        demands: sortedData,
         byStatus: Object.values(byStatus),
-        total: data.length,
+        total: sortedData.length,
         periodStart: start,
         periodEnd: end,
       };

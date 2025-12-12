@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { sortDemandsByPriorityAndDueDate } from "./useDemands";
 
 export function useArchivedDemands(teamId?: string) {
   const { user } = useAuth();
@@ -17,8 +18,7 @@ export function useArchivedDemands(teamId?: string) {
           assigned_profile:profiles!demands_assigned_to_fkey(full_name, avatar_url),
           teams(name)
         `)
-        .eq("archived", true)
-        .order("archived_at", { ascending: false });
+        .eq("archived", true);
 
       if (teamId) {
         query = query.eq("team_id", teamId);
@@ -27,7 +27,9 @@ export function useArchivedDemands(teamId?: string) {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data;
+      
+      // Sort by priority then due date
+      return sortDemandsByPriorityAndDueDate(data || []);
     },
     enabled: !!user,
   });
