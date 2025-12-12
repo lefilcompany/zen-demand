@@ -8,9 +8,10 @@ import { getErrorMessage } from "@/lib/errorUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, Camera, Loader2, Save, User } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { ArrowLeft, Camera, Loader2, Save, User, Mail, Calendar, Shield } from "lucide-react";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -72,13 +73,11 @@ export default function Profile() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       toast.error("Por favor, selecione uma imagem válida");
       return;
     }
 
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast.error("A imagem deve ter no máximo 2MB");
       return;
@@ -91,14 +90,12 @@ export default function Profile() {
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
-      // Upload to Storage
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from("avatars")
         .getPublicUrl(filePath);
@@ -137,6 +134,14 @@ export default function Profile() {
       .slice(0, 2);
   };
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -157,39 +162,32 @@ export default function Profile() {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Meu Perfil</h1>
-          <p className="text-muted-foreground">
-            Gerencie suas informações pessoais
-          </p>
-        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Avatar Card */}
-        <Card className="md:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-lg">Foto de Perfil</CardTitle>
-            <CardDescription>
-              Clique na imagem para alterar sua foto
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center gap-4">
+      {/* Profile Hero Section */}
+      <Card className="overflow-hidden">
+        <div className="h-32 bg-gradient-to-r from-primary/80 via-primary to-primary/60" />
+        <CardContent className="relative pb-6">
+          {/* Avatar */}
+          <div className="absolute -top-16 left-6 md:left-8">
             <div className="relative group">
-              <Avatar className="h-32 w-32 border-4 border-primary/20">
-                <AvatarImage src={avatarUrl} alt={fullName} />
-                <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+              <Avatar className="h-28 w-28 md:h-32 md:w-32 border-4 border-background shadow-xl">
+                <AvatarImage src={avatarUrl} alt={fullName} className="object-cover" />
+                <AvatarFallback className="text-3xl bg-primary/10 text-primary font-semibold">
                   {fullName ? getInitials(fullName) : <User className="h-12 w-12" />}
                 </AvatarFallback>
               </Avatar>
               <label
                 htmlFor="avatar-upload"
-                className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer"
               >
                 {isUploading ? (
                   <Loader2 className="h-8 w-8 text-white animate-spin" />
                 ) : (
-                  <Camera className="h-8 w-8 text-white" />
+                  <div className="flex flex-col items-center gap-1">
+                    <Camera className="h-6 w-6 text-white" />
+                    <span className="text-xs text-white font-medium">Alterar</span>
+                  </div>
                 )}
               </label>
               <input
@@ -201,22 +199,36 @@ export default function Profile() {
                 disabled={isUploading}
               />
             </div>
-            <p className="text-sm text-muted-foreground text-center">
-              JPG, PNG ou GIF. Máximo 2MB.
-            </p>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Profile Info Card */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-lg">Informações Pessoais</CardTitle>
-            <CardDescription>
-              Atualize suas informações de perfil
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Profile Info Header */}
+          <div className="pt-16 md:pt-20 md:pl-40">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+              {fullName || "Seu Nome"}
+            </h1>
+            <p className="text-muted-foreground mt-1 flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              {user?.email}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Edit Profile Card */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-lg">Informações Pessoais</h2>
+                <p className="text-sm text-muted-foreground">Atualize seus dados</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Nome Completo</Label>
                 <Input
@@ -224,7 +236,7 @@ export default function Profile() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Seu nome completo"
-                  className="max-w-md"
+                  className="h-11"
                 />
               </div>
 
@@ -234,30 +246,17 @@ export default function Profile() {
                   id="email"
                   value={user?.email || ""}
                   disabled
-                  className="max-w-md bg-muted"
+                  className="h-11 bg-muted/50"
                 />
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   O e-mail não pode ser alterado
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Membro desde</Label>
-                <p className="text-sm text-muted-foreground">
-                  {profile?.created_at
-                    ? new Date(profile.created_at).toLocaleDateString("pt-BR", {
-                        day: "2-digit",
-                        month: "long",
-                        year: "numeric",
-                      })
-                    : "-"}
                 </p>
               </div>
 
               <Button
                 type="submit"
                 disabled={updateProfileMutation.isPending}
-                className="gap-2"
+                className="w-full h-11 gap-2"
               >
                 {updateProfileMutation.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -267,6 +266,55 @@ export default function Profile() {
                 Salvar Alterações
               </Button>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Account Info Card */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Shield className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-lg">Informações da Conta</h2>
+                <p className="text-sm text-muted-foreground">Detalhes do seu perfil</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/30">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <Calendar className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Membro desde</p>
+                  <p className="font-medium">
+                    {profile?.created_at ? formatDate(profile.created_at) : "-"}
+                  </p>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="p-4 rounded-lg bg-muted/30">
+                <p className="text-sm text-muted-foreground mb-2">Foto de perfil</p>
+                <p className="text-sm">
+                  Formatos aceitos: <span className="font-medium">JPG, PNG ou GIF</span>
+                </p>
+                <p className="text-sm">
+                  Tamanho máximo: <span className="font-medium">2MB</span>
+                </p>
+              </div>
+
+              <Separator />
+
+              <div className="p-4 rounded-lg border border-dashed border-primary/30 bg-primary/5">
+                <p className="text-sm text-center text-muted-foreground">
+                  Precisa de ajuda? Entre em contato com o suporte.
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
