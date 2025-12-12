@@ -35,8 +35,46 @@ export function getFirebaseMessaging(): Messaging | null {
   return messaging;
 }
 
+// Wait for service worker to be ready
+async function waitForServiceWorkerReady(registration: ServiceWorkerRegistration): Promise<ServiceWorker> {
+  return new Promise((resolve, reject) => {
+    const sw = registration.installing || registration.waiting || registration.active;
+    
+    if (registration.active) {
+      resolve(registration.active);
+      return;
+    }
+    
+    if (!sw) {
+      reject(new Error("No service worker found"));
+      return;
+    }
+    
+    sw.addEventListener("statechange", () => {
+      if (sw.state === "activated") {
+        resolve(sw);
+      }
+    });
+    
+    // Timeout after 10 seconds
+    setTimeout(() => {
+      if (registration.active) {
+        resolve(registration.active);
+      } else {
+        reject(new Error("Service worker activation timeout"));
+      }
+    }, 10000);
+  });
+}
+
 export async function requestNotificationPermission(): Promise<string | null> {
   try {
+    // Check if running in a secure context
+    if (!window.isSecureContext) {
+      console.error("Push notifications require a secure context (HTTPS)");
+      return null;
+    }
+
     const permission = await Notification.requestPermission();
     
     if (permission !== "granted") {
@@ -44,19 +82,32 @@ export async function requestNotificationPermission(): Promise<string | null> {
       return null;
     }
 
+    // Register service worker first and wait for it to be active
+    console.log("Registering service worker...");
+    const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js", {
+      scope: "/"
+    });
+    console.log("Service worker registered:", registration);
+    
+    // Wait for the service worker to be ready
+    await waitForServiceWorkerReady(registration);
+    console.log("Service worker is active");
+
+    // Ensure we have an active registration
+    const activeRegistration = await navigator.serviceWorker.ready;
+    console.log("Service worker ready:", activeRegistration);
+
     const fcmMessaging = getFirebaseMessaging();
     if (!fcmMessaging) {
       console.error("Firebase Messaging not available");
       return null;
     }
 
-    // Register service worker first
-    const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-    
     // Get FCM token
+    console.log("Getting FCM token...");
     const token = await getToken(fcmMessaging, {
       vapidKey: VAPID_KEY,
-      serviceWorkerRegistration: registration,
+      serviceWorkerRegistration: activeRegistration,
     });
 
     console.log("FCM Token obtained:", token);
