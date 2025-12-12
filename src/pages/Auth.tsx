@@ -126,9 +126,7 @@ export default function Auth() {
     }}>
         <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary/50 to-transparent" />
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
-          <div>
-            <img src={logoSomaDark} alt="SoMA" className="h-12 w-auto" />
-          </div>
+          <div />
           <div className="max-w-md">
             <h1 className="text-4xl xl:text-5xl font-bold mb-6 leading-tight">Gerencie suas demandas com eficiência</h1>
             <p className="text-lg xl:text-xl text-white/90 leading-relaxed">
