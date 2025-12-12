@@ -7,6 +7,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -37,6 +38,47 @@ function isUUID(str: string): boolean {
   return uuidRegex.test(str);
 }
 
+// Verify JWT token and get user
+async function verifyAuth(req: Request): Promise<{ userId: string | null; error: string | null }> {
+  const authHeader = req.headers.get("authorization");
+  
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return { userId: null, error: "Missing or invalid authorization header" };
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    return { userId: null, error: "Server configuration error" };
+  }
+
+  try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    });
+
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !user) {
+      console.error("Auth verification failed:", error);
+      return { userId: null, error: "Invalid or expired token" };
+    }
+
+    return { userId: user.id, error: null };
+  } catch (err) {
+    console.error("Auth verification error:", err);
+    return { userId: null, error: "Authentication failed" };
+  }
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -44,11 +86,48 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Verify authentication
+    const { userId, error: authError } = await verifyAuth(req);
+    
+    if (authError || !userId) {
+      console.warn("Unauthorized email attempt:", authError);
+      return new Response(
+        JSON.stringify({ error: authError || "Unauthorized" }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    console.log(`Email request from authenticated user: ${userId}`);
+
     const { to, subject, html, from, template, templateData }: EmailRequest = await req.json();
 
     if (!to || !subject) {
       return new Response(
         JSON.stringify({ error: "Missing required fields: to, subject" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Validate input lengths to prevent abuse
+    if (subject.length > 200) {
+      return new Response(
+        JSON.stringify({ error: "Subject too long (max 200 characters)" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    if (templateData?.message && templateData.message.length > 5000) {
+      return new Response(
+        JSON.stringify({ error: "Message too long (max 5000 characters)" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -85,7 +164,7 @@ const handler = async (req: Request): Promise<Response> => {
       if (userError || !userData?.user?.email) {
         console.error("Error fetching user email:", userError);
         return new Response(
-          JSON.stringify({ error: "Could not find user email", details: userError?.message }),
+          JSON.stringify({ error: "Could not find user email" }),
           {
             status: 404,
             headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -144,7 +223,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (!res.ok) {
       console.error("Resend API error:", data);
-      return new Response(JSON.stringify({ error: data }), {
+      return new Response(JSON.stringify({ error: "Failed to send email" }), {
         status: res.status,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
@@ -152,7 +231,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Email sent successfully:", data);
 
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
@@ -162,7 +241,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in send-email function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Internal server error" }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
