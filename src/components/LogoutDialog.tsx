@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +22,7 @@ interface LogoutDialogProps {
 export function LogoutDialog({ isCollapsed }: LogoutDialogProps) {
   const [open, setOpen] = useState(false);
   const { signOut } = useAuth();
+  const { t } = useTranslation();
 
   const handleLogout = async () => {
     await signOut();
@@ -30,22 +32,22 @@ export function LogoutDialog({ isCollapsed }: LogoutDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <SidebarMenuButton tooltip="Sair" className="w-full hover:bg-sidebar-accent transition-colors">
+        <SidebarMenuButton tooltip={t("auth.logout")} className="w-full hover:bg-sidebar-accent transition-colors">
           <LogOut className="h-4 w-4" />
-          {!isCollapsed && <span>Sair</span>}
+          {!isCollapsed && <span>{t("auth.logout")}</span>}
         </SidebarMenuButton>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirmar saída</AlertDialogTitle>
+          <AlertDialogTitle>{t("auth.logoutConfirm")}</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja sair da sua conta? Você precisará fazer login novamente para acessar o sistema.
+            {t("auth.logoutDescription")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
           <AlertDialogAction onClick={handleLogout} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-            Sair
+            {t("auth.logout")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

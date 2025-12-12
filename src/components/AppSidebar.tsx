@@ -1,4 +1,5 @@
 import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, Wrench, Settings2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import logoSoma from "@/assets/logo-soma-dark.png";
 import logoSomaIcon from "@/assets/logo-soma-icon.png";
 import { NavLink } from "@/components/NavLink";
@@ -13,29 +14,8 @@ import { useAdjustmentCount } from "@/hooks/useAdjustmentCount";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-const menuItems = [{
-  title: "Dashboard",
-  url: "/",
-  icon: LayoutDashboard
-}, {
-  title: "Kanban",
-  url: "/kanban",
-  icon: Kanban
-}, {
-  title: "Demandas",
-  url: "/demands",
-  icon: Briefcase
-}, {
-  title: "Ajustes",
-  url: "/adjustments",
-  icon: Wrench,
-  showBadge: true
-}, {
-  title: "Arquivadas",
-  url: "/archived",
-  icon: Archive
-}];
 export function AppSidebar() {
+  const { t } = useTranslation();
   const {
     state,
     setOpenMobile,
@@ -58,6 +38,29 @@ export function AppSidebar() {
   const adjustmentCount = useAdjustmentCount(selectedTeamId);
   const isAdminOrModerator = role === "admin" || role === "moderator";
 
+  const menuItems = [{
+    title: t("dashboard.title"),
+    url: "/",
+    icon: LayoutDashboard
+  }, {
+    title: t("kanban.title"),
+    url: "/kanban",
+    icon: Kanban
+  }, {
+    title: t("demands.title"),
+    url: "/demands",
+    icon: Briefcase
+  }, {
+    title: t("dashboard.adjustments"),
+    url: "/adjustments",
+    icon: Wrench,
+    showBadge: true
+  }, {
+    title: t("demands.archived"),
+    url: "/archived",
+    icon: Archive
+  }];
+
   // Keep teams expanded if on teams routes
   const isOnTeamsRoute = location.pathname.startsWith("/teams");
   const [teamsOpen, setTeamsOpen] = useState(isOnTeamsRoute);
@@ -75,7 +78,7 @@ export function AppSidebar() {
         </div>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
+          <SidebarGroupLabel>{t("common.actions")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map(item => <SidebarMenuItem key={item.title} className="relative">
@@ -101,7 +104,7 @@ export function AppSidebar() {
               {isCollapsed ? <SidebarMenuItem>
                   <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                     <PopoverTrigger asChild>
-                      <SidebarMenuButton tooltip="Equipes" className="hover:bg-sidebar-accent transition-colors relative">
+                      <SidebarMenuButton tooltip={t("teams.title")} className="hover:bg-sidebar-accent transition-colors relative">
                         <Users className="h-4 w-4" />
                         {typeof pendingCount === "number" && pendingCount > 0 && isAdmin && <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0">
                             {pendingCount}
@@ -111,16 +114,16 @@ export function AppSidebar() {
                     <PopoverContent side="right" align="start" sideOffset={8} className="w-48 p-2 bg-sidebar border-sidebar-border z-50">
                       <div className="flex flex-col gap-1">
                         <span className="text-xs font-medium text-sidebar-foreground/70 px-2 py-1">
-                          Equipes
+                          {t("teams.title")}
                         </span>
                         <NavLink to="/teams" end onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                           <Users className="h-4 w-4" />
-                          Minhas Equipes
+                          {t("teams.myTeams")}
                         </NavLink>
                         
                         {isAdmin && selectedTeamId && <NavLink to={`/teams/${selectedTeamId}/requests`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                             <Users className="h-4 w-4" />
-                            Solicitações
+                            {t("teams.requests")}
                             {typeof pendingCount === "number" && pendingCount > 0 && <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs">
                                 {pendingCount}
                               </Badge>}
@@ -128,7 +131,7 @@ export function AppSidebar() {
                         
                         {isAdminOrModerator && selectedTeamId && <NavLink to={`/teams/${selectedTeamId}/services`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                             <Settings2 className="h-4 w-4" />
-                            Serviços
+                            {t("teams.services")}
                           </NavLink>}
                       </div>
                     </PopoverContent>
@@ -136,9 +139,9 @@ export function AppSidebar() {
                 </SidebarMenuItem> : <Collapsible open={teamsOpen} onOpenChange={setTeamsOpen} className="group/collapsible">
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
-                      <SidebarMenuButton tooltip="Equipes" className="hover:bg-sidebar-accent transition-colors">
+                      <SidebarMenuButton tooltip={t("teams.title")} className="hover:bg-sidebar-accent transition-colors">
                         <Users className="h-4 w-4" />
-                        <span className="flex-1">Equipes</span>
+                        <span className="flex-1">{t("teams.title")}</span>
                         {typeof pendingCount === "number" && pendingCount > 0 && isAdmin && <Badge variant="destructive" className="mr-1 h-5 min-w-5 flex items-center justify-center text-xs">
                             {pendingCount}
                           </Badge>}
@@ -151,7 +154,7 @@ export function AppSidebar() {
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
                             <NavLink to="/teams" end onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                              Minhas Equipes
+                              {t("teams.myTeams")}
                             </NavLink>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
@@ -159,7 +162,7 @@ export function AppSidebar() {
                         {isAdmin && selectedTeamId && <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
                               <NavLink to={`/teams/${selectedTeamId}/requests`} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                                Solicitações
+                                {t("teams.requests")}
                                 {typeof pendingCount === "number" && pendingCount > 0 && <Badge variant="destructive" className="ml-2 h-5 min-w-5 flex items-center justify-center text-xs">
                                     {pendingCount}
                                   </Badge>}
@@ -171,7 +174,7 @@ export function AppSidebar() {
                             <SidebarMenuSubButton asChild>
                               <NavLink to={`/teams/${selectedTeamId}/services`} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                                 <Settings2 className="h-4 w-4 mr-2" />
-                                Serviços
+                                {t("teams.services")}
                               </NavLink>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>}

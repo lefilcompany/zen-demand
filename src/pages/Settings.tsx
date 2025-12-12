@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
-import { ArrowLeft, Moon, Sun, Monitor, Bell, BellOff, Globe, Mail, MessageSquare } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { ArrowLeft, Moon, Sun, Monitor, Bell, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -35,37 +36,33 @@ const defaultNotificationPrefs: NotificationPreferences = {
 export default function Settings() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const { t, i18n } = useTranslation();
   const [mounted, setMounted] = useState(false);
-  const [language, setLanguage] = useState("pt-BR");
   const [notifications, setNotifications] = useState<NotificationPreferences>(defaultNotificationPrefs);
 
-  // Prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
-    // Load preferences from localStorage
-    const savedLanguage = localStorage.getItem("app-language");
     const savedNotifications = localStorage.getItem("notification-preferences");
-    
-    if (savedLanguage) setLanguage(savedLanguage);
     if (savedNotifications) setNotifications(JSON.parse(savedNotifications));
   }, []);
 
   const handleThemeChange = (newTheme: string) => {
     setTheme(newTheme);
-    toast.success(`Tema alterado para ${newTheme === "dark" ? "escuro" : newTheme === "light" ? "claro" : "sistema"}`);
+    const themeLabel = newTheme === "dark" ? t("settings.themeDark") : newTheme === "light" ? t("settings.themeLight") : t("settings.themeSystem");
+    toast.success(`${t("settings.theme")}: ${themeLabel}`);
   };
 
   const handleLanguageChange = (newLanguage: string) => {
-    setLanguage(newLanguage);
+    i18n.changeLanguage(newLanguage);
     localStorage.setItem("app-language", newLanguage);
-    toast.success("Idioma atualizado");
+    toast.success(t("toast.languageUpdated"));
   };
 
   const handleNotificationChange = (key: keyof NotificationPreferences, value: boolean) => {
     const newPrefs = { ...notifications, [key]: value };
     setNotifications(newPrefs);
     localStorage.setItem("notification-preferences", JSON.stringify(newPrefs));
-    toast.success("Preferência de notificação atualizada");
+    toast.success(t("toast.settingsSaved"));
   };
 
   if (!mounted) return null;
@@ -80,12 +77,12 @@ export default function Settings() {
           className="shrink-0"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar
+          {t("common.back")}
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t("settings.title")}</h1>
           <p className="text-muted-foreground">
-            Personalize sua experiência no SoMA
+            {t("settings.description")}
           </p>
         </div>
       </div>
@@ -96,15 +93,15 @@ export default function Settings() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Sun className="h-5 w-5" />
-              Aparência
+              {t("settings.appearance")}
             </CardTitle>
             <CardDescription>
-              Personalize a aparência do aplicativo
+              {t("settings.appearanceDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-3">
-              <Label>Tema</Label>
+              <Label>{t("settings.theme")}</Label>
               <div className="flex flex-wrap gap-3">
                 <Button
                   variant={theme === "light" ? "default" : "outline"}
@@ -112,7 +109,7 @@ export default function Settings() {
                   onClick={() => handleThemeChange("light")}
                 >
                   <Sun className="h-4 w-4" />
-                  Claro
+                  {t("settings.themeLight")}
                 </Button>
                 <Button
                   variant={theme === "dark" ? "default" : "outline"}
@@ -120,7 +117,7 @@ export default function Settings() {
                   onClick={() => handleThemeChange("dark")}
                 >
                   <Moon className="h-4 w-4" />
-                  Escuro
+                  {t("settings.themeDark")}
                 </Button>
                 <Button
                   variant={theme === "system" ? "default" : "outline"}
@@ -128,7 +125,7 @@ export default function Settings() {
                   onClick={() => handleThemeChange("system")}
                 >
                   <Monitor className="h-4 w-4" />
-                  Sistema
+                  {t("settings.themeSystem")}
                 </Button>
               </div>
             </div>
@@ -139,19 +136,19 @@ export default function Settings() {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <Globe className="h-5 w-5" />
-              Idioma e Região
+              <span className="text-xl">🌐</span>
+              {t("settings.languageRegion")}
             </CardTitle>
             <CardDescription>
-              Configure seu idioma preferido
+              {t("settings.languageDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <Label htmlFor="language">Idioma</Label>
-              <Select value={language} onValueChange={handleLanguageChange}>
+              <Label htmlFor="language">{t("settings.language")}</Label>
+              <Select value={i18n.language} onValueChange={handleLanguageChange}>
                 <SelectTrigger className="max-w-xs">
-                  <SelectValue placeholder="Selecione o idioma" />
+                  <SelectValue placeholder={t("settings.language")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
@@ -160,7 +157,7 @@ export default function Settings() {
                 </SelectContent>
               </Select>
               <p className="text-sm text-muted-foreground">
-                O idioma será aplicado em toda a interface do aplicativo
+                {t("settings.languageApplied")}
               </p>
             </div>
           </CardContent>
@@ -171,26 +168,26 @@ export default function Settings() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Bell className="h-5 w-5" />
-              Notificações
+              {t("settings.notifications")}
             </CardTitle>
             <CardDescription>
-              Gerencie como você recebe notificações
+              {t("settings.notificationsDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Notification Channels */}
             <div className="space-y-4">
-              <h4 className="text-sm font-medium text-foreground">Canais de Notificação</h4>
+              <h4 className="text-sm font-medium text-foreground">{t("settings.notificationChannels")}</h4>
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Mail className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <Label htmlFor="email-notifications" className="cursor-pointer">
-                      Notificações por E-mail
+                      {t("settings.emailNotifications")}
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                      Receba atualizações importantes por e-mail
+                      {t("settings.emailNotificationsDesc")}
                     </p>
                   </div>
                 </div>
@@ -206,10 +203,10 @@ export default function Settings() {
                   <Bell className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <Label htmlFor="push-notifications" className="cursor-pointer">
-                      Notificações Push
+                      {t("settings.pushNotifications")}
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                      Receba notificações no navegador
+                      {t("settings.pushNotificationsDesc")}
                     </p>
                   </div>
                 </div>
@@ -225,15 +222,15 @@ export default function Settings() {
 
             {/* Notification Types */}
             <div className="space-y-4">
-              <h4 className="text-sm font-medium text-foreground">Tipos de Notificação</h4>
+              <h4 className="text-sm font-medium text-foreground">{t("settings.notificationTypes")}</h4>
               
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="demand-updates" className="cursor-pointer">
-                    Atualizações de Demandas
+                    {t("settings.demandUpdates")}
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Mudanças de status e novas interações
+                    {t("settings.demandUpdatesDesc")}
                   </p>
                 </div>
                 <Switch
@@ -246,10 +243,10 @@ export default function Settings() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="team-updates" className="cursor-pointer">
-                    Atualizações de Equipe
+                    {t("settings.teamUpdates")}
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Novos membros e solicitações de entrada
+                    {t("settings.teamUpdatesDesc")}
                   </p>
                 </div>
                 <Switch
@@ -262,10 +259,10 @@ export default function Settings() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="deadline-reminders" className="cursor-pointer">
-                    Lembretes de Prazo
+                    {t("settings.deadlineReminders")}
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Alertas sobre prazos próximos do vencimento
+                    {t("settings.deadlineRemindersDesc")}
                   </p>
                 </div>
                 <Switch
