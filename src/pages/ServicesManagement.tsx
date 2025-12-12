@@ -163,8 +163,9 @@ export default function ServicesManagement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(`/teams/${id}`)}>
-            <ArrowLeft className="h-5 w-5" />
+          <Button variant="ghost" onClick={() => navigate(`/teams/${id}`)}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Serviços</h1>

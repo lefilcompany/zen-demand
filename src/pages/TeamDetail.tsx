@@ -125,8 +125,9 @@ export default function TeamDetail() {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/teams")}>
-          <ArrowLeft className="h-5 w-5" />
+        <Button variant="ghost" onClick={() => navigate("/teams")}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar
         </Button>
         <div className="flex-1">
           <h1 className="text-2xl font-bold">{team.name}</h1>
