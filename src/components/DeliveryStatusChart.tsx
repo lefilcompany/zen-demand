@@ -36,7 +36,7 @@ export function DeliveryStatusChart({ data }: DeliveryStatusChartProps) {
           </span>
         </div>
       )}
-      <ResponsiveContainer width="100%" height={250}>
+      <ResponsiveContainer width="100%" height={320}>
         <PieChart>
         <Pie
           data={chartData}
