@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
 
@@ -14,6 +15,8 @@ export default function Auth() {
   const { t } = useTranslation();
   const { user, loading, signIn, signUp } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [loginData, setLoginData] = useState({
     email: "",
     password: ""
@@ -185,15 +188,30 @@ export default function Auth() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="login-password">{t("common.password")}</Label>
-                  <Input 
-                    id="login-password" 
-                    type="password" 
-                    placeholder="••••••••" 
-                    className="h-11 sm:h-12" 
-                    value={loginData.password} 
-                    onChange={e => setLoginData({...loginData, password: e.target.value})} 
-                    required 
-                  />
+                  <div className="relative">
+                    <Input 
+                      id="login-password" 
+                      type={showLoginPassword ? "text" : "password"} 
+                      placeholder="••••••••" 
+                      className="h-11 sm:h-12 pr-10" 
+                      value={loginData.password} 
+                      onChange={e => setLoginData({...loginData, password: e.target.value})} 
+                      required 
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    >
+                      {showLoginPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
                 <Button type="submit" className="w-full h-11 sm:h-12 text-base font-semibold" disabled={isLoading}>
                   {isLoading ? t("common.loading") : t("auth.login")}
@@ -267,15 +285,30 @@ export default function Auth() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">{t("common.password")}</Label>
-                  <Input 
-                    id="signup-password" 
-                    type="password" 
-                    placeholder="••••••••" 
-                    className="h-10 sm:h-11" 
-                    value={signupData.password} 
-                    onChange={e => setSignupData({...signupData, password: e.target.value})} 
-                    required 
-                  />
+                  <div className="relative">
+                    <Input 
+                      id="signup-password" 
+                      type={showSignupPassword ? "text" : "password"} 
+                      placeholder="••••••••" 
+                      className="h-10 sm:h-11 pr-10" 
+                      value={signupData.password} 
+                      onChange={e => setSignupData({...signupData, password: e.target.value})} 
+                      required 
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowSignupPassword(!showSignupPassword)}
+                    >
+                      {showSignupPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
                 <Button type="submit" className="w-full h-11 sm:h-12 text-base font-semibold" disabled={isLoading}>
                   {isLoading ? t("common.loading") : t("auth.signup")}
