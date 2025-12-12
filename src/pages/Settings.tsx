@@ -258,6 +258,23 @@ export default function Settings() {
                   disabled={isLoading}
                 />
               </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="adjustment-requests" className="cursor-pointer">
+                    {t("settings.adjustmentRequests")}
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    {t("settings.adjustmentRequestsDesc")}
+                  </p>
+                </div>
+                <Switch
+                  id="adjustment-requests"
+                  checked={preferences.adjustmentRequests}
+                  onCheckedChange={(checked) => handleNotificationChange("adjustmentRequests", checked)}
+                  disabled={isLoading}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
