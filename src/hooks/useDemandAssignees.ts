@@ -83,20 +83,37 @@ export function useSetAssignees() {
 
   return useMutation({
     mutationFn: async ({ demandId, userIds }: { demandId: string; userIds: string[] }) => {
-      // First delete all existing assignees
-      const { error: deleteError } = await supabase
+      // Get current assignees
+      const { data: currentAssignees, error: fetchError } = await supabase
         .from("demand_assignees")
-        .delete()
+        .select("user_id")
         .eq("demand_id", demandId);
 
-      if (deleteError) throw deleteError;
+      if (fetchError) throw fetchError;
 
-      // Then insert new assignees
-      if (userIds.length > 0) {
+      const currentUserIds = currentAssignees?.map(a => a.user_id) || [];
+      
+      // Find users to remove and users to add
+      const toRemove = currentUserIds.filter(id => !userIds.includes(id));
+      const toAdd = userIds.filter(id => !currentUserIds.includes(id));
+
+      // Remove assignees that are no longer selected
+      if (toRemove.length > 0) {
+        const { error: deleteError } = await supabase
+          .from("demand_assignees")
+          .delete()
+          .eq("demand_id", demandId)
+          .in("user_id", toRemove);
+
+        if (deleteError) throw deleteError;
+      }
+
+      // Add new assignees (only those not already assigned)
+      if (toAdd.length > 0) {
         const { error: insertError } = await supabase
           .from("demand_assignees")
           .insert(
-            userIds.map((userId) => ({
+            toAdd.map((userId) => ({
               demand_id: demandId,
               user_id: userId,
             }))
