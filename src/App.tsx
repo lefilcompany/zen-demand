@@ -20,6 +20,9 @@ import TeamRequests from "./pages/TeamRequests";
 import ServicesManagement from "./pages/ServicesManagement";
 import Demands from "./pages/Demands";
 import CreateDemand from "./pages/CreateDemand";
+import CreateDemandRequest from "./pages/CreateDemandRequest";
+import MyDemandRequests from "./pages/MyDemandRequests";
+import DemandRequests from "./pages/DemandRequests";
 import DemandDetail from "./pages/DemandDetail";
 import Kanban from "./pages/Kanban";
 import ArchivedDemands from "./pages/ArchivedDemands";
@@ -58,7 +61,10 @@ const App = () => (
                     <Route path="/teams/:id/services" element={<ServicesManagement />} />
                     <Route path="/demands" element={<Demands />} />
                     <Route path="/demands/create" element={<CreateDemand />} />
+                    <Route path="/demands/request" element={<CreateDemandRequest />} />
                     <Route path="/demands/:id" element={<DemandDetail />} />
+                    <Route path="/my-requests" element={<MyDemandRequests />} />
+                    <Route path="/demand-requests" element={<DemandRequests />} />
                     <Route path="/kanban" element={<Kanban />} />
                     <Route path="/archived" element={<ArchivedDemands />} />
                     <Route path="/adjustments" element={<Adjustments />} />

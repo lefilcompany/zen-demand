@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, Wrench, Settings2 } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, Wrench, Settings2, FileText, Send } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import logoSoma from "@/assets/logo-soma-dark.png";
 import logoSomaIcon from "@/assets/logo-soma-icon.png";
@@ -8,6 +8,7 @@ import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGrou
 import { LogoutDialog } from "@/components/LogoutDialog";
 import { Badge } from "@/components/ui/badge";
 import { usePendingRequestsCount } from "@/hooks/useTeamJoinRequests";
+import { usePendingRequestsCount as usePendingDemandRequestsCount } from "@/hooks/useDemandRequests";
 import { useIsTeamAdmin, useTeamRole } from "@/hooks/useTeamRole";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useAdjustmentCount } from "@/hooks/useAdjustmentCount";
@@ -35,10 +36,12 @@ export function AppSidebar() {
   const {
     data: pendingCount
   } = usePendingRequestsCount(isAdmin ? selectedTeamId : null);
+  const { data: pendingDemandRequests } = usePendingDemandRequestsCount();
   const adjustmentCount = useAdjustmentCount(selectedTeamId);
   const isAdminOrModerator = role === "admin" || role === "moderator";
+  const isRequester = role === "requester";
 
-  const menuItems = [{
+  const baseMenuItems = [{
     title: t("dashboard.title"),
     url: "/",
     icon: LayoutDashboard
@@ -50,7 +53,24 @@ export function AppSidebar() {
     title: t("demands.title"),
     url: "/demands",
     icon: Briefcase
-  }, {
+  }];
+
+  // Add demand requests link for admins/moderators
+  const adminMenuItems = isAdminOrModerator ? [{
+    title: "Solicitações de Demanda",
+    url: "/demand-requests",
+    icon: FileText,
+    showDemandRequestBadge: true
+  }] : [];
+
+  // Add my requests link for requesters
+  const requesterMenuItems = isRequester ? [{
+    title: "Minhas Solicitações",
+    url: "/my-requests",
+    icon: Send
+  }] : [];
+
+  const endMenuItems = [{
     title: t("dashboard.adjustments"),
     url: "/adjustments",
     icon: Wrench,
@@ -60,6 +80,8 @@ export function AppSidebar() {
     url: "/archived",
     icon: Archive
   }];
+
+  const menuItems = [...baseMenuItems, ...adminMenuItems, ...requesterMenuItems, ...endMenuItems];
 
   // Keep teams expanded if on teams routes
   const isOnTeamsRoute = location.pathname.startsWith("/teams");
@@ -100,11 +122,21 @@ export function AppSidebar() {
                             {adjustmentCount}
                           </Badge>
                         )}
+                        {!isCollapsed && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
+                          <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs">
+                            {pendingDemandRequests}
+                          </Badge>
+                        )}
                       </NavLink>
                     </SidebarMenuButton>
                     {isCollapsed && (item as any).showBadge && adjustmentCount > 0 && (
                       <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1">
                         {adjustmentCount}
+                      </Badge>
+                    )}
+                    {isCollapsed && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
+                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1">
+                        {pendingDemandRequests}
                       </Badge>
                     )}
                   </SidebarMenuItem>

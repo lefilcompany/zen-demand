@@ -13,7 +13,7 @@ import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { ScopeProgressBar } from "@/components/ScopeProgressBar";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { addDays, format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +32,11 @@ export default function CreateDemand() {
 
   const selectedTeam = teams?.find(t => t.id === selectedTeamId);
   const canAssignResponsibles = role !== "requester";
+
+  // Redirect requesters to the request page
+  if (role === "requester") {
+    return <Navigate to="/demands/request" replace />;
+  }
   const limit = scope?.monthly_demand_limit || 0;
 
   const [title, setTitle] = useState("");
