@@ -13,6 +13,28 @@ serve(async (req) => {
   }
 
   try {
+    // Validate CRON_SECRET for authentication
+    const authHeader = req.headers.get("authorization");
+    const cronSecret = Deno.env.get("CRON_SECRET");
+    
+    if (!cronSecret) {
+      console.error("CRON_SECRET not configured");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    // Check if request has valid authorization
+    const expectedAuth = `Bearer ${cronSecret}`;
+    if (authHeader !== expectedAuth) {
+      console.warn("Unauthorized access attempt to check-deadlines");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     console.log("Starting deadline check...");
     
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -127,7 +149,7 @@ serve(async (req) => {
   } catch (error: any) {
     console.error("Error in check-deadlines function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Internal server error" }),
       { 
         status: 500, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 

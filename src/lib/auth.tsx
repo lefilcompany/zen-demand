@@ -3,6 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errorUtils";
 
 interface AuthContextType {
   user: User | null;
@@ -85,7 +86,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       navigate("/auth");
     } catch (error: any) {
       toast.error("Erro ao fazer logout", {
-        description: error.message,
+        description: getErrorMessage(error),
       });
     }
   };

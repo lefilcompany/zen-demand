@@ -17,6 +17,7 @@ import { useState, useEffect } from "react";
 import { addDays, format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errorUtils";
 
 export default function CreateDemand() {
   const navigate = useNavigate();
@@ -95,7 +96,7 @@ export default function CreateDemand() {
         },
         onError: (error: any) => {
           toast.error("Erro ao criar demanda", {
-            description: error.message || "Tente novamente.",
+            description: getErrorMessage(error),
           });
         },
       }

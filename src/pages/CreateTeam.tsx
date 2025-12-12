@@ -8,6 +8,7 @@ import { ArrowLeft, RefreshCw, Copy, Check, Eye, EyeOff, Users, Loader2, Shield 
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errorUtils";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
 
@@ -86,7 +87,7 @@ export default function CreateTeam() {
             });
           } else {
             toast.error("Erro ao criar equipe", {
-              description: error.message || "Tente novamente.",
+              description: getErrorMessage(error),
             });
           }
         },

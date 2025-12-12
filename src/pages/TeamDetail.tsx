@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errorUtils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,7 +65,7 @@ export default function TeamDetail() {
         },
         onError: (error: any) => {
           toast.error("Erro ao atualizar papel", {
-            description: error.message || "Tente novamente.",
+            description: getErrorMessage(error),
           });
         },
       }
@@ -78,7 +79,7 @@ export default function TeamDetail() {
       },
       onError: (error: any) => {
         toast.error("Erro ao remover membro", {
-          description: error.message || "Tente novamente.",
+          description: getErrorMessage(error),
         });
       },
     });
@@ -93,7 +94,7 @@ export default function TeamDetail() {
       },
       onError: (error: any) => {
         toast.error("Erro ao excluir equipe", {
-          description: error.message || "Tente novamente.",
+          description: getErrorMessage(error),
         });
       },
     });

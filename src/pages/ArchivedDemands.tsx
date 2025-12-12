@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errorUtils";
 
 export default function ArchivedDemands() {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ export default function ArchivedDemands() {
         },
         onError: (error: any) => {
           toast.error("Erro ao restaurar demanda", {
-            description: error.message || "Tente novamente.",
+            description: getErrorMessage(error),
           });
         },
       }
