@@ -17,6 +17,7 @@ export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loginData, setLoginData] = useState({
     email: "",
     password: ""
@@ -27,7 +28,8 @@ export default function Auth() {
     phone: "",
     state: "",
     city: "",
-    password: ""
+    password: "",
+    confirmPassword: ""
   });
 
   if (loading) {
@@ -78,6 +80,12 @@ export default function Auth() {
     if (signupData.password.length < 6) {
       toast.warning(t("toast.warning"), {
         description: t("profile.newPassword")
+      });
+      return;
+    }
+    if (signupData.password !== signupData.confirmPassword) {
+      toast.warning(t("toast.warning"), {
+        description: t("profile.passwordMismatch")
       });
       return;
     }
@@ -303,6 +311,33 @@ export default function Auth() {
                       onClick={() => setShowSignupPassword(!showSignupPassword)}
                     >
                       {showSignupPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-confirm-password">{t("profile.confirmPassword")}</Label>
+                  <div className="relative">
+                    <Input 
+                      id="signup-confirm-password" 
+                      type={showConfirmPassword ? "text" : "password"} 
+                      placeholder="••••••••" 
+                      className="h-10 sm:h-11 pr-10" 
+                      value={signupData.confirmPassword} 
+                      onChange={e => setSignupData({...signupData, confirmPassword: e.target.value})} 
+                      required 
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? (
                         <EyeOff className="h-4 w-4 text-muted-foreground" />
                       ) : (
                         <Eye className="h-4 w-4 text-muted-foreground" />
