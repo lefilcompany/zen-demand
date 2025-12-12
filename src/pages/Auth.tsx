@@ -171,8 +171,8 @@ export default function Auth() {
       <div className="flex-1 lg:w-1/2 xl:w-2/5 flex items-start lg:items-center justify-center p-6 sm:p-8 md:p-12 bg-background">
         <div className="w-full max-w-md">
           <div className="mb-6 sm:mb-8 text-center">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
-              Bem-vindo ao <Image src={logoSomaDark} alt="SoMA+" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 flex items-center justify-center gap-2">
+              Bem-vindo ao <img src={logoSomaDark} alt="SoMA+" className="h-8 inline-block" />
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground">Acesse sua conta ou crie uma nova</p>
           </div>
