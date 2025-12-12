@@ -30,6 +30,7 @@ import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { DemandEditForm } from "@/components/DemandEditForm";
 import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter } from "lucide-react";
+import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
 import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -63,10 +64,13 @@ export default function DemandDetail() {
   const canEdit = role === "admin" || role === "moderator" || demand?.created_by === user?.id;
   const isCreator = demand?.created_by === user?.id;
 
-  // Check if demand is delivered - any team member can request adjustment
+  // Check if demand is delivered or in progress
   const deliveredStatusId = statuses?.find((s) => s.name === "Entregue")?.id;
   const adjustmentStatusId = statuses?.find((s) => s.name === "Em Ajuste")?.id;
+  const fazendoStatusId = statuses?.find((s) => s.name === "Fazendo")?.id;
   const canRequestAdjustment = demand?.status_id === deliveredStatusId;
+  const isInProgress = demand?.status_id === fazendoStatusId;
+  const isDelivered = demand?.status_id === deliveredStatusId;
 
   const filteredInteractions = useMemo(() => {
     if (!interactions) return [];
@@ -425,6 +429,22 @@ export default function DemandDetail() {
               )}
             </div>
           </div>
+
+          {/* Time tracking display */}
+          {(isInProgress || isDelivered) && (
+            <div>
+              <h3 className="font-semibold mb-2 text-sm md:text-base">Tempo de Execução</h3>
+              <DemandTimeDisplay
+                createdAt={demand.created_at}
+                updatedAt={demand.updated_at}
+                timeInProgressSeconds={(demand as any).time_in_progress_seconds}
+                lastStartedAt={(demand as any).last_started_at}
+                isInProgress={isInProgress}
+                isDelivered={isDelivered}
+                variant="detail"
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 

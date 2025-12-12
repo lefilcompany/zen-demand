@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
+import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -13,6 +14,10 @@ export interface DemandTableRow {
   description?: string | null;
   priority?: string | null;
   due_date?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  time_in_progress_seconds?: number | null;
+  last_started_at?: string | null;
   demand_statuses?: {
     name: string;
     color: string;
@@ -148,6 +153,31 @@ function PriorityCell({ row }: { row: { original: DemandTableRow } }) {
   );
 }
 
+// Cell component for execution time
+function ExecutionTimeCell({ row }: { row: { original: DemandTableRow } }) {
+  const demand = row.original;
+  const statusName = demand.demand_statuses?.name;
+  const isInProgress = statusName === "Fazendo";
+  const isDelivered = statusName === "Entregue";
+  
+  // Only show for in progress or delivered
+  if (!isInProgress && !isDelivered) {
+    return <span className="text-muted-foreground text-sm">—</span>;
+  }
+
+  return (
+    <DemandTimeDisplay
+      createdAt={demand.created_at}
+      updatedAt={demand.updated_at}
+      timeInProgressSeconds={demand.time_in_progress_seconds}
+      lastStartedAt={demand.last_started_at}
+      isInProgress={isInProgress}
+      isDelivered={isDelivered}
+      variant="table"
+    />
+  );
+}
+
 export const demandColumns: ColumnDef<DemandTableRow>[] = [
   {
     accessorKey: "title",
@@ -168,6 +198,11 @@ export const demandColumns: ColumnDef<DemandTableRow>[] = [
     accessorKey: "due_date",
     header: "Data de Entrega",
     cell: ({ row }) => <DueDateCell row={row} />,
+  },
+  {
+    id: "execution_time",
+    header: "Tempo Execução",
+    cell: ({ row }) => <ExecutionTimeCell row={row} />,
   },
   {
     accessorKey: "priority",
