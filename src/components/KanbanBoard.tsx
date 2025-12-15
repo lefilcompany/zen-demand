@@ -77,27 +77,28 @@ const columns = [
   { key: "Entregue", label: "Entregue", color: "bg-emerald-500/10", shortLabel: "Entregue" },
 ];
 
-// Custom hook to detect tablet size (between mobile and large desktop)
-function useIsTablet() {
-  const [isTablet, setIsTablet] = useState(false);
+// Custom hook to detect medium screens (tablet and small desktop)
+function useIsMediumScreen() {
+  const [isMediumScreen, setIsMediumScreen] = useState(false);
 
   useEffect(() => {
-    const checkIsTablet = () => {
+    const checkIsMediumScreen = () => {
       const width = window.innerWidth;
-      setIsTablet(width >= 768 && width < 1024);
+      // Detect screens between 768px and 1280px as "medium" requiring collapsible layout
+      setIsMediumScreen(width >= 768 && width < 1280);
     };
     
-    checkIsTablet();
-    window.addEventListener("resize", checkIsTablet);
-    return () => window.removeEventListener("resize", checkIsTablet);
+    checkIsMediumScreen();
+    window.addEventListener("resize", checkIsMediumScreen);
+    return () => window.removeEventListener("resize", checkIsMediumScreen);
   }, []);
 
-  return isTablet;
+  return isMediumScreen;
 }
 
 export function KanbanBoard({ demands, onDemandClick, readOnly = false }: KanbanBoardProps) {
   const isMobile = useIsMobile();
-  const isTablet = useIsTablet();
+  const isMediumScreen = useIsMediumScreen();
   const { user } = useAuth();
   const [activeColumn, setActiveColumn] = useState(columns[0].key);
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -284,7 +285,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
   const renderDemandCard = (demand: Demand, columnKey: string) => {
     const assignees = demand.demand_assignees || [];
     const adjustmentCount = adjustmentCounts?.[demand.id] || 0;
-    const showDragHandle = !readOnly && !isMobile && !isTablet;
+    const showDragHandle = !readOnly && !isMobile && !isMediumScreen;
     
     return (
       <Card
@@ -421,7 +422,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
         {columnDemands.map((demand) => renderDemandCard(demand, columnKey))}
         {columnDemands.length === 0 && (
           <div className="text-center py-8 text-muted-foreground text-sm border-2 border-dashed rounded-lg">
-            {readOnly || isMobile || isTablet ? "Nenhuma demanda" : "Arraste demandas aqui"}
+            {readOnly || isMobile || isMediumScreen ? "Nenhuma demanda" : "Arraste demandas aqui"}
           </div>
         )}
       </div>
@@ -536,8 +537,8 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
     );
   }
 
-  // Tablet view with horizontal collapsible tabs
-  if (isTablet) {
+  // Medium screen view (tablet/small desktop) with horizontal collapsible tabs
+  if (isMediumScreen) {
     return (
       <div className="flex flex-col h-full gap-2">
         {/* Horizontal tabs row */}
