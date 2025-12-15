@@ -77,28 +77,28 @@ const columns = [
   { key: "Entregue", label: "Entregue", color: "bg-emerald-500/10", shortLabel: "Entregue" },
 ];
 
-// Custom hook to detect medium screens (tablet and small desktop)
-function useIsMediumScreen() {
-  const [isMediumScreen, setIsMediumScreen] = useState(false);
+// Custom hook to detect desktop screens (non-mobile) for collapsible tabs layout
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
-    const checkIsMediumScreen = () => {
+    const checkIsDesktop = () => {
       const width = window.innerWidth;
-      // Detect screens between 768px and 1280px as "medium" requiring collapsible layout
-      setIsMediumScreen(width >= 768 && width < 1280);
+      // All screens >= 768px use collapsible tabs layout
+      setIsDesktop(width >= 768);
     };
     
-    checkIsMediumScreen();
-    window.addEventListener("resize", checkIsMediumScreen);
-    return () => window.removeEventListener("resize", checkIsMediumScreen);
+    checkIsDesktop();
+    window.addEventListener("resize", checkIsDesktop);
+    return () => window.removeEventListener("resize", checkIsDesktop);
   }, []);
 
-  return isMediumScreen;
+  return isDesktop;
 }
 
 export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole }: KanbanBoardProps) {
   const isMobile = useIsMobile();
-  const isMediumScreen = useIsMediumScreen();
+  const isDesktop = useIsDesktop();
   const [activeColumn, setActiveColumn] = useState(columns[0].key);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
@@ -163,8 +163,8 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     
     if (previousStatusName === columnKey) return;
 
-    // Mudar para a aba de destino no modo tablet para acompanhar o card
-    if (isMediumScreen) {
+    // Mudar para a aba de destino no modo desktop para acompanhar o card
+    if (isDesktop) {
       setActiveColumn(columnKey);
     }
 
@@ -559,8 +559,8 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     );
   }
 
-  // Medium screen view (tablet/small desktop) with horizontal collapsible tabs and drag-drop
-  if (isMediumScreen) {
+  // Desktop view (all non-mobile) with horizontal collapsible tabs and drag-drop
+  if (isDesktop) {
     return (
       <div className="flex flex-col h-full gap-2">
         {/* Horizontal tabs row */}
@@ -655,50 +655,6 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     );
   }
 
-  // Large Desktop view with all columns visible and drag-drop with visual feedback
-  return (
-    <div className="grid grid-cols-5 gap-3 h-full">
-      {columns.map((column) => {
-        const isDragTarget = dragOverColumn === column.key && draggedId;
-        
-        return (
-          <div
-            key={column.key}
-            className={cn(
-              "rounded-lg p-4 transition-all duration-200 flex flex-col min-h-0",
-              column.color,
-              // Visual feedback when any drag is happening
-              draggedId && "ring-2 ring-primary/20",
-              // Highlight the specific column being hovered
-              isDragTarget && "ring-2 ring-primary ring-offset-2 ring-offset-background scale-[1.02] bg-primary/10"
-            )}
-            onDragOver={(e) => handleDragOver(e, column.key)}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, column.key)}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className={cn(
-                "font-semibold text-sm uppercase tracking-wide text-muted-foreground transition-colors",
-                isDragTarget && "text-primary"
-              )}>
-                {column.label}
-              </h3>
-              <Badge variant="secondary" className="text-xs">
-                {getDemandsForColumn(column.key).length}
-              </Badge>
-            </div>
-
-            {renderColumnContent(column.key)}
-          </div>
-        );
-      })}
-
-      <KanbanAdjustmentDialog
-        open={adjustmentDialogOpen}
-        onOpenChange={handleAdjustmentDialogChange}
-        demandId={adjustmentDemandId}
-        demandTitle={adjustmentDemand?.title}
-      />
-    </div>
-  );
+  // Fallback (should not reach here)
+  return null;
 }
