@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { TeamSelector } from "@/components/TeamSelector";
@@ -25,6 +26,25 @@ export function ProtectedLayout() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { isOpen, steps, closeTour, completeOnboarding, resetOnboarding, hasCompleted } = useOnboarding();
+  
+  // Detect if tablet/medium screen to collapse sidebar by default
+  const [isTablet, setIsTablet] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const width = window.innerWidth;
+      return width >= 768 && width < 1280;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      setIsTablet(width >= 768 && width < 1280);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -47,8 +67,11 @@ export function ProtectedLayout() {
     .toUpperCase()
     .slice(0, 2) || "U";
 
+  // Sidebar starts collapsed on tablet, open on desktop
+  const defaultSidebarOpen = !isTablet;
+
   return (
-    <SidebarProvider defaultOpen>
+    <SidebarProvider defaultOpen={defaultSidebarOpen} key={isTablet ? 'tablet' : 'desktop'}>
       <div className="flex h-screen w-full bg-sidebar p-2 md:p-3 overflow-hidden">
         <AppSidebar />
         <main className="flex-1 flex flex-col bg-background rounded-xl shadow-xl min-h-0 overflow-hidden">
