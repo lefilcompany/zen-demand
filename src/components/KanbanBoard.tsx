@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, Clock, GripVertical, RefreshCw, Wrench } from "lucide-react";
+import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -71,14 +71,33 @@ const priorityColors: Record<string, string> = {
 };
 
 const columns = [
-  { key: "A Iniciar", label: "A Iniciar", color: "bg-muted" },
-  { key: "Fazendo", label: "Fazendo", color: "bg-blue-500/10" },
-  { key: "Em Ajuste", label: "Em Ajuste", color: "bg-purple-500/10" },
-  { key: "Entregue", label: "Entregue", color: "bg-emerald-500/10" },
+  { key: "A Iniciar", label: "A Iniciar", color: "bg-muted", shortLabel: "Iniciar" },
+  { key: "Fazendo", label: "Fazendo", color: "bg-blue-500/10", shortLabel: "Fazendo" },
+  { key: "Em Ajuste", label: "Em Ajuste", color: "bg-purple-500/10", shortLabel: "Ajuste" },
+  { key: "Entregue", label: "Entregue", color: "bg-emerald-500/10", shortLabel: "Entregue" },
 ];
+
+// Custom hook to detect tablet size (between mobile and large desktop)
+function useIsTablet() {
+  const [isTablet, setIsTablet] = useState(false);
+
+  useEffect(() => {
+    const checkIsTablet = () => {
+      const width = window.innerWidth;
+      setIsTablet(width >= 768 && width < 1024);
+    };
+    
+    checkIsTablet();
+    window.addEventListener("resize", checkIsTablet);
+    return () => window.removeEventListener("resize", checkIsTablet);
+  }, []);
+
+  return isTablet;
+}
 
 export function KanbanBoard({ demands, onDemandClick, readOnly = false }: KanbanBoardProps) {
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
   const { user } = useAuth();
   const [activeColumn, setActiveColumn] = useState(columns[0].key);
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -122,7 +141,6 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
       return;
     }
 
-    // Check if this is an adjustment completion (Em Ajuste -> Entregue)
     const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && columnKey === "Entregue";
 
     updateDemand.mutate(
@@ -134,7 +152,6 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
         onSuccess: async () => {
           toast.success(`Status alterado para "${columnKey}"`);
           
-          // Send email notification when adjustment is completed
           if (isAdjustmentCompletion && demand) {
             try {
               await supabase.functions.invoke("send-email", {
@@ -151,7 +168,6 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
                   },
                 },
               });
-              console.log("Email de ajuste concluído enviado");
             } catch (emailError) {
               console.error("Erro ao enviar email de ajuste concluído:", emailError);
             }
@@ -177,7 +193,6 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
     return new Date(dueDate) < new Date();
   };
 
-
   const handleOpenAdjustmentDialog = (e: React.MouseEvent, demandId: string) => {
     e.stopPropagation();
     setAdjustmentDemandId(demandId);
@@ -188,14 +203,12 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
   const handleRequestAdjustment = async () => {
     if (!adjustmentDemandId || !adjustmentStatusId || !adjustmentReason.trim()) return;
     
-    // Verify user is authenticated
     if (!user) {
       toast.error("Você precisa estar autenticado para solicitar ajustes");
       return;
     }
     
     try {
-      // First create the interaction record
       await new Promise<void>((resolve, reject) => {
         createInteraction.mutate(
           {
@@ -210,7 +223,6 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
         );
       });
       
-      // Then update the demand status
       await new Promise<void>((resolve, reject) => {
         updateDemand.mutate(
           { id: adjustmentDemandId, status_id: adjustmentStatusId },
@@ -223,7 +235,6 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
       
       toast.success("Ajuste solicitado com sucesso!");
       
-      // Notify all assignees about the adjustment request
       if (adjustmentAssignees && adjustmentAssignees.length > 0) {
         const notifications = adjustmentAssignees.map((assignee) => ({
           user_id: assignee.user_id,
@@ -235,7 +246,6 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
         
         await supabase.from("notifications").insert(notifications);
         
-        // Send email notifications to assignees
         for (const assignee of adjustmentAssignees) {
           try {
             await supabase.functions.invoke("send-email", {
@@ -270,164 +280,218 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
     }
   };
 
-  // Render a single column's content
-  const renderColumnContent = (column: typeof columns[0]) => {
-    const columnDemands = getDemandsForColumn(column.key);
+  // Render demand card
+  const renderDemandCard = (demand: Demand, columnKey: string) => {
+    const assignees = demand.demand_assignees || [];
+    const adjustmentCount = adjustmentCounts?.[demand.id] || 0;
+    const showDragHandle = !readOnly && !isMobile && !isTablet;
+    
+    return (
+      <Card
+        key={demand.id}
+        draggable={showDragHandle}
+        onDragStart={(e) => handleDragStart(e, demand.id)}
+        onClick={() => onDemandClick(demand.id)}
+        className={cn(
+          "hover:shadow-md transition-all",
+          showDragHandle && "cursor-grab active:cursor-grabbing",
+          !showDragHandle && "cursor-pointer",
+          draggedId === demand.id && "opacity-50 scale-95",
+          "group"
+        )}
+      >
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex items-start gap-2">
+            {showDragHandle && (
+              <GripVertical className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-1 flex-shrink-0" />
+            )}
+            <div className="flex-1 min-w-0">
+              <h4 className="font-medium text-sm line-clamp-2 mb-2">
+                {demand.title}
+              </h4>
+
+              {demand.description && (
+                <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
+                  {demand.description}
+                </p>
+              )}
+
+              <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
+                {demand.priority && (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "text-xs capitalize",
+                      priorityColors[demand.priority] ||
+                        "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {demand.priority}
+                  </Badge>
+                )}
+
+                {adjustmentCount > 0 && (
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/20"
+                  >
+                    <RefreshCw className="h-3 w-3 mr-1" />
+                    {adjustmentCount}
+                  </Badge>
+                )}
+
+                {demand.teams?.name && (
+                  <Badge variant="secondary" className="text-xs truncate max-w-[100px]">
+                    {demand.teams.name}
+                  </Badge>
+                )}
+              </div>
+
+              {(columnKey === "Entregue" || columnKey === "Fazendo") && (
+                <DemandTimeDisplay
+                  createdAt={demand.created_at}
+                  updatedAt={demand.updated_at}
+                  timeInProgressSeconds={demand.time_in_progress_seconds}
+                  lastStartedAt={demand.last_started_at}
+                  isInProgress={columnKey === "Fazendo"}
+                  isDelivered={columnKey === "Entregue"}
+                  variant="card"
+                />
+              )}
+
+              {columnKey === "Entregue" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => handleOpenAdjustmentDialog(e, demand.id)}
+                  className="w-full mt-2 border-purple-500/30 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950 text-xs"
+                >
+                  <Wrench className="h-3 w-3 mr-1" />
+                  Solicitar Ajuste
+                </Button>
+              )}
+
+              <div className="flex items-center justify-between mt-2">
+                {demand.due_date && (
+                  <div
+                    className={cn(
+                      "flex items-center gap-1 text-xs",
+                      isOverdue(demand.due_date) && columnKey !== "Entregue"
+                        ? "text-destructive"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    {isOverdue(demand.due_date) && columnKey !== "Entregue" ? (
+                      <Clock className="h-3 w-3" />
+                    ) : (
+                      <Calendar className="h-3 w-3" />
+                    )}
+                    {format(new Date(demand.due_date), "dd MMM", { locale: ptBR })}
+                  </div>
+                )}
+
+                {assignees.length > 0 ? (
+                  <AssigneeAvatars assignees={assignees} size="sm" maxVisible={2} />
+                ) : demand.assigned_profile ? (
+                  <AssigneeAvatars 
+                    assignees={[{ 
+                      user_id: "legacy", 
+                      profile: { 
+                        full_name: demand.assigned_profile.full_name, 
+                        avatar_url: demand.assigned_profile.avatar_url || null 
+                      } 
+                    }]} 
+                    size="sm" 
+                  />
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Render column content
+  const renderColumnContent = (columnKey: string) => {
+    const columnDemands = getDemandsForColumn(columnKey);
     
     return (
       <div className="space-y-3 flex-1 overflow-y-auto min-h-0">
-        {columnDemands.map((demand) => {
-          const assignees = demand.demand_assignees || [];
-          const adjustmentCount = adjustmentCounts?.[demand.id] || 0;
-          
-          return (
-            <Card
-              key={demand.id}
-              draggable={!readOnly && !isMobile}
-              onDragStart={(e) => handleDragStart(e, demand.id)}
-              onClick={() => onDemandClick(demand.id)}
-              className={cn(
-                "hover:shadow-md transition-all",
-                !readOnly && !isMobile && "cursor-grab active:cursor-grabbing",
-                (readOnly || isMobile) && "cursor-pointer",
-                draggedId === demand.id && "opacity-50 scale-95",
-                "group"
-              )}
-            >
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-start gap-2">
-                  {!readOnly && !isMobile && (
-                    <GripVertical className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-1 flex-shrink-0" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm line-clamp-2 mb-2">
-                      {demand.title}
-                    </h4>
-
-                    {demand.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
-                        {demand.description}
-                      </p>
-                    )}
-
-                    <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
-                      {demand.priority && (
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "text-xs capitalize",
-                            priorityColors[demand.priority] ||
-                              "bg-muted text-muted-foreground"
-                          )}
-                        >
-                          {demand.priority}
-                        </Badge>
-                      )}
-
-                      {adjustmentCount > 0 && (
-                        <Badge
-                          variant="outline"
-                          className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/20"
-                        >
-                          <RefreshCw className="h-3 w-3 mr-1" />
-                          {adjustmentCount}
-                        </Badge>
-                      )}
-
-                      {demand.teams?.name && (
-                        <Badge variant="secondary" className="text-xs truncate max-w-[100px]">
-                          {demand.teams.name}
-                        </Badge>
-                      )}
-                    </div>
-
-                    {/* Time display for demands */}
-                    {(column.key === "Entregue" || column.key === "Fazendo") && (
-                      <DemandTimeDisplay
-                        createdAt={demand.created_at}
-                        updatedAt={demand.updated_at}
-                        timeInProgressSeconds={demand.time_in_progress_seconds}
-                        lastStartedAt={demand.last_started_at}
-                        isInProgress={column.key === "Fazendo"}
-                        isDelivered={column.key === "Entregue"}
-                        variant="card"
-                      />
-                    )}
-
-                    {/* Adjustment button for delivered demands */}
-                    {column.key === "Entregue" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => handleOpenAdjustmentDialog(e, demand.id)}
-                        className="w-full mt-2 border-purple-500/30 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950 text-xs"
-                      >
-                        <Wrench className="h-3 w-3 mr-1" />
-                        Solicitar Ajuste
-                      </Button>
-                    )}
-
-                    <div className="flex items-center justify-between mt-2">
-                      {demand.due_date && (
-                        <div
-                          className={cn(
-                            "flex items-center gap-1 text-xs",
-                            isOverdue(demand.due_date) &&
-                              column.key !== "Entregue"
-                              ? "text-destructive"
-                              : "text-muted-foreground"
-                          )}
-                        >
-                          {isOverdue(demand.due_date) &&
-                          column.key !== "Entregue" ? (
-                            <Clock className="h-3 w-3" />
-                          ) : (
-                            <Calendar className="h-3 w-3" />
-                          )}
-                          {format(new Date(demand.due_date), "dd MMM", {
-                            locale: ptBR,
-                          })}
-                        </div>
-                      )}
-
-                      {assignees.length > 0 ? (
-                        <AssigneeAvatars assignees={assignees} size="sm" maxVisible={2} />
-                      ) : demand.assigned_profile ? (
-                        <AssigneeAvatars 
-                          assignees={[{ 
-                            user_id: "legacy", 
-                            profile: { 
-                              full_name: demand.assigned_profile.full_name, 
-                              avatar_url: demand.assigned_profile.avatar_url || null 
-                            } 
-                          }]} 
-                          size="sm" 
-                        />
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-
+        {columnDemands.map((demand) => renderDemandCard(demand, columnKey))}
         {columnDemands.length === 0 && (
           <div className="text-center py-8 text-muted-foreground text-sm border-2 border-dashed rounded-lg">
-            {readOnly ? "Nenhuma demanda" : isMobile ? "Nenhuma demanda" : "Arraste demandas aqui"}
+            {readOnly || isMobile || isTablet ? "Nenhuma demanda" : "Arraste demandas aqui"}
           </div>
         )}
       </div>
     );
   };
 
-  // Mobile/Tablet view with column selector
+  // Adjustment Dialog Component
+  const AdjustmentDialog = () => (
+    <Dialog open={adjustmentDialogOpen} onOpenChange={(open) => {
+      setAdjustmentDialogOpen(open);
+      if (!open) {
+        setAdjustmentReason("");
+        setAdjustmentDemandId(null);
+      }
+    }}>
+      <DialogContent className="max-w-[95vw] sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Solicitar ajuste</DialogTitle>
+          <DialogDescription>
+            Descreva o que precisa ser ajustado na demanda "{adjustmentDemand?.title}".
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <label htmlFor="kanban-adjustment-reason" className="text-sm font-medium">
+              Motivo do ajuste <span className="text-destructive">*</span>
+            </label>
+            <Textarea
+              id="kanban-adjustment-reason"
+              placeholder="Descreva o que precisa ser corrigido ou alterado..."
+              value={adjustmentReason}
+              onChange={(e) => setAdjustmentReason(e.target.value)}
+              rows={4}
+              maxLength={1000}
+              className="resize-none"
+            />
+            <p className="text-xs text-muted-foreground text-right">
+              {adjustmentReason.length}/1000
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setAdjustmentDialogOpen(false);
+              setAdjustmentReason("");
+              setAdjustmentDemandId(null);
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleRequestAdjustment}
+            disabled={!adjustmentReason.trim() || updateDemand.isPending || createInteraction.isPending}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            {(updateDemand.isPending || createInteraction.isPending) ? "Enviando..." : "Solicitar Ajuste"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
+  // Mobile view with dropdown selector
   if (isMobile) {
     const activeColumnData = columns.find(c => c.key === activeColumn) || columns[0];
     
     return (
       <div className="flex flex-col h-full">
-        {/* Column selector for mobile */}
         <div className="mb-4">
           <Select value={activeColumn} onValueChange={setActiveColumn}>
             <SelectTrigger className="w-full">
@@ -440,7 +504,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
                 </div>
               </SelectValue>
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-background border shadow-lg">
               {columns.map((column) => (
                 <SelectItem key={column.key} value={column.key}>
                   <div className="flex items-center justify-between w-full gap-4">
@@ -455,13 +519,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
           </Select>
         </div>
 
-        {/* Single column view */}
-        <div
-          className={cn(
-            "rounded-lg p-3 sm:p-4 flex flex-col flex-1 min-h-0",
-            activeColumnData.color
-          )}
-        >
+        <div className={cn("rounded-lg p-3 sm:p-4 flex flex-col flex-1 min-h-0", activeColumnData.color)}>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
               {activeColumnData.label}
@@ -470,150 +528,108 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
               {getDemandsForColumn(activeColumn).length}
             </Badge>
           </div>
-          {renderColumnContent(activeColumnData)}
+          {renderColumnContent(activeColumn)}
         </div>
 
-        {/* Adjustment Request Dialog */}
-        <Dialog open={adjustmentDialogOpen} onOpenChange={(open) => {
-          setAdjustmentDialogOpen(open);
-          if (!open) {
-            setAdjustmentReason("");
-            setAdjustmentDemandId(null);
-          }
-        }}>
-          <DialogContent className="max-w-[95vw] sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Solicitar ajuste</DialogTitle>
-              <DialogDescription>
-                Descreva o que precisa ser ajustado na demanda "{adjustmentDemand?.title}".
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <label htmlFor="kanban-adjustment-reason-mobile" className="text-sm font-medium">
-                  Motivo do ajuste <span className="text-destructive">*</span>
-                </label>
-                <Textarea
-                  id="kanban-adjustment-reason-mobile"
-                  placeholder="Descreva o que precisa ser corrigido ou alterado..."
-                  value={adjustmentReason}
-                  onChange={(e) => setAdjustmentReason(e.target.value)}
-                  rows={4}
-                  maxLength={1000}
-                  className="resize-none"
-                />
-                <p className="text-xs text-muted-foreground text-right">
-                  {adjustmentReason.length}/1000
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setAdjustmentDialogOpen(false);
-                  setAdjustmentReason("");
-                  setAdjustmentDemandId(null);
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleRequestAdjustment}
-                disabled={!adjustmentReason.trim() || updateDemand.isPending || createInteraction.isPending}
-                className="bg-purple-600 hover:bg-purple-700"
-              >
-                {(updateDemand.isPending || createInteraction.isPending) ? "Enviando..." : "Solicitar Ajuste"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <AdjustmentDialog />
       </div>
     );
   }
 
-  // Desktop view with all columns
+  // Tablet view with horizontal collapsible tabs
+  if (isTablet) {
+    return (
+      <div className="flex flex-col h-full gap-2">
+        {/* Horizontal tabs row */}
+        <div className="flex gap-2 h-full min-h-0">
+          {columns.map((column) => {
+            const isActive = activeColumn === column.key;
+            const columnDemands = getDemandsForColumn(column.key);
+            
+            return (
+              <div
+                key={column.key}
+                className={cn(
+                  "rounded-lg transition-all duration-300 ease-in-out flex flex-col min-h-0",
+                  column.color,
+                  isActive ? "flex-[3] p-4" : "flex-[0.5] p-2 cursor-pointer hover:opacity-80"
+                )}
+                onClick={() => !isActive && setActiveColumn(column.key)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, column.key)}
+              >
+                {isActive ? (
+                  // Expanded state
+                  <>
+                    <div className="flex items-center justify-between mb-3 shrink-0">
+                      <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+                        {column.label}
+                      </h3>
+                      <Badge variant="secondary" className="text-xs">
+                        {columnDemands.length}
+                      </Badge>
+                    </div>
+                    {renderColumnContent(column.key)}
+                  </>
+                ) : (
+                  // Collapsed state - vertical text
+                  <div className="flex flex-col items-center justify-start h-full gap-2 py-2">
+                    <Badge variant="secondary" className="text-xs shrink-0">
+                      {columnDemands.length}
+                    </Badge>
+                    <div className="flex-1 flex items-center justify-center">
+                      <span 
+                        className="font-semibold text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap"
+                        style={{ 
+                          writingMode: 'vertical-rl', 
+                          textOrientation: 'mixed',
+                          transform: 'rotate(180deg)'
+                        }}
+                      >
+                        {column.shortLabel}
+                      </span>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <AdjustmentDialog />
+      </div>
+    );
+  }
+
+  // Large Desktop view with all columns visible
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 h-full">
+    <div className="grid grid-cols-4 gap-4 h-full">
       {columns.map((column) => (
         <div
           key={column.key}
           className={cn(
-            "rounded-lg p-3 lg:p-4 transition-colors flex flex-col min-h-0",
+            "rounded-lg p-4 transition-colors flex flex-col min-h-0",
             column.color,
             draggedId && "ring-2 ring-primary/20"
           )}
           onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, column.key)}
         >
-          <div className="flex items-center justify-between mb-3 lg:mb-4">
-            <h3 className="font-semibold text-xs lg:text-sm uppercase tracking-wide text-muted-foreground truncate">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
               {column.label}
             </h3>
-            <Badge variant="secondary" className="text-xs flex-shrink-0">
+            <Badge variant="secondary" className="text-xs">
               {getDemandsForColumn(column.key).length}
             </Badge>
           </div>
 
-          {renderColumnContent(column)}
+          {renderColumnContent(column.key)}
         </div>
       ))}
 
-      {/* Adjustment Request Dialog */}
-      <Dialog open={adjustmentDialogOpen} onOpenChange={(open) => {
-        setAdjustmentDialogOpen(open);
-        if (!open) {
-          setAdjustmentReason("");
-          setAdjustmentDemandId(null);
-        }
-      }}>
-        <DialogContent className="max-w-[90vw] sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Solicitar ajuste</DialogTitle>
-            <DialogDescription>
-              Descreva o que precisa ser ajustado na demanda "{adjustmentDemand?.title}".
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label htmlFor="kanban-adjustment-reason" className="text-sm font-medium">
-                Motivo do ajuste <span className="text-destructive">*</span>
-              </label>
-              <Textarea
-                id="kanban-adjustment-reason"
-                placeholder="Descreva o que precisa ser corrigido ou alterado..."
-                value={adjustmentReason}
-                onChange={(e) => setAdjustmentReason(e.target.value)}
-                rows={4}
-                maxLength={1000}
-                className="resize-none"
-              />
-              <p className="text-xs text-muted-foreground text-right">
-                {adjustmentReason.length}/1000
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setAdjustmentDialogOpen(false);
-                setAdjustmentReason("");
-                setAdjustmentDemandId(null);
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleRequestAdjustment}
-              disabled={!adjustmentReason.trim() || updateDemand.isPending || createInteraction.isPending}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              {(updateDemand.isPending || createInteraction.isPending) ? "Enviando..." : "Solicitar Ajuste"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <AdjustmentDialog />
     </div>
   );
 }
