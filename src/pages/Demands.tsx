@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTable } from "@/components/ui/data-table";
 import { demandColumns, DemandTableRow } from "@/components/demands/columns";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type ViewMode = "table" | "grid";
 
@@ -24,6 +25,10 @@ export default function Demands() {
   const { data: role } = useTeamRole(selectedTeamId);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("table");
+  const isMobile = useIsMobile();
+  
+  // Force grid view on mobile/tablet (screens < 1024px)
+  const effectiveViewMode = isMobile ? "grid" : viewMode;
 
   const isReadOnly = role === "requester";
   
@@ -87,7 +92,7 @@ export default function Demands() {
       );
     }
 
-    if (viewMode === "table") {
+    if (effectiveViewMode === "table") {
       return (
         <DataTable
           columns={demandColumns}
@@ -98,12 +103,13 @@ export default function Demands() {
     }
 
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {demandList.map((demand) => (
           <DemandCard
             key={demand.id}
             demand={demand}
             onClick={() => navigate(`/demands/${demand.id}`)}
+            showFullDetails
           />
         ))}
       </div>
@@ -132,7 +138,8 @@ export default function Demands() {
             />
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="flex items-center border border-border rounded-md">
+            {/* View toggle - hidden on mobile/tablet */}
+            <div className="hidden lg:flex items-center border border-border rounded-md">
               <Button
                 variant={viewMode === "table" ? "secondary" : "ghost"}
                 size="icon"
