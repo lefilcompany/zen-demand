@@ -26,7 +26,7 @@ import DemandRequests from "./pages/DemandRequests";
 import DemandDetail from "./pages/DemandDetail";
 import Kanban from "./pages/Kanban";
 import ArchivedDemands from "./pages/ArchivedDemands";
-import Adjustments from "./pages/Adjustments";
+import MyDemands from "./pages/MyDemands";
 
 import Reports from "./pages/Reports";
 import Profile from "./pages/Profile";
@@ -69,7 +69,7 @@ const App = () => (
                     <Route path="/demand-requests" element={<DemandRequests />} />
                     <Route path="/kanban" element={<Kanban />} />
                     <Route path="/archived" element={<ArchivedDemands />} />
-                    <Route path="/adjustments" element={<Adjustments />} />
+                    <Route path="/my-demands" element={<MyDemands />} />
                     
                     <Route path="/reports" element={<Reports />} />
                     <Route path="/profile" element={<Profile />} />
