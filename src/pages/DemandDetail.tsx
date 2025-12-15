@@ -72,15 +72,19 @@ export default function DemandDetail() {
   const demand = demands?.find((d) => d.id === id);
   const { data: role } = useTeamRole(demand?.team_id || null);
   const isAssignee = assignees?.some(a => a.user_id === user?.id) || false;
-  const canManageAssignees = role === "admin" || role === "moderator";
-  const canEdit = role === "admin" || role === "moderator" || role === "executor" || demand?.created_by === user?.id;
-  const isCreator = demand?.created_by === user?.id;
-
   // Check if demand is delivered or in progress
   const deliveredStatusId = statuses?.find((s) => s.name === "Entregue")?.id;
   const approvalStatusId = statuses?.find((s) => s.name === "Aprovação do Cliente")?.id;
   const adjustmentStatusId = statuses?.find((s) => s.name === "Em Ajuste")?.id;
   const fazendoStatusId = statuses?.find((s) => s.name === "Fazendo")?.id;
+  
+  // Demandas entregues são apenas visualizáveis
+  const isDeliveredStatus = demand?.status_id === deliveredStatusId;
+  const canManageAssignees = !isDeliveredStatus && (role === "admin" || role === "moderator");
+  const canEdit = !isDeliveredStatus && (role === "admin" || role === "moderator" || role === "executor" || demand?.created_by === user?.id);
+  const canArchive = !isDeliveredStatus;
+  const isCreator = demand?.created_by === user?.id;
+
   const canRequestAdjustment = demand?.status_id === approvalStatusId;
   const isInProgress = demand?.status_id === fazendoStatusId;
   const isDelivered = demand?.status_id === deliveredStatusId || demand?.status_id === approvalStatusId;
@@ -445,18 +449,19 @@ export default function DemandDetail() {
                   Editar
                 </Button>
               )}
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={updateDemand.isPending}
-                    className="flex-1 sm:flex-none"
-                  >
-                    <Archive className="mr-2 h-4 w-4" />
-                    Arquivar
-                  </Button>
-                </AlertDialogTrigger>
+              {canArchive && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={updateDemand.isPending}
+                      className="flex-1 sm:flex-none"
+                    >
+                      <Archive className="mr-2 h-4 w-4" />
+                      Arquivar
+                    </Button>
+                  </AlertDialogTrigger>
                 <AlertDialogContent className="w-[calc(100vw-2rem)] max-w-lg mx-auto">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Arquivar demanda?</AlertDialogTitle>
@@ -472,6 +477,7 @@ export default function DemandDetail() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+              )}
             </div>
           </div>
         </CardHeader>
