@@ -84,7 +84,7 @@ export default function DemandDetail() {
   const isDeliveredStatus = demand?.status_id === deliveredStatusId;
   const canManageAssignees = !isDeliveredStatus && (role === "admin" || role === "moderator");
   const canEdit = !isDeliveredStatus && (role === "admin" || role === "moderator" || role === "executor" || demand?.created_by === user?.id);
-  const canArchive = !isDeliveredStatus;
+  const canArchive = isDeliveredStatus; // Apenas demandas entregues podem ser arquivadas
   const isCreator = demand?.created_by === user?.id;
 
   const canRequestAdjustment = demand?.status_id === approvalStatusId;
