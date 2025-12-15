@@ -39,15 +39,17 @@ export function TeamSelector() {
   }
 
   return (
-    <div className="flex items-center gap-2 md:gap-3">
+    <div className="flex items-center gap-2 min-w-0">
       <Select value={selectedTeamId || ""} onValueChange={setSelectedTeamId}>
-        <SelectTrigger className="w-32 sm:w-40 md:w-52 border-border bg-background text-xs sm:text-sm">
-          <div className="flex items-center gap-1 md:gap-2">
-            <Users className="h-3 w-3 md:h-4 md:w-4 text-primary flex-shrink-0" />
-            <SelectValue placeholder="Equipe" className="truncate" />
+        <SelectTrigger className="w-auto min-w-[100px] max-w-[140px] sm:max-w-[160px] md:max-w-[200px] border-border bg-background text-xs sm:text-sm">
+          <div className="flex items-center gap-1 md:gap-2 min-w-0">
+            <Users className="h-3 w-3 md:h-4 md:w-4 text-primary shrink-0" />
+            <span className="truncate">
+              <SelectValue placeholder="Equipe" />
+            </span>
           </div>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-background border shadow-lg">
           {teams?.map((team) => (
             <SelectItem key={team.id} value={team.id}>
               {team.name}
@@ -56,7 +58,7 @@ export function TeamSelector() {
         </SelectContent>
       </Select>
       {role && (
-        <Badge variant="secondary" className={`${roleColors[role]} hidden sm:flex text-xs`}>
+        <Badge variant="secondary" className={`${roleColors[role]} hidden md:flex text-xs whitespace-nowrap shrink-0`}>
           {roleLabels[role]}
         </Badge>
       )}
