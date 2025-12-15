@@ -149,24 +149,33 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
 
   const handleDrop = async (e: React.DragEvent, columnKey: string) => {
     e.preventDefault();
-    if (!draggedId || !statuses) return;
+    e.stopPropagation();
+    
+    // Limpar estados de drag imediatamente para evitar glitches visuais
+    const currentDraggedId = draggedId;
+    setDraggedId(null);
+    setDragOverColumn(null);
+    
+    if (!currentDraggedId || !statuses) return;
 
     const targetStatus = statuses.find((s) => s.name === columnKey);
     if (!targetStatus) return;
 
-    const demand = demands.find((d) => d.id === draggedId);
+    const demand = demands.find((d) => d.id === currentDraggedId);
     const previousStatusName = demand?.demand_statuses?.name;
     
-    if (previousStatusName === columnKey) {
-      setDraggedId(null);
-      return;
+    if (previousStatusName === columnKey) return;
+
+    // Mudar para a aba de destino no modo tablet para acompanhar o card
+    if (isMediumScreen) {
+      setActiveColumn(columnKey);
     }
 
     const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && columnKey === "Entregue";
 
     updateDemand.mutate(
       {
-        id: draggedId,
+        id: currentDraggedId,
         status_id: targetStatus.id,
       },
       {
@@ -201,9 +210,6 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
         },
       }
     );
-
-    setDraggedId(null);
-    setDragOverColumn(null);
   };
 
   // Handle mobile status change via dropdown
@@ -687,7 +693,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
                 key={column.key}
                 className={cn(
                   "rounded-lg flex flex-col min-h-0 overflow-hidden",
-                  "transition-[flex,padding,opacity,ring] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                  "transition-all duration-300 ease-out will-change-[flex,transform]",
                   column.color,
                   isActive 
                     ? "flex-[4] p-4" 
@@ -701,13 +707,13 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
                 onDrop={(e) => handleDrop(e, column.key)}
               >
                 {isActive ? (
-                  // Expanded state with fade-in animation
-                  <div className="flex flex-col h-full animate-fade-in">
+                  // Expanded state
+                  <div className="flex flex-col h-full">
                     <div className="flex items-center justify-between mb-3 shrink-0">
-                      <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground transition-opacity duration-300">
+                      <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
                         {column.label}
                       </h3>
-                      <Badge variant="secondary" className="text-xs transition-transform duration-300 scale-100">
+                      <Badge variant="secondary" className="text-xs">
                         {columnDemands.length}
                       </Badge>
                     </div>
