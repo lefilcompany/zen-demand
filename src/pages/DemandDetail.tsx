@@ -29,7 +29,8 @@ import { useAuth } from "@/lib/auth";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { DemandEditForm } from "@/components/DemandEditForm";
-import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter, MoreHorizontal, Trash2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter, MoreHorizontal, Trash2, AlertTriangle } from "lucide-react";
 import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
 import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
@@ -88,6 +89,15 @@ export default function DemandDetail() {
     if (interactionFilter === "all") return interactions;
     return interactions.filter((i) => i.interaction_type === interactionFilter);
   }, [interactions, interactionFilter]);
+
+  // Get the latest adjustment request for highlighting
+  const latestAdjustmentRequest = useMemo(() => {
+    if (!interactions) return null;
+    const adjustmentRequests = interactions.filter(i => i.interaction_type === "adjustment_request");
+    return adjustmentRequests.length > 0 ? adjustmentRequests[0] : null; // Already sorted by created_at desc
+  }, [interactions]);
+
+  const isInAdjustment = demand?.demand_statuses?.name === "Em Ajuste";
 
   const handleRequestAdjustment = async () => {
     if (!id || !adjustmentStatusId || !adjustmentReason.trim()) return;
@@ -305,6 +315,34 @@ export default function DemandDetail() {
           Voltar
         </Button>
       </div>
+
+      {/* Adjustment Alert - Shows when demand is in "Em Ajuste" status */}
+      {isInAdjustment && latestAdjustmentRequest && (
+        <Alert className="border-purple-500/50 bg-purple-500/10">
+          <Wrench className="h-4 w-4 text-purple-600" />
+          <AlertTitle className="text-purple-600 font-semibold">
+            Ajuste Solicitado
+          </AlertTitle>
+          <AlertDescription className="mt-2 space-y-2">
+            <p className="text-sm text-foreground whitespace-pre-wrap">
+              {latestAdjustmentRequest.content}
+            </p>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="font-medium">
+                {latestAdjustmentRequest.profiles?.full_name}
+              </span>
+              <span>•</span>
+              <span>
+                {format(
+                  new Date(latestAdjustmentRequest.created_at),
+                  "dd/MM/yyyy 'às' HH:mm",
+                  { locale: ptBR }
+                )}
+              </span>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Card>
         <CardHeader className="p-4 md:p-6">

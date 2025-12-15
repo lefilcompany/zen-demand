@@ -41,6 +41,11 @@ const ERROR_MAPPINGS: ErrorMapping[] = [
   { pattern: /object not found/i, message: "Arquivo não encontrado." },
   { pattern: /payload too large/i, message: "Arquivo muito grande." },
   
+  // API errors
+  { pattern: "400", message: "Erro na requisição. Verifique os dados e tente novamente." },
+  { pattern: /bad request/i, message: "Erro na requisição. Verifique os dados e tente novamente." },
+  { pattern: /columns.*not found/i, message: "Erro ao processar a solicitação. Tente novamente." },
+  
   // Generic database errors
   { pattern: /PGRST/i, message: "Erro ao processar a solicitação. Tente novamente." },
 ];
