@@ -139,12 +139,9 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
   // Handle column toggle with FIFO logic (max 3 columns)
   const toggleColumn = useCallback((columnKey: string) => {
     setActiveColumns(prev => {
-      // If already active, close it (but keep at least one open)
+      // If already active, close it (allow closing all)
       if (prev.includes(columnKey)) {
-        if (prev.length > 1) {
-          return prev.filter(c => c !== columnKey);
-        }
-        return prev; // Keep at least one column open
+        return prev.filter(c => c !== columnKey);
       }
       
       // Opening a new column
@@ -157,6 +154,11 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
       
       return newColumns;
     });
+  }, []);
+
+  // Close a single column (for tablet/small desktop)
+  const closeColumn = useCallback((columnKey: string) => {
+    setActiveColumns(prev => prev.filter(c => c !== columnKey));
   }, []);
 
   const handleAdjustmentDialogChange = useCallback((open: boolean) => {
@@ -657,11 +659,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
                           className="h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive"
                           onClick={(e) => {
                             e.stopPropagation();
-                            // Switch to the first available non-active column
-                            const nextColumn = columns.find(c => c.key !== column.key);
-                            if (nextColumn) {
-                              setActiveColumns([nextColumn.key]);
-                            }
+                            closeColumn(column.key);
                           }}
                         >
                           <X className="h-3.5 w-3.5" />
@@ -753,19 +751,17 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
                         <Badge variant="secondary" className="text-xs">
                           {columnDemands.length}
                         </Badge>
-                        {openCount > 1 && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleColumn(column.key);
-                            }}
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleColumn(column.key);
+                          }}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     </div>
                     <div className="flex-1 min-h-0 overflow-y-auto">
