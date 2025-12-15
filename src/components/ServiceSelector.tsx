@@ -47,13 +47,13 @@ export function ServiceSelector({
         {services?.map((service) => (
           <SelectItem key={service.id} value={service.id}>
             <div className="flex items-center gap-2">
-              <span>{service.name}</span>
+              <span className="font-medium">{service.name}</span>
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 {service.estimated_days} dias
-                <span className="text-primary">
-                  (até {calculateDueDate(service.estimated_days)})
-                </span>
+              </span>
+              <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                (até {calculateDueDate(service.estimated_days)})
               </span>
             </div>
           </SelectItem>
