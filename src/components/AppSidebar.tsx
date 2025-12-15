@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, Wrench, Settings2, FileText, Send } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, ClipboardList, Settings2, FileText, Send } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import logoSoma from "@/assets/logo-soma-dark.png";
 import logoSomaIcon from "@/assets/logo-soma-icon.png";
@@ -11,7 +11,7 @@ import { usePendingRequestsCount } from "@/hooks/useTeamJoinRequests";
 import { usePendingRequestsCount as usePendingDemandRequestsCount } from "@/hooks/useDemandRequests";
 import { useIsTeamAdmin, useTeamRole } from "@/hooks/useTeamRole";
 import { useSelectedTeam } from "@/contexts/TeamContext";
-import { useAdjustmentCount } from "@/hooks/useAdjustmentCount";
+
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -37,7 +37,7 @@ export function AppSidebar() {
     data: pendingCount
   } = usePendingRequestsCount(isAdmin ? selectedTeamId : null);
   const { data: pendingDemandRequests } = usePendingDemandRequestsCount();
-  const adjustmentCount = useAdjustmentCount(selectedTeamId);
+  
   const isAdminOrModerator = role === "admin" || role === "moderator";
   const isRequester = role === "requester";
 
@@ -71,10 +71,9 @@ export function AppSidebar() {
   }] : [];
 
   const endMenuItems = [{
-    title: t("dashboard.adjustments"),
-    url: "/adjustments",
-    icon: Wrench,
-    showBadge: true
+    title: "Minhas Demandas",
+    url: "/my-demands",
+    icon: ClipboardList
   }, {
     title: t("demands.archived"),
     url: "/archived",
@@ -107,7 +106,7 @@ export function AppSidebar() {
                 const tourId = item.url === "/" ? "dashboard-link" 
                   : item.url === "/kanban" ? "kanban-link"
                   : item.url === "/demands" ? "demands-link"
-                  : item.url === "/adjustments" ? "adjustments-link"
+                  : item.url === "/my-demands" ? "my-demands-link"
                   : item.url === "/archived" ? "archived-link"
                   : undefined;
                 
@@ -117,11 +116,6 @@ export function AppSidebar() {
                       <NavLink to={item.url} end={item.url === "/"} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                         <item.icon className="h-4 w-4" />
                         {!isCollapsed && <span>{item.title}</span>}
-                        {!isCollapsed && (item as any).showBadge && adjustmentCount > 0 && (
-                          <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs">
-                            {adjustmentCount}
-                          </Badge>
-                        )}
                         {!isCollapsed && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
                           <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs">
                             {pendingDemandRequests}
@@ -129,11 +123,6 @@ export function AppSidebar() {
                         )}
                       </NavLink>
                     </SidebarMenuButton>
-                    {isCollapsed && (item as any).showBadge && adjustmentCount > 0 && (
-                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1">
-                        {adjustmentCount}
-                      </Badge>
-                    )}
                     {isCollapsed && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
                       <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1">
                         {pendingDemandRequests}
