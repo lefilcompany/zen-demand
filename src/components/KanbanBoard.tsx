@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { useAdjustmentCounts } from "@/hooks/useAdjustmentCount";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTimerControl } from "@/hooks/useTimerControl";
 
 interface Assignee {
   user_id: string;
@@ -59,6 +60,7 @@ interface KanbanBoardProps {
   demands: Demand[];
   onDemandClick: (id: string) => void;
   readOnly?: boolean;
+  userRole?: string;
 }
 
 const priorityColors: Record<string, string> = {
@@ -94,7 +96,7 @@ function useIsMediumScreen() {
   return isMediumScreen;
 }
 
-export function KanbanBoard({ demands, onDemandClick, readOnly = false }: KanbanBoardProps) {
+export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole }: KanbanBoardProps) {
   const isMobile = useIsMobile();
   const isMediumScreen = useIsMediumScreen();
   const [activeColumn, setActiveColumn] = useState(columns[0].key);
@@ -107,6 +109,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
   
   const demandIds = useMemo(() => demands.map(d => d.id), [demands]);
   const { data: adjustmentCounts } = useAdjustmentCounts(demandIds);
+  const { startTimer, pauseTimer, isLoading: isTimerLoading } = useTimerControl();
   
   const adjustmentDemand = demands.find(d => d.id === adjustmentDemandId);
 
@@ -402,17 +405,33 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
                 )}
               </div>
 
-              {(columnKey === "Entregue" || columnKey === "Aprovação do Cliente" || columnKey === "Fazendo") && (
-                <DemandTimeDisplay
-                  createdAt={demand.created_at}
-                  updatedAt={demand.updated_at}
-                  timeInProgressSeconds={demand.time_in_progress_seconds}
-                  lastStartedAt={demand.last_started_at}
-                  isInProgress={columnKey === "Fazendo"}
-                  isDelivered={columnKey === "Entregue" || columnKey === "Aprovação do Cliente"}
-                  variant="card"
-                />
-              )}
+              {(columnKey === "Entregue" || columnKey === "Aprovação do Cliente" || columnKey === "Fazendo" || columnKey === "Em Ajuste") && (() => {
+                const canControlTimer = !readOnly && 
+                  (userRole === "admin" || userRole === "moderator" || userRole === "executor") &&
+                  (columnKey === "Fazendo" || columnKey === "Em Ajuste");
+                const isTimerRunning = !!demand.last_started_at;
+                
+                return (
+                  <DemandTimeDisplay
+                    createdAt={demand.created_at}
+                    updatedAt={demand.updated_at}
+                    timeInProgressSeconds={demand.time_in_progress_seconds}
+                    lastStartedAt={demand.last_started_at}
+                    isInProgress={isTimerRunning}
+                    isDelivered={columnKey === "Entregue" || columnKey === "Aprovação do Cliente"}
+                    variant="card"
+                    showTimerControls={canControlTimer}
+                    isTimerRunning={isTimerRunning}
+                    onPlayClick={() => startTimer.mutate(demand.id)}
+                    onPauseClick={() => pauseTimer.mutate({
+                      demandId: demand.id,
+                      lastStartedAt: demand.last_started_at!,
+                      currentSeconds: demand.time_in_progress_seconds || 0,
+                    })}
+                    isLoading={isTimerLoading}
+                  />
+                );
+              })()}
 
               {columnKey === "Aprovação do Cliente" && (
                 <Button
