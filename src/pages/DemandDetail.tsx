@@ -346,9 +346,9 @@ export default function DemandDetail() {
 
       <Card>
         <CardHeader className="p-4 md:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-            <div className="space-y-2 flex-1">
-              <CardTitle className="text-xl md:text-2xl">{demand.title}</CardTitle>
+          <div className="flex flex-col gap-4">
+            <div className="space-y-2 min-w-0">
+              <CardTitle className="text-lg md:text-2xl break-words">{demand.title}</CardTitle>
               <div className="flex flex-wrap items-center gap-2">
                 {demand.demand_statuses && (
                   <Badge
@@ -369,23 +369,23 @@ export default function DemandDetail() {
                 )}
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <div className="flex flex-wrap gap-2">
               {canRequestAdjustment && (
                 <>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setIsAdjustmentDialogOpen(true)}
-                    className="w-full sm:w-auto border-purple-500/30 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950"
+                    className="flex-1 sm:flex-none border-purple-500/30 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950"
                   >
                     <Wrench className="mr-2 h-4 w-4" />
-                    Solicitar Ajuste
+                    <span className="hidden xs:inline">Solicitar</span> Ajuste
                   </Button>
                   <Dialog open={isAdjustmentDialogOpen} onOpenChange={(open) => {
                     setIsAdjustmentDialogOpen(open);
                     if (!open) setAdjustmentReason("");
                   }}>
-                    <DialogContent className="max-w-[90vw] sm:max-w-lg">
+                    <DialogContent className="w-[calc(100vw-2rem)] max-w-lg mx-auto">
                       <DialogHeader>
                         <DialogTitle>Solicitar ajuste</DialogTitle>
                         <DialogDescription>
@@ -438,7 +438,7 @@ export default function DemandDetail() {
                   variant="outline"
                   size="sm"
                   onClick={() => setIsEditDialogOpen(true)}
-                  className="w-full sm:w-auto"
+                  className="flex-1 sm:flex-none"
                 >
                   <Pencil className="mr-2 h-4 w-4" />
                   Editar
@@ -450,13 +450,13 @@ export default function DemandDetail() {
                     variant="outline"
                     size="sm"
                     disabled={updateDemand.isPending}
-                    className="w-full sm:w-auto"
+                    className="flex-1 sm:flex-none"
                   >
                     <Archive className="mr-2 h-4 w-4" />
                     Arquivar
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent className="max-w-[90vw] sm:max-w-lg">
+                <AlertDialogContent className="w-[calc(100vw-2rem)] max-w-lg mx-auto">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Arquivar demanda?</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -557,7 +557,7 @@ export default function DemandDetail() {
 
       <Card>
         <CardHeader className="p-4 md:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex flex-col gap-3">
             <div>
               <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
                 <MessageSquare className="h-4 w-4 md:h-5 md:w-5 text-primary" />
@@ -567,24 +567,24 @@ export default function DemandDetail() {
                 Comentários e atividades da demanda
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               <ToggleGroup
                 type="single"
                 value={interactionFilter}
                 onValueChange={(value) => value && setInteractionFilter(value)}
-                className="justify-start"
+                className="justify-start flex-nowrap"
               >
-                <ToggleGroupItem value="all" size="sm" className="text-xs px-2 py-1 h-7">
+                <ToggleGroupItem value="all" size="sm" className="text-xs px-2 py-1 h-7 whitespace-nowrap">
                   Todos
                 </ToggleGroupItem>
-                <ToggleGroupItem value="comment" size="sm" className="text-xs px-2 py-1 h-7">
+                <ToggleGroupItem value="comment" size="sm" className="text-xs px-2 py-1 h-7 whitespace-nowrap">
                   Comentários
                 </ToggleGroupItem>
-                <ToggleGroupItem value="adjustment_request" size="sm" className="text-xs px-2 py-1 h-7 data-[state=on]:bg-purple-500/20 data-[state=on]:text-purple-600">
+                <ToggleGroupItem value="adjustment_request" size="sm" className="text-xs px-2 py-1 h-7 whitespace-nowrap data-[state=on]:bg-purple-500/20 data-[state=on]:text-purple-600">
                   Ajustes
                 </ToggleGroupItem>
-                <ToggleGroupItem value="status_change" size="sm" className="text-xs px-2 py-1 h-7">
+                <ToggleGroupItem value="status_change" size="sm" className="text-xs px-2 py-1 h-7 whitespace-nowrap">
                   Status
                 </ToggleGroupItem>
               </ToggleGroup>
@@ -726,7 +726,7 @@ export default function DemandDetail() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-lg mx-auto max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Demanda</DialogTitle>
             <DialogDescription>
