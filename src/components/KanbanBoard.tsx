@@ -71,6 +71,7 @@ const columns = [
   { key: "A Iniciar", label: "A Iniciar", color: "bg-muted", shortLabel: "Iniciar" },
   { key: "Fazendo", label: "Fazendo", color: "bg-blue-500/10", shortLabel: "Fazendo" },
   { key: "Em Ajuste", label: "Em Ajuste", color: "bg-purple-500/10", shortLabel: "Ajuste" },
+  { key: "Aprovação do Cliente", label: "Aprovação do Cliente", color: "bg-amber-500/10", shortLabel: "Aprovação" },
   { key: "Entregue", label: "Entregue", color: "bg-emerald-500/10", shortLabel: "Entregue" },
 ];
 
@@ -164,7 +165,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
       setActiveColumn(columnKey);
     }
 
-    const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && columnKey === "Entregue";
+    const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && columnKey === "Aprovação do Cliente";
 
     updateDemand.mutate(
       {
@@ -217,7 +218,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
     
     if (previousStatusName === newStatusKey) return;
 
-    const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && newStatusKey === "Entregue";
+    const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && newStatusKey === "Aprovação do Cliente";
 
     updateDemand.mutate(
       {
@@ -399,24 +400,24 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
                 )}
               </div>
 
-              {(columnKey === "Entregue" || columnKey === "Fazendo") && (
+              {(columnKey === "Entregue" || columnKey === "Aprovação do Cliente" || columnKey === "Fazendo") && (
                 <DemandTimeDisplay
                   createdAt={demand.created_at}
                   updatedAt={demand.updated_at}
                   timeInProgressSeconds={demand.time_in_progress_seconds}
                   lastStartedAt={demand.last_started_at}
                   isInProgress={columnKey === "Fazendo"}
-                  isDelivered={columnKey === "Entregue"}
+                  isDelivered={columnKey === "Entregue" || columnKey === "Aprovação do Cliente"}
                   variant="card"
                 />
               )}
 
-              {columnKey === "Entregue" && (
+              {columnKey === "Aprovação do Cliente" && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={(e) => handleOpenAdjustmentDialog(e, demand.id)}
-                  className="w-full mt-2 border-purple-500/30 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950 text-xs"
+                  className="w-full mt-2 border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 text-xs"
                 >
                   <Wrench className="h-3 w-3 mr-1" />
                   Solicitar Ajuste
@@ -635,7 +636,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
 
   // Large Desktop view with all columns visible and drag-drop with visual feedback
   return (
-    <div className="grid grid-cols-4 gap-4 h-full">
+    <div className="grid grid-cols-5 gap-3 h-full">
       {columns.map((column) => {
         const isDragTarget = dragOverColumn === column.key && draggedId;
         

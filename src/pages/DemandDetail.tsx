@@ -78,11 +78,12 @@ export default function DemandDetail() {
 
   // Check if demand is delivered or in progress
   const deliveredStatusId = statuses?.find((s) => s.name === "Entregue")?.id;
+  const approvalStatusId = statuses?.find((s) => s.name === "Aprovação do Cliente")?.id;
   const adjustmentStatusId = statuses?.find((s) => s.name === "Em Ajuste")?.id;
   const fazendoStatusId = statuses?.find((s) => s.name === "Fazendo")?.id;
-  const canRequestAdjustment = demand?.status_id === deliveredStatusId;
+  const canRequestAdjustment = demand?.status_id === approvalStatusId;
   const isInProgress = demand?.status_id === fazendoStatusId;
-  const isDelivered = demand?.status_id === deliveredStatusId;
+  const isDelivered = demand?.status_id === deliveredStatusId || demand?.status_id === approvalStatusId;
 
   const filteredInteractions = useMemo(() => {
     if (!interactions) return [];
@@ -376,7 +377,7 @@ export default function DemandDetail() {
                     variant="outline"
                     size="sm"
                     onClick={() => setIsAdjustmentDialogOpen(true)}
-                    className="flex-1 sm:flex-none border-purple-500/30 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950"
+                    className="flex-1 sm:flex-none border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
                   >
                     <Wrench className="mr-2 h-4 w-4" />
                     <span className="hidden xs:inline">Solicitar</span> Ajuste
@@ -424,7 +425,7 @@ export default function DemandDetail() {
                         <Button
                           onClick={handleRequestAdjustment}
                           disabled={!adjustmentReason.trim() || updateDemand.isPending}
-                          className="bg-purple-600 hover:bg-purple-700"
+                          className="bg-amber-600 hover:bg-amber-700"
                         >
                           {updateDemand.isPending ? "Enviando..." : "Solicitar Ajuste"}
                         </Button>
