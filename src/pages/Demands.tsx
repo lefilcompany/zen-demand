@@ -57,7 +57,7 @@ export default function Demands() {
   const filteredDemands = useMemo(() => {
     if (!demands) return [];
     
-    return demands.filter((d) => {
+    const filtered = demands.filter((d) => {
       // Search query filter
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
@@ -106,6 +106,21 @@ export default function Demands() {
       }
       
       return true;
+    });
+    
+    // Sort by due date: closest to current date first, no due date at the end
+    return filtered.sort((a, b) => {
+      // If both have no due date, maintain original order
+      if (!a.due_date && !b.due_date) return 0;
+      // If only a has no due date, put it at the end
+      if (!a.due_date) return 1;
+      // If only b has no due date, put it at the end
+      if (!b.due_date) return -1;
+      
+      // Both have due dates - sort by closest to now first
+      const dateA = new Date(a.due_date).getTime();
+      const dateB = new Date(b.due_date).getTime();
+      return dateA - dateB;
     });
   }, [demands, searchQuery, filters]);
   
