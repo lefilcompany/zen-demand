@@ -26,6 +26,7 @@ import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees"
 import { supabase } from "@/integrations/supabase/client";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useAuth } from "@/lib/auth";
+import { useTimerControl } from "@/hooks/useTimerControl";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { DemandEditForm } from "@/components/DemandEditForm";
@@ -59,6 +60,7 @@ export default function DemandDetail() {
   const deleteInteraction = useDeleteInteraction();
   const updateDemand = useUpdateDemand();
   const setAssignees = useSetAssignees();
+  const { startTimer, pauseTimer, isLoading: isTimerLoading } = useTimerControl();
   const [comment, setComment] = useState("");
   const [editingAssignees, setEditingAssignees] = useState(false);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
@@ -87,7 +89,14 @@ export default function DemandDetail() {
 
   const canRequestAdjustment = demand?.status_id === approvalStatusId;
   const isInProgress = demand?.status_id === fazendoStatusId;
+  const isInAdjustment = demand?.status_id === adjustmentStatusId;
   const isDelivered = demand?.status_id === deliveredStatusId || demand?.status_id === approvalStatusId;
+  
+  // Timer control permissions (same as Kanban)
+  const canControlTimer = !isDeliveredStatus && 
+    (role === "admin" || role === "moderator" || role === "executor") &&
+    (isInProgress || isInAdjustment);
+  const isTimerRunning = !!(demand as any)?.last_started_at;
 
   const filteredInteractions = useMemo(() => {
     if (!interactions) return [];
@@ -102,7 +111,6 @@ export default function DemandDetail() {
     return adjustmentRequests.length > 0 ? adjustmentRequests[0] : null; // Already sorted by created_at desc
   }, [interactions]);
 
-  const isInAdjustment = demand?.demand_statuses?.name === "Em Ajuste";
 
   const handleRequestAdjustment = async () => {
     if (!id || !adjustmentStatusId || !adjustmentReason.trim()) return;
@@ -545,7 +553,7 @@ export default function DemandDetail() {
           </div>
 
           {/* Time tracking display */}
-          {(isInProgress || isDelivered) && (
+          {(isInProgress || isInAdjustment || isDelivered) && (
             <div>
               <h3 className="font-semibold mb-2 text-sm md:text-base">Tempo de Execução</h3>
               <DemandTimeDisplay
@@ -553,9 +561,18 @@ export default function DemandDetail() {
                 updatedAt={demand.updated_at}
                 timeInProgressSeconds={(demand as any).time_in_progress_seconds}
                 lastStartedAt={(demand as any).last_started_at}
-                isInProgress={isInProgress}
+                isInProgress={isTimerRunning}
                 isDelivered={isDelivered}
                 variant="detail"
+                showTimerControls={canControlTimer}
+                isTimerRunning={isTimerRunning}
+                onPlayClick={() => startTimer.mutate(demand.id)}
+                onPauseClick={() => pauseTimer.mutate({
+                  demandId: demand.id,
+                  lastStartedAt: (demand as any).last_started_at!,
+                  currentSeconds: (demand as any).time_in_progress_seconds || 0,
+                })}
+                isLoading={isTimerLoading}
               />
             </div>
           )}
