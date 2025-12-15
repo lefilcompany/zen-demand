@@ -281,6 +281,11 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
     }
   };
 
+  // Handle drag start only from the drag handle
+  const handleDragHandleMouseDown = (e: React.MouseEvent, demandId: string) => {
+    e.stopPropagation();
+  };
+
   // Render demand card
   const renderDemandCard = (demand: Demand, columnKey: string) => {
     const assignees = demand.demand_assignees || [];
@@ -290,23 +295,40 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
     return (
       <Card
         key={demand.id}
-        draggable={showDragHandle}
-        onDragStart={(e) => handleDragStart(e, demand.id)}
-        onClick={() => onDemandClick(demand.id)}
+        draggable={false}
         className={cn(
-          "hover:shadow-md transition-all",
-          showDragHandle && "cursor-grab active:cursor-grabbing",
-          !showDragHandle && "cursor-pointer",
+          "hover:shadow-md transition-all cursor-pointer",
           draggedId === demand.id && "opacity-50 scale-95",
-          "group"
+          "group relative"
         )}
       >
         <CardContent className="p-3 sm:p-4">
           <div className="flex items-start gap-2">
             {showDragHandle && (
-              <GripVertical className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-1 flex-shrink-0" />
+              <div
+                draggable
+                onDragStart={(e) => {
+                  e.stopPropagation();
+                  handleDragStart(e, demand.id);
+                }}
+                onMouseDown={(e) => handleDragHandleMouseDown(e, demand.id)}
+                onClick={(e) => e.stopPropagation()}
+                className={cn(
+                  "flex items-center justify-center rounded-md p-1 -ml-1 mt-0.5",
+                  "bg-muted/50 hover:bg-muted cursor-grab active:cursor-grabbing",
+                  "transition-all duration-200",
+                  "opacity-60 group-hover:opacity-100",
+                  "touch-none select-none"
+                )}
+                title="Arraste para mover"
+              >
+                <GripVertical className="h-4 w-4 text-muted-foreground" />
+              </div>
             )}
-            <div className="flex-1 min-w-0">
+            <div 
+              className="flex-1 min-w-0"
+              onClick={() => onDemandClick(demand.id)}
+            >
               <h4 className="font-medium text-sm line-clamp-2 mb-2">
                 {demand.title}
               </h4>
