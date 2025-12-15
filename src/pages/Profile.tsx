@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Camera, Loader2, Save, User, Mail, Calendar, Shield, Lock, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Camera, Loader2, Save, User, Mail, Calendar, Shield, Lock, Eye, EyeOff, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -30,6 +30,13 @@ export default function Profile() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
+  const [currentPasswordVerified, setCurrentPasswordVerified] = useState(false);
+
+  // Password validation
+  const passwordsMatch = newPassword === confirmPassword && newPassword.length > 0;
+  const newPasswordValid = newPassword.length >= 6;
+  const canSubmitPassword = currentPasswordVerified && newPasswordValid && passwordsMatch;
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["profile", user?.id],
@@ -134,11 +141,48 @@ export default function Profile() {
     });
   };
 
+  const handleVerifyCurrentPassword = async () => {
+    if (!currentPassword.trim()) {
+      toast.error("Informe a senha atual");
+      return;
+    }
+    
+    if (!user?.email) {
+      toast.error("Erro ao identificar usuário");
+      return;
+    }
+    
+    setIsVerifyingPassword(true);
+    
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+      
+      if (signInError) {
+        toast.error("Senha atual incorreta");
+        setCurrentPasswordVerified(false);
+        return;
+      }
+      
+      setCurrentPasswordVerified(true);
+      toast.success("Senha verificada! Agora você pode definir a nova senha.");
+    } catch (error) {
+      toast.error("Erro ao verificar senha", {
+        description: getErrorMessage(error),
+      });
+      setCurrentPasswordVerified(false);
+    } finally {
+      setIsVerifyingPassword(false);
+    }
+  };
+
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!currentPassword.trim()) {
-      toast.error("Informe a senha atual");
+    if (!currentPasswordVerified) {
+      toast.error("Verifique a senha atual primeiro");
       return;
     }
     
@@ -157,26 +201,9 @@ export default function Profile() {
       return;
     }
     
-    if (!user?.email) {
-      toast.error("Erro ao identificar usuário");
-      return;
-    }
-    
     setIsChangingPassword(true);
     
     try {
-      // Verify current password by re-authenticating
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: currentPassword,
-      });
-      
-      if (signInError) {
-        toast.error("Senha atual incorreta");
-        return;
-      }
-      
-      // Update to new password
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword,
       });
@@ -189,12 +216,20 @@ export default function Profile() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      setCurrentPasswordVerified(false);
     } catch (error) {
       toast.error("Erro ao alterar senha", {
         description: getErrorMessage(error),
       });
     } finally {
       setIsChangingPassword(false);
+    }
+  };
+
+  const handleCurrentPasswordChange = (value: string) => {
+    setCurrentPassword(value);
+    if (currentPasswordVerified) {
+      setCurrentPasswordVerified(false);
     }
   };
 
@@ -405,83 +440,154 @@ export default function Profile() {
             </div>
           </div>
 
-          <form onSubmit={handlePasswordChange} className="space-y-5 max-w-md">
-            <div className="space-y-2">
-              <Label htmlFor="currentPassword">Senha Atual</Label>
-              <div className="relative">
-                <Input
-                  id="currentPassword"
-                  type={showCurrentPassword ? "text" : "password"}
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Digite sua senha atual"
-                  className="h-11 pr-10"
-                />
-                <button
+          <form onSubmit={handlePasswordChange} className="space-y-6">
+            {/* Step 1: Verify Current Password */}
+            <div className="p-4 rounded-lg border bg-muted/20">
+              <div className="flex items-center gap-2 mb-3">
+                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${currentPasswordVerified ? 'bg-emerald-500 text-white' : 'bg-primary text-primary-foreground'}`}>
+                  {currentPasswordVerified ? <CheckCircle2 className="h-4 w-4" /> : '1'}
+                </div>
+                <Label className="font-medium">Verificar Senha Atual</Label>
+                {currentPasswordVerified && (
+                  <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Verificada
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    id="currentPassword"
+                    type={showCurrentPassword ? "text" : "password"}
+                    value={currentPassword}
+                    onChange={(e) => handleCurrentPasswordChange(e.target.value)}
+                    placeholder="Digite sua senha atual"
+                    className="h-11 pr-10"
+                    disabled={currentPasswordVerified}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <Button
                   type="button"
-                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  variant={currentPasswordVerified ? "outline" : "default"}
+                  onClick={handleVerifyCurrentPassword}
+                  disabled={isVerifyingPassword || !currentPassword.trim() || currentPasswordVerified}
+                  className="shrink-0"
                 >
-                  {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                  {isVerifyingPassword ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : currentPasswordVerified ? (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  ) : (
+                    "Verificar"
+                  )}
+                </Button>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="newPassword">Nova Senha</Label>
-              <div className="relative">
-                <Input
-                  id="newPassword"
-                  type={showNewPassword ? "text" : "password"}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Digite sua nova senha"
-                  className="h-11 pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+            {/* Step 2: New Password Fields */}
+            <div className={`p-4 rounded-lg border transition-all ${currentPasswordVerified ? 'bg-background' : 'bg-muted/30 opacity-60'}`}>
+              <div className="flex items-center gap-2 mb-4">
+                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${currentPasswordVerified ? 'bg-primary text-primary-foreground' : 'bg-muted-foreground/30 text-muted-foreground'}`}>
+                  2
+                </div>
+                <Label className="font-medium">Definir Nova Senha</Label>
               </div>
-              <p className="text-xs text-muted-foreground">Mínimo de 6 caracteres</p>
+              
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword" className="text-sm">Nova Senha</Label>
+                  <div className="relative">
+                    <Input
+                      id="newPassword"
+                      type={showNewPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Digite sua nova senha"
+                      className={`h-11 pr-10 ${newPassword && !newPasswordValid ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                      disabled={!currentPasswordVerified}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      disabled={!currentPasswordVerified}
+                    >
+                      {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {newPassword && (
+                    <p className={`text-xs flex items-center gap-1 ${newPasswordValid ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'}`}>
+                      {newPasswordValid ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                      {newPasswordValid ? 'Senha válida' : 'Mínimo de 6 caracteres'}
+                    </p>
+                  )}
+                  {!newPassword && (
+                    <p className="text-xs text-muted-foreground">Mínimo de 6 caracteres</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-sm">Confirmar Nova Senha</Label>
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirme sua nova senha"
+                      className={`h-11 pr-10 ${confirmPassword && !passwordsMatch ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                      disabled={!currentPasswordVerified}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      disabled={!currentPasswordVerified}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {confirmPassword && (
+                    <p className={`text-xs flex items-center gap-1 ${passwordsMatch ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'}`}>
+                      {passwordsMatch ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                      {passwordsMatch ? 'Senhas coincidem' : 'Senhas não coincidem'}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirme sua nova senha"
-                  className="h-11 pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              disabled={isChangingPassword}
-              className="gap-2"
-            >
-              {isChangingPassword ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Lock className="h-4 w-4" />
+            {/* Submit Button */}
+            <div className="flex items-center gap-4">
+              <Button
+                type="submit"
+                disabled={isChangingPassword || !canSubmitPassword}
+                className="gap-2"
+              >
+                {isChangingPassword ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Lock className="h-4 w-4" />
+                )}
+                Alterar Senha
+              </Button>
+              
+              {!currentPasswordVerified && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  Verifique a senha atual primeiro
+                </p>
               )}
-              Alterar Senha
-            </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
