@@ -33,7 +33,34 @@ export default function Profile() {
   const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
   const [currentPasswordVerified, setCurrentPasswordVerified] = useState(false);
 
+  // Password strength calculation
+  const getPasswordStrength = (password: string) => {
+    if (!password) return { score: 0, label: "", color: "" };
+    
+    let score = 0;
+    const checks = {
+      length: password.length >= 6,
+      lengthBonus: password.length >= 10,
+      hasUppercase: /[A-Z]/.test(password),
+      hasLowercase: /[a-z]/.test(password),
+      hasNumber: /[0-9]/.test(password),
+      hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    };
+    
+    if (checks.length) score += 1;
+    if (checks.lengthBonus) score += 1;
+    if (checks.hasUppercase) score += 1;
+    if (checks.hasLowercase) score += 1;
+    if (checks.hasNumber) score += 1;
+    if (checks.hasSpecial) score += 1;
+    
+    if (score <= 2) return { score, label: "Fraca", color: "bg-destructive" };
+    if (score <= 4) return { score, label: "Média", color: "bg-amber-500" };
+    return { score, label: "Forte", color: "bg-emerald-500" };
+  };
+
   // Password validation
+  const passwordStrength = getPasswordStrength(newPassword);
   const passwordsMatch = newPassword === confirmPassword && newPassword.length > 0;
   const newPasswordValid = newPassword.length >= 6;
   const canSubmitPassword = currentPasswordVerified && newPasswordValid && passwordsMatch;
@@ -524,13 +551,37 @@ export default function Profile() {
                       {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  {newPassword && (
-                    <p className={`text-xs flex items-center gap-1 ${newPasswordValid ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'}`}>
-                      {newPasswordValid ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-                      {newPasswordValid ? 'Senha válida' : 'Mínimo de 6 caracteres'}
-                    </p>
-                  )}
-                  {!newPassword && (
+                  {newPassword ? (
+                    <div className="space-y-2">
+                      {/* Strength Bar */}
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5, 6].map((level) => (
+                          <div
+                            key={level}
+                            className={`h-1.5 flex-1 rounded-full transition-all ${
+                              level <= passwordStrength.score
+                                ? passwordStrength.color
+                                : 'bg-muted'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      {/* Strength Label */}
+                      <div className="flex items-center justify-between">
+                        <p className={`text-xs flex items-center gap-1 ${newPasswordValid ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'}`}>
+                          {newPasswordValid ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                          {newPasswordValid ? 'Mínimo atingido' : 'Mínimo de 6 caracteres'}
+                        </p>
+                        <span className={`text-xs font-medium ${
+                          passwordStrength.score <= 2 ? 'text-destructive' : 
+                          passwordStrength.score <= 4 ? 'text-amber-600 dark:text-amber-400' : 
+                          'text-emerald-600 dark:text-emerald-400'
+                        }`}>
+                          {passwordStrength.label}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
                     <p className="text-xs text-muted-foreground">Mínimo de 6 caracteres</p>
                   )}
                 </div>
