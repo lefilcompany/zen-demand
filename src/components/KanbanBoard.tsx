@@ -17,7 +17,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -102,6 +108,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
   const { user } = useAuth();
   const [activeColumn, setActiveColumn] = useState(columns[0].key);
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
   const [adjustmentDemandId, setAdjustmentDemandId] = useState<string | null>(null);
   const [adjustmentReason, setAdjustmentReason] = useState("");
@@ -122,9 +129,22 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
     e.dataTransfer.effectAllowed = "move";
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, columnKey?: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
+    if (columnKey && dragOverColumn !== columnKey) {
+      setDragOverColumn(columnKey);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverColumn(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
+    setDragOverColumn(null);
   };
 
   const handleDrop = async (e: React.DragEvent, columnKey: string) => {
@@ -183,6 +203,60 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
     );
 
     setDraggedId(null);
+    setDragOverColumn(null);
+  };
+
+  // Handle mobile status change via dropdown
+  const handleMobileStatusChange = async (demandId: string, newStatusKey: string) => {
+    if (!statuses) return;
+    
+    const targetStatus = statuses.find((s) => s.name === newStatusKey);
+    if (!targetStatus) return;
+
+    const demand = demands.find((d) => d.id === demandId);
+    const previousStatusName = demand?.demand_statuses?.name;
+    
+    if (previousStatusName === newStatusKey) return;
+
+    const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && newStatusKey === "Entregue";
+
+    updateDemand.mutate(
+      {
+        id: demandId,
+        status_id: targetStatus.id,
+      },
+      {
+        onSuccess: async () => {
+          toast.success(`Status alterado para "${newStatusKey}"`);
+          
+          if (isAdjustmentCompletion && demand) {
+            try {
+              await supabase.functions.invoke("send-email", {
+                body: {
+                  to: demand.created_by,
+                  subject: `Ajuste concluído: ${demand.title}`,
+                  template: "notification",
+                  templateData: {
+                    title: "Ajuste Concluído",
+                    message: `O ajuste solicitado na demanda "${demand.title}" foi finalizado com sucesso.`,
+                    actionUrl: `${window.location.origin}/demands/${demand.id}`,
+                    actionText: "Ver Demanda",
+                    type: "success",
+                  },
+                },
+              });
+            } catch (emailError) {
+              console.error("Erro ao enviar email:", emailError);
+            }
+          }
+        },
+        onError: (error: any) => {
+          toast.error("Erro ao alterar status", {
+            description: getErrorMessage(error),
+          });
+        },
+      }
+    );
   };
 
   const getDemandsForColumn = (columnKey: string) => {
@@ -287,10 +361,13 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
   };
 
   // Render demand card
-  const renderDemandCard = (demand: Demand, columnKey: string) => {
+  const renderDemandCard = (demand: Demand, columnKey: string, showMoveMenu: boolean = false) => {
     const assignees = demand.demand_assignees || [];
     const adjustmentCount = adjustmentCounts?.[demand.id] || 0;
-    const showDragHandle = !readOnly && !isMobile && !isMediumScreen;
+    // Show drag handle on desktop and tablet (medium screens), not on mobile
+    const showDragHandle = !readOnly && !isMobile;
+    const currentStatus = demand.demand_statuses?.name;
+    const availableStatuses = columns.filter(col => col.key !== currentStatus);
     
     return (
       <Card
@@ -304,6 +381,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
       >
         <CardContent className="p-3 sm:p-4">
           <div className="flex items-start gap-2">
+            {/* Drag handle for desktop and tablet */}
             {showDragHandle && (
               <div
                 draggable
@@ -311,20 +389,53 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
                   e.stopPropagation();
                   handleDragStart(e, demand.id);
                 }}
+                onDragEnd={handleDragEnd}
                 onMouseDown={(e) => handleDragHandleMouseDown(e, demand.id)}
                 onClick={(e) => e.stopPropagation()}
                 className={cn(
-                  "flex items-center justify-center rounded-md p-1 -ml-1 mt-0.5",
-                  "bg-muted/50 hover:bg-muted cursor-grab active:cursor-grabbing",
+                  "flex items-center justify-center rounded-md p-1.5 -ml-1 mt-0.5",
+                  "bg-primary/10 hover:bg-primary/20 cursor-grab active:cursor-grabbing",
                   "transition-all duration-200",
-                  "opacity-60 group-hover:opacity-100",
+                  "opacity-80 group-hover:opacity-100",
                   "touch-none select-none"
                 )}
                 title="Arraste para mover"
               >
-                <GripVertical className="h-4 w-4 text-muted-foreground" />
+                <GripVertical className="h-4 w-4 text-primary" />
               </div>
             )}
+            
+            {/* Mobile move menu - dropdown to change status */}
+            {showMoveMenu && !readOnly && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 -ml-1 mt-0.5 bg-primary/10 hover:bg-primary/20"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ArrowRight className="h-4 w-4 text-primary" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="bg-background">
+                  {availableStatuses.map((status) => (
+                    <DropdownMenuItem
+                      key={status.key}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMobileStatusChange(demand.id, status.key);
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <div className={cn("w-2 h-2 rounded-full mr-2", status.color.replace('/10', ''))} />
+                      Mover para {status.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            
             <div 
               className="flex-1 min-w-0"
               onClick={() => onDemandClick(demand.id)}
@@ -436,15 +547,15 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
   };
 
   // Render column content
-  const renderColumnContent = (columnKey: string) => {
+  const renderColumnContent = (columnKey: string, showMoveMenu: boolean = false) => {
     const columnDemands = getDemandsForColumn(columnKey);
     
     return (
       <div className="space-y-3 flex-1 overflow-y-auto min-h-0">
-        {columnDemands.map((demand) => renderDemandCard(demand, columnKey))}
+        {columnDemands.map((demand) => renderDemandCard(demand, columnKey, showMoveMenu))}
         {columnDemands.length === 0 && (
           <div className="text-center py-8 text-muted-foreground text-sm border-2 border-dashed rounded-lg">
-            {readOnly || isMobile || isMediumScreen ? "Nenhuma demanda" : "Arraste demandas aqui"}
+            {readOnly ? "Nenhuma demanda" : (isMobile ? "Nenhuma demanda" : "Arraste demandas aqui")}
           </div>
         )}
       </div>
@@ -509,7 +620,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
     </Dialog>
   );
 
-  // Mobile view with dropdown selector
+  // Mobile view with dropdown selector - shows move menu on cards
   if (isMobile) {
     const activeColumnData = columns.find(c => c.key === activeColumn) || columns[0];
     
@@ -551,7 +662,8 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
               {getDemandsForColumn(activeColumn).length}
             </Badge>
           </div>
-          {renderColumnContent(activeColumn)}
+          {/* Pass showMoveMenu=true for mobile */}
+          {renderColumnContent(activeColumn, true)}
         </div>
 
         <AdjustmentDialog />
@@ -559,7 +671,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
     );
   }
 
-  // Medium screen view (tablet/small desktop) with horizontal collapsible tabs
+  // Medium screen view (tablet/small desktop) with horizontal collapsible tabs and drag-drop
   if (isMediumScreen) {
     return (
       <div className="flex flex-col h-full gap-2">
@@ -568,20 +680,24 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
           {columns.map((column) => {
             const isActive = activeColumn === column.key;
             const columnDemands = getDemandsForColumn(column.key);
+            const isDragTarget = dragOverColumn === column.key && draggedId;
             
             return (
               <div
                 key={column.key}
                 className={cn(
                   "rounded-lg flex flex-col min-h-0 overflow-hidden",
-                  "transition-[flex,padding,opacity] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                  "transition-[flex,padding,opacity,ring] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                   column.color,
                   isActive 
                     ? "flex-[4] p-4" 
-                    : "flex-[0.6] p-2 cursor-pointer hover:flex-[0.8] hover:bg-opacity-80"
+                    : "flex-[0.6] p-2 cursor-pointer hover:flex-[0.8] hover:bg-opacity-80",
+                  // Visual feedback when dragging over this column
+                  isDragTarget && "ring-2 ring-primary ring-offset-2 ring-offset-background scale-[1.02]"
                 )}
                 onClick={() => !isActive && setActiveColumn(column.key)}
-                onDragOver={handleDragOver}
+                onDragOver={(e) => handleDragOver(e, column.key)}
+                onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, column.key)}
               >
                 {isActive ? (
@@ -600,8 +716,11 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
                     </div>
                   </div>
                 ) : (
-                  // Collapsed state - vertical text with smooth transitions
-                  <div className="flex flex-col items-center justify-start h-full gap-2 py-2 transition-all duration-300">
+                  // Collapsed state - vertical text with smooth transitions and drop zone indicator
+                  <div className={cn(
+                    "flex flex-col items-center justify-start h-full gap-2 py-2 transition-all duration-300",
+                    isDragTarget && "bg-primary/20"
+                  )}>
                     <Badge 
                       variant="secondary" 
                       className="text-xs shrink-0 transition-all duration-300 hover:scale-110"
@@ -612,7 +731,8 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
                       <span 
                         className={cn(
                           "font-semibold text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap",
-                          "transition-all duration-300 hover:text-foreground"
+                          "transition-all duration-300 hover:text-foreground",
+                          isDragTarget && "text-primary font-bold"
                         )}
                         style={{ 
                           writingMode: 'vertical-rl', 
@@ -626,7 +746,8 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
                     <ChevronRight 
                       className={cn(
                         "h-4 w-4 text-muted-foreground shrink-0",
-                        "transition-all duration-300 hover:text-foreground hover:translate-x-0.5"
+                        "transition-all duration-300 hover:text-foreground hover:translate-x-0.5",
+                        isDragTarget && "text-primary"
                       )} 
                     />
                   </div>
@@ -641,32 +762,43 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
     );
   }
 
-  // Large Desktop view with all columns visible
+  // Large Desktop view with all columns visible and drag-drop with visual feedback
   return (
     <div className="grid grid-cols-4 gap-4 h-full">
-      {columns.map((column) => (
-        <div
-          key={column.key}
-          className={cn(
-            "rounded-lg p-4 transition-colors flex flex-col min-h-0",
-            column.color,
-            draggedId && "ring-2 ring-primary/20"
-          )}
-          onDragOver={handleDragOver}
-          onDrop={(e) => handleDrop(e, column.key)}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
-              {column.label}
-            </h3>
-            <Badge variant="secondary" className="text-xs">
-              {getDemandsForColumn(column.key).length}
-            </Badge>
-          </div>
+      {columns.map((column) => {
+        const isDragTarget = dragOverColumn === column.key && draggedId;
+        
+        return (
+          <div
+            key={column.key}
+            className={cn(
+              "rounded-lg p-4 transition-all duration-200 flex flex-col min-h-0",
+              column.color,
+              // Visual feedback when any drag is happening
+              draggedId && "ring-2 ring-primary/20",
+              // Highlight the specific column being hovered
+              isDragTarget && "ring-2 ring-primary ring-offset-2 ring-offset-background scale-[1.02] bg-primary/10"
+            )}
+            onDragOver={(e) => handleDragOver(e, column.key)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, column.key)}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className={cn(
+                "font-semibold text-sm uppercase tracking-wide text-muted-foreground transition-colors",
+                isDragTarget && "text-primary"
+              )}>
+                {column.label}
+              </h3>
+              <Badge variant="secondary" className="text-xs">
+                {getDemandsForColumn(column.key).length}
+              </Badge>
+            </div>
 
-          {renderColumnContent(column.key)}
-        </div>
-      ))}
+            {renderColumnContent(column.key)}
+          </div>
+        );
+      })}
 
       <AdjustmentDialog />
     </div>
