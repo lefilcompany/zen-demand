@@ -423,19 +423,6 @@ const Index = () => {
             </Card>
           )}
 
-          {widgets.welcomeCard && (
-            <Card className="bg-gradient-to-br from-primary/10 to-accent/10 border-primary/20 hover:shadow-md transition-shadow">
-              <CardHeader>
-                <CardTitle>{t("welcome.title")}</CardTitle>
-                <CardDescription>{t("settings.description")}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {t("welcome.subtitle")}
-                </p>
-              </CardContent>
-            </Card>
-          )}
         </div>
       )}
 
