@@ -77,30 +77,48 @@ const columns = [
   { key: "Entregue", label: "Entregue", color: "bg-emerald-500/10", shortLabel: "Entregue" },
 ];
 
-// Custom hook to detect desktop screens (non-mobile) for collapsible tabs layout
-function useIsDesktop() {
-  const [isDesktop, setIsDesktop] = useState(false);
+// Custom hook to detect tablet/small desktop (768px - 1023px) - single tab mode
+function useIsTablet() {
+  const [isTablet, setIsTablet] = useState(false);
 
   useEffect(() => {
-    const checkIsDesktop = () => {
+    const checkIsTablet = () => {
       const width = window.innerWidth;
-      // All screens >= 768px use collapsible tabs layout
-      setIsDesktop(width >= 768);
+      setIsTablet(width >= 768 && width < 1024);
     };
     
-    checkIsDesktop();
-    window.addEventListener("resize", checkIsDesktop);
-    return () => window.removeEventListener("resize", checkIsDesktop);
+    checkIsTablet();
+    window.addEventListener("resize", checkIsTablet);
+    return () => window.removeEventListener("resize", checkIsTablet);
   }, []);
 
-  return isDesktop;
+  return isTablet;
+}
+
+// Custom hook to detect large desktop (>=1024px) - multiple tabs mode
+function useIsLargeDesktop() {
+  const [isLargeDesktop, setIsLargeDesktop] = useState(false);
+
+  useEffect(() => {
+    const checkIsLargeDesktop = () => {
+      const width = window.innerWidth;
+      setIsLargeDesktop(width >= 1024);
+    };
+    
+    checkIsLargeDesktop();
+    window.addEventListener("resize", checkIsLargeDesktop);
+    return () => window.removeEventListener("resize", checkIsLargeDesktop);
+  }, []);
+
+  return isLargeDesktop;
 }
 
 const MAX_OPEN_COLUMNS = 3;
 
 export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole }: KanbanBoardProps) {
   const isMobile = useIsMobile();
-  const isDesktop = useIsDesktop();
+  const isTablet = useIsTablet();
+  const isLargeDesktop = useIsLargeDesktop();
   // Track multiple active columns (max 3), using array to maintain order (FIFO)
   const [activeColumns, setActiveColumns] = useState<string[]>([columns[0].key]);
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -189,9 +207,11 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     
     if (previousStatusName === columnKey) return;
 
-    // Adicionar a aba de destino às abertas no modo desktop para acompanhar o card
-    if (isDesktop && !activeColumns.includes(columnKey)) {
+    // Adicionar a aba de destino às abertas no modo desktop grande para acompanhar o card
+    if (isLargeDesktop && !activeColumns.includes(columnKey)) {
       toggleColumn(columnKey);
+    } else if (isTablet) {
+      setActiveColumns([columnKey]);
     }
 
     const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && columnKey === "Aprovação do Cliente";
@@ -590,21 +610,98 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     );
   }
 
-  // Desktop view (all non-mobile) with horizontal collapsible tabs and drag-drop
-  if (isDesktop) {
+  // Tablet/Small desktop view - single tab collapsible layout with drag-drop
+  if (isTablet) {
+    const tabletActiveColumn = activeColumns[0] || columns[0].key;
+    
+    return (
+      <div className="flex flex-col h-full gap-2">
+        <div className="flex gap-2 h-full min-h-0">
+          {columns.map((column) => {
+            const isActive = tabletActiveColumn === column.key;
+            const columnDemands = getDemandsForColumn(column.key);
+            const isDragTarget = dragOverColumn === column.key && draggedId;
+            
+            return (
+              <div
+                key={column.key}
+                className={cn(
+                  "rounded-lg flex flex-col min-h-0 overflow-hidden",
+                  "transition-all duration-300 ease-out will-change-[flex,transform]",
+                  column.color,
+                  isActive 
+                    ? "flex-[4] p-4" 
+                    : "flex-[0.6] p-2 cursor-pointer hover:flex-[0.8] hover:bg-opacity-80",
+                  isDragTarget && "ring-2 ring-primary ring-offset-2 ring-offset-background scale-[1.02]"
+                )}
+                onClick={() => !isActive && setActiveColumns([column.key])}
+                onDragOver={(e) => handleDragOver(e, column.key)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, column.key)}
+              >
+                {isActive ? (
+                  <div className="flex flex-col h-full">
+                    <div className="flex items-center justify-between mb-3 shrink-0">
+                      <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+                        {column.label}
+                      </h3>
+                      <Badge variant="secondary" className="text-xs">
+                        {columnDemands.length}
+                      </Badge>
+                    </div>
+                    <div className="flex-1 min-h-0 overflow-y-auto">
+                      {renderColumnContent(column.key)}
+                    </div>
+                  </div>
+                ) : (
+                  <div className={cn(
+                    "flex flex-col items-center justify-start h-full gap-2 py-2 transition-all duration-300",
+                    isDragTarget && "bg-primary/20"
+                  )}>
+                    <Badge variant="secondary" className="text-xs shrink-0">
+                      {columnDemands.length}
+                    </Badge>
+                    <div className="flex-1 flex items-center justify-center overflow-hidden">
+                      <span 
+                        className={cn(
+                          "font-semibold text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap",
+                          isDragTarget && "text-primary font-bold"
+                        )}
+                        style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)' }}
+                      >
+                        {column.shortLabel}
+                      </span>
+                    </div>
+                    <ChevronRight className={cn("h-4 w-4 text-muted-foreground shrink-0", isDragTarget && "text-primary")} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <KanbanAdjustmentDialog
+          open={adjustmentDialogOpen}
+          onOpenChange={handleAdjustmentDialogChange}
+          demandId={adjustmentDemandId}
+          demandTitle={adjustmentDemand?.title}
+        />
+      </div>
+    );
+  }
+
+  // Large Desktop view - multiple tabs (up to 3) with drag-drop
+  if (isLargeDesktop) {
     const openCount = activeColumns.length;
-    // Calculate flex values based on number of open columns
     const getFlexValue = (isActive: boolean) => {
       if (!isActive) return "flex-[0.5]";
-      // Distribute space evenly among open columns
       if (openCount === 1) return "flex-[5]";
       if (openCount === 2) return "flex-[2.5]";
-      return "flex-[1.7]"; // 3 columns
+      return "flex-[1.7]";
     };
 
     return (
       <div className="flex flex-col h-full gap-2">
-        {/* Horizontal tabs row */}
         <div className="flex gap-2 h-full min-h-0">
           {columns.map((column) => {
             const isActive = activeColumns.includes(column.key);
@@ -620,7 +717,6 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
                   column.color,
                   getFlexValue(isActive),
                   isActive ? "p-4" : "p-2 cursor-pointer hover:bg-opacity-80",
-                  // Visual feedback when dragging over this column
                   isDragTarget && "ring-2 ring-primary ring-offset-2 ring-offset-background scale-[1.02]"
                 )}
                 onClick={() => toggleColumn(column.key)}
@@ -629,7 +725,6 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
                 onDrop={(e) => handleDrop(e, column.key)}
               >
                 {isActive ? (
-                  // Expanded state
                   <div className="flex flex-col h-full">
                     <div className="flex items-center justify-between mb-3 shrink-0">
                       <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
@@ -644,15 +739,11 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
                     </div>
                   </div>
                 ) : (
-                  // Collapsed state - vertical text with smooth transitions and drop zone indicator
                   <div className={cn(
                     "flex flex-col items-center justify-start h-full gap-2 py-2 transition-all duration-300",
                     isDragTarget && "bg-primary/20"
                   )}>
-                    <Badge 
-                      variant="secondary" 
-                      className="text-xs shrink-0 transition-all duration-300 hover:scale-110"
-                    >
+                    <Badge variant="secondary" className="text-xs shrink-0 transition-all duration-300 hover:scale-110">
                       {columnDemands.length}
                     </Badge>
                     <div className="flex-1 flex items-center justify-center overflow-hidden">
@@ -662,11 +753,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
                           "transition-all duration-300 hover:text-foreground",
                           isDragTarget && "text-primary font-bold"
                         )}
-                        style={{ 
-                          writingMode: 'vertical-rl', 
-                          textOrientation: 'mixed',
-                          transform: 'rotate(180deg)'
-                        }}
+                        style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)' }}
                       >
                         {column.shortLabel}
                       </span>
