@@ -198,30 +198,42 @@ export function useCreateInteraction() {
       content?: string;
       metadata?: Record<string, unknown>;
     }) => {
+      // Verify user is authenticated first
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        throw new Error("Você precisa estar autenticado para realizar esta ação.");
+      }
+      
       // Validate input data before database operation
       const validatedData = validateData(InteractionCreateSchema, data);
-      const userId = (await supabase.auth.getUser()).data.user!.id;
       
       const insertData = {
         demand_id: validatedData.demand_id,
         interaction_type: validatedData.interaction_type,
         content: validatedData.content ?? null,
         metadata: (validatedData.metadata ?? null) as Json,
-        user_id: userId,
+        user_id: user.id,
       };
       
       const { data: interaction, error } = await supabase
         .from("demand_interactions")
-        .insert([insertData])
+        .insert(insertData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating interaction:", error);
+        throw error;
+      }
       return interaction;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["demand-interactions", variables.demand_id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["adjustment-counts"],
       });
     },
   });
