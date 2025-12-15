@@ -178,7 +178,7 @@ export default function CreateDemand() {
               />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="status">Status *</Label>
                 <Select value={statusId} onValueChange={setStatusId} required>
@@ -243,7 +243,7 @@ export default function CreateDemand() {
               </div>
             )}
 
-            <div className="flex gap-2 pt-4">
+            <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4">
               <Button
                 type="button"
                 variant="outline"
