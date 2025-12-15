@@ -1,15 +1,7 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -28,15 +20,14 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { getErrorMessage } from "@/lib/errorUtils";
-import { useUpdateDemand, useDemandStatuses, useCreateInteraction } from "@/hooks/useDemands";
-import { useDemandAssignees } from "@/hooks/useDemandAssignees";
+import { useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
+import { KanbanAdjustmentDialog } from "@/components/KanbanAdjustmentDialog";
 import { toast } from "sonner";
 import { useAdjustmentCounts } from "@/hooks/useAdjustmentCount";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useAuth } from "@/lib/auth";
 
 interface Assignee {
   user_id: string;
@@ -105,23 +96,25 @@ function useIsMediumScreen() {
 export function KanbanBoard({ demands, onDemandClick, readOnly = false }: KanbanBoardProps) {
   const isMobile = useIsMobile();
   const isMediumScreen = useIsMediumScreen();
-  const { user } = useAuth();
   const [activeColumn, setActiveColumn] = useState(columns[0].key);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
   const [adjustmentDemandId, setAdjustmentDemandId] = useState<string | null>(null);
-  const [adjustmentReason, setAdjustmentReason] = useState("");
   const { data: statuses } = useDemandStatuses();
   const updateDemand = useUpdateDemand();
-  const createInteraction = useCreateInteraction();
   
   const demandIds = useMemo(() => demands.map(d => d.id), [demands]);
   const { data: adjustmentCounts } = useAdjustmentCounts(demandIds);
   
   const adjustmentDemand = demands.find(d => d.id === adjustmentDemandId);
-  const { data: adjustmentAssignees } = useDemandAssignees(adjustmentDemandId);
-  const adjustmentStatusId = statuses?.find((s) => s.name === "Em Ajuste")?.id;
+
+  const handleAdjustmentDialogChange = useCallback((open: boolean) => {
+    setAdjustmentDialogOpen(open);
+    if (!open) {
+      setAdjustmentDemandId(null);
+    }
+  }, []);
 
   const handleDragStart = (e: React.DragEvent, demandId: string) => {
     if (readOnly) return;
@@ -274,97 +267,16 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
     return new Date(dueDate) < new Date();
   };
 
-  const handleOpenAdjustmentDialog = (e: React.MouseEvent, demandId: string) => {
+  const handleOpenAdjustmentDialog = useCallback((e: React.MouseEvent, demandId: string) => {
     e.stopPropagation();
     setAdjustmentDemandId(demandId);
-    setAdjustmentReason("");
     setAdjustmentDialogOpen(true);
-  };
-
-  const handleRequestAdjustment = async () => {
-    if (!adjustmentDemandId || !adjustmentStatusId || !adjustmentReason.trim()) return;
-    
-    if (!user) {
-      toast.error("Você precisa estar autenticado para solicitar ajustes");
-      return;
-    }
-    
-    try {
-      await new Promise<void>((resolve, reject) => {
-        createInteraction.mutate(
-          {
-            demand_id: adjustmentDemandId,
-            interaction_type: "adjustment_request",
-            content: adjustmentReason.trim(),
-          },
-          {
-            onSuccess: () => resolve(),
-            onError: (error) => reject(error),
-          }
-        );
-      });
-      
-      await new Promise<void>((resolve, reject) => {
-        updateDemand.mutate(
-          { id: adjustmentDemandId, status_id: adjustmentStatusId },
-          {
-            onSuccess: () => resolve(),
-            onError: (error) => reject(error),
-          }
-        );
-      });
-      
-      toast.success("Ajuste solicitado com sucesso!");
-      
-      if (adjustmentAssignees && adjustmentAssignees.length > 0) {
-        const notifications = adjustmentAssignees.map((assignee) => ({
-          user_id: assignee.user_id,
-          title: "Ajuste solicitado",
-          message: `Foi solicitado ajuste na demanda "${adjustmentDemand?.title}": ${adjustmentReason.trim().substring(0, 100)}${adjustmentReason.length > 100 ? '...' : ''}`,
-          type: "warning",
-          link: `/demands/${adjustmentDemandId}`,
-        }));
-        
-        await supabase.from("notifications").insert(notifications);
-        
-        for (const assignee of adjustmentAssignees) {
-          try {
-            await supabase.functions.invoke("send-email", {
-              body: {
-                to: assignee.user_id,
-                subject: `Ajuste solicitado: ${adjustmentDemand?.title}`,
-                template: "notification",
-                templateData: {
-                  title: "Ajuste Solicitado",
-                  message: `Foi solicitado um ajuste na demanda "${adjustmentDemand?.title}".\n\nMotivo: ${adjustmentReason.trim()}`,
-                  actionUrl: `${window.location.origin}/demands/${adjustmentDemandId}`,
-                  actionText: "Ver Demanda",
-                  userName: assignee.profile?.full_name || "Responsável",
-                  type: "warning" as const,
-                },
-              },
-            });
-          } catch (emailError) {
-            console.error("Error sending adjustment email:", emailError);
-          }
-        }
-      }
-      
-      setAdjustmentReason("");
-      setAdjustmentDialogOpen(false);
-      setAdjustmentDemandId(null);
-    } catch (error: any) {
-      console.error("Erro ao solicitar ajuste:", error);
-      toast.error("Erro ao solicitar ajuste", {
-        description: getErrorMessage(error),
-      });
-    }
-  };
+  }, []);
 
   // Handle drag start only from the drag handle
-  const handleDragHandleMouseDown = (e: React.MouseEvent, demandId: string) => {
+  const handleDragHandleMouseDown = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-  };
+  }, []);
 
   // Render demand card
   const renderDemandCard = (demand: Demand, columnKey: string, showMoveMenu: boolean = false) => {
@@ -396,7 +308,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
                   handleDragStart(e, demand.id);
                 }}
                 onDragEnd={handleDragEnd}
-                onMouseDown={(e) => handleDragHandleMouseDown(e, demand.id)}
+                onMouseDown={handleDragHandleMouseDown}
                 onClick={(e) => e.stopPropagation()}
                 className={cn(
                   "flex items-center justify-center rounded-md p-1.5 -ml-1 mt-0.5",
@@ -568,63 +480,6 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
     );
   };
 
-  // Adjustment Dialog Component
-  const AdjustmentDialog = () => (
-    <Dialog open={adjustmentDialogOpen} onOpenChange={(open) => {
-      setAdjustmentDialogOpen(open);
-      if (!open) {
-        setAdjustmentReason("");
-        setAdjustmentDemandId(null);
-      }
-    }}>
-      <DialogContent className="max-w-[95vw] sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Solicitar ajuste</DialogTitle>
-          <DialogDescription>
-            Descreva o que precisa ser ajustado na demanda "{adjustmentDemand?.title}".
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <label htmlFor="kanban-adjustment-reason" className="text-sm font-medium">
-              Motivo do ajuste <span className="text-destructive">*</span>
-            </label>
-            <Textarea
-              id="kanban-adjustment-reason"
-              placeholder="Descreva o que precisa ser corrigido ou alterado..."
-              value={adjustmentReason}
-              onChange={(e) => setAdjustmentReason(e.target.value)}
-              rows={4}
-              maxLength={1000}
-              className="resize-none"
-            />
-            <p className="text-xs text-muted-foreground text-right">
-              {adjustmentReason.length}/1000
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              setAdjustmentDialogOpen(false);
-              setAdjustmentReason("");
-              setAdjustmentDemandId(null);
-            }}
-          >
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleRequestAdjustment}
-            disabled={!adjustmentReason.trim() || updateDemand.isPending || createInteraction.isPending}
-            className="bg-purple-600 hover:bg-purple-700"
-          >
-            {(updateDemand.isPending || createInteraction.isPending) ? "Enviando..." : "Solicitar Ajuste"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
 
   // Mobile view with dropdown selector - shows move menu on cards
   if (isMobile) {
@@ -672,7 +527,12 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
           {renderColumnContent(activeColumn, true)}
         </div>
 
-        <AdjustmentDialog />
+        <KanbanAdjustmentDialog
+          open={adjustmentDialogOpen}
+          onOpenChange={handleAdjustmentDialogChange}
+          demandId={adjustmentDemandId}
+          demandTitle={adjustmentDemand?.title}
+        />
       </div>
     );
   }
@@ -763,7 +623,12 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
           })}
         </div>
 
-        <AdjustmentDialog />
+        <KanbanAdjustmentDialog
+          open={adjustmentDialogOpen}
+          onOpenChange={handleAdjustmentDialogChange}
+          demandId={adjustmentDemandId}
+          demandTitle={adjustmentDemand?.title}
+        />
       </div>
     );
   }
@@ -806,7 +671,12 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
         );
       })}
 
-      <AdjustmentDialog />
+      <KanbanAdjustmentDialog
+        open={adjustmentDialogOpen}
+        onOpenChange={handleAdjustmentDialogChange}
+        demandId={adjustmentDemandId}
+        demandTitle={adjustmentDemand?.title}
+      />
     </div>
   );
 }
