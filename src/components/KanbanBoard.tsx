@@ -551,36 +551,47 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
               <div
                 key={column.key}
                 className={cn(
-                  "rounded-lg transition-all duration-300 ease-in-out flex flex-col min-h-0",
+                  "rounded-lg flex flex-col min-h-0 overflow-hidden",
+                  "transition-[flex,padding,opacity] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
                   column.color,
-                  isActive ? "flex-[3] p-4" : "flex-[0.5] p-2 cursor-pointer hover:opacity-80"
+                  isActive 
+                    ? "flex-[4] p-4" 
+                    : "flex-[0.6] p-2 cursor-pointer hover:flex-[0.8] hover:bg-opacity-80"
                 )}
                 onClick={() => !isActive && setActiveColumn(column.key)}
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, column.key)}
               >
                 {isActive ? (
-                  // Expanded state
-                  <>
+                  // Expanded state with fade-in animation
+                  <div className="flex flex-col h-full animate-fade-in">
                     <div className="flex items-center justify-between mb-3 shrink-0">
-                      <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+                      <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground transition-opacity duration-300">
                         {column.label}
                       </h3>
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-xs transition-transform duration-300 scale-100">
                         {columnDemands.length}
                       </Badge>
                     </div>
-                    {renderColumnContent(column.key)}
-                  </>
+                    <div className="flex-1 min-h-0 overflow-hidden">
+                      {renderColumnContent(column.key)}
+                    </div>
+                  </div>
                 ) : (
-                  // Collapsed state - vertical text
-                  <div className="flex flex-col items-center justify-start h-full gap-2 py-2">
-                    <Badge variant="secondary" className="text-xs shrink-0">
+                  // Collapsed state - vertical text with smooth transitions
+                  <div className="flex flex-col items-center justify-start h-full gap-2 py-2 transition-all duration-300">
+                    <Badge 
+                      variant="secondary" 
+                      className="text-xs shrink-0 transition-all duration-300 hover:scale-110"
+                    >
                       {columnDemands.length}
                     </Badge>
-                    <div className="flex-1 flex items-center justify-center">
+                    <div className="flex-1 flex items-center justify-center overflow-hidden">
                       <span 
-                        className="font-semibold text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap"
+                        className={cn(
+                          "font-semibold text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap",
+                          "transition-all duration-300 hover:text-foreground"
+                        )}
                         style={{ 
                           writingMode: 'vertical-rl', 
                           textOrientation: 'mixed',
@@ -590,7 +601,12 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
                         {column.shortLabel}
                       </span>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <ChevronRight 
+                      className={cn(
+                        "h-4 w-4 text-muted-foreground shrink-0",
+                        "transition-all duration-300 hover:text-foreground hover:translate-x-0.5"
+                      )} 
+                    />
                   </div>
                 )}
               </div>
