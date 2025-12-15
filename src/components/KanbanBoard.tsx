@@ -15,7 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight } from "lucide-react";
+import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight, X } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -647,9 +647,26 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
                       <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
                         {column.label}
                       </h3>
-                      <Badge variant="secondary" className="text-xs">
-                        {columnDemands.length}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs">
+                          {columnDemands.length}
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Switch to the first available non-active column
+                            const nextColumn = columns.find(c => c.key !== column.key);
+                            if (nextColumn) {
+                              setActiveColumns([nextColumn.key]);
+                            }
+                          }}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                     <div className="flex-1 min-h-0 overflow-y-auto">
                       {renderColumnContent(column.key)}
@@ -732,9 +749,24 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
                       <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
                         {column.label}
                       </h3>
-                      <Badge variant="secondary" className="text-xs">
-                        {columnDemands.length}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs">
+                          {columnDemands.length}
+                        </Badge>
+                        {openCount > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleColumn(column.key);
+                            }}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     <div className="flex-1 min-h-0 overflow-y-auto">
                       {renderColumnContent(column.key)}
