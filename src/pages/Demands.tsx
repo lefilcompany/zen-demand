@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +12,8 @@ import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTable } from "@/components/ui/data-table";
 import { demandColumns, DemandTableRow } from "@/components/demands/columns";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useEffect, useState as useReactState } from "react";
+import { DemandFilters, DemandFiltersState } from "@/components/DemandFilters";
+import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 
 type ViewMode = "table" | "grid";
 
@@ -28,9 +28,17 @@ export default function Demands() {
   const { data: role } = useTeamRole(selectedTeamId);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("table");
+  const [filters, setFilters] = useState<DemandFiltersState>({
+    status: null,
+    priority: null,
+    assignee: null,
+    service: null,
+    dueDateFrom: null,
+    dueDateTo: null,
+  });
   
   // Detect if screen is mobile or tablet (< 1024px)
-  const [isTabletOrSmaller, setIsTabletOrSmaller] = useReactState(false);
+  const [isTabletOrSmaller, setIsTabletOrSmaller] = useState(false);
   
   useEffect(() => {
     const checkScreenSize = () => {
@@ -48,15 +56,58 @@ export default function Demands() {
   
   const filteredDemands = useMemo(() => {
     if (!demands) return [];
-    if (!searchQuery.trim()) return demands;
     
-    const query = searchQuery.toLowerCase();
-    return demands.filter((d) =>
-      d.title.toLowerCase().includes(query) ||
-      d.description?.toLowerCase().includes(query) ||
-      d.priority?.toLowerCase().includes(query)
-    );
-  }, [demands, searchQuery]);
+    return demands.filter((d) => {
+      // Search query filter
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const matchesSearch = 
+          d.title.toLowerCase().includes(query) ||
+          d.description?.toLowerCase().includes(query) ||
+          d.priority?.toLowerCase().includes(query);
+        if (!matchesSearch) return false;
+      }
+      
+      // Status filter
+      if (filters.status && d.status_id !== filters.status) {
+        return false;
+      }
+      
+      // Priority filter
+      if (filters.priority && d.priority !== filters.priority) {
+        return false;
+      }
+      
+      // Assignee filter
+      if (filters.assignee) {
+        const isAssigned = d.demand_assignees?.some(
+          (a) => a.user_id === filters.assignee
+        ) || d.assigned_to === filters.assignee;
+        if (!isAssigned) return false;
+      }
+      
+      // Service filter
+      if (filters.service && d.service_id !== filters.service) {
+        return false;
+      }
+      
+      // Due date range filter
+      if (d.due_date) {
+        const dueDate = new Date(d.due_date);
+        if (filters.dueDateFrom && isBefore(dueDate, startOfDay(filters.dueDateFrom))) {
+          return false;
+        }
+        if (filters.dueDateTo && isAfter(dueDate, endOfDay(filters.dueDateTo))) {
+          return false;
+        }
+      } else if (filters.dueDateFrom || filters.dueDateTo) {
+        // If filtering by date but demand has no due date, exclude it
+        return false;
+      }
+      
+      return true;
+    });
+  }, [demands, searchQuery, filters]);
   
   const myDemands = filteredDemands.filter((d) => d.assigned_to === user?.id);
   const createdByMe = filteredDemands.filter((d) => d.created_by === user?.id);
@@ -151,7 +202,12 @@ export default function Demands() {
               className="pl-9 w-full sm:w-[200px] md:w-[250px]"
             />
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <DemandFilters 
+              teamId={selectedTeamId} 
+              filters={filters} 
+              onChange={setFilters} 
+            />
             {/* View toggle - hidden on mobile/tablet */}
             <div className="hidden lg:flex items-center border border-border rounded-md">
               <Button
