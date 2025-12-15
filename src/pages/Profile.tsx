@@ -236,6 +236,13 @@ export default function Profile() {
       });
       
       if (updateError) {
+        // Handle specific error codes
+        if (updateError.code === 'same_password' || updateError.message?.includes('different from the old password')) {
+          toast.error("A nova senha deve ser diferente da senha atual", {
+            description: "Por favor, escolha uma senha diferente da sua senha atual.",
+          });
+          return;
+        }
         throw updateError;
       }
       
@@ -244,10 +251,17 @@ export default function Profile() {
       setNewPassword("");
       setConfirmPassword("");
       setCurrentPasswordVerified(false);
-    } catch (error) {
-      toast.error("Erro ao alterar senha", {
-        description: getErrorMessage(error),
-      });
+    } catch (error: any) {
+      // Double-check for same_password error
+      if (error?.code === 'same_password' || error?.message?.includes('different from the old password')) {
+        toast.error("A nova senha deve ser diferente da senha atual", {
+          description: "Por favor, escolha uma senha diferente da sua senha atual.",
+        });
+      } else {
+        toast.error("Erro ao alterar senha", {
+          description: getErrorMessage(error),
+        });
+      }
     } finally {
       setIsChangingPassword(false);
     }
