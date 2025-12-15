@@ -283,8 +283,10 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
   const renderDemandCard = (demand: Demand, columnKey: string, showMoveMenu: boolean = false) => {
     const assignees = demand.demand_assignees || [];
     const adjustmentCount = adjustmentCounts?.[demand.id] || 0;
-    // Show drag handle on desktop and tablet (medium screens), not on mobile
-    const showDragHandle = !readOnly && !isMobile;
+    // Demandas em "Entregue" não podem ser movidas
+    const isDelivered = columnKey === "Entregue";
+    // Show drag handle on desktop and tablet (medium screens), not on mobile, and not for delivered demands
+    const showDragHandle = !readOnly && !isMobile && !isDelivered;
     const currentStatus = demand.demand_statuses?.name;
     const availableStatuses = columns.filter(col => col.key !== currentStatus);
     
@@ -324,8 +326,8 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
               </div>
             )}
             
-            {/* Mobile move menu - dropdown to change status */}
-            {showMoveMenu && !readOnly && (
+            {/* Mobile move menu - dropdown to change status (not for delivered) */}
+            {showMoveMenu && !readOnly && !isDelivered && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
