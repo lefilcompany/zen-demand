@@ -189,7 +189,7 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
           <Button
             onClick={handleSubmit}
             disabled={!reason.trim() || isSubmitting}
-            className="bg-purple-600 hover:bg-purple-700"
+            className="bg-amber-600 hover:bg-amber-700"
           >
             {isSubmitting ? "Enviando..." : "Solicitar Ajuste"}
           </Button>
