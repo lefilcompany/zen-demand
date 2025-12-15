@@ -81,7 +81,7 @@ export function AssigneeSelector({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="start">
+      <PopoverContent className="w-[calc(100vw-2rem)] max-w-80 p-0" align="start">
         <div className="p-3 border-b">
           <h4 className="font-medium text-sm">Atribuir responsáveis</h4>
           <p className="text-xs text-muted-foreground">

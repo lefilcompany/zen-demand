@@ -91,7 +91,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto max-h-[70vh] pr-1">
       <div className="space-y-2">
         <Label htmlFor="edit-title">Título *</Label>
         <Input
@@ -110,11 +110,11 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
           placeholder="Descreva os detalhes da demanda..."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          rows={4}
+          rows={3}
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="edit-status">Status *</Label>
           <Select value={statusId} onValueChange={setStatusId} required>
@@ -176,7 +176,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
         />
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-2 pt-4">
+      <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4 sticky bottom-0 bg-background pb-1">
         <Button
           type="button"
           variant="outline"
