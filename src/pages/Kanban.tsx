@@ -55,7 +55,8 @@ export default function Kanban() {
           <KanbanBoard 
             demands={demands} 
             onDemandClick={id => navigate(`/demands/${id}`)} 
-            readOnly={isReadOnly} 
+            readOnly={isReadOnly}
+            userRole={role || undefined}
           />
         ) : (
           <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
