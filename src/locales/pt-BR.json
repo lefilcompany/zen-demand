@@ -24,7 +24,9 @@
     "password": "Senha",
     "phone": "Telefone",
     "state": "Estado",
-    "city": "Cidade"
+    "city": "Cidade",
+    "current": "Atual",
+    "viewAll": "Ver todos"
   },
   "auth": {
     "login": "Entrar",

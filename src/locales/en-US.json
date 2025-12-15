@@ -24,7 +24,9 @@
     "password": "Password",
     "phone": "Phone",
     "state": "State",
-    "city": "City"
+    "city": "City",
+    "current": "Current",
+    "viewAll": "View all"
   },
   "auth": {
     "login": "Sign In",
