@@ -13,8 +13,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTable } from "@/components/ui/data-table";
 import { demandColumns, DemandTableRow } from "@/components/demands/columns";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useEffect, useState as useReactState } from "react";
 
 type ViewMode = "table" | "grid";
+
+const TABLET_BREAKPOINT = 1024;
 
 export default function Demands() {
   const { t } = useTranslation();
@@ -25,10 +28,21 @@ export default function Demands() {
   const { data: role } = useTeamRole(selectedTeamId);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("table");
-  const isMobile = useIsMobile();
+  
+  // Detect if screen is mobile or tablet (< 1024px)
+  const [isTabletOrSmaller, setIsTabletOrSmaller] = useReactState(false);
+  
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsTabletOrSmaller(window.innerWidth < TABLET_BREAKPOINT);
+    };
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
   
   // Force grid view on mobile/tablet (screens < 1024px)
-  const effectiveViewMode = isMobile ? "grid" : viewMode;
+  const effectiveViewMode = isTabletOrSmaller ? "grid" : viewMode;
 
   const isReadOnly = role === "requester";
   
