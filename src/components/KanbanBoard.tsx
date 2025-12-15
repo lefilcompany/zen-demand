@@ -96,10 +96,13 @@ function useIsDesktop() {
   return isDesktop;
 }
 
+const MAX_OPEN_COLUMNS = 3;
+
 export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole }: KanbanBoardProps) {
   const isMobile = useIsMobile();
   const isDesktop = useIsDesktop();
-  const [activeColumn, setActiveColumn] = useState(columns[0].key);
+  // Track multiple active columns (max 3), using array to maintain order (FIFO)
+  const [activeColumns, setActiveColumns] = useState<string[]>([columns[0].key]);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
@@ -112,6 +115,29 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
   const { startTimer, pauseTimer, isLoading: isTimerLoading } = useTimerControl();
   
   const adjustmentDemand = demands.find(d => d.id === adjustmentDemandId);
+
+  // Handle column toggle with FIFO logic (max 3 columns)
+  const toggleColumn = useCallback((columnKey: string) => {
+    setActiveColumns(prev => {
+      // If already active, close it (but keep at least one open)
+      if (prev.includes(columnKey)) {
+        if (prev.length > 1) {
+          return prev.filter(c => c !== columnKey);
+        }
+        return prev; // Keep at least one column open
+      }
+      
+      // Opening a new column
+      const newColumns = [...prev, columnKey];
+      
+      // If exceeds max, remove the first one (FIFO)
+      if (newColumns.length > MAX_OPEN_COLUMNS) {
+        return newColumns.slice(1);
+      }
+      
+      return newColumns;
+    });
+  }, []);
 
   const handleAdjustmentDialogChange = useCallback((open: boolean) => {
     setAdjustmentDialogOpen(open);
@@ -163,9 +189,9 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     
     if (previousStatusName === columnKey) return;
 
-    // Mudar para a aba de destino no modo desktop para acompanhar o card
-    if (isDesktop) {
-      setActiveColumn(columnKey);
+    // Adicionar a aba de destino às abertas no modo desktop para acompanhar o card
+    if (isDesktop && !activeColumns.includes(columnKey)) {
+      toggleColumn(columnKey);
     }
 
     const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && columnKey === "Aprovação do Cliente";
@@ -505,18 +531,23 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
 
   // Mobile view with dropdown selector - shows move menu on cards
   if (isMobile) {
-    const activeColumnData = columns.find(c => c.key === activeColumn) || columns[0];
+    const mobileActiveColumn = activeColumns[0] || columns[0].key;
+    const activeColumnData = columns.find(c => c.key === mobileActiveColumn) || columns[0];
+    
+    const handleMobileColumnChange = (value: string) => {
+      setActiveColumns([value]);
+    };
     
     return (
       <div className="flex flex-col h-full">
         <div className="mb-4">
-          <Select value={activeColumn} onValueChange={setActiveColumn}>
+          <Select value={mobileActiveColumn} onValueChange={handleMobileColumnChange}>
             <SelectTrigger className="w-full">
               <SelectValue>
                 <div className="flex items-center justify-between w-full">
                   <span>{activeColumnData.label}</span>
                   <Badge variant="secondary" className="ml-2">
-                    {getDemandsForColumn(activeColumn).length}
+                    {getDemandsForColumn(mobileActiveColumn).length}
                   </Badge>
                 </div>
               </SelectValue>
@@ -542,11 +573,11 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
               {activeColumnData.label}
             </h3>
             <Badge variant="secondary" className="text-xs">
-              {getDemandsForColumn(activeColumn).length}
+              {getDemandsForColumn(mobileActiveColumn).length}
             </Badge>
           </div>
           {/* Pass showMoveMenu=true for mobile */}
-          {renderColumnContent(activeColumn, true)}
+          {renderColumnContent(mobileActiveColumn, true)}
         </div>
 
         <KanbanAdjustmentDialog
@@ -561,12 +592,22 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
 
   // Desktop view (all non-mobile) with horizontal collapsible tabs and drag-drop
   if (isDesktop) {
+    const openCount = activeColumns.length;
+    // Calculate flex values based on number of open columns
+    const getFlexValue = (isActive: boolean) => {
+      if (!isActive) return "flex-[0.5]";
+      // Distribute space evenly among open columns
+      if (openCount === 1) return "flex-[5]";
+      if (openCount === 2) return "flex-[2.5]";
+      return "flex-[1.7]"; // 3 columns
+    };
+
     return (
       <div className="flex flex-col h-full gap-2">
         {/* Horizontal tabs row */}
         <div className="flex gap-2 h-full min-h-0">
           {columns.map((column) => {
-            const isActive = activeColumn === column.key;
+            const isActive = activeColumns.includes(column.key);
             const columnDemands = getDemandsForColumn(column.key);
             const isDragTarget = dragOverColumn === column.key && draggedId;
             
@@ -577,13 +618,12 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
                   "rounded-lg flex flex-col min-h-0 overflow-hidden",
                   "transition-all duration-300 ease-out will-change-[flex,transform]",
                   column.color,
-                  isActive 
-                    ? "flex-[4] p-4" 
-                    : "flex-[0.6] p-2 cursor-pointer hover:flex-[0.8] hover:bg-opacity-80",
+                  getFlexValue(isActive),
+                  isActive ? "p-4" : "p-2 cursor-pointer hover:bg-opacity-80",
                   // Visual feedback when dragging over this column
                   isDragTarget && "ring-2 ring-primary ring-offset-2 ring-offset-background scale-[1.02]"
                 )}
-                onClick={() => !isActive && setActiveColumn(column.key)}
+                onClick={() => toggleColumn(column.key)}
                 onDragOver={(e) => handleDragOver(e, column.key)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, column.key)}
