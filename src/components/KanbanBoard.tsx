@@ -77,37 +77,39 @@ const columns = [
   { key: "Entregue", label: "Entregue", color: "bg-emerald-500/10", shortLabel: "Entregue" },
 ];
 
-// Custom hook to detect tablet/small desktop (768px - 1023px) - single tab mode
-function useIsTablet() {
-  const [isTablet, setIsTablet] = useState(false);
+// Custom hook to detect tablet and small desktop (768px - 1279px) - single tab mode
+function useIsTabletOrSmallDesktop() {
+  const [isTabletOrSmallDesktop, setIsTabletOrSmallDesktop] = useState(false);
 
   useEffect(() => {
-    const checkIsTablet = () => {
+    const check = () => {
       const width = window.innerWidth;
-      setIsTablet(width >= 768 && width < 1024);
+      // Tablet and small desktop: single tab collapsible
+      setIsTabletOrSmallDesktop(width >= 768 && width < 1280);
     };
     
-    checkIsTablet();
-    window.addEventListener("resize", checkIsTablet);
-    return () => window.removeEventListener("resize", checkIsTablet);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
   }, []);
 
-  return isTablet;
+  return isTabletOrSmallDesktop;
 }
 
-// Custom hook to detect large desktop (>=1024px) - multiple tabs mode
+// Custom hook to detect medium/large desktop (>=1280px) - multiple tabs mode
 function useIsLargeDesktop() {
   const [isLargeDesktop, setIsLargeDesktop] = useState(false);
 
   useEffect(() => {
-    const checkIsLargeDesktop = () => {
+    const check = () => {
       const width = window.innerWidth;
-      setIsLargeDesktop(width >= 1024);
+      // Medium/Large desktop: multiple tabs (up to 3)
+      setIsLargeDesktop(width >= 1280);
     };
     
-    checkIsLargeDesktop();
-    window.addEventListener("resize", checkIsLargeDesktop);
-    return () => window.removeEventListener("resize", checkIsLargeDesktop);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
   }, []);
 
   return isLargeDesktop;
@@ -117,7 +119,7 @@ const MAX_OPEN_COLUMNS = 3;
 
 export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole }: KanbanBoardProps) {
   const isMobile = useIsMobile();
-  const isTablet = useIsTablet();
+  const isTabletOrSmallDesktop = useIsTabletOrSmallDesktop();
   const isLargeDesktop = useIsLargeDesktop();
   // Track multiple active columns (max 3), using array to maintain order (FIFO)
   const [activeColumns, setActiveColumns] = useState<string[]>([columns[0].key]);
@@ -210,7 +212,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     // Adicionar a aba de destino às abertas no modo desktop grande para acompanhar o card
     if (isLargeDesktop && !activeColumns.includes(columnKey)) {
       toggleColumn(columnKey);
-    } else if (isTablet) {
+    } else if (isTabletOrSmallDesktop) {
       setActiveColumns([columnKey]);
     }
 
@@ -611,7 +613,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
   }
 
   // Tablet/Small desktop view - single tab collapsible layout with drag-drop
-  if (isTablet) {
+  if (isTabletOrSmallDesktop) {
     const tabletActiveColumn = activeColumns[0] || columns[0].key;
     
     return (
