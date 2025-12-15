@@ -711,7 +711,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false }: Kanban
                         {columnDemands.length}
                       </Badge>
                     </div>
-                    <div className="flex-1 min-h-0 overflow-hidden">
+                    <div className="flex-1 min-h-0 overflow-y-auto">
                       {renderColumnContent(column.key)}
                     </div>
                   </div>
