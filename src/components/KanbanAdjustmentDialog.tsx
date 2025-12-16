@@ -15,11 +15,14 @@ import { useDemandAssignees } from "@/hooks/useDemandAssignees";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
+export type AdjustmentType = "internal" | "external";
+
 interface KanbanAdjustmentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   demandId: string | null;
   demandTitle: string | undefined;
+  adjustmentType: AdjustmentType;
 }
 
 export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog({
@@ -27,6 +30,7 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
   onOpenChange,
   demandId,
   demandTitle,
+  adjustmentType,
 }: KanbanAdjustmentDialogProps) {
   // Estado LOCAL do textarea - não propaga re-render ao pai
   const [reason, setReason] = useState("");
@@ -66,13 +70,17 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
     setIsSubmitting(true);
     
     try {
-      // Criar interação de solicitação de ajuste
+      const isInternal = adjustmentType === "internal";
+      const typeLabel = isInternal ? "Ajuste Interno" : "Ajuste Externo";
+      
+      // Criar interação de solicitação de ajuste com metadata do tipo
       await new Promise<void>((resolve, reject) => {
         createInteraction.mutate(
           {
             demand_id: demandId,
             interaction_type: "adjustment_request",
             content: reason.trim(),
+            metadata: { adjustment_type: adjustmentType },
           },
           {
             onSuccess: () => resolve(),
@@ -92,14 +100,19 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
         );
       });
       
-      toast.success("Ajuste solicitado com sucesso!");
+      toast.success(`${typeLabel} solicitado com sucesso!`);
       
       // Enviar notificações para os responsáveis
       if (assignees && assignees.length > 0) {
+        const notificationTitle = isInternal ? "Ajuste interno solicitado" : "Ajuste externo solicitado";
+        const notificationMessage = isInternal 
+          ? `Foi solicitado um ajuste interno na demanda "${demandTitle}": ${reason.trim().substring(0, 100)}${reason.length > 100 ? '...' : ''}`
+          : `O cliente solicitou um ajuste na demanda "${demandTitle}": ${reason.trim().substring(0, 100)}${reason.length > 100 ? '...' : ''}`;
+        
         const notifications = assignees.map((assignee) => ({
           user_id: assignee.user_id,
-          title: "Ajuste solicitado",
-          message: `Foi solicitado ajuste na demanda "${demandTitle}": ${reason.trim().substring(0, 100)}${reason.length > 100 ? '...' : ''}`,
+          title: notificationTitle,
+          message: notificationMessage,
           type: "warning",
           link: `/demands/${demandId}`,
         }));
@@ -111,11 +124,11 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
             await supabase.functions.invoke("send-email", {
               body: {
                 to: assignee.user_id,
-                subject: `Ajuste solicitado: ${demandTitle}`,
+                subject: `${typeLabel} solicitado: ${demandTitle}`,
                 template: "notification",
                 templateData: {
-                  title: "Ajuste Solicitado",
-                  message: `Foi solicitado um ajuste na demanda "${demandTitle}".\n\nMotivo: ${reason.trim()}`,
+                  title: notificationTitle,
+                  message: `${isInternal ? 'Foi solicitado um ajuste interno' : 'O cliente solicitou um ajuste'} na demanda "${demandTitle}".\n\nMotivo: ${reason.trim()}`,
                   actionUrl: `${window.location.origin}/demands/${demandId}`,
                   actionText: "Ver Demanda",
                   userName: assignee.profile?.full_name || "Responsável",
@@ -137,11 +150,20 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
       });
       setIsSubmitting(false);
     }
-  }, [demandId, adjustmentStatusId, reason, user, assignees, demandTitle, createInteraction, updateDemand, handleClose]);
+  }, [demandId, adjustmentStatusId, reason, user, assignees, demandTitle, adjustmentType, createInteraction, updateDemand, handleClose]);
 
   const handleReasonChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setReason(e.target.value);
   }, []);
+
+  const isInternal = adjustmentType === "internal";
+  const dialogTitle = isInternal ? "Solicitar Ajuste Interno" : "Solicitar Ajuste Externo";
+  const dialogDescription = isInternal 
+    ? `Descreva o ajuste interno necessário na demanda "${demandTitle}".`
+    : `Descreva o que precisa ser ajustado na demanda "${demandTitle}".`;
+  const buttonColor = isInternal 
+    ? "bg-blue-600 hover:bg-blue-700" 
+    : "bg-amber-600 hover:bg-amber-700";
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
@@ -153,9 +175,9 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
     }}>
       <DialogContent className="max-w-[95vw] sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Solicitar ajuste</DialogTitle>
+          <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>
-            Descreva o que precisa ser ajustado na demanda "{demandTitle}".
+            {dialogDescription}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -189,9 +211,9 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
           <Button
             onClick={handleSubmit}
             disabled={!reason.trim() || isSubmitting}
-            className="bg-amber-600 hover:bg-amber-700"
+            className={buttonColor}
           >
-            {isSubmitting ? "Enviando..." : "Solicitar Ajuste"}
+            {isSubmitting ? "Enviando..." : isInternal ? "Solicitar Ajuste Interno" : "Solicitar Ajuste Externo"}
           </Button>
         </div>
       </DialogContent>

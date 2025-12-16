@@ -23,7 +23,7 @@ import { getErrorMessage } from "@/lib/errorUtils";
 import { useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
-import { KanbanAdjustmentDialog } from "@/components/KanbanAdjustmentDialog";
+import { KanbanAdjustmentDialog, AdjustmentType } from "@/components/KanbanAdjustmentDialog";
 import { toast } from "sonner";
 import { useAdjustmentCounts } from "@/hooks/useAdjustmentCount";
 import { supabase } from "@/integrations/supabase/client";
@@ -127,6 +127,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
   const [adjustmentDemandId, setAdjustmentDemandId] = useState<string | null>(null);
+  const [adjustmentType, setAdjustmentType] = useState<AdjustmentType>("internal");
   const { data: statuses } = useDemandStatuses();
   const updateDemand = useUpdateDemand();
   
@@ -165,6 +166,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     setAdjustmentDialogOpen(open);
     if (!open) {
       setAdjustmentDemandId(null);
+      setAdjustmentType("internal");
     }
   }, []);
 
@@ -321,9 +323,10 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     return new Date(dueDate) < new Date();
   };
 
-  const handleOpenAdjustmentDialog = useCallback((e: React.MouseEvent, demandId: string) => {
+  const handleOpenAdjustmentDialog = useCallback((e: React.MouseEvent, demandId: string, type: AdjustmentType) => {
     e.stopPropagation();
     setAdjustmentDemandId(demandId);
+    setAdjustmentType(type);
     setAdjustmentDialogOpen(true);
   }, []);
 
@@ -483,17 +486,40 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
                 );
               })()}
 
-              {columnKey === "Aprovação do Cliente" && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => handleOpenAdjustmentDialog(e, demand.id)}
-                  className="w-full mt-2 border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 text-xs"
-                >
-                  <Wrench className="h-3 w-3 mr-1" />
-                  Solicitar Ajuste
-                </Button>
-              )}
+              {columnKey === "Aprovação do Cliente" && (() => {
+                // Determinar quais botões mostrar baseado no role
+                const canRequestInternal = userRole === "admin" || userRole === "moderator";
+                const canRequestExternal = userRole === "requester";
+                
+                if (!canRequestInternal && !canRequestExternal) return null;
+                
+                return (
+                  <div className="flex flex-col gap-1 mt-2">
+                    {canRequestInternal && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => handleOpenAdjustmentDialog(e, demand.id, "internal")}
+                        className="w-full border-blue-500/30 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 text-xs"
+                      >
+                        <Wrench className="h-3 w-3 mr-1" />
+                        Ajuste Interno
+                      </Button>
+                    )}
+                    {canRequestExternal && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => handleOpenAdjustmentDialog(e, demand.id, "external")}
+                        className="w-full border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 text-xs"
+                      >
+                        <Wrench className="h-3 w-3 mr-1" />
+                        Ajuste Externo
+                      </Button>
+                    )}
+                  </div>
+                );
+              })()}
 
               <div className="flex items-center justify-between mt-2">
                 {demand.due_date && (
@@ -609,6 +635,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
           onOpenChange={handleAdjustmentDialogChange}
           demandId={adjustmentDemandId}
           demandTitle={adjustmentDemand?.title}
+          adjustmentType={adjustmentType}
         />
       </div>
     );
@@ -702,6 +729,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
           onOpenChange={handleAdjustmentDialogChange}
           demandId={adjustmentDemandId}
           demandTitle={adjustmentDemand?.title}
+          adjustmentType={adjustmentType}
         />
       </div>
     );
@@ -807,6 +835,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
           onOpenChange={handleAdjustmentDialogChange}
           demandId={adjustmentDemandId}
           demandTitle={adjustmentDemand?.title}
+          adjustmentType={adjustmentType}
         />
       </div>
     );
