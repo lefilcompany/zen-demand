@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { User, Session } from "@supabase/supabase-js";
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
+import { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -14,15 +14,74 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
+  refreshSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Token refresh interval (5 minutes before expiry)
+const TOKEN_REFRESH_MARGIN = 5 * 60 * 1000; // 5 minutes in ms
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Function to schedule automatic token refresh
+  const scheduleTokenRefresh = useCallback((currentSession: Session | null) => {
+    // Clear any existing timeout
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current);
+      refreshTimeoutRef.current = null;
+    }
+
+    if (!currentSession?.expires_at) return;
+
+    // Calculate time until token expires (expires_at is in seconds)
+    const expiresAt = currentSession.expires_at * 1000; // Convert to ms
+    const now = Date.now();
+    const timeUntilExpiry = expiresAt - now;
+    
+    // Schedule refresh 5 minutes before expiry, or immediately if less than 5 minutes
+    const refreshIn = Math.max(timeUntilExpiry - TOKEN_REFRESH_MARGIN, 0);
+
+    if (refreshIn > 0 && refreshIn < 24 * 60 * 60 * 1000) { // Only schedule if within 24 hours
+      console.log(`Token refresh scheduled in ${Math.round(refreshIn / 1000 / 60)} minutes`);
+      
+      refreshTimeoutRef.current = setTimeout(async () => {
+        try {
+          const { data, error } = await supabase.auth.refreshSession();
+          if (error) {
+            console.error("Auto token refresh failed:", error.message);
+            // If refresh fails, the user will be logged out on next API call
+          } else if (data.session) {
+            console.log("Token refreshed successfully");
+            // The onAuthStateChange listener will handle state updates
+          }
+        } catch (err) {
+          console.error("Token refresh error:", err);
+        }
+      }, refreshIn);
+    }
+  }, []);
+
+  // Manual refresh function exposed to context
+  const refreshSession = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error) throw error;
+      if (data.session) {
+        setSession(data.session);
+        setUser(data.session.user);
+        scheduleTokenRefresh(data.session);
+      }
+    } catch (error: any) {
+      console.error("Manual session refresh failed:", error.message);
+      throw error;
+    }
+  }, [scheduleTokenRefresh]);
 
   useEffect(() => {
     // Check if user should be logged out (session only, no remember me)
@@ -31,17 +90,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      (event: AuthChangeEvent, currentSession: Session | null) => {
+        console.log("Auth event:", event, currentSession ? "Session exists" : "No session");
+        
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
         setLoading(false);
+
+        // Handle different auth events
+        switch (event) {
+          case "SIGNED_IN":
+          case "TOKEN_REFRESHED":
+            // Schedule next automatic refresh
+            scheduleTokenRefresh(currentSession);
+            break;
+          case "SIGNED_OUT":
+            // Clear refresh timeout
+            if (refreshTimeoutRef.current) {
+              clearTimeout(refreshTimeoutRef.current);
+              refreshTimeoutRef.current = null;
+            }
+            break;
+        }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
       // If there's a session but "remember me" was not checked and this is a new browser session
-      if (session && shouldLogout && !sessionStorage.getItem("sessionChecked")) {
+      if (existingSession && shouldLogout && !sessionStorage.getItem("sessionChecked")) {
         sessionStorage.setItem("sessionChecked", "true");
         // User didn't check "remember me" and this is a fresh browser session - log them out
         supabase.auth.signOut().then(() => {
@@ -53,13 +130,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       sessionStorage.setItem("sessionChecked", "true");
-      setSession(session);
-      setUser(session?.user ?? null);
+      setSession(existingSession);
+      setUser(existingSession?.user ?? null);
       setLoading(false);
+      
+      // Schedule token refresh for existing session
+      if (existingSession) {
+        scheduleTokenRefresh(existingSession);
+      }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    // Cleanup on unmount
+    return () => {
+      subscription.unsubscribe();
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
+  }, [scheduleTokenRefresh]);
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
@@ -148,7 +236,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, session, loading, signUp, signIn, signOut, resetPassword, updatePassword }}
+      value={{ user, session, loading, signUp, signIn, signOut, resetPassword, updatePassword, refreshSession }}
     >
       {children}
     </AuthContext.Provider>
