@@ -98,21 +98,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
+    // Clear remember me preferences on logout
+    localStorage.removeItem("rememberMe");
+    sessionStorage.removeItem("sessionOnly");
+    sessionStorage.removeItem("sessionChecked");
+    
+    // Clear local state first
+    setSession(null);
+    setUser(null);
+    
     try {
-      // Clear remember me preferences on logout
-      localStorage.removeItem("rememberMe");
-      sessionStorage.removeItem("sessionOnly");
-      sessionStorage.removeItem("sessionChecked");
-      
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      toast.success("Logout realizado com sucesso!");
-      navigate("/auth");
+      // Try to sign out from Supabase, but don't block on errors
+      // (session might already be expired/missing)
+      await supabase.auth.signOut();
     } catch (error: any) {
-      toast.error("Erro ao fazer logout", {
-        description: getErrorMessage(error),
-      });
+      // Ignore AuthSessionMissingError - session was already gone
+      console.log("SignOut cleanup:", error?.name || error?.message);
     }
+    
+    toast.success("Logout realizado com sucesso!");
+    navigate("/auth");
   };
 
   const resetPassword = async (email: string) => {
