@@ -25,7 +25,7 @@ import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
 import { KanbanAdjustmentDialog, AdjustmentType } from "@/components/KanbanAdjustmentDialog";
 import { toast } from "sonner";
-import { useAdjustmentCounts } from "@/hooks/useAdjustmentCount";
+import { useAdjustmentCounts, AdjustmentInfo } from "@/hooks/useAdjustmentCount";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTimerControl } from "@/hooks/useTimerControl";
@@ -338,7 +338,9 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
   // Render demand card
   const renderDemandCard = (demand: Demand, columnKey: string, showMoveMenu: boolean = false) => {
     const assignees = demand.demand_assignees || [];
-    const adjustmentCount = adjustmentCounts?.[demand.id] || 0;
+    const adjustmentInfo = adjustmentCounts?.[demand.id];
+    const adjustmentCount = adjustmentInfo?.count || 0;
+    const latestAdjustmentType = adjustmentInfo?.latestType;
     // Demandas em "Entregue" não podem ser movidas
     const isDelivered = columnKey === "Entregue";
     // Show drag handle on desktop and tablet (medium screens), not on mobile, and not for delivered demands
@@ -451,9 +453,17 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
                   </Badge>
                 )}
 
-                {demand.teams?.name && (
-                  <Badge variant="secondary" className="text-xs truncate max-w-[100px]">
-                    {demand.teams.name}
+                {columnKey === "Em Ajuste" && latestAdjustmentType && (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "text-xs",
+                      latestAdjustmentType === "internal"
+                        ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                        : "bg-purple-500/10 text-purple-600 border-purple-500/20"
+                    )}
+                  >
+                    {latestAdjustmentType === "internal" ? "Interno" : "Externo"}
                   </Badge>
                 )}
               </div>

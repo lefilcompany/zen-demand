@@ -19,6 +19,11 @@ export function useAdjustmentCount(teamId: string | null) {
   return count;
 }
 
+export interface AdjustmentInfo {
+  count: number;
+  latestType: "internal" | "external" | null;
+}
+
 export function useAdjustmentCounts(demandIds: string[]) {
   return useQuery({
     queryKey: ["adjustment-counts", demandIds],
@@ -27,18 +32,28 @@ export function useAdjustmentCounts(demandIds: string[]) {
 
       const { data, error } = await supabase
         .from("demand_interactions")
-        .select("demand_id")
+        .select("demand_id, metadata, created_at")
         .in("demand_id", demandIds)
-        .eq("interaction_type", "adjustment_request");
+        .eq("interaction_type", "adjustment_request")
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      const counts: Record<string, number> = {};
+      const info: Record<string, AdjustmentInfo> = {};
       data?.forEach((item) => {
-        counts[item.demand_id] = (counts[item.demand_id] || 0) + 1;
+        if (!info[item.demand_id]) {
+          // First occurrence is the latest (ordered desc)
+          const metadata = item.metadata as { adjustment_type?: string } | null;
+          info[item.demand_id] = {
+            count: 1,
+            latestType: (metadata?.adjustment_type as "internal" | "external") || null,
+          };
+        } else {
+          info[item.demand_id].count += 1;
+        }
       });
 
-      return counts;
+      return info;
     },
     enabled: demandIds.length > 0,
   });
