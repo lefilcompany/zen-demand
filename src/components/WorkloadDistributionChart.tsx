@@ -240,96 +240,100 @@ export function WorkloadDistributionChart({ demands }: WorkloadDistributionChart
             {/* Legend */}
             <CustomLegend />
 
-            {/* Stacked Bar Chart */}
-            <div className="w-full">
-              <ResponsiveContainer width="100%" height={workloadData.length * 50 + 20}>
-                <BarChart
-                  layout="vertical"
-                  data={workloadData}
-                  margin={{ top: 0, right: 30, left: 145, bottom: 0 }}
-                  barSize={20}
-                >
-                  <XAxis
-                    type="number"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                  />
-                  <YAxis
-                    dataKey="name"
-                    type="category"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={CustomYAxisTick as any}
-                    width={140}
-                  />
-                  <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.3)" }} />
-                  <Bar
-                    dataKey="toStart"
-                    stackId="a"
-                    fill={STATUS_COLORS.toStart}
-                    name="A Iniciar"
-                    radius={[4, 0, 0, 4]}
-                  />
-                  <Bar
-                    dataKey="inProgress"
-                    stackId="a"
-                    fill={STATUS_COLORS.inProgress}
-                    name="Em Andamento"
-                  />
-                  <Bar
-                    dataKey="delivered"
-                    stackId="a"
-                    fill={STATUS_COLORS.delivered}
-                    name="Entregue"
-                    radius={[0, 4, 4, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {/* Chart and Details Side by Side */}
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* Stacked Bar Chart */}
+              {/* Stacked Bar Chart */}
+              <div className="flex-1 min-w-0">
+                <ResponsiveContainer width="100%" height={workloadData.length * 50 + 20}>
+                  <BarChart
+                    layout="vertical"
+                    data={workloadData}
+                    margin={{ top: 0, right: 20, left: 145, bottom: 0 }}
+                    barSize={20}
+                  >
+                    <XAxis
+                      type="number"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                    />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={CustomYAxisTick as any}
+                      width={140}
+                    />
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.3)" }} />
+                    <Bar
+                      dataKey="toStart"
+                      stackId="a"
+                      fill={STATUS_COLORS.toStart}
+                      name="A Iniciar"
+                      radius={[4, 0, 0, 4]}
+                    />
+                    <Bar
+                      dataKey="inProgress"
+                      stackId="a"
+                      fill={STATUS_COLORS.inProgress}
+                      name="Em Andamento"
+                    />
+                    <Bar
+                      dataKey="delivered"
+                      stackId="a"
+                      fill={STATUS_COLORS.delivered}
+                      name="Entregue"
+                      radius={[0, 4, 4, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
 
-            {/* Member Details List */}
-            <div className="space-y-2 pt-2 border-t border-border">
-              <p className="text-xs font-medium text-muted-foreground mb-2">Detalhamento por Membro</p>
-              {workloadData.map((member) => {
-                const initials = member.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase();
+              {/* Member Details List */}
+              <div className="flex-1 min-w-0 space-y-2 lg:border-l lg:border-border lg:pl-4">
+                <p className="text-xs font-medium text-muted-foreground mb-2">Detalhamento por Membro</p>
+                {workloadData.map((member) => {
+                  const initials = member.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase();
 
-                return (
-                  <div key={member.id} className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={member.avatar || undefined} />
-                        <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm font-medium truncate max-w-[100px]">{member.name}</span>
+                  return (
+                    <div key={member.id} className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={member.avatar || undefined} />
+                          <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium truncate max-w-[100px]">{member.name}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLORS.toStart }} />
+                          <span className="text-muted-foreground">{member.toStart}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLORS.inProgress }} />
+                          <span className="text-muted-foreground">{member.inProgress}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLORS.delivered }} />
+                          <span className="text-muted-foreground">{member.delivered}</span>
+                        </div>
+                        <div className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                          {member.deliveryRate}%
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3 text-xs">
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLORS.toStart }} />
-                        <span className="text-muted-foreground">{member.toStart}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLORS.inProgress }} />
-                        <span className="text-muted-foreground">{member.inProgress}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLORS.delivered }} />
-                        <span className="text-muted-foreground">{member.delivered}</span>
-                      </div>
-                      <div className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                        {member.deliveryRate}%
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
         ) : (
