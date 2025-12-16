@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, TrendingUp, TrendingDown } from "lucide-react";
+import { Clock } from "lucide-react";
 import { differenceInHours } from "date-fns";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { useMemo } from "react";
@@ -74,24 +74,6 @@ export function AverageCompletionTime({ demands }: AverageCompletionTimeProps) {
     });
   }, [completedDemands]);
 
-  // Calculate trend
-  const trend = useMemo(() => {
-    if (chartData.length < 2) return null;
-    
-    const firstHalf = chartData.slice(0, Math.floor(chartData.length / 2));
-    const secondHalf = chartData.slice(Math.floor(chartData.length / 2));
-    
-    const avgFirst = firstHalf.reduce((acc, d) => acc + d.horas, 0) / firstHalf.length;
-    const avgSecond = secondHalf.reduce((acc, d) => acc + d.horas, 0) / secondHalf.length;
-    
-    const percentChange = ((avgSecond - avgFirst) / avgFirst) * 100;
-    
-    return {
-      direction: percentChange < -5 ? "down" : percentChange > 5 ? "up" : "stable",
-      percent: Math.abs(Math.round(percentChange))
-    };
-  }, [chartData]);
-
   const hasData = completedDemands.length > 0;
 
   return (
@@ -106,42 +88,16 @@ export function AverageCompletionTime({ demands }: AverageCompletionTimeProps) {
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-end gap-2">
-              <span className="text-3xl md:text-4xl font-bold text-foreground">
-                {value}
-              </span>
-              <span className="text-lg text-muted-foreground mb-1">{unit}</span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {hasData ? `${completedDemands.length} demanda${completedDemands.length > 1 ? 's' : ''} concluída${completedDemands.length > 1 ? 's' : ''}` : "Nenhuma demanda concluída"}
-            </p>
+        <div>
+          <div className="flex items-end gap-2">
+            <span className="text-3xl md:text-4xl font-bold text-foreground">
+              {value}
+            </span>
+            <span className="text-lg text-muted-foreground mb-1">{unit}</span>
           </div>
-          
-          {trend && (
-            <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${
-              trend.direction === "down" 
-                ? "text-green-600 bg-green-500/10" 
-                : trend.direction === "up" 
-                  ? "text-red-500 bg-red-500/10" 
-                  : "text-muted-foreground bg-muted"
-            }`}>
-              {trend.direction === "down" ? (
-                <>
-                  <TrendingDown className="h-3 w-3" />
-                  <span>{trend.percent}%</span>
-                </>
-              ) : trend.direction === "up" ? (
-                <>
-                  <TrendingUp className="h-3 w-3" />
-                  <span>{trend.percent}%</span>
-                </>
-              ) : (
-                <span>Estável</span>
-              )}
-            </div>
-          )}
+          <p className="text-xs text-muted-foreground mt-1">
+            {hasData ? `${completedDemands.length} demanda${completedDemands.length > 1 ? 's' : ''} concluída${completedDemands.length > 1 ? 's' : ''}` : "Nenhuma demanda concluída"}
+          </p>
         </div>
         
         {chartData.length > 1 && (
