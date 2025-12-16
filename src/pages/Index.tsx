@@ -1,4 +1,5 @@
 import { useState } from "react";
+import dashboardBanner from "@/assets/dashboard-banner.jpg";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -316,16 +317,21 @@ const Index = () => {
       </div>
 
       {/* Banner */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary via-primary/90 to-accent p-4 md:p-6 lg:p-8 text-primary-foreground">
-        <div className="absolute inset-0 bg-[url('/placeholder.svg')] opacity-5"></div>
-        <div className="relative z-10">
-          <h2 className="text-lg md:text-xl lg:text-2xl font-bold mb-2">{t("welcome.title")}</h2>
-          <p className="text-primary-foreground/90 text-xs md:text-sm lg:text-base max-w-2xl">
-            {t("settings.description")}
+      <div className="relative overflow-hidden rounded-xl h-32 md:h-40 lg:h-48">
+        <img 
+          src={dashboardBanner} 
+          alt="Gestão de demandas" 
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-foreground/80 via-foreground/60 to-transparent"></div>
+        <div className="relative z-10 h-full flex flex-col justify-center p-4 md:p-6 lg:p-8">
+          <h2 className="text-lg md:text-xl lg:text-2xl font-bold mb-1 text-white">
+            Gestão Inteligente de Demandas
+          </h2>
+          <p className="text-white/90 text-xs md:text-sm lg:text-base max-w-md">
+            Acompanhe suas solicitações em tempo real e mantenha o controle total das suas entregas
           </p>
         </div>
-        <div className="absolute -right-10 -bottom-10 w-24 md:w-40 h-24 md:h-40 bg-white/10 rounded-full blur-2xl"></div>
-        <div className="absolute -right-5 -top-5 w-16 md:w-24 h-16 md:h-24 bg-white/10 rounded-full blur-xl"></div>
       </div>
 
       {/* Stats Cards */}
