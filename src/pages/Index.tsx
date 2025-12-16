@@ -17,7 +17,7 @@ import { AverageCompletionTime } from "@/components/AverageCompletionTime";
 import { WorkloadDistributionChart } from "@/components/WorkloadDistributionChart";
 import { DashboardCustomizer } from "@/components/DashboardCustomizer";
 import { useDashboardWidgets } from "@/hooks/useDashboardWidgets";
-import { ScopeProgressBar } from "@/components/ScopeProgressBar";
+import { ScopeOverviewCard } from "@/components/ScopeOverviewCard";
 import { DeliveryStatusChart } from "@/components/DeliveryStatusChart";
 import { PeriodFilter, type PeriodType } from "@/components/PeriodFilter";
 import { ExportReportButton } from "@/components/ExportReportButton";
@@ -155,15 +155,16 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Scope Progress */}
-        <Card data-tour="scope-progress">
-          <CardContent className="pt-4 md:pt-6">
-            <ScopeProgressBar 
-              used={monthlyCount || 0} 
-              limit={limit}
-            />
-          </CardContent>
-        </Card>
+        {/* Scope Overview */}
+        <ScopeOverviewCard 
+          data-tour="scope-progress"
+          used={monthlyCount || 0} 
+          limit={limit}
+          contractStart={scope?.contract_start_date}
+          contractEnd={scope?.contract_end_date}
+          scopeDescription={scope?.scope_description}
+          active={scope?.active}
+        />
 
         {/* Stats Cards */}
         <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
@@ -299,38 +300,6 @@ const Index = () => {
             </CardContent>
           </Card>
         </div>
-
-        {/* Contract Info */}
-        {scope?.scope_description && (
-          <Card>
-            <CardHeader className="p-4 md:p-6">
-              <CardTitle className="text-base md:text-lg">{t("teams.scopeConfig")}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 p-4 md:p-6 pt-0 md:pt-0">
-              <p className="text-sm md:text-base text-muted-foreground">{scope.scope_description}</p>
-              {(scope.contract_start_date || scope.contract_end_date) && (
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs md:text-sm">
-                  {scope.contract_start_date && (
-                    <div>
-                      <span className="text-muted-foreground">{t("common.date")}: </span>
-                      <span className="font-medium">
-                        {format(new Date(scope.contract_start_date), "dd/MM/yyyy")}
-                      </span>
-                    </div>
-                  )}
-                  {scope.contract_end_date && (
-                    <div>
-                      <span className="text-muted-foreground">{t("common.date")}: </span>
-                      <span className="font-medium">
-                        {format(new Date(scope.contract_end_date), "dd/MM/yyyy")}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
       </div>
     );
   }
