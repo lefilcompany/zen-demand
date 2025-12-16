@@ -85,6 +85,13 @@ export function OnboardingTour({ steps, isOpen, onClose, onComplete }: Onboardin
     element.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [step, currentStep, steps.length]);
 
+  // Reset to first step when tour opens
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentStep(0);
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     if (isOpen) {
       calculatePosition();
