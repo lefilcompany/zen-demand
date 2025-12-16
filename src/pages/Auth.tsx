@@ -531,7 +531,7 @@ export default function Auth() {
                       </div>
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="signup-confirm-password">{t("profile.confirmPassword")}</Label>
+                      <Label htmlFor="signup-confirm-password">{t("auth.confirmPassword")}</Label>
                       <div className="relative">
                         <Input 
                           id="signup-confirm-password" 
