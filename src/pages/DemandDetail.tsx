@@ -67,6 +67,7 @@ export default function DemandDetail() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAdjustmentDialogOpen, setIsAdjustmentDialogOpen] = useState(false);
   const [adjustmentReason, setAdjustmentReason] = useState("");
+  const [adjustmentType, setAdjustmentType] = useState<"internal" | "external">("internal");
   const [interactionFilter, setInteractionFilter] = useState<string>("all");
   const [editingInteractionId, setEditingInteractionId] = useState<string | null>(null);
   const [editingInteractionContent, setEditingInteractionContent] = useState("");
@@ -87,7 +88,10 @@ export default function DemandDetail() {
   const canArchive = isDeliveredStatus; // Apenas demandas entregues podem ser arquivadas
   const isCreator = demand?.created_by === user?.id;
 
-  const canRequestAdjustment = demand?.status_id === approvalStatusId;
+  // Permissões de ajuste baseadas no role
+  const canRequestInternalAdjustment = demand?.status_id === approvalStatusId && (role === "admin" || role === "moderator");
+  const canRequestExternalAdjustment = demand?.status_id === approvalStatusId && role === "requester";
+  const canRequestAdjustment = canRequestInternalAdjustment || canRequestExternalAdjustment;
   const isInProgress = demand?.status_id === fazendoStatusId;
   const isInAdjustment = demand?.status_id === adjustmentStatusId;
   const isDelivered = demand?.status_id === deliveredStatusId || demand?.status_id === approvalStatusId;
@@ -115,14 +119,18 @@ export default function DemandDetail() {
   const handleRequestAdjustment = async () => {
     if (!id || !adjustmentStatusId || !adjustmentReason.trim()) return;
     
+    const isInternal = adjustmentType === "internal";
+    const typeLabel = isInternal ? "Ajuste Interno" : "Ajuste Externo";
+    
     try {
-      // First create the interaction record
+      // First create the interaction record with metadata
       await new Promise<void>((resolve, reject) => {
         createInteraction.mutate(
           {
             demand_id: id,
             interaction_type: "adjustment_request",
             content: `Solicitou ajuste: ${adjustmentReason.trim()}`,
+            metadata: { adjustment_type: adjustmentType },
           },
           {
             onSuccess: () => resolve(),
@@ -142,14 +150,19 @@ export default function DemandDetail() {
         );
       });
       
-      toast.success("Ajuste solicitado com sucesso!");
+      toast.success(`${typeLabel} solicitado com sucesso!`);
       
       // Notify all assignees about the adjustment request
       if (assignees && assignees.length > 0) {
+        const notificationTitle = isInternal ? "Ajuste interno solicitado" : "Ajuste externo solicitado";
+        const notificationMessage = isInternal 
+          ? `Foi solicitado um ajuste interno na demanda "${demand?.title}": ${adjustmentReason.trim().substring(0, 100)}${adjustmentReason.length > 100 ? '...' : ''}`
+          : `O cliente solicitou um ajuste na demanda "${demand?.title}": ${adjustmentReason.trim().substring(0, 100)}${adjustmentReason.length > 100 ? '...' : ''}`;
+        
         const notifications = assignees.map((assignee) => ({
           user_id: assignee.user_id,
-          title: "Ajuste solicitado",
-          message: `O cliente solicitou ajuste na demanda "${demand?.title}": ${adjustmentReason.trim().substring(0, 100)}${adjustmentReason.length > 100 ? '...' : ''}`,
+          title: notificationTitle,
+          message: notificationMessage,
           type: "warning",
           link: `/demands/${id}`,
         }));
@@ -162,11 +175,11 @@ export default function DemandDetail() {
             await supabase.functions.invoke("send-email", {
               body: {
                 to: assignee.user_id,
-                subject: `Ajuste solicitado: ${demand?.title}`,
+                subject: `${typeLabel} solicitado: ${demand?.title}`,
                 template: "notification",
                 templateData: {
-                  title: "Ajuste Solicitado",
-                  message: `O cliente solicitou um ajuste na demanda "${demand?.title}".\n\nMotivo: ${adjustmentReason.trim()}`,
+                  title: notificationTitle,
+                  message: `${isInternal ? 'Foi solicitado um ajuste interno' : 'O cliente solicitou um ajuste'} na demanda "${demand?.title}".\n\nMotivo: ${adjustmentReason.trim()}`,
                   actionUrl: `${window.location.origin}/demands/${id}`,
                   actionText: "Ver Demanda",
                   userName: assignee.profile?.full_name || "Responsável",
@@ -181,6 +194,7 @@ export default function DemandDetail() {
       }
       
       setAdjustmentReason("");
+      setAdjustmentType("internal");
       setIsAdjustmentDialogOpen(false);
     } catch (error: any) {
       toast.error("Erro ao solicitar ajuste", {
@@ -330,32 +344,38 @@ export default function DemandDetail() {
       </div>
 
       {/* Adjustment Alert - Shows when demand is in "Em Ajuste" status */}
-      {isInAdjustment && latestAdjustmentRequest && (
-        <Alert className="border-purple-500/50 bg-purple-500/10">
-          <Wrench className="h-4 w-4 text-purple-600" />
-          <AlertTitle className="text-purple-600 font-semibold">
-            Ajuste Solicitado
-          </AlertTitle>
-          <AlertDescription className="mt-2 space-y-2">
-            <p className="text-sm text-foreground whitespace-pre-wrap">
-              {latestAdjustmentRequest.content}
-            </p>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="font-medium">
-                {latestAdjustmentRequest.profiles?.full_name}
-              </span>
-              <span>•</span>
-              <span>
-                {format(
-                  new Date(latestAdjustmentRequest.created_at),
-                  "dd/MM/yyyy 'às' HH:mm",
-                  { locale: ptBR }
-                )}
-              </span>
-            </div>
-          </AlertDescription>
-        </Alert>
-      )}
+      {isInAdjustment && latestAdjustmentRequest && (() => {
+        const latestMetadata = latestAdjustmentRequest.metadata as { adjustment_type?: string } | null;
+        const latestType = latestMetadata?.adjustment_type || "external";
+        const isInternalAlert = latestType === "internal";
+        
+        return (
+          <Alert className={isInternalAlert ? "border-blue-500/50 bg-blue-500/10" : "border-purple-500/50 bg-purple-500/10"}>
+            <Wrench className={`h-4 w-4 ${isInternalAlert ? "text-blue-600" : "text-purple-600"}`} />
+            <AlertTitle className={`${isInternalAlert ? "text-blue-600" : "text-purple-600"} font-semibold`}>
+              {isInternalAlert ? "Ajuste Interno Solicitado" : "Ajuste Externo Solicitado"}
+            </AlertTitle>
+            <AlertDescription className="mt-2 space-y-2">
+              <p className="text-sm text-foreground whitespace-pre-wrap">
+                {latestAdjustmentRequest.content}
+              </p>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="font-medium">
+                  {latestAdjustmentRequest.profiles?.full_name}
+                </span>
+                <span>•</span>
+                <span>
+                  {format(
+                    new Date(latestAdjustmentRequest.created_at),
+                    "dd/MM/yyyy 'às' HH:mm",
+                    { locale: ptBR }
+                  )}
+                </span>
+              </div>
+            </AlertDescription>
+          </Alert>
+        );
+      })()}
 
       <Card>
         <CardHeader className="p-4 md:p-6">
@@ -383,68 +403,97 @@ export default function DemandDetail() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {canRequestAdjustment && (
+              {canRequestInternalAdjustment && (
                 <>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsAdjustmentDialogOpen(true)}
+                    onClick={() => {
+                      setAdjustmentType("internal");
+                      setIsAdjustmentDialogOpen(true);
+                    }}
+                    className="flex-1 sm:flex-none border-blue-500/30 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
+                  >
+                    <Wrench className="mr-2 h-4 w-4" />
+                    <span className="hidden xs:inline">Ajuste</span> Interno
+                  </Button>
+                </>
+              )}
+              {canRequestExternalAdjustment && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setAdjustmentType("external");
+                      setIsAdjustmentDialogOpen(true);
+                    }}
                     className="flex-1 sm:flex-none border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
                   >
                     <Wrench className="mr-2 h-4 w-4" />
-                    <span className="hidden xs:inline">Solicitar</span> Ajuste
+                    <span className="hidden xs:inline">Ajuste</span> Externo
                   </Button>
-                  <Dialog open={isAdjustmentDialogOpen} onOpenChange={(open) => {
-                    setIsAdjustmentDialogOpen(open);
-                    if (!open) setAdjustmentReason("");
-                  }}>
-                    <DialogContent className="w-[calc(100vw-2rem)] max-w-lg mx-auto">
-                      <DialogHeader>
-                        <DialogTitle>Solicitar ajuste</DialogTitle>
-                        <DialogDescription>
-                          Descreva o que precisa ser ajustado nesta demanda. A equipe receberá sua solicitação.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <label htmlFor="adjustment-reason" className="text-sm font-medium">
-                            Motivo do ajuste <span className="text-destructive">*</span>
-                          </label>
-                          <Textarea
-                            id="adjustment-reason"
-                            placeholder="Descreva o que precisa ser corrigido ou alterado..."
-                            value={adjustmentReason}
-                            onChange={(e) => setAdjustmentReason(e.target.value)}
-                            rows={4}
-                            maxLength={1000}
-                            className="resize-none"
-                          />
-                          <p className="text-xs text-muted-foreground text-right">
-                            {adjustmentReason.length}/1000
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setIsAdjustmentDialogOpen(false);
-                            setAdjustmentReason("");
-                          }}
-                        >
-                          Cancelar
-                        </Button>
-                        <Button
-                          onClick={handleRequestAdjustment}
-                          disabled={!adjustmentReason.trim() || updateDemand.isPending}
-                          className="bg-amber-600 hover:bg-amber-700"
-                        >
-                          {updateDemand.isPending ? "Enviando..." : "Solicitar Ajuste"}
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
                 </>
+              )}
+              {canRequestAdjustment && (
+                <Dialog open={isAdjustmentDialogOpen} onOpenChange={(open) => {
+                  setIsAdjustmentDialogOpen(open);
+                  if (!open) {
+                    setAdjustmentReason("");
+                    setAdjustmentType("internal");
+                  }
+                }}>
+                  <DialogContent className="w-[calc(100vw-2rem)] max-w-lg mx-auto">
+                    <DialogHeader>
+                      <DialogTitle>
+                        {adjustmentType === "internal" ? "Solicitar Ajuste Interno" : "Solicitar Ajuste Externo"}
+                      </DialogTitle>
+                      <DialogDescription>
+                        {adjustmentType === "internal" 
+                          ? "Descreva o ajuste interno necessário nesta demanda."
+                          : "Descreva o que precisa ser ajustado nesta demanda. A equipe receberá sua solicitação."}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <label htmlFor="adjustment-reason" className="text-sm font-medium">
+                          Motivo do ajuste <span className="text-destructive">*</span>
+                        </label>
+                        <Textarea
+                          id="adjustment-reason"
+                          placeholder="Descreva o que precisa ser corrigido ou alterado..."
+                          value={adjustmentReason}
+                          onChange={(e) => setAdjustmentReason(e.target.value)}
+                          rows={4}
+                          maxLength={1000}
+                          className="resize-none"
+                        />
+                        <p className="text-xs text-muted-foreground text-right">
+                          {adjustmentReason.length}/1000
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setIsAdjustmentDialogOpen(false);
+                          setAdjustmentReason("");
+                          setAdjustmentType("internal");
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        onClick={handleRequestAdjustment}
+                        disabled={!adjustmentReason.trim() || updateDemand.isPending}
+                        className={adjustmentType === "internal" ? "bg-blue-600 hover:bg-blue-700" : "bg-amber-600 hover:bg-amber-700"}
+                      >
+                        {updateDemand.isPending ? "Enviando..." : adjustmentType === "internal" ? "Solicitar Ajuste Interno" : "Solicitar Ajuste Externo"}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               )}
               {canEdit && (
                 <Button
@@ -641,13 +690,21 @@ export default function DemandDetail() {
                 const canEditInteraction = isOwnInteraction && interaction.interaction_type === 'comment';
                 const isEditing = editingInteractionId === interaction.id;
                 
+                // Determinar tipo de ajuste
+                const metadata = interaction.metadata as { adjustment_type?: string } | null;
+                const interactionAdjustmentType = metadata?.adjustment_type || "external"; // default external para compatibilidade
+                const isInternalAdjustment = isAdjustmentRequest && interactionAdjustmentType === "internal";
+                const isExternalAdjustment = isAdjustmentRequest && interactionAdjustmentType === "external";
+                
                 return (
                   <div
                     key={interaction.id}
                     className={`flex gap-2 md:gap-3 p-3 md:p-4 rounded-lg ${
-                      isAdjustmentRequest 
-                        ? 'bg-purple-500/10 border border-purple-500/30' 
-                        : 'bg-muted/50'
+                      isInternalAdjustment 
+                        ? 'bg-blue-500/10 border border-blue-500/30' 
+                        : isExternalAdjustment
+                          ? 'bg-purple-500/10 border border-purple-500/30'
+                          : 'bg-muted/50'
                     }`}
                   >
                     <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
@@ -662,9 +719,14 @@ export default function DemandDetail() {
                           <span className="font-semibold text-xs md:text-sm truncate">
                             {interaction.profiles?.full_name}
                           </span>
-                          {isAdjustmentRequest && (
+                          {isInternalAdjustment && (
+                            <span className="text-[10px] md:text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-500/20 px-1.5 py-0.5 rounded">
+                              Ajuste Interno
+                            </span>
+                          )}
+                          {isExternalAdjustment && (
                             <span className="text-[10px] md:text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-500/20 px-1.5 py-0.5 rounded">
-                              Solicitação de Ajuste
+                              Ajuste Externo
                             </span>
                           )}
                           <span className="text-[10px] md:text-xs text-muted-foreground">
