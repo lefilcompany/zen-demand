@@ -275,7 +275,7 @@ export function useOnboarding() {
   }, [user?.id, role]);
 
   // Reset onboarding (for testing or re-watching)
-  const resetOnboarding = useCallback(async () => {
+  const resetOnboarding = useCallback(async (navigateFn?: () => void) => {
     if (!user?.id) return;
 
     try {
@@ -286,7 +286,14 @@ export function useOnboarding() {
         .eq("preference_key", "onboarding_completed");
 
       setHasCompleted(false);
-      setIsOpen(true);
+      
+      // Navigate to initial screen before opening tour
+      if (navigateFn) {
+        navigateFn();
+      }
+      
+      // Small delay to ensure navigation completed
+      setTimeout(() => setIsOpen(true), 150);
     } catch (error) {
       console.error("Error resetting onboarding:", error);
     }

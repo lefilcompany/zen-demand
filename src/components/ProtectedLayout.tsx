@@ -130,7 +130,7 @@ export function ProtectedLayout() {
                     Configurações
                   </DropdownMenuItem>
                   {hasCompleted && (
-                    <DropdownMenuItem onClick={resetOnboarding}>
+                    <DropdownMenuItem onClick={() => resetOnboarding(() => navigate("/"))}>
                       <RotateCcw className="h-4 w-4 mr-2" />
                       Rever Tour Guiado
                     </DropdownMenuItem>
