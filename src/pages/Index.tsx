@@ -34,13 +34,28 @@ const Index = () => {
   const { selectedTeamId } = useSelectedTeam();
   const { data: demands } = useDemands(selectedTeamId || undefined);
   const { data: teams } = useTeams();
-  const { data: role } = useTeamRole(selectedTeamId);
+  const { data: role, isLoading: roleLoading } = useTeamRole(selectedTeamId);
   const { data: scope, isLoading: scopeLoading } = useTeamScope();
   const { data: monthlyCount, isLoading: countLoading } = useMonthlyDemandCount();
   const { data: demandData, isLoading: demandsLoading } = useDemandsByPeriod(period);
   const { widgets, setWidgets, isSaving } = useDashboardWidgets();
 
   const isRequester = role === "requester";
+
+  // Show loading while role is being determined to prevent layout glitch
+  if (roleLoading) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid gap-4 md:grid-cols-4">
+          {[1, 2, 3, 4].map(i => (
+            <Skeleton key={i} className="h-32" />
+          ))}
+        </div>
+        <Skeleton className="h-64" />
+      </div>
+    );
+  }
   const currentTeam = teams?.find(t => t.id === selectedTeamId);
 
   const getLocale = () => {
