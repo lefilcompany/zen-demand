@@ -275,9 +275,9 @@ export default function Auth() {
         </div>
       </div>
 
-      {/* Form Section - Scrollable on mobile/tablet, centered on desktop */}
-      <div className="flex-1 lg:w-1/2 xl:w-2/5 h-full flex flex-col bg-background overflow-hidden">
-        <div className="flex-1 flex items-start lg:items-center justify-center p-4 sm:p-6 md:p-8 lg:p-12 overflow-y-auto">
+      {/* Form Section */}
+      <div className="flex-1 lg:w-1/2 xl:w-2/5 flex flex-col bg-background">
+        <div className="flex-1 flex items-start lg:items-center justify-center p-4 sm:p-6 md:p-8 lg:p-12">
           <div className="w-full max-w-md py-4">
             <div className="mb-5 sm:mb-6 text-center">
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 flex items-center justify-center gap-2">
@@ -433,21 +433,23 @@ export default function Auth() {
                     />
                   </div>
 
-                  {/* Telefone + Estado */}
+                  {/* Telefone */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="signup-phone">{t("common.phone")}</Label>
+                    <Input 
+                      id="signup-phone" 
+                      type="tel" 
+                      placeholder="(00) 00000-0000" 
+                      className="h-10" 
+                      value={signupData.phone} 
+                      onChange={handlePhoneChange}
+                      maxLength={16}
+                      required 
+                    />
+                  </div>
+
+                  {/* Estado + Cidade */}
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="signup-phone">{t("common.phone")}</Label>
-                      <Input 
-                        id="signup-phone" 
-                        type="tel" 
-                        placeholder="(00) 00000-0000" 
-                        className="h-10" 
-                        value={signupData.phone} 
-                        onChange={handlePhoneChange}
-                        maxLength={16}
-                        required 
-                      />
-                    </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="signup-state">{t("common.state")}</Label>
                       <Select
@@ -472,11 +474,8 @@ export default function Auth() {
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
-
-                  {/* Cidade */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="signup-city">{t("common.city")}</Label>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signup-city">{t("common.city")}</Label>
                     <Select
                       value={signupData.city}
                       onValueChange={(value) => setSignupData({...signupData, city: value})}
@@ -499,6 +498,7 @@ export default function Auth() {
                         )}
                       </SelectContent>
                     </Select>
+                    </div>
                   </div>
 
                   {/* Senha + Confirmar Senha */}
