@@ -15,6 +15,14 @@ interface PushNotificationRequest {
   data?: Record<string, string>;
 }
 
+interface UserPreferences {
+  pushNotifications?: boolean;
+  demandUpdates?: boolean;
+  teamUpdates?: boolean;
+  deadlineReminders?: boolean;
+  adjustmentRequests?: boolean;
+}
+
 // Get access token for FCM HTTP v1 API
 async function getAccessToken(serviceAccount: any): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
@@ -101,7 +109,7 @@ async function sendPushNotification(
   title: string,
   body: string,
   data?: Record<string, string>
-): Promise<boolean> {
+): Promise<{ success: boolean; error?: string; shouldRemoveToken?: boolean }> {
   const message = {
     message: {
       token: fcmToken,
@@ -113,6 +121,9 @@ async function sendPushNotification(
         notification: {
           icon: "/favicon.png",
           badge: "/favicon.png",
+          vibrate: [200, 100, 200],
+          requireInteraction: true,
+          tag: data?.type || "soma-notification",
         },
         fcm_options: {
           link: data?.link || "/",
@@ -122,26 +133,66 @@ async function sendPushNotification(
     },
   };
 
-  const response = await fetch(
-    `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(message),
-    }
-  );
+  try {
+    const response = await fetch(
+      `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(message),
+      }
+    );
 
-  if (!response.ok) {
-    const error = await response.text();
-    console.error("FCM send error:", error);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("FCM send error:", errorText);
+      
+      // Check if token is invalid/expired
+      if (errorText.includes("UNREGISTERED") || errorText.includes("INVALID_ARGUMENT")) {
+        return { success: false, error: errorText, shouldRemoveToken: true };
+      }
+      
+      return { success: false, error: errorText };
+    }
+
+    console.log("Push notification sent successfully to token:", fcmToken.substring(0, 20) + "...");
+    return { success: true };
+  } catch (error: any) {
+    console.error("FCM request error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Check if user has enabled the specific notification type
+function shouldSendNotification(
+  preferences: UserPreferences | null,
+  notificationType: string
+): boolean {
+  // If no preferences found, default to sending
+  if (!preferences) return true;
+  
+  // Check if push notifications are globally enabled
+  if (preferences.pushNotifications === false) {
+    console.log("Push notifications globally disabled for user");
     return false;
   }
 
-  console.log("Push notification sent successfully");
-  return true;
+  // Check specific notification type
+  switch (notificationType) {
+    case "demandUpdates":
+      return preferences.demandUpdates !== false;
+    case "teamUpdates":
+      return preferences.teamUpdates !== false;
+    case "deadlineReminders":
+      return preferences.deadlineReminders !== false;
+    case "adjustmentRequests":
+      return preferences.adjustmentRequests !== false;
+    default:
+      return true;
+  }
 }
 
 serve(async (req) => {
@@ -161,10 +212,14 @@ serve(async (req) => {
     const projectId = serviceAccount.project_id;
 
     // Get access token
+    console.log("Getting FCM access token...");
     const accessToken = await getAccessToken(serviceAccount);
 
     // Parse request
     const { userId, userIds, title, body, link, data }: PushNotificationRequest = await req.json();
+    const notificationType = data?.notificationType || "demandUpdates";
+
+    console.log(`Processing push notification: "${title}" for notification type: ${notificationType}`);
 
     if (!title || !body) {
       throw new Error("title and body are required");
@@ -175,25 +230,48 @@ serve(async (req) => {
     if (userId) targetUserIds.push(userId);
     if (userIds) targetUserIds.push(...userIds);
 
-    if (targetUserIds.length === 0) {
+    // Remove duplicates
+    const uniqueUserIds = [...new Set(targetUserIds)];
+
+    if (uniqueUserIds.length === 0) {
       throw new Error("userId or userIds is required");
     }
+
+    console.log(`Target users: ${uniqueUserIds.length}`);
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get FCM tokens for all target users
-    const { data: preferences, error: prefsError } = await supabase
+    // Get FCM tokens and notification preferences for all target users
+    const { data: fcmPreferences, error: fcmError } = await supabase
       .from("user_preferences")
       .select("user_id, preference_value")
       .eq("preference_key", "fcm_token")
-      .in("user_id", targetUserIds);
+      .in("user_id", uniqueUserIds);
 
-    if (prefsError) {
-      console.error("Error fetching FCM tokens:", prefsError);
-      throw prefsError;
+    if (fcmError) {
+      console.error("Error fetching FCM tokens:", fcmError);
+      throw fcmError;
+    }
+
+    // Get notification preferences
+    const { data: notifPreferences, error: notifError } = await supabase
+      .from("user_preferences")
+      .select("user_id, preference_value")
+      .eq("preference_key", "notification_preferences")
+      .in("user_id", uniqueUserIds);
+
+    if (notifError) {
+      console.error("Error fetching notification preferences:", notifError);
+      // Continue anyway - we'll use defaults
+    }
+
+    // Build a map of user preferences
+    const userPrefsMap = new Map<string, UserPreferences>();
+    for (const pref of notifPreferences || []) {
+      userPrefsMap.set(pref.user_id, pref.preference_value as UserPreferences);
     }
 
     const notificationData = {
@@ -204,36 +282,65 @@ serve(async (req) => {
     // Send push notifications
     let successCount = 0;
     let failCount = 0;
+    let skippedCount = 0;
+    const tokensToRemove: { userId: string; token: string }[] = [];
 
-    for (const pref of preferences || []) {
+    for (const pref of fcmPreferences || []) {
       const prefValue = pref.preference_value as { token?: string };
       const fcmToken = prefValue?.token;
 
-      if (fcmToken) {
-        const success = await sendPushNotification(
-          accessToken,
-          projectId,
-          fcmToken,
-          title,
-          body,
-          notificationData
-        );
+      if (!fcmToken) {
+        console.log(`No FCM token for user ${pref.user_id}`);
+        continue;
+      }
 
-        if (success) {
-          successCount++;
-        } else {
-          failCount++;
+      // Check user preferences
+      const userPrefs = userPrefsMap.get(pref.user_id);
+      if (!shouldSendNotification(userPrefs || null, notificationType)) {
+        console.log(`User ${pref.user_id} has disabled ${notificationType} notifications`);
+        skippedCount++;
+        continue;
+      }
+
+      const result = await sendPushNotification(
+        accessToken,
+        projectId,
+        fcmToken,
+        title,
+        body,
+        notificationData
+      );
+
+      if (result.success) {
+        successCount++;
+      } else {
+        failCount++;
+        if (result.shouldRemoveToken) {
+          tokensToRemove.push({ userId: pref.user_id, token: fcmToken });
         }
       }
     }
 
-    console.log(`Push notifications sent: ${successCount} success, ${failCount} failed`);
+    // Remove invalid tokens
+    if (tokensToRemove.length > 0) {
+      console.log(`Removing ${tokensToRemove.length} invalid FCM tokens...`);
+      for (const { userId } of tokensToRemove) {
+        await supabase
+          .from("user_preferences")
+          .delete()
+          .eq("user_id", userId)
+          .eq("preference_key", "fcm_token");
+      }
+    }
+
+    console.log(`Push notifications complete: ${successCount} sent, ${failCount} failed, ${skippedCount} skipped (preferences)`);
 
     return new Response(
       JSON.stringify({
         success: true,
         sent: successCount,
         failed: failCount,
+        skipped: skippedCount,
       }),
       {
         status: 200,

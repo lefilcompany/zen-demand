@@ -29,6 +29,7 @@ import { useAdjustmentCounts, AdjustmentInfo } from "@/hooks/useAdjustmentCount"
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTimerControl } from "@/hooks/useTimerControl";
+import { sendAdjustmentCompletionPushNotification } from "@/hooks/useSendPushNotification";
 
 interface Assignee {
   user_id: string;
@@ -231,7 +232,15 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
         onSuccess: async () => {
           toast.success(`Status alterado para "${columnKey}"`);
           
-          if (isAdjustmentCompletion && demand) {
+          if (isAdjustmentCompletion && demand && demand.created_by) {
+            // Send push notification
+            sendAdjustmentCompletionPushNotification({
+              creatorId: demand.created_by,
+              demandId: demand.id,
+              demandTitle: demand.title,
+            }).catch(err => console.error("Erro ao enviar push de ajuste concluído:", err));
+            
+            // Send email notification
             try {
               await supabase.functions.invoke("send-email", {
                 body: {
@@ -284,7 +293,15 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
         onSuccess: async () => {
           toast.success(`Status alterado para "${newStatusKey}"`);
           
-          if (isAdjustmentCompletion && demand) {
+          if (isAdjustmentCompletion && demand && demand.created_by) {
+            // Send push notification
+            sendAdjustmentCompletionPushNotification({
+              creatorId: demand.created_by,
+              demandId: demand.id,
+              demandTitle: demand.title,
+            }).catch(err => console.error("Erro ao enviar push de ajuste concluído:", err));
+            
+            // Send email notification
             try {
               await supabase.functions.invoke("send-email", {
                 body: {

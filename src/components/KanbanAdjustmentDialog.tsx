@@ -14,6 +14,7 @@ import { useUpdateDemand, useDemandStatuses, useCreateInteraction } from "@/hook
 import { useDemandAssignees } from "@/hooks/useDemandAssignees";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { sendAdjustmentPushNotification } from "@/hooks/useSendPushNotification";
 
 export type AdjustmentType = "internal" | "external";
 
@@ -119,6 +120,17 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
         
         await supabase.from("notifications").insert(notifications);
         
+        // Send push notifications
+        const assigneeIds = assignees.map(a => a.user_id);
+        sendAdjustmentPushNotification({
+          assigneeIds,
+          demandId,
+          demandTitle: demandTitle || "",
+          reason: reason.trim(),
+          isInternal,
+        }).catch(err => console.error("Error sending push notification:", err));
+        
+        // Send email notifications
         for (const assignee of assignees) {
           try {
             await supabase.functions.invoke("send-email", {

@@ -46,6 +46,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { sendAdjustmentPushNotification } from "@/hooks/useSendPushNotification";
 
 export default function DemandDetail() {
   const { id } = useParams<{ id: string }>();
@@ -168,6 +169,16 @@ export default function DemandDetail() {
         }));
         
         await supabase.from("notifications").insert(notifications);
+        
+        // Send push notifications
+        const assigneeIds = assignees.map(a => a.user_id);
+        sendAdjustmentPushNotification({
+          assigneeIds,
+          demandId: id,
+          demandTitle: demand?.title || "",
+          reason: adjustmentReason.trim(),
+          isInternal,
+        }).catch(err => console.error("Error sending push notification:", err));
         
         // Send email notifications to assignees
         for (const assignee of assignees) {
