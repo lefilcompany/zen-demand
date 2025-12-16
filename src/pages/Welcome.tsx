@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 import { LogOut, Plus, Users, ArrowRight, Sparkles } from "lucide-react";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
@@ -9,11 +9,7 @@ import authBackground from "@/assets/auth-background.jpg";
 export default function Welcome() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
+  const { signOut } = useAuth();
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen">
@@ -137,7 +133,7 @@ export default function Welcome() {
           <div className="mt-8 pt-6 border-t border-border text-center">
             <Button 
               variant="ghost" 
-              onClick={handleLogout}
+              onClick={signOut}
               className="text-muted-foreground hover:text-foreground"
             >
               <LogOut className="mr-2 h-4 w-4" />
