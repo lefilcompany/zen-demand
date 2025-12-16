@@ -52,7 +52,7 @@ export function NotificationDropdown() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
+      <DropdownMenuContent align="end" className="w-80 bg-popover border-border shadow-lg">
         <div className="flex items-center justify-between px-3 py-2">
           <h4 className="font-semibold text-sm">Notificações</h4>
           {unreadCount > 0 && (
@@ -79,9 +79,9 @@ export function NotificationDropdown() {
               <DropdownMenuItem
                 key={notification.id}
                 className={cn(
-                  "flex flex-col items-start gap-1 p-3 cursor-pointer border-b border-border/50 last:border-b-0",
-                  "hover:bg-accent/80 focus:bg-accent/80",
-                  "data-[highlighted]:bg-accent/80",
+                  "flex flex-col items-start gap-1 p-3 cursor-pointer border-b border-border/30 last:border-b-0",
+                  "hover:!bg-muted focus:!bg-muted",
+                  "data-[highlighted]:!bg-muted",
                   !notification.read && "bg-primary/5"
                 )}
                 onClick={() => handleNotificationClick(notification)}
