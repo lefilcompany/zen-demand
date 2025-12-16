@@ -155,17 +155,6 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Scope Overview */}
-        <ScopeOverviewCard 
-          data-tour="scope-progress"
-          used={monthlyCount || 0} 
-          limit={limit}
-          contractStart={scope?.contract_start_date}
-          contractEnd={scope?.contract_end_date}
-          scopeDescription={scope?.scope_description}
-          active={scope?.active}
-        />
-
         {/* Stats Cards */}
         <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
           <Card>
@@ -300,6 +289,17 @@ const Index = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Scope Overview - At the end */}
+        <ScopeOverviewCard 
+          data-tour="scope-progress"
+          used={monthlyCount || 0} 
+          limit={limit}
+          contractStart={scope?.contract_start_date}
+          contractEnd={scope?.contract_end_date}
+          scopeDescription={scope?.scope_description}
+          active={scope?.active}
+        />
       </div>
     );
   }
