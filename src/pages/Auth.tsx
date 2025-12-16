@@ -202,7 +202,7 @@ export default function Auth() {
         description: t("auth.welcomeBack")
       });
     } catch (error: any) {
-      toast.error(t("toast.error"), {
+      toast.error("Erro ao realizar login", {
         description: getErrorMessage(error)
       });
     } finally {
