@@ -183,18 +183,18 @@ export function WorkloadDistributionChart({ demands }: WorkloadDistributionChart
       .toUpperCase();
 
     return (
-      <g transform={`translate(${x},${y})`}>
-        <foreignObject x={-140} y={-12} width={135} height={24}>
-          <div className="flex items-center gap-2 justify-end">
-            <span className="text-xs text-foreground truncate max-w-[90px]" title={member.name}>
-              {member.name}
-            </span>
-            <Avatar className="h-5 w-5">
+      <g transform={`translate(0,${y})`}>
+        <foreignObject x={0} y={-12} width={160} height={24}>
+          <div className="flex items-center gap-2 justify-start pl-2">
+            <Avatar className="h-5 w-5 shrink-0">
               <AvatarImage src={member.avatar || undefined} />
               <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
                 {initials}
               </AvatarFallback>
             </Avatar>
+            <span className="text-xs text-foreground truncate" title={member.name}>
+              {member.name}
+            </span>
           </div>
         </foreignObject>
       </g>
@@ -249,7 +249,7 @@ export function WorkloadDistributionChart({ demands }: WorkloadDistributionChart
                   <BarChart
                     layout="vertical"
                     data={workloadData}
-                    margin={{ top: 0, right: 20, left: 145, bottom: 0 }}
+                    margin={{ top: 0, right: 20, left: 10, bottom: 0 }}
                     barSize={20}
                   >
                     <XAxis
@@ -264,7 +264,7 @@ export function WorkloadDistributionChart({ demands }: WorkloadDistributionChart
                       axisLine={false}
                       tickLine={false}
                       tick={CustomYAxisTick as any}
-                      width={140}
+                      width={170}
                     />
                     <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.3)" }} />
                     <Bar
