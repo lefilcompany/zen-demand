@@ -13,21 +13,26 @@ import { Eye, EyeOff, Loader2, Mail, Check, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
-
 interface IBGEState {
   id: number;
   sigla: string;
   nome: string;
 }
-
 interface IBGECity {
   id: number;
   nome: string;
 }
-
 export default function Auth() {
-  const { t } = useTranslation();
-  const { user, loading, signIn, signUp, resetPassword } = useAuth();
+  const {
+    t
+  } = useTranslation();
+  const {
+    user,
+    loading,
+    signIn,
+    signUp,
+    resetPassword
+  } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isResetLoading, setIsResetLoading] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -79,11 +84,13 @@ export default function Auth() {
       setCities([]);
       return;
     }
-    
     const fetchCities = async () => {
       setLoadingCities(true);
       setCities([]);
-      setSignupData(prev => ({ ...prev, city: "" }));
+      setSignupData(prev => ({
+        ...prev,
+        city: ""
+      }));
       try {
         const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${signupData.state}/municipios?orderBy=nome`);
         const data = await response.json();
@@ -96,31 +103,27 @@ export default function Auth() {
     };
     fetchCities();
   }, [signupData.state]);
-
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-sidebar">
+    return <div className="flex min-h-screen items-center justify-center bg-sidebar">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
+      </div>;
   }
-
   if (user) {
     return <Navigate to="/welcome" replace />;
   }
-
   const formatPhone = (value: string): string => {
     const digits = value.replace(/\D/g, "").slice(0, 11);
     if (digits.length <= 2) return digits.length ? `(${digits}` : "";
     if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
   };
-
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatPhone(e.target.value);
-    setSignupData({ ...signupData, phone: formatted });
+    setSignupData({
+      ...signupData,
+      phone: formatted
+    });
   };
-
   const getErrorMessage = (error: any): string => {
     const message = error?.message?.toLowerCase() || "";
     if (message.includes("user already registered") || message.includes("already been registered")) {
@@ -134,7 +137,6 @@ export default function Auth() {
     }
     return error?.message || t("toast.error");
   };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -147,7 +149,6 @@ export default function Auth() {
         localStorage.removeItem("rememberMe");
         sessionStorage.setItem("sessionOnly", "true");
       }
-      
       await signIn(loginData.email, loginData.password);
       toast.success(t("toast.success"), {
         description: t("auth.welcomeBack")
@@ -160,12 +161,11 @@ export default function Auth() {
       setIsLoading(false);
     }
   };
-
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!resetEmail.trim()) {
       toast.warning("Informe o email", {
-        description: "Digite o email associado à sua conta.",
+        description: "Digite o email associado à sua conta."
       });
       return;
     }
@@ -173,19 +173,18 @@ export default function Auth() {
     try {
       await resetPassword(resetEmail.trim());
       toast.success("Email enviado!", {
-        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+        description: "Verifique sua caixa de entrada para redefinir sua senha."
       });
       setResetDialogOpen(false);
       setResetEmail("");
     } catch (error: any) {
       toast.error("Erro ao enviar email", {
-        description: getErrorMessage(error),
+        description: getErrorMessage(error)
       });
     } finally {
       setIsResetLoading(false);
     }
   };
-
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (signupData.password.length < 6) {
@@ -222,40 +221,60 @@ export default function Auth() {
   };
 
   // Password strength calculation
-  const getPasswordStrength = (password: string): { level: number; label: string; color: string } => {
-    if (!password) return { level: 0, label: "", color: "" };
-    
+  const getPasswordStrength = (password: string): {
+    level: number;
+    label: string;
+    color: string;
+  } => {
+    if (!password) return {
+      level: 0,
+      label: "",
+      color: ""
+    };
     let score = 0;
     if (password.length >= 6) score++;
     if (password.length >= 8) score++;
     if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
     if (/\d/.test(password)) score++;
     if (/[^a-zA-Z0-9]/.test(password)) score++;
-
-    if (score <= 1) return { level: 1, label: "Fraca", color: "bg-destructive" };
-    if (score <= 2) return { level: 2, label: "Fraca", color: "bg-destructive" };
-    if (score <= 3) return { level: 3, label: "Média", color: "bg-amber-500" };
-    if (score <= 4) return { level: 4, label: "Forte", color: "bg-emerald-500" };
-    return { level: 5, label: "Muito forte", color: "bg-emerald-600" };
+    if (score <= 1) return {
+      level: 1,
+      label: "Fraca",
+      color: "bg-destructive"
+    };
+    if (score <= 2) return {
+      level: 2,
+      label: "Fraca",
+      color: "bg-destructive"
+    };
+    if (score <= 3) return {
+      level: 3,
+      label: "Média",
+      color: "bg-amber-500"
+    };
+    if (score <= 4) return {
+      level: 4,
+      label: "Forte",
+      color: "bg-emerald-500"
+    };
+    return {
+      level: 5,
+      label: "Muito forte",
+      color: "bg-emerald-600"
+    };
   };
-
   const passwordStrength = getPasswordStrength(signupData.password);
 
   // Password match validation
   const passwordsMatch = signupData.password && signupData.confirmPassword && signupData.password === signupData.confirmPassword;
   const passwordsDontMatch = signupData.confirmPassword && signupData.password !== signupData.confirmPassword;
-
-  return (
-    <div className="flex flex-col lg:flex-row h-screen overflow-hidden">
+  return <div className="flex flex-col lg:flex-row h-screen overflow-hidden">
       {/* Mobile/Tablet Header with Image - Fixed height */}
-      <div 
-        className="lg:hidden relative h-40 sm:h-48 md:h-56 flex-shrink-0 overflow-hidden" 
-        style={{
-          backgroundImage: `url(${authBackground})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center"
-        }}
-      >
+      <div className="lg:hidden relative h-40 sm:h-48 md:h-56 flex-shrink-0 overflow-hidden" style={{
+      backgroundImage: `url(${authBackground})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center"
+    }}>
         <div className="absolute inset-0 bg-gradient-to-b from-primary/70 via-primary/50 to-background" />
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-white px-6 text-center">
           <img src={logoSomaDark} alt="SoMA" className="h-10 sm:h-12 w-auto mb-3" />
@@ -264,14 +283,11 @@ export default function Auth() {
       </div>
 
       {/* Desktop Left side - Image - Fixed full height */}
-      <div 
-        className="hidden lg:flex lg:w-1/2 xl:w-3/5 h-full relative overflow-hidden" 
-        style={{
-          backgroundImage: `url(${authBackground})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center"
-        }}
-      >
+      <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 h-full relative overflow-hidden" style={{
+      backgroundImage: `url(${authBackground})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center"
+    }}>
         <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary/50 to-transparent" />
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
           <div />
@@ -320,55 +336,28 @@ export default function Auth() {
                 <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
                   <div className="space-y-2">
                     <Label htmlFor="login-email">{t("common.email")}</Label>
-                    <Input 
-                      id="login-email" 
-                      type="email" 
-                      placeholder="seu@email.com" 
-                      className="h-11 sm:h-12" 
-                      value={loginData.email} 
-                      onChange={e => setLoginData({...loginData, email: e.target.value})} 
-                      required 
-                    />
+                    <Input id="login-email" type="email" placeholder="seu@email.com" className="h-11 sm:h-12" value={loginData.email} onChange={e => setLoginData({
+                    ...loginData,
+                    email: e.target.value
+                  })} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="login-password">{t("common.password")}</Label>
                     <div className="relative">
-                      <Input 
-                        id="login-password" 
-                        type={showLoginPassword ? "text" : "password"} 
-                        placeholder="••••••••" 
-                        className="h-11 sm:h-12 pr-10" 
-                        value={loginData.password} 
-                        onChange={e => setLoginData({...loginData, password: e.target.value})} 
-                        required 
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                        onClick={() => setShowLoginPassword(!showLoginPassword)}
-                      >
-                        {showLoginPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
-                        )}
+                      <Input id="login-password" type={showLoginPassword ? "text" : "password"} placeholder="••••••••" className="h-11 sm:h-12 pr-10" value={loginData.password} onChange={e => setLoginData({
+                      ...loginData,
+                      password: e.target.value
+                    })} required />
+                      <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowLoginPassword(!showLoginPassword)}>
+                        {showLoginPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
                       </Button>
                     </div>
                   </div>
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="remember-me" 
-                        checked={rememberMe}
-                        onCheckedChange={(checked) => setRememberMe(checked === true)}
-                      />
-                      <Label 
-                        htmlFor="remember-me" 
-                        className="text-sm text-muted-foreground cursor-pointer"
-                      >
+                      <Checkbox id="remember-me" checked={rememberMe} onCheckedChange={checked => setRememberMe(checked === true)} />
+                      <Label htmlFor="remember-me" className="text-sm text-muted-foreground cursor-pointer">
                         Manter conectado
                       </Label>
                     </div>
@@ -391,21 +380,10 @@ export default function Auth() {
                         <form onSubmit={handleResetPassword} className="space-y-4">
                           <div className="space-y-2">
                             <Label htmlFor="reset-email">Email</Label>
-                            <Input 
-                              id="reset-email" 
-                              type="email" 
-                              placeholder="seu@email.com"
-                              value={resetEmail}
-                              onChange={e => setResetEmail(e.target.value)}
-                              required
-                            />
+                            <Input id="reset-email" type="email" placeholder="seu@email.com" value={resetEmail} onChange={e => setResetEmail(e.target.value)} required />
                           </div>
                           <div className="flex gap-2 justify-end">
-                            <Button 
-                              type="button" 
-                              variant="outline" 
-                              onClick={() => setResetDialogOpen(false)}
-                            >
+                            <Button type="button" variant="outline" onClick={() => setResetDialogOpen(false)}>
                               Cancelar
                             </Button>
                             <Button type="submit" disabled={isResetLoading}>
@@ -428,94 +406,62 @@ export default function Auth() {
                   {/* Nome */}
                   <div className="space-y-1.5">
                     <Label htmlFor="signup-name">{t("auth.fullName")}</Label>
-                    <Input 
-                      id="signup-name" 
-                      type="text" 
-                      placeholder={t("common.name")} 
-                      className="h-10" 
-                      value={signupData.fullName} 
-                      onChange={e => setSignupData({...signupData, fullName: e.target.value})} 
-                      required 
-                    />
+                    <Input id="signup-name" type="text" placeholder={t("common.name")} className="h-10" value={signupData.fullName} onChange={e => setSignupData({
+                    ...signupData,
+                    fullName: e.target.value
+                  })} required />
                   </div>
 
                   {/* Email */}
                   <div className="space-y-1.5">
                     <Label htmlFor="signup-email">{t("common.email")}</Label>
-                    <Input 
-                      id="signup-email" 
-                      type="email" 
-                      placeholder="seu@email.com" 
-                      className="h-10" 
-                      value={signupData.email} 
-                      onChange={e => setSignupData({...signupData, email: e.target.value})} 
-                      required 
-                    />
+                    <Input id="signup-email" type="email" placeholder="seu@email.com" className="h-10" value={signupData.email} onChange={e => setSignupData({
+                    ...signupData,
+                    email: e.target.value
+                  })} required />
                   </div>
 
                   {/* Telefone */}
                   <div className="space-y-1.5">
                     <Label htmlFor="signup-phone">{t("common.phone")}</Label>
-                    <Input 
-                      id="signup-phone" 
-                      type="tel" 
-                      placeholder="(00) 00000-0000" 
-                      className="h-10" 
-                      value={signupData.phone} 
-                      onChange={handlePhoneChange}
-                      maxLength={16}
-                      required 
-                    />
+                    <Input id="signup-phone" type="tel" placeholder="(00) 00000-0000" className="h-10" value={signupData.phone} onChange={handlePhoneChange} maxLength={16} required />
                   </div>
 
                   {/* Estado + Cidade */}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <Label htmlFor="signup-state">{t("common.state")}</Label>
-                      <Select
-                        value={signupData.state}
-                        onValueChange={(value) => setSignupData({...signupData, state: value})}
-                      >
+                      <Select value={signupData.state} onValueChange={value => setSignupData({
+                      ...signupData,
+                      state: value
+                    })}>
                         <SelectTrigger className="h-10">
                           <SelectValue placeholder={loadingStates ? "..." : "UF"} />
                         </SelectTrigger>
                         <SelectContent>
-                          {loadingStates ? (
-                            <div className="flex items-center justify-center p-2">
+                          {loadingStates ? <div className="flex items-center justify-center p-2">
                               <Loader2 className="h-4 w-4 animate-spin" />
-                            </div>
-                          ) : (
-                            states.map((state) => (
-                              <SelectItem key={state.id} value={state.sigla}>
+                            </div> : states.map(state => <SelectItem key={state.id} value={state.sigla}>
                                 {state.sigla} - {state.nome}
-                              </SelectItem>
-                            ))
-                          )}
+                              </SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="signup-city">{t("common.city")}</Label>
-                    <Select
-                      value={signupData.city}
-                      onValueChange={(value) => setSignupData({...signupData, city: value})}
-                      disabled={!signupData.state || loadingCities}
-                    >
+                    <Select value={signupData.city} onValueChange={value => setSignupData({
+                      ...signupData,
+                      city: value
+                    })} disabled={!signupData.state || loadingCities}>
                       <SelectTrigger className="h-10">
                         <SelectValue placeholder={loadingCities ? "Carregando..." : "Selecione a cidade"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {loadingCities ? (
-                          <div className="flex items-center justify-center p-2">
+                        {loadingCities ? <div className="flex items-center justify-center p-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                          </div>
-                        ) : (
-                          cities.map((city) => (
-                            <SelectItem key={city.id} value={city.nome}>
+                          </div> : cities.map(city => <SelectItem key={city.id} value={city.nome}>
                               {city.nome}
-                            </SelectItem>
-                          ))
-                        )}
+                            </SelectItem>)}
                       </SelectContent>
                     </Select>
                     </div>
@@ -527,99 +473,46 @@ export default function Auth() {
                       <div className="space-y-1.5">
                         <Label htmlFor="signup-password">{t("common.password")}</Label>
                         <div className="relative">
-                          <Input 
-                            id="signup-password" 
-                            type={showSignupPassword ? "text" : "password"} 
-                            placeholder="••••••••" 
-                            className="h-10 pr-9" 
-                            value={signupData.password} 
-                            onChange={e => setSignupData({...signupData, password: e.target.value})} 
-                            required 
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-0 top-0 h-full px-2.5 hover:bg-transparent"
-                            onClick={() => setShowSignupPassword(!showSignupPassword)}
-                          >
-                            {showSignupPassword ? (
-                              <EyeOff className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <Eye className="h-4 w-4 text-muted-foreground" />
-                            )}
+                          <Input id="signup-password" type={showSignupPassword ? "text" : "password"} placeholder="••••••••" className="h-10 pr-9" value={signupData.password} onChange={e => setSignupData({
+                          ...signupData,
+                          password: e.target.value
+                        })} required />
+                          <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-2.5 hover:bg-transparent" onClick={() => setShowSignupPassword(!showSignupPassword)}>
+                            {showSignupPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
                           </Button>
                         </div>
                       </div>
                       <div className="space-y-1.5">
                         <Label htmlFor="signup-confirm-password">{t("auth.confirmPassword")}</Label>
                         <div className="relative">
-                          <Input 
-                            id="signup-confirm-password" 
-                            type={showConfirmPassword ? "text" : "password"} 
-                            placeholder="••••••••" 
-                            className={`h-10 pr-16 ${passwordsMatch ? 'border-emerald-500 focus-visible:ring-emerald-500' : ''} ${passwordsDontMatch ? 'border-destructive focus-visible:ring-destructive' : ''}`}
-                            value={signupData.confirmPassword} 
-                            onChange={e => setSignupData({...signupData, confirmPassword: e.target.value})} 
-                            required 
-                          />
+                          <Input id="signup-confirm-password" type={showConfirmPassword ? "text" : "password"} placeholder="••••••••" className={`h-10 pr-16 ${passwordsMatch ? 'border-emerald-500 focus-visible:ring-emerald-500' : ''} ${passwordsDontMatch ? 'border-destructive focus-visible:ring-destructive' : ''}`} value={signupData.confirmPassword} onChange={e => setSignupData({
+                          ...signupData,
+                          confirmPassword: e.target.value
+                        })} required />
                           <div className="absolute right-0 top-0 h-full flex items-center">
-                            {signupData.confirmPassword && (
-                              <span className="pr-1">
-                                {passwordsMatch ? (
-                                  <Check className="h-4 w-4 text-emerald-500" />
-                                ) : (
-                                  <X className="h-4 w-4 text-destructive" />
-                                )}
-                              </span>
-                            )}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-full px-2.5 hover:bg-transparent"
-                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            >
-                              {showConfirmPassword ? (
-                                <EyeOff className="h-4 w-4 text-muted-foreground" />
-                              ) : (
-                                <Eye className="h-4 w-4 text-muted-foreground" />
-                              )}
+                            {signupData.confirmPassword && <span className="pr-1">
+                                {passwordsMatch ? <Check className="h-4 w-4 text-emerald-500" /> : <X className="h-4 w-4 text-destructive" />}
+                              </span>}
+                            <Button type="button" variant="ghost" size="icon" className="h-full px-2.5 hover:bg-transparent" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                              {showConfirmPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
                             </Button>
                           </div>
                         </div>
                       </div>
                     </div>
                     {/* Password Strength Indicator */}
-                    {signupData.password && (
-                      <div className="space-y-1 mt-2">
+                    {signupData.password && <div className="space-y-1 mt-2">
                         <div className="flex gap-1">
-                          {[1, 2, 3, 4, 5].map((i) => (
-                            <div
-                              key={i}
-                              className={`h-1 flex-1 rounded-full transition-colors ${
-                                i <= passwordStrength.level ? passwordStrength.color : "bg-muted"
-                              }`}
-                            />
-                          ))}
+                          {[1, 2, 3, 4, 5].map(i => <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i <= passwordStrength.level ? passwordStrength.color : "bg-muted"}`} />)}
                         </div>
-                        <p className={`text-xs ${
-                          passwordStrength.level <= 2 ? "text-destructive" : 
-                          passwordStrength.level === 3 ? "text-amber-500" : "text-emerald-500"
-                        }`}>
+                        <p className={`text-xs ${passwordStrength.level <= 2 ? "text-destructive" : passwordStrength.level === 3 ? "text-amber-500" : "text-emerald-500"}`}>
                           Força: {passwordStrength.label}
                         </p>
-                      </div>
-                    )}
+                      </div>}
                   </div>
 
                   {/* Password validation feedback */}
-                  {passwordsDontMatch && (
-                    <p className="text-xs text-destructive flex items-center gap-1">
-                      <X className="h-3 w-3" />
-                      As senhas não coincidem
-                    </p>
-                  )}
+                  {passwordsDontMatch}
 
                   <Button type="submit" className="w-full h-11 text-base font-semibold mt-2" disabled={isLoading || passwordsDontMatch}>
                     {isLoading ? t("common.loading") : t("auth.signup")}
@@ -630,6 +523,5 @@ export default function Auth() {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 }
