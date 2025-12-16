@@ -241,7 +241,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
                   templateData: {
                     title: "Ajuste Concluído",
                     message: `O ajuste solicitado na demanda "${demand.title}" foi finalizado com sucesso. A demanda voltou para o status Entregue.`,
-                    actionUrl: `${window.location.origin}/demands/${demand.id}`,
+                    actionUrl: `https://pla.soma.lefil.com.br/demands/${demand.id}`,
                     actionText: "Ver Demanda",
                     type: "success",
                   },
@@ -294,7 +294,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
                   templateData: {
                     title: "Ajuste Concluído",
                     message: `O ajuste solicitado na demanda "${demand.title}" foi finalizado com sucesso.`,
-                    actionUrl: `${window.location.origin}/demands/${demand.id}`,
+                    actionUrl: `https://pla.soma.lefil.com.br/demands/${demand.id}`,
                     actionText: "Ver Demanda",
                     type: "success",
                   },

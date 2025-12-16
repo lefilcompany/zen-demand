@@ -129,7 +129,7 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
                 templateData: {
                   title: notificationTitle,
                   message: `${isInternal ? 'Foi solicitado um ajuste interno' : 'O cliente solicitou um ajuste'} na demanda "${demandTitle}".\n\nMotivo: ${reason.trim()}`,
-                  actionUrl: `${window.location.origin}/demands/${demandId}`,
+                  actionUrl: `https://pla.soma.lefil.com.br/demands/${demandId}`,
                   actionText: "Ver Demanda",
                   userName: assignee.profile?.full_name || "Responsável",
                   type: "warning" as const,

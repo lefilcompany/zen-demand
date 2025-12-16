@@ -99,12 +99,12 @@ export const NotificationEmail = ({
               Se você não esperava este email, pode ignorá-lo com segurança.
             </Text>
             <Text style={footerLinks}>
-              <Link href="#" style={footerLink}>
+              <Link href="https://pla.soma.lefil.com.br/settings" style={footerLink}>
                 Configurações de Notificação
               </Link>
               {' • '}
-              <Link href="#" style={footerLink}>
-                Suporte
+              <Link href="https://pla.soma.lefil.com.br" style={footerLink}>
+                Acessar SoMA+
               </Link>
             </Text>
             <Text style={copyright}>

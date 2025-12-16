@@ -180,7 +180,7 @@ export default function DemandDetail() {
                 templateData: {
                   title: notificationTitle,
                   message: `${isInternal ? 'Foi solicitado um ajuste interno' : 'O cliente solicitou um ajuste'} na demanda "${demand?.title}".\n\nMotivo: ${adjustmentReason.trim()}`,
-                  actionUrl: `${window.location.origin}/demands/${id}`,
+                  actionUrl: `https://pla.soma.lefil.com.br/demands/${id}`,
                   actionText: "Ver Demanda",
                   userName: assignee.profile?.full_name || "Responsável",
                   type: "warning" as const,
