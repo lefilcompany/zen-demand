@@ -122,7 +122,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
   const isTabletOrSmallDesktop = useIsTabletOrSmallDesktop();
   const isLargeDesktop = useIsLargeDesktop();
   // Track multiple active columns (max 3), using array to maintain order (FIFO)
-  const [activeColumns, setActiveColumns] = useState<string[]>([columns[0].key]);
+  const [activeColumns, setActiveColumns] = useState<string[]>([]);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
@@ -591,8 +591,8 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
 
   // Mobile view with dropdown selector - shows move menu on cards
   if (isMobile) {
-    const mobileActiveColumn = activeColumns[0] || columns[0].key;
-    const activeColumnData = columns.find(c => c.key === mobileActiveColumn) || columns[0];
+    const mobileActiveColumn = activeColumns[0];
+    const activeColumnData = mobileActiveColumn ? columns.find(c => c.key === mobileActiveColumn) : null;
     
     const handleMobileColumnChange = (value: string) => {
       setActiveColumns([value]);
@@ -601,15 +601,19 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     return (
       <div className="flex flex-col h-full">
         <div className="mb-4">
-          <Select value={mobileActiveColumn} onValueChange={handleMobileColumnChange}>
+          <Select value={mobileActiveColumn || ""} onValueChange={handleMobileColumnChange}>
             <SelectTrigger className="w-full">
-              <SelectValue>
-                <div className="flex items-center justify-between w-full">
-                  <span>{activeColumnData.label}</span>
-                  <Badge variant="secondary" className="ml-2">
-                    {getDemandsForColumn(mobileActiveColumn).length}
-                  </Badge>
-                </div>
+              <SelectValue placeholder="Selecione uma coluna">
+                {activeColumnData ? (
+                  <div className="flex items-center justify-between w-full">
+                    <span>{activeColumnData.label}</span>
+                    <Badge variant="secondary" className="ml-2">
+                      {getDemandsForColumn(mobileActiveColumn!).length}
+                    </Badge>
+                  </div>
+                ) : (
+                  "Selecione uma coluna"
+                )}
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-background border shadow-lg">
@@ -627,18 +631,24 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
           </Select>
         </div>
 
-        <div className={cn("rounded-lg p-3 sm:p-4 flex flex-col flex-1 min-h-0", activeColumnData.color)}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
-              {activeColumnData.label}
-            </h3>
-            <Badge variant="secondary" className="text-xs">
-              {getDemandsForColumn(mobileActiveColumn).length}
-            </Badge>
+        {activeColumnData && mobileActiveColumn ? (
+          <div className={cn("rounded-lg p-3 sm:p-4 flex flex-col flex-1 min-h-0", activeColumnData.color)}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+                {activeColumnData.label}
+              </h3>
+              <Badge variant="secondary" className="text-xs">
+                {getDemandsForColumn(mobileActiveColumn).length}
+              </Badge>
+            </div>
+            {/* Pass showMoveMenu=true for mobile */}
+            {renderColumnContent(mobileActiveColumn, true)}
           </div>
-          {/* Pass showMoveMenu=true for mobile */}
-          {renderColumnContent(mobileActiveColumn, true)}
-        </div>
+        ) : (
+          <div className="flex-1 flex items-center justify-center border-2 border-dashed border-border rounded-lg">
+            <p className="text-muted-foreground text-sm">Selecione uma coluna para visualizar as demandas</p>
+          </div>
+        )}
 
         <KanbanAdjustmentDialog
           open={adjustmentDialogOpen}
@@ -653,7 +663,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
 
   // Tablet/Small desktop view - single tab collapsible layout with drag-drop
   if (isTabletOrSmallDesktop) {
-    const tabletActiveColumn = activeColumns[0] || columns[0].key;
+    const tabletActiveColumn = activeColumns[0];
     
     return (
       <div className="flex flex-col h-full gap-2">
@@ -749,6 +759,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
   if (isLargeDesktop) {
     const openCount = activeColumns.length;
     const getFlexValue = (isActive: boolean) => {
+      if (openCount === 0) return "flex-1"; // All columns equal when none open
       if (!isActive) return "flex-[0.5]";
       if (openCount === 1) return "flex-[5]";
       if (openCount === 2) return "flex-[2.5]";
