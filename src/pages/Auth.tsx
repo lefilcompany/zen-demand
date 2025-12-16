@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2, Mail } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, Check, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
@@ -221,11 +221,15 @@ export default function Auth() {
     }
   };
 
+  // Password match validation
+  const passwordsMatch = signupData.password && signupData.confirmPassword && signupData.password === signupData.confirmPassword;
+  const passwordsDontMatch = signupData.confirmPassword && signupData.password !== signupData.confirmPassword;
+
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen">
-      {/* Mobile/Tablet Header with Image */}
+    <div className="flex flex-col lg:flex-row h-screen overflow-hidden">
+      {/* Mobile/Tablet Header with Image - Fixed height */}
       <div 
-        className="lg:hidden relative h-48 sm:h-64 md:h-72 overflow-hidden" 
+        className="lg:hidden relative h-40 sm:h-48 md:h-56 flex-shrink-0 overflow-hidden" 
         style={{
           backgroundImage: `url(${authBackground})`,
           backgroundSize: "cover",
@@ -239,9 +243,9 @@ export default function Auth() {
         </div>
       </div>
 
-      {/* Desktop Left side - Image */}
+      {/* Desktop Left side - Image - Fixed full height */}
       <div 
-        className="hidden lg:flex lg:w-1/2 xl:w-3/5 relative overflow-hidden" 
+        className="hidden lg:flex lg:w-1/2 xl:w-3/5 h-full relative overflow-hidden" 
         style={{
           backgroundImage: `url(${authBackground})`,
           backgroundSize: "cover",
@@ -271,206 +275,215 @@ export default function Auth() {
         </div>
       </div>
 
-      {/* Form Section */}
-      <div className="flex-1 lg:w-1/2 xl:w-2/5 flex items-start lg:items-center justify-center p-6 sm:p-8 md:p-12 bg-background">
-        <div className="w-full max-w-md">
-          <div className="mb-6 sm:mb-8 text-center">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 flex items-center justify-center gap-2">
-              {t("auth.welcomeBack")} <img alt="SoMA+" src="/lovable-uploads/9889f524-0819-424e-9185-2cc441526116.png" className="h-10 w-20 inline-block items-center justify-center" />
-            </h1>
-            <p className="text-sm sm:text-base text-muted-foreground">{t("auth.loginDescription")}</p>
-          </div>
+      {/* Form Section - Scrollable on mobile/tablet, centered on desktop */}
+      <div className="flex-1 lg:w-1/2 xl:w-2/5 h-full flex flex-col bg-background overflow-hidden">
+        <div className="flex-1 flex items-start lg:items-center justify-center p-4 sm:p-6 md:p-8 lg:p-12 overflow-y-auto">
+          <div className="w-full max-w-md py-4">
+            <div className="mb-5 sm:mb-6 text-center">
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 flex items-center justify-center gap-2">
+                {t("auth.welcomeBack")} <img alt="SoMA+" src="/lovable-uploads/9889f524-0819-424e-9185-2cc441526116.png" className="h-10 w-20 inline-block items-center justify-center" />
+              </h1>
+              <p className="text-sm sm:text-base text-muted-foreground">{t("auth.loginDescription")}</p>
+            </div>
 
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-5 sm:mb-6 h-10 sm:h-11 bg-muted/50 p-1 rounded-xl">
-              <TabsTrigger value="login" className="text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
-                {t("auth.login")}
-              </TabsTrigger>
-              <TabsTrigger value="signup" className="text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
-                {t("auth.signup")}
-              </TabsTrigger>
-            </TabsList>
+            <Tabs defaultValue="login" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-5 h-10 sm:h-11 bg-muted/50 p-1 rounded-xl">
+                <TabsTrigger value="login" className="text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+                  {t("auth.login")}
+                </TabsTrigger>
+                <TabsTrigger value="signup" className="text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+                  {t("auth.signup")}
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="login" className="mt-0">
-              <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">{t("common.email")}</Label>
-                  <Input 
-                    id="login-email" 
-                    type="email" 
-                    placeholder="seu@email.com" 
-                    className="h-11 sm:h-12" 
-                    value={loginData.email} 
-                    onChange={e => setLoginData({...loginData, email: e.target.value})} 
-                    required 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">{t("common.password")}</Label>
-                  <div className="relative">
+              <TabsContent value="login" className="mt-0">
+                <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email">{t("common.email")}</Label>
                     <Input 
-                      id="login-password" 
-                      type={showLoginPassword ? "text" : "password"} 
-                      placeholder="••••••••" 
-                      className="h-11 sm:h-12 pr-10" 
-                      value={loginData.password} 
-                      onChange={e => setLoginData({...loginData, password: e.target.value})} 
+                      id="login-email" 
+                      type="email" 
+                      placeholder="seu@email.com" 
+                      className="h-11 sm:h-12" 
+                      value={loginData.email} 
+                      onChange={e => setLoginData({...loginData, email: e.target.value})} 
                       required 
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                      onClick={() => setShowLoginPassword(!showLoginPassword)}
-                    >
-                      {showLoginPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
                   </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="remember-me" 
-                      checked={rememberMe}
-                      onCheckedChange={(checked) => setRememberMe(checked === true)}
-                    />
-                    <Label 
-                      htmlFor="remember-me" 
-                      className="text-sm text-muted-foreground cursor-pointer"
-                    >
-                      Manter conectado
-                    </Label>
-                  </div>
-                  <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button type="button" variant="link" className="p-0 h-auto text-sm text-muted-foreground hover:text-primary">
-                        Esqueceu a senha?
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                      <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                          <Mail className="h-5 w-5" />
-                          Recuperar Senha
-                        </DialogTitle>
-                        <DialogDescription>
-                          Digite seu email e enviaremos um link para redefinir sua senha.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <form onSubmit={handleResetPassword} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="reset-email">Email</Label>
-                          <Input 
-                            id="reset-email" 
-                            type="email" 
-                            placeholder="seu@email.com"
-                            value={resetEmail}
-                            onChange={e => setResetEmail(e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div className="flex gap-2 justify-end">
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={() => setResetDialogOpen(false)}
-                          >
-                            Cancelar
-                          </Button>
-                          <Button type="submit" disabled={isResetLoading}>
-                            {isResetLoading ? "Enviando..." : "Enviar Link"}
-                          </Button>
-                        </div>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-                
-                <Button type="submit" className="w-full h-11 sm:h-12 text-base font-semibold" disabled={isLoading}>
-                  {isLoading ? t("common.loading") : t("auth.login")}
-                </Button>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="signup" className="mt-0">
-              <form onSubmit={handleSignup} className="space-y-3 sm:space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">{t("auth.fullName")}</Label>
-                  <Input 
-                    id="signup-name" 
-                    type="text" 
-                    placeholder={t("common.name")} 
-                    className="h-10 sm:h-11" 
-                    value={signupData.fullName} 
-                    onChange={e => setSignupData({...signupData, fullName: e.target.value})} 
-                    required 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">{t("common.email")}</Label>
-                  <Input 
-                    id="signup-email" 
-                    type="email" 
-                    placeholder="seu@email.com" 
-                    className="h-10 sm:h-11" 
-                    value={signupData.email} 
-                    onChange={e => setSignupData({...signupData, email: e.target.value})} 
-                    required 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-phone">{t("common.phone")}</Label>
-                  <Input 
-                    id="signup-phone" 
-                    type="tel" 
-                    placeholder="(00) 00000-0000" 
-                    className="h-10 sm:h-11" 
-                    value={signupData.phone} 
-                    onChange={handlePhoneChange}
-                    maxLength={16}
-                    required 
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-state">{t("common.state")}</Label>
-                    <Select
-                      value={signupData.state}
-                      onValueChange={(value) => setSignupData({...signupData, state: value})}
-                    >
-                      <SelectTrigger className="h-10 sm:h-11">
-                        <SelectValue placeholder={loadingStates ? "Carregando..." : "Selecione"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {loadingStates ? (
-                          <div className="flex items-center justify-center p-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          </div>
+                    <Label htmlFor="login-password">{t("common.password")}</Label>
+                    <div className="relative">
+                      <Input 
+                        id="login-password" 
+                        type={showLoginPassword ? "text" : "password"} 
+                        placeholder="••••••••" 
+                        className="h-11 sm:h-12 pr-10" 
+                        value={loginData.password} 
+                        onChange={e => setLoginData({...loginData, password: e.target.value})} 
+                        required 
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      >
+                        {showLoginPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
                         ) : (
-                          states.map((state) => (
-                            <SelectItem key={state.id} value={state.sigla}>
-                              {state.sigla} - {state.nome}
-                            </SelectItem>
-                          ))
+                          <Eye className="h-4 w-4 text-muted-foreground" />
                         )}
-                      </SelectContent>
-                    </Select>
+                      </Button>
+                    </div>
                   </div>
-                  <div className="space-y-2">
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="remember-me" 
+                        checked={rememberMe}
+                        onCheckedChange={(checked) => setRememberMe(checked === true)}
+                      />
+                      <Label 
+                        htmlFor="remember-me" 
+                        className="text-sm text-muted-foreground cursor-pointer"
+                      >
+                        Manter conectado
+                      </Label>
+                    </div>
+                    <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button type="button" variant="link" className="p-0 h-auto text-sm text-muted-foreground hover:text-primary">
+                          Esqueceu a senha?
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle className="flex items-center gap-2">
+                            <Mail className="h-5 w-5" />
+                            Recuperar Senha
+                          </DialogTitle>
+                          <DialogDescription>
+                            Digite seu email e enviaremos um link para redefinir sua senha.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleResetPassword} className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="reset-email">Email</Label>
+                            <Input 
+                              id="reset-email" 
+                              type="email" 
+                              placeholder="seu@email.com"
+                              value={resetEmail}
+                              onChange={e => setResetEmail(e.target.value)}
+                              required
+                            />
+                          </div>
+                          <div className="flex gap-2 justify-end">
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              onClick={() => setResetDialogOpen(false)}
+                            >
+                              Cancelar
+                            </Button>
+                            <Button type="submit" disabled={isResetLoading}>
+                              {isResetLoading ? "Enviando..." : "Enviar Link"}
+                            </Button>
+                          </div>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                  
+                  <Button type="submit" className="w-full h-11 sm:h-12 text-base font-semibold" disabled={isLoading}>
+                    {isLoading ? t("common.loading") : t("auth.login")}
+                  </Button>
+                </form>
+              </TabsContent>
+
+              <TabsContent value="signup" className="mt-0">
+                <form onSubmit={handleSignup} className="space-y-3">
+                  {/* Nome */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="signup-name">{t("auth.fullName")}</Label>
+                    <Input 
+                      id="signup-name" 
+                      type="text" 
+                      placeholder={t("common.name")} 
+                      className="h-10" 
+                      value={signupData.fullName} 
+                      onChange={e => setSignupData({...signupData, fullName: e.target.value})} 
+                      required 
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="signup-email">{t("common.email")}</Label>
+                    <Input 
+                      id="signup-email" 
+                      type="email" 
+                      placeholder="seu@email.com" 
+                      className="h-10" 
+                      value={signupData.email} 
+                      onChange={e => setSignupData({...signupData, email: e.target.value})} 
+                      required 
+                    />
+                  </div>
+
+                  {/* Telefone + Estado */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signup-phone">{t("common.phone")}</Label>
+                      <Input 
+                        id="signup-phone" 
+                        type="tel" 
+                        placeholder="(00) 00000-0000" 
+                        className="h-10" 
+                        value={signupData.phone} 
+                        onChange={handlePhoneChange}
+                        maxLength={16}
+                        required 
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signup-state">{t("common.state")}</Label>
+                      <Select
+                        value={signupData.state}
+                        onValueChange={(value) => setSignupData({...signupData, state: value})}
+                      >
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder={loadingStates ? "..." : "UF"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {loadingStates ? (
+                            <div className="flex items-center justify-center p-2">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            </div>
+                          ) : (
+                            states.map((state) => (
+                              <SelectItem key={state.id} value={state.sigla}>
+                                {state.sigla} - {state.nome}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Cidade */}
+                  <div className="space-y-1.5">
                     <Label htmlFor="signup-city">{t("common.city")}</Label>
                     <Select
                       value={signupData.city}
                       onValueChange={(value) => setSignupData({...signupData, city: value})}
                       disabled={!signupData.state || loadingCities}
                     >
-                      <SelectTrigger className="h-10 sm:h-11">
-                        <SelectValue placeholder={loadingCities ? "Carregando..." : "Selecione"} />
+                      <SelectTrigger className="h-10">
+                        <SelectValue placeholder={loadingCities ? "Carregando..." : "Selecione a cidade"} />
                       </SelectTrigger>
                       <SelectContent>
                         {loadingCities ? (
@@ -487,67 +500,91 @@ export default function Auth() {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">{t("common.password")}</Label>
-                  <div className="relative">
-                    <Input 
-                      id="signup-password" 
-                      type={showSignupPassword ? "text" : "password"} 
-                      placeholder="••••••••" 
-                      className="h-10 sm:h-11 pr-10" 
-                      value={signupData.password} 
-                      onChange={e => setSignupData({...signupData, password: e.target.value})} 
-                      required 
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                      onClick={() => setShowSignupPassword(!showSignupPassword)}
-                    >
-                      {showSignupPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
+
+                  {/* Senha + Confirmar Senha */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signup-password">{t("common.password")}</Label>
+                      <div className="relative">
+                        <Input 
+                          id="signup-password" 
+                          type={showSignupPassword ? "text" : "password"} 
+                          placeholder="••••••••" 
+                          className="h-10 pr-9" 
+                          value={signupData.password} 
+                          onChange={e => setSignupData({...signupData, password: e.target.value})} 
+                          required 
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-2.5 hover:bg-transparent"
+                          onClick={() => setShowSignupPassword(!showSignupPassword)}
+                        >
+                          {showSignupPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signup-confirm-password">{t("profile.confirmPassword")}</Label>
+                      <div className="relative">
+                        <Input 
+                          id="signup-confirm-password" 
+                          type={showConfirmPassword ? "text" : "password"} 
+                          placeholder="••••••••" 
+                          className={`h-10 pr-16 ${passwordsMatch ? 'border-emerald-500 focus-visible:ring-emerald-500' : ''} ${passwordsDontMatch ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                          value={signupData.confirmPassword} 
+                          onChange={e => setSignupData({...signupData, confirmPassword: e.target.value})} 
+                          required 
+                        />
+                        <div className="absolute right-0 top-0 h-full flex items-center">
+                          {signupData.confirmPassword && (
+                            <span className="pr-1">
+                              {passwordsMatch ? (
+                                <Check className="h-4 w-4 text-emerald-500" />
+                              ) : (
+                                <X className="h-4 w-4 text-destructive" />
+                              )}
+                            </span>
+                          )}
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-full px-2.5 hover:bg-transparent"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          >
+                            {showConfirmPassword ? (
+                              <EyeOff className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <Eye className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-confirm-password">{t("profile.confirmPassword")}</Label>
-                  <div className="relative">
-                    <Input 
-                      id="signup-confirm-password" 
-                      type={showConfirmPassword ? "text" : "password"} 
-                      placeholder="••••••••" 
-                      className="h-10 sm:h-11 pr-10" 
-                      value={signupData.confirmPassword} 
-                      onChange={e => setSignupData({...signupData, confirmPassword: e.target.value})} 
-                      required 
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-                <Button type="submit" className="w-full h-11 sm:h-12 text-base font-semibold" disabled={isLoading}>
-                  {isLoading ? t("common.loading") : t("auth.signup")}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+
+                  {/* Password validation feedback */}
+                  {passwordsDontMatch && (
+                    <p className="text-xs text-destructive flex items-center gap-1">
+                      <X className="h-3 w-3" />
+                      As senhas não coincidem
+                    </p>
+                  )}
+
+                  <Button type="submit" className="w-full h-11 text-base font-semibold mt-2" disabled={isLoading || passwordsDontMatch}>
+                    {isLoading ? t("common.loading") : t("auth.signup")}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
       </div>
     </div>
