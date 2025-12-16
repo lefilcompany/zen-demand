@@ -303,31 +303,36 @@ export function WorkloadDistributionChart({ demands }: WorkloadDistributionChart
                     .toUpperCase();
 
                   return (
-                    <div key={member.id} className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={member.avatar || undefined} />
-                          <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
-                            {initials}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm font-medium truncate max-w-[100px]">{member.name}</span>
+                    <div key={member.id} className="py-2 px-2 rounded-md hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={member.avatar || undefined} />
+                            <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
+                              {initials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm font-medium truncate max-w-[120px]">{member.name}</span>
+                        </div>
+                        <div className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                          {member.deliveryRate}% entregue
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 text-xs">
-                        <div className="flex items-center gap-1">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLORS.toStart }} />
-                          <span className="text-muted-foreground">{member.toStart}</span>
+                      <div className="flex items-center gap-4 text-xs pl-8">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: STATUS_COLORS.toStart }} />
+                          <span className="text-muted-foreground">Iniciar:</span>
+                          <span className="font-medium text-foreground">{member.toStart}</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLORS.inProgress }} />
-                          <span className="text-muted-foreground">{member.inProgress}</span>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: STATUS_COLORS.inProgress }} />
+                          <span className="text-muted-foreground">Andamento:</span>
+                          <span className="font-medium text-foreground">{member.inProgress}</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLORS.delivered }} />
-                          <span className="text-muted-foreground">{member.delivered}</span>
-                        </div>
-                        <div className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                          {member.deliveryRate}%
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: STATUS_COLORS.delivered }} />
+                          <span className="text-muted-foreground">Entregue:</span>
+                          <span className="font-medium text-foreground">{member.delivered}</span>
                         </div>
                       </div>
                     </div>
