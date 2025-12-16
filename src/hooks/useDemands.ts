@@ -36,11 +36,11 @@ export function sortDemandsByPriorityAndDueDate<T extends { priority?: string | 
   });
 }
 
-export function useDemands(teamId?: string) {
+export function useDemands(teamId?: string, boardId?: string) {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ["demands", teamId],
+    queryKey: ["demands", teamId, boardId],
     queryFn: async () => {
       let query = supabase
         .from("demands")
@@ -59,6 +59,10 @@ export function useDemands(teamId?: string) {
 
       if (teamId) {
         query = query.eq("team_id", teamId);
+      }
+
+      if (boardId) {
+        query = query.eq("board_id", boardId);
       }
 
       const { data, error } = await query;

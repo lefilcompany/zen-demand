@@ -14,6 +14,85 @@ export type Database = {
   }
   public: {
     Tables: {
+      board_members: {
+        Row: {
+          added_by: string | null
+          board_id: string
+          id: string
+          joined_at: string
+          role: Database["public"]["Enums"]["team_role"]
+          user_id: string
+        }
+        Insert: {
+          added_by?: string | null
+          board_id: string
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["team_role"]
+          user_id: string
+        }
+        Update: {
+          added_by?: string | null
+          board_id?: string
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["team_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_members_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boards: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_default: boolean | null
+          monthly_demand_limit: number | null
+          name: string
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          monthly_demand_limit?: number | null
+          name: string
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          monthly_demand_limit?: number | null
+          name?: string
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boards_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demand_assignees: {
         Row: {
           assigned_at: string | null
@@ -145,6 +224,7 @@ export type Database = {
       }
       demand_requests: {
         Row: {
+          board_id: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -160,6 +240,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          board_id?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -175,6 +256,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          board_id?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -190,6 +272,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "demand_requests_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "demand_requests_created_by_fkey"
             columns: ["created_by"]
@@ -284,6 +373,7 @@ export type Database = {
       }
       demand_templates: {
         Row: {
+          board_id: string | null
           created_at: string
           created_by: string
           description_template: string | null
@@ -296,6 +386,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          board_id?: string | null
           created_at?: string
           created_by: string
           description_template?: string | null
@@ -308,6 +399,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          board_id?: string | null
           created_at?: string
           created_by?: string
           description_template?: string | null
@@ -320,6 +412,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "demand_templates_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "demand_templates_created_by_fkey"
             columns: ["created_by"]
@@ -348,6 +447,7 @@ export type Database = {
           archived: boolean
           archived_at: string | null
           assigned_to: string | null
+          board_id: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -366,6 +466,7 @@ export type Database = {
           archived?: boolean
           archived_at?: string | null
           assigned_to?: string | null
+          board_id?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -384,6 +485,7 @@ export type Database = {
           archived?: boolean
           archived_at?: string | null
           assigned_to?: string | null
+          board_id?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -404,6 +506,13 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demands_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
             referencedColumns: ["id"]
           },
           {
@@ -495,6 +604,7 @@ export type Database = {
       }
       services: {
         Row: {
+          board_id: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -505,6 +615,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          board_id?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -515,6 +626,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          board_id?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -525,6 +637,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "services_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "services_team_id_fkey"
             columns: ["team_id"]
@@ -743,6 +862,10 @@ export type Database = {
     }
     Functions: {
       can_create_demand: { Args: { _team_id: string }; Returns: boolean }
+      get_board_role: {
+        Args: { _board_id: string; _user_id: string }
+        Returns: Database["public"]["Enums"]["team_role"]
+      }
       get_monthly_demand_count: {
         Args: { _month: number; _team_id: string; _year: number }
         Returns: number
@@ -756,7 +879,16 @@ export type Database = {
           name: string
         }[]
       }
+      get_user_board_ids: { Args: { _user_id: string }; Returns: string[] }
       get_user_team_ids: { Args: { _user_id: string }; Returns: string[] }
+      has_board_role: {
+        Args: {
+          _board_id: string
+          _role: Database["public"]["Enums"]["team_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -770,6 +902,14 @@ export type Database = {
           _team_id: string
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_board_admin_or_moderator: {
+        Args: { _board_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_board_member: {
+        Args: { _board_id: string; _user_id: string }
         Returns: boolean
       }
       is_team_admin_or_moderator: {

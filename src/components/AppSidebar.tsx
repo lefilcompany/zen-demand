@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, ClipboardList, Settings2, FileText, Send } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, ClipboardList, Settings2, FileText, Send, LayoutGrid, UserCog } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import logoSoma from "@/assets/logo-soma-dark.png";
 import logoSomaIcon from "@/assets/logo-soma-icon.png";
@@ -11,6 +11,9 @@ import { usePendingRequestsCount } from "@/hooks/useTeamJoinRequests";
 import { usePendingRequestsCount as usePendingDemandRequestsCount } from "@/hooks/useDemandRequests";
 import { useIsTeamAdmin, useTeamRole } from "@/hooks/useTeamRole";
 import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useSelectedBoard } from "@/contexts/BoardContext";
+import { useBoardRole } from "@/hooks/useBoardMembers";
+import { CreateBoardDialog } from "@/components/CreateBoardDialog";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
@@ -27,19 +30,22 @@ export function AppSidebar() {
   const {
     selectedTeamId
   } = useSelectedTeam();
+  const { selectedBoardId, currentBoard } = useSelectedBoard();
   const {
     isAdmin
   } = useIsTeamAdmin(selectedTeamId);
   const {
     data: role
   } = useTeamRole(selectedTeamId);
+  const { data: boardRole } = useBoardRole(selectedBoardId);
   const {
     data: pendingCount
   } = usePendingRequestsCount(isAdmin ? selectedTeamId : null);
   const { data: pendingDemandRequests } = usePendingDemandRequestsCount();
   
-  const isAdminOrModerator = role === "admin" || role === "moderator";
-  const isRequester = role === "requester";
+  const isTeamAdminOrModerator = role === "admin" || role === "moderator";
+  const isBoardAdminOrModerator = boardRole === "admin" || boardRole === "moderator";
+  const isRequester = boardRole === "requester";
 
   const baseMenuItems = [{
     title: t("dashboard.title"),
@@ -56,7 +62,7 @@ export function AppSidebar() {
   }];
 
   // Add demand requests link for admins/moderators
-  const adminMenuItems = isAdminOrModerator ? [{
+  const adminMenuItems = isBoardAdminOrModerator ? [{
     title: "Solicitações de Demanda",
     url: "/demand-requests",
     icon: FileText,
@@ -132,6 +138,60 @@ export function AppSidebar() {
                 );
               })}
 
+              {/* Quadros - Collapsible section for board management */}
+              {selectedBoardId && isBoardAdminOrModerator && (
+                isCollapsed ? (
+                  <SidebarMenuItem data-tour="boards-link">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <SidebarMenuButton tooltip="Quadro" className="hover:bg-sidebar-accent transition-colors">
+                          <LayoutGrid className="h-4 w-4" />
+                        </SidebarMenuButton>
+                      </PopoverTrigger>
+                      <PopoverContent side="right" align="start" sideOffset={8} className="w-48 p-2 bg-sidebar border-sidebar-border z-50">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs font-medium text-sidebar-foreground/70 px-2 py-1">
+                            Quadro: {currentBoard?.name}
+                          </span>
+                          <NavLink to={`/boards/${selectedBoardId}/members`} onClick={closeMobileSidebar} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                            <UserCog className="h-4 w-4" />
+                            Gerenciar Membros
+                          </NavLink>
+                          <CreateBoardDialog trigger={
+                            <button className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors w-full text-left">
+                              <LayoutGrid className="h-4 w-4" />
+                              Novo Quadro
+                            </button>
+                          } />
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </SidebarMenuItem>
+                ) : (
+                  <SidebarMenuItem data-tour="boards-link">
+                    <div className="px-2 py-1">
+                      <span className="text-xs font-medium text-sidebar-foreground/70">
+                        Quadro: {currentBoard?.name}
+                      </span>
+                    </div>
+                    <SidebarMenuButton asChild tooltip="Gerenciar Membros" className="hover:bg-sidebar-accent transition-colors">
+                      <NavLink to={`/boards/${selectedBoardId}/members`} onClick={closeMobileSidebar} activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                        <UserCog className="h-4 w-4" />
+                        <span>Gerenciar Membros</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                    <div className="px-2 mt-1">
+                      <CreateBoardDialog trigger={
+                        <button className="flex items-center gap-2 w-full px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors text-left">
+                          <LayoutGrid className="h-4 w-4" />
+                          Novo Quadro
+                        </button>
+                      } />
+                    </div>
+                  </SidebarMenuItem>
+                )
+              )}
+
               {/* Equipes - Popover quando colapsado, Collapsible quando expandido */}
               {isCollapsed ? <SidebarMenuItem data-tour="teams-link">
                   <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
@@ -161,7 +221,7 @@ export function AppSidebar() {
                               </Badge>}
                           </NavLink>}
                         
-                        {isAdminOrModerator && selectedTeamId && <NavLink to={`/teams/${selectedTeamId}/services`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                        {isTeamAdminOrModerator && selectedTeamId && <NavLink to={`/teams/${selectedTeamId}/services`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                             <Settings2 className="h-4 w-4" />
                             {t("teams.services")}
                           </NavLink>}
@@ -202,7 +262,7 @@ export function AppSidebar() {
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>}
                         
-                        {isAdminOrModerator && selectedTeamId && <SidebarMenuSubItem data-tour="services-link">
+                        {isTeamAdminOrModerator && selectedTeamId && <SidebarMenuSubItem data-tour="services-link">
                             <SidebarMenuSubButton asChild>
                               <NavLink to={`/teams/${selectedTeamId}/services`} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                                 <Settings2 className="h-4 w-4 mr-2" />

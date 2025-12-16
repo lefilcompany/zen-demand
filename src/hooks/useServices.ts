@@ -3,19 +3,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { ServiceCreateSchema, ServiceUpdateSchema, validateData } from "@/lib/validations";
 
-export function useServices(teamId: string | null) {
+export function useServices(teamId: string | null, boardId?: string | null) {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ["services", teamId],
+    queryKey: ["services", teamId, boardId],
     queryFn: async () => {
       if (!teamId) return [];
       
-      const { data, error } = await supabase
+      let query = supabase
         .from("services")
         .select("*")
         .eq("team_id", teamId)
         .order("name");
+
+      if (boardId) {
+        query = query.eq("board_id", boardId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data;
