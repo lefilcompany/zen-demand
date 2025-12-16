@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { TeamSelector } from "@/components/TeamSelector";
+import { BoardSelector } from "@/components/BoardSelector";
 import { Outlet, useNavigate } from "react-router-dom";
 import { Settings, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -78,8 +79,12 @@ export function ProtectedLayout() {
           <header className="flex h-14 md:h-16 shrink-0 items-center justify-between gap-2 bg-background px-3 md:px-6 border-b border-border rounded-t-xl">
             <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
               <SidebarTrigger className="text-foreground hover:bg-muted shrink-0" />
-              <div className="min-w-0 flex-1 max-w-[280px] md:max-w-none">
+              <div className="min-w-0 flex-1 flex items-center gap-2 md:gap-4 max-w-[500px] md:max-w-none">
                 <TeamSelector />
+                <div className="hidden sm:block h-6 w-px bg-border" />
+                <div className="hidden sm:block">
+                  <BoardSelector />
+                </div>
               </div>
             </div>
             
