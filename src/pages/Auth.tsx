@@ -126,16 +126,64 @@ export default function Auth() {
   };
   const getErrorMessage = (error: any): string => {
     const message = error?.message?.toLowerCase() || "";
-    if (message.includes("user already registered") || message.includes("already been registered")) {
-      return t("auth.hasAccount");
-    }
+    const code = error?.code?.toLowerCase() || "";
+    
+    // Invalid credentials
     if (message.includes("invalid login credentials") || message.includes("invalid credentials")) {
-      return t("toast.error");
+      return "Email ou senha incorretos. Verifique suas credenciais e tente novamente.";
     }
+    
+    // User already registered
+    if (message.includes("user already registered") || message.includes("already been registered")) {
+      return "Este email já está cadastrado. Tente fazer login ou use outro email.";
+    }
+    
+    // Email not confirmed
     if (message.includes("email not confirmed")) {
-      return t("common.email");
+      return "Email não confirmado. Verifique sua caixa de entrada para confirmar seu cadastro.";
     }
-    return error?.message || t("toast.error");
+    
+    // Rate limit exceeded
+    if (message.includes("rate limit") || message.includes("too many requests")) {
+      return "Muitas tentativas de login. Aguarde alguns minutos e tente novamente.";
+    }
+    
+    // Network/connection errors
+    if (message.includes("network") || message.includes("fetch") || message.includes("connection")) {
+      return "Erro de conexão. Verifique sua internet e tente novamente.";
+    }
+    
+    // Invalid email format
+    if (message.includes("invalid email") || message.includes("email format")) {
+      return "Formato de email inválido. Verifique o email digitado.";
+    }
+    
+    // Weak password
+    if (message.includes("weak password") || message.includes("password should be")) {
+      return "A senha é muito fraca. Use pelo menos 6 caracteres.";
+    }
+    
+    // User not found
+    if (message.includes("user not found")) {
+      return "Usuário não encontrado. Verifique o email ou crie uma nova conta.";
+    }
+    
+    // Session expired
+    if (message.includes("session") || message.includes("token") || message.includes("expired")) {
+      return "Sua sessão expirou. Faça login novamente.";
+    }
+    
+    // Signup disabled
+    if (message.includes("signups not allowed") || message.includes("signup disabled")) {
+      return "Novos cadastros estão desabilitados no momento.";
+    }
+    
+    // Generic fallback with original message if available
+    if (error?.message && error.message.length > 0 && error.message.length < 200) {
+      return `Erro: ${error.message}`;
+    }
+    
+    return "Ocorreu um erro. Por favor, tente novamente.";
   };
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
