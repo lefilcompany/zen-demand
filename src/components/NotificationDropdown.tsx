@@ -79,8 +79,10 @@ export function NotificationDropdown() {
               <DropdownMenuItem
                 key={notification.id}
                 className={cn(
-                  "flex flex-col items-start gap-1 p-3 cursor-pointer",
-                  !notification.read && "bg-muted/50"
+                  "flex flex-col items-start gap-1 p-3 cursor-pointer border-b border-border/50 last:border-b-0",
+                  "hover:bg-accent/80 focus:bg-accent/80",
+                  "data-[highlighted]:bg-accent/80",
+                  !notification.read && "bg-primary/5"
                 )}
                 onClick={() => handleNotificationClick(notification)}
               >
