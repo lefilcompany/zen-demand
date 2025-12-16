@@ -55,7 +55,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           const { data, error } = await supabase.auth.refreshSession();
           if (error) {
             console.error("Auto token refresh failed:", error.message);
-            // If refresh fails, the user will be logged out on next API call
+            // If refresh token is invalid/not found, clear local state gracefully
+            if (error.message.includes("Refresh Token") || error.message.includes("refresh_token")) {
+              console.log("Clearing invalid session data...");
+              // Don't show error toast - just silently clear the invalid session
+              // The onAuthStateChange SIGNED_OUT event will handle state cleanup
+            }
           } else if (data.session) {
             console.log("Token refreshed successfully");
             // The onAuthStateChange listener will handle state updates
@@ -116,7 +121,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+    supabase.auth.getSession().then(({ data: { session: existingSession }, error }) => {
+      // Handle error from getSession (e.g., invalid refresh token)
+      if (error) {
+        console.log("getSession error (likely stale token):", error.message);
+        // Clear any stale localStorage data
+        localStorage.removeItem("rememberMe");
+        sessionStorage.removeItem("sessionOnly");
+        sessionStorage.setItem("sessionChecked", "true");
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
       // If there's a session but "remember me" was not checked and this is a new browser session
       if (existingSession && shouldLogout && !sessionStorage.getItem("sessionChecked")) {
         sessionStorage.setItem("sessionChecked", "true");
@@ -138,6 +156,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (existingSession) {
         scheduleTokenRefresh(existingSession);
       }
+    }).catch((err) => {
+      // Catch any unexpected errors
+      console.error("Unexpected getSession error:", err);
+      setSession(null);
+      setUser(null);
+      setLoading(false);
     });
 
     // Cleanup on unmount
