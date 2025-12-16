@@ -221,6 +221,26 @@ export default function Auth() {
     }
   };
 
+  // Password strength calculation
+  const getPasswordStrength = (password: string): { level: number; label: string; color: string } => {
+    if (!password) return { level: 0, label: "", color: "" };
+    
+    let score = 0;
+    if (password.length >= 6) score++;
+    if (password.length >= 8) score++;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
+    if (/\d/.test(password)) score++;
+    if (/[^a-zA-Z0-9]/.test(password)) score++;
+
+    if (score <= 1) return { level: 1, label: "Fraca", color: "bg-destructive" };
+    if (score <= 2) return { level: 2, label: "Fraca", color: "bg-destructive" };
+    if (score <= 3) return { level: 3, label: "Média", color: "bg-amber-500" };
+    if (score <= 4) return { level: 4, label: "Forte", color: "bg-emerald-500" };
+    return { level: 5, label: "Muito forte", color: "bg-emerald-600" };
+  };
+
+  const passwordStrength = getPasswordStrength(signupData.password);
+
   // Password match validation
   const passwordsMatch = signupData.password && signupData.confirmPassword && signupData.password === signupData.confirmPassword;
   const passwordsDontMatch = signupData.confirmPassword && signupData.password !== signupData.confirmPassword;
@@ -501,71 +521,92 @@ export default function Auth() {
                     </div>
                   </div>
 
-                  {/* Senha + Confirmar Senha */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="signup-password">{t("common.password")}</Label>
-                      <div className="relative">
-                        <Input 
-                          id="signup-password" 
-                          type={showSignupPassword ? "text" : "password"} 
-                          placeholder="••••••••" 
-                          className="h-10 pr-9" 
-                          value={signupData.password} 
-                          onChange={e => setSignupData({...signupData, password: e.target.value})} 
-                          required 
-                        />
+                  {/* Senha */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="signup-password">{t("common.password")}</Label>
+                    <div className="relative">
+                      <Input 
+                        id="signup-password" 
+                        type={showSignupPassword ? "text" : "password"} 
+                        placeholder="••••••••" 
+                        className="h-10 pr-9" 
+                        value={signupData.password} 
+                        onChange={e => setSignupData({...signupData, password: e.target.value})} 
+                        required 
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-2.5 hover:bg-transparent"
+                        onClick={() => setShowSignupPassword(!showSignupPassword)}
+                      >
+                        {showSignupPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                    {/* Password Strength Indicator */}
+                    {signupData.password && (
+                      <div className="space-y-1">
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <div
+                              key={i}
+                              className={`h-1 flex-1 rounded-full transition-colors ${
+                                i <= passwordStrength.level ? passwordStrength.color : "bg-muted"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <p className={`text-xs ${
+                          passwordStrength.level <= 2 ? "text-destructive" : 
+                          passwordStrength.level === 3 ? "text-amber-500" : "text-emerald-500"
+                        }`}>
+                          Força: {passwordStrength.label}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Confirmar Senha */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="signup-confirm-password">{t("auth.confirmPassword")}</Label>
+                    <div className="relative">
+                      <Input 
+                        id="signup-confirm-password" 
+                        type={showConfirmPassword ? "text" : "password"} 
+                        placeholder="••••••••" 
+                        className={`h-10 pr-16 ${passwordsMatch ? 'border-emerald-500 focus-visible:ring-emerald-500' : ''} ${passwordsDontMatch ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                        value={signupData.confirmPassword} 
+                        onChange={e => setSignupData({...signupData, confirmPassword: e.target.value})} 
+                        required 
+                      />
+                      <div className="absolute right-0 top-0 h-full flex items-center">
+                        {signupData.confirmPassword && (
+                          <span className="pr-1">
+                            {passwordsMatch ? (
+                              <Check className="h-4 w-4 text-emerald-500" />
+                            ) : (
+                              <X className="h-4 w-4 text-destructive" />
+                            )}
+                          </span>
+                        )}
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="absolute right-0 top-0 h-full px-2.5 hover:bg-transparent"
-                          onClick={() => setShowSignupPassword(!showSignupPassword)}
+                          className="h-full px-2.5 hover:bg-transparent"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         >
-                          {showSignupPassword ? (
+                          {showConfirmPassword ? (
                             <EyeOff className="h-4 w-4 text-muted-foreground" />
                           ) : (
                             <Eye className="h-4 w-4 text-muted-foreground" />
                           )}
                         </Button>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="signup-confirm-password">{t("auth.confirmPassword")}</Label>
-                      <div className="relative">
-                        <Input 
-                          id="signup-confirm-password" 
-                          type={showConfirmPassword ? "text" : "password"} 
-                          placeholder="••••••••" 
-                          className={`h-10 pr-16 ${passwordsMatch ? 'border-emerald-500 focus-visible:ring-emerald-500' : ''} ${passwordsDontMatch ? 'border-destructive focus-visible:ring-destructive' : ''}`}
-                          value={signupData.confirmPassword} 
-                          onChange={e => setSignupData({...signupData, confirmPassword: e.target.value})} 
-                          required 
-                        />
-                        <div className="absolute right-0 top-0 h-full flex items-center">
-                          {signupData.confirmPassword && (
-                            <span className="pr-1">
-                              {passwordsMatch ? (
-                                <Check className="h-4 w-4 text-emerald-500" />
-                              ) : (
-                                <X className="h-4 w-4 text-destructive" />
-                              )}
-                            </span>
-                          )}
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-full px-2.5 hover:bg-transparent"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          >
-                            {showConfirmPassword ? (
-                              <EyeOff className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <Eye className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </Button>
-                        </div>
                       </div>
                     </div>
                   </div>
