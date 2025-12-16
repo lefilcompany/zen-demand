@@ -317,7 +317,7 @@ const Index = () => {
       </div>
 
       {/* Banner */}
-      <div className="relative overflow-hidden rounded-xl h-32 md:h-40 lg:h-48">
+      <div className="relative overflow-hidden rounded-xl h-32 md:h-40 lg:h-48 shadow-[0_8px_30px_-5px_hsl(var(--primary)/0.5)]">
         <img 
           src={dashboardBanner} 
           alt="Gestão de demandas" 
