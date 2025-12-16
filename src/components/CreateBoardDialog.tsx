@@ -30,17 +30,19 @@ import { Plus, Loader2 } from "lucide-react";
 const formSchema = z.object({
   name: z
     .string()
+    .trim()
     .min(1, "Nome é obrigatório")
     .max(100, "Nome deve ter no máximo 100 caracteres"),
   description: z
     .string()
+    .trim()
     .max(500, "Descrição deve ter no máximo 500 caracteres")
-    .optional(),
+    .optional()
+    .or(z.literal("")),
   monthly_demand_limit: z.coerce
     .number()
     .int("Deve ser um número inteiro")
     .min(0, "Deve ser zero ou maior")
-    .optional()
     .default(0),
 });
 
@@ -64,22 +66,33 @@ export function CreateBoardDialog({ trigger }: CreateBoardDialogProps) {
     },
   });
 
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    if (!newOpen) {
+      form.reset();
+    }
+  };
+
   const onSubmit = async (values: FormValues) => {
     if (!selectedTeamId) return;
 
-    await createBoard.mutateAsync({
-      team_id: selectedTeamId,
-      name: values.name,
-      description: values.description || null,
-      monthly_demand_limit: values.monthly_demand_limit,
-    });
-
-    form.reset();
-    setOpen(false);
+    try {
+      await createBoard.mutateAsync({
+        team_id: selectedTeamId,
+        name: values.name.trim(),
+        description: values.description?.trim() || null,
+        monthly_demand_limit: values.monthly_demand_limit || 0,
+      });
+      form.reset();
+      setOpen(false);
+    } catch (error) {
+      // Error handling is done in the hook
+      console.error("Erro ao criar quadro:", error);
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || (
           <Button variant="outline" size="sm">
@@ -92,8 +105,8 @@ export function CreateBoardDialog({ trigger }: CreateBoardDialogProps) {
         <DialogHeader>
           <DialogTitle>Criar Novo Quadro</DialogTitle>
           <DialogDescription>
-            Crie um novo quadro para organizar suas demandas. Você poderá adicionar
-            membros depois.
+            Crie um novo quadro para organizar suas demandas. Você poderá
+            adicionar membros depois.
           </DialogDescription>
         </DialogHeader>
 
@@ -106,7 +119,11 @@ export function CreateBoardDialog({ trigger }: CreateBoardDialogProps) {
                 <FormItem>
                   <FormLabel>Nome do Quadro</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Marketing, Desenvolvimento..." {...field} />
+                    <Input
+                      placeholder="Ex: Marketing, Desenvolvimento..."
+                      autoComplete="off"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -154,11 +171,12 @@ export function CreateBoardDialog({ trigger }: CreateBoardDialogProps) {
               )}
             />
 
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-0">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}
+                onClick={() => handleOpenChange(false)}
+                disabled={createBoard.isPending}
               >
                 Cancelar
               </Button>
