@@ -54,19 +54,11 @@ export function ScopeProgressBar({ used, limit, className }: ScopeProgressBarPro
           {used}/{limit} {t("demands.title").toLowerCase()} ({Math.round(percentage)}%)
         </span>
       </div>
-      <div className="relative">
-        <Progress 
-          value={percentage} 
-          className="h-3 bg-muted"
-        />
-        <div 
-          className={cn(
-            "absolute inset-0 h-3 rounded-full transition-all",
-            getProgressColor()
-          )}
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
+      <Progress 
+        value={percentage} 
+        className="h-3 bg-muted"
+        indicatorClassName={getProgressColor()}
+      />
       <div className={cn("text-xs", getStatusColor())}>
         {getStatusText()}
       </div>
