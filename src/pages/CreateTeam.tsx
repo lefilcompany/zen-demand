@@ -124,7 +124,7 @@ export default function CreateTeam() {
     );
   };
 
-  const isFormValid = name.trim().length > 0 && accessCode.length >= 6 && accessCode.length <= 20 && isCodeAvailable !== false;
+  const isFormValid = name.trim().length > 0 && accessCode.length >= 6 && accessCode.length <= 20 && isCodeAvailable === true && !isCheckingCode;
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen">
