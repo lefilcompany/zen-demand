@@ -37,13 +37,10 @@ export function generateAccessCode(): string {
 
 export async function checkAccessCodeAvailable(code: string): Promise<boolean> {
   const { data, error } = await supabase
-    .from("teams")
-    .select("id")
-    .eq("access_code", code.toUpperCase())
-    .maybeSingle();
+    .rpc("check_access_code_exists", { code: code.toUpperCase() });
   
   if (error) throw error;
-  return data === null;
+  return data === false; // Se NÃO existe, está disponível
 }
 
 export function useCreateTeam() {
