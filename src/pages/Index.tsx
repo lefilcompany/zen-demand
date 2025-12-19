@@ -394,69 +394,6 @@ const Index = () => {
         </div>
       )}
 
-      {/* Teams Card */}
-      {widgets.teamsCard && (
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
-                  {t("teams.title")}
-                </CardTitle>
-                <CardDescription className="mt-1">{t("teams.myTeams")}</CardDescription>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => navigate("/teams")}
-                className="gap-1"
-              >
-                {t("common.viewAll")}
-                <ArrowRight className="h-3 w-3" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-6">
-              <div className="flex flex-col">
-                <span className="text-3xl font-bold text-primary">{totalTeams}</span>
-                <span className="text-sm text-muted-foreground">{t("teams.title").toLowerCase()}</span>
-              </div>
-              {currentTeam && (
-                <div className="flex-1 border-l pl-6">
-                  <p className="text-sm font-medium text-foreground">{t("common.current")}:</p>
-                  <p className="text-sm text-muted-foreground truncate">{currentTeam.name}</p>
-                  {role && (
-                    <Badge variant="secondary" className="mt-1 text-xs">
-                      {t(`roles.${role}`)}
-                    </Badge>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="flex gap-2 mt-4">
-              <Button 
-                variant="default" 
-                size="sm" 
-                className="flex-1 gap-1"
-                onClick={() => navigate("/create-team")}
-              >
-                <PlusCircle className="h-3 w-3" />
-                {t("teams.createTeam")}
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex-1 gap-1"
-                onClick={() => navigate("/join-team")}
-              >
-                {t("teams.joinTeam")}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Priority and Completion Time */}
       {selectedTeamId && demands && demands.length > 0 && (widgets.priorityChart || widgets.completionTime) && (
