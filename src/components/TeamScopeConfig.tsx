@@ -21,7 +21,6 @@ export function TeamScopeConfig({ teamId, currentScope }: TeamScopeConfigProps) 
   const [scopeDescription, setScopeDescription] = useState(currentScope?.scope_description || "");
   const [contractStartDate, setContractStartDate] = useState(currentScope?.contract_start_date || "");
   const [contractEndDate, setContractEndDate] = useState(currentScope?.contract_end_date || "");
-  const [monthlyDemandLimit, setMonthlyDemandLimit] = useState(currentScope?.monthly_demand_limit?.toString() || "0");
   const [active, setActive] = useState(currentScope?.active ?? true);
 
   const updateScopeMutation = useMutation({
@@ -32,7 +31,6 @@ export function TeamScopeConfig({ teamId, currentScope }: TeamScopeConfigProps) 
           scope_description: scopeDescription || null,
           contract_start_date: contractStartDate || null,
           contract_end_date: contractEndDate || null,
-          monthly_demand_limit: parseInt(monthlyDemandLimit) || 0,
           active,
         })
         .eq("id", teamId);
@@ -93,21 +91,6 @@ export function TeamScopeConfig({ teamId, currentScope }: TeamScopeConfigProps) 
               onChange={(e) => setContractEndDate(e.target.value)}
             />
           </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="limit">Limite Mensal de Demandas</Label>
-          <Input
-            id="limit"
-            type="number"
-            min="0"
-            placeholder="0 = sem limite"
-            value={monthlyDemandLimit}
-            onChange={(e) => setMonthlyDemandLimit(e.target.value)}
-          />
-          <p className="text-xs text-muted-foreground">
-            Defina 0 para demandas ilimitadas
-          </p>
         </div>
 
         <div className="flex items-center justify-between">
