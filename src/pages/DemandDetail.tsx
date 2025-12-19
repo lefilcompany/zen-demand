@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useDemands, useDemandInteractions, useCreateInteraction, useUpdateInteraction, useDeleteInteraction, useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
+import { useDemandById, useDemandInteractions, useCreateInteraction, useUpdateInteraction, useDeleteInteraction, useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
 import { supabase } from "@/integrations/supabase/client";
 import { useTeamRole } from "@/hooks/useTeamRole";
@@ -36,7 +36,7 @@ import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
 import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -52,7 +52,7 @@ export default function DemandDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: demands } = useDemands();
+  const { data: demand, isLoading, isError, error } = useDemandById(id);
   const { data: interactions } = useDemandInteractions(id!);
   const { data: assignees } = useDemandAssignees(id || null);
   const { data: statuses } = useDemandStatuses();
@@ -72,8 +72,40 @@ export default function DemandDetail() {
   const [interactionFilter, setInteractionFilter] = useState<string>("all");
   const [editingInteractionId, setEditingInteractionId] = useState<string | null>(null);
   const [editingInteractionContent, setEditingInteractionContent] = useState("");
+  
+  // Track toast state
+  const toastShownRef = useRef<{ loading: boolean; success: boolean; error: boolean }>({
+    loading: false,
+    success: false,
+    error: false,
+  });
 
-  const demand = demands?.find((d) => d.id === id);
+  // Toast notifications for loading states
+  useEffect(() => {
+    const toastId = `demand-loading-${id}`;
+    
+    if (isLoading && id && !toastShownRef.current.loading) {
+      toastShownRef.current = { loading: true, success: false, error: false };
+      toast.loading("Carregando demanda...", { id: toastId });
+    }
+    
+    if (isError && !toastShownRef.current.error) {
+      toastShownRef.current.error = true;
+      toast.dismiss(toastId);
+      toast.error("Erro ao carregar demanda", {
+        description: getErrorMessage(error),
+      });
+    }
+    
+    if (demand && !isLoading && !toastShownRef.current.success) {
+      toastShownRef.current.success = true;
+      toast.dismiss(toastId);
+      toast.success("Demanda carregada!", {
+        description: demand.title,
+      });
+    }
+  }, [isLoading, isError, demand, id, error]);
+
   const { data: role } = useTeamRole(demand?.team_id || null);
   const isAssignee = assignees?.some(a => a.user_id === user?.id) || false;
   // Check if demand is delivered or in progress
@@ -325,9 +357,21 @@ export default function DemandDetail() {
     );
   };
 
+  if (isLoading) {
+    return (
+      <div className="text-center py-12">
+        <div className="animate-pulse">
+          <div className="h-8 bg-muted rounded w-1/3 mx-auto mb-4"></div>
+          <div className="h-4 bg-muted rounded w-1/2 mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
+
   if (!demand) {
     return (
       <div className="text-center py-12">
+        <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
         <p className="text-muted-foreground">Demanda não encontrada</p>
         <Button onClick={() => navigate("/demands")} className="mt-4">
           Voltar para Demandas

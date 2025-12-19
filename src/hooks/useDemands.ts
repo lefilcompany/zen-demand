@@ -72,6 +72,35 @@ export function useDemands(boardId?: string) {
   });
 }
 
+export function useDemandById(demandId: string | undefined) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["demand", demandId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("demands")
+        .select(`
+          *,
+          demand_statuses(name, color),
+          profiles!demands_created_by_fkey(full_name, avatar_url),
+          assigned_profile:profiles!demands_assigned_to_fkey(full_name, avatar_url),
+          teams(name),
+          demand_assignees(
+            user_id,
+            profile:profiles(full_name, avatar_url)
+          )
+        `)
+        .eq("id", demandId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user && !!demandId,
+  });
+}
+
 export function useDemandStatuses() {
   return useQuery({
     queryKey: ["demand-statuses"],
