@@ -224,7 +224,7 @@ export default function TeamConfig() {
                             {isCurrentUser && <span className="text-muted-foreground ml-2">(você)</span>}
                           </p>
                           {!canEditMember && (
-                            <Badge className={`text-xs ${roleColors[member.role] || ""}`}>
+                            <Badge className={`text-xs pointer-events-none ${roleColors[member.role] || ""}`}>
                               {roleLabels[member.role] || member.role}
                             </Badge>
                           )}
