@@ -7,6 +7,7 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { Settings, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
 import {
   DropdownMenu,
@@ -22,11 +23,29 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { FloatingCreateButton } from "@/components/FloatingCreateButton";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useTeamRole } from "@/hooks/useTeamRole";
+
+const roleLabels: Record<string, string> = {
+  admin: "Administrador",
+  moderator: "Coordenador",
+  executor: "Agente",
+  requester: "Solicitante",
+};
+
+const roleColors: Record<string, string> = {
+  admin: "bg-red-500/10 text-red-500 border-red-500/20",
+  moderator: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  executor: "bg-green-500/10 text-green-500 border-green-500/20",
+  requester: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+};
 
 export function ProtectedLayout() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { isOpen, steps, closeTour, completeOnboarding, resetOnboarding, hasCompleted } = useOnboarding();
+  const { selectedTeamId } = useSelectedTeam();
+  const { data: teamRole } = useTeamRole(selectedTeamId);
   
   // Detect if tablet/medium screen to collapse sidebar by default
   const [isTablet, setIsTablet] = useState(() => {
@@ -82,8 +101,13 @@ export function ProtectedLayout() {
               <div className="min-w-0 flex-1 flex items-center gap-2 md:gap-4 max-w-[500px] md:max-w-none">
                 <TeamSelector />
                 <div className="hidden sm:block h-6 w-px bg-border" />
-                <div className="hidden sm:block">
+                <div className="hidden sm:flex items-center gap-2">
                   <BoardSelector />
+                  {teamRole && (
+                    <Badge variant="outline" className={`${roleColors[teamRole]} text-xs`}>
+                      {roleLabels[teamRole]}
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>
