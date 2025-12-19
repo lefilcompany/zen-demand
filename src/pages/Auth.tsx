@@ -198,8 +198,8 @@ export default function Auth() {
         sessionStorage.setItem("sessionOnly", "true");
       }
       await signIn(loginData.email, loginData.password);
-      toast.success(t("toast.success"), {
-        description: t("auth.welcomeBack")
+      toast.success("Bem-vindo ao SoMA+", {
+        description: "Login realizado com sucesso!"
       });
     } catch (error: any) {
       toast.error("Erro ao realizar login", {
