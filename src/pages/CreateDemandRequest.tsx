@@ -6,10 +6,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useTeamScope } from "@/hooks/useTeamScope";
 import { useCreateDemandRequest } from "@/hooks/useDemandRequests";
 import { ServiceSelector } from "@/components/ServiceSelector";
-import { ArrowLeft, Ban, Send } from "lucide-react";
+import { ArrowLeft, Ban, Send, Layout } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -18,10 +19,10 @@ import { getErrorMessage } from "@/lib/errorUtils";
 export default function CreateDemandRequest() {
   const navigate = useNavigate();
   const createRequest = useCreateDemandRequest();
-  const { selectedTeamId, teams } = useSelectedTeam();
+  const { selectedTeamId } = useSelectedTeam();
+  const { selectedBoardId, currentBoard } = useSelectedBoard();
   const { data: scope } = useTeamScope();
 
-  const selectedTeam = teams?.find(t => t.id === selectedTeamId);
   const isTeamActive = scope?.active ?? true;
 
   const [title, setTitle] = useState("");
@@ -35,13 +36,14 @@ export default function CreateDemandRequest() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !selectedTeamId || !isTeamActive) return;
+    if (!title.trim() || !selectedTeamId || !selectedBoardId || !isTeamActive) return;
 
     createRequest.mutate(
       {
         title: title.trim(),
         description: description.trim() || undefined,
         team_id: selectedTeamId,
+        board_id: selectedBoardId,
         priority,
         service_id: serviceId && serviceId !== "none" ? serviceId : undefined,
       },
@@ -73,8 +75,9 @@ export default function CreateDemandRequest() {
           Voltar
         </Button>
         <h1 className="text-3xl font-bold tracking-tight">Solicitar Demanda</h1>
-        <p className="text-muted-foreground">
-          Envie uma solicitação para a equipe <span className="font-medium text-primary">{selectedTeam?.name}</span>
+        <p className="text-muted-foreground flex items-center gap-2">
+          <Layout className="h-4 w-4" />
+          Quadro: <span className="font-medium text-primary">{currentBoard?.name || "Selecione um quadro"}</span>
         </p>
       </div>
 
@@ -84,6 +87,16 @@ export default function CreateDemandRequest() {
           <Ban className="h-4 w-4" />
           <AlertDescription>
             O contrato desta equipe está inativo. Não é possível enviar novas solicitações.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* No Board Selected Alert */}
+      {!selectedBoardId && (
+        <Alert variant="destructive">
+          <Ban className="h-4 w-4" />
+          <AlertDescription>
+            Selecione um quadro para enviar uma solicitação.
           </AlertDescription>
         </Alert>
       )}
@@ -138,6 +151,7 @@ export default function CreateDemandRequest() {
                 <Label>Serviço</Label>
                 <ServiceSelector
                   teamId={selectedTeamId}
+                  boardId={selectedBoardId}
                   value={serviceId}
                   onChange={handleServiceChange}
                 />
@@ -155,7 +169,7 @@ export default function CreateDemandRequest() {
               </Button>
               <Button
                 type="submit"
-                disabled={createRequest.isPending || !title.trim() || !isTeamActive}
+                disabled={createRequest.isPending || !title.trim() || !isTeamActive || !selectedBoardId}
                 className="flex-1"
               >
                 <Send className="mr-2 h-4 w-4" />

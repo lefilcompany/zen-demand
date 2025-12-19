@@ -11,6 +11,7 @@ import { addDays, format } from "date-fns";
 
 interface ServiceSelectorProps {
   teamId: string | null;
+  boardId?: string | null;
   value: string;
   onChange: (serviceId: string, estimatedDays?: number) => void;
   disabled?: boolean;
@@ -18,11 +19,12 @@ interface ServiceSelectorProps {
 
 export function ServiceSelector({
   teamId,
+  boardId,
   value,
   onChange,
   disabled = false,
 }: ServiceSelectorProps) {
-  const { data: services, isLoading } = useServices(teamId);
+  const { data: services, isLoading } = useServices(teamId, boardId);
 
   const handleChange = (serviceId: string) => {
     const service = services?.find((s) => s.id === serviceId);

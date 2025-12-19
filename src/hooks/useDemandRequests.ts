@@ -2,10 +2,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useSelectedBoard } from "@/contexts/BoardContext";
 
 interface DemandRequest {
   id: string;
   team_id: string;
+  board_id: string | null;
   created_by: string;
   title: string;
   description: string | null;
@@ -28,19 +30,19 @@ interface DemandRequest {
     name: string;
     estimated_days: number;
   } | null;
-  team?: {
+  board?: {
     name: string;
   } | null;
 }
 
-// Fetch pending requests for admins/moderators
+// Fetch pending requests for admins/moderators - filtered by board
 export function usePendingDemandRequests() {
-  const { selectedTeamId } = useSelectedTeam();
+  const { selectedBoardId } = useSelectedBoard();
 
   return useQuery({
-    queryKey: ["demand-requests", "pending", selectedTeamId],
+    queryKey: ["demand-requests", "pending", selectedBoardId],
     queryFn: async () => {
-      if (!selectedTeamId) return [];
+      if (!selectedBoardId) return [];
 
       const { data, error } = await supabase
         .from("demand_requests")
@@ -48,70 +50,71 @@ export function usePendingDemandRequests() {
           *,
           creator:profiles!demand_requests_created_by_fkey(full_name, avatar_url),
           service:services(name, estimated_days),
-          team:teams(name)
+          board:boards(name)
         `)
-        .eq("team_id", selectedTeamId)
+        .eq("board_id", selectedBoardId)
         .eq("status", "pending")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as DemandRequest[];
     },
-    enabled: !!selectedTeamId,
+    enabled: !!selectedBoardId,
   });
 }
 
-// Fetch user's own requests (for Solicitantes)
+// Fetch user's own requests (for Solicitantes) - filtered by board
 export function useMyDemandRequests() {
   const { user } = useAuth();
-  const { selectedTeamId } = useSelectedTeam();
+  const { selectedBoardId } = useSelectedBoard();
 
   return useQuery({
-    queryKey: ["demand-requests", "my", user?.id, selectedTeamId],
+    queryKey: ["demand-requests", "my", user?.id, selectedBoardId],
     queryFn: async () => {
-      if (!user || !selectedTeamId) return [];
+      if (!user || !selectedBoardId) return [];
 
       const { data, error } = await supabase
         .from("demand_requests")
         .select(`
           *,
           responder:profiles!demand_requests_responded_by_fkey(full_name),
-          service:services(name, estimated_days)
+          service:services(name, estimated_days),
+          board:boards(name)
         `)
         .eq("created_by", user.id)
-        .eq("team_id", selectedTeamId)
+        .eq("board_id", selectedBoardId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as DemandRequest[];
     },
-    enabled: !!user && !!selectedTeamId,
+    enabled: !!user && !!selectedBoardId,
   });
 }
 
-// Count pending requests for badge
+// Count pending requests for badge - filtered by board
 export function usePendingRequestsCount() {
-  const { selectedTeamId } = useSelectedTeam();
+  const { selectedBoardId } = useSelectedBoard();
 
   return useQuery({
-    queryKey: ["demand-requests", "count", selectedTeamId],
+    queryKey: ["demand-requests", "count", selectedBoardId],
     queryFn: async () => {
-      if (!selectedTeamId) return 0;
+      if (!selectedBoardId) return 0;
 
       const { count, error } = await supabase
         .from("demand_requests")
         .select("*", { count: "exact", head: true })
-        .eq("team_id", selectedTeamId)
+        .eq("board_id", selectedBoardId)
         .eq("status", "pending");
 
       if (error) throw error;
       return count || 0;
     },
-    enabled: !!selectedTeamId,
+    enabled: !!selectedBoardId,
   });
 }
 
-// Create a new demand request
+// Create a new demand request - requires board_id
 export function useCreateDemandRequest() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -119,6 +122,7 @@ export function useCreateDemandRequest() {
   return useMutation({
     mutationFn: async (data: {
       team_id: string;
+      board_id: string;
       title: string;
       description?: string;
       priority?: string;

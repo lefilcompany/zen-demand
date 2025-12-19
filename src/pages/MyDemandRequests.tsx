@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useMyDemandRequests, useUpdateDemandRequest, useDeleteDemandRequest } from "@/hooks/useDemandRequests";
-import { ArrowLeft, Clock, CheckCircle, XCircle, RotateCcw, Edit, Trash2, Plus } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle, XCircle, RotateCcw, Edit, Trash2, Plus, Layout } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ServiceSelector } from "@/components/ServiceSelector";
+import { useSelectedBoard } from "@/contexts/BoardContext";
 import { getErrorMessage } from "@/lib/errorUtils";
 
 const statusConfig = {
@@ -25,6 +26,7 @@ const statusConfig = {
 
 export default function MyDemandRequests() {
   const navigate = useNavigate();
+  const { currentBoard, selectedBoardId } = useSelectedBoard();
   const { data: requests, isLoading } = useMyDemandRequests();
   const updateRequest = useUpdateDemandRequest();
   const deleteRequest = useDeleteDemandRequest();
@@ -85,7 +87,10 @@ export default function MyDemandRequests() {
             Voltar
           </Button>
           <h1 className="text-3xl font-bold tracking-tight">Minhas Solicitações</h1>
-          <p className="text-muted-foreground">Acompanhe o status das suas solicitações de demanda</p>
+          <p className="text-muted-foreground flex items-center gap-2">
+            <Layout className="h-4 w-4" />
+            Quadro: <span className="font-medium">{currentBoard?.name || "Selecione um quadro"}</span>
+          </p>
         </div>
         <Button onClick={() => navigate("/demands/request")}>
           <Plus className="mr-2 h-4 w-4" />
@@ -107,6 +112,12 @@ export default function MyDemandRequests() {
                 <CardHeader className="pb-3">
                   <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
                     <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                          <Layout className="h-3 w-3 mr-1" />
+                          {request.board?.name || "Quadro"}
+                        </Badge>
+                      </div>
                       <CardTitle className="text-lg">{request.title}</CardTitle>
                       <CardDescription>
                         Criada em {format(new Date(request.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
@@ -180,7 +191,7 @@ export default function MyDemandRequests() {
       ) : (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            <p>Você ainda não tem solicitações</p>
+            <p>Você ainda não tem solicitações neste quadro</p>
             <Button className="mt-4" onClick={() => navigate("/demands/request")}>
               <Plus className="mr-2 h-4 w-4" />
               Criar Solicitação
@@ -232,6 +243,7 @@ export default function MyDemandRequests() {
                 <Label>Serviço</Label>
                 <ServiceSelector
                   teamId={editingRequest?.team_id}
+                  boardId={editingRequest?.board_id || selectedBoardId}
                   value={serviceId}
                   onChange={setServiceId}
                 />

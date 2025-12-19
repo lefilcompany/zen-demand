@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePendingDemandRequests, useApproveDemandRequest, useReturnDemandRequest } from "@/hooks/useDemandRequests";
-import { ArrowLeft, Clock, CheckCircle, RotateCcw, Users, Building2 } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle, RotateCcw, Users, Layout } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useSelectedBoard } from "@/contexts/BoardContext";
 import { addDays } from "date-fns";
 import { getErrorMessage } from "@/lib/errorUtils";
 
@@ -27,6 +28,7 @@ const priorityColors: Record<string, string> = {
 export default function DemandRequests() {
   const navigate = useNavigate();
   const { selectedTeamId } = useSelectedTeam();
+  const { selectedBoardId, currentBoard } = useSelectedBoard();
   const { data: requests, isLoading } = usePendingDemandRequests();
   const approveRequest = useApproveDemandRequest();
   const returnRequest = useReturnDemandRequest();
@@ -108,7 +110,10 @@ export default function DemandRequests() {
           Voltar
         </Button>
         <h1 className="text-3xl font-bold tracking-tight">Solicitações de Demanda</h1>
-        <p className="text-muted-foreground">Revise e aprove solicitações de demanda dos solicitantes</p>
+        <p className="text-muted-foreground flex items-center gap-2">
+          <Layout className="h-4 w-4" />
+          Quadro: <span className="font-medium">{currentBoard?.name || "Selecione um quadro"}</span>
+        </p>
       </div>
 
       {isLoading ? (
@@ -122,8 +127,8 @@ export default function DemandRequests() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                        <Building2 className="h-3 w-3 mr-1" />
-                        {request.team?.name || "Equipe"}
+                        <Layout className="h-3 w-3 mr-1" />
+                        {request.board?.name || "Quadro"}
                       </Badge>
                     </div>
                     <CardTitle className="text-lg">{request.title}</CardTitle>
@@ -181,7 +186,7 @@ export default function DemandRequests() {
       ) : (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            <p>Não há solicitações pendentes</p>
+            <p>Não há solicitações pendentes para este quadro</p>
           </CardContent>
         </Card>
       )}
@@ -210,6 +215,7 @@ export default function DemandRequests() {
               </Label>
               <AssigneeSelector
                 teamId={selectedTeamId}
+                boardId={selectedBoardId}
                 selectedUserIds={assigneeIds}
                 onChange={setAssigneeIds}
               />
