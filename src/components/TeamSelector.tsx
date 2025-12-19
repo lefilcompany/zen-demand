@@ -22,8 +22,10 @@ const roleColors: Record<string, string> = {
 
 export function TeamSelector() {
   const navigate = useNavigate();
-  const { teams, selectedTeamId, setSelectedTeamId, isLoading, hasTeams } = useSelectedTeam();
+  const { teams, selectedTeamId, setSelectedTeamId, isLoading, hasTeams, currentTeam } = useSelectedTeam();
   const { data: role } = useTeamRole(selectedTeamId);
+
+  const isRequester = role === "requester";
 
   if (isLoading) {
     return <div className="h-9 w-48 animate-pulse rounded-md bg-muted" />;
@@ -35,6 +37,16 @@ export function TeamSelector() {
         <UserPlus className="h-4 w-4" />
         Entrar em Equipe
       </Button>
+    );
+  }
+
+  // For requesters: show only team tag, no selector, no role badge
+  if (isRequester) {
+    return (
+      <Badge variant="secondary" className="bg-primary/10 border border-primary/20 text-foreground text-xs whitespace-nowrap">
+        <Users className="h-3 w-3 mr-1" />
+        {currentTeam?.name || "Equipe"}
+      </Badge>
     );
   }
 

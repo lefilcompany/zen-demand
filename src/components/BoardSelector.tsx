@@ -30,6 +30,8 @@ export function BoardSelector() {
     useSelectedBoard();
   const { data: boardRole, isLoading: roleLoading } = useBoardRole(selectedBoardId);
 
+  const isRequester = boardRole === "requester";
+
   if (isLoading) {
     return <Skeleton className="h-9 w-[180px]" />;
   }
@@ -65,13 +67,16 @@ export function BoardSelector() {
         </SelectContent>
       </Select>
 
-      {roleLoading ? (
-        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-      ) : boardRole ? (
-        <Badge variant="outline" className={`${roleColors[boardRole]} text-xs`}>
-          {roleLabels[boardRole]}
-        </Badge>
-      ) : null}
+      {/* Hide role badge for requesters */}
+      {!isRequester && (
+        roleLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        ) : boardRole ? (
+          <Badge variant="outline" className={`${roleColors[boardRole]} text-xs`}>
+            {roleLabels[boardRole]}
+          </Badge>
+        ) : null
+      )}
     </div>
   );
 }
