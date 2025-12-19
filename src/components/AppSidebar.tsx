@@ -76,17 +76,20 @@ export function AppSidebar() {
     icon: Send
   }] : [];
 
-  const endMenuItems = [{
+  // "Minhas Demandas" only for non-requesters
+  const myDemandsItems = !isRequester ? [{
     title: "Minhas Demandas",
     url: "/my-demands",
     icon: ClipboardList
-  }, {
+  }] : [];
+
+  const endMenuItems = [{
     title: t("demands.archived"),
     url: "/archived",
     icon: Archive
   }];
 
-  const menuItems = [...baseMenuItems, ...adminMenuItems, ...requesterMenuItems, ...endMenuItems];
+  const menuItems = [...baseMenuItems, ...adminMenuItems, ...requesterMenuItems, ...myDemandsItems, ...endMenuItems];
 
   // Keep teams expanded if on teams routes
   const isOnTeamsRoute = location.pathname.startsWith("/teams");
