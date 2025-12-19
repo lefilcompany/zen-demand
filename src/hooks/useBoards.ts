@@ -29,19 +29,35 @@ export interface UpdateBoardData {
   monthly_demand_limit?: number;
 }
 
-// Fetch boards for a team
+// Fetch boards for a team (only boards the user belongs to)
 export function useBoards(teamId: string | null) {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ["boards", teamId],
+    queryKey: ["boards", teamId, user?.id],
     queryFn: async () => {
-      if (!teamId) return [];
+      if (!teamId || !user) return [];
+
+      // Get board IDs where the user is a member
+      const { data: memberBoards, error: memberError } = await supabase
+        .from("board_members")
+        .select("board_id")
+        .eq("user_id", user.id);
+
+      if (memberError) {
+        console.error("Erro ao buscar membros de quadros:", memberError);
+        throw memberError;
+      }
+
+      const boardIds = memberBoards?.map((m) => m.board_id) || [];
+      
+      if (boardIds.length === 0) return [];
 
       const { data, error } = await supabase
         .from("boards")
         .select("*")
         .eq("team_id", teamId)
+        .in("id", boardIds)
         .order("is_default", { ascending: false })
         .order("name", { ascending: true });
 
