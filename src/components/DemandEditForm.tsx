@@ -23,6 +23,7 @@ interface DemandEditFormProps {
     due_date: string | null;
     service_id: string | null;
     team_id: string;
+    board_id: string;
   };
   onClose: () => void;
   onSuccess: () => void;
@@ -150,6 +151,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
         <Label>Serviço</Label>
         <ServiceSelector
           teamId={demand.team_id}
+          boardId={demand.board_id}
           value={serviceId}
           onChange={handleServiceChange}
         />

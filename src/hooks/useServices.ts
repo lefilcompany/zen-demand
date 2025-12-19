@@ -17,8 +17,9 @@ export function useServices(teamId: string | null, boardId?: string | null) {
         .eq("team_id", teamId)
         .order("name");
 
+      // Filter by board_id: show services for this board OR team-wide services (board_id = null)
       if (boardId) {
-        query = query.eq("board_id", boardId);
+        query = query.or(`board_id.eq.${boardId},board_id.is.null`);
       }
 
       const { data, error } = await query;

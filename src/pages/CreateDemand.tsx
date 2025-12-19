@@ -231,6 +231,7 @@ export default function CreateDemand() {
               <Label>Serviço</Label>
               <ServiceSelector
                 teamId={selectedTeamId}
+                boardId={selectedBoardId}
                 value={serviceId}
                 onChange={handleServiceChange}
               />
