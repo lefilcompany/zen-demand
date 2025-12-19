@@ -41,13 +41,13 @@ export function BoardSelector() {
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
       <Select value={selectedBoardId || ""} onValueChange={setSelectedBoardId}>
-        <SelectTrigger className="w-[180px] h-9">
-          <div className="flex items-center gap-2">
-            <LayoutGrid className="h-4 w-4 text-muted-foreground" />
-            <SelectValue placeholder="Selecione um quadro">
-              {currentBoard?.name || "Selecione um quadro"}
+        <SelectTrigger className="w-[100px] xs:w-[120px] sm:w-[160px] md:w-[180px] h-8 sm:h-9 text-xs sm:text-sm">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+            <SelectValue placeholder="Quadro" className="truncate">
+              <span className="truncate">{currentBoard?.name || "Quadro"}</span>
             </SelectValue>
           </div>
         </SelectTrigger>
@@ -67,12 +67,12 @@ export function BoardSelector() {
         </SelectContent>
       </Select>
 
-      {/* Hide role badge for requesters */}
+      {/* Hide role badge on mobile, only show for non-requesters */}
       {!isRequester && (
         roleLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground hidden sm:block" />
         ) : boardRole ? (
-          <Badge variant="outline" className={`${roleColors[boardRole]} text-xs`}>
+          <Badge variant="outline" className={`${roleColors[boardRole]} text-xs hidden sm:inline-flex`}>
             {roleLabels[boardRole]}
           </Badge>
         ) : null
