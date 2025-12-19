@@ -6,11 +6,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSelectedTeam } from "@/contexts/TeamContext";
-import { useCanCreateDemand, useMonthlyDemandCount, useTeamScope } from "@/hooks/useTeamScope";
+import { useTeamScope } from "@/hooks/useTeamScope";
 import { useCreateDemandRequest } from "@/hooks/useDemandRequests";
 import { ServiceSelector } from "@/components/ServiceSelector";
-import { ScopeProgressBar } from "@/components/ScopeProgressBar";
-import { ArrowLeft, AlertTriangle, Send } from "lucide-react";
+import { ArrowLeft, Ban, Send } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -20,12 +19,10 @@ export default function CreateDemandRequest() {
   const navigate = useNavigate();
   const createRequest = useCreateDemandRequest();
   const { selectedTeamId, teams } = useSelectedTeam();
-  const { data: canCreate } = useCanCreateDemand();
-  const { data: monthlyCount } = useMonthlyDemandCount();
   const { data: scope } = useTeamScope();
 
   const selectedTeam = teams?.find(t => t.id === selectedTeamId);
-  const limit = scope?.monthly_demand_limit || 0;
+  const isTeamActive = scope?.active ?? true;
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -38,7 +35,7 @@ export default function CreateDemandRequest() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !selectedTeamId) return;
+    if (!title.trim() || !selectedTeamId || !isTeamActive) return;
 
     createRequest.mutate(
       {
@@ -81,21 +78,12 @@ export default function CreateDemandRequest() {
         </p>
       </div>
 
-      {/* Limit Warning */}
-      {limit > 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <ScopeProgressBar used={monthlyCount || 0} limit={limit} />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Limit Reached Alert */}
-      {canCreate === false && (
+      {/* Team Inactive Alert */}
+      {!isTeamActive && (
         <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
+          <Ban className="h-4 w-4" />
           <AlertDescription>
-            O limite mensal de demandas foi atingido. Entre em contato com o administrador da equipe para mais informações.
+            O contrato desta equipe está inativo. Não é possível enviar novas solicitações.
           </AlertDescription>
         </Alert>
       )}
@@ -167,7 +155,7 @@ export default function CreateDemandRequest() {
               </Button>
               <Button
                 type="submit"
-                disabled={createRequest.isPending || !title.trim() || canCreate === false}
+                disabled={createRequest.isPending || !title.trim() || !isTeamActive}
                 className="flex-1"
               >
                 <Send className="mr-2 h-4 w-4" />

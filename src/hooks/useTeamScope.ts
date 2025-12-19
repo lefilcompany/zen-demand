@@ -6,7 +6,6 @@ export interface TeamScope {
   scope_description: string | null;
   contract_start_date: string | null;
   contract_end_date: string | null;
-  monthly_demand_limit: number;
   active: boolean;
 }
 
@@ -19,7 +18,7 @@ export function useTeamScope(teamId?: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("teams")
-        .select("scope_description, contract_start_date, contract_end_date, monthly_demand_limit, active")
+        .select("scope_description, contract_start_date, contract_end_date, active")
         .eq("id", id!)
         .single();
 
