@@ -43,7 +43,7 @@ export function BoardSelector() {
   return (
     <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
       <Select value={selectedBoardId || ""} onValueChange={setSelectedBoardId}>
-        <SelectTrigger className="w-[100px] xs:w-[120px] sm:w-[160px] md:w-[180px] h-8 sm:h-9 text-xs sm:text-sm">
+        <SelectTrigger className="w-[120px] xs:w-[140px] sm:w-[180px] md:w-[200px] h-8 sm:h-9 text-xs sm:text-sm">
           <div className="flex items-center gap-1.5 min-w-0">
             <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
             <SelectValue placeholder="Quadro" className="truncate">
