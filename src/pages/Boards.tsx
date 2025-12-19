@@ -32,35 +32,35 @@ function BoardCard({ board }: { board: { id: string; name: string; description: 
 
   return (
     <Card 
-      className="cursor-pointer hover:shadow-lg transition-all hover:border-primary/50"
+      className="cursor-pointer hover:shadow-lg transition-all hover:border-primary/50 min-w-0"
       onClick={() => navigate(`/boards/${board.id}`)}
     >
-      <CardHeader className="pb-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-center gap-2 min-w-0">
+      <CardHeader className="pb-3 space-y-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <LayoutGrid className="h-5 w-5 text-primary shrink-0" />
-            <CardTitle className="text-lg truncate">{board.name}</CardTitle>
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {board.is_default && (
-              <Badge variant="secondary" className="text-xs">Padrão</Badge>
-            )}
-            {role && (
-              <Badge className={`text-xs ${roleColors[role] || ""}`}>
-                {roleLabels[role] || role}
-              </Badge>
-            )}
+            <CardTitle className="text-base font-semibold truncate">{board.name}</CardTitle>
           </div>
         </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {board.is_default && (
+            <Badge variant="secondary" className="text-xs shrink-0">Padrão</Badge>
+          )}
+          {role && (
+            <Badge className={`text-xs shrink-0 ${roleColors[role] || ""}`}>
+              {roleLabels[role] || role}
+            </Badge>
+          )}
+        </div>
         {board.description && (
-          <CardDescription className="line-clamp-2 mt-1">{board.description}</CardDescription>
+          <CardDescription className="line-clamp-2 text-sm">{board.description}</CardDescription>
         )}
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-muted-foreground">
-          <div className="flex items-center gap-1">
+        <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-1.5 min-w-0">
             <Users className="h-4 w-4 shrink-0" />
-            <span>
+            <span className="truncate">
               {membersLoading ? (
                 <Skeleton className="h-4 w-8 inline-block" />
               ) : (
@@ -68,9 +68,9 @@ function BoardCard({ board }: { board: { id: string; name: string; description: 
               )}
             </span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5 min-w-0">
             <Settings2 className="h-4 w-4 shrink-0" />
-            <span className="truncate">Limite: {board.monthly_demand_limit || "Ilimitado"}</span>
+            <span className="truncate">{board.monthly_demand_limit || "Ilimitado"}</span>
           </div>
         </div>
       </CardContent>
