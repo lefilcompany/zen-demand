@@ -1,16 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { TeamCard } from "@/components/TeamCard";
 import { useTeams } from "@/hooks/useTeams";
-import { useUserRole } from "@/hooks/useUserRole";
 import { Plus, Users as UsersIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Teams() {
   const navigate = useNavigate();
   const { data: teams, isLoading } = useTeams();
-  const { data: userRole } = useUserRole();
-
-  const isAdmin = userRole === "admin";
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
@@ -27,13 +23,11 @@ export default function Teams() {
             <span className="hidden sm:inline">Entrar em Equipe</span>
             <span className="sm:hidden">Entrar</span>
           </Button>
-          {isAdmin && (
-            <Button onClick={() => navigate("/teams/create")} className="flex-1 sm:flex-none">
-              <Plus className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Criar Equipe</span>
-              <span className="sm:hidden">Criar</span>
-            </Button>
-          )}
+          <Button onClick={() => navigate("/teams/create")} className="flex-1 sm:flex-none">
+            <Plus className="mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Criar Equipe</span>
+            <span className="sm:hidden">Criar</span>
+          </Button>
         </div>
       </div>
 
@@ -52,25 +46,21 @@ export default function Teams() {
           <UsersIcon className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-lg font-semibold">Nenhuma equipe encontrada</h3>
           <p className="text-muted-foreground mt-2">
-            {isAdmin
-              ? "Comece criando uma nova equipe"
-              : "Entre em uma equipe usando um código de acesso"}
+            Comece criando uma nova equipe ou entre com um código de acesso.
           </p>
-          <div className="mt-6">
-            {isAdmin ? (
-              <Button onClick={() => navigate("/teams/create")}>
-                <Plus className="mr-2 h-4 w-4" />
-                Criar Primeira Equipe
-              </Button>
-            ) : (
-              <Button onClick={() => navigate("/teams/join")}>
-                <UsersIcon className="mr-2 h-4 w-4" />
-                Entrar em Equipe
-              </Button>
-            )}
+          <div className="mt-6 flex flex-col sm:flex-row gap-2 justify-center">
+            <Button onClick={() => navigate("/teams/create")}>
+              <Plus className="mr-2 h-4 w-4" />
+              Criar Equipe
+            </Button>
+            <Button onClick={() => navigate("/teams/join")} variant="outline">
+              <UsersIcon className="mr-2 h-4 w-4" />
+              Entrar em Equipe
+            </Button>
           </div>
         </div>
       )}
     </div>
   );
 }
+

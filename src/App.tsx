@@ -5,6 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/lib/auth";
 import { TeamProvider } from "@/contexts/TeamContext";
 import { BoardProvider } from "@/contexts/BoardContext";
+import { RequireAuth } from "@/components/RequireAuth";
 import { RequireTeam } from "@/components/RequireTeam";
 import { ProtectedLayout } from "@/components/ProtectedLayout";
 import { Toaster } from "@/components/ui/sonner";
@@ -53,9 +54,11 @@ const App = () => (
                     {/* Public routes */}
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/reset-password" element={<ResetPassword />} />
-                    <Route path="/welcome" element={<Welcome />} />
-                    <Route path="/teams/create" element={<CreateTeam />} />
-                    <Route path="/teams/join" element={<JoinTeam />} />
+
+                    {/* Auth-only routes (no team required) */}
+                    <Route path="/welcome" element={<RequireAuth><Welcome /></RequireAuth>} />
+                    <Route path="/teams/create" element={<RequireAuth><CreateTeam /></RequireAuth>} />
+                    <Route path="/teams/join" element={<RequireAuth><JoinTeam /></RequireAuth>} />
                     
                     {/* Protected routes - require team selection, shared layout */}
                     <Route element={<RequireTeam><ProtectedLayout /></RequireTeam>}>

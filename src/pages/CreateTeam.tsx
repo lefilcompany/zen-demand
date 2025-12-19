@@ -9,7 +9,6 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
-import { supabase } from "@/integrations/supabase/client";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
 
@@ -105,12 +104,10 @@ export default function CreateTeam() {
         accessCode: accessCode,
       },
       {
-        onSuccess: async () => {
-          toast.success("Equipe criada com sucesso!", {
-            description: "Faça login novamente para acessar sua equipe.",
-          });
-          await supabase.auth.signOut();
-          navigate("/auth");
+        onSuccess: (team: any) => {
+          setSelectedTeamId(team.id);
+          toast.success("Equipe criada com sucesso!");
+          navigate("/");
         },
         onError: (error: any) => {
           if (error.code === "23505") {
