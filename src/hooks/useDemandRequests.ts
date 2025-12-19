@@ -28,6 +28,9 @@ interface DemandRequest {
     name: string;
     estimated_days: number;
   } | null;
+  team?: {
+    name: string;
+  } | null;
 }
 
 // Fetch pending requests for admins/moderators
@@ -44,7 +47,8 @@ export function usePendingDemandRequests() {
         .select(`
           *,
           creator:profiles!demand_requests_created_by_fkey(full_name, avatar_url),
-          service:services(name, estimated_days)
+          service:services(name, estimated_days),
+          team:teams(name)
         `)
         .eq("team_id", selectedTeamId)
         .eq("status", "pending")

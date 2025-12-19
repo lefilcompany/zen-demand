@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePendingDemandRequests, useApproveDemandRequest, useReturnDemandRequest } from "@/hooks/useDemandRequests";
-import { ArrowLeft, Clock, CheckCircle, RotateCcw, Users } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle, RotateCcw, Users, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -120,6 +120,12 @@ export default function DemandRequests() {
               <CardHeader className="pb-3">
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
                   <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                        <Building2 className="h-3 w-3 mr-1" />
+                        {request.team?.name || "Equipe"}
+                      </Badge>
+                    </div>
                     <CardTitle className="text-lg">{request.title}</CardTitle>
                     <CardDescription className="flex items-center gap-2 mt-1">
                       <Avatar className="h-5 w-5">
