@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { TeamSelector } from "@/components/TeamSelector";
 import { BoardSelector } from "@/components/BoardSelector";
 import { Outlet, useNavigate } from "react-router-dom";
 import { Settings, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,20 +15,6 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { FloatingCreateButton } from "@/components/FloatingCreateButton";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { useOnboarding } from "@/hooks/useOnboarding";
-import { useSelectedTeam } from "@/contexts/TeamContext";
-import { useTeamRole } from "@/hooks/useTeamRole";
-const roleLabels: Record<string, string> = {
-  admin: "Administrador",
-  moderator: "Coordenador",
-  executor: "Agente",
-  requester: "Solicitante"
-};
-const roleColors: Record<string, string> = {
-  admin: "bg-red-500/10 text-red-500 border-red-500/20",
-  moderator: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  executor: "bg-green-500/10 text-green-500 border-green-500/20",
-  requester: "bg-amber-500/10 text-amber-500 border-amber-500/20"
-};
 export function ProtectedLayout() {
   const {
     user
@@ -44,12 +28,6 @@ export function ProtectedLayout() {
     resetOnboarding,
     hasCompleted
   } = useOnboarding();
-  const {
-    selectedTeamId
-  } = useSelectedTeam();
-  const {
-    data: teamRole
-  } = useTeamRole(selectedTeamId);
 
   // Detect if tablet/medium screen to collapse sidebar by default
   const [isTablet, setIsTablet] = useState(() => {
@@ -91,11 +69,7 @@ export function ProtectedLayout() {
           <header className="flex h-14 md:h-16 shrink-0 items-center justify-between gap-2 bg-background px-3 md:px-6 border-b border-border rounded-t-xl">
             <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
               <SidebarTrigger className="text-foreground hover:bg-muted shrink-0" />
-              <div className="min-w-0 flex-1 flex items-center gap-2 md:gap-4 max-w-[500px] md:max-w-none">
-                <TeamSelector />
-                <div className="h-6 w-px bg-border hidden sm:block" />
-                <BoardSelector />
-              </div>
+              <BoardSelector />
             </div>
             
             <div className="flex items-center gap-1 md:gap-2">
