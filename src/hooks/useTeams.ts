@@ -28,11 +28,22 @@ export function useTeams() {
 export function generateAccessCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let code = '';
-  // Increased to 10 characters for better brute-force protection (36^10 ≈ 3.6 quadrillion combinations)
-  for (let i = 0; i < 10; i++) {
+  // Increased to 20 characters for maximum brute-force protection (36^20 combinations)
+  for (let i = 0; i < 20; i++) {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return code;
+}
+
+export async function checkAccessCodeAvailable(code: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("teams")
+    .select("id")
+    .eq("access_code", code.toUpperCase())
+    .maybeSingle();
+  
+  if (error) throw error;
+  return data === null;
 }
 
 export function useCreateTeam() {
