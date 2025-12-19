@@ -47,7 +47,7 @@ function BoardCard({ board }: { board: { id: string; name: string; description: 
             <Badge variant="secondary" className="text-xs shrink-0">Padrão</Badge>
           )}
           {role && (
-            <Badge className={`text-xs shrink-0 ${roleColors[role] || ""}`}>
+            <Badge className={`text-xs shrink-0 pointer-events-none ${roleColors[role] || ""}`}>
               {roleLabels[role] || role}
             </Badge>
           )}
