@@ -9,7 +9,8 @@ import { Briefcase, Users, CheckCircle2, Clock, Timer, RefreshCw, FileText, Plus
 import { useDemands } from "@/hooks/useDemands";
 import { useTeams } from "@/hooks/useTeams";
 import { useSelectedTeam } from "@/contexts/TeamContext";
-import { useTeamRole } from "@/hooks/useTeamRole";
+import { useSelectedBoard } from "@/contexts/BoardContext";
+import { useBoardRole } from "@/hooks/useBoardMembers";
 import { DemandTrendChart } from "@/components/DemandTrendChart";
 import { RecentActivities } from "@/components/RecentActivities";
 import { AdjustmentTrendChart } from "@/components/AdjustmentTrendChart";
@@ -33,9 +34,10 @@ const Index = () => {
   const navigate = useNavigate();
   const [period, setPeriod] = useState<PeriodType>("month");
   const { selectedTeamId } = useSelectedTeam();
-  const { data: demands } = useDemands(selectedTeamId || undefined);
+  const { selectedBoardId, currentTeamId } = useSelectedBoard();
+  const { data: demands } = useDemands(selectedBoardId || undefined);
   const { data: teams } = useTeams();
-  const { data: role, isLoading: roleLoading } = useTeamRole(selectedTeamId);
+  const { data: role, isLoading: roleLoading } = useBoardRole(selectedBoardId);
   const { data: scope, isLoading: scopeLoading } = useTeamScope();
   const { data: monthlyCount, isLoading: countLoading } = useMonthlyDemandCount();
   const { data: demandData, isLoading: demandsLoading } = useDemandsByPeriod(period);

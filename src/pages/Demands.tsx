@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DemandCard } from "@/components/DemandCard";
 import { useDemands } from "@/hooks/useDemands";
-import { useSelectedTeam } from "@/contexts/TeamContext";
-import { useTeamRole } from "@/hooks/useTeamRole";
+import { useSelectedBoard } from "@/contexts/BoardContext";
+import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useAuth } from "@/lib/auth";
 import { Plus, Briefcase, LayoutGrid, List, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -23,9 +23,9 @@ export default function Demands() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { selectedTeamId } = useSelectedTeam();
-  const { data: demands, isLoading } = useDemands(selectedTeamId || undefined);
-  const { data: role } = useTeamRole(selectedTeamId);
+  const { selectedBoardId } = useSelectedBoard();
+  const { data: demands, isLoading } = useDemands(selectedBoardId || undefined);
+  const { data: role } = useBoardRole(selectedBoardId);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [filters, setFilters] = useState<DemandFiltersState>({
@@ -219,7 +219,7 @@ export default function Demands() {
           </div>
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <DemandFilters 
-              teamId={selectedTeamId} 
+              boardId={selectedBoardId} 
               filters={filters} 
               onChange={setFilters} 
             />
@@ -253,7 +253,7 @@ export default function Demands() {
         </div>
       </div>
 
-      {!selectedTeamId ? (
+      {!selectedBoardId ? (
         <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
           <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-lg font-semibold text-foreground">

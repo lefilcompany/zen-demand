@@ -3,11 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { sortDemandsByPriorityAndDueDate } from "./useDemands";
 
-export function useArchivedDemands(teamId?: string) {
+export function useArchivedDemands(boardId?: string) {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ["archived-demands", teamId],
+    queryKey: ["archived-demands", boardId],
     queryFn: async () => {
       let query = supabase
         .from("demands")
@@ -20,8 +20,8 @@ export function useArchivedDemands(teamId?: string) {
         `)
         .eq("archived", true);
 
-      if (teamId) {
-        query = query.eq("team_id", teamId);
+      if (boardId) {
+        query = query.eq("board_id", boardId);
       }
 
       const { data, error } = await query;
@@ -31,6 +31,6 @@ export function useArchivedDemands(teamId?: string) {
       // Sort by priority then due date
       return sortDemandsByPriorityAndDueDate(data || []);
     },
-    enabled: !!user,
+    enabled: !!user && !!boardId,
   });
 }

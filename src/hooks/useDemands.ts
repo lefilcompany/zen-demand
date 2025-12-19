@@ -36,11 +36,11 @@ export function sortDemandsByPriorityAndDueDate<T extends { priority?: string | 
   });
 }
 
-export function useDemands(teamId?: string, boardId?: string) {
+export function useDemands(boardId?: string) {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ["demands", teamId, boardId],
+    queryKey: ["demands", boardId],
     queryFn: async () => {
       let query = supabase
         .from("demands")
@@ -57,10 +57,6 @@ export function useDemands(teamId?: string, boardId?: string) {
         `)
         .eq("archived", false);
 
-      if (teamId) {
-        query = query.eq("team_id", teamId);
-      }
-
       if (boardId) {
         query = query.eq("board_id", boardId);
       }
@@ -72,7 +68,7 @@ export function useDemands(teamId?: string, boardId?: string) {
       // Sort by priority then due date
       return sortDemandsByPriorityAndDueDate(data || []);
     },
-    enabled: !!user,
+    enabled: !!user && !!boardId,
   });
 }
 
@@ -99,6 +95,7 @@ export function useCreateDemand() {
       title: string;
       description?: string;
       team_id: string;
+      board_id: string;
       status_id: string;
       priority?: string;
       assigned_to?: string;
@@ -115,6 +112,7 @@ export function useCreateDemand() {
           title: validatedData.title,
           description: validatedData.description,
           team_id: validatedData.team_id,
+          board_id: validatedData.board_id,
           status_id: validatedData.status_id,
           priority: validatedData.priority,
           assigned_to: validatedData.assigned_to,

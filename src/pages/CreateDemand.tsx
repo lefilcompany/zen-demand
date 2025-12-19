@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCreateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useCanCreateDemand, useMonthlyDemandCount, useTeamScope } from "@/hooks/useTeamScope";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { ServiceSelector } from "@/components/ServiceSelector";
@@ -24,6 +25,7 @@ export default function CreateDemand() {
   const navigate = useNavigate();
   const createDemand = useCreateDemand();
   const { selectedTeamId, teams } = useSelectedTeam();
+  const { selectedBoardId, currentBoard } = useSelectedBoard();
   const { data: statuses } = useDemandStatuses();
   const { data: canCreate } = useCanCreateDemand();
   const { data: monthlyCount } = useMonthlyDemandCount();
@@ -65,13 +67,14 @@ export default function CreateDemand() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !selectedTeamId || !statusId) return;
+    if (!title.trim() || !selectedTeamId || !selectedBoardId || !statusId) return;
 
     createDemand.mutate(
       {
         title: title.trim(),
         description: description.trim() || undefined,
         team_id: selectedTeamId,
+        board_id: selectedBoardId,
         status_id: statusId,
         priority,
         due_date: dueDate || undefined,
@@ -124,7 +127,7 @@ export default function CreateDemand() {
         </Button>
         <h1 className="text-3xl font-bold tracking-tight">Nova Demanda</h1>
         <p className="text-muted-foreground">
-          Criar demanda para a equipe <span className="font-medium text-primary">{selectedTeam?.name}</span>
+          Criar demanda para o quadro <span className="font-medium text-primary">{currentBoard?.name}</span>
         </p>
       </div>
 
@@ -254,7 +257,7 @@ export default function CreateDemand() {
               </Button>
               <Button
                 type="submit"
-                disabled={createDemand.isPending || !title.trim() || !statusId || canCreate === false}
+                disabled={createDemand.isPending || !title.trim() || !statusId || !selectedBoardId || canCreate === false}
                 className="flex-1"
               >
                 {createDemand.isPending ? "Criando..." : "Criar Demanda"}

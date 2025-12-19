@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useDemands, useDemandStatuses } from "@/hooks/useDemands";
 import { useAuth } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,8 +26,8 @@ const TABLET_BREAKPOINT = 1024;
 export default function MyDemands() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { selectedTeamId } = useSelectedTeam();
-  const { data: demands, isLoading } = useDemands(selectedTeamId || undefined);
+  const { selectedBoardId } = useSelectedBoard();
+  const { data: demands, isLoading } = useDemands(selectedBoardId || undefined);
   const { data: statuses } = useDemandStatuses();
 
   const [searchQuery, setSearchQuery] = useState("");

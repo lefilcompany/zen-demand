@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { DemandCard } from "@/components/DemandCard";
 import { useArchivedDemands } from "@/hooks/useArchivedDemands";
 import { useUpdateDemand } from "@/hooks/useDemands";
+import { useSelectedBoard } from "@/contexts/BoardContext";
 import { Archive, RotateCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +14,8 @@ import { getErrorMessage } from "@/lib/errorUtils";
 
 export default function ArchivedDemands() {
   const navigate = useNavigate();
-  const { data: demands, isLoading } = useArchivedDemands();
+  const { selectedBoardId } = useSelectedBoard();
+  const { data: demands, isLoading } = useArchivedDemands(selectedBoardId || undefined);
   const updateDemand = useUpdateDemand();
 
   const handleRestore = (id: string, e: React.MouseEvent) => {

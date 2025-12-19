@@ -7,6 +7,7 @@ interface BoardContextType {
   setSelectedBoardId: (id: string | null) => void;
   boards: Board[] | undefined;
   currentBoard: Board | undefined;
+  currentTeamId: string | null;
   hasBoards: boolean;
   isLoading: boolean;
 }
@@ -57,6 +58,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
   }, [selectedTeamId]);
 
   const currentBoard = boards?.find((b) => b.id === selectedBoardId);
+  const currentTeamId = currentBoard?.team_id ?? selectedTeamId;
   const hasBoards = Boolean(boards && boards.length > 0);
 
   return (
@@ -66,6 +68,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
         setSelectedBoardId,
         boards,
         currentBoard,
+        currentTeamId,
         hasBoards,
         isLoading,
       }}

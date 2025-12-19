@@ -22,6 +22,7 @@ export const DemandCreateSchema = z.object({
     .optional()
     .nullable(),
   team_id: z.string().uuid("ID da equipe inválido"),
+  board_id: z.string().uuid("ID do quadro inválido"),
   status_id: z.string().uuid("ID do status inválido"),
   priority: z.enum(priorityValues).optional().default("média"),
   assigned_to: z.string().uuid("ID do responsável inválido").optional().nullable(),

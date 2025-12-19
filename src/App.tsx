@@ -16,8 +16,6 @@ import Auth from "./pages/Auth";
 import Welcome from "./pages/Welcome";
 import Teams from "./pages/Teams";
 import TeamDetail from "./pages/TeamDetail";
-import CreateTeam from "./pages/CreateTeam";
-import JoinTeam from "./pages/JoinTeam";
 import TeamRequests from "./pages/TeamRequests";
 import ServicesManagement from "./pages/ServicesManagement";
 import Demands from "./pages/Demands";
@@ -57,8 +55,6 @@ const App = () => (
 
                     {/* Auth-only routes (no team required) */}
                     <Route path="/welcome" element={<RequireAuth><Welcome /></RequireAuth>} />
-                    <Route path="/teams/create" element={<RequireAuth><CreateTeam /></RequireAuth>} />
-                    <Route path="/teams/join" element={<RequireAuth><JoinTeam /></RequireAuth>} />
                     
                     {/* Protected routes - require team selection, shared layout */}
                     <Route element={<RequireTeam><ProtectedLayout /></RequireTeam>}>
