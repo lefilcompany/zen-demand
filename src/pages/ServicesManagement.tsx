@@ -48,12 +48,12 @@ export default function ServicesManagement() {
     id: string;
     name: string;
     description: string;
-    estimated_days: number;
+    estimated_hours: number;
   } | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    estimated_days: 7,
+    estimated_hours: 24,
   });
 
   const team = teams?.find((t) => t.id === id);
@@ -64,11 +64,11 @@ export default function ServicesManagement() {
       setFormData({
         name: service.name,
         description: service.description || "",
-        estimated_days: service.estimated_days,
+        estimated_hours: service.estimated_hours,
       });
     } else {
       setEditingService(null);
-      setFormData({ name: "", description: "", estimated_days: 7 });
+      setFormData({ name: "", description: "", estimated_hours: 24 });
     }
     setDialogOpen(true);
   };
@@ -83,7 +83,7 @@ export default function ServicesManagement() {
           team_id: id,
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
-          estimated_days: formData.estimated_days,
+          estimated_hours: formData.estimated_hours,
         },
         {
           onSuccess: () => {
@@ -104,7 +104,7 @@ export default function ServicesManagement() {
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
           team_id: id,
-          estimated_days: formData.estimated_days,
+          estimated_hours: formData.estimated_hours,
         },
         {
           onSuccess: () => {
@@ -215,16 +215,16 @@ export default function ServicesManagement() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="estimated_days">Prazo Estimado (dias) *</Label>
+                <Label htmlFor="estimated_hours">Prazo Estimado (horas) *</Label>
                 <Input
-                  id="estimated_days"
+                  id="estimated_hours"
                   type="number"
                   min={1}
-                  value={formData.estimated_days}
+                  value={formData.estimated_hours}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      estimated_days: parseInt(e.target.value) || 1,
+                      estimated_hours: parseInt(e.target.value) || 1,
                     })
                   }
                 />
@@ -278,7 +278,7 @@ export default function ServicesManagement() {
                           id: service.id,
                           name: service.name,
                           description: service.description || "",
-                          estimated_days: service.estimated_days,
+                          estimated_hours: service.estimated_hours,
                         })
                       }
                     >
@@ -320,7 +320,7 @@ export default function ServicesManagement() {
               <CardContent>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Clock className="h-4 w-4" />
-                  <span>Prazo estimado: {service.estimated_days} dias</span>
+                  <span>Prazo estimado: {service.estimated_hours} horas</span>
                 </div>
               </CardContent>
             </Card>

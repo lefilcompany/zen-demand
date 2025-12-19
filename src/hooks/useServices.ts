@@ -38,7 +38,7 @@ export function useCreateService() {
       name: string;
       description?: string;
       team_id: string;
-      estimated_days: number;
+      estimated_hours: number;
     }) => {
       // Validate input data before database operation
       const validatedData = validateData(ServiceCreateSchema, data);
@@ -50,7 +50,7 @@ export function useCreateService() {
           name: validatedData.name,
           description: validatedData.description,
           team_id: validatedData.team_id,
-          estimated_days: validatedData.estimated_days,
+          estimated_hours: validatedData.estimated_hours,
           created_by: userId,
         })
         .select()
@@ -78,7 +78,7 @@ export function useUpdateService() {
       team_id: string;
       name?: string;
       description?: string;
-      estimated_days?: number;
+      estimated_hours?: number;
     }) => {
       // Validate input data before database operation
       const validatedData = validateData(ServiceUpdateSchema, { id, team_id, ...data });

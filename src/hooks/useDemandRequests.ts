@@ -28,7 +28,7 @@ interface DemandRequest {
   } | null;
   service?: {
     name: string;
-    estimated_days: number;
+    estimated_hours: number;
   } | null;
   board?: {
     name: string;
@@ -49,7 +49,7 @@ export function usePendingDemandRequests() {
         .select(`
           *,
           creator:profiles!demand_requests_created_by_fkey(full_name, avatar_url),
-          service:services(name, estimated_days),
+          service:services(name, estimated_hours),
           board:boards(name)
         `)
         .eq("board_id", selectedBoardId)
@@ -78,7 +78,7 @@ export function useMyDemandRequests() {
         .select(`
           *,
           responder:profiles!demand_requests_responded_by_fkey(full_name),
-          service:services(name, estimated_days),
+          service:services(name, estimated_hours),
           board:boards(name)
         `)
         .eq("created_by", user.id)
@@ -226,7 +226,7 @@ export function useApproveDemandRequest() {
       // Get the request details
       const { data: request, error: fetchError } = await supabase
         .from("demand_requests")
-        .select("*, service:services(estimated_days)")
+        .select("*, service:services(estimated_hours)")
         .eq("id", requestId)
         .single();
 

@@ -89,10 +89,10 @@ export const ServiceCreateSchema = z.object({
     .optional()
     .nullable(),
   team_id: z.string().uuid("ID da equipe inválido"),
-  estimated_days: z.number()
-    .int("Dias estimados deve ser um número inteiro")
-    .min(1, "Dias estimados deve ser pelo menos 1")
-    .max(365, "Dias estimados deve ser no máximo 365"),
+  estimated_hours: z.number()
+    .int("Horas estimadas deve ser um número inteiro")
+    .min(1, "Horas estimadas deve ser pelo menos 1")
+    .max(8760, "Horas estimadas deve ser no máximo 8760 (1 ano)"),
 });
 
 export const ServiceUpdateSchema = z.object({
@@ -105,10 +105,10 @@ export const ServiceUpdateSchema = z.object({
     .max(500, "Descrição deve ter no máximo 500 caracteres")
     .optional()
     .nullable(),
-  estimated_days: z.number()
-    .int("Dias estimados deve ser um número inteiro")
-    .min(1, "Dias estimados deve ser pelo menos 1")
-    .max(365, "Dias estimados deve ser no máximo 365")
+  estimated_hours: z.number()
+    .int("Horas estimadas deve ser um número inteiro")
+    .min(1, "Horas estimadas deve ser pelo menos 1")
+    .max(8760, "Horas estimadas deve ser no máximo 8760 (1 ano)")
     .optional(),
 });
 
