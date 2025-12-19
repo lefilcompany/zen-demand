@@ -1,0 +1,271 @@
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { ArrowLeft, LayoutGrid, Users, Trash2, Edit, Loader2, UserPlus, UserMinus, Shield } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useBoard, useDeleteBoard } from "@/hooks/useBoards";
+import { useBoardMembers, useBoardRole, useUpdateBoardMemberRole, useRemoveBoardMember } from "@/hooks/useBoardMembers";
+import { BoardScopeConfig } from "@/components/BoardScopeConfig";
+import { AddBoardMemberDialog } from "@/components/AddBoardMemberDialog";
+import { toast } from "sonner";
+
+const roleLabels: Record<string, string> = {
+  admin: "Administrador",
+  moderator: "Coordenador",
+  executor: "Agente",
+  requester: "Solicitante",
+};
+
+const roleColors: Record<string, string> = {
+  admin: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  moderator: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  executor: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  requester: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
+};
+
+export default function BoardDetail() {
+  const { boardId } = useParams<{ boardId: string }>();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  
+  const { data: board, isLoading: boardLoading } = useBoard(boardId || null);
+  const { data: members, isLoading: membersLoading } = useBoardMembers(boardId || null);
+  const { data: myRole } = useBoardRole(boardId || null);
+  const deleteBoard = useDeleteBoard();
+  const updateRole = useUpdateBoardMemberRole();
+  const removeMember = useRemoveBoardMember();
+
+  const canManage = myRole === "admin" || myRole === "moderator";
+  const isAdmin = myRole === "admin";
+
+  const handleDeleteBoard = async () => {
+    if (!board) return;
+    
+    try {
+      await deleteBoard.mutateAsync({ boardId: board.id, teamId: board.team_id });
+      toast.success("Quadro excluído com sucesso!");
+      navigate("/boards");
+    } catch (error) {
+      toast.error("Erro ao excluir quadro");
+    }
+  };
+
+  const handleRoleChange = async (memberId: string, newRole: string) => {
+    if (!boardId) return;
+    
+    try {
+      await updateRole.mutateAsync({ 
+        memberId, 
+        boardId, 
+        role: newRole as "admin" | "moderator" | "executor" | "requester" 
+      });
+    } catch (error) {
+      toast.error("Erro ao atualizar papel");
+    }
+  };
+
+  const handleRemoveMember = async (memberId: string) => {
+    if (!boardId) return;
+    
+    try {
+      await removeMember.mutateAsync({ memberId, boardId });
+    } catch (error) {
+      toast.error("Erro ao remover membro");
+    }
+  };
+
+  if (boardLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid gap-6 md:grid-cols-2">
+          <Skeleton className="h-64" />
+          <Skeleton className="h-64" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!board) {
+    return (
+      <div className="text-center py-12">
+        <LayoutGrid className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Quadro não encontrado</h2>
+        <Button onClick={() => navigate("/boards")} variant="outline">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar para Quadros
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/boards")}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tight">{board.name}</h1>
+              {board.is_default && (
+                <Badge variant="secondary">Padrão</Badge>
+              )}
+            </div>
+            {board.description && (
+              <p className="text-muted-foreground">{board.description}</p>
+            )}
+          </div>
+        </div>
+        
+        {isAdmin && !board.is_default && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir Quadro
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Excluir Quadro</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tem certeza que deseja excluir o quadro "{board.name}"? Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteBoard} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Excluir
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Scope Configuration */}
+        <BoardScopeConfig boardId={board.id} canEdit={canManage} />
+
+        {/* Members */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Membros do Quadro
+                </CardTitle>
+                <CardDescription>
+                  {members?.length || 0} membros neste quadro
+                </CardDescription>
+              </div>
+              {canManage && (
+                <AddBoardMemberDialog 
+                  boardId={board.id}
+                  trigger={
+                    <Button size="sm">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Adicionar
+                    </Button>
+                  }
+                />
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {membersLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-14" />
+                ))}
+              </div>
+            ) : members && members.length > 0 ? (
+              <div className="space-y-3">
+                {members.map((member) => (
+                  <div 
+                    key={member.id} 
+                    className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={member.profile?.avatar_url || undefined} />
+                        <AvatarFallback>
+                          {member.profile?.full_name?.charAt(0)?.toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{member.profile?.full_name || "Usuário"}</p>
+                        <Badge className={`text-xs ${roleColors[member.role] || ""}`}>
+                          {roleLabels[member.role] || member.role}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    {canManage && (
+                      <div className="flex items-center gap-2">
+                        <Select 
+                          value={member.role} 
+                          onValueChange={(value) => handleRoleChange(member.id, value)}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="admin">Administrador</SelectItem>
+                            <SelectItem value="moderator">Coordenador</SelectItem>
+                            <SelectItem value="executor">Agente</SelectItem>
+                            <SelectItem value="requester">Solicitante</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                              <UserMinus className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remover Membro</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja remover {member.profile?.full_name} deste quadro?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleRemoveMember(member.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Remover
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>Nenhum membro neste quadro</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
