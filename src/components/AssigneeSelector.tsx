@@ -8,11 +8,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { useBoardMembers } from "@/hooks/useBoardMembers";
 import { Users, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AssigneeSelectorProps {
   teamId: string | null;
+  boardId?: string | null;
   selectedUserIds: string[];
   onChange: (userIds: string[]) => void;
   disabled?: boolean;
@@ -20,12 +22,25 @@ interface AssigneeSelectorProps {
 
 export function AssigneeSelector({
   teamId,
+  boardId,
   selectedUserIds,
   onChange,
   disabled = false,
 }: AssigneeSelectorProps) {
   const [open, setOpen] = useState(false);
-  const { data: members, isLoading } = useTeamMembers(teamId);
+  const { data: teamMembers, isLoading: loadingTeam } = useTeamMembers(teamId);
+  const { data: boardMembers, isLoading: loadingBoard } = useBoardMembers(boardId || null);
+
+  // Use board members if boardId is provided, otherwise use team members
+  const members = boardId
+    ? boardMembers?.map((m) => ({
+        id: m.id,
+        user_id: m.user_id,
+        profile: m.profile,
+      }))
+    : teamMembers;
+
+  const isLoading = boardId ? loadingBoard : loadingTeam;
 
   const toggleUser = (userId: string) => {
     if (selectedUserIds.includes(userId)) {
@@ -57,7 +72,7 @@ export function AssigneeSelector({
             "w-full justify-start",
             !selectedUserIds.length && "text-muted-foreground"
           )}
-          disabled={disabled || !teamId}
+          disabled={disabled || (!teamId && !boardId)}
         >
           <Users className="mr-2 h-4 w-4" />
           {selectedUserIds.length > 0 ? (
@@ -85,7 +100,7 @@ export function AssigneeSelector({
         <div className="p-3 border-b">
           <h4 className="font-medium text-sm">Atribuir responsáveis</h4>
           <p className="text-xs text-muted-foreground">
-            Selecione os membros da equipe
+            Selecione os membros {boardId ? "do quadro" : "da equipe"}
           </p>
         </div>
         <div className="max-h-60 overflow-auto p-2">
