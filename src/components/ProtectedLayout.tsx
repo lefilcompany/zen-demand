@@ -3,7 +3,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { BoardSelector } from "@/components/BoardSelector";
 import { Outlet, useNavigate } from "react-router-dom";
-import { Settings, RotateCcw } from "lucide-react";
+import { Settings, RotateCcw, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
@@ -15,6 +15,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { FloatingCreateButton } from "@/components/FloatingCreateButton";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { useSelectedTeam } from "@/contexts/TeamContext";
 export function ProtectedLayout() {
   const {
     user
@@ -28,6 +29,7 @@ export function ProtectedLayout() {
     resetOnboarding,
     hasCompleted
   } = useOnboarding();
+  const { currentTeam } = useSelectedTeam();
 
   // Detect if tablet/medium screen to collapse sidebar by default
   const [isTablet, setIsTablet] = useState(() => {
@@ -69,6 +71,13 @@ export function ProtectedLayout() {
           <header className="flex h-14 md:h-16 shrink-0 items-center justify-between gap-2 bg-background px-3 md:px-6 border-b border-border rounded-t-xl">
             <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
               <SidebarTrigger className="text-foreground hover:bg-muted shrink-0" />
+              {currentTeam && (
+                <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                  <Users className="h-4 w-4 text-primary" />
+                  <span className="truncate max-w-[120px] sm:max-w-[180px]">{currentTeam.name}</span>
+                </div>
+              )}
+              <div className="h-5 w-px bg-border hidden sm:block" />
               <BoardSelector />
             </div>
             
