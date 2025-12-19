@@ -29,7 +29,7 @@ export function TeamSelector() {
   // For requesters: show only team tag, no selector, no role badge
   if (isRequester) {
     return (
-      <Badge variant="secondary" className="bg-primary/10 border border-primary/20 text-foreground text-xs whitespace-nowrap">
+      <Badge variant="secondary" className="bg-primary/10 border border-primary/20 text-foreground text-xs whitespace-nowrap cursor-default hover:bg-primary/10">
         <Users className="h-3 w-3 mr-1" />
         {currentTeam?.name || "Equipe"}
       </Badge>
