@@ -85,3 +85,20 @@ export function useSelectedBoard() {
   }
   return context;
 }
+
+// Safe version that doesn't throw - returns null values when outside provider
+export function useSelectedBoardSafe() {
+  const context = useContext(BoardContext);
+  if (context === undefined) {
+    return {
+      selectedBoardId: null,
+      setSelectedBoardId: () => {},
+      boards: undefined,
+      currentBoard: undefined,
+      currentTeamId: null,
+      hasBoards: false,
+      isLoading: false,
+    };
+  }
+  return context;
+}

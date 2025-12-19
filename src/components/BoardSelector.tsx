@@ -1,4 +1,4 @@
-import { useSelectedBoard } from "@/contexts/BoardContext";
+import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import {
   Select,
@@ -27,7 +27,7 @@ const roleColors: Record<string, string> = {
 
 export function BoardSelector() {
   const { boards, selectedBoardId, setSelectedBoardId, isLoading, currentBoard } =
-    useSelectedBoard();
+    useSelectedBoardSafe();
   const { data: boardRole, isLoading: roleLoading } = useBoardRole(selectedBoardId);
 
   const isRequester = boardRole === "requester";

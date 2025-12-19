@@ -10,7 +10,7 @@ import { usePendingRequestsCount as usePendingDemandRequestsCount } from "@/hook
 import { usePendingRequestsCount as usePendingJoinRequestsCount } from "@/hooks/useTeamJoinRequests";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useSelectedTeam } from "@/contexts/TeamContext";
-import { useSelectedBoard } from "@/contexts/BoardContext";
+import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -29,7 +29,7 @@ export function AppSidebar() {
   const {
     selectedTeamId
   } = useSelectedTeam();
-  const { selectedBoardId } = useSelectedBoard();
+  const { selectedBoardId } = useSelectedBoardSafe();
   const {
     data: role
   } = useTeamRole(selectedTeamId);
