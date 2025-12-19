@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useBoards, Board } from "@/hooks/useBoards";
-import { useSelectedTeam } from "@/contexts/TeamContext";
+import { TeamContext } from "@/contexts/TeamContext";
 
 interface BoardContextType {
   selectedBoardId: string | null;
@@ -14,7 +14,10 @@ interface BoardContextType {
 const BoardContext = createContext<BoardContextType | undefined>(undefined);
 
 export function BoardProvider({ children }: { children: ReactNode }) {
-  const { selectedTeamId } = useSelectedTeam();
+  // Use TeamContext directly to avoid the throwing hook during initialization
+  const teamContext = useContext(TeamContext);
+  const selectedTeamId = teamContext?.selectedTeamId ?? null;
+  
   const [selectedBoardId, setSelectedBoardId] = useState<string | null>(() => {
     return localStorage.getItem("selectedBoardId");
   });
