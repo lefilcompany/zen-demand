@@ -38,7 +38,7 @@ export function useTeamByAccessCode(accessCode: string) {
   return useQuery({
     queryKey: ["team-by-access-code", accessCode],
     queryFn: async () => {
-      if (!accessCode || accessCode.length < 6 || accessCode.length > 10) return null;
+      if (!accessCode || accessCode.length < 6 || accessCode.length > 20) return null;
 
       const { data, error } = await supabase
         .rpc("get_team_by_access_code", { code: accessCode.toUpperCase() });
@@ -46,7 +46,7 @@ export function useTeamByAccessCode(accessCode: string) {
       if (error) throw error;
       return (data?.[0] as TeamPreview) || null;
     },
-    enabled: accessCode.length >= 6 && accessCode.length <= 10,
+    enabled: accessCode.length >= 6 && accessCode.length <= 20,
   });
 }
 
