@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, ClipboardList, Settings2, FileText, Send, LayoutGrid, Settings } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, ClipboardList, Settings2, FileText, Send, LayoutGrid, Settings, UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import logoSoma from "@/assets/logo-soma-dark.png";
 import { NavLink } from "@/components/NavLink";
@@ -7,6 +7,7 @@ import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGrou
 import { LogoutDialog } from "@/components/LogoutDialog";
 import { Badge } from "@/components/ui/badge";
 import { usePendingRequestsCount as usePendingDemandRequestsCount } from "@/hooks/useDemandRequests";
+import { usePendingRequestsCount as usePendingJoinRequestsCount } from "@/hooks/useTeamJoinRequests";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSelectedBoard } from "@/contexts/BoardContext";
@@ -34,6 +35,7 @@ export function AppSidebar() {
   } = useTeamRole(selectedTeamId);
   const { data: boardRole } = useBoardRole(selectedBoardId);
   const { data: pendingDemandRequests } = usePendingDemandRequestsCount();
+  const { data: pendingJoinRequests } = usePendingJoinRequestsCount(selectedTeamId);
   
   const isTeamAdminOrModerator = role === "admin" || role === "moderator";
   const isBoardAdminOrModerator = boardRole === "admin" || boardRole === "moderator";
@@ -84,7 +86,7 @@ export function AppSidebar() {
   const menuItems = [...baseMenuItems, ...adminMenuItems, ...requesterMenuItems, ...myDemandsItems, ...endMenuItems];
 
   // Keep team section expanded if on team/board routes
-  const isOnTeamRoute = location.pathname.startsWith("/boards") || location.pathname.startsWith("/team-config") || location.pathname.includes("/services");
+  const isOnTeamRoute = location.pathname.startsWith("/boards") || location.pathname.startsWith("/team-config") || location.pathname.includes("/services") || location.pathname.includes("/requests");
   const [teamOpen, setTeamOpen] = useState(isOnTeamRoute);
   const [popoverOpen, setPopoverOpen] = useState(false);
 
@@ -169,6 +171,17 @@ export function AppSidebar() {
                             Serviços
                           </NavLink>
                         )}
+                        {isTeamAdminOrModerator && selectedTeamId && (
+                          <NavLink to={`/teams/${selectedTeamId}/requests`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors relative" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                            <UserPlus className="h-4 w-4" />
+                            Solicitações
+                            {typeof pendingJoinRequests === "number" && pendingJoinRequests > 0 && (
+                              <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs">
+                                {pendingJoinRequests}
+                              </Badge>
+                            )}
+                          </NavLink>
+                        )}
                       </div>
                     </PopoverContent>
                   </Popover>
@@ -212,6 +225,22 @@ export function AppSidebar() {
                               <NavLink to={`/teams/${selectedTeamId}/services`} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                                 <Settings2 className="h-4 w-4 mr-2" />
                                 Serviços
+                              </NavLink>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        )}
+                        
+                        {isTeamAdminOrModerator && selectedTeamId && (
+                          <SidebarMenuSubItem className="relative">
+                            <SidebarMenuSubButton asChild>
+                              <NavLink to={`/teams/${selectedTeamId}/requests`} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                                <UserPlus className="h-4 w-4 mr-2" />
+                                Solicitações de Entrada
+                                {typeof pendingJoinRequests === "number" && pendingJoinRequests > 0 && (
+                                  <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs">
+                                    {pendingJoinRequests}
+                                  </Badge>
+                                )}
                               </NavLink>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
