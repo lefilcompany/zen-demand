@@ -6,7 +6,7 @@ import { useLocation } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton, useSidebar } from "@/components/ui/sidebar";
 import { LogoutDialog } from "@/components/LogoutDialog";
 import { Badge } from "@/components/ui/badge";
-import { usePendingRequestsCount as usePendingDemandRequestsCount } from "@/hooks/useDemandRequests";
+import { usePendingRequestsCount as usePendingDemandRequestsCount, useReturnedRequestsCount } from "@/hooks/useDemandRequests";
 import { usePendingRequestsCount as usePendingJoinRequestsCount } from "@/hooks/useTeamJoinRequests";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useSelectedTeam } from "@/contexts/TeamContext";
@@ -36,6 +36,7 @@ export function AppSidebar() {
   const { data: boardRole } = useBoardRole(selectedBoardId);
   const { data: pendingDemandRequests } = usePendingDemandRequestsCount();
   const { data: pendingJoinRequests } = usePendingJoinRequestsCount(selectedTeamId);
+  const { data: returnedRequestsCount } = useReturnedRequestsCount();
   
   const isTeamAdminOrModerator = role === "admin" || role === "moderator";
   const isBoardAdminOrModerator = boardRole === "admin" || boardRole === "moderator";
@@ -67,7 +68,8 @@ export function AppSidebar() {
   const requesterMenuItems = isRequester ? [{
     title: "Minhas Solicitações",
     url: "/my-requests",
-    icon: Send
+    icon: Send,
+    showReturnedBadge: true
   }] : [];
 
   // "Minhas Demandas" only for non-requesters
@@ -130,11 +132,21 @@ export function AppSidebar() {
                             {pendingDemandRequests}
                           </Badge>
                         )}
+                        {!isCollapsed && (item as any).showReturnedBadge && typeof returnedRequestsCount === "number" && returnedRequestsCount > 0 && (
+                          <Badge variant="outline" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs border-amber-500 text-amber-500 bg-amber-500/10">
+                            {returnedRequestsCount}
+                          </Badge>
+                        )}
                       </NavLink>
                     </SidebarMenuButton>
                     {isCollapsed && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
                       <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1">
                         {pendingDemandRequests}
+                      </Badge>
+                    )}
+                    {isCollapsed && (item as any).showReturnedBadge && typeof returnedRequestsCount === "number" && returnedRequestsCount > 0 && (
+                      <Badge variant="outline" className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1 border-amber-500 text-amber-500 bg-amber-500/10">
+                        {returnedRequestsCount}
                       </Badge>
                     )}
                   </SidebarMenuItem>

@@ -114,6 +114,28 @@ export function usePendingRequestsCount() {
   });
 }
 
+// Count returned requests for the current user (needs attention)
+export function useReturnedRequestsCount() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["demand-requests", "returned-count", user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+
+      const { count, error } = await supabase
+        .from("demand_requests")
+        .select("*", { count: "exact", head: true })
+        .eq("created_by", user.id)
+        .eq("status", "returned");
+
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!user,
+  });
+}
+
 // Create a new demand request - requires board_id
 export function useCreateDemandRequest() {
   const queryClient = useQueryClient();
