@@ -250,10 +250,14 @@ export default function TeamConfig() {
                           </Select>
                           
                           <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                <UserMinus className="h-4 w-4" />
-                              </Button>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                            >
+                              <UserMinus className="h-4 w-4" />
+                            </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
