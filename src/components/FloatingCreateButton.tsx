@@ -6,11 +6,6 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CreateBoardDialog } from "@/components/CreateBoardDialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 export function FloatingCreateButton() {
   const { t } = useTranslation();
@@ -30,19 +25,13 @@ export function FloatingCreateButton() {
     return (
       <CreateBoardDialog
         trigger={
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg animate-scale-in"
-                size="icon"
-              >
-                <LayoutGrid className="h-6 w-6" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="left">
-              Novo Quadro
-            </TooltipContent>
-          </Tooltip>
+          <Button
+            className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg animate-scale-in"
+            size="icon"
+            aria-label="Novo Quadro"
+          >
+            <LayoutGrid className="h-6 w-6" />
+          </Button>
         }
       />
     );
@@ -54,20 +43,14 @@ export function FloatingCreateButton() {
   const targetUrl = role === "requester" ? "/demands/request" : "/demands/create";
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          onClick={() => navigate(targetUrl)}
-          className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg animate-scale-in"
-          size="icon"
-          data-tour="new-demand-btn"
-        >
-          <Plus className="h-6 w-6" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="left">
-        {t("demands.newDemand")}
-      </TooltipContent>
-    </Tooltip>
+    <Button
+      onClick={() => navigate(targetUrl)}
+      className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg animate-scale-in"
+      size="icon"
+      data-tour="new-demand-btn"
+      aria-label={t("demands.newDemand")}
+    >
+      <Plus className="h-6 w-6" />
+    </Button>
   );
 }
