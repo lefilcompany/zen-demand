@@ -918,6 +918,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_board_admin_in_team: {
+        Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_board_admin_or_moderator: {
         Args: { _board_id: string; _user_id: string }
         Returns: boolean
