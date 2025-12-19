@@ -15,6 +15,7 @@ interface TeamContextType {
   selectedTeamId: string | null;
   setSelectedTeamId: (id: string | null) => void;
   teams: Team[] | undefined;
+  currentTeam: Team | undefined;
   hasTeams: boolean;
   isLoading: boolean;
 }
@@ -53,9 +54,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   }, [teams, selectedTeamId]);
 
   const hasTeams = Boolean(teams && teams.length > 0);
+  const currentTeam = teams?.find(team => team.id === selectedTeamId);
 
   return (
-    <TeamContext.Provider value={{ selectedTeamId, setSelectedTeamId, teams, hasTeams, isLoading }}>
+    <TeamContext.Provider value={{ selectedTeamId, setSelectedTeamId, teams, currentTeam, hasTeams, isLoading }}>
       {children}
     </TeamContext.Provider>
   );
