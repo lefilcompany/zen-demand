@@ -36,11 +36,22 @@ export function generateAccessCode(): string {
 }
 
 export async function checkAccessCodeAvailable(code: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .rpc("check_access_code_exists", { code: code.toUpperCase() });
+  const normalizedCode = code.toUpperCase().trim();
   
-  if (error) throw error;
-  return data === false; // Se NÃO existe, está disponível
+  if (normalizedCode.length < 6) {
+    return true; // Too short to check, will be validated on submit
+  }
+  
+  const { data, error } = await supabase
+    .rpc("check_access_code_exists", { code: normalizedCode });
+  
+  if (error) {
+    console.error("Error checking access code:", error);
+    throw new Error("Erro ao verificar disponibilidade do código");
+  }
+  
+  // RPC returns true if code EXISTS, so we return the opposite (available if NOT exists)
+  return data === false;
 }
 
 export function useCreateTeam() {

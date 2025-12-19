@@ -21,6 +21,8 @@ import ServicesManagement from "./pages/ServicesManagement";
 import Demands from "./pages/Demands";
 import CreateDemand from "./pages/CreateDemand";
 import CreateDemandRequest from "./pages/CreateDemandRequest";
+import CreateTeam from "./pages/CreateTeam";
+import JoinTeam from "./pages/JoinTeam";
 import MyDemandRequests from "./pages/MyDemandRequests";
 import DemandRequests from "./pages/DemandRequests";
 import DemandDetail from "./pages/DemandDetail";
@@ -58,6 +60,8 @@ const App = () => (
 
                     {/* Auth-only routes (no team required) */}
                     <Route path="/welcome" element={<RequireAuth><Welcome /></RequireAuth>} />
+                    <Route path="/teams/create" element={<RequireAuth><CreateTeam /></RequireAuth>} />
+                    <Route path="/teams/join" element={<RequireAuth><JoinTeam /></RequireAuth>} />
                     
                     {/* Protected routes - require team selection, shared layout */}
                     <Route element={<RequireTeam><ProtectedLayout /></RequireTeam>}>

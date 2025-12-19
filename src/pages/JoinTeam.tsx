@@ -126,7 +126,7 @@ export default function JoinTeam() {
             </p>
           </div>
           <div className="text-white/60 text-sm">
-            O código de acesso tem entre 6 e 10 caracteres
+            O código de acesso tem entre 6 e 20 caracteres
           </div>
         </div>
       </div>
@@ -161,17 +161,17 @@ export default function JoinTeam() {
                 Código
               </Label>
               <div className="relative">
-                <Input
-                  id="accessCode"
-                  placeholder="ABC123"
-                  value={accessCode}
-                  onChange={(e) => setAccessCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10))}
-                  maxLength={10}
-                  className="h-14 text-xl font-mono tracking-[0.3em] uppercase text-center bg-muted/50 border-2 focus:border-primary transition-colors"
-                />
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium bg-background px-1">
-                  {accessCode.length}/6-10
-                </div>
+                  <Input
+                    id="accessCode"
+                    placeholder="ABCD1234EFGH5678"
+                    value={accessCode}
+                    onChange={(e) => setAccessCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 20))}
+                    maxLength={20}
+                    className="h-14 text-xl font-mono tracking-[0.15em] uppercase text-center bg-muted/50 border-2 focus:border-primary transition-colors"
+                  />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium bg-background px-1">
+                    {accessCode.length}/20
+                  </div>
               </div>
             </div>
 
