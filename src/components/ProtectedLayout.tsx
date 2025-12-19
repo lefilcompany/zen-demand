@@ -100,11 +100,11 @@ export function ProtectedLayout() {
               <SidebarTrigger className="text-foreground hover:bg-muted shrink-0" />
               <div className="min-w-0 flex-1 flex items-center gap-2 md:gap-4 max-w-[500px] md:max-w-none">
                 <TeamSelector />
-                <div className="hidden sm:block h-6 w-px bg-border" />
-                <div className="hidden sm:flex items-center gap-2">
+                <div className="h-6 w-px bg-border hidden sm:block" />
+                <div className="flex items-center gap-2">
                   <BoardSelector />
                   {teamRole && (
-                    <Badge variant="outline" className={`${roleColors[teamRole]} text-xs`}>
+                    <Badge variant="outline" className={`${roleColors[teamRole]} text-xs hidden sm:flex`}>
                       {roleLabels[teamRole]}
                     </Badge>
                   )}
