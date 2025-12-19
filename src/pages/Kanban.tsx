@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { KanbanBoard } from "@/components/KanbanBoard";
-import { DashboardBanner } from "@/components/DashboardBanner";
+
 import { useDemands } from "@/hooks/useDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
@@ -19,10 +19,6 @@ export default function Kanban() {
 
   return (
     <div className="flex flex-col h-full animate-fade-in space-y-4">
-      <DashboardBanner 
-        title="Quadro Kanban" 
-        subtitle="Arraste e solte cards para atualizar o status das demandas"
-      />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between shrink-0 pb-4 md:pb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">

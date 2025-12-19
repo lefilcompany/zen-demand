@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { ClipboardList, Search, LayoutGrid, List } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { DemandCard } from "@/components/DemandCard";
-import { DashboardBanner } from "@/components/DashboardBanner";
+
 import { DataTable } from "@/components/ui/data-table";
 import { demandColumns } from "@/components/demands/columns";
 import {
@@ -105,10 +105,6 @@ export default function MyDemands() {
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <DashboardBanner 
-        title="Minhas Demandas" 
-        subtitle="Visualize e gerencie as demandas atribuídas a você"
-      />
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center gap-3">
