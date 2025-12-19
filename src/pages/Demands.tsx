@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DemandCard } from "@/components/DemandCard";
+import { DashboardBanner } from "@/components/DashboardBanner";
 import { useDemands } from "@/hooks/useDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
@@ -198,6 +199,10 @@ export default function Demands() {
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
+      <DashboardBanner 
+        title="Todas as Demandas" 
+        subtitle="Visualize e gerencie todas as demandas do seu quadro"
+      />
       <div className="flex flex-col gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
