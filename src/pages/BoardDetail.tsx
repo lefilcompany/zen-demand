@@ -89,22 +89,22 @@ export default function BoardDetail() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/boards")}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+          <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate("/boards")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight">{board.name}</h1>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight truncate">{board.name}</h1>
               {board.is_default && (
-                <Badge variant="secondary">Padrão</Badge>
+                <Badge variant="secondary" className="text-xs shrink-0">Padrão</Badge>
               )}
             </div>
             {board.description && (
-              <p className="text-muted-foreground">{board.description}</p>
+              <p className="text-sm text-muted-foreground line-clamp-2">{board.description}</p>
             )}
           </div>
         </div>
@@ -112,7 +112,7 @@ export default function BoardDetail() {
         {isAdmin && !board.is_default && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm">
+              <Button variant="destructive" size="sm" className="hidden sm:inline-flex shrink-0">
                 <Trash2 className="h-4 w-4 mr-2" />
                 Excluir Quadro
               </Button>
@@ -135,20 +135,20 @@ export default function BoardDetail() {
         )}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
         {/* Scope Configuration */}
         <BoardScopeConfig boardId={board.id} canEdit={canManage} />
 
         {/* Members */}
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Membros do Quadro
+          <CardHeader className="pb-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <Users className="h-5 w-5 shrink-0" />
+                  <span className="truncate">Membros do Quadro</span>
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-sm">
                   {members?.length || 0} membros neste quadro
                   <span className="block text-xs mt-1">
                     Os cargos são gerenciados nas configurações da equipe
@@ -159,7 +159,7 @@ export default function BoardDetail() {
                 <AddBoardMemberDialog 
                   boardId={board.id}
                   trigger={
-                    <Button size="sm">
+                    <Button size="sm" className="hidden sm:inline-flex shrink-0">
                       <UserPlus className="h-4 w-4 mr-2" />
                       Adicionar
                     </Button>

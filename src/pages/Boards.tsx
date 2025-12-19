@@ -35,31 +35,31 @@ function BoardCard({ board }: { board: { id: string; name: string; description: 
       className="cursor-pointer hover:shadow-lg transition-all hover:border-primary/50"
       onClick={() => navigate(`/boards/${board.id}`)}
     >
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
-            <LayoutGrid className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg">{board.name}</CardTitle>
+      <CardHeader className="pb-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            <LayoutGrid className="h-5 w-5 text-primary shrink-0" />
+            <CardTitle className="text-lg truncate">{board.name}</CardTitle>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {board.is_default && (
-              <Badge variant="secondary">Padrão</Badge>
+              <Badge variant="secondary" className="text-xs">Padrão</Badge>
             )}
             {role && (
-              <Badge className={roleColors[role] || ""}>
+              <Badge className={`text-xs ${roleColors[role] || ""}`}>
                 {roleLabels[role] || role}
               </Badge>
             )}
           </div>
         </div>
         {board.description && (
-          <CardDescription>{board.description}</CardDescription>
+          <CardDescription className="line-clamp-2 mt-1">{board.description}</CardDescription>
         )}
       </CardHeader>
-      <CardContent>
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
+      <CardContent className="pt-0">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
-            <Users className="h-4 w-4" />
+            <Users className="h-4 w-4 shrink-0" />
             <span>
               {membersLoading ? (
                 <Skeleton className="h-4 w-8 inline-block" />
@@ -69,8 +69,8 @@ function BoardCard({ board }: { board: { id: string; name: string; description: 
             </span>
           </div>
           <div className="flex items-center gap-1">
-            <Settings2 className="h-4 w-4" />
-            <span>Limite: {board.monthly_demand_limit || "Ilimitado"}</span>
+            <Settings2 className="h-4 w-4 shrink-0" />
+            <span className="truncate">Limite: {board.monthly_demand_limit || "Ilimitado"}</span>
           </div>
         </div>
       </CardContent>
@@ -105,18 +105,18 @@ export default function Boards() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Meus Quadros</h1>
-          <p className="text-muted-foreground">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Meus Quadros</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Gerencie os quadros da sua equipe
           </p>
         </div>
         {canCreateBoard && (
           <CreateBoardDialog 
             trigger={
-              <Button>
+              <Button className="hidden sm:inline-flex w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Quadro
               </Button>
@@ -126,7 +126,7 @@ export default function Boards() {
       </div>
 
       {boards && boards.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {boards.map((board) => (
             <BoardCard key={board.id} board={board} />
           ))}
