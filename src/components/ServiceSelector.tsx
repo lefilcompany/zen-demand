@@ -7,13 +7,13 @@ import {
 } from "@/components/ui/select";
 import { useServices } from "@/hooks/useServices";
 import { Clock } from "lucide-react";
-import { addDays, format } from "date-fns";
+import { addHours, format } from "date-fns";
 
 interface ServiceSelectorProps {
   teamId: string | null;
   boardId?: string | null;
   value: string;
-  onChange: (serviceId: string, estimatedDays?: number) => void;
+  onChange: (serviceId: string, estimatedHours?: number) => void;
   disabled?: boolean;
 }
 
@@ -28,11 +28,11 @@ export function ServiceSelector({
 
   const handleChange = (serviceId: string) => {
     const service = services?.find((s) => s.id === serviceId);
-    onChange(serviceId, service?.estimated_days);
+    onChange(serviceId, service?.estimated_hours);
   };
 
-  const calculateDueDate = (estimatedDays: number) => {
-    return format(addDays(new Date(), estimatedDays), "dd/MM/yyyy");
+  const calculateDueDate = (estimatedHours: number) => {
+    return format(addHours(new Date(), estimatedHours), "dd/MM/yyyy HH:mm");
   };
 
   return (
@@ -52,10 +52,10 @@ export function ServiceSelector({
               <span className="font-medium">{service.name}</span>
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {service.estimated_days} dias
+                {service.estimated_hours}h
               </span>
               <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                (até {calculateDueDate(service.estimated_days)})
+                (até {calculateDueDate(service.estimated_hours)})
               </span>
             </div>
           </SelectItem>

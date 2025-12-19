@@ -16,7 +16,7 @@ import { ScopeProgressBar } from "@/components/ScopeProgressBar";
 import { ArrowLeft, AlertTriangle, Ban } from "lucide-react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { addDays, format } from "date-fns";
+import { addHours, format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
@@ -61,10 +61,10 @@ export default function CreateDemand() {
     }
   }, [statuses, statusId]);
 
-  const handleServiceChange = (newServiceId: string, estimatedDays?: number) => {
+  const handleServiceChange = (newServiceId: string, estimatedHours?: number) => {
     setServiceId(newServiceId);
-    if (newServiceId !== "none" && estimatedDays) {
-      const calculatedDate = addDays(new Date(), estimatedDays);
+    if (newServiceId !== "none" && estimatedHours) {
+      const calculatedDate = addHours(new Date(), estimatedHours);
       setDueDate(format(calculatedDate, "yyyy-MM-dd"));
     }
   };

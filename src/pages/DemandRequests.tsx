@@ -160,7 +160,7 @@ export default function DemandRequests() {
                   </Badge>
                   {request.service && (
                     <Badge variant="outline">
-                      {request.service.name} ({request.service.estimated_days} dias)
+                      {request.service.name} ({request.service.estimated_hours}h)
                     </Badge>
                   )}
                 </div>

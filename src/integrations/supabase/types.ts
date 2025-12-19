@@ -622,7 +622,7 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
-          estimated_days: number
+          estimated_hours: number
           id: string
           name: string
           team_id: string
@@ -633,7 +633,7 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
-          estimated_days?: number
+          estimated_hours?: number
           id?: string
           name: string
           team_id: string
@@ -644,7 +644,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
-          estimated_days?: number
+          estimated_hours?: number
           id?: string
           name?: string
           team_id?: string
