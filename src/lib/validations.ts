@@ -69,13 +69,13 @@ export const TeamCreateSchema = z.object({
     .optional()
     .nullable(),
   accessCode: z.string()
-    .regex(/^[A-Z0-9]{6,10}$/, "Código deve ter 6-10 caracteres alfanuméricos")
+    .regex(/^[A-Z0-9]{6,20}$/, "Código deve ter 6-20 caracteres alfanuméricos")
     .optional(),
 });
 
 export const AccessCodeSchema = z.string()
   .min(6, "Código deve ter pelo menos 6 caracteres")
-  .max(10, "Código deve ter no máximo 10 caracteres")
+  .max(20, "Código deve ter no máximo 20 caracteres")
   .regex(/^[A-Z0-9]+$/i, "Código deve conter apenas letras e números");
 
 // ==================== SERVICE SCHEMAS ====================

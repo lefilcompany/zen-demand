@@ -2,11 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreateTeam, generateAccessCode } from "@/hooks/useTeams";
+import { useCreateTeam, generateAccessCode, checkAccessCodeAvailable } from "@/hooks/useTeams";
 import { useSelectedTeam } from "@/contexts/TeamContext";
-import { ArrowLeft, RefreshCw, Copy, Check, Eye, EyeOff, Users, Loader2, Shield } from "lucide-react";
+import { ArrowLeft, RefreshCw, Copy, Check, Eye, EyeOff, Users, Loader2, Shield, CheckCircle2, XCircle, Loader } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +22,32 @@ export default function CreateTeam() {
   const [accessCode, setAccessCode] = useState(() => generateAccessCode());
   const [copied, setCopied] = useState(false);
   const [showCode, setShowCode] = useState(false);
+  const [isCheckingCode, setIsCheckingCode] = useState(false);
+  const [isCodeAvailable, setIsCodeAvailable] = useState<boolean | null>(null);
+
+  // Check code availability when it changes
+  useEffect(() => {
+    if (accessCode.length < 6) {
+      setIsCodeAvailable(null);
+      return;
+    }
+
+    const checkCode = async () => {
+      setIsCheckingCode(true);
+      try {
+        const available = await checkAccessCodeAvailable(accessCode);
+        setIsCodeAvailable(available);
+      } catch (error) {
+        console.error("Error checking code:", error);
+        setIsCodeAvailable(null);
+      } finally {
+        setIsCheckingCode(false);
+      }
+    };
+
+    const timeoutId = setTimeout(checkCode, 500); // Debounce
+    return () => clearTimeout(timeoutId);
+  }, [accessCode]);
 
   const getCodeStrength = (code: string) => {
     if (code.length < 6) return { level: 0, label: "Muito fraco", color: "bg-destructive" };
@@ -30,9 +56,9 @@ export default function CreateTeam() {
     const hasNumbers = /[0-9]/.test(code);
     const isMixed = hasLetters && hasNumbers;
     
-    if (code.length >= 10 && isMixed) return { level: 4, label: "Excelente", color: "bg-emerald-500" };
-    if (code.length >= 8 && isMixed) return { level: 3, label: "Forte", color: "bg-emerald-400" };
-    if (code.length >= 6 && isMixed) return { level: 2, label: "Bom", color: "bg-amber-500" };
+    if (code.length >= 18 && isMixed) return { level: 4, label: "Excelente", color: "bg-emerald-500" };
+    if (code.length >= 14 && isMixed) return { level: 3, label: "Forte", color: "bg-emerald-400" };
+    if (code.length >= 10 && isMixed) return { level: 2, label: "Bom", color: "bg-amber-500" };
     if (code.length >= 6) return { level: 1, label: "Fraco", color: "bg-amber-400" };
     
     return { level: 0, label: "Muito fraco", color: "bg-destructive" };
@@ -41,7 +67,9 @@ export default function CreateTeam() {
   const codeStrength = getCodeStrength(accessCode);
 
   const handleGenerateCode = () => {
-    setAccessCode(generateAccessCode());
+    const newCode = generateAccessCode();
+    setAccessCode(newCode);
+    setIsCodeAvailable(null);
     toast.info("Novo código gerado");
   };
 
@@ -53,8 +81,9 @@ export default function CreateTeam() {
   };
 
   const handleAccessCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+    const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 20);
     setAccessCode(value);
+    setIsCodeAvailable(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -62,6 +91,10 @@ export default function CreateTeam() {
     if (!name.trim()) return;
     if (accessCode.length < 6) {
       toast.error("Código de acesso deve ter no mínimo 6 caracteres");
+      return;
+    }
+    if (isCodeAvailable === false) {
+      toast.error("Este código já está em uso. Escolha outro.");
       return;
     }
 
@@ -94,7 +127,7 @@ export default function CreateTeam() {
     );
   };
 
-  const isFormValid = name.trim().length > 0 && accessCode.length >= 6 && accessCode.length <= 10;
+  const isFormValid = name.trim().length > 0 && accessCode.length >= 6 && accessCode.length <= 20 && isCodeAvailable !== false;
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen">
@@ -140,7 +173,7 @@ export default function CreateTeam() {
             </p>
           </div>
           <div className="text-white/60 text-sm">
-            O código de acesso deve ter entre 6 e 10 caracteres
+            O código de acesso deve ter entre 6 e 20 caracteres
           </div>
         </div>
       </div>
@@ -219,12 +252,16 @@ export default function CreateTeam() {
                     type={showCode ? "text" : "password"}
                     value={accessCode}
                     onChange={handleAccessCodeChange}
-                    placeholder="ABC1234XYZ"
-                    className="h-12 text-base font-mono tracking-[0.15em] uppercase text-center bg-muted/50 border-2 focus:border-primary transition-colors pr-14"
-                    maxLength={10}
+                    placeholder="ABCDEFGH1234567890XY"
+                    className={`h-12 text-base font-mono tracking-[0.1em] uppercase text-center bg-muted/50 border-2 transition-colors pr-14 ${
+                      isCodeAvailable === false ? 'border-destructive focus:border-destructive' : 
+                      isCodeAvailable === true ? 'border-emerald-500 focus:border-emerald-500' : 
+                      'focus:border-primary'
+                    }`}
+                    maxLength={20}
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium">
-                    {accessCode.length}/10
+                    {accessCode.length}/20
                   </div>
                 </div>
                 <Button
@@ -238,6 +275,28 @@ export default function CreateTeam() {
                   {showCode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
+
+              {/* Code availability indicator */}
+              {accessCode.length >= 6 && (
+                <div className="flex items-center gap-2 text-sm">
+                  {isCheckingCode ? (
+                    <>
+                      <Loader className="h-4 w-4 animate-spin text-muted-foreground" />
+                      <span className="text-muted-foreground">Verificando disponibilidade...</span>
+                    </>
+                  ) : isCodeAvailable === true ? (
+                    <>
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                      <span className="text-emerald-500">Código disponível</span>
+                    </>
+                  ) : isCodeAvailable === false ? (
+                    <>
+                      <XCircle className="h-4 w-4 text-destructive" />
+                      <span className="text-destructive">Código já em uso</span>
+                    </>
+                  ) : null}
+                </div>
+              )}
 
               <div className="flex gap-2">
                 <Button
