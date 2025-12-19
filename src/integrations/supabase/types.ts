@@ -876,6 +876,7 @@ export type Database = {
     }
     Functions: {
       can_create_demand: { Args: { _team_id: string }; Returns: boolean }
+      check_access_code_exists: { Args: { code: string }; Returns: boolean }
       get_board_role: {
         Args: { _board_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["team_role"]
