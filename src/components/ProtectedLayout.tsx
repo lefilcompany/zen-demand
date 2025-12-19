@@ -94,10 +94,7 @@ export function ProtectedLayout() {
               <div className="min-w-0 flex-1 flex items-center gap-2 md:gap-4 max-w-[500px] md:max-w-none">
                 <TeamSelector />
                 <div className="h-6 w-px bg-border hidden sm:block" />
-                <div className="flex items-center gap-2">
-                  <BoardSelector />
-                  {teamRole}
-                </div>
+                <BoardSelector />
               </div>
             </div>
             
