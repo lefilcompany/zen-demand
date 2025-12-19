@@ -1,0 +1,155 @@
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { LayoutGrid, Users, Settings2, Plus } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useBoards } from "@/hooks/useBoards";
+import { useBoardMembers, useBoardRole } from "@/hooks/useBoardMembers";
+import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useTeamRole } from "@/hooks/useTeamRole";
+import { CreateBoardDialog } from "@/components/CreateBoardDialog";
+
+function BoardCard({ board }: { board: { id: string; name: string; description: string | null; is_default: boolean; monthly_demand_limit: number } }) {
+  const navigate = useNavigate();
+  const { data: members, isLoading: membersLoading } = useBoardMembers(board.id);
+  const { data: role } = useBoardRole(board.id);
+
+  const roleLabels: Record<string, string> = {
+    admin: "Administrador",
+    moderator: "Coordenador",
+    executor: "Agente",
+    requester: "Solicitante",
+  };
+
+  const roleColors: Record<string, string> = {
+    admin: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+    moderator: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+    executor: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+    requester: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
+  };
+
+  return (
+    <Card 
+      className="cursor-pointer hover:shadow-lg transition-all hover:border-primary/50"
+      onClick={() => navigate(`/boards/${board.id}`)}
+    >
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2">
+            <LayoutGrid className="h-5 w-5 text-primary" />
+            <CardTitle className="text-lg">{board.name}</CardTitle>
+          </div>
+          <div className="flex gap-2">
+            {board.is_default && (
+              <Badge variant="secondary">Padrão</Badge>
+            )}
+            {role && (
+              <Badge className={roleColors[role] || ""}>
+                {roleLabels[role] || role}
+              </Badge>
+            )}
+          </div>
+        </div>
+        {board.description && (
+          <CardDescription>{board.description}</CardDescription>
+        )}
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <Users className="h-4 w-4" />
+            <span>
+              {membersLoading ? (
+                <Skeleton className="h-4 w-8 inline-block" />
+              ) : (
+                `${members?.length || 0} membros`
+              )}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Settings2 className="h-4 w-4" />
+            <span>Limite: {board.monthly_demand_limit || "Ilimitado"}</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function Boards() {
+  const { t } = useTranslation();
+  const { selectedTeamId } = useSelectedTeam();
+  const { data: boards, isLoading } = useBoards(selectedTeamId);
+  const { data: teamRole } = useTeamRole(selectedTeamId);
+  
+  const canCreateBoard = teamRole === "admin" || teamRole === "moderator" || teamRole === "executor";
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-48 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-40" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Meus Quadros</h1>
+          <p className="text-muted-foreground">
+            Gerencie os quadros da sua equipe
+          </p>
+        </div>
+        {canCreateBoard && (
+          <CreateBoardDialog 
+            trigger={
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Quadro
+              </Button>
+            }
+          />
+        )}
+      </div>
+
+      {boards && boards.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {boards.map((board) => (
+            <BoardCard key={board.id} board={board} />
+          ))}
+        </div>
+      ) : (
+        <Card className="p-12 text-center">
+          <LayoutGrid className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">Nenhum quadro encontrado</h3>
+          <p className="text-muted-foreground mb-4">
+            Você ainda não tem acesso a nenhum quadro.
+          </p>
+          {canCreateBoard && (
+            <CreateBoardDialog 
+              trigger={
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Criar Primeiro Quadro
+                </Button>
+              }
+            />
+          )}
+        </Card>
+      )}
+    </div>
+  );
+}
