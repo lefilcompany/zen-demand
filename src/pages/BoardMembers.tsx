@@ -3,20 +3,12 @@ import { useBoard } from "@/hooks/useBoards";
 import {
   useBoardMembers,
   useBoardRole,
-  useUpdateBoardMemberRole,
   useRemoveBoardMember,
 } from "@/hooks/useBoardMembers";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,21 +54,11 @@ export default function BoardMembers() {
   const { data: board, isLoading: boardLoading } = useBoard(boardId || null);
   const { data: members, isLoading: membersLoading } = useBoardMembers(boardId || null);
   const { data: userRole } = useBoardRole(boardId || null);
-  const updateRole = useUpdateBoardMemberRole();
   const removeMember = useRemoveBoardMember();
 
   const isAdmin = userRole === "admin";
   const isModerator = userRole === "moderator";
   const canManage = isAdmin || isModerator;
-
-  const handleRoleChange = async (memberId: string, newRole: string) => {
-    if (!boardId) return;
-    await updateRole.mutateAsync({
-      memberId,
-      boardId,
-      role: newRole as "admin" | "moderator" | "executor" | "requester",
-    });
-  };
 
   const handleRemoveMember = async (memberId: string) => {
     if (!boardId) return;
@@ -140,16 +122,14 @@ export default function BoardMembers() {
             {members?.length || 0} {members?.length === 1 ? "membro" : "membros"}
           </CardTitle>
           <CardDescription>
-            Gerencie os membros e seus cargos neste quadro
+            Os cargos são gerenciados nas configurações da equipe
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {members?.map((member) => {
               const isCurrentUser = member.user_id === user?.id;
-              const memberIsAdmin = member.role === "admin";
-              // Can't change admin role unless you're also admin
-              const canChangeRole = canManage && (!memberIsAdmin || isAdmin);
+              const memberIsAdmin = member.teamRole === "admin";
               // Can't remove yourself or admins (unless you're admin)
               const canRemove = canManage && !isCurrentUser && (!memberIsAdmin || isAdmin);
 
@@ -182,50 +162,13 @@ export default function BoardMembers() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {canChangeRole ? (
-                      <Select
-                        value={member.role}
-                        onValueChange={(value) => handleRoleChange(member.id, value)}
-                      >
-                        <SelectTrigger className="w-[160px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="requester">
-                            <div className="flex items-center gap-2">
-                              {roleIcons.requester}
-                              Solicitante
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="executor">
-                            <div className="flex items-center gap-2">
-                              {roleIcons.executor}
-                              Agente
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="moderator">
-                            <div className="flex items-center gap-2">
-                              {roleIcons.moderator}
-                              Coordenador
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="admin">
-                            <div className="flex items-center gap-2">
-                              {roleIcons.admin}
-                              Administrador
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Badge
-                        variant="outline"
-                        className={`${roleColors[member.role]} flex items-center gap-1`}
-                      >
-                        {roleIcons[member.role]}
-                        {roleLabels[member.role]}
-                      </Badge>
-                    )}
+                    <Badge
+                      variant="outline"
+                      className={`${roleColors[member.teamRole]} flex items-center gap-1`}
+                    >
+                      {roleIcons[member.teamRole]}
+                      {roleLabels[member.teamRole]}
+                    </Badge>
 
                     {canRemove && (
                       <AlertDialog>

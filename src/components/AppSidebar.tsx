@@ -157,10 +157,12 @@ export function AppSidebar() {
                           <LayoutGrid className="h-4 w-4" />
                           Meus Quadros
                         </NavLink>
-                        <NavLink to="/team-config" onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                          <Settings className="h-4 w-4" />
-                          Configurações
-                        </NavLink>
+                        {isTeamAdminOrModerator && (
+                          <NavLink to="/team-config" onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                            <Settings className="h-4 w-4" />
+                            Configurações
+                          </NavLink>
+                        )}
                         {isTeamAdminOrModerator && selectedTeamId && (
                           <NavLink to={`/teams/${selectedTeamId}/services`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                             <Settings2 className="h-4 w-4" />
@@ -193,14 +195,16 @@ export function AppSidebar() {
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         
-                        <SidebarMenuSubItem>
-                          <SidebarMenuSubButton asChild>
-                            <NavLink to="/team-config" onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                              <Settings className="h-4 w-4 mr-2" />
-                              Configurações
-                            </NavLink>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
+                        {isTeamAdminOrModerator && (
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild>
+                              <NavLink to="/team-config" onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                                <Settings className="h-4 w-4 mr-2" />
+                                Configurações
+                              </NavLink>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        )}
                         
                         {isTeamAdminOrModerator && selectedTeamId && (
                           <SidebarMenuSubItem data-tour="services-link">
