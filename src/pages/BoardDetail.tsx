@@ -1,16 +1,14 @@
-import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, LayoutGrid, Users, Trash2, Edit, Loader2, UserPlus, UserMinus, Shield } from "lucide-react";
+import { ArrowLeft, LayoutGrid, Users, Trash2, UserPlus, UserMinus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useBoard, useDeleteBoard } from "@/hooks/useBoards";
-import { useBoardMembers, useBoardRole, useUpdateBoardMemberRole, useRemoveBoardMember } from "@/hooks/useBoardMembers";
+import { useBoardMembers, useBoardRole, useRemoveBoardMember } from "@/hooks/useBoardMembers";
 import { BoardScopeConfig } from "@/components/BoardScopeConfig";
 import { AddBoardMemberDialog } from "@/components/AddBoardMemberDialog";
 import { toast } from "sonner";
@@ -38,7 +36,6 @@ export default function BoardDetail() {
   const { data: members, isLoading: membersLoading } = useBoardMembers(boardId || null);
   const { data: myRole } = useBoardRole(boardId || null);
   const deleteBoard = useDeleteBoard();
-  const updateRole = useUpdateBoardMemberRole();
   const removeMember = useRemoveBoardMember();
 
   const canManage = myRole === "admin" || myRole === "moderator";
@@ -53,20 +50,6 @@ export default function BoardDetail() {
       navigate("/boards");
     } catch (error) {
       toast.error("Erro ao excluir quadro");
-    }
-  };
-
-  const handleRoleChange = async (memberId: string, newRole: string) => {
-    if (!boardId) return;
-    
-    try {
-      await updateRole.mutateAsync({ 
-        memberId, 
-        boardId, 
-        role: newRole as "admin" | "moderator" | "executor" | "requester" 
-      });
-    } catch (error) {
-      toast.error("Erro ao atualizar papel");
     }
   };
 
@@ -167,6 +150,9 @@ export default function BoardDetail() {
                 </CardTitle>
                 <CardDescription>
                   {members?.length || 0} membros neste quadro
+                  <span className="block text-xs mt-1">
+                    Os cargos são gerenciados nas configurações da equipe
+                  </span>
                 </CardDescription>
               </div>
               {canManage && (
@@ -205,54 +191,37 @@ export default function BoardDetail() {
                       </Avatar>
                       <div>
                         <p className="font-medium">{member.profile?.full_name || "Usuário"}</p>
-                        <Badge className={`text-xs ${roleColors[member.role] || ""}`}>
-                          {roleLabels[member.role] || member.role}
+                        <Badge className={`text-xs ${roleColors[member.teamRole] || ""}`}>
+                          {roleLabels[member.teamRole] || member.teamRole}
                         </Badge>
                       </div>
                     </div>
                     
                     {canManage && (
-                      <div className="flex items-center gap-2">
-                        <Select 
-                          value={member.role} 
-                          onValueChange={(value) => handleRoleChange(member.id, value)}
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="admin">Administrador</SelectItem>
-                            <SelectItem value="moderator">Coordenador</SelectItem>
-                            <SelectItem value="executor">Agente</SelectItem>
-                            <SelectItem value="requester">Solicitante</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                              <UserMinus className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Remover Membro</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja remover {member.profile?.full_name} deste quadro?
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => handleRemoveMember(member.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Remover
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                            <UserMinus className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remover Membro</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja remover {member.profile?.full_name} deste quadro?
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleRemoveMember(member.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Remover
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     )}
                   </div>
                 ))}

@@ -12,25 +12,26 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { UserPlus, Loader2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-const roleOptions = [
-  { value: "requester", label: "Solicitante" },
-  { value: "executor", label: "Agente" },
-  { value: "moderator", label: "Coordenador" },
-  { value: "admin", label: "Administrador" },
-] as const;
+const roleLabels: Record<string, string> = {
+  admin: "Administrador",
+  moderator: "Coordenador",
+  executor: "Agente",
+  requester: "Solicitante",
+};
+
+const roleColors: Record<string, string> = {
+  admin: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  moderator: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  executor: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  requester: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
+};
 
 interface AddBoardMemberDialogProps {
   trigger?: React.ReactNode;
@@ -40,7 +41,6 @@ interface AddBoardMemberDialogProps {
 export function AddBoardMemberDialog({ trigger, boardId: propBoardId }: AddBoardMemberDialogProps) {
   const [open, setOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
-  const [selectedRole, setSelectedRole] = useState<string>("requester");
 
   const { user } = useAuth();
   const { selectedTeamId } = useSelectedTeam();
@@ -59,12 +59,10 @@ export function AddBoardMemberDialog({ trigger, boardId: propBoardId }: AddBoard
     await addMember.mutateAsync({
       boardId,
       userId: selectedUserId,
-      role: selectedRole as "admin" | "moderator" | "executor" | "requester",
       addedBy: user.id,
     });
 
     setSelectedUserId("");
-    setSelectedRole("requester");
     setOpen(false);
   };
 
@@ -84,7 +82,8 @@ export function AddBoardMemberDialog({ trigger, boardId: propBoardId }: AddBoard
         <DialogHeader>
           <DialogTitle>Adicionar Membro ao Quadro</DialogTitle>
           <DialogDescription>
-            Selecione um membro da equipe para adicionar a este quadro.
+            Selecione um membro da equipe para adicionar a este quadro. 
+            O cargo é herdado das configurações da equipe.
           </DialogDescription>
         </DialogHeader>
 
@@ -103,19 +102,24 @@ export function AddBoardMemberDialog({ trigger, boardId: propBoardId }: AddBoard
                       key={member.user_id}
                       type="button"
                       onClick={() => setSelectedUserId(member.user_id)}
-                      className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                      className={`w-full flex items-center justify-between gap-3 p-2 rounded-lg transition-colors ${
                         selectedUserId === member.user_id
                           ? "bg-primary/10 border border-primary"
                           : "hover:bg-muted"
                       }`}
                     >
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={member.avatar_url || undefined} />
-                        <AvatarFallback>
-                          {member.full_name?.charAt(0).toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm font-medium">{member.full_name}</span>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={member.avatar_url || undefined} />
+                          <AvatarFallback>
+                            {member.full_name?.charAt(0).toUpperCase() || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium">{member.full_name}</span>
+                      </div>
+                      <Badge className={`text-xs ${roleColors[member.teamRole] || ""}`}>
+                        {roleLabels[member.teamRole] || member.teamRole}
+                      </Badge>
                     </button>
                   ))}
                 </div>
@@ -128,20 +132,16 @@ export function AddBoardMemberDialog({ trigger, boardId: propBoardId }: AddBoard
           </div>
 
           {selectedMember && (
-            <div className="space-y-2">
-              <Label>Cargo no Quadro</Label>
-              <Select value={selectedRole} onValueChange={setSelectedRole}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {roleOptions.map((role) => (
-                    <SelectItem key={role.value} value={role.value}>
-                      {role.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="p-3 rounded-lg bg-muted/50 border">
+              <p className="text-sm text-muted-foreground">
+                <strong>{selectedMember.full_name}</strong> será adicionado como{" "}
+                <Badge className={`text-xs ${roleColors[selectedMember.teamRole] || ""}`}>
+                  {roleLabels[selectedMember.teamRole] || selectedMember.teamRole}
+                </Badge>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Para alterar o cargo, acesse as configurações da equipe.
+              </p>
             </div>
           )}
         </div>

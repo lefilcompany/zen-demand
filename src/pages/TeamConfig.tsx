@@ -1,17 +1,21 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Users, Copy, Check, Calendar, Shield, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Users, Copy, Check, Calendar, Shield, Loader2, UserMinus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useTeams } from "@/hooks/useTeams";
-import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { useTeamMembers, useUpdateMemberRole, useRemoveMember } from "@/hooks/useTeamMembers";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useTeamScope } from "@/hooks/useTeamScope";
 import { TeamScopeConfig } from "@/components/TeamScopeConfig";
+import { useAuth } from "@/lib/auth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -32,15 +36,26 @@ const roleColors: Record<string, string> = {
 
 export default function TeamConfig() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const { selectedTeamId } = useSelectedTeam();
   const { data: teams, isLoading: teamsLoading } = useTeams();
   const { data: members, isLoading: membersLoading } = useTeamMembers(selectedTeamId);
-  const { data: myRole } = useTeamRole(selectedTeamId);
+  const { data: myRole, isLoading: roleLoading } = useTeamRole(selectedTeamId);
   const { data: teamScope } = useTeamScope(selectedTeamId);
+  const updateRole = useUpdateMemberRole();
+  const removeMember = useRemoveMember();
   const [copied, setCopied] = useState(false);
 
   const team = teams?.find(t => t.id === selectedTeamId);
   const isAdmin = myRole === "admin";
+  const isAdminOrModerator = myRole === "admin" || myRole === "moderator";
+
+  // Redirect non-admins/moderators
+  if (!roleLoading && !isAdminOrModerator && selectedTeamId) {
+    navigate("/");
+    return null;
+  }
 
   const handleCopyCode = async () => {
     if (!team?.access_code) return;
@@ -55,7 +70,28 @@ export default function TeamConfig() {
     }
   };
 
-  if (teamsLoading) {
+  const handleRoleChange = async (memberId: string, newRole: string) => {
+    try {
+      await updateRole.mutateAsync({ 
+        memberId, 
+        newRole: newRole as "admin" | "moderator" | "executor" | "requester" 
+      });
+      toast.success("Cargo atualizado com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao atualizar cargo");
+    }
+  };
+
+  const handleRemoveMember = async (memberId: string) => {
+    try {
+      await removeMember.mutateAsync(memberId);
+      toast.success("Membro removido da equipe!");
+    } catch (error) {
+      toast.error("Erro ao remover membro");
+    }
+  };
+
+  if (teamsLoading || roleLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
@@ -154,6 +190,7 @@ export default function TeamConfig() {
             </CardTitle>
             <CardDescription>
               {members?.length || 0} membros na equipe
+              {isAdmin && " • Apenas administradores podem alterar cargos"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -164,26 +201,84 @@ export default function TeamConfig() {
                 ))}
               </div>
             ) : members && members.length > 0 ? (
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                {members.map((member) => (
-                  <div 
-                    key={member.id} 
-                    className="flex items-center gap-3 p-3 rounded-lg border bg-card"
-                  >
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={member.profile?.avatar_url || undefined} />
-                      <AvatarFallback>
-                        {member.profile?.full_name?.charAt(0)?.toUpperCase() || "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{member.profile?.full_name || "Usuário"}</p>
-                      <Badge className={`text-xs ${roleColors[member.role] || ""}`}>
-                        {roleLabels[member.role] || member.role}
-                      </Badge>
+              <div className="space-y-3">
+                {members.map((member) => {
+                  const isCurrentUser = member.user_id === user?.id;
+                  const canEditMember = isAdmin && !isCurrentUser;
+                  
+                  return (
+                    <div 
+                      key={member.id} 
+                      className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={member.profile?.avatar_url || undefined} />
+                          <AvatarFallback>
+                            {member.profile?.full_name?.charAt(0)?.toUpperCase() || "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">
+                            {member.profile?.full_name || "Usuário"}
+                            {isCurrentUser && <span className="text-muted-foreground ml-2">(você)</span>}
+                          </p>
+                          {!canEditMember && (
+                            <Badge className={`text-xs ${roleColors[member.role] || ""}`}>
+                              {roleLabels[member.role] || member.role}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {canEditMember && (
+                        <div className="flex items-center gap-2">
+                          <Select 
+                            value={member.role} 
+                            onValueChange={(value) => handleRoleChange(member.id, value)}
+                            disabled={updateRole.isPending}
+                          >
+                            <SelectTrigger className="w-36">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="admin">Administrador</SelectItem>
+                              <SelectItem value="moderator">Coordenador</SelectItem>
+                              <SelectItem value="executor">Agente</SelectItem>
+                              <SelectItem value="requester">Solicitante</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                <UserMinus className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Remover Membro</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja remover {member.profile?.full_name} da equipe? 
+                                  O membro também será removido de todos os quadros.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleRemoveMember(member.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Remover
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
