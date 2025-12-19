@@ -16,8 +16,9 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Filter, X, CalendarIcon } from "lucide-react";
 import { useDemandStatuses } from "@/hooks/useDemands";
-import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { useBoardMembers } from "@/hooks/useBoardMembers";
 import { useServices } from "@/hooks/useServices";
+import { useSelectedBoard } from "@/contexts/BoardContext";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -31,16 +32,17 @@ export interface DemandFiltersState {
 }
 
 interface DemandFiltersProps {
-  teamId: string | null;
+  boardId: string | null;
   filters: DemandFiltersState;
   onChange: (filters: DemandFiltersState) => void;
 }
 
-export function DemandFilters({ teamId, filters, onChange }: DemandFiltersProps) {
+export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps) {
   const [open, setOpen] = useState(false);
+  const { currentTeamId } = useSelectedBoard();
   const { data: statuses } = useDemandStatuses();
-  const { data: members } = useTeamMembers(teamId);
-  const { data: services } = useServices(teamId);
+  const { data: members } = useBoardMembers(boardId);
+  const { data: services } = useServices(currentTeamId, boardId);
 
   const activeFiltersCount = Object.values(filters).filter(Boolean).length;
 

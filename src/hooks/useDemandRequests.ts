@@ -217,6 +217,7 @@ export function useApproveDemandRequest() {
         .from("demands")
         .insert({
           team_id: request.team_id,
+          board_id: request.board_id,
           created_by: request.created_by,
           title: request.title,
           description: request.description,

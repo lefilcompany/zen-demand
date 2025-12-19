@@ -461,7 +461,7 @@ export type Database = {
           archived: boolean
           archived_at: string | null
           assigned_to: string | null
-          board_id: string | null
+          board_id: string
           created_at: string
           created_by: string
           description: string | null
@@ -480,7 +480,7 @@ export type Database = {
           archived?: boolean
           archived_at?: string | null
           assigned_to?: string | null
-          board_id?: string | null
+          board_id: string
           created_at?: string
           created_by: string
           description?: string | null
@@ -499,7 +499,7 @@ export type Database = {
           archived?: boolean
           archived_at?: string | null
           assigned_to?: string | null
-          board_id?: string | null
+          board_id?: string
           created_at?: string
           created_by?: string
           description?: string | null

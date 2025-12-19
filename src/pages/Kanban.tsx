@@ -2,17 +2,17 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { useDemands } from "@/hooks/useDemands";
-import { useSelectedTeam } from "@/contexts/TeamContext";
-import { useTeamRole } from "@/hooks/useTeamRole";
+import { useSelectedBoard } from "@/contexts/BoardContext";
+import { useBoardRole } from "@/hooks/useBoardMembers";
 import { Plus, LayoutGrid } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Kanban() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { selectedTeamId } = useSelectedTeam();
-  const { data: demands, isLoading } = useDemands(selectedTeamId || undefined);
-  const { data: role } = useTeamRole(selectedTeamId);
+  const { selectedBoardId } = useSelectedBoard();
+  const { data: demands, isLoading } = useDemands(selectedBoardId || undefined);
+  const { data: role } = useBoardRole(selectedBoardId);
 
   const isReadOnly = role === "requester";
 
@@ -36,7 +36,7 @@ export default function Kanban() {
       </div>
 
       <div className="flex-1 min-h-0 overflow-hidden">
-        {!selectedTeamId ? (
+        {!selectedBoardId ? (
           <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
             <LayoutGrid className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold text-foreground">

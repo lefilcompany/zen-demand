@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useSelectedBoard } from "@/contexts/BoardContext";
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter } from "date-fns";
 import type { PeriodType } from "@/components/PeriodFilter";
 import { sortDemandsByPriorityAndDueDate } from "./useDemands";
@@ -27,9 +27,9 @@ function getPeriodRange(period: PeriodType): { start: Date; end: Date } {
   }
 }
 
-export function useDemandsByPeriod(period: PeriodType, teamId?: string) {
-  const { selectedTeamId } = useSelectedTeam();
-  const id = teamId || selectedTeamId;
+export function useDemandsByPeriod(period: PeriodType, boardId?: string) {
+  const { selectedBoardId } = useSelectedBoard();
+  const id = boardId || selectedBoardId;
   const { start, end } = getPeriodRange(period);
 
   return useQuery({
@@ -46,7 +46,7 @@ export function useDemandsByPeriod(period: PeriodType, teamId?: string) {
           status_id,
           demand_statuses!inner(name, color)
         `)
-        .eq("team_id", id!)
+        .eq("board_id", id!)
         .eq("archived", false)
         .gte("created_at", start.toISOString())
         .lte("created_at", end.toISOString());
