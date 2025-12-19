@@ -8,12 +8,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCreateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSelectedBoard } from "@/contexts/BoardContext";
-import { useCanCreateDemand, useMonthlyDemandCount, useTeamScope } from "@/hooks/useTeamScope";
+import { useCanCreateDemandOnBoard } from "@/hooks/useBoardScope";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { ScopeProgressBar } from "@/components/ScopeProgressBar";
-import { ArrowLeft, AlertTriangle } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Ban } from "lucide-react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { addDays, format } from "date-fns";
@@ -27,9 +27,14 @@ export default function CreateDemand() {
   const { selectedTeamId, teams } = useSelectedTeam();
   const { selectedBoardId, currentBoard } = useSelectedBoard();
   const { data: statuses } = useDemandStatuses();
-  const { data: canCreate } = useCanCreateDemand();
-  const { data: monthlyCount } = useMonthlyDemandCount();
-  const { data: scope } = useTeamScope();
+  const { 
+    canCreate, 
+    isTeamActive, 
+    isWithinLimit, 
+    hasBoardLimit, 
+    monthlyCount, 
+    limit 
+  } = useCanCreateDemandOnBoard(selectedBoardId, selectedTeamId);
   const { data: role } = useTeamRole(selectedTeamId);
 
   const selectedTeam = teams?.find(t => t.id === selectedTeamId);
@@ -39,7 +44,6 @@ export default function CreateDemand() {
   if (role === "requester") {
     return <Navigate to="/demands/request" replace />;
   }
-  const limit = scope?.monthly_demand_limit || 0;
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -67,7 +71,7 @@ export default function CreateDemand() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !selectedTeamId || !selectedBoardId || !statusId) return;
+    if (!title.trim() || !selectedTeamId || !selectedBoardId || !statusId || !canCreate) return;
 
     createDemand.mutate(
       {
@@ -131,21 +135,31 @@ export default function CreateDemand() {
         </p>
       </div>
 
-      {/* Limit Warning */}
-      {limit > 0 && (
+      {/* Team Inactive Alert */}
+      {!isTeamActive && (
+        <Alert variant="destructive">
+          <Ban className="h-4 w-4" />
+          <AlertDescription>
+            O contrato desta equipe está inativo. Não é possível criar novas demandas.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Board Limit Progress */}
+      {hasBoardLimit && isTeamActive && (
         <Card>
           <CardContent className="pt-6">
-            <ScopeProgressBar used={monthlyCount || 0} limit={limit} />
+            <ScopeProgressBar used={monthlyCount} limit={limit} />
           </CardContent>
         </Card>
       )}
 
-      {/* Limit Reached Alert */}
-      {canCreate === false && (
+      {/* Board Limit Reached Alert */}
+      {!isWithinLimit && isTeamActive && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            O limite mensal de demandas foi atingido. Entre em contato com o administrador da equipe para mais informações.
+            O limite mensal de demandas deste quadro foi atingido. Entre em contato com o administrador para mais informações.
           </AlertDescription>
         </Alert>
       )}

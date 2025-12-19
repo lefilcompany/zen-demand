@@ -23,7 +23,8 @@ import { ScopeOverviewCard } from "@/components/ScopeOverviewCard";
 import { DeliveryStatusChart } from "@/components/DeliveryStatusChart";
 import { PeriodFilter, type PeriodType } from "@/components/PeriodFilter";
 import { ExportReportButton } from "@/components/ExportReportButton";
-import { useTeamScope, useMonthlyDemandCount } from "@/hooks/useTeamScope";
+import { useTeamScope } from "@/hooks/useTeamScope";
+import { useCanCreateDemandOnBoard } from "@/hooks/useBoardScope";
 import { useDemandsByPeriod } from "@/hooks/useDemandsByPeriod";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -39,7 +40,13 @@ const Index = () => {
   const { data: teams } = useTeams();
   const { data: role, isLoading: roleLoading } = useBoardRole(selectedBoardId);
   const { data: scope, isLoading: scopeLoading } = useTeamScope();
-  const { data: monthlyCount, isLoading: countLoading } = useMonthlyDemandCount();
+  const { 
+    canCreate, 
+    monthlyCount, 
+    limit, 
+    hasBoardLimit,
+    isLoading: boardScopeLoading 
+  } = useCanCreateDemandOnBoard(selectedBoardId, selectedTeamId);
   const { data: demandData, isLoading: demandsLoading } = useDemandsByPeriod(period);
   const { widgets, setWidgets, isSaving } = useDashboardWidgets();
 
@@ -94,8 +101,7 @@ const Index = () => {
     s.name.toLowerCase().includes("iniciar") || s.name.toLowerCase().includes("pendente")
   )?.count || 0;
 
-  const limit = scope?.monthly_demand_limit || 0;
-  const canCreate = limit === 0 || (monthlyCount || 0) < limit;
+  const isTeamActive = scope?.active ?? true;
 
   // Prepare export data
   const exportDemands = demandData?.demands.map((d: any) => ({
@@ -106,7 +112,7 @@ const Index = () => {
   })) || [];
 
   // Show loading for requester view
-  if (isRequester && (scopeLoading || countLoading || demandsLoading)) {
+  if (isRequester && (scopeLoading || boardScopeLoading || demandsLoading)) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
@@ -147,7 +153,7 @@ const Index = () => {
             />
             <Button 
               onClick={() => navigate("/demands/create")}
-              disabled={!canCreate}
+              disabled={!canCreate || !isTeamActive}
               className="gap-2"
               data-tour="new-demand-btn"
             >
@@ -294,15 +300,17 @@ const Index = () => {
         </div>
 
         {/* Scope Overview - At the end */}
-        <ScopeOverviewCard 
-          data-tour="scope-progress"
-          used={monthlyCount || 0} 
-          limit={limit}
-          contractStart={scope?.contract_start_date}
-          contractEnd={scope?.contract_end_date}
-          scopeDescription={scope?.scope_description}
-          active={scope?.active}
-        />
+        {hasBoardLimit && (
+          <ScopeOverviewCard 
+            data-tour="scope-progress"
+            used={monthlyCount} 
+            limit={limit}
+            contractStart={scope?.contract_start_date}
+            contractEnd={scope?.contract_end_date}
+            scopeDescription={scope?.scope_description}
+            active={scope?.active}
+          />
+        )}
       </div>
     );
   }
