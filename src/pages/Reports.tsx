@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DashboardBanner } from "@/components/DashboardBanner";
+
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -152,10 +152,6 @@ export default function Reports() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <DashboardBanner 
-        title="Relatórios" 
-        subtitle="Análise detalhada das demandas da sua equipe"
-      />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Relatórios</h1>
