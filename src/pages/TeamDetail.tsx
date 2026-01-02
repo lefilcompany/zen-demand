@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,15 +6,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Users, Calendar, Key, Copy, Check, Settings, Trash2, Home } from "lucide-react";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { Users, Calendar, Key, Copy, Check, Settings, Trash2 } from "lucide-react";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState } from "react";
@@ -125,36 +118,12 @@ export default function TeamDetail() {
   }
   return <div className="space-y-6 animate-fade-in">
       {/* Breadcrumbs */}
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/" className="flex items-center gap-1">
-                <Home className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only">Início</span>
-              </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/teams" className="flex items-center gap-1">
-                <Users className="h-3.5 w-3.5" />
-                <span>Equipes</span>
-              </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage className="max-w-[200px] truncate">
-              {team.name}
-            </BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      {/* Team Info Card */}
-      
+      <PageBreadcrumb
+        items={[
+          { label: "Equipes", href: "/teams", icon: Users },
+          { label: team.name, isCurrent: true },
+        ]}
+      />
 
       {/* Scope Configuration - Only for Admins */}
       {isAdmin && id && <TeamScopeConfig teamId={id} currentScope={scope || null} />}
