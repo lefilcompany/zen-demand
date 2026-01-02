@@ -73,7 +73,7 @@ export function ProtectedLayout() {
 
   return (
     <SidebarProvider defaultOpen={defaultSidebarOpen} key={isTablet ? 'tablet' : 'desktop'}>
-      <div className="flex h-screen w-full bg-sidebar p-2 md:p-3 overflow-hidden">
+      <div className="flex h-screen w-full bg-sidebar p-2 md:p-3 overflow-hidden safe-all">
         <AppSidebar />
         <main className="flex-1 flex flex-col bg-background rounded-xl shadow-xl min-h-0 overflow-hidden">
           <header className="flex h-12 sm:h-14 md:h-16 shrink-0 items-center justify-between gap-1 sm:gap-2 bg-background px-2 sm:px-3 md:px-6 border-b border-border rounded-t-xl overflow-hidden">
