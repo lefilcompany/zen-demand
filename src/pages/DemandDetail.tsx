@@ -817,6 +817,14 @@ export default function DemandDetail() {
               />
             </div>
           )}
+
+          {/* Attachments section - result/deliverables */}
+          <div>
+            <h3 className="font-semibold mb-2 text-sm md:text-base flex items-center gap-2">
+              📎 Anexos / Resultado
+            </h3>
+            <AttachmentUploader demandId={demand.id} readOnly={isDeliveredStatus && !canEdit} />
+          </div>
         </CardContent>
       </Card>
 
