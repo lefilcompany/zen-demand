@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Pencil, Trash2, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatTimeDisplay } from "@/hooks/useLiveTimer";
+import { useAuth } from "@/lib/auth";
 
 interface TimeEntry {
   id: string;
@@ -42,6 +43,7 @@ interface TimeEntry {
 
 interface TimeEntryEditDialogProps {
   entries: TimeEntry[];
+  demandId: string;
   isLoading?: boolean;
 }
 
@@ -214,10 +216,15 @@ function TimeEntryRow({
 
 export function TimeEntryEditDialog({
   entries,
+  demandId,
   isLoading,
 }: TimeEntryEditDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [newStartedAt, setNewStartedAt] = useState("");
+  const [newEndedAt, setNewEndedAt] = useState("");
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -291,12 +298,76 @@ export function TimeEntryEditDialog({
     },
   });
 
+  const createMutation = useMutation({
+    mutationFn: async ({
+      startedAt,
+      endedAt,
+    }: {
+      startedAt: string;
+      endedAt: string;
+    }) => {
+      if (!user) throw new Error("Usuário não autenticado");
+
+      const durationSeconds = Math.floor(
+        (new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 1000
+      );
+
+      const { error } = await supabase.from("demand_time_entries").insert({
+        demand_id: demandId,
+        user_id: user.id,
+        started_at: startedAt,
+        ended_at: endedAt,
+        duration_seconds: durationSeconds,
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["demand-time-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["user-demand-time"] });
+      toast.success("Entrada de tempo criada");
+      setIsCreating(false);
+      setNewStartedAt("");
+      setNewEndedAt("");
+    },
+    onError: (error) => {
+      console.error("Error creating time entry:", error);
+      toast.error("Erro ao criar entrada de tempo");
+    },
+  });
+
   const handleUpdate = (id: string, startedAt: string, endedAt: string | null) => {
     updateMutation.mutate({ id, startedAt, endedAt });
   };
 
   const handleDelete = (id: string) => {
     deleteMutation.mutate(id);
+  };
+
+  const handleCreate = () => {
+    if (!newStartedAt || !newEndedAt) {
+      toast.error("Preencha os horários de início e término");
+      return;
+    }
+
+    const startDate = new Date(newStartedAt);
+    const endDate = new Date(newEndedAt);
+
+    if (endDate <= startDate) {
+      toast.error("Data de término deve ser após a data de início");
+      return;
+    }
+
+    createMutation.mutate({
+      startedAt: startDate.toISOString(),
+      endedAt: endDate.toISOString(),
+    });
+  };
+
+  const handleCancelCreate = () => {
+    setIsCreating(false);
+    setNewStartedAt("");
+    setNewEndedAt("");
   };
 
   // Filter to only show current user's entries
@@ -325,9 +396,9 @@ export function TimeEntryEditDialog({
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Editar entradas de tempo</DialogTitle>
+          <DialogTitle>Gerenciar entradas de tempo</DialogTitle>
           <DialogDescription>
-            Corrija horários de início e término das suas sessões de trabalho.
+            Corrija horários ou adicione entradas manualmente.
           </DialogDescription>
         </DialogHeader>
 
@@ -335,32 +406,91 @@ export function TimeEntryEditDialog({
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        ) : userEntries.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">
-            Nenhuma entrada de tempo encontrada.
-          </p>
         ) : (
           <>
-            <ScrollArea className="max-h-[400px] pr-4">
-              <div className="space-y-2">
-                {userEntries.map((entry) => (
-                  <TimeEntryRow
-                    key={entry.id}
-                    entry={entry}
-                    onUpdate={handleUpdate}
-                    onDelete={handleDelete}
-                    isUpdating={updatingId === entry.id}
-                    isDeleting={deletingId === entry.id}
+            {/* Create new entry form */}
+            {isCreating ? (
+              <div className="border border-primary/30 rounded-lg p-3 space-y-3 bg-primary/5">
+                <div className="text-sm font-medium">Nova entrada</div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Início</Label>
+                  <Input
+                    type="datetime-local"
+                    value={newStartedAt}
+                    onChange={(e) => setNewStartedAt(e.target.value)}
+                    className="h-8 text-xs"
                   />
-                ))}
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Término</Label>
+                  <Input
+                    type="datetime-local"
+                    value={newEndedAt}
+                    onChange={(e) => setNewEndedAt(e.target.value)}
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <Button
+                    size="sm"
+                    className="h-7 text-xs flex-1"
+                    onClick={handleCreate}
+                    disabled={createMutation.isPending}
+                  >
+                    {createMutation.isPending ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      "Salvar"
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs flex-1"
+                    onClick={handleCancelCreate}
+                    disabled={createMutation.isPending}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
               </div>
-            </ScrollArea>
-            <div className="border-t border-border pt-3 flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Total registrado:</span>
-              <span className="font-mono font-medium">
-                {formatTimeDisplay(totalSeconds)}
-              </span>
-            </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-2"
+                onClick={() => setIsCreating(true)}
+              >
+                <Plus className="h-4 w-4" />
+                Adicionar entrada manual
+              </Button>
+            )}
+
+            {userEntries.length > 0 && (
+              <ScrollArea className="max-h-[300px] pr-4">
+                <div className="space-y-2">
+                  {userEntries.map((entry) => (
+                    <TimeEntryRow
+                      key={entry.id}
+                      entry={entry}
+                      onUpdate={handleUpdate}
+                      onDelete={handleDelete}
+                      isUpdating={updatingId === entry.id}
+                      isDeleting={deletingId === entry.id}
+                    />
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+
+            {userEntries.length > 0 && (
+              <div className="border-t border-border pt-3 flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Total registrado:</span>
+                <span className="font-mono font-medium">
+                  {formatTimeDisplay(totalSeconds)}
+                </span>
+              </div>
+            )}
           </>
         )}
       </DialogContent>

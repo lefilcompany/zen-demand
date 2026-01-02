@@ -194,9 +194,10 @@ export function UserTimeTrackingDisplay({
           </span>
         )}
         <div className="ml-auto flex items-center gap-1">
-          {currentUserEntries.length > 0 && (
+          {demandId && (
             <TimeEntryEditDialog
               entries={currentUserEntries}
+              demandId={demandId}
               isLoading={isLoadingEntries}
             />
           )}
