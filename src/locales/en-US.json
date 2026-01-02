@@ -254,5 +254,12 @@
     "createTeamDesc": "Create your own team and invite members",
     "joinTeamOption": "Join a Team",
     "joinTeamDesc": "Use an access code to request entry"
+  },
+  "sync": {
+    "success": "{{count}} operations synced",
+    "successDescription": "Your offline changes were saved successfully",
+    "partial": "{{success}} synced, {{failed}} failed",
+    "pending": "{{count}} pending changes",
+    "syncing": "Syncing..."
   }
 }
