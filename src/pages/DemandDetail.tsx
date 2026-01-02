@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/dialog";
 import { useDemandById, useDemandInteractions, useCreateInteraction, useUpdateInteraction, useDeleteInteraction, useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
+import { useUploadAttachment } from "@/hooks/useAttachments";
+import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/components/InlineFileUploader";
 import { supabase } from "@/integrations/supabase/client";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useAuth } from "@/lib/auth";
@@ -30,6 +32,7 @@ import { useTimerControl } from "@/hooks/useTimerControl";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { DemandEditForm } from "@/components/DemandEditForm";
+import { AttachmentUploader } from "@/components/AttachmentUploader";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter, MoreHorizontal, Trash2, AlertTriangle } from "lucide-react";
 import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
@@ -73,8 +76,11 @@ export default function DemandDetail() {
   const deleteInteraction = useDeleteInteraction();
   const updateDemand = useUpdateDemand();
   const setAssignees = useSetAssignees();
+  const uploadAttachment = useUploadAttachment();
   const { startTimer, pauseTimer, isLoading: isTimerLoading } = useTimerControl();
   const [comment, setComment] = useState("");
+  const [commentPendingFiles, setCommentPendingFiles] = useState<PendingFile[]>([]);
+  const [adjustmentPendingFiles, setAdjustmentPendingFiles] = useState<PendingFile[]>([]);
   const [editingAssignees, setEditingAssignees] = useState(false);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -280,7 +286,7 @@ export default function DemandDetail() {
     );
   };
 
-  const handleAddComment = () => {
+  const handleAddComment = async () => {
     if (!comment.trim() || !id) return;
 
     createInteraction.mutate(
@@ -290,8 +296,19 @@ export default function DemandDetail() {
         content: comment.trim(),
       },
       {
-        onSuccess: () => {
-          toast.success("Comentário adicionado!");
+        onSuccess: async () => {
+          // Upload pending files
+          if (commentPendingFiles.length > 0) {
+            const { success, failed } = await uploadPendingFiles(id, commentPendingFiles, uploadAttachment);
+            if (failed > 0) {
+              toast.warning(`Comentário adicionado! ${success} arquivo(s) enviado(s), ${failed} falhou(ram)`);
+            } else {
+              toast.success(`Comentário adicionado com ${success} anexo(s)!`);
+            }
+            setCommentPendingFiles([]);
+          } else {
+            toast.success("Comentário adicionado!");
+          }
           setComment("");
         },
         onError: (error: any) => {
@@ -749,6 +766,11 @@ export default function DemandDetail() {
               onBlur={stopTyping}
               rows={3}
               className="text-sm md:text-base"
+            />
+            <InlineFileUploader
+              pendingFiles={commentPendingFiles}
+              onFilesChange={setCommentPendingFiles}
+              disabled={createInteraction.isPending}
             />
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <Button

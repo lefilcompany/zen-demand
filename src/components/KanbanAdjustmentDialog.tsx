@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { useUpdateDemand, useDemandStatuses, useCreateInteraction } from "@/hooks/useDemands";
 import { useDemandAssignees } from "@/hooks/useDemandAssignees";
+import { useUploadAttachment } from "@/hooks/useAttachments";
+import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/components/InlineFileUploader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { sendAdjustmentPushNotification } from "@/hooks/useSendPushNotification";
@@ -36,10 +38,12 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
   // Estado LOCAL do textarea - não propaga re-render ao pai
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const { user } = useAuth();
   const { data: statuses } = useDemandStatuses();
   const updateDemand = useUpdateDemand();
   const createInteraction = useCreateInteraction();
+  const uploadAttachment = useUploadAttachment();
   
   // Query movida para dentro do Dialog - só busca quando está aberto
   const { data: assignees } = useDemandAssignees(open ? demandId : null);
@@ -51,12 +55,14 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
     if (open) {
       setReason("");
       setIsSubmitting(false);
+      setPendingFiles([]);
     }
   }, [open]);
 
   const handleClose = useCallback(() => {
     setReason("");
     setIsSubmitting(false);
+    setPendingFiles([]);
     onOpenChange(false);
   }, [onOpenChange]);
 
@@ -102,6 +108,15 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
       });
       
       toast.success(`${typeLabel} solicitado com sucesso!`);
+      
+      // Upload pending files
+      if (pendingFiles.length > 0) {
+        const { success, failed } = await uploadPendingFiles(demandId, pendingFiles, uploadAttachment);
+        if (failed > 0) {
+          toast.warning(`${success} arquivo(s) enviado(s), ${failed} falhou(ram)`);
+        }
+        setPendingFiles([]);
+      }
       
       // Enviar notificações para os responsáveis
       if (assignees && assignees.length > 0) {
@@ -210,6 +225,15 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
             <p className="text-xs text-muted-foreground text-right">
               {reason.length}/1000
             </p>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Anexos</label>
+            <InlineFileUploader
+              pendingFiles={pendingFiles}
+              onFilesChange={setPendingFiles}
+              disabled={isSubmitting}
+            />
           </div>
         </div>
         <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
