@@ -271,6 +271,35 @@ export async function sendMentionPushNotification({
 }
 
 /**
+ * Send push notification for new comment
+ */
+export async function sendCommentPushNotification({
+  userIds,
+  demandId,
+  demandTitle,
+  commenterName,
+  commentPreview,
+}: {
+  userIds: string[];
+  demandId: string;
+  demandTitle: string;
+  commenterName: string;
+  commentPreview: string;
+}) {
+  return sendPushNotification({
+    userIds,
+    title: "💬 Novo comentário",
+    body: `${commenterName} comentou em "${demandTitle.substring(0, 30)}...": ${commentPreview.substring(0, 50)}${commentPreview.length > 50 ? "..." : ""}`,
+    link: `/demands/${demandId}`,
+    data: {
+      demandId,
+      type: "new_comment",
+    },
+    notificationType: "demandUpdates",
+  });
+}
+
+/**
  * Send push notification for team join request
  */
 export async function sendTeamJoinRequestPushNotification({
