@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { sendAdjustmentPushNotification } from "@/hooks/useSendPushNotification";
 import { useRealtimeDemandDetail } from "@/hooks/useRealtimeDemandDetail";
+import { DemandPresenceIndicator } from "@/components/DemandPresenceIndicator";
 
 export default function DemandDetail() {
   const { id } = useParams<{ id: string }>();
@@ -391,15 +392,15 @@ export default function DemandDetail() {
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
-      <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <Button
           variant="ghost"
           onClick={() => navigate("/demands")}
-          className="mb-2 md:mb-4"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar
         </Button>
+        {id && <DemandPresenceIndicator demandId={id} />}
       </div>
 
       {/* Adjustment Alert - Shows when demand is in "Em Ajuste" status */}
