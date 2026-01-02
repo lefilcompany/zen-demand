@@ -26,7 +26,7 @@ export function InlineFileUploader({
   onFilesChange,
   maxFiles = 10,
   maxSizeMB = 10,
-  accept = "image/*,.pdf,.doc,.docx,.txt",
+  accept = "image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.json,.xml",
   disabled = false,
   listenToGlobalPaste = false,
 }: InlineFileUploaderProps) {
