@@ -147,8 +147,8 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
   const { data: adjustmentCounts } = useAdjustmentCounts(demandIds);
 
   // Helper function to stop all active timers for a demand
-  const stopAllTimersForDemand = useCallback(async (demandId: string) => {
-    if (!user) return;
+  const stopAllTimersForDemand = useCallback(async (demandId: string): Promise<boolean> => {
+    if (!user) return false;
     
     try {
       // Find all active time entries for this demand (current user)
@@ -179,9 +179,18 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
         // Invalidate queries to update UI
         queryClient.invalidateQueries({ queryKey: ["demand-time-entries", demandId] });
         queryClient.invalidateQueries({ queryKey: ["current-user-demand-time", demandId] });
+        
+        // Show notification that timer was stopped
+        toast.info("Timer pausado automaticamente", {
+          description: "O timer foi pausado pois a demanda foi movida para aprovação/entrega",
+        });
+        
+        return true;
       }
+      return false;
     } catch (error) {
       console.error("Error stopping timers:", error);
+      return false;
     }
   }, [user, queryClient]);
   
