@@ -92,8 +92,14 @@ export default function TeamConfig() {
         newRole: newRole as "admin" | "moderator" | "executor" | "requester" 
       });
       toast.success("Cargo atualizado com sucesso!");
-    } catch (error) {
-      toast.error("Erro ao atualizar cargo");
+    } catch (error: any) {
+      console.error("Error updating role:", error);
+      const message = error?.message || "Erro ao atualizar cargo";
+      if (message.includes("row-level security") || message.includes("policy")) {
+        toast.error("Você não tem permissão para alterar cargos");
+      } else {
+        toast.error("Erro ao atualizar cargo: " + message);
+      }
     }
   };
 

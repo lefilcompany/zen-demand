@@ -59,12 +59,20 @@ export function useUpdateMemberRole() {
       memberId: string;
       newRole: TeamRole;
     }) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("team_members")
         .update({ role: newRole })
-        .eq("id", memberId);
+        .eq("id", memberId)
+        .select();
 
       if (error) throw error;
+      
+      // Check if any rows were actually updated
+      if (!data || data.length === 0) {
+        throw new Error("Nenhuma alteração foi feita. Você pode não ter permissão para alterar este cargo.");
+      }
+      
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["team-members"] });
