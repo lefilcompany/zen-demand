@@ -9,9 +9,11 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useTeamScope } from "@/hooks/useTeamScope";
 import { useCreateDemandRequest } from "@/hooks/useDemandRequests";
+import { useUploadRequestAttachment } from "@/hooks/useRequestAttachments";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { RequestAttachmentUploader } from "@/components/RequestAttachmentUploader";
-import { ArrowLeft, Ban, Send, Layout, Paperclip } from "lucide-react";
+import { PendingFileUploader, PendingFile } from "@/components/PendingFileUploader";
+import { ArrowLeft, Ban, Send, Layout, Paperclip, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -30,7 +32,11 @@ export default function CreateDemandRequest() {
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("média");
   const [serviceId, setServiceId] = useState("");
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [createdRequestId, setCreatedRequestId] = useState<string | null>(null);
+  
+  const uploadAttachment = useUploadRequestAttachment();
 
   const handleServiceChange = (newServiceId: string) => {
     setServiceId(newServiceId);
@@ -50,10 +56,29 @@ export default function CreateDemandRequest() {
         service_id: serviceId && serviceId !== "none" ? serviceId : undefined,
       },
       {
-        onSuccess: (data) => {
+        onSuccess: async (data) => {
+          // Upload pending files
+          if (pendingFiles.length > 0) {
+            setIsUploading(true);
+            try {
+              for (const pf of pendingFiles) {
+                await uploadAttachment.mutateAsync({ requestId: data.id, file: pf.file });
+              }
+              // Clean up previews
+              pendingFiles.forEach((pf) => {
+                if (pf.preview) URL.revokeObjectURL(pf.preview);
+              });
+              setPendingFiles([]);
+            } catch (error) {
+              toast.error("Alguns arquivos não foram enviados");
+            } finally {
+              setIsUploading(false);
+            }
+          }
+          
           setCreatedRequestId(data.id);
           toast.success("Solicitação criada!", {
-            description: "Agora você pode adicionar anexos se desejar.",
+            description: "Agora você pode adicionar mais anexos se desejar.",
           });
         },
         onError: (error: any) => {
@@ -210,6 +235,19 @@ export default function CreateDemandRequest() {
               </div>
             </div>
 
+            {/* Anexos */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Paperclip className="h-4 w-4" />
+                Anexos (opcional)
+              </Label>
+              <PendingFileUploader
+                files={pendingFiles}
+                onFilesChange={setPendingFiles}
+                disabled={createRequest.isPending || isUploading}
+              />
+            </div>
+
             <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4">
               <Button
                 type="button"
@@ -221,11 +259,15 @@ export default function CreateDemandRequest() {
               </Button>
               <Button
                 type="submit"
-                disabled={createRequest.isPending || !title.trim() || !isTeamActive || !selectedBoardId}
+                disabled={createRequest.isPending || isUploading || !title.trim() || !isTeamActive || !selectedBoardId}
                 className="flex-1"
               >
-                <Send className="mr-2 h-4 w-4" />
-                {createRequest.isPending ? "Criando..." : "Avançar"}
+                {(createRequest.isPending || isUploading) ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="mr-2 h-4 w-4" />
+                )}
+                {isUploading ? "Enviando anexos..." : createRequest.isPending ? "Criando..." : "Avançar"}
               </Button>
             </div>
           </form>
