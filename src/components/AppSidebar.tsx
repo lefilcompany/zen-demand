@@ -100,12 +100,12 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" data-tour="sidebar">
-      <SidebarContent>
-        <div className="p-4 items-center justify-center px-0 py-0 mx-0 my-[24px] flex flex-col">
-          {isCollapsed ? (
+      <SidebarContent className="overflow-y-auto">
+        <div className="p-4 items-center justify-center px-0 py-0 mx-0 my-4 md:my-6 flex flex-col">
+          {isCollapsed && !isMobile ? (
             <img alt="SoMA" src="/lovable-uploads/8967ad53-156a-4e31-a5bd-b472b7cde839.png" className="h-5 w-5 object-scale-down" />
           ) : (
-            <img src={logoSoma} alt="SoMA" className="h-10 w-auto" />
+            <img src={logoSoma} alt="SoMA" className="h-8 md:h-10 w-auto" />
           )}
         </div>
 
@@ -121,30 +121,31 @@ export function AppSidebar() {
                   : item.url === "/archived" ? "archived-link"
                   : undefined;
                 
+                const showText = isMobile || !isCollapsed;
                 return (
                   <SidebarMenuItem key={item.title} className="relative" data-tour={tourId}>
-                    <SidebarMenuButton asChild tooltip={item.title}>
-                      <NavLink to={item.url} end={item.url === "/"} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                        <item.icon className="h-4 w-4" />
-                        {!isCollapsed && <span>{item.title}</span>}
-                        {!isCollapsed && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
+                    <SidebarMenuButton asChild tooltip={item.title} size={isMobile ? "lg" : "default"}>
+                      <NavLink to={item.url} end={item.url === "/"} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[44px] md:min-h-0" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                        <item.icon className="h-5 w-5 md:h-4 md:w-4" />
+                        {showText && <span className="text-base md:text-sm">{item.title}</span>}
+                        {showText && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
                           <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs">
                             {pendingDemandRequests}
                           </Badge>
                         )}
-                        {!isCollapsed && (item as any).showReturnedBadge && typeof returnedRequestsCount === "number" && returnedRequestsCount > 0 && (
+                        {showText && (item as any).showReturnedBadge && typeof returnedRequestsCount === "number" && returnedRequestsCount > 0 && (
                           <Badge variant="outline" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs border-amber-500 text-amber-500 bg-amber-500/10">
                             {returnedRequestsCount}
                           </Badge>
                         )}
                       </NavLink>
                     </SidebarMenuButton>
-                    {isCollapsed && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
+                    {isCollapsed && !isMobile && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
                       <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1">
                         {pendingDemandRequests}
                       </Badge>
                     )}
-                    {isCollapsed && (item as any).showReturnedBadge && typeof returnedRequestsCount === "number" && returnedRequestsCount > 0 && (
+                    {isCollapsed && !isMobile && (item as any).showReturnedBadge && typeof returnedRequestsCount === "number" && returnedRequestsCount > 0 && (
                       <Badge variant="outline" className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1 border-amber-500 text-amber-500 bg-amber-500/10">
                         {returnedRequestsCount}
                       </Badge>
@@ -154,7 +155,7 @@ export function AppSidebar() {
               })}
 
               {/* Equipe - Collapsible section for team and board management */}
-              {isCollapsed ? (
+              {isCollapsed && !isMobile ? (
                 <SidebarMenuItem data-tour="teams-link">
                   <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                     <PopoverTrigger asChild>
@@ -202,10 +203,10 @@ export function AppSidebar() {
                 <Collapsible open={teamOpen} onOpenChange={setTeamOpen} className="group/collapsible">
                   <SidebarMenuItem data-tour="teams-link">
                     <CollapsibleTrigger asChild>
-                      <SidebarMenuButton tooltip="Equipe" className="hover:bg-sidebar-accent transition-colors">
-                        <Users className="h-4 w-4" />
-                        <span className="flex-1">Equipe</span>
-                        <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                      <SidebarMenuButton tooltip="Equipe" size={isMobile ? "lg" : "default"} className="hover:bg-sidebar-accent transition-colors min-h-[44px] md:min-h-0">
+                        <Users className="h-5 w-5 md:h-4 md:w-4" />
+                        <span className="flex-1 text-base md:text-sm">Equipe</span>
+                        <ChevronRight className="h-5 w-5 md:h-4 md:w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
                     
@@ -213,9 +214,9 @@ export function AppSidebar() {
                       <SidebarMenuSub>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
-                            <NavLink to="/boards" onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                              <LayoutGrid className="h-4 w-4 mr-2" />
-                              Meus Quadros
+                            <NavLink to="/boards" onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[40px] md:min-h-0 py-2 md:py-1.5" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                              <LayoutGrid className="h-5 w-5 md:h-4 md:w-4 mr-2" />
+                              <span className="text-base md:text-sm">Meus Quadros</span>
                             </NavLink>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
@@ -223,9 +224,9 @@ export function AppSidebar() {
                         {isTeamAdminOrModerator && (
                           <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
-                              <NavLink to="/team-config" onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                                <Settings className="h-4 w-4 mr-2" />
-                                Configurações
+                              <NavLink to="/team-config" onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[40px] md:min-h-0 py-2 md:py-1.5" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                                <Settings className="h-5 w-5 md:h-4 md:w-4 mr-2" />
+                                <span className="text-base md:text-sm">Configurações</span>
                               </NavLink>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
@@ -234,9 +235,9 @@ export function AppSidebar() {
                         {isTeamAdminOrModerator && selectedTeamId && (
                           <SidebarMenuSubItem data-tour="services-link">
                             <SidebarMenuSubButton asChild>
-                              <NavLink to={`/teams/${selectedTeamId}/services`} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                                <Settings2 className="h-4 w-4 mr-2" />
-                                Serviços
+                              <NavLink to={`/teams/${selectedTeamId}/services`} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[40px] md:min-h-0 py-2 md:py-1.5" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                                <Settings2 className="h-5 w-5 md:h-4 md:w-4 mr-2" />
+                                <span className="text-base md:text-sm">Serviços</span>
                               </NavLink>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
@@ -245,9 +246,9 @@ export function AppSidebar() {
                         {isTeamAdminOrModerator && selectedTeamId && (
                           <SidebarMenuSubItem className="relative">
                             <SidebarMenuSubButton asChild>
-                              <NavLink to={`/teams/${selectedTeamId}/requests`} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                                <UserPlus className="h-4 w-4 mr-2" />
-                                Solicitações de Entrada
+                              <NavLink to={`/teams/${selectedTeamId}/requests`} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[40px] md:min-h-0 py-2 md:py-1.5" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                                <UserPlus className="h-5 w-5 md:h-4 md:w-4 mr-2" />
+                                <span className="text-base md:text-sm">Solicitações de Entrada</span>
                                 {typeof pendingJoinRequests === "number" && pendingJoinRequests > 0 && (
                                   <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs">
                                     {pendingJoinRequests}
@@ -266,11 +267,11 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup className="mt-auto">
+        <SidebarGroup className="mt-auto pb-4 md:pb-2">
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <LogoutDialog isCollapsed={isCollapsed} />
+                <LogoutDialog isCollapsed={isCollapsed && !isMobile} isMobile={isMobile} />
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
