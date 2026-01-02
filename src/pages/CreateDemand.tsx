@@ -307,6 +307,7 @@ export default function CreateDemand() {
                 pendingFiles={pendingFiles}
                 onFilesChange={setPendingFiles}
                 disabled={isOffline}
+                listenToGlobalPaste={!isOffline}
               />
               {isOffline && (
                 <p className="text-xs text-muted-foreground">

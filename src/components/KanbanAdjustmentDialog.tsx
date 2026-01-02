@@ -233,6 +233,7 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
               pendingFiles={pendingFiles}
               onFilesChange={setPendingFiles}
               disabled={isSubmitting}
+              listenToGlobalPaste={!isSubmitting}
             />
           </div>
         </div>
