@@ -34,6 +34,7 @@ export function PendingFileUploader({
   disabled = false,
 }: PendingFileUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [inputId] = useState(() => `pending-file-upload-${Math.random().toString(36).slice(2)}`);
   const maxSize = maxSizeMB * 1024 * 1024;
 
   const handleFiles = useCallback(
@@ -98,7 +99,7 @@ export function PendingFileUploader({
       >
         <input
           type="file"
-          id="pending-file-upload"
+          id={inputId}
           multiple
           className="hidden"
           disabled={disabled}
@@ -106,8 +107,8 @@ export function PendingFileUploader({
           accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
         />
         <label
-          htmlFor="pending-file-upload"
-          className={disabled ? "cursor-not-allowed" : "cursor-pointer"}
+          htmlFor={inputId}
+          className={`block ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
         >
           <Paperclip className="h-6 w-6 mx-auto text-muted-foreground mb-1" />
           <p className="text-sm text-muted-foreground">
