@@ -50,6 +50,8 @@ import { sendAdjustmentPushNotification } from "@/hooks/useSendPushNotification"
 import { useRealtimeDemandDetail } from "@/hooks/useRealtimeDemandDetail";
 import { DemandPresenceIndicator } from "@/components/DemandPresenceIndicator";
 import { RealtimeUpdateIndicator } from "@/components/RealtimeUpdateIndicator";
+import { useTypingIndicator } from "@/hooks/useTypingIndicator";
+import { TypingIndicator } from "@/components/TypingIndicator";
 
 export default function DemandDetail() {
   const { id } = useParams<{ id: string }>();
@@ -62,6 +64,10 @@ export default function DemandDetail() {
   
   // Enable realtime updates for this demand
   const { lastUpdate, showUpdateIndicator, clearUpdateIndicator } = useRealtimeDemandDetail(id);
+  
+  // Enable typing indicator
+  const { typingUsers, handleInputChange, stopTyping } = useTypingIndicator(id);
+  
   const createInteraction = useCreateInteraction();
   const updateInteraction = useUpdateInteraction();
   const deleteInteraction = useDeleteInteraction();
@@ -736,17 +742,27 @@ export default function DemandDetail() {
             <Textarea
               placeholder="Adicionar um comentário..."
               value={comment}
-              onChange={(e) => setComment(e.target.value)}
+              onChange={(e) => {
+                setComment(e.target.value);
+                handleInputChange();
+              }}
+              onBlur={stopTyping}
               rows={3}
               className="text-sm md:text-base"
             />
-            <Button
-              onClick={handleAddComment}
-              disabled={!comment.trim() || createInteraction.isPending}
-              className="w-full sm:w-auto"
-            >
-              {createInteraction.isPending ? "Enviando..." : "Enviar Comentário"}
-            </Button>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <Button
+                onClick={() => {
+                  stopTyping();
+                  handleAddComment();
+                }}
+                disabled={!comment.trim() || createInteraction.isPending}
+                className="w-full sm:w-auto"
+              >
+                {createInteraction.isPending ? "Enviando..." : "Enviar Comentário"}
+              </Button>
+              <TypingIndicator users={typingUsers} />
+            </div>
           </div>
 
           <div className="space-y-3 md:space-y-4 pt-4">
