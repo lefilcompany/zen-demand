@@ -160,6 +160,29 @@ export const getCachedDemand = async (id: string): Promise<unknown | null> => {
   return getFromStore(STORES.demands, id);
 };
 
+// Add a single demand to cache (for offline creation)
+export const addCachedDemand = async (demand: Record<string, unknown>): Promise<void> => {
+  try {
+    const db = await openDB();
+    const transaction = db.transaction(STORES.demands, 'readwrite');
+    const store = transaction.objectStore(STORES.demands);
+
+    await new Promise<void>((resolve, reject) => {
+      const request = store.put(demand);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+    console.log('Added demand to cache:', demand.id);
+  } catch (error) {
+    console.error('Failed to add demand to cache:', error);
+  }
+};
+
+// Generate a temporary offline ID
+export const generateOfflineId = (): string => {
+  return `offline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+};
+
 // Update a single cached demand (for offline status changes)
 export const updateCachedDemand = async (
   demandId: string,
@@ -187,6 +210,24 @@ export const updateCachedDemand = async (
     }
   } catch (error) {
     console.error('Failed to update cached demand:', error);
+  }
+};
+
+// Remove a cached demand (for cleaning up after sync)
+export const removeCachedDemand = async (demandId: string): Promise<void> => {
+  try {
+    const db = await openDB();
+    const transaction = db.transaction(STORES.demands, 'readwrite');
+    const store = transaction.objectStore(STORES.demands);
+
+    await new Promise<void>((resolve, reject) => {
+      const request = store.delete(demandId);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+    console.log('Removed demand from cache:', demandId);
+  } catch (error) {
+    console.error('Failed to remove demand from cache:', error);
   }
 };
 

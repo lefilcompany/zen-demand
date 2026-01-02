@@ -262,6 +262,8 @@
     "pending": "{{count}} pending changes",
     "syncing": "Syncing...",
     "offlinePending": "Pending",
-    "offlineDescription": "Will sync when connection is restored"
+    "offlineDescription": "Will sync when connection is restored",
+    "createdOffline": "Demand created offline",
+    "createdOfflineDescription": "Will be sent to server when connection is restored"
   }
 }

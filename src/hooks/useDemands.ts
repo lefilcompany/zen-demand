@@ -16,7 +16,10 @@ import {
   getCachedDemandStatuses,
   isOnline,
   updateCachedDemand,
-  addToSyncQueue 
+  addToSyncQueue,
+  addCachedDemand,
+  generateOfflineId,
+  getCachedDemandStatuses as getOfflineDemandStatuses
 } from "@/lib/offlineStorage";
 
 // Priority order: alta (high) = 1, média (medium) = 2, baixa (low) = 3
@@ -196,7 +199,73 @@ export function useCreateDemand() {
     }) => {
       // Validate input data before database operation
       const validatedData = validateData(DemandCreateSchema, data);
-      const userId = (await supabase.auth.getUser()).data.user!.id;
+      
+      // Get user info - may be cached
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+
+      // If offline, create locally and queue for sync
+      if (!isOnline()) {
+        console.log('Offline: creating demand locally');
+        
+        const offlineId = generateOfflineId();
+        const now = new Date().toISOString();
+        
+        // Get status info from cache for display purposes
+        const cachedStatuses = await getOfflineDemandStatuses();
+        const statusInfo = cachedStatuses.find((s: any) => s.id === validatedData.status_id);
+        
+        const offlineDemand = {
+          id: offlineId,
+          title: validatedData.title,
+          description: validatedData.description || null,
+          team_id: validatedData.team_id,
+          board_id: validatedData.board_id,
+          status_id: validatedData.status_id,
+          priority: validatedData.priority || 'média',
+          assigned_to: validatedData.assigned_to || null,
+          due_date: validatedData.due_date || null,
+          service_id: validatedData.service_id || null,
+          created_by: userId || 'offline_user',
+          created_at: now,
+          updated_at: now,
+          archived: false,
+          archived_at: null,
+          time_in_progress_seconds: null,
+          last_started_at: null,
+          // Add display info for the Kanban
+          demand_statuses: statusInfo || { name: 'A Iniciar', color: '#94a3b8' },
+          profiles: { full_name: 'Você', avatar_url: null },
+          demand_assignees: [],
+          _isOffline: true, // Flag to indicate this is an offline demand
+        };
+
+        // Add to local cache
+        await addCachedDemand(offlineDemand);
+
+        // Add to sync queue for later sync
+        await addToSyncQueue({
+          type: 'create',
+          table: 'demands',
+          data: {
+            title: validatedData.title,
+            description: validatedData.description,
+            team_id: validatedData.team_id,
+            board_id: validatedData.board_id,
+            status_id: validatedData.status_id,
+            priority: validatedData.priority,
+            assigned_to: validatedData.assigned_to,
+            due_date: validatedData.due_date,
+            service_id: validatedData.service_id,
+            created_by: userId,
+            _offlineId: offlineId, // Track the offline ID for replacement after sync
+          },
+        });
+
+        return offlineDemand;
+      }
+
+      if (!userId) throw new Error('Usuário não autenticado');
       
       const { data: demand, error } = await supabase
         .from("demands")
