@@ -26,11 +26,11 @@ export function FloatingCreateButton() {
       <CreateBoardDialog
         trigger={
           <Button
-            className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg animate-scale-in"
+            className="fixed bottom-20 right-4 z-40 h-12 w-12 rounded-full shadow-lg animate-scale-in pointer-events-auto"
             size="icon"
             aria-label="Novo Quadro"
           >
-            <LayoutGrid className="h-6 w-6" />
+            <LayoutGrid className="h-5 w-5" />
           </Button>
         }
       />
@@ -45,12 +45,12 @@ export function FloatingCreateButton() {
   return (
     <Button
       onClick={() => navigate(targetUrl)}
-      className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg animate-scale-in"
+      className="fixed bottom-20 right-4 z-40 h-12 w-12 rounded-full shadow-lg animate-scale-in pointer-events-auto"
       size="icon"
       data-tour="new-demand-btn"
       aria-label={t("demands.newDemand")}
     >
-      <Plus className="h-6 w-6" />
+      <Plus className="h-5 w-5" />
     </Button>
   );
 }
