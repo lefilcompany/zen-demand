@@ -777,6 +777,7 @@ export default function DemandDetail() {
               pendingFiles={commentPendingFiles}
               onFilesChange={setCommentPendingFiles}
               disabled={createInteraction.isPending}
+              listenToGlobalPaste
             />
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <Button
