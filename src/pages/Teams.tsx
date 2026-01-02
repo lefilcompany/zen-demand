@@ -1,8 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { TeamCard } from "@/components/TeamCard";
 import { useTeams } from "@/hooks/useTeams";
-import { Plus, Users as UsersIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Plus, Users as UsersIcon, Home } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 export default function Teams() {
   const navigate = useNavigate();
@@ -10,6 +18,27 @@ export default function Teams() {
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
+      {/* Breadcrumbs */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/" className="flex items-center gap-1">
+                <Home className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only">Início</span>
+              </Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage className="flex items-center gap-1">
+              <UsersIcon className="h-3.5 w-3.5" />
+              <span>Equipes</span>
+            </BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Equipes</h1>

@@ -1,6 +1,14 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, LayoutGrid, Users, Trash2, UserPlus, UserMinus } from "lucide-react";
+import { ArrowLeft, LayoutGrid, Users, Trash2, UserPlus, UserMinus, Home } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -90,23 +98,47 @@ export default function BoardDetail() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/" className="flex items-center gap-1">
+                <Home className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only">Início</span>
+              </Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/boards" className="flex items-center gap-1">
+                <LayoutGrid className="h-3.5 w-3.5" />
+                <span>Quadros</span>
+              </Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage className="max-w-[200px] truncate">
+              {board.name}
+            </BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-          <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate("/boards")}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight truncate">{board.name}</h1>
-              {board.is_default && (
-                <Badge variant="secondary" className="text-xs shrink-0">Padrão</Badge>
-              )}
-            </div>
-            {board.description && (
-              <p className="text-sm text-muted-foreground line-clamp-2">{board.description}</p>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight truncate">{board.name}</h1>
+            {board.is_default && (
+              <Badge variant="secondary" className="text-xs shrink-0">Padrão</Badge>
             )}
           </div>
+          {board.description && (
+            <p className="text-sm text-muted-foreground line-clamp-2">{board.description}</p>
+          )}
         </div>
         
         {isAdmin && !board.is_default && (
