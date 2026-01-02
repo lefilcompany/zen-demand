@@ -6,6 +6,7 @@ import {
   Heading,
   Hr,
   Html,
+  Img,
   Link,
   Preview,
   Section,
@@ -56,11 +57,13 @@ export const NotificationEmail = ({
             <table width="100%" cellPadding="0" cellSpacing="0">
               <tr>
                 <td align="center">
-                  <Text style={logoText}>
-                    <span style={{ color: accentColor, fontWeight: 'bold' }}>So</span>
-                    <span style={{ color: '#1D1D1D', fontWeight: 'bold' }}>MA</span>
-                    <span style={{ color: accentColor, fontWeight: 'bold' }}>+</span>
-                  </Text>
+                  <Img
+                    src="https://pla.soma.lefil.com.br/lovable-uploads/8967ad53-156a-4e31-a5bd-b472b7cde839.png"
+                    alt="SoMA+"
+                    width="150"
+                    height="50"
+                    style={{ margin: '0 auto' }}
+                  />
                 </td>
               </tr>
             </table>
@@ -98,13 +101,12 @@ export const NotificationEmail = ({
             <Text style={footerText}>
               Se você não esperava este email, pode ignorá-lo com segurança.
             </Text>
+            <Link href="https://pla.soma.lefil.com.br" style={mainLink}>
+              Acessar SoMA+
+            </Link>
             <Text style={footerLinks}>
               <Link href="https://pla.soma.lefil.com.br/settings" style={footerLink}>
                 Configurações de Notificação
-              </Link>
-              {' • '}
-              <Link href="https://pla.soma.lefil.com.br" style={footerLink}>
-                Acessar SoMA+
               </Link>
             </Text>
             <Text style={copyright}>
@@ -136,12 +138,6 @@ const headerSection = {
   backgroundColor: '#FFFFFF',
   borderRadius: '12px 12px 0 0',
   padding: '32px 40px 24px',
-}
-
-const logoText = {
-  fontSize: '32px',
-  margin: '0',
-  textAlign: 'center' as const,
 }
 
 const accentBar = {
@@ -220,6 +216,18 @@ const footerLinks = {
 const footerLink = {
   color: '#F28705',
   textDecoration: 'none',
+}
+
+const mainLink = {
+  color: '#FFFFFF',
+  backgroundColor: '#F28705',
+  padding: '12px 24px',
+  borderRadius: '6px',
+  textDecoration: 'none',
+  display: 'inline-block',
+  fontSize: '14px',
+  fontWeight: '600',
+  margin: '16px 0',
 }
 
 const copyright = {

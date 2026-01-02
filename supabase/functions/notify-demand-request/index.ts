@@ -12,6 +12,8 @@ import {
   Button,
   Heading,
   Hr,
+  Img,
+  Link,
 } from "https://esm.sh/@react-email/components@0.0.22";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
@@ -65,7 +67,7 @@ const DemandRequestEmail = ({
       Body,
       {
         style: {
-          backgroundColor: "#f6f9fc",
+          backgroundColor: "#f5f5f5",
           fontFamily:
             '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         },
@@ -74,25 +76,60 @@ const DemandRequestEmail = ({
         Container,
         {
           style: {
-            backgroundColor: "#ffffff",
-            margin: "40px auto",
-            padding: "20px",
-            borderRadius: "8px",
+            margin: "0 auto",
+            padding: "20px 0",
             maxWidth: "600px",
           },
         },
+        // Header with logo
         React.createElement(
-          Heading,
+          Section,
           {
             style: {
-              color: "#1f2937",
-              fontSize: "24px",
-              fontWeight: "bold",
-              marginBottom: "16px",
+              backgroundColor: "#ffffff",
+              borderRadius: "12px 12px 0 0",
+              padding: "32px 40px 24px",
+              textAlign: "center" as const,
             },
           },
-          "Nova Solicitação de Demanda"
+          React.createElement(Img, {
+            src: "https://pla.soma.lefil.com.br/lovable-uploads/8967ad53-156a-4e31-a5bd-b472b7cde839.png",
+            alt: "SoMA+",
+            width: "150",
+            height: "50",
+            style: { margin: "0 auto" },
+          })
         ),
+        // Accent bar
+        React.createElement("div", {
+          style: {
+            height: "4px",
+            width: "100%",
+            backgroundColor: "#F28705",
+          },
+        }),
+        // Main content
+        React.createElement(
+          Section,
+          {
+            style: {
+              backgroundColor: "#ffffff",
+              padding: "32px 40px",
+            },
+          },
+          React.createElement(
+            Heading,
+            {
+              style: {
+                color: "#1f2937",
+                fontSize: "24px",
+                fontWeight: "600",
+                lineHeight: "1.3",
+                margin: "0 0 16px",
+              },
+            },
+            "Nova Solicitação de Demanda"
+          ),
         React.createElement(
           Text,
           { style: { color: "#6b7280", fontSize: "16px", marginBottom: "24px" } },
@@ -172,35 +209,90 @@ const DemandRequestEmail = ({
           )
         ),
         React.createElement(Hr, { style: { borderColor: "#e5e7eb", margin: "24px 0" } }),
-        React.createElement(
-          Button,
-          {
-            href: actionUrl,
-            style: {
-              backgroundColor: "#7c3aed",
-              borderRadius: "6px",
-              color: "#ffffff",
-              fontSize: "16px",
-              fontWeight: "600",
-              textDecoration: "none",
-              textAlign: "center" as const,
-              display: "block",
-              padding: "12px 24px",
-            },
-          },
-          "Ver Solicitação"
+          React.createElement(
+            Section,
+            { style: { textAlign: "center" as const, margin: "24px 0" } },
+            React.createElement(
+              Button,
+              {
+                href: actionUrl,
+                style: {
+                  backgroundColor: "#F28705",
+                  borderRadius: "8px",
+                  color: "#ffffff",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  textDecoration: "none",
+                  textAlign: "center" as const,
+                  display: "inline-block",
+                  padding: "14px 32px",
+                },
+              },
+              "Ver Solicitação"
+            )
+          )
         ),
+        // Divider
+        React.createElement(Hr, { style: { borderColor: "#e5e7eb", margin: "0" } }),
+        // Footer
         React.createElement(
-          Text,
+          Section,
           {
             style: {
-              color: "#9ca3af",
-              fontSize: "12px",
-              marginTop: "24px",
+              backgroundColor: "#ffffff",
+              borderRadius: "0 0 12px 12px",
+              padding: "24px 40px 32px",
               textAlign: "center" as const,
             },
           },
-          "Este email foi enviado automaticamente pelo SoMA+."
+          React.createElement(
+            Text,
+            {
+              style: {
+                color: "#9ca3af",
+                fontSize: "12px",
+                lineHeight: "1.5",
+                margin: "0 0 8px",
+              },
+            },
+            "Esta é uma notificação automática do sistema SoMA+."
+          ),
+          React.createElement(
+            Text,
+            {
+              style: {
+                color: "#9ca3af",
+                fontSize: "12px",
+                lineHeight: "1.5",
+                margin: "0 0 16px",
+              },
+            },
+            "Se você não esperava este email, pode ignorá-lo com segurança."
+          ),
+          React.createElement(
+            Link,
+            {
+              href: "https://pla.soma.lefil.com.br",
+              style: {
+                color: "#F28705",
+                fontSize: "14px",
+                fontWeight: "600",
+                textDecoration: "none",
+              },
+            },
+            "Acessar SoMA+"
+          ),
+          React.createElement(
+            Text,
+            {
+              style: {
+                color: "#9ca3af",
+                fontSize: "11px",
+                margin: "16px 0 0",
+              },
+            },
+            `© ${new Date().getFullYear()} SoMA+. Todos os direitos reservados.`
+          )
         )
       )
     )
