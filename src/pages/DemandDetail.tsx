@@ -34,6 +34,7 @@ import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { DemandEditForm } from "@/components/DemandEditForm";
 import { AttachmentUploader } from "@/components/AttachmentUploader";
+import { AttachmentCounter } from "@/components/AttachmentCounter";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter, MoreHorizontal, Trash2, AlertTriangle, LayoutGrid, List } from "lucide-react";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
@@ -822,6 +823,7 @@ export default function DemandDetail() {
           <div>
             <h3 className="font-semibold mb-2 text-sm md:text-base flex items-center gap-2">
               📎 Anexos / Resultado
+              <AttachmentCounter demandId={demand.id} />
             </h3>
             <AttachmentUploader 
               demandId={demand.id} 
