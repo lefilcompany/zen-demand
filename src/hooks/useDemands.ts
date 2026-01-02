@@ -344,8 +344,11 @@ export function useUpdateDemand() {
       if (error) throw error;
       return demand;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["demands"] });
+      if (data?.id) {
+        queryClient.invalidateQueries({ queryKey: ["demand", data.id] });
+      }
     },
   });
 }
