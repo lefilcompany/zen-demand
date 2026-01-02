@@ -5,10 +5,14 @@ import { useAttachments, useUploadAttachment, useDeleteAttachment, getAttachment
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 
 interface AttachmentUploaderProps {
   demandId: string;
   readOnly?: boolean;
+  demandTitle?: string;
+  demandCreatedBy?: string;
 }
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
@@ -110,11 +114,55 @@ function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps)
   );
 }
 
-export function AttachmentUploader({ demandId, readOnly = false }: AttachmentUploaderProps) {
+export function AttachmentUploader({ demandId, readOnly = false, demandTitle, demandCreatedBy }: AttachmentUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const { data: attachments, isLoading } = useAttachments(demandId);
   const uploadAttachment = useUploadAttachment();
   const deleteAttachment = useDeleteAttachment();
+  const { user } = useAuth();
+
+  const notifyCreator = useCallback(async (fileName: string) => {
+    // Only notify if creator exists, is different from uploader, and we have demand info
+    if (!demandCreatedBy || !demandTitle || demandCreatedBy === user?.id) return;
+
+    try {
+      // Get uploader name
+      const { data: uploaderProfile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user?.id || "")
+        .single();
+
+      const uploaderName = uploaderProfile?.full_name || "Alguém";
+
+      // Create in-app notification
+      await supabase.from("notifications").insert({
+        user_id: demandCreatedBy,
+        title: "Novo arquivo anexado",
+        message: `${uploaderName} anexou "${fileName}" na demanda "${demandTitle}"`,
+        type: "info",
+        link: `/demands/${demandId}`,
+      });
+
+      // Send email notification
+      await supabase.functions.invoke("send-email", {
+        body: {
+          to: demandCreatedBy,
+          subject: `📎 Novo arquivo anexado: ${demandTitle}`,
+          template: "notification",
+          templateData: {
+            title: "Novo arquivo anexado à demanda",
+            message: `${uploaderName} anexou o arquivo "${fileName}" na demanda "${demandTitle}".`,
+            actionUrl: `${window.location.origin}/demands/${demandId}`,
+            actionText: "Ver Demanda",
+            type: "info" as const,
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Error notifying creator about attachment:", error);
+    }
+  }, [demandCreatedBy, demandTitle, demandId, user?.id]);
 
   const handleFiles = useCallback(async (files: FileList | null) => {
     if (!files) return;
@@ -128,11 +176,14 @@ export function AttachmentUploader({ demandId, readOnly = false }: AttachmentUpl
       try {
         await uploadAttachment.mutateAsync({ demandId, file });
         toast.success(`${file.name} enviado com sucesso`);
+        
+        // Notify demand creator
+        await notifyCreator(file.name);
       } catch {
         toast.error(`Erro ao enviar ${file.name}`);
       }
     }
-  }, [demandId, uploadAttachment]);
+  }, [demandId, uploadAttachment, notifyCreator]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
