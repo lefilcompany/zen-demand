@@ -136,20 +136,20 @@ export default function BoardMembers() {
               return (
                 <div
                   key={member.id}
-                  className="flex items-center justify-between p-4 rounded-lg border bg-card"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-lg border bg-card"
                 >
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar className="h-10 w-10 shrink-0">
                       <AvatarImage src={member.profile?.avatar_url || undefined} />
                       <AvatarFallback>
                         {member.profile?.full_name?.charAt(0).toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <p className="font-medium flex items-center gap-2">
-                        {member.profile?.full_name || "Usuário"}
+                    <div className="min-w-0">
+                      <p className="font-medium flex flex-wrap items-center gap-2">
+                        <span className="truncate">{member.profile?.full_name || "Usuário"}</span>
                         {isCurrentUser && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-xs shrink-0">
                             Você
                           </Badge>
                         )}
@@ -161,13 +161,14 @@ export default function BoardMembers() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 justify-between sm:justify-end">
                     <Badge
                       variant="outline"
                       className={`${roleColors[member.teamRole]} flex items-center gap-1`}
                     >
                       {roleIcons[member.teamRole]}
-                      {roleLabels[member.teamRole]}
+                      <span className="hidden sm:inline">{roleLabels[member.teamRole]}</span>
+                      <span className="sm:hidden">{roleLabels[member.teamRole].slice(0, 5)}...</span>
                     </Badge>
 
                     {canRemove && (

@@ -29,30 +29,30 @@ export function TeamCard({ team }: TeamCardProps) {
       className="hover:shadow-lg transition-all cursor-pointer group"
       onClick={handleClick}
     >
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="space-y-1 flex-1">
-            <CardTitle className="text-xl flex items-center gap-2">
-              {team.name}
-              <ChevronRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="space-y-1 flex-1 min-w-0">
+            <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
+              <span className="truncate">{team.name}</span>
+              <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
             </CardTitle>
             {team.description && (
-              <CardDescription>{team.description}</CardDescription>
+              <CardDescription className="line-clamp-2 text-sm">{team.description}</CardDescription>
             )}
           </div>
-          <Badge variant="secondary" className="ml-2 font-mono">
-            {team.access_code}
+          <Badge variant="secondary" className="font-mono text-xs shrink-0">
+            {team.access_code.slice(0, 8)}...
           </Badge>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Users className="h-4 w-4" />
-            <span>Criado por {team.profiles?.full_name || "Usuário"}</span>
+      <CardContent className="pt-0">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+          <div className="flex items-center gap-1 min-w-0">
+            <Users className="h-4 w-4 shrink-0" />
+            <span className="truncate">{team.profiles?.full_name || "Usuário"}</span>
           </div>
           <div className="flex items-center gap-1">
-            <Calendar className="h-4 w-4" />
+            <Calendar className="h-4 w-4 shrink-0" />
             <span>
               {format(new Date(team.created_at), "dd/MM/yyyy", { locale: ptBR })}
             </span>

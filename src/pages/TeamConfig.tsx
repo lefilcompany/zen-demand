@@ -207,16 +207,16 @@ export default function TeamConfig() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Configurações da Equipe</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Configurações da Equipe</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           Gerencie as configurações e membros da sua equipe
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 md:gap-6 grid-cols-1 lg:grid-cols-2">
         {/* Team Info */}
         <Card>
           <CardHeader>
@@ -240,17 +240,18 @@ export default function TeamConfig() {
 
             <div>
               <label className="text-sm font-medium text-muted-foreground">Código de Acesso</label>
-              <div className="flex items-center gap-2 mt-1">
-                <code className="flex-1 px-3 py-2 rounded-md bg-muted font-mono text-sm">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-1">
+                <code className="flex-1 px-3 py-2 rounded-md bg-muted font-mono text-sm break-all">
                   {team.access_code}
                 </code>
-                <Button variant="outline" size="icon" onClick={handleCopyCode}>
-                  {copied ? (
-                    <Check className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="icon" onClick={handleCopyCode} className="shrink-0">
+                    {copied ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
                 {isAdmin && (
                   <Dialog open={changeCodeOpen} onOpenChange={(open) => {
                     setChangeCodeOpen(open);
@@ -383,6 +384,7 @@ export default function TeamConfig() {
                     </DialogContent>
                   </Dialog>
                 )}
+                </div>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Compartilhe este código para outros usuários entrarem na equipe
@@ -407,7 +409,7 @@ export default function TeamConfig() {
         )}
 
         {/* Team Members */}
-        <Card className="md:col-span-2">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
@@ -434,17 +436,17 @@ export default function TeamConfig() {
                   return (
                     <div 
                       key={member.id} 
-                      className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border bg-card"
                     >
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Avatar className="h-10 w-10 shrink-0">
                           <AvatarImage src={member.profile?.avatar_url || undefined} />
                           <AvatarFallback>
                             {member.profile?.full_name?.charAt(0)?.toUpperCase() || "?"}
                           </AvatarFallback>
                         </Avatar>
-                        <div>
-                          <p className="font-medium">
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">
                             {member.profile?.full_name || "Usuário"}
                             {isCurrentUser && <span className="text-muted-foreground ml-2">(você)</span>}
                           </p>
@@ -457,13 +459,13 @@ export default function TeamConfig() {
                       </div>
                       
                       {canEditMember && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                           <Select 
                             value={member.role} 
                             onValueChange={(value) => handleRoleChange(member.id, value)}
                             disabled={updateRole.isPending}
                           >
-                            <SelectTrigger className="w-36">
+                            <SelectTrigger className="w-full sm:w-36">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
