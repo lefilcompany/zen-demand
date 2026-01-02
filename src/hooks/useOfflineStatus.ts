@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { onOnlineStatusChange, isOnline } from '@/lib/offlineStorage';
+import { onOnlineStatusChange } from '@/lib/offlineStorage';
 
 export function useOfflineStatus() {
-  const [online, setOnline] = useState(isOnline());
+  // Start with true (assume online) to avoid flash of offline indicator
+  const [online, setOnline] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onOnlineStatusChange(setOnline);

@@ -395,18 +395,52 @@ export const getSyncQueueCount = async (): Promise<number> => {
   }
 };
 
-// Check if we're online
+// Check if we're online - uses navigator.onLine as initial check
 export const isOnline = (): boolean => {
   return navigator.onLine;
 };
 
-// Listen for online/offline events
+// Verify actual connectivity by making a lightweight request
+export const checkRealConnectivity = async (): Promise<boolean> => {
+  if (!navigator.onLine) {
+    return false;
+  }
+  
+  try {
+    // Try to fetch a small resource to verify actual connectivity
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    const response = await fetch('/favicon.png', {
+      method: 'HEAD',
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch {
+    // If fetch fails but navigator says we're online, trust navigator
+    // This handles cases where the app is running locally or favicon isn't available
+    return navigator.onLine;
+  }
+};
+
+// Listen for online/offline events with real connectivity check
 export const onOnlineStatusChange = (callback: (online: boolean) => void): (() => void) => {
-  const handleOnline = () => callback(true);
+  const handleOnline = async () => {
+    // When browser says online, verify with actual request
+    const isReallyOnline = await checkRealConnectivity();
+    callback(isReallyOnline);
+  };
+  
   const handleOffline = () => callback(false);
 
   window.addEventListener('online', handleOnline);
   window.addEventListener('offline', handleOffline);
+
+  // Initial check on mount
+  checkRealConnectivity().then(callback);
 
   return () => {
     window.removeEventListener('online', handleOnline);
