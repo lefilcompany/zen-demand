@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useTeams } from "@/hooks/useTeams";
+import { useTeams, generateAccessCode, checkAccessCodeAvailable } from "@/hooks/useTeams";
 import { useTeamMembers, useUpdateMemberRole, useRemoveMember } from "@/hooks/useTeamMembers";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeamRole } from "@/hooks/useTeamRole";
@@ -58,6 +58,9 @@ export default function TeamConfig() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isChangingCode, setIsChangingCode] = useState(false);
+  const [isCheckingCode, setIsCheckingCode] = useState(false);
+  const [isCodeAvailable, setIsCodeAvailable] = useState<boolean | null>(null);
+  const [codeSuggestions, setCodeSuggestions] = useState<string[]>([]);
 
   const team = teams?.find(t => t.id === selectedTeamId);
   const isAdmin = myRole === "admin";
@@ -103,13 +106,36 @@ export default function TeamConfig() {
     }
   };
 
-  const generateRandomCode = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let code = "";
-    for (let i = 0; i < 8; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
+  const handleNewCodeChange = async (value: string) => {
+    const normalizedCode = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 20);
+    setNewAccessCode(normalizedCode);
+    setIsCodeAvailable(null);
+    
+    if (normalizedCode.length >= 6 && normalizedCode !== team?.access_code) {
+      setIsCheckingCode(true);
+      try {
+        const available = await checkAccessCodeAvailable(normalizedCode);
+        setIsCodeAvailable(available);
+        if (!available) {
+          // Generate suggestions
+          setCodeSuggestions([generateAccessCode(), generateAccessCode(), generateAccessCode()]);
+        }
+      } catch (error) {
+        console.error("Error checking code:", error);
+        setIsCodeAvailable(null);
+      } finally {
+        setIsCheckingCode(false);
+      }
     }
-    setNewAccessCode(code);
+  };
+
+  const handleGenerateNewCode = () => {
+    const newCode = generateAccessCode();
+    setNewAccessCode(newCode);
+    setIsCodeAvailable(null);
+    setCodeSuggestions([]);
+    // Check availability after generating
+    handleNewCodeChange(newCode);
   };
 
   const handleChangeAccessCode = async () => {
@@ -253,15 +279,65 @@ export default function TeamConfig() {
                             <Input
                               id="new-code"
                               value={newAccessCode}
-                              onChange={(e) => setNewAccessCode(e.target.value.toUpperCase())}
-                              placeholder="Ex: TEAM2024"
-                              maxLength={12}
+                              onChange={(e) => handleNewCodeChange(e.target.value)}
+                              placeholder="Ex: TEAM2024XYZ"
+                              maxLength={20}
                               className="font-mono uppercase"
                             />
-                            <Button type="button" variant="outline" onClick={generateRandomCode}>
+                            <Button type="button" variant="outline" onClick={handleGenerateNewCode}>
                               Gerar
                             </Button>
                           </div>
+                          
+                          {/* Code availability indicator */}
+                          {newAccessCode.length >= 6 && (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-sm">
+                                {isCheckingCode ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                    <span className="text-muted-foreground">Verificando...</span>
+                                  </>
+                                ) : isCodeAvailable === true ? (
+                                  <>
+                                    <Check className="h-4 w-4 text-emerald-500" />
+                                    <span className="text-emerald-500">Código disponível</span>
+                                  </>
+                                ) : isCodeAvailable === false ? (
+                                  <>
+                                    <RefreshCw className="h-4 w-4 text-destructive" />
+                                    <span className="text-destructive">Código já em uso</span>
+                                  </>
+                                ) : null}
+                              </div>
+                              
+                              {/* Suggestions when code is taken */}
+                              {isCodeAvailable === false && codeSuggestions.length > 0 && (
+                                <div className="space-y-1">
+                                  <p className="text-xs text-muted-foreground">Sugestões disponíveis:</p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {codeSuggestions.map((suggestion, i) => (
+                                      <Button
+                                        key={i}
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="font-mono text-xs"
+                                        onClick={() => {
+                                          setNewAccessCode(suggestion);
+                                          setIsCodeAvailable(true);
+                                          setCodeSuggestions([]);
+                                        }}
+                                      >
+                                        {suggestion.slice(0, 10)}...
+                                      </Button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          
                           <p className="text-xs text-muted-foreground">
                             Código atual: {team.access_code}
                           </p>
@@ -298,7 +374,7 @@ export default function TeamConfig() {
                         </Button>
                         <Button 
                           onClick={handleChangeAccessCode} 
-                          disabled={!newAccessCode || !password || isChangingCode}
+                          disabled={!newAccessCode || !password || isChangingCode || newAccessCode.length < 6 || isCodeAvailable === false || isCheckingCode}
                         >
                           {isChangingCode && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                           Alterar Código
