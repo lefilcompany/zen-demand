@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { useNotificationSound } from "./useNotificationSound";
 
 interface Notification {
   id: string;
@@ -17,6 +18,8 @@ interface Notification {
 export function useNotifications() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { playNotificationSound } = useNotificationSound();
+  const isInitialMount = useRef(true);
 
   const { data: notifications, isLoading } = useQuery({
     queryKey: ["notifications", user?.id],
@@ -68,6 +71,11 @@ export function useNotifications() {
   useEffect(() => {
     if (!user?.id) return;
 
+    // Mark initial mount complete after a delay to avoid playing sound on page load
+    const mountTimer = setTimeout(() => {
+      isInitialMount.current = false;
+    }, 2000);
+
     const channel = supabase
       .channel("notifications-changes")
       .on(
@@ -80,14 +88,19 @@ export function useNotifications() {
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ["notifications"] });
+          // Play sound only after initial mount
+          if (!isInitialMount.current) {
+            playNotificationSound();
+          }
         }
       )
       .subscribe();
 
     return () => {
+      clearTimeout(mountTimer);
       supabase.removeChannel(channel);
     };
-  }, [user?.id, queryClient]);
+  }, [user?.id, queryClient, playNotificationSound]);
 
   return {
     notifications: notifications || [],
