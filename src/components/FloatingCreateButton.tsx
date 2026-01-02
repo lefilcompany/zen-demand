@@ -26,7 +26,7 @@ export function FloatingCreateButton() {
       <CreateBoardDialog
         trigger={
           <Button
-            className="fixed bottom-20 right-4 z-40 h-12 w-12 rounded-full shadow-lg animate-scale-in pointer-events-auto"
+            className="fixed z-40 h-12 w-12 rounded-full shadow-lg animate-scale-in pointer-events-auto right-4 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))]"
             size="icon"
             aria-label="Novo Quadro"
           >
@@ -45,7 +45,7 @@ export function FloatingCreateButton() {
   return (
     <Button
       onClick={() => navigate(targetUrl)}
-      className="fixed bottom-20 right-4 z-40 h-12 w-12 rounded-full shadow-lg animate-scale-in pointer-events-auto"
+      className="fixed z-40 h-12 w-12 rounded-full shadow-lg animate-scale-in pointer-events-auto right-4 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))]"
       size="icon"
       data-tour="new-demand-btn"
       aria-label={t("demands.newDemand")}
