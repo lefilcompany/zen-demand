@@ -825,7 +825,9 @@ export default function DemandDetail() {
             </h3>
             <AttachmentUploader 
               demandId={demand.id} 
-              readOnly={!(role === "admin" || role === "moderator" || role === "executor")} 
+              readOnly={!(role === "admin" || role === "moderator" || role === "executor")}
+              demandTitle={demand.title}
+              demandCreatedBy={demand.created_by}
             />
           </div>
         </CardContent>
