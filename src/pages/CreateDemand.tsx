@@ -13,6 +13,8 @@ import { useTeamRole } from "@/hooks/useTeamRole";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { ScopeProgressBar } from "@/components/ScopeProgressBar";
+import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/components/InlineFileUploader";
+import { useUploadAttachment } from "@/hooks/useAttachments";
 import { ArrowLeft, AlertTriangle, Ban, CloudOff, WifiOff } from "lucide-react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -56,6 +58,9 @@ export default function CreateDemand() {
   const [dueDate, setDueDate] = useState("");
   const [serviceId, setServiceId] = useState("");
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  
+  const uploadAttachment = useUploadAttachment();
 
   // Set default status when statuses load
   useEffect(() => {
@@ -109,9 +114,18 @@ export default function CreateDemand() {
               toast.warning("Demanda criada, mas houve um erro ao atribuir responsáveis", {
                 description: "Você pode atribuir responsáveis na tela de detalhes.",
               });
-              navigate("/kanban");
-              return;
             }
+          }
+          
+          // Upload pending files
+          if (!wasCreatedOffline && pendingFiles.length > 0 && demand) {
+            const { success, failed } = await uploadPendingFiles(demand.id, pendingFiles, uploadAttachment);
+            if (failed > 0) {
+              toast.warning(`${success} arquivo(s) enviado(s), ${failed} falhou(ram)`);
+            } else if (success > 0) {
+              toast.success(`${success} arquivo(s) anexado(s)`);
+            }
+            setPendingFiles([]);
           }
           
           if (wasCreatedOffline) {
@@ -286,6 +300,20 @@ export default function CreateDemand() {
                 />
               </div>
             )}
+
+            <div className="space-y-2">
+              <Label>Anexos</Label>
+              <InlineFileUploader
+                pendingFiles={pendingFiles}
+                onFilesChange={setPendingFiles}
+                disabled={isOffline}
+              />
+              {isOffline && (
+                <p className="text-xs text-muted-foreground">
+                  Anexos não podem ser adicionados offline
+                </p>
+              )}
+            </div>
 
             <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4">
               <Button
