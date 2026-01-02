@@ -52,7 +52,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { sendAdjustmentPushNotification } from "@/hooks/useSendPushNotification";
+import { sendAdjustmentPushNotification, sendCommentPushNotification } from "@/hooks/useSendPushNotification";
 import { useRealtimeDemandDetail } from "@/hooks/useRealtimeDemandDetail";
 import { DemandPresenceIndicator } from "@/components/DemandPresenceIndicator";
 import { RealtimeUpdateIndicator } from "@/components/RealtimeUpdateIndicator";
@@ -296,11 +296,13 @@ export default function DemandDetail() {
   const handleAddComment = async () => {
     if (!comment.trim() || !id) return;
 
+    const commentContent = comment.trim();
+    
     createInteraction.mutate(
       {
         demand_id: id,
         interaction_type: "comment",
-        content: comment.trim(),
+        content: commentContent,
       },
       {
         onSuccess: async (createdInteraction) => {
@@ -322,6 +324,58 @@ export default function DemandDetail() {
             toast.success("Comentário adicionado!");
           }
           setComment("");
+          
+          // Stop typing indicator
+          stopTyping();
+          
+          // Notify assignees and creator about the new comment (excluding current user)
+          const usersToNotify = new Set<string>();
+          
+          // Add all assignees
+          assignees?.forEach(a => usersToNotify.add(a.user_id));
+          
+          // Add demand creator
+          if (demand?.created_by) {
+            usersToNotify.add(demand.created_by);
+          }
+          
+          // Remove current user from notification list
+          if (user?.id) {
+            usersToNotify.delete(user.id);
+          }
+          
+          const notifyUserIds = Array.from(usersToNotify);
+          
+          if (notifyUserIds.length > 0) {
+            // Get current user's name
+            const { data: currentProfile } = await supabase
+              .from("profiles")
+              .select("full_name")
+              .eq("id", user?.id || "")
+              .single();
+            
+            const commenterName = currentProfile?.full_name || "Alguém";
+            
+            // Create in-app notifications
+            const notifications = notifyUserIds.map((userId) => ({
+              user_id: userId,
+              title: "Novo comentário",
+              message: `${commenterName} comentou na demanda "${demand?.title}": ${commentContent.substring(0, 100)}${commentContent.length > 100 ? "..." : ""}`,
+              type: "info",
+              link: `/demands/${id}`,
+            }));
+            
+            await supabase.from("notifications").insert(notifications);
+            
+            // Send push notifications
+            sendCommentPushNotification({
+              userIds: notifyUserIds,
+              demandId: id,
+              demandTitle: demand?.title || "",
+              commenterName,
+              commentPreview: commentContent,
+            }).catch(err => console.error("Error sending comment push notification:", err));
+          }
         },
         onError: (error: any) => {
           toast.error("Erro ao adicionar comentário", {
