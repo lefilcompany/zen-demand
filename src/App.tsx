@@ -39,6 +39,7 @@ import Reports from "./pages/Reports";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import ResetPassword from "./pages/ResetPassword";
+import TimeManagement from "./pages/TimeManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -85,6 +86,7 @@ const App = () => (
                       <Route path="/kanban" element={<Kanban />} />
                       <Route path="/archived" element={<ArchivedDemands />} />
                       <Route path="/my-demands" element={<MyDemands />} />
+                      <Route path="/time-management" element={<TimeManagement />} />
                       
                       <Route path="/reports" element={<Reports />} />
                       <Route path="/profile" element={<Profile />} />

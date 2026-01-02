@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, ClipboardList, Settings2, FileText, Send, LayoutGrid, UserPlus, UsersRound } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, ClipboardList, Settings2, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import logoSoma from "@/assets/logo-soma-dark.png";
 import { NavLink } from "@/components/NavLink";
@@ -58,12 +58,19 @@ export function AppSidebar() {
   }];
 
   // Add demand requests link for admins/moderators
-  const adminMenuItems = isBoardAdminOrModerator ? [{
-    title: "Solicitações de Demanda",
-    url: "/demand-requests",
-    icon: FileText,
-    showDemandRequestBadge: true
-  }] : [];
+  const adminMenuItems = isBoardAdminOrModerator ? [
+    {
+      title: "Solicitações de Demanda",
+      url: "/demand-requests",
+      icon: FileText,
+      showDemandRequestBadge: true
+    },
+    {
+      title: "Gerenciamento de Tempo",
+      url: "/time-management",
+      icon: Clock
+    }
+  ] : [];
 
   // Add my requests link for requesters
   const requesterMenuItems = isRequester ? [{
