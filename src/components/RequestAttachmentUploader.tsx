@@ -34,6 +34,7 @@ interface AttachmentItemProps {
 function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps) {
   const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -58,6 +59,30 @@ function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps)
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const handleDownload = async () => {
+    if (!url) return;
+    
+    setDownloading(true);
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = attachment.file_name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      toast.error("Erro ao baixar arquivo");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const Icon = getFileIcon(attachment.file_type);
@@ -92,11 +117,14 @@ function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps)
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            asChild
+            onClick={handleDownload}
+            disabled={downloading}
           >
-            <a href={url} download={attachment.file_name} target="_blank" rel="noopener noreferrer">
+            {downloading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
               <Download className="h-4 w-4" />
-            </a>
+            )}
           </Button>
         )}
         
