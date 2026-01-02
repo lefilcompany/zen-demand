@@ -818,12 +818,15 @@ export default function DemandDetail() {
             </div>
           )}
 
-          {/* Attachments section - result/deliverables */}
+          {/* Attachments section - result/deliverables - only agents/admins can upload */}
           <div>
             <h3 className="font-semibold mb-2 text-sm md:text-base flex items-center gap-2">
               📎 Anexos / Resultado
             </h3>
-            <AttachmentUploader demandId={demand.id} readOnly={isDeliveredStatus && !canEdit} />
+            <AttachmentUploader 
+              demandId={demand.id} 
+              readOnly={!(role === "admin" || role === "moderator" || role === "executor")} 
+            />
           </div>
         </CardContent>
       </Card>
