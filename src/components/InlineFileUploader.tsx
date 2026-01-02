@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Paperclip, X, Image, FileText, File, Clipboard } from "lucide-react";
+import { Paperclip, X, Image, FileText, File, FileSpreadsheet, FileArchive, FileCode, Presentation } from "lucide-react";
 import { toast } from "sonner";
 
 export interface PendingFile {
@@ -123,10 +123,20 @@ export function InlineFileUploader({
     onFilesChange(pendingFiles.filter(f => f.id !== fileId));
   }, [pendingFiles, onFilesChange]);
 
-  const getFileIcon = (type: string) => {
+  const getFileIcon = (type: string, name: string) => {
+    const ext = name.split('.').pop()?.toLowerCase();
     if (type.startsWith("image/")) return Image;
-    if (type.includes("pdf") || type.includes("document")) return FileText;
+    if (ext === "pdf" || type.includes("pdf")) return FileText;
+    if (ext === "csv" || ext === "xls" || ext === "xlsx" || type.includes("spreadsheet")) return FileSpreadsheet;
+    if (ext === "ppt" || ext === "pptx" || type.includes("presentation")) return Presentation;
+    if (ext === "zip" || ext === "rar" || ext === "7z" || type.includes("zip") || type.includes("rar")) return FileArchive;
+    if (ext === "json" || ext === "xml" || ext === "html" || ext === "css" || ext === "js" || ext === "ts") return FileCode;
+    if (type.includes("document") || ext === "doc" || ext === "docx" || ext === "txt") return FileText;
     return File;
+  };
+
+  const getFileExtension = (name: string) => {
+    return name.split('.').pop()?.toUpperCase() || '';
   };
 
   const formatSize = (bytes: number) => {
@@ -170,25 +180,33 @@ export function InlineFileUploader({
       {pendingFiles.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {pendingFiles.map((pendingFile) => {
-            const Icon = getFileIcon(pendingFile.file.type);
+            const Icon = getFileIcon(pendingFile.file.type, pendingFile.file.name);
             const isImage = pendingFile.file.type.startsWith("image/");
+            const extension = getFileExtension(pendingFile.file.name);
             
             return (
               <div
                 key={pendingFile.id}
-                className="relative group flex items-center gap-2 bg-muted/50 rounded-lg p-2 pr-8 max-w-[200px]"
+                className="relative group flex items-center gap-2 bg-muted/50 rounded-lg p-2 pr-8 max-w-[220px]"
               >
                 {isImage && pendingFile.preview ? (
                   <img
                     src={pendingFile.preview}
                     alt={pendingFile.file.name}
-                    className="h-8 w-8 object-cover rounded"
+                    className="h-10 w-10 object-cover rounded"
                   />
                 ) : (
-                  <Icon className="h-8 w-8 p-1.5 bg-background rounded flex-shrink-0" />
+                  <div className="relative h-10 w-10 flex items-center justify-center bg-background rounded flex-shrink-0">
+                    <Icon className="h-5 w-5 text-muted-foreground" />
+                    <span className="absolute -bottom-1 -right-1 text-[8px] font-bold bg-primary text-primary-foreground px-1 rounded">
+                      {extension}
+                    </span>
+                  </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium truncate">{pendingFile.file.name}</p>
+                  <p className="text-xs font-medium truncate" title={pendingFile.file.name}>
+                    {pendingFile.file.name}
+                  </p>
                   <p className="text-[10px] text-muted-foreground">
                     {formatSize(pendingFile.file.size)}
                   </p>
