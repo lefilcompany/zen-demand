@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.png", "lovable-uploads/**/*"],
+      includeAssets: ["favicon.png", "icons/**/*", "lovable-uploads/**/*"],
       manifest: {
         name: "SoMA - Gerenciamento de Demandas",
         short_name: "SoMA",
@@ -26,18 +26,42 @@ export default defineConfig(({ mode }) => ({
         orientation: "portrait",
         scope: "/",
         start_url: "/",
+        categories: ["productivity", "business"],
+        lang: "pt-BR",
+        dir: "ltr",
         icons: [
           {
-            src: "/favicon.png",
+            src: "/icons/icon-192x192.png",
             sizes: "192x192",
             type: "image/png",
-            purpose: "any maskable",
+            purpose: "any",
           },
           {
-            src: "/favicon.png",
+            src: "/icons/icon-512x512.png",
             sizes: "512x512",
             type: "image/png",
-            purpose: "any maskable",
+            purpose: "any",
+          },
+          {
+            src: "/icons/icon-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "maskable",
+          },
+          {
+            src: "/icons/icon-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+        ],
+        screenshots: [
+          {
+            src: "/icons/icon-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            form_factor: "narrow",
+            label: "SoMA - Gerenciamento de Demandas",
           },
         ],
       },
