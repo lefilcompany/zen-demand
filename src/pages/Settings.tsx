@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Moon, Sun, Monitor, Bell, Mail, Smartphone, Loader2, Send, LogOut, Users } from "lucide-react";
+import { ArrowLeft, Moon, Sun, Monitor, Bell, Mail, Smartphone, Loader2, Send, LogOut, Users, Trash2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -25,12 +26,22 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useNotificationPreferences, NotificationPreferences } from "@/hooks/useNotificationPreferences";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useAuth } from "@/lib/auth";
 import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useTeamRole } from "@/hooks/useTeamRole";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -41,8 +52,13 @@ export default function Settings() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { currentTeam, selectedTeamId, setSelectedTeamId, teams } = useSelectedTeam();
+  const { data: myRole } = useTeamRole(selectedTeamId);
   const [mounted, setMounted] = useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [deleteTeamOpen, setDeleteTeamOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [showDeletePassword, setShowDeletePassword] = useState(false);
+  const [isDeletingTeam, setIsDeletingTeam] = useState(false);
   const { preferences, updatePreferences, isLoading } = useNotificationPreferences();
   const { 
     isSupported: isPushSupported, 
@@ -52,6 +68,8 @@ export default function Settings() {
     enablePushNotifications, 
     disablePushNotifications 
   } = usePushNotifications();
+  
+  const isAdmin = myRole === "admin";
 
   const leaveTeamMutation = useMutation({
     mutationFn: async (teamId: string) => {
@@ -84,6 +102,52 @@ export default function Settings() {
       toast.error("Erro ao sair da equipe");
     },
   });
+
+  const handleDeleteTeam = async () => {
+    if (!user?.email || !deletePassword || !selectedTeamId) return;
+    
+    setIsDeletingTeam(true);
+    try {
+      // Verify password by re-authenticating
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: deletePassword,
+      });
+
+      if (authError) {
+        toast.error("Senha incorreta");
+        return;
+      }
+
+      // Delete the team
+      const { error: deleteError } = await supabase
+        .from("teams")
+        .delete()
+        .eq("id", selectedTeamId);
+
+      if (deleteError) throw deleteError;
+
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      
+      // Select another team if available
+      const remainingTeams = teams?.filter(t => t.id !== selectedTeamId);
+      if (remainingTeams && remainingTeams.length > 0) {
+        setSelectedTeamId(remainingTeams[0].id);
+      } else {
+        setSelectedTeamId(null);
+        navigate("/welcome");
+      }
+      
+      toast.success("Equipe excluída com sucesso");
+      setDeleteTeamOpen(false);
+      setDeletePassword("");
+    } catch (error: any) {
+      console.error("Error deleting team:", error);
+      toast.error("Erro ao excluir equipe");
+    } finally {
+      setIsDeletingTeam(false);
+    }
+  };
 
   const sendTestNotification = async () => {
     if (!user?.id) return;
@@ -435,23 +499,24 @@ export default function Settings() {
                 Gerencie sua participação na equipe atual
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between p-4 rounded-lg border border-destructive/20 bg-destructive/5">
+            <CardContent className="space-y-4">
+              {/* Leave Team */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border border-border bg-muted/30">
                 <div className="flex items-center gap-3">
-                  <LogOut className="h-4 w-4 text-destructive" />
+                  <LogOut className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="font-medium text-foreground">
-                      Sair da equipe "{currentTeam.name}"
+                      Sair da equipe
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Você perderá acesso a todos os quadros e demandas desta equipe
+                      Você perderá acesso a todos os quadros e demandas
                     </p>
                   </div>
                 </div>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button 
-                      variant="destructive" 
+                      variant="outline" 
                       size="sm"
                       disabled={leaveTeamMutation.isPending}
                     >
@@ -484,6 +549,88 @@ export default function Settings() {
                   </AlertDialogContent>
                 </AlertDialog>
               </div>
+
+              {/* Delete Team - Admin only */}
+              {isAdmin && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border border-destructive/20 bg-destructive/5">
+                  <div className="flex items-center gap-3">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <div>
+                      <p className="font-medium text-foreground">
+                        Excluir equipe
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Esta ação é irreversível e excluirá todos os dados
+                      </p>
+                    </div>
+                  </div>
+                  <Dialog open={deleteTeamOpen} onOpenChange={(open) => {
+                    setDeleteTeamOpen(open);
+                    if (!open) {
+                      setDeletePassword("");
+                      setShowDeletePassword(false);
+                    }
+                  }}>
+                    <DialogTrigger asChild>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Excluir
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Excluir equipe "{currentTeam.name}"?</DialogTitle>
+                        <DialogDescription>
+                          Esta ação é irreversível. Todos os quadros, demandas, membros e dados associados serão permanentemente excluídos.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="delete-password">Confirme sua senha</Label>
+                          <div className="relative">
+                            <Input
+                              id="delete-password"
+                              type={showDeletePassword ? "text" : "password"}
+                              value={deletePassword}
+                              onChange={(e) => setDeletePassword(e.target.value)}
+                              placeholder="Digite sua senha"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="absolute right-0 top-0 h-full px-3"
+                              onClick={() => setShowDeletePassword(!showDeletePassword)}
+                            >
+                              {showDeletePassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteTeamOpen(false)}>
+                          Cancelar
+                        </Button>
+                        <Button 
+                          variant="destructive"
+                          onClick={handleDeleteTeam} 
+                          disabled={!deletePassword || isDeletingTeam}
+                        >
+                          {isDeletingTeam && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Excluir equipe
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
