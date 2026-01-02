@@ -15,7 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight, X } from "lucide-react";
+import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight, X, WifiOff, CloudOff } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -30,6 +30,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTimerControl } from "@/hooks/useTimerControl";
 import { sendAdjustmentCompletionPushNotification } from "@/hooks/useSendPushNotification";
+import { useOfflineStatus } from "@/hooks/useOfflineStatus";
+import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 interface Assignee {
   user_id: string;
@@ -119,9 +122,13 @@ function useIsLargeDesktop() {
 const MAX_OPEN_COLUMNS = 3;
 
 export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole }: KanbanBoardProps) {
+  const { t } = useTranslation();
   const isMobile = useIsMobile();
   const isTabletOrSmallDesktop = useIsTabletOrSmallDesktop();
   const isLargeDesktop = useIsLargeDesktop();
+  const { isOffline } = useOfflineStatus();
+  const queryClient = useQueryClient();
+  
   // Track multiple active columns (max 3), using array to maintain order (FIFO)
   const [activeColumns, setActiveColumns] = useState<string[]>([]);
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -129,6 +136,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
   const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
   const [adjustmentDemandId, setAdjustmentDemandId] = useState<string | null>(null);
   const [adjustmentType, setAdjustmentType] = useState<AdjustmentType>("internal");
+  const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, string>>({});
   const { data: statuses } = useDemandStatuses();
   const updateDemand = useUpdateDemand();
   
@@ -221,6 +229,9 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
       setActiveColumns([columnKey]);
     }
 
+    // Apply optimistic update immediately for smooth UX (especially offline)
+    setOptimisticUpdates(prev => ({ ...prev, [currentDraggedId]: columnKey }));
+
     const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && columnKey === "Aprovação do Cliente";
 
     updateDemand.mutate(
@@ -230,9 +241,27 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
       },
       {
         onSuccess: async () => {
-          toast.success(`Status alterado para "${columnKey}"`);
+          // Clear optimistic update after success
+          setOptimisticUpdates(prev => {
+            const newUpdates = { ...prev };
+            delete newUpdates[currentDraggedId];
+            return newUpdates;
+          });
+
+          // Invalidate to sync with server data
+          queryClient.invalidateQueries({ queryKey: ['demands'] });
+
+          if (isOffline) {
+            toast.success(`Status alterado para "${columnKey}"`, {
+              description: t("sync.offlineDescription"),
+              icon: <CloudOff className="h-4 w-4" />,
+            });
+          } else {
+            toast.success(`Status alterado para "${columnKey}"`);
+          }
           
-          if (isAdjustmentCompletion && demand && demand.created_by) {
+          // Only send notifications if online
+          if (!isOffline && isAdjustmentCompletion && demand && demand.created_by) {
             // Send push notification
             sendAdjustmentCompletionPushNotification({
               creatorId: demand.created_by,
@@ -262,6 +291,12 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
           }
         },
         onError: (error: any) => {
+          // Revert optimistic update on error
+          setOptimisticUpdates(prev => {
+            const newUpdates = { ...prev };
+            delete newUpdates[currentDraggedId];
+            return newUpdates;
+          });
           toast.error("Erro ao alterar status", {
             description: getErrorMessage(error),
           });
@@ -282,6 +317,9 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     
     if (previousStatusName === newStatusKey) return;
 
+    // Apply optimistic update immediately
+    setOptimisticUpdates(prev => ({ ...prev, [demandId]: newStatusKey }));
+
     const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && newStatusKey === "Aprovação do Cliente";
 
     updateDemand.mutate(
@@ -291,9 +329,26 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
       },
       {
         onSuccess: async () => {
-          toast.success(`Status alterado para "${newStatusKey}"`);
+          // Clear optimistic update
+          setOptimisticUpdates(prev => {
+            const newUpdates = { ...prev };
+            delete newUpdates[demandId];
+            return newUpdates;
+          });
+
+          queryClient.invalidateQueries({ queryKey: ['demands'] });
+
+          if (isOffline) {
+            toast.success(`Status alterado para "${newStatusKey}"`, {
+              description: t("sync.offlineDescription"),
+              icon: <CloudOff className="h-4 w-4" />,
+            });
+          } else {
+            toast.success(`Status alterado para "${newStatusKey}"`);
+          }
           
-          if (isAdjustmentCompletion && demand && demand.created_by) {
+          // Only send notifications if online
+          if (!isOffline && isAdjustmentCompletion && demand && demand.created_by) {
             // Send push notification
             sendAdjustmentCompletionPushNotification({
               creatorId: demand.created_by,
@@ -323,6 +378,12 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
           }
         },
         onError: (error: any) => {
+          // Revert optimistic update
+          setOptimisticUpdates(prev => {
+            const newUpdates = { ...prev };
+            delete newUpdates[demandId];
+            return newUpdates;
+          });
           toast.error("Erro ao alterar status", {
             description: getErrorMessage(error),
           });
@@ -331,8 +392,16 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     );
   };
 
+  // Get demands for column, considering optimistic updates
   const getDemandsForColumn = (columnKey: string) => {
-    return demands.filter((d) => d.demand_statuses?.name === columnKey);
+    return demands.filter((d) => {
+      // Check if there's an optimistic update for this demand
+      const optimisticStatus = optimisticUpdates[d.id];
+      if (optimisticStatus) {
+        return optimisticStatus === columnKey;
+      }
+      return d.demand_statuses?.name === columnKey;
+    });
   };
 
   const isOverdue = (dueDate: string | null | undefined) => {
@@ -364,6 +433,8 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     const showDragHandle = !readOnly && !isMobile && !isDelivered;
     const currentStatus = demand.demand_statuses?.name;
     const availableStatuses = columns.filter(col => col.key !== currentStatus);
+    // Check if this demand has a pending optimistic update (offline change)
+    const hasPendingSync = !!optimisticUpdates[demand.id];
     
     return (
       <Card
@@ -372,6 +443,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
         className={cn(
           "hover:shadow-md transition-all cursor-pointer",
           draggedId === demand.id && "opacity-50 scale-95",
+          hasPendingSync && "ring-2 ring-amber-500/50 bg-amber-500/5",
           "group relative"
         )}
       >
@@ -447,6 +519,17 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
               )}
 
               <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
+                {hasPendingSync && (
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/20 animate-pulse"
+                    title={t("sync.offlineDescription")}
+                  >
+                    <CloudOff className="h-3 w-3 mr-1" />
+                    {t("sync.offlinePending")}
+                  </Badge>
+                )}
+                
                 {demand.priority && (
                   <Badge
                     variant="outline"

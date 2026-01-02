@@ -160,6 +160,36 @@ export const getCachedDemand = async (id: string): Promise<unknown | null> => {
   return getFromStore(STORES.demands, id);
 };
 
+// Update a single cached demand (for offline status changes)
+export const updateCachedDemand = async (
+  demandId: string,
+  updates: Record<string, unknown>
+): Promise<void> => {
+  try {
+    const db = await openDB();
+    const transaction = db.transaction(STORES.demands, 'readwrite');
+    const store = transaction.objectStore(STORES.demands);
+
+    const existingDemand = await new Promise<Record<string, unknown> | undefined>((resolve, reject) => {
+      const request = store.get(demandId);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+
+    if (existingDemand) {
+      const updatedDemand = { ...existingDemand, ...updates };
+      await new Promise<void>((resolve, reject) => {
+        const request = store.put(updatedDemand);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+      console.log('Updated cached demand:', demandId);
+    }
+  } catch (error) {
+    console.error('Failed to update cached demand:', error);
+  }
+};
+
 // Specific functions for statuses
 export const saveDemandStatuses = async (statuses: unknown[]): Promise<void> => {
   await saveToStore(STORES.demandStatuses, statuses);
