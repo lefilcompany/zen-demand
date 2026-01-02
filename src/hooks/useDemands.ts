@@ -8,6 +8,14 @@ import {
   InteractionCreateSchema, 
   validateData 
 } from "@/lib/validations";
+import { 
+  saveDemands, 
+  getCachedDemandsByBoard, 
+  getCachedDemand,
+  saveDemandStatuses,
+  getCachedDemandStatuses,
+  isOnline 
+} from "@/lib/offlineStorage";
 
 // Priority order: alta (high) = 1, média (medium) = 2, baixa (low) = 3
 const priorityOrder: Record<string, number> = {
@@ -42,6 +50,13 @@ export function useDemands(boardId?: string) {
   return useQuery({
     queryKey: ["demands", boardId],
     queryFn: async () => {
+      // If offline, return cached data
+      if (!isOnline() && boardId) {
+        console.log('Offline: returning cached demands');
+        const cachedDemands = await getCachedDemandsByBoard(boardId);
+        return sortDemandsByPriorityAndDueDate(cachedDemands as any[]);
+      }
+
       let query = supabase
         .from("demands")
         .select(`
@@ -63,12 +78,32 @@ export function useDemands(boardId?: string) {
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        // If network error, try to return cached data
+        if (boardId) {
+          console.log('Network error: returning cached demands');
+          const cachedDemands = await getCachedDemandsByBoard(boardId);
+          if (cachedDemands.length > 0) {
+            return sortDemandsByPriorityAndDueDate(cachedDemands as any[]);
+          }
+        }
+        throw error;
+      }
+      
+      // Cache the data for offline use
+      if (data && data.length > 0) {
+        await saveDemands(data);
+      }
       
       // Sort by priority then due date
       return sortDemandsByPriorityAndDueDate(data || []);
     },
     enabled: !!user && !!boardId,
+    retry: (failureCount, error) => {
+      // Don't retry if offline
+      if (!isOnline()) return false;
+      return failureCount < 3;
+    },
   });
 }
 
