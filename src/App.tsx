@@ -12,7 +12,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { CommandMenu } from "@/components/CommandMenu";
 import { KeyboardShortcutsProvider } from "@/components/KeyboardShortcuts";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
-import { OfflineIndicator } from "@/components/OfflineIndicator";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Welcome from "./pages/Welcome";
@@ -56,7 +55,6 @@ const App = () => (
                   <Toaster position="top-right" richColors />
                   <CommandMenu />
                   <PWAInstallPrompt />
-                  <OfflineIndicator />
                   <Routes>
                     {/* Public routes */}
                     <Route path="/auth" element={<Auth />} />
