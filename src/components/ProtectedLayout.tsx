@@ -68,9 +68,9 @@ export function ProtectedLayout() {
       <div className="flex h-screen w-full bg-sidebar p-2 md:p-3 overflow-hidden">
         <AppSidebar />
         <main className="flex-1 flex flex-col bg-background rounded-xl shadow-xl min-h-0 overflow-hidden">
-          <header className="flex h-12 sm:h-14 md:h-16 shrink-0 items-center justify-between gap-1.5 sm:gap-2 bg-background px-2 sm:px-3 md:px-6 border-b border-border rounded-t-xl overflow-hidden">
-            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-4 min-w-0 flex-1">
-              <SidebarTrigger className="text-foreground hover:bg-muted shrink-0 h-8 w-8 sm:h-9 sm:w-9" />
+          <header className="flex h-12 sm:h-14 md:h-16 shrink-0 items-center justify-between gap-1 sm:gap-2 bg-background px-2 sm:px-3 md:px-6 border-b border-border rounded-t-xl overflow-hidden">
+            <div className="flex items-center gap-1 sm:gap-2 md:gap-4 min-w-0 flex-1">
+              <SidebarTrigger className="text-foreground hover:bg-muted shrink-0 h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9" />
               {currentTeam && (
                 <div className="hidden md:flex items-center gap-1.5 text-sm font-medium text-foreground">
                   <Users className="h-4 w-4 text-primary shrink-0" />
@@ -78,12 +78,16 @@ export function ProtectedLayout() {
                 </div>
               )}
               <div className="h-5 w-px bg-border hidden md:block" />
-              <BoardSelector />
+              <div className="flex-1 min-w-0">
+                <BoardSelector />
+              </div>
             </div>
             
-            <div className="flex items-center gap-0.5 sm:gap-1 md:gap-2 shrink-0">
-              {/* Theme Toggle */}
-              <ThemeToggle />
+            <div className="flex items-center gap-0.5 sm:gap-1.5 md:gap-2 shrink-0">
+              {/* Theme Toggle - Hidden on very small screens */}
+              <div className="hidden xs:block">
+                <ThemeToggle />
+              </div>
 
               {/* Notifications */}
               <div data-tour="notifications-btn">
