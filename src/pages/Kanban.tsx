@@ -1,13 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { KanbanBoard } from "@/components/KanbanBoard";
+import { KanbanNotifications } from "@/components/KanbanNotifications";
 
 import { useDemands } from "@/hooks/useDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { Plus, LayoutGrid } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useRealtimeDemands } from "@/hooks/useRealtimeDemands";
+import { useRealtimeDemands, useKanbanRealtimeNotifications } from "@/hooks/useRealtimeDemands";
 
 export default function Kanban() {
   const { t } = useTranslation();
@@ -18,6 +19,13 @@ export default function Kanban() {
   
   // Enable realtime updates for demands
   useRealtimeDemands(selectedBoardId || undefined);
+  
+  // Enable realtime notifications for card moves
+  const { 
+    notifications, 
+    clearNotification, 
+    clearAllNotifications 
+  } = useKanbanRealtimeNotifications(selectedBoardId || undefined);
 
   const isReadOnly = role === "requester";
 
@@ -81,6 +89,14 @@ export default function Kanban() {
           </div>
         )}
       </div>
+      
+      {/* Real-time notifications for card moves */}
+      <KanbanNotifications
+        notifications={notifications}
+        onClear={clearNotification}
+        onClearAll={clearAllNotifications}
+        onDemandClick={(id) => navigate(`/demands/${id}`)}
+      />
     </div>
   );
 }
