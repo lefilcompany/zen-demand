@@ -33,6 +33,7 @@ import { sendAdjustmentCompletionPushNotification } from "@/hooks/useSendPushNot
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/lib/auth";
 
 interface Assignee {
   user_id: string;
@@ -124,6 +125,7 @@ const MAX_OPEN_COLUMNS = 3;
 
 export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole }: KanbanBoardProps) {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const isMobile = useIsMobile();
   const isTabletOrSmallDesktop = useIsTabletOrSmallDesktop();
   const isLargeDesktop = useIsLargeDesktop();
@@ -143,6 +145,45 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
   
   const demandIds = useMemo(() => demands.map(d => d.id), [demands]);
   const { data: adjustmentCounts } = useAdjustmentCounts(demandIds);
+
+  // Helper function to stop all active timers for a demand
+  const stopAllTimersForDemand = useCallback(async (demandId: string) => {
+    if (!user) return;
+    
+    try {
+      // Find all active time entries for this demand (current user)
+      const { data: activeEntries, error: fetchError } = await supabase
+        .from("demand_time_entries")
+        .select("id, started_at")
+        .eq("demand_id", demandId)
+        .eq("user_id", user.id)
+        .is("ended_at", null);
+
+      if (fetchError) throw fetchError;
+
+      if (activeEntries && activeEntries.length > 0) {
+        for (const entry of activeEntries) {
+          const now = new Date();
+          const startedAt = new Date(entry.started_at);
+          const durationSeconds = Math.floor((now.getTime() - startedAt.getTime()) / 1000);
+
+          await supabase
+            .from("demand_time_entries")
+            .update({
+              ended_at: now.toISOString(),
+              duration_seconds: durationSeconds,
+            })
+            .eq("id", entry.id);
+        }
+        
+        // Invalidate queries to update UI
+        queryClient.invalidateQueries({ queryKey: ["demand-time-entries", demandId] });
+        queryClient.invalidateQueries({ queryKey: ["current-user-demand-time", demandId] });
+      }
+    } catch (error) {
+      console.error("Error stopping timers:", error);
+    }
+  }, [user, queryClient]);
   
   const adjustmentDemand = demands.find(d => d.id === adjustmentDemandId);
 
@@ -234,6 +275,11 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
 
     const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && columnKey === "Aprovação do Cliente";
 
+    // Stop timer if moving to "Aprovação do Cliente" or "Entregue"
+    if (columnKey === "Aprovação do Cliente" || columnKey === "Entregue") {
+      stopAllTimersForDemand(currentDraggedId);
+    }
+
     updateDemand.mutate(
       {
         id: currentDraggedId,
@@ -321,6 +367,11 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     setOptimisticUpdates(prev => ({ ...prev, [demandId]: newStatusKey }));
 
     const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && newStatusKey === "Aprovação do Cliente";
+
+    // Stop timer if moving to "Aprovação do Cliente" or "Entregue"
+    if (newStatusKey === "Aprovação do Cliente" || newStatusKey === "Entregue") {
+      stopAllTimersForDemand(demandId);
+    }
 
     updateDemand.mutate(
       {
