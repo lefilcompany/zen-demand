@@ -309,6 +309,32 @@ export function useApproveDemandRequest() {
         if (assignError) console.error("Erro ao atribuir responsáveis:", assignError);
       }
 
+      // Copy attachments from request to demand
+      if (demand) {
+        const { data: requestAttachments } = await supabase
+          .from("demand_request_attachments")
+          .select("*")
+          .eq("demand_request_id", requestId);
+
+        if (requestAttachments && requestAttachments.length > 0) {
+          // Insert attachment records pointing to the same files
+          const { error: attachError } = await supabase
+            .from("demand_attachments")
+            .insert(
+              requestAttachments.map((att) => ({
+                demand_id: demand.id,
+                file_name: att.file_name,
+                file_path: att.file_path,
+                file_type: att.file_type,
+                file_size: att.file_size,
+                uploaded_by: att.uploaded_by,
+              }))
+            );
+
+          if (attachError) console.error("Erro ao copiar anexos:", attachError);
+        }
+      }
+
       // Update request status
       const { error: updateError } = await supabase
         .from("demand_requests")

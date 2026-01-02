@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePendingDemandRequests, useApproveDemandRequest, useReturnDemandRequest } from "@/hooks/useDemandRequests";
-import { ArrowLeft, Clock, CheckCircle, RotateCcw, Users, Layout } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle, RotateCcw, Users, Layout, Paperclip } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -18,6 +18,8 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { addDays } from "date-fns";
 import { getErrorMessage } from "@/lib/errorUtils";
+import { RequestAttachmentBadge } from "@/components/RequestAttachmentBadge";
+import { RequestAttachmentUploader } from "@/components/RequestAttachmentUploader";
 
 const priorityColors: Record<string, string> = {
   baixa: "bg-blue-500/20 text-blue-700 border-blue-500/30",
@@ -154,7 +156,7 @@ export default function DemandRequests() {
                   <p className="text-sm text-muted-foreground mb-3">{request.description}</p>
                 )}
 
-                <div className="flex flex-wrap gap-2 mb-4">
+                <div className="flex flex-wrap items-center gap-2 mb-4">
                   <Badge className={`${priorityColors[request.priority || "média"]} border`}>
                     Prioridade: {request.priority || "média"}
                   </Badge>
@@ -163,6 +165,7 @@ export default function DemandRequests() {
                       {request.service.name} ({request.service.estimated_hours}h)
                     </Badge>
                   )}
+                  <RequestAttachmentBadge requestId={request.id} />
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-2">
@@ -200,13 +203,20 @@ export default function DemandRequests() {
               Configure os responsáveis e a data de vencimento para criar a demanda.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
             <div className="p-3 rounded-md bg-muted">
               <p className="font-medium">{approving?.title}</p>
               {approving?.description && (
                 <p className="text-sm text-muted-foreground mt-1">{approving.description}</p>
               )}
             </div>
+
+            {/* Show attachments */}
+            {approving && (
+              <div className="border rounded-lg p-3">
+                <RequestAttachmentUploader requestId={approving.id} readOnly />
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
