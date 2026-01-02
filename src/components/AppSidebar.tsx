@@ -173,12 +173,6 @@ export function AppSidebar() {
                           <LayoutGrid className="h-4 w-4" />
                           Meus Quadros
                         </NavLink>
-                        {isTeamAdminOrModerator && (
-                          <NavLink to="/team-config" onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                            <Settings className="h-4 w-4" />
-                            Configurações
-                          </NavLink>
-                        )}
                         {isTeamAdminOrModerator && selectedTeamId && (
                           <NavLink to={`/teams/${selectedTeamId}/services`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                             <Settings2 className="h-4 w-4" />
@@ -222,16 +216,6 @@ export function AppSidebar() {
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         
-                        {isTeamAdminOrModerator && (
-                          <SidebarMenuSubItem>
-                            <SidebarMenuSubButton asChild>
-                              <NavLink to="/team-config" onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[40px] md:min-h-0 py-2 md:py-1.5" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                                <Settings className="h-5 w-5 md:h-4 md:w-4 mr-2" />
-                                <span className="text-base md:text-sm">Configurações</span>
-                              </NavLink>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        )}
                         
                         {isTeamAdminOrModerator && selectedTeamId && (
                           <SidebarMenuSubItem data-tour="services-link">
