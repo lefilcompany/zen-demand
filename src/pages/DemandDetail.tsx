@@ -53,6 +53,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { sendAdjustmentPushNotification, sendCommentPushNotification } from "@/hooks/useSendPushNotification";
+import { useSendEmail } from "@/hooks/useSendEmail";
 import { useRealtimeDemandDetail } from "@/hooks/useRealtimeDemandDetail";
 import { DemandPresenceIndicator } from "@/components/DemandPresenceIndicator";
 import { RealtimeUpdateIndicator } from "@/components/RealtimeUpdateIndicator";
@@ -86,6 +87,7 @@ export default function DemandDetail() {
   const setAssignees = useSetAssignees();
   const uploadAttachment = useUploadAttachment();
   const { isTimerRunning, startTimer, stopTimer, isLoading: isTimerLoading } = useUserTimerControl(id);
+  const sendEmail = useSendEmail();
   const [comment, setComment] = useState("");
   const [commentPendingFiles, setCommentPendingFiles] = useState<PendingFile[]>([]);
   const [adjustmentPendingFiles, setAdjustmentPendingFiles] = useState<PendingFile[]>([]);
@@ -375,6 +377,22 @@ export default function DemandDetail() {
               commenterName,
               commentPreview: commentContent,
             }).catch(err => console.error("Error sending comment push notification:", err));
+            
+            // Send email notifications to each user
+            for (const userId of notifyUserIds) {
+              sendEmail.mutate({
+                to: userId, // Edge function will look up email by user_id
+                subject: `💬 Novo comentário em "${demand?.title}"`,
+                template: 'notification',
+                templateData: {
+                  title: "Novo comentário na demanda",
+                  message: `${commenterName} comentou na demanda "${demand?.title}":\n\n"${commentContent.substring(0, 200)}${commentContent.length > 200 ? "..." : ""}"`,
+                  actionUrl: `${window.location.origin}/demands/${id}`,
+                  actionText: "Ver demanda",
+                  type: 'info',
+                },
+              });
+            }
           }
         },
         onError: (error: any) => {
