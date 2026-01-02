@@ -12,6 +12,7 @@ import { useTeamRole } from "@/hooks/useTeamRole";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
+import { SidebarSyncIndicator } from "@/components/SidebarSyncIndicator";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
@@ -269,6 +270,7 @@ export function AppSidebar() {
 
         <SidebarGroup className="mt-auto pb-4 md:pb-2">
           <SidebarGroupContent>
+            <SidebarSyncIndicator isCollapsed={isCollapsed && !isMobile} />
             <SidebarMenu>
               <SidebarMenuItem>
                 <LogoutDialog isCollapsed={isCollapsed && !isMobile} isMobile={isMobile} />
