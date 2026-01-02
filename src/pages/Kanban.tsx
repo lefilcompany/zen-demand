@@ -7,6 +7,7 @@ import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { Plus, LayoutGrid } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useRealtimeDemands } from "@/hooks/useRealtimeDemands";
 
 export default function Kanban() {
   const { t } = useTranslation();
@@ -14,6 +15,9 @@ export default function Kanban() {
   const { selectedBoardId } = useSelectedBoard();
   const { data: demands, isLoading } = useDemands(selectedBoardId || undefined);
   const { data: role } = useBoardRole(selectedBoardId);
+  
+  // Enable realtime updates for demands
+  useRealtimeDemands(selectedBoardId || undefined);
 
   const isReadOnly = role === "requester";
 

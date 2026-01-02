@@ -15,6 +15,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { demandColumns, DemandTableRow } from "@/components/demands/columns";
 import { DemandFilters, DemandFiltersState } from "@/components/DemandFilters";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
+import { useRealtimeDemands } from "@/hooks/useRealtimeDemands";
 
 type ViewMode = "table" | "grid";
 
@@ -27,6 +28,9 @@ export default function Demands() {
   const { selectedBoardId } = useSelectedBoard();
   const { data: demands, isLoading } = useDemands(selectedBoardId || undefined);
   const { data: role } = useBoardRole(selectedBoardId);
+  
+  // Enable realtime updates for demands
+  useRealtimeDemands(selectedBoardId || undefined);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [filters, setFilters] = useState<DemandFiltersState>({

@@ -47,6 +47,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { sendAdjustmentPushNotification } from "@/hooks/useSendPushNotification";
+import { useRealtimeDemandDetail } from "@/hooks/useRealtimeDemandDetail";
 
 export default function DemandDetail() {
   const { id } = useParams<{ id: string }>();
@@ -56,6 +57,9 @@ export default function DemandDetail() {
   const { data: interactions } = useDemandInteractions(id!);
   const { data: assignees } = useDemandAssignees(id || null);
   const { data: statuses } = useDemandStatuses();
+  
+  // Enable realtime updates for this demand
+  useRealtimeDemandDetail(id);
   const createInteraction = useCreateInteraction();
   const updateInteraction = useUpdateInteraction();
   const deleteInteraction = useDeleteInteraction();
