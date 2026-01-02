@@ -212,15 +212,32 @@ export default function DemandDetail() {
       
       toast.success(`${typeLabel} solicitado com sucesso!`);
       
-      // Notify all assignees about the adjustment request
-      if (assignees && assignees.length > 0) {
+      // Notify all assignees AND the creator about the adjustment request
+      const usersToNotify = new Set<string>();
+      
+      // Add all assignees
+      assignees?.forEach(a => usersToNotify.add(a.user_id));
+      
+      // Always add demand creator (solicitante)
+      if (demand?.created_by) {
+        usersToNotify.add(demand.created_by);
+      }
+      
+      // Remove current user from notification list
+      if (user?.id) {
+        usersToNotify.delete(user.id);
+      }
+      
+      const notifyUserIds = Array.from(usersToNotify);
+      
+      if (notifyUserIds.length > 0) {
         const notificationTitle = isInternal ? "Ajuste interno solicitado" : "Ajuste externo solicitado";
         const notificationMessage = isInternal 
           ? `Foi solicitado um ajuste interno na demanda "${demand?.title}": ${adjustmentReason.trim().substring(0, 100)}${adjustmentReason.length > 100 ? '...' : ''}`
           : `O cliente solicitou um ajuste na demanda "${demand?.title}": ${adjustmentReason.trim().substring(0, 100)}${adjustmentReason.length > 100 ? '...' : ''}`;
         
-        const notifications = assignees.map((assignee) => ({
-          user_id: assignee.user_id,
+        const notifications = notifyUserIds.map((userId) => ({
+          user_id: userId,
           title: notificationTitle,
           message: notificationMessage,
           type: "warning",
@@ -230,29 +247,35 @@ export default function DemandDetail() {
         await supabase.from("notifications").insert(notifications);
         
         // Send push notifications
-        const assigneeIds = assignees.map(a => a.user_id);
         sendAdjustmentPushNotification({
-          assigneeIds,
+          assigneeIds: notifyUserIds,
           demandId: id,
           demandTitle: demand?.title || "",
           reason: adjustmentReason.trim(),
           isInternal,
         }).catch(err => console.error("Error sending push notification:", err));
         
-        // Send email notifications to assignees
-        for (const assignee of assignees) {
+        // Send email notifications to each user
+        for (const userId of notifyUserIds) {
           try {
+            // Get user profile for name
+            const { data: userProfile } = await supabase
+              .from("profiles")
+              .select("full_name")
+              .eq("id", userId)
+              .single();
+            
             await supabase.functions.invoke("send-email", {
               body: {
-                to: assignee.user_id,
-                subject: `${typeLabel} solicitado: ${demand?.title}`,
+                to: userId,
+                subject: `🔧 ${typeLabel} solicitado: ${demand?.title}`,
                 template: "notification",
                 templateData: {
                   title: notificationTitle,
                   message: `${isInternal ? 'Foi solicitado um ajuste interno' : 'O cliente solicitou um ajuste'} na demanda "${demand?.title}".\n\nMotivo: ${adjustmentReason.trim()}`,
-                  actionUrl: `https://pla.soma.lefil.com.br/demands/${id}`,
+                  actionUrl: `${window.location.origin}/demands/${id}`,
                   actionText: "Ver Demanda",
-                  userName: assignee.profile?.full_name || "Responsável",
+                  userName: userProfile?.full_name || "Usuário",
                   type: "warning" as const,
                 },
               },
