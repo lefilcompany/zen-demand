@@ -35,7 +35,16 @@ import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { DemandEditForm } from "@/components/DemandEditForm";
 import { AttachmentUploader } from "@/components/AttachmentUploader";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter, MoreHorizontal, Trash2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter, MoreHorizontal, Trash2, AlertTriangle, Home, LayoutGrid, List } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Link } from "react-router-dom";
 import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { format } from "date-fns";
@@ -433,14 +442,44 @@ export default function DemandDetail() {
         onDismiss={clearUpdateIndicator}
       />
       <div className="space-y-4 md:space-y-6 animate-fade-in">
+      {/* Breadcrumbs */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(backPath)}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar
-        </Button>
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/" className="flex items-center gap-1">
+                  <Home className="h-3.5 w-3.5" />
+                  <span className="sr-only sm:not-sr-only">Início</span>
+                </Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to={backPath} className="flex items-center gap-1">
+                  {cameFromKanban ? (
+                    <>
+                      <LayoutGrid className="h-3.5 w-3.5" />
+                      <span>Kanban</span>
+                    </>
+                  ) : (
+                    <>
+                      <List className="h-3.5 w-3.5" />
+                      <span>Demandas</span>
+                    </>
+                  )}
+                </Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage className="max-w-[200px] truncate">
+                {demand?.title || "Carregando..."}
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
         {id && <DemandPresenceIndicator demandId={id} />}
       </div>
 
