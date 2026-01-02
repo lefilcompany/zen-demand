@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Clock, User, Calendar, Filter, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { Clock, User, Calendar, Filter, ChevronDown, ChevronUp, ExternalLink, CalendarIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSelectedTeam } from "@/contexts/TeamContext";
@@ -15,8 +15,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { formatTimeDisplay } from "@/hooks/useLiveTimer";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import { cn } from "@/lib/utils";
 
 interface TimeEntryWithDetails {
   id: string;
@@ -55,6 +58,8 @@ export default function TimeManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [userFilter, setUserFilter] = useState<string>("all");
   const [expandedDemands, setExpandedDemands] = useState<Set<string>>(new Set());
+  const [startDate, setStartDate] = useState<Date | undefined>(startOfMonth(new Date()));
+  const [endDate, setEndDate] = useState<Date | undefined>(endOfMonth(new Date()));
 
   // Fetch all time entries for the team
   const { data: timeEntries, isLoading } = useQuery({
@@ -102,6 +107,18 @@ export default function TimeManagement() {
     if (!timeEntries) return [];
 
     let filtered = timeEntries;
+
+    // Apply date range filter
+    if (startDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      filtered = filtered.filter((entry) => new Date(entry.started_at) >= start);
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      filtered = filtered.filter((entry) => new Date(entry.started_at) <= end);
+    }
 
     // Apply search filter
     if (searchTerm) {
@@ -151,7 +168,7 @@ export default function TimeManagement() {
     });
 
     return Array.from(grouped.values()).sort((a, b) => b.totalSeconds - a.totalSeconds);
-  }, [timeEntries, searchTerm, userFilter]);
+  }, [timeEntries, searchTerm, userFilter, startDate, endDate]);
 
   // Calculate totals
   const totals = useMemo(() => {
@@ -244,27 +261,94 @@ export default function TimeManagement() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Buscar por demanda ou usuário..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <Input
+                  placeholder="Buscar por demanda ou usuário..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <Select value={userFilter} onValueChange={setUserFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="Filtrar por usuário" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os usuários</SelectItem>
+                  {uniqueUsers.map((user) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={userFilter} onValueChange={setUserFilter}>
-              <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="Filtrar por usuário" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os usuários</SelectItem>
-                {uniqueUsers.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.full_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Período:</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[140px] justify-start text-left font-normal",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, "dd/MM/yyyy") : "Início"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                <span className="text-muted-foreground">até</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[140px] justify-start text-left font-normal",
+                        !endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, "dd/MM/yyyy") : "Fim"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              {(startDate || endDate) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setStartDate(undefined);
+                    setEndDate(undefined);
+                  }}
+                >
+                  Limpar datas
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -275,6 +359,11 @@ export default function TimeManagement() {
           <CardTitle>Tempo por Demanda</CardTitle>
           <CardDescription>
             Clique em uma demanda para ver os detalhes de tempo por usuário.
+            {startDate && endDate && (
+              <span className="ml-2 text-xs">
+                (Período: {format(startDate, "dd/MM/yyyy")} - {format(endDate, "dd/MM/yyyy")})
+              </span>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -433,12 +522,23 @@ export default function TimeManagement() {
                                           })
                                         : "em andamento"}
                                     </span>
-                                    <span className="text-xs text-muted-foreground">
-                                      ({entry.profile?.full_name})
-                                    </span>
+                                    <Avatar className="h-4 w-4">
+                                      <AvatarImage
+                                        src={entry.profile?.avatar_url || undefined}
+                                      />
+                                      <AvatarFallback className="text-[8px]">
+                                        {entry.profile?.full_name
+                                          .split(" ")
+                                          .map((n) => n[0])
+                                          .join("")
+                                          .slice(0, 2)
+                                          .toUpperCase()}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <span>{entry.profile?.full_name}</span>
                                   </div>
-                                  <span className="font-mono text-xs">
-                                    {entry.ended_at ? formatTimeDisplay(duration) : "⏱️"}
+                                  <span className="font-mono">
+                                    {formatTimeDisplay(duration)}
                                   </span>
                                 </div>
                               );
