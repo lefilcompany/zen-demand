@@ -39,7 +39,7 @@ export function useUploadAttachment() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ demandId, file }: { demandId: string; file: File }) => {
+    mutationFn: async ({ demandId, file, interactionId }: { demandId: string; file: File; interactionId?: string }) => {
       if (!user) throw new Error("User not authenticated");
       
       const fileExt = file.name.split(".").pop();
@@ -51,16 +51,30 @@ export function useUploadAttachment() {
       
       if (uploadError) throw uploadError;
       
+      const insertData: {
+        demand_id: string;
+        file_name: string;
+        file_path: string;
+        file_type: string;
+        file_size: number;
+        uploaded_by: string;
+        interaction_id?: string;
+      } = {
+        demand_id: demandId,
+        file_name: file.name,
+        file_path: filePath,
+        file_type: file.type,
+        file_size: file.size,
+        uploaded_by: user.id,
+      };
+      
+      if (interactionId) {
+        insertData.interaction_id = interactionId;
+      }
+      
       const { data, error } = await supabase
         .from("demand_attachments")
-        .insert({
-          demand_id: demandId,
-          file_name: file.name,
-          file_path: filePath,
-          file_type: file.type,
-          file_size: file.size,
-          uploaded_by: user.id,
-        })
+        .insert(insertData)
         .select()
         .single();
       
@@ -69,6 +83,9 @@ export function useUploadAttachment() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["attachments", variables.demandId] });
+      if (variables.interactionId) {
+        queryClient.invalidateQueries({ queryKey: ["interaction-attachments", variables.interactionId] });
+      }
     },
   });
 }
