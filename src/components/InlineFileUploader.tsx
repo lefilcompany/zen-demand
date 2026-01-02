@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Paperclip, X, Image, FileText, File, Loader2 } from "lucide-react";
+import { Paperclip, X, Image, FileText, File, Clipboard } from "lucide-react";
 import { toast } from "sonner";
 
 export interface PendingFile {
@@ -16,6 +16,7 @@ interface InlineFileUploaderProps {
   maxSizeMB?: number;
   accept?: string;
   disabled?: boolean;
+  listenToGlobalPaste?: boolean;
 }
 
 const MAX_DEFAULT_SIZE = 10 * 1024 * 1024; // 10MB
@@ -27,17 +28,19 @@ export function InlineFileUploader({
   maxSizeMB = 10,
   accept = "image/*,.pdf,.doc,.docx,.txt",
   disabled = false,
+  listenToGlobalPaste = false,
 }: InlineFileUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   
   const maxSize = maxSizeMB * 1024 * 1024;
 
-  const handleFiles = useCallback((files: FileList | null) => {
+  const handleFiles = useCallback((files: FileList | File[] | null) => {
     if (!files || disabled) return;
     
+    const fileArray = Array.isArray(files) ? files : Array.from(files);
     const newFiles: PendingFile[] = [];
     
-    for (const file of Array.from(files)) {
+    for (const file of fileArray) {
       if (pendingFiles.length + newFiles.length >= maxFiles) {
         toast.error(`Máximo de ${maxFiles} arquivos permitido`);
         break;
@@ -63,6 +66,46 @@ export function InlineFileUploader({
       onFilesChange([...pendingFiles, ...newFiles]);
     }
   }, [pendingFiles, maxFiles, maxSize, maxSizeMB, disabled, onFilesChange]);
+
+  // Handle paste events for clipboard images
+  const handlePaste = useCallback((e: ClipboardEvent) => {
+    if (disabled) return;
+    
+    const clipboardItems = e.clipboardData?.items;
+    if (!clipboardItems) return;
+    
+    const imageFiles: File[] = [];
+    
+    for (const item of Array.from(clipboardItems)) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          // Create a more descriptive name for pasted images
+          const extension = item.type.split("/")[1] || "png";
+          const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+          // Rename file by creating a new blob with the file data
+          const renamedFile = Object.assign(file, {
+            name: `imagem-colada-${timestamp}.${extension}`,
+          }) as File;
+          imageFiles.push(renamedFile);
+        }
+      }
+    }
+    
+    if (imageFiles.length > 0) {
+      e.preventDefault();
+      handleFiles(imageFiles);
+      toast.success(`${imageFiles.length} imagem(ns) colada(s) do clipboard`);
+    }
+  }, [handleFiles, disabled]);
+
+  // Listen for global paste events if enabled
+  useEffect(() => {
+    if (!listenToGlobalPaste) return;
+    
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [listenToGlobalPaste, handlePaste]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -118,7 +161,7 @@ export function InlineFileUploader({
         >
           <Paperclip className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm text-muted-foreground">
-            Arraste ou <span className="text-primary">clique</span> para anexar arquivos
+            Arraste, <span className="text-primary">clique</span> ou <kbd className="px-1 py-0.5 bg-muted rounded text-xs font-mono">Ctrl+V</kbd> para anexar
           </span>
         </label>
       </div>
