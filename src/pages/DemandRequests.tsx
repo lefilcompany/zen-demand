@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePendingDemandRequests, useApproveDemandRequest, useReturnDemandRequest } from "@/hooks/useDemandRequests";
-import { ArrowLeft, Clock, CheckCircle, RotateCcw, Users, Layout, Paperclip } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle, RotateCcw, Users, Layout, Paperclip, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -35,6 +35,7 @@ export default function DemandRequests() {
   const approveRequest = useApproveDemandRequest();
   const returnRequest = useReturnDemandRequest();
 
+  const [viewing, setViewing] = useState<any | null>(null);
   const [approving, setApproving] = useState<any | null>(null);
   const [returning, setReturning] = useState<any | null>(null);
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
@@ -123,7 +124,11 @@ export default function DemandRequests() {
       ) : requests && requests.length > 0 ? (
         <div className="grid gap-4">
           {requests.map((request) => (
-            <Card key={request.id}>
+            <Card 
+              key={request.id} 
+              className="cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setViewing(request)}
+            >
               <CardHeader className="pb-3">
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
                   <div className="flex-1">
@@ -153,10 +158,10 @@ export default function DemandRequests() {
               </CardHeader>
               <CardContent>
                 {request.description && (
-                  <p className="text-sm text-muted-foreground mb-3">{request.description}</p>
+                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{request.description}</p>
                 )}
 
-                <div className="flex flex-wrap items-center gap-2 mb-4">
+                <div className="flex flex-wrap items-center gap-2">
                   <Badge className={`${priorityColors[request.priority || "média"]} border`}>
                     Prioridade: {request.priority || "média"}
                   </Badge>
@@ -166,21 +171,6 @@ export default function DemandRequests() {
                     </Badge>
                   )}
                   <RequestAttachmentBadge requestId={request.id} />
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Button onClick={() => openApproveDialog(request)} className="flex-1">
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Aprovar e Criar Demanda
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setReturning(request)}
-                    className="flex-1"
-                  >
-                    <RotateCcw className="h-4 w-4 mr-2" />
-                    Devolver para Revisão
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -193,6 +183,101 @@ export default function DemandRequests() {
           </CardContent>
         </Card>
       )}
+
+      {/* View Details Dialog */}
+      <Dialog open={!!viewing} onOpenChange={() => setViewing(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                <Layout className="h-3 w-3 mr-1" />
+                {viewing?.board?.name || "Quadro"}
+              </Badge>
+              <Badge className="bg-yellow-500/20 text-yellow-700 border border-yellow-500/30">
+                <Clock className="h-3 w-3 mr-1" />
+                Pendente
+              </Badge>
+            </div>
+            <DialogTitle className="text-xl">{viewing?.title}</DialogTitle>
+            <DialogDescription className="flex items-center gap-2">
+              <Avatar className="h-5 w-5">
+                <AvatarImage src={viewing?.creator?.avatar_url || undefined} />
+                <AvatarFallback className="text-[10px]">
+                  {getInitials(viewing?.creator?.full_name || "?")}
+                </AvatarFallback>
+              </Avatar>
+              <span>
+                {viewing?.creator?.full_name} •{" "}
+                {viewing && format(new Date(viewing.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+            {/* Priority and Service */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge className={`${priorityColors[viewing?.priority || "média"]} border`}>
+                Prioridade: {viewing?.priority || "média"}
+              </Badge>
+              {viewing?.service && (
+                <Badge variant="outline">
+                  {viewing.service.name} ({viewing.service.estimated_hours}h)
+                </Badge>
+              )}
+            </div>
+
+            {/* Description */}
+            {viewing?.description && (
+              <div className="space-y-1">
+                <Label className="text-sm font-medium">Descrição</Label>
+                <div className="p-3 rounded-md bg-muted text-sm whitespace-pre-wrap">
+                  {viewing.description}
+                </div>
+              </div>
+            )}
+
+            {/* Attachments */}
+            {viewing && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-sm font-medium">
+                  <Paperclip className="h-4 w-4" />
+                  Anexos
+                </Label>
+                <div className="border rounded-lg p-3">
+                  <RequestAttachmentUploader requestId={viewing.id} readOnly />
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setViewing(null);
+                  openApproveDialog(viewing);
+                }}
+                className="flex-1"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Aprovar e Criar Demanda
+              </Button>
+              <Button
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setViewing(null);
+                  setReturning(viewing);
+                }}
+                className="flex-1"
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Devolver para Revisão
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Approve Dialog */}
       <Dialog open={!!approving} onOpenChange={() => setApproving(null)}>
