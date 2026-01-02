@@ -13,16 +13,20 @@ import { useTeamRole } from "@/hooks/useTeamRole";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { ScopeProgressBar } from "@/components/ScopeProgressBar";
-import { ArrowLeft, AlertTriangle, Ban } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Ban, CloudOff, WifiOff } from "lucide-react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { addHours, format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
+import { useOfflineStatus } from "@/hooks/useOfflineStatus";
+import { useTranslation } from "react-i18next";
 
 export default function CreateDemand() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+  const { isOffline } = useOfflineStatus();
   const createDemand = useCreateDemand();
   const { selectedTeamId, teams } = useSelectedTeam();
   const { selectedBoardId, currentBoard } = useSelectedBoard();
@@ -86,8 +90,11 @@ export default function CreateDemand() {
       },
       {
         onSuccess: async (demand) => {
-          // Add assignees if any
-          if (assigneeIds.length > 0 && demand) {
+          // Check if this was created offline
+          const wasCreatedOffline = (demand as any)?._isOffline;
+          
+          // Add assignees if any (only if online - offline demands can't have assignees yet)
+          if (!wasCreatedOffline && assigneeIds.length > 0 && demand) {
             const { error: assignError } = await supabase
               .from("demand_assignees")
               .insert(
@@ -102,12 +109,20 @@ export default function CreateDemand() {
               toast.warning("Demanda criada, mas houve um erro ao atribuir responsáveis", {
                 description: "Você pode atribuir responsáveis na tela de detalhes.",
               });
-              navigate("/demands");
+              navigate("/kanban");
               return;
             }
           }
-          toast.success("Demanda criada com sucesso!");
-          navigate("/demands");
+          
+          if (wasCreatedOffline) {
+            toast.success(t("sync.createdOffline"), {
+              description: t("sync.createdOfflineDescription"),
+              icon: <CloudOff className="h-4 w-4" />,
+            });
+          } else {
+            toast.success("Demanda criada com sucesso!");
+          }
+          navigate("/kanban");
         },
         onError: (error: any) => {
           toast.error("Erro ao criar demanda", {
@@ -134,6 +149,16 @@ export default function CreateDemand() {
           Criar demanda para o quadro <span className="font-medium text-primary">{currentBoard?.name}</span>
         </p>
       </div>
+
+      {/* Offline Mode Alert */}
+      {isOffline && (
+        <Alert className="border-amber-500/50 bg-amber-500/10">
+          <WifiOff className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-700 dark:text-amber-400">
+            Você está offline. A demanda será salva localmente e sincronizada quando a conexão for restaurada.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Team Inactive Alert */}
       {!isTeamActive && (

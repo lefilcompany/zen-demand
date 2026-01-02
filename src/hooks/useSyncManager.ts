@@ -11,6 +11,7 @@ import {
   onOnlineStatusChange,
   isOnline,
   SyncOperation,
+  removeCachedDemand,
 } from '@/lib/offlineStorage';
 
 const MAX_RETRIES = 3;
@@ -26,8 +27,22 @@ export function useSyncManager() {
     try {
       switch (type) {
         case 'create': {
-          const { error } = await supabase.from(table as 'demands').insert(data as any);
+          // Extract offline tracking fields before inserting
+          const { _offlineId, ...insertData } = data;
+          
+          const { data: result, error } = await supabase
+            .from(table as 'demands')
+            .insert(insertData as any)
+            .select()
+            .single();
+          
           if (error) throw error;
+          
+          // If this was an offline demand, remove the temporary cached version
+          if (_offlineId && typeof _offlineId === 'string') {
+            await removeCachedDemand(_offlineId);
+            console.log('Removed offline demand from cache:', _offlineId);
+          }
           break;
         }
         case 'update': {

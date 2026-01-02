@@ -58,6 +58,7 @@ interface Demand {
   assigned_profile?: { full_name: string; avatar_url?: string | null } | null;
   teams?: { name: string } | null;
   demand_assignees?: Assignee[];
+  _isOffline?: boolean; // Flag for offline-created demands
 }
 
 interface KanbanBoardProps {
@@ -435,6 +436,9 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     const availableStatuses = columns.filter(col => col.key !== currentStatus);
     // Check if this demand has a pending optimistic update (offline change)
     const hasPendingSync = !!optimisticUpdates[demand.id];
+    // Check if this demand was created offline
+    const isOfflineDemand = (demand as Demand)._isOffline === true;
+    const showOfflineIndicator = hasPendingSync || isOfflineDemand;
     
     return (
       <Card
@@ -443,7 +447,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
         className={cn(
           "hover:shadow-md transition-all cursor-pointer",
           draggedId === demand.id && "opacity-50 scale-95",
-          hasPendingSync && "ring-2 ring-amber-500/50 bg-amber-500/5",
+          showOfflineIndicator && "ring-2 ring-amber-500/50 bg-amber-500/5",
           "group relative"
         )}
       >
@@ -519,7 +523,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
               )}
 
               <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
-                {hasPendingSync && (
+                {showOfflineIndicator && (
                   <Badge
                     variant="outline"
                     className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/20 animate-pulse"
