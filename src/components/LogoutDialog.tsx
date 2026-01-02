@@ -17,9 +17,10 @@ import { useAuth } from "@/lib/auth";
 
 interface LogoutDialogProps {
   isCollapsed?: boolean;
+  isMobile?: boolean;
 }
 
-export function LogoutDialog({ isCollapsed }: LogoutDialogProps) {
+export function LogoutDialog({ isCollapsed, isMobile }: LogoutDialogProps) {
   const [open, setOpen] = useState(false);
   const { signOut } = useAuth();
   const { t } = useTranslation();
@@ -29,12 +30,18 @@ export function LogoutDialog({ isCollapsed }: LogoutDialogProps) {
     setOpen(false);
   };
 
+  const showText = isMobile || !isCollapsed;
+
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <SidebarMenuButton tooltip={t("auth.logout")} className="w-full hover:bg-sidebar-accent transition-colors">
-          <LogOut className="h-4 w-4" />
-          {!isCollapsed && <span>{t("auth.logout")}</span>}
+        <SidebarMenuButton 
+          tooltip={t("auth.logout")} 
+          size={isMobile ? "lg" : "default"}
+          className="w-full hover:bg-sidebar-accent transition-colors min-h-[44px] md:min-h-0"
+        >
+          <LogOut className="h-5 w-5 md:h-4 md:w-4" />
+          {showText && <span className="text-base md:text-sm">{t("auth.logout")}</span>}
         </SidebarMenuButton>
       </AlertDialogTrigger>
       <AlertDialogContent>
