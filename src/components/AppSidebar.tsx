@@ -120,7 +120,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>{t("common.actions")}</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-1">
               {menuItems.map(item => {
                 const tourId = item.url === "/" ? "dashboard-link" 
                   : item.url === "/kanban" ? "kanban-link"
