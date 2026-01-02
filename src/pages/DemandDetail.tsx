@@ -25,6 +25,7 @@ import { useDemandById, useDemandInteractions, useCreateInteraction, useUpdateIn
 import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
 import { useUploadAttachment } from "@/hooks/useAttachments";
 import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/components/InlineFileUploader";
+import { InteractionAttachments } from "@/components/InteractionAttachments";
 import { supabase } from "@/integrations/supabase/client";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useAuth } from "@/lib/auth";
@@ -296,10 +297,15 @@ export default function DemandDetail() {
         content: comment.trim(),
       },
       {
-        onSuccess: async () => {
-          // Upload pending files
-          if (commentPendingFiles.length > 0) {
-            const { success, failed } = await uploadPendingFiles(id, commentPendingFiles, uploadAttachment);
+        onSuccess: async (createdInteraction) => {
+          // Upload pending files linked to the interaction
+          if (commentPendingFiles.length > 0 && createdInteraction?.id) {
+            const { success, failed } = await uploadPendingFiles(
+              id, 
+              commentPendingFiles, 
+              uploadAttachment,
+              createdInteraction.id
+            );
             if (failed > 0) {
               toast.warning(`Comentário adicionado! ${success} arquivo(s) enviado(s), ${failed} falhou(ram)`);
             } else {
@@ -894,11 +900,14 @@ export default function DemandDetail() {
                           </div>
                         </div>
                       ) : (
-                        interaction.content && (
-                          <p className="text-xs md:text-sm whitespace-pre-wrap break-words">
-                            {interaction.content}
-                          </p>
-                        )
+                        <>
+                          {interaction.content && (
+                            <p className="text-xs md:text-sm whitespace-pre-wrap break-words">
+                              {interaction.content}
+                            </p>
+                          )}
+                          <InteractionAttachments interactionId={interaction.id} />
+                        </>
                       )}
                     </div>
                   </div>

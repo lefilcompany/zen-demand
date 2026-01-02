@@ -173,14 +173,15 @@ export function InlineFileUploader({
 export async function uploadPendingFiles(
   demandId: string,
   pendingFiles: PendingFile[],
-  uploadMutation: { mutateAsync: (data: { demandId: string; file: File }) => Promise<any> }
+  uploadMutation: { mutateAsync: (data: { demandId: string; file: File; interactionId?: string }) => Promise<any> },
+  interactionId?: string
 ): Promise<{ success: number; failed: number }> {
   let success = 0;
   let failed = 0;
   
   for (const pendingFile of pendingFiles) {
     try {
-      await uploadMutation.mutateAsync({ demandId, file: pendingFile.file });
+      await uploadMutation.mutateAsync({ demandId, file: pendingFile.file, interactionId });
       success++;
       // Cleanup preview URL
       if (pendingFile.preview) {

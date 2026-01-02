@@ -152,6 +152,7 @@ export type Database = {
           file_size: number
           file_type: string
           id: string
+          interaction_id: string | null
           uploaded_by: string
         }
         Insert: {
@@ -162,6 +163,7 @@ export type Database = {
           file_size: number
           file_type: string
           id?: string
+          interaction_id?: string | null
           uploaded_by: string
         }
         Update: {
@@ -172,6 +174,7 @@ export type Database = {
           file_size?: number
           file_type?: string
           id?: string
+          interaction_id?: string | null
           uploaded_by?: string
         }
         Relationships: [
@@ -180,6 +183,13 @@ export type Database = {
             columns: ["demand_id"]
             isOneToOne: false
             referencedRelation: "demands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demand_attachments_interaction_id_fkey"
+            columns: ["interaction_id"]
+            isOneToOne: false
+            referencedRelation: "demand_interactions"
             referencedColumns: ["id"]
           },
           {
