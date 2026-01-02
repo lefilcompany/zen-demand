@@ -42,6 +42,7 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useAuth } from "@/lib/auth";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeamRole } from "@/hooks/useTeamRole";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -53,12 +54,16 @@ export default function Settings() {
   const { user } = useAuth();
   const { currentTeam, selectedTeamId, setSelectedTeamId, teams } = useSelectedTeam();
   const { data: myRole } = useTeamRole(selectedTeamId);
+  const { data: teamMembers } = useTeamMembers(selectedTeamId);
   const [mounted, setMounted] = useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [deleteTeamOpen, setDeleteTeamOpen] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [showDeletePassword, setShowDeletePassword] = useState(false);
   const [isDeletingTeam, setIsDeletingTeam] = useState(false);
+  const [transferAdminDialogOpen, setTransferAdminDialogOpen] = useState(false);
+  const [selectedNewAdmin, setSelectedNewAdmin] = useState<string | null>(null);
+  const [isTransferringAdmin, setIsTransferringAdmin] = useState(false);
   const { preferences, updatePreferences, isLoading } = useNotificationPreferences();
   const { 
     isSupported: isPushSupported, 
@@ -70,6 +75,55 @@ export default function Settings() {
   } = usePushNotifications();
   
   const isAdmin = myRole === "admin";
+  const isOnlyMember = teamMembers?.length === 1;
+  const otherMembers = teamMembers?.filter(m => m.user_id !== user?.id) || [];
+
+  const handleTransferAdminAndLeave = async () => {
+    if (!user?.id || !selectedTeamId || !selectedNewAdmin) return;
+    
+    setIsTransferringAdmin(true);
+    try {
+      // Transfer admin role to selected member
+      const { error: updateError } = await supabase
+        .from("team_members")
+        .update({ role: "admin" })
+        .eq("team_id", selectedTeamId)
+        .eq("user_id", selectedNewAdmin);
+
+      if (updateError) throw updateError;
+
+      // Now leave the team
+      const { error: leaveError } = await supabase
+        .from("team_members")
+        .delete()
+        .eq("team_id", selectedTeamId)
+        .eq("user_id", user.id);
+
+      if (leaveError) throw leaveError;
+
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      queryClient.invalidateQueries({ queryKey: ["team-members"] });
+      queryClient.invalidateQueries({ queryKey: ["team-role"] });
+      
+      // Select another team if available
+      const remainingTeams = teams?.filter(t => t.id !== selectedTeamId);
+      if (remainingTeams && remainingTeams.length > 0) {
+        setSelectedTeamId(remainingTeams[0].id);
+      } else {
+        setSelectedTeamId(null);
+        navigate("/welcome");
+      }
+      
+      toast.success("Administração transferida e você saiu da equipe");
+      setTransferAdminDialogOpen(false);
+      setSelectedNewAdmin(null);
+    } catch (error: any) {
+      console.error("Error transferring admin:", error);
+      toast.error("Erro ao transferir administração");
+    } finally {
+      setIsTransferringAdmin(false);
+    }
+  };
 
   const leaveTeamMutation = useMutation({
     mutationFn: async (teamId: string) => {
@@ -503,55 +557,117 @@ export default function Settings() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Leave Team */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border border-border bg-muted/30">
-                <div className="flex items-center gap-3">
-                  <LogOut className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium text-foreground">
-                      Sair da equipe
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Você perderá acesso a todos os quadros e demandas
-                    </p>
-                  </div>
-                </div>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      disabled={leaveTeamMutation.isPending}
-                    >
-                      {leaveTeamMutation.isPending ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <LogOut className="mr-2 h-4 w-4" />
-                      )}
-                      Sair
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Sair da equipe?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Tem certeza que deseja sair da equipe "{currentTeam.name}"? 
-                        Você perderá acesso a todos os quadros, demandas e dados associados a esta equipe.
-                        Para entrar novamente, você precisará do código de acesso.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => leaveTeamMutation.mutate(currentTeam.id)}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
+              {/* Leave Team - Only show if not the only member (for admins) or if not admin */}
+              {(!isAdmin || (isAdmin && !isOnlyMember)) && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border border-border bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <LogOut className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium text-foreground">
                         Sair da equipe
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {isAdmin 
+                          ? "Você precisará transferir a administração antes de sair" 
+                          : "Você perderá acesso a todos os quadros e demandas"
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  {isAdmin ? (
+                    // Admin needs to transfer role before leaving
+                    <Dialog open={transferAdminDialogOpen} onOpenChange={(open) => {
+                      setTransferAdminDialogOpen(open);
+                      if (!open) setSelectedNewAdmin(null);
+                    }}>
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          disabled={isTransferringAdmin}
+                        >
+                          <LogOut className="mr-2 h-4 w-4" />
+                          Sair
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Transferir administração</DialogTitle>
+                          <DialogDescription>
+                            Você é administrador. Antes de sair, selecione um membro para assumir a administração da equipe.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <Label>Selecione o novo administrador</Label>
+                            <Select value={selectedNewAdmin || ""} onValueChange={setSelectedNewAdmin}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione um membro" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {otherMembers.map((member) => (
+                                  <SelectItem key={member.user_id} value={member.user_id}>
+                                    {member.profile.full_name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => setTransferAdminDialogOpen(false)}>
+                            Cancelar
+                          </Button>
+                          <Button 
+                            onClick={handleTransferAdminAndLeave}
+                            disabled={!selectedNewAdmin || isTransferringAdmin}
+                          >
+                            {isTransferringAdmin && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Transferir e sair
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  ) : (
+                    // Non-admin can leave directly
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          disabled={leaveTeamMutation.isPending}
+                        >
+                          {leaveTeamMutation.isPending ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <LogOut className="mr-2 h-4 w-4" />
+                          )}
+                          Sair
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Sair da equipe?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Tem certeza que deseja sair da equipe "{currentTeam.name}"? 
+                            Você perderá acesso a todos os quadros, demandas e dados associados a esta equipe.
+                            Para entrar novamente, você precisará do código de acesso.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => leaveTeamMutation.mutate(currentTeam.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Sair da equipe
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
+              )}
 
               {/* Delete Team - Admin only */}
               {isAdmin && (
