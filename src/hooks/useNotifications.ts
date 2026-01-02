@@ -22,6 +22,14 @@ async function requestNotificationPermission(): Promise<boolean> {
   return false;
 }
 
+// Trigger device vibration (works on mobile browsers)
+function triggerVibration() {
+  if ("vibrate" in navigator) {
+    // Pattern: vibrate 200ms, pause 100ms, vibrate 200ms
+    navigator.vibrate([200, 100, 200]);
+  }
+}
+
 // Show browser notification when app is not focused
 function showBrowserNotification(title: string, body: string, link?: string) {
   if (!("Notification" in window) || Notification.permission !== "granted") {
@@ -33,13 +41,17 @@ function showBrowserNotification(title: string, body: string, link?: string) {
     return;
   }
   
+  // Vibrate on mobile when notification arrives
+  triggerVibration();
+  
   const notification = new Notification(title, {
     body,
     icon: "/favicon.png",
     badge: "/favicon.png",
     tag: "soma-notification",
     requireInteraction: false,
-  });
+    vibrate: [200, 100, 200], // Vibration pattern for supported browsers
+  } as NotificationOptions);
   
   notification.onclick = () => {
     window.focus();
@@ -142,9 +154,12 @@ export function useNotifications() {
         },
         (payload) => {
           queryClient.invalidateQueries({ queryKey: ["notifications"] });
-          // Play sound and show browser notification only after initial mount
+          // Play sound, vibrate, and show browser notification only after initial mount
           if (!isInitialMount.current) {
             playNotificationSound();
+            
+            // Vibrate on mobile (works when app is in focus too)
+            triggerVibration();
             
             // Show browser push notification when app is not focused
             const newNotification = payload.new as AppNotification;
