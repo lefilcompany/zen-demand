@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { Users, Copy, Check, Calendar, Shield, Loader2, UserMinus } from "lucide-react";
+import { Users, Copy, Check, Calendar, Shield, Loader2, UserMinus, RefreshCw, Eye, EyeOff } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useTeams } from "@/hooks/useTeams";
 import { useTeamMembers, useUpdateMemberRole, useRemoveMember } from "@/hooks/useTeamMembers";
@@ -16,6 +19,8 @@ import { useTeamRole } from "@/hooks/useTeamRole";
 import { useTeamScope } from "@/hooks/useTeamScope";
 import { TeamScopeConfig } from "@/components/TeamScopeConfig";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -45,7 +50,14 @@ export default function TeamConfig() {
   const { data: teamScope } = useTeamScope(selectedTeamId);
   const updateRole = useUpdateMemberRole();
   const removeMember = useRemoveMember();
+  const queryClient = useQueryClient();
+  
   const [copied, setCopied] = useState(false);
+  const [changeCodeOpen, setChangeCodeOpen] = useState(false);
+  const [newAccessCode, setNewAccessCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isChangingCode, setIsChangingCode] = useState(false);
 
   const team = teams?.find(t => t.id === selectedTeamId);
   const isAdmin = myRole === "admin";
@@ -88,6 +100,61 @@ export default function TeamConfig() {
       toast.success("Membro removido da equipe!");
     } catch (error) {
       toast.error("Erro ao remover membro");
+    }
+  };
+
+  const generateRandomCode = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let code = "";
+    for (let i = 0; i < 8; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewAccessCode(code);
+  };
+
+  const handleChangeAccessCode = async () => {
+    if (!user?.email || !password || !newAccessCode || !selectedTeamId) return;
+    
+    setIsChangingCode(true);
+    try {
+      // Verify password by re-authenticating
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: password,
+      });
+
+      if (authError) {
+        toast.error("Senha incorreta");
+        return;
+      }
+
+      // Check if new code already exists
+      const { data: existingCode } = await supabase
+        .rpc("check_access_code_exists", { code: newAccessCode.toUpperCase() });
+
+      if (existingCode) {
+        toast.error("Este código já está em uso. Tente outro.");
+        return;
+      }
+
+      // Update the team access code
+      const { error: updateError } = await supabase
+        .from("teams")
+        .update({ access_code: newAccessCode.toUpperCase() })
+        .eq("id", selectedTeamId);
+
+      if (updateError) throw updateError;
+
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      toast.success("Código de acesso alterado com sucesso!");
+      setChangeCodeOpen(false);
+      setNewAccessCode("");
+      setPassword("");
+    } catch (error: any) {
+      console.error("Error changing access code:", error);
+      toast.error("Erro ao alterar código de acesso");
+    } finally {
+      setIsChangingCode(false);
     }
   };
 
@@ -158,6 +225,88 @@ export default function TeamConfig() {
                     <Copy className="h-4 w-4" />
                   )}
                 </Button>
+                {isAdmin && (
+                  <Dialog open={changeCodeOpen} onOpenChange={(open) => {
+                    setChangeCodeOpen(open);
+                    if (!open) {
+                      setNewAccessCode("");
+                      setPassword("");
+                      setShowPassword(false);
+                    }
+                  }}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="icon" title="Alterar código">
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Alterar Código de Acesso</DialogTitle>
+                        <DialogDescription>
+                          Digite um novo código de acesso para a equipe. Para confirmar, insira sua senha.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="new-code">Novo Código de Acesso</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              id="new-code"
+                              value={newAccessCode}
+                              onChange={(e) => setNewAccessCode(e.target.value.toUpperCase())}
+                              placeholder="Ex: TEAM2024"
+                              maxLength={12}
+                              className="font-mono uppercase"
+                            />
+                            <Button type="button" variant="outline" onClick={generateRandomCode}>
+                              Gerar
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Código atual: {team.access_code}
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="password">Confirme sua Senha</Label>
+                          <div className="relative">
+                            <Input
+                              id="password"
+                              type={showPassword ? "text" : "password"}
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              placeholder="Digite sua senha"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="absolute right-0 top-0 h-full px-3"
+                              onClick={() => setShowPassword(!showPassword)}
+                            >
+                              {showPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setChangeCodeOpen(false)}>
+                          Cancelar
+                        </Button>
+                        <Button 
+                          onClick={handleChangeAccessCode} 
+                          disabled={!newAccessCode || !password || isChangingCode}
+                        >
+                          {isChangingCode && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Alterar Código
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                )}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Compartilhe este código para outros usuários entrarem na equipe
