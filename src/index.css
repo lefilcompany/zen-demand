@@ -12,7 +12,32 @@
 }
 
 .animate-spin-slow {
-  animation: spin-slow 2s linear infinite;
+  animation: spin-slow 3s linear infinite;
+}
+
+@keyframes loading-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-loading-progress {
+  animation: loading-progress 1.5s ease-in-out infinite;
+}
+
+/* Primary glow color for loading effects */
+:root {
+  --primary-glow: 40 95% 60%;
+}
+
+.dark {
+  --primary-glow: 40 95% 55%;
 }
 @tailwind components;
 @tailwind utilities;
