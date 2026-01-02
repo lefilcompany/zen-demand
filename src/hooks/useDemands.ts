@@ -14,7 +14,9 @@ import {
   getCachedDemand,
   saveDemandStatuses,
   getCachedDemandStatuses,
-  isOnline 
+  isOnline,
+  updateCachedDemand,
+  addToSyncQueue 
 } from "@/lib/offlineStorage";
 
 // Priority order: alta (high) = 1, média (medium) = 2, baixa (low) = 3
@@ -140,13 +142,39 @@ export function useDemandStatuses() {
   return useQuery({
     queryKey: ["demand-statuses"],
     queryFn: async () => {
+      // If offline, return cached statuses
+      if (!isOnline()) {
+        console.log('Offline: returning cached statuses');
+        const cachedStatuses = await getCachedDemandStatuses();
+        if (cachedStatuses.length > 0) {
+          return cachedStatuses as { id: string; name: string; color: string }[];
+        }
+      }
+
       const { data, error } = await supabase
         .from("demand_statuses")
         .select("*")
         .order("name");
 
-      if (error) throw error;
+      if (error) {
+        // Try cached statuses on error
+        const cachedStatuses = await getCachedDemandStatuses();
+        if (cachedStatuses.length > 0) {
+          return cachedStatuses as { id: string; name: string; color: string }[];
+        }
+        throw error;
+      }
+
+      // Cache statuses for offline use
+      if (data) {
+        await saveDemandStatuses(data);
+      }
+
       return data;
+    },
+    retry: (failureCount, error) => {
+      if (!isOnline()) return false;
+      return failureCount < 3;
     },
   });
 }
@@ -215,6 +243,24 @@ export function useUpdateDemand() {
       archived_at?: string | null;
       service_id?: string | null;
     }) => {
+      // If offline, queue the operation and update cache optimistically
+      if (!isOnline()) {
+        console.log('Offline: queueing demand update');
+        
+        // Add to sync queue
+        await addToSyncQueue({
+          type: 'update',
+          table: 'demands',
+          data: { id, ...data },
+        });
+
+        // Update local cache optimistically
+        await updateCachedDemand(id, data);
+
+        // Return a mock response for optimistic update
+        return { id, ...data };
+      }
+
       // Validate input data before database operation
       const validatedData = validateData(DemandUpdateSchema, { id, ...data });
       const { id: validatedId, ...updateData } = validatedData;

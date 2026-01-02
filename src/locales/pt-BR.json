@@ -260,6 +260,8 @@
     "successDescription": "Suas alterações offline foram salvas com sucesso",
     "partial": "{{success}} sincronizadas, {{failed}} falharam",
     "pending": "{{count}} alterações pendentes",
-    "syncing": "Sincronizando..."
+    "syncing": "Sincronizando...",
+    "offlinePending": "Pendente",
+    "offlineDescription": "Será sincronizado quando a conexão for restaurada"
   }
 }
