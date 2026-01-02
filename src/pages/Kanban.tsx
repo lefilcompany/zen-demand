@@ -67,7 +67,7 @@ export default function Kanban() {
         ) : demands && demands.length > 0 ? (
           <KanbanBoard 
             demands={demands} 
-            onDemandClick={id => navigate(`/demands/${id}`)} 
+            onDemandClick={id => navigate(`/demands/${id}`, { state: { from: "kanban" } })} 
             readOnly={isReadOnly}
             userRole={role || undefined}
           />
@@ -95,7 +95,7 @@ export default function Kanban() {
         notifications={notifications}
         onClear={clearNotification}
         onClearAll={clearAllNotifications}
-        onDemandClick={(id) => navigate(`/demands/${id}`)}
+        onDemandClick={(id) => navigate(`/demands/${id}`, { state: { from: "kanban" } })}
       />
     </div>
   );

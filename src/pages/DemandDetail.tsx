@@ -37,7 +37,7 @@ import { AttachmentUploader } from "@/components/AttachmentUploader";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter, MoreHorizontal, Trash2, AlertTriangle } from "lucide-react";
 import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState, useMemo, useEffect, useRef } from "react";
@@ -60,6 +60,11 @@ import { TypingIndicator } from "@/components/TypingIndicator";
 export default function DemandDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Check if user came from kanban
+  const cameFromKanban = location.state?.from === "kanban" || document.referrer.includes("/kanban");
+  const backPath = cameFromKanban ? "/kanban" : "/demands";
   const { user } = useAuth();
   const { data: demand, isLoading, isError, error } = useDemandById(id);
   const { data: interactions } = useDemandInteractions(id!);
@@ -431,7 +436,7 @@ export default function DemandDetail() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <Button
           variant="ghost"
-          onClick={() => navigate("/demands")}
+          onClick={() => navigate(backPath)}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar
