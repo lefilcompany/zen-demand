@@ -267,10 +267,14 @@
     "createdOfflineDescription": "Será enviada ao servidor quando a conexão for restaurada"
   },
   "cache": {
-    "precaching": "Preparando dados offline...",
+    "precaching": "Sincronizando dados offline...",
     "lastUpdate": "Última atualização: {{date}}",
     "refreshing": "Atualizando cache...",
     "ready": "Dados offline prontos",
-    "error": "Falha ao carregar dados offline"
+    "error": "Erro ao sincronizar dados"
+  },
+  "offline": {
+    "viewingCache": "Modo offline - Visualizando dados em cache",
+    "connectionRestored": "Conexão restaurada"
   }
 }
