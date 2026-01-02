@@ -11,6 +11,7 @@ import { ProtectedLayout } from "@/components/ProtectedLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { CommandMenu } from "@/components/CommandMenu";
 import { KeyboardShortcutsProvider } from "@/components/KeyboardShortcuts";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Welcome from "./pages/Welcome";
@@ -53,6 +54,7 @@ const App = () => (
                 <KeyboardShortcutsProvider>
                   <Toaster position="top-right" richColors />
                   <CommandMenu />
+                  <PWAInstallPrompt />
                   <Routes>
                     {/* Public routes */}
                     <Route path="/auth" element={<Auth />} />
