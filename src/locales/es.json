@@ -265,5 +265,12 @@
     "offlineDescription": "Se sincronizará cuando se restaure la conexión",
     "createdOffline": "Demanda creada offline",
     "createdOfflineDescription": "Se enviará al servidor cuando se restaure la conexión"
+  },
+  "cache": {
+    "precaching": "Preparando datos offline...",
+    "lastUpdate": "Última actualización: {{date}}",
+    "refreshing": "Actualizando caché...",
+    "ready": "Datos offline listos",
+    "error": "Error al cargar datos offline"
   }
 }

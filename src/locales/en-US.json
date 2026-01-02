@@ -265,5 +265,12 @@
     "offlineDescription": "Will sync when connection is restored",
     "createdOffline": "Demand created offline",
     "createdOfflineDescription": "Will be sent to server when connection is restored"
+  },
+  "cache": {
+    "precaching": "Preparing offline data...",
+    "lastUpdate": "Last update: {{date}}",
+    "refreshing": "Refreshing cache...",
+    "ready": "Offline data ready",
+    "error": "Failed to load offline data"
   }
 }
