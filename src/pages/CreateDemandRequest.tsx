@@ -252,7 +252,11 @@ export default function CreateDemandRequest() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate(-1)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  navigate(-1);
+                }}
                 className="flex-1"
               >
                 Cancelar
