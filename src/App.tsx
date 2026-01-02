@@ -12,6 +12,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { CommandMenu } from "@/components/CommandMenu";
 import { KeyboardShortcutsProvider } from "@/components/KeyboardShortcuts";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { SwipeNavigationProvider } from "@/components/SwipeNavigationProvider";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Welcome from "./pages/Welcome";
@@ -53,9 +54,10 @@ const App = () => (
             <TeamProvider>
               <BoardProvider>
                 <KeyboardShortcutsProvider>
-                  <Toaster position="top-right" richColors />
-                  <CommandMenu />
-                  <PWAInstallPrompt />
+                  <SwipeNavigationProvider>
+                    <Toaster position="top-right" richColors />
+                    <CommandMenu />
+                    <PWAInstallPrompt />
                   <Routes>
                     {/* Public routes */}
                     <Route path="/auth" element={<Auth />} />
@@ -96,6 +98,7 @@ const App = () => (
                     {/* Catch-all */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
+                  </SwipeNavigationProvider>
                 </KeyboardShortcutsProvider>
               </BoardProvider>
             </TeamProvider>
