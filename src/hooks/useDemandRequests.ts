@@ -152,6 +152,15 @@ export function useCreateDemandRequest() {
     }) => {
       if (!user) throw new Error("Usuário não autenticado");
 
+      // Get user's profile name
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .single();
+
+      const requesterName = profile?.full_name || "Usuário";
+
       const { data: result, error } = await supabase
         .from("demand_requests")
         .insert({
@@ -162,6 +171,31 @@ export function useCreateDemandRequest() {
         .single();
 
       if (error) throw error;
+
+      // Send email notification to admins (fire and forget)
+      supabase.functions
+        .invoke("notify-demand-request", {
+          body: {
+            requestId: result.id,
+            teamId: data.team_id,
+            boardId: data.board_id,
+            title: data.title,
+            description: data.description,
+            priority: data.priority || "média",
+            requesterName,
+          },
+        })
+        .then((response) => {
+          if (response.error) {
+            console.error("Failed to send email notification:", response.error);
+          } else {
+            console.log("Email notification sent to admins");
+          }
+        })
+        .catch((err) => {
+          console.error("Error sending email notification:", err);
+        });
+
       return result;
     },
     onSuccess: () => {
