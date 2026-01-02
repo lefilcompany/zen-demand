@@ -49,6 +49,7 @@ import {
 import { sendAdjustmentPushNotification } from "@/hooks/useSendPushNotification";
 import { useRealtimeDemandDetail } from "@/hooks/useRealtimeDemandDetail";
 import { DemandPresenceIndicator } from "@/components/DemandPresenceIndicator";
+import { RealtimeUpdateIndicator } from "@/components/RealtimeUpdateIndicator";
 
 export default function DemandDetail() {
   const { id } = useParams<{ id: string }>();
@@ -60,7 +61,7 @@ export default function DemandDetail() {
   const { data: statuses } = useDemandStatuses();
   
   // Enable realtime updates for this demand
-  useRealtimeDemandDetail(id);
+  const { lastUpdate, showUpdateIndicator, clearUpdateIndicator } = useRealtimeDemandDetail(id);
   const createInteraction = useCreateInteraction();
   const updateInteraction = useUpdateInteraction();
   const deleteInteraction = useDeleteInteraction();
@@ -391,7 +392,13 @@ export default function DemandDetail() {
   })) || [];
 
   return (
-    <div className="space-y-4 md:space-y-6 animate-fade-in">
+    <>
+      <RealtimeUpdateIndicator 
+        show={showUpdateIndicator} 
+        updateType={lastUpdate?.type}
+        onDismiss={clearUpdateIndicator}
+      />
+      <div className="space-y-4 md:space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <Button
           variant="ghost"
@@ -897,5 +904,6 @@ export default function DemandDetail() {
         </DialogContent>
       </Dialog>
     </div>
+    </>
   );
 }
