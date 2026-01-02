@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => ({
         name: "SoMA - Gerenciamento de Demandas",
         short_name: "SoMA",
         description: "Sistema profissional de gerenciamento de demandas para equipes",
-        theme_color: "#7c3aed",
+        theme_color: "#f29f05",
         background_color: "#0f0f23",
         display: "standalone",
         orientation: "portrait",
