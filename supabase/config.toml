@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.send-push-notification]
 verify_jwt = true
+
+[functions.notify-demand-request]
+verify_jwt = true
