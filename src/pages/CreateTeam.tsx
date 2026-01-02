@@ -275,23 +275,46 @@ export default function CreateTeam() {
 
               {/* Code availability indicator */}
               {accessCode.length >= 6 && (
-                <div className="flex items-center gap-2 text-sm">
-                  {isCheckingCode ? (
-                    <>
-                      <Loader className="h-4 w-4 animate-spin text-muted-foreground" />
-                      <span className="text-muted-foreground">Verificando disponibilidade...</span>
-                    </>
-                  ) : isCodeAvailable === true ? (
-                    <>
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                      <span className="text-emerald-500">Código disponível</span>
-                    </>
-                  ) : isCodeAvailable === false ? (
-                    <>
-                      <XCircle className="h-4 w-4 text-destructive" />
-                      <span className="text-destructive">Código já em uso</span>
-                    </>
-                  ) : null}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    {isCheckingCode ? (
+                      <>
+                        <Loader className="h-4 w-4 animate-spin text-muted-foreground" />
+                        <span className="text-muted-foreground">Verificando disponibilidade...</span>
+                      </>
+                    ) : isCodeAvailable === true ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                        <span className="text-emerald-500">Código disponível</span>
+                      </>
+                    ) : isCodeAvailable === false ? (
+                      <>
+                        <XCircle className="h-4 w-4 text-destructive" />
+                        <span className="text-destructive">Código já em uso. Escolha outro ou use uma sugestão:</span>
+                      </>
+                    ) : null}
+                  </div>
+                  
+                  {/* Suggestions when code is taken */}
+                  {isCodeAvailable === false && (
+                    <div className="flex flex-wrap gap-2">
+                      {[1, 2, 3].map((i) => {
+                        const suggestion = generateAccessCode();
+                        return (
+                          <Button
+                            key={i}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="font-mono text-xs"
+                            onClick={() => setAccessCode(suggestion)}
+                          >
+                            {suggestion.slice(0, 8)}...
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
 
