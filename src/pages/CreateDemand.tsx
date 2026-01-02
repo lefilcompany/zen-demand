@@ -255,6 +255,7 @@ export default function CreateDemand() {
                 <Label>Responsáveis</Label>
                 <AssigneeSelector
                   teamId={selectedTeamId}
+                  boardId={selectedBoardId}
                   selectedUserIds={assigneeIds}
                   onChange={setAssigneeIds}
                 />
