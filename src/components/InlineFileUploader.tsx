@@ -1,12 +1,17 @@
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Paperclip, X, Image, FileText, File, FileSpreadsheet, FileArchive, FileCode, Presentation } from "lucide-react";
+import { Paperclip, X, Image, FileText, File, FileSpreadsheet, FileArchive, FileCode, Presentation, Loader2, Check, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Progress } from "@/components/ui/progress";
+
+export type UploadStatus = 'pending' | 'uploading' | 'complete' | 'error';
 
 export interface PendingFile {
   id: string;
   file: File;
   preview?: string;
+  status?: UploadStatus;
+  progress?: number;
 }
 
 interface InlineFileUploaderProps {
@@ -183,44 +188,89 @@ export function InlineFileUploader({
             const Icon = getFileIcon(pendingFile.file.type, pendingFile.file.name);
             const isImage = pendingFile.file.type.startsWith("image/");
             const extension = getFileExtension(pendingFile.file.name);
+            const status = pendingFile.status || 'pending';
+            const progress = pendingFile.progress ?? 0;
+            const isUploading = status === 'uploading';
+            const isComplete = status === 'complete';
+            const isError = status === 'error';
             
             return (
               <div
                 key={pendingFile.id}
-                className="relative group flex items-center gap-2 bg-muted/50 rounded-lg p-2 pr-8 max-w-[220px]"
+                className={`relative group flex flex-col bg-muted/50 rounded-lg p-2 max-w-[220px] ${
+                  isError ? 'ring-1 ring-destructive/50' : ''
+                } ${isComplete ? 'ring-1 ring-green-500/50' : ''}`}
               >
-                {isImage && pendingFile.preview ? (
-                  <img
-                    src={pendingFile.preview}
-                    alt={pendingFile.file.name}
-                    className="h-10 w-10 object-cover rounded"
-                  />
-                ) : (
-                  <div className="relative h-10 w-10 flex items-center justify-center bg-background rounded flex-shrink-0">
-                    <Icon className="h-5 w-5 text-muted-foreground" />
-                    <span className="absolute -bottom-1 -right-1 text-[8px] font-bold bg-primary text-primary-foreground px-1 rounded">
-                      {extension}
-                    </span>
+                <div className="flex items-center gap-2 pr-6">
+                  {isImage && pendingFile.preview ? (
+                    <div className="relative">
+                      <img
+                        src={pendingFile.preview}
+                        alt={pendingFile.file.name}
+                        className={`h-10 w-10 object-cover rounded ${isUploading ? 'opacity-50' : ''}`}
+                      />
+                      {isUploading && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        </div>
+                      )}
+                      {isComplete && (
+                        <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5">
+                          <Check className="h-2.5 w-2.5 text-white" />
+                        </div>
+                      )}
+                      {isError && (
+                        <div className="absolute -top-1 -right-1 bg-destructive rounded-full p-0.5">
+                          <AlertCircle className="h-2.5 w-2.5 text-white" />
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="relative h-10 w-10 flex items-center justify-center bg-background rounded flex-shrink-0">
+                      {isUploading ? (
+                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                      ) : (
+                        <Icon className="h-5 w-5 text-muted-foreground" />
+                      )}
+                      <span className="absolute -bottom-1 -right-1 text-[8px] font-bold bg-primary text-primary-foreground px-1 rounded">
+                        {extension}
+                      </span>
+                      {isComplete && (
+                        <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5">
+                          <Check className="h-2.5 w-2.5 text-white" />
+                        </div>
+                      )}
+                      {isError && (
+                        <div className="absolute -top-1 -right-1 bg-destructive rounded-full p-0.5">
+                          <AlertCircle className="h-2.5 w-2.5 text-white" />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium truncate" title={pendingFile.file.name}>
+                      {pendingFile.file.name}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {isUploading ? 'Enviando...' : isComplete ? 'Enviado' : isError ? 'Erro' : formatSize(pendingFile.file.size)}
+                    </p>
                   </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium truncate" title={pendingFile.file.name}>
-                    {pendingFile.file.name}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {formatSize(pendingFile.file.size)}
-                  </p>
+                  {!isUploading && !isComplete && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-1 right-1 h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => removeFile(pendingFile.id)}
+                      disabled={disabled}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-1 right-1 h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => removeFile(pendingFile.id)}
-                  disabled={disabled}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
+                {isUploading && (
+                  <Progress value={progress} className="h-1 mt-2" />
+                )}
               </div>
             );
           })}
@@ -230,26 +280,35 @@ export function InlineFileUploader({
   );
 }
 
-// Helper function to upload pending files to a demand
+// Helper function to upload pending files to a demand with progress tracking
 export async function uploadPendingFiles(
   demandId: string,
   pendingFiles: PendingFile[],
   uploadMutation: { mutateAsync: (data: { demandId: string; file: File; interactionId?: string }) => Promise<any> },
-  interactionId?: string
+  interactionId?: string,
+  onProgress?: (fileId: string, status: UploadStatus, progress?: number) => void
 ): Promise<{ success: number; failed: number }> {
   let success = 0;
   let failed = 0;
   
   for (const pendingFile of pendingFiles) {
     try {
+      // Notify upload started
+      onProgress?.(pendingFile.id, 'uploading', 30);
+      
       await uploadMutation.mutateAsync({ demandId, file: pendingFile.file, interactionId });
+      
+      // Notify upload complete
+      onProgress?.(pendingFile.id, 'complete', 100);
       success++;
+      
       // Cleanup preview URL
       if (pendingFile.preview) {
         URL.revokeObjectURL(pendingFile.preview);
       }
     } catch (error) {
       console.error(`Failed to upload ${pendingFile.file.name}:`, error);
+      onProgress?.(pendingFile.id, 'error', 0);
       failed++;
     }
   }
