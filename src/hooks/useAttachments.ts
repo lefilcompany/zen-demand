@@ -26,6 +26,7 @@ export function useAttachments(demandId: string | null) {
         .from("demand_attachments")
         .select("*, profiles(full_name, avatar_url)")
         .eq("demand_id", demandId)
+        .is("interaction_id", null) // Only general attachments, not interaction attachments
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Attachment[];
