@@ -1,11 +1,12 @@
 import { Clock, Play, Pause, Loader2, Users } from "lucide-react";
 import { useLiveTimer, formatTimeDisplay } from "@/hooks/useLiveTimer";
-import { useDemandUserTimeStats, useUserTimerControl } from "@/hooks/useUserTimeTracking";
+import { useDemandTimeEntries, useDemandUserTimeStats, useUserTimerControl } from "@/hooks/useUserTimeTracking";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-
+import { TimeEntryEditDialog } from "./TimeEntryEditDialog";
+import { useAuth } from "@/lib/auth";
 interface UserTimeTrackingDisplayProps {
   demandId: string;
   variant?: "card" | "detail";
@@ -77,7 +78,9 @@ export function UserTimeTrackingDisplay({
   showControls = true,
   canControl = true,
 }: UserTimeTrackingDisplayProps) {
+  const { user } = useAuth();
   const { data: userStats, isLoading: isLoadingStats } = useDemandUserTimeStats(demandId);
+  const { data: allEntries, isLoading: isLoadingEntries } = useDemandTimeEntries(demandId);
   const {
     isTimerRunning,
     totalSeconds,
@@ -86,6 +89,9 @@ export function UserTimeTrackingDisplay({
     stopTimer,
     isLoading: isTimerLoading,
   } = useUserTimerControl(demandId);
+
+  // Filter entries for current user only
+  const currentUserEntries = allEntries?.filter((e) => e.user_id === user?.id) || [];
 
   // Current user's live time
   const currentUserLiveTime = useLiveTimer({
@@ -187,36 +193,44 @@ export function UserTimeTrackingDisplay({
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </span>
         )}
-        {showControls && canControl && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "h-7 w-7 ml-auto shrink-0",
-              isTimerRunning 
-                ? "bg-amber-500/20 text-amber-600 hover:bg-amber-500/30 hover:text-amber-700" 
-                : "bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30 hover:text-emerald-700"
-            )}
-            onClick={() => {
-              if (isTimerLoading) return;
-              if (isTimerRunning) {
-                stopTimer();
-              } else {
-                startTimer();
-              }
-            }}
-            disabled={isTimerLoading}
-            title={isTimerRunning ? "Pausar meu timer" : "Iniciar meu timer"}
-          >
-            {isTimerLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : isTimerRunning ? (
-              <Pause className="h-4 w-4" />
-            ) : (
-              <Play className="h-4 w-4" />
-            )}
-          </Button>
-        )}
+        <div className="ml-auto flex items-center gap-1">
+          {currentUserEntries.length > 0 && (
+            <TimeEntryEditDialog
+              entries={currentUserEntries}
+              isLoading={isLoadingEntries}
+            />
+          )}
+          {showControls && canControl && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "h-7 w-7 shrink-0",
+                isTimerRunning 
+                  ? "bg-amber-500/20 text-amber-600 hover:bg-amber-500/30 hover:text-amber-700" 
+                  : "bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30 hover:text-emerald-700"
+              )}
+              onClick={() => {
+                if (isTimerLoading) return;
+                if (isTimerRunning) {
+                  stopTimer();
+                } else {
+                  startTimer();
+                }
+              }}
+              disabled={isTimerLoading}
+              title={isTimerRunning ? "Pausar meu timer" : "Iniciar meu timer"}
+            >
+              {isTimerLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isTimerRunning ? (
+                <Pause className="h-4 w-4" />
+              ) : (
+                <Play className="h-4 w-4" />
+              )}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Team breakdown */}
