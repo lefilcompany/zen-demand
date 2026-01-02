@@ -10,7 +10,8 @@ import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useTeamScope } from "@/hooks/useTeamScope";
 import { useCreateDemandRequest } from "@/hooks/useDemandRequests";
 import { ServiceSelector } from "@/components/ServiceSelector";
-import { ArrowLeft, Ban, Send, Layout } from "lucide-react";
+import { RequestAttachmentUploader } from "@/components/RequestAttachmentUploader";
+import { ArrowLeft, Ban, Send, Layout, Paperclip } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -29,6 +30,7 @@ export default function CreateDemandRequest() {
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("média");
   const [serviceId, setServiceId] = useState("");
+  const [createdRequestId, setCreatedRequestId] = useState<string | null>(null);
 
   const handleServiceChange = (newServiceId: string) => {
     setServiceId(newServiceId);
@@ -48,11 +50,11 @@ export default function CreateDemandRequest() {
         service_id: serviceId && serviceId !== "none" ? serviceId : undefined,
       },
       {
-        onSuccess: () => {
-          toast.success("Solicitação enviada com sucesso!", {
-            description: "Aguarde a aprovação de um administrador ou coordenador.",
+        onSuccess: (data) => {
+          setCreatedRequestId(data.id);
+          toast.success("Solicitação criada!", {
+            description: "Agora você pode adicionar anexos se desejar.",
           });
-          navigate("/my-requests");
         },
         onError: (error: any) => {
           toast.error("Erro ao enviar solicitação", {
@@ -62,6 +64,56 @@ export default function CreateDemandRequest() {
       }
     );
   };
+
+  const handleFinish = () => {
+    toast.success("Solicitação enviada com sucesso!", {
+      description: "Aguarde a aprovação de um administrador ou coordenador.",
+    });
+    navigate("/my-requests");
+  };
+
+  // If request was created, show attachment step
+  if (createdRequestId) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fade-in px-1">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Adicionar Anexos</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
+            Adicione arquivos à sua solicitação (opcional)
+          </p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Paperclip className="h-5 w-5" />
+              Anexos
+            </CardTitle>
+            <CardDescription>
+              Anexe documentos, imagens ou outros arquivos relevantes
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <RequestAttachmentUploader requestId={createdRequestId} />
+
+            <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={handleFinish}
+                className="flex-1"
+              >
+                Pular
+              </Button>
+              <Button onClick={handleFinish} className="flex-1">
+                <Send className="mr-2 h-4 w-4" />
+                Concluir Solicitação
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fade-in px-1">
@@ -173,7 +225,7 @@ export default function CreateDemandRequest() {
                 className="flex-1"
               >
                 <Send className="mr-2 h-4 w-4" />
-                {createRequest.isPending ? "Enviando..." : "Enviar Solicitação"}
+                {createRequest.isPending ? "Criando..." : "Avançar"}
               </Button>
             </div>
           </form>

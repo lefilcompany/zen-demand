@@ -2,7 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useMyDemandRequests, useUpdateDemandRequest, useDeleteDemandRequest } from "@/hooks/useDemandRequests";
-import { ArrowLeft, Clock, CheckCircle, XCircle, RotateCcw, Edit, Trash2, Plus, Layout } from "lucide-react";
+import { useRequestAttachments } from "@/hooks/useRequestAttachments";
+import { ArrowLeft, Clock, CheckCircle, XCircle, RotateCcw, Edit, Trash2, Plus, Layout, Paperclip } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -14,6 +15,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ServiceSelector } from "@/components/ServiceSelector";
+import { RequestAttachmentUploader } from "@/components/RequestAttachmentUploader";
+import { RequestAttachmentBadge } from "@/components/RequestAttachmentBadge";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { getErrorMessage } from "@/lib/errorUtils";
 
@@ -134,7 +137,7 @@ export default function MyDemandRequests() {
                     <p className="text-sm text-muted-foreground mb-3">{request.description}</p>
                   )}
 
-                  <div className="flex flex-wrap gap-2 mb-3">
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
                     <Badge variant="outline">
                       Prioridade: {request.priority || "média"}
                     </Badge>
@@ -143,6 +146,7 @@ export default function MyDemandRequests() {
                         Serviço: {request.service.name}
                       </Badge>
                     )}
+                    <RequestAttachmentBadge requestId={request.id} />
                   </div>
 
                   {request.rejection_reason && (
@@ -249,6 +253,14 @@ export default function MyDemandRequests() {
                 />
               </div>
             </div>
+
+            {/* Attachments Section */}
+            {editingRequest && (
+              <div className="border-t pt-4">
+                <RequestAttachmentUploader requestId={editingRequest.id} />
+              </div>
+            )}
+            
             <div className="flex gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => setEditingRequest(null)} className="flex-1">
                 Cancelar
