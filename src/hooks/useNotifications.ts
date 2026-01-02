@@ -1,10 +1,59 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useNotificationSound } from "./useNotificationSound";
 
-interface Notification {
+// Request browser notification permission
+async function requestNotificationPermission(): Promise<boolean> {
+  if (!("Notification" in window)) {
+    return false;
+  }
+  
+  if (Notification.permission === "granted") {
+    return true;
+  }
+  
+  if (Notification.permission !== "denied") {
+    const permission = await Notification.requestPermission();
+    return permission === "granted";
+  }
+  
+  return false;
+}
+
+// Show browser notification when app is not focused
+function showBrowserNotification(title: string, body: string, link?: string) {
+  if (!("Notification" in window) || Notification.permission !== "granted") {
+    return;
+  }
+  
+  // Only show if document is not visible (app not in focus)
+  if (document.visibilityState === "visible") {
+    return;
+  }
+  
+  const notification = new Notification(title, {
+    body,
+    icon: "/favicon.png",
+    badge: "/favicon.png",
+    tag: "soma-notification",
+    requireInteraction: false,
+  });
+  
+  notification.onclick = () => {
+    window.focus();
+    if (link) {
+      window.location.href = link;
+    }
+    notification.close();
+  };
+  
+  // Auto close after 5 seconds
+  setTimeout(() => notification.close(), 5000);
+}
+
+interface AppNotification {
   id: string;
   user_id: string;
   title: string;
@@ -21,6 +70,11 @@ export function useNotifications() {
   const { playNotificationSound } = useNotificationSound();
   const isInitialMount = useRef(true);
 
+  // Request permission on mount
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
+
   const { data: notifications, isLoading } = useQuery({
     queryKey: ["notifications", user?.id],
     queryFn: async () => {
@@ -32,7 +86,7 @@ export function useNotifications() {
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
-      return data as Notification[];
+      return data as AppNotification[];
     },
     enabled: !!user?.id,
   });
@@ -86,11 +140,21 @@ export function useNotifications() {
           table: "notifications",
           filter: `user_id=eq.${user.id}`,
         },
-        () => {
+        (payload) => {
           queryClient.invalidateQueries({ queryKey: ["notifications"] });
-          // Play sound only after initial mount
+          // Play sound and show browser notification only after initial mount
           if (!isInitialMount.current) {
             playNotificationSound();
+            
+            // Show browser push notification when app is not focused
+            const newNotification = payload.new as AppNotification;
+            if (newNotification) {
+              showBrowserNotification(
+                newNotification.title,
+                newNotification.message,
+                newNotification.link || undefined
+              );
+            }
           }
         }
       )
@@ -110,3 +174,5 @@ export function useNotifications() {
     markAllAsRead: markAllAsReadMutation.mutate,
   };
 }
+
+export type { AppNotification };
