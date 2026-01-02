@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, ClipboardList, Settings2, FileText, Send, LayoutGrid, UserPlus } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, ClipboardList, Settings2, FileText, Send, LayoutGrid, UserPlus, UsersRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import logoSoma from "@/assets/logo-soma-dark.png";
 import { NavLink } from "@/components/NavLink";
@@ -173,6 +173,12 @@ export function AppSidebar() {
                           <LayoutGrid className="h-4 w-4" />
                           Meus Quadros
                         </NavLink>
+                        {selectedTeamId && (
+                          <NavLink to={`/teams/${selectedTeamId}`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                            <UsersRound className="h-4 w-4" />
+                            Participantes
+                          </NavLink>
+                        )}
                         {isTeamAdminOrModerator && selectedTeamId && (
                           <NavLink to={`/teams/${selectedTeamId}/services`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                             <Settings2 className="h-4 w-4" />
@@ -216,6 +222,16 @@ export function AppSidebar() {
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         
+                        {selectedTeamId && (
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild>
+                              <NavLink to={`/teams/${selectedTeamId}`} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[40px] md:min-h-0 py-2 md:py-1.5" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                                <UsersRound className="h-5 w-5 md:h-4 md:w-4 mr-2" />
+                                <span className="text-base md:text-sm">Participantes</span>
+                              </NavLink>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        )}
                         
                         {isTeamAdminOrModerator && selectedTeamId && (
                           <SidebarMenuSubItem data-tour="services-link">
