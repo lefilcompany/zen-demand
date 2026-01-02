@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Moon, Sun, Monitor, Bell, Mail, Smartphone, Loader2, Send } from "lucide-react";
+import { ArrowLeft, Moon, Sun, Monitor, Bell, Mail, Smartphone, Loader2, Send, LogOut, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -14,18 +14,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useNotificationPreferences, NotificationPreferences } from "@/hooks/useNotificationPreferences";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useAuth } from "@/lib/auth";
+import { useSelectedTeam } from "@/contexts/TeamContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function Settings() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { theme, setTheme } = useTheme();
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { currentTeam, selectedTeamId, setSelectedTeamId, teams } = useSelectedTeam();
   const [mounted, setMounted] = useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
   const { preferences, updatePreferences, isLoading } = useNotificationPreferences();
@@ -37,6 +52,38 @@ export default function Settings() {
     enablePushNotifications, 
     disablePushNotifications 
   } = usePushNotifications();
+
+  const leaveTeamMutation = useMutation({
+    mutationFn: async (teamId: string) => {
+      if (!user?.id) throw new Error("Usuário não autenticado");
+      
+      const { error } = await supabase
+        .from("team_members")
+        .delete()
+        .eq("team_id", teamId)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      
+      // Select another team if available
+      const remainingTeams = teams?.filter(t => t.id !== selectedTeamId);
+      if (remainingTeams && remainingTeams.length > 0) {
+        setSelectedTeamId(remainingTeams[0].id);
+      } else {
+        setSelectedTeamId(null);
+        navigate("/welcome");
+      }
+      
+      toast.success("Você saiu da equipe com sucesso");
+    },
+    onError: (error: any) => {
+      console.error("Error leaving team:", error);
+      toast.error("Erro ao sair da equipe");
+    },
+  });
 
   const sendTestNotification = async () => {
     if (!user?.id) return;
@@ -375,6 +422,71 @@ export default function Settings() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Team */}
+        {currentTeam && (
+          <Card className="border-destructive/20">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Equipe
+              </CardTitle>
+              <CardDescription>
+                Gerencie sua participação na equipe atual
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between p-4 rounded-lg border border-destructive/20 bg-destructive/5">
+                <div className="flex items-center gap-3">
+                  <LogOut className="h-4 w-4 text-destructive" />
+                  <div>
+                    <p className="font-medium text-foreground">
+                      Sair da equipe "{currentTeam.name}"
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Você perderá acesso a todos os quadros e demandas desta equipe
+                    </p>
+                  </div>
+                </div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      disabled={leaveTeamMutation.isPending}
+                    >
+                      {leaveTeamMutation.isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <LogOut className="mr-2 h-4 w-4" />
+                      )}
+                      Sair
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Sair da equipe?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja sair da equipe "{currentTeam.name}"? 
+                        Você perderá acesso a todos os quadros, demandas e dados associados a esta equipe.
+                        Para entrar novamente, você precisará do código de acesso.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => leaveTeamMutation.mutate(currentTeam.id)}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Sair da equipe
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
