@@ -1,20 +1,13 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, LayoutGrid, Users, Trash2, UserPlus, UserMinus, Home } from "lucide-react";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+import { LayoutGrid, Users, Trash2, UserPlus, UserMinus, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { useBoard, useDeleteBoard } from "@/hooks/useBoards";
 import { useBoardMembers, useBoardRole, useRemoveBoardMember } from "@/hooks/useBoardMembers";
 import { BoardScopeConfig } from "@/components/BoardScopeConfig";
@@ -99,33 +92,12 @@ export default function BoardDetail() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Breadcrumbs */}
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/" className="flex items-center gap-1">
-                <Home className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only">Início</span>
-              </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/boards" className="flex items-center gap-1">
-                <LayoutGrid className="h-3.5 w-3.5" />
-                <span>Quadros</span>
-              </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage className="max-w-[200px] truncate">
-              {board.name}
-            </BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+      <PageBreadcrumb
+        items={[
+          { label: "Quadros", href: "/boards", icon: LayoutGrid },
+          { label: board.name, isCurrent: true },
+        ]}
+      />
 
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
