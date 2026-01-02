@@ -29,7 +29,7 @@ import { InteractionAttachments } from "@/components/InteractionAttachments";
 import { supabase } from "@/integrations/supabase/client";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useAuth } from "@/lib/auth";
-import { useTimerControl } from "@/hooks/useTimerControl";
+import { useUserTimerControl } from "@/hooks/useUserTimeTracking";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { DemandEditForm } from "@/components/DemandEditForm";
@@ -38,7 +38,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter, MoreHorizontal, Trash2, AlertTriangle, LayoutGrid, List } from "lucide-react";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Link } from "react-router-dom";
-import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
+import { UserTimeTrackingDisplay } from "@/components/UserTimeTrackingDisplay";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -85,7 +85,7 @@ export default function DemandDetail() {
   const updateDemand = useUpdateDemand();
   const setAssignees = useSetAssignees();
   const uploadAttachment = useUploadAttachment();
-  const { startTimer, pauseTimer, isLoading: isTimerLoading } = useTimerControl();
+  const { isTimerRunning, startTimer, stopTimer, isLoading: isTimerLoading } = useUserTimerControl(id);
   const [comment, setComment] = useState("");
   const [commentPendingFiles, setCommentPendingFiles] = useState<PendingFile[]>([]);
   const [adjustmentPendingFiles, setAdjustmentPendingFiles] = useState<PendingFile[]>([]);
@@ -159,7 +159,6 @@ export default function DemandDetail() {
   const canControlTimer = !isDeliveredStatus && 
     (role === "admin" || role === "moderator" || role === "executor") &&
     (isInProgress || isInAdjustment);
-  const isTimerRunning = !!(demand as any)?.last_started_at;
 
   const filteredInteractions = useMemo(() => {
     if (!interactions) return [];
@@ -711,27 +710,15 @@ export default function DemandDetail() {
             </div>
           </div>
 
-          {/* Time tracking display */}
+          {/* Time tracking display - per user */}
           {(isInProgress || isInAdjustment || isDelivered) && (
             <div>
               <h3 className="font-semibold mb-2 text-sm md:text-base">Tempo de Execução</h3>
-              <DemandTimeDisplay
-                createdAt={demand.created_at}
-                updatedAt={demand.updated_at}
-                timeInProgressSeconds={(demand as any).time_in_progress_seconds}
-                lastStartedAt={(demand as any).last_started_at}
-                isInProgress={isTimerRunning}
-                isDelivered={isDelivered}
+              <UserTimeTrackingDisplay
+                demandId={demand.id}
                 variant="detail"
-                showTimerControls={canControlTimer}
-                isTimerRunning={isTimerRunning}
-                onPlayClick={() => startTimer.mutate(demand.id)}
-                onPauseClick={() => pauseTimer.mutate({
-                  demandId: demand.id,
-                  lastStartedAt: (demand as any).last_started_at!,
-                  currentSeconds: (demand as any).time_in_progress_seconds || 0,
-                })}
-                isLoading={isTimerLoading}
+                showControls={canControlTimer}
+                canControl={canControlTimer}
               />
             </div>
           )}
