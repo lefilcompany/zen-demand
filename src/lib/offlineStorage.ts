@@ -169,6 +169,124 @@ export const getCachedDemandStatuses = async (): Promise<unknown[]> => {
   return getAllFromStore(STORES.demandStatuses);
 };
 
+// Sync Queue types and functions
+export interface SyncOperation {
+  id?: number;
+  type: 'create' | 'update' | 'delete';
+  table: string;
+  data: Record<string, unknown>;
+  timestamp: number;
+  retryCount: number;
+}
+
+// Add operation to sync queue
+export const addToSyncQueue = async (operation: Omit<SyncOperation, 'id' | 'timestamp' | 'retryCount'>): Promise<void> => {
+  try {
+    const db = await openDB();
+    const transaction = db.transaction(STORES.syncQueue, 'readwrite');
+    const store = transaction.objectStore(STORES.syncQueue);
+
+    const syncOp: Omit<SyncOperation, 'id'> = {
+      ...operation,
+      timestamp: Date.now(),
+      retryCount: 0,
+    };
+
+    await new Promise<void>((resolve, reject) => {
+      const request = store.add(syncOp);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+
+    console.log('Added to sync queue:', operation.type, operation.table);
+  } catch (error) {
+    console.error('Failed to add to sync queue:', error);
+  }
+};
+
+// Get all pending sync operations
+export const getPendingSyncOperations = async (): Promise<SyncOperation[]> => {
+  return getAllFromStore<SyncOperation>(STORES.syncQueue);
+};
+
+// Remove operation from sync queue
+export const removeSyncOperation = async (id: number): Promise<void> => {
+  try {
+    const db = await openDB();
+    const transaction = db.transaction(STORES.syncQueue, 'readwrite');
+    const store = transaction.objectStore(STORES.syncQueue);
+
+    await new Promise<void>((resolve, reject) => {
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('Failed to remove sync operation:', error);
+  }
+};
+
+// Update retry count for failed operation
+export const updateSyncOperationRetry = async (id: number, retryCount: number): Promise<void> => {
+  try {
+    const db = await openDB();
+    const transaction = db.transaction(STORES.syncQueue, 'readwrite');
+    const store = transaction.objectStore(STORES.syncQueue);
+
+    const operation = await new Promise<SyncOperation | undefined>((resolve, reject) => {
+      const request = store.get(id);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+
+    if (operation) {
+      operation.retryCount = retryCount;
+      await new Promise<void>((resolve, reject) => {
+        const request = store.put(operation);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    }
+  } catch (error) {
+    console.error('Failed to update sync operation:', error);
+  }
+};
+
+// Clear all sync operations
+export const clearSyncQueue = async (): Promise<void> => {
+  try {
+    const db = await openDB();
+    const transaction = db.transaction(STORES.syncQueue, 'readwrite');
+    const store = transaction.objectStore(STORES.syncQueue);
+
+    await new Promise<void>((resolve, reject) => {
+      const request = store.clear();
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('Failed to clear sync queue:', error);
+  }
+};
+
+// Get sync queue count
+export const getSyncQueueCount = async (): Promise<number> => {
+  try {
+    const db = await openDB();
+    const transaction = db.transaction(STORES.syncQueue, 'readonly');
+    const store = transaction.objectStore(STORES.syncQueue);
+
+    return new Promise((resolve, reject) => {
+      const request = store.count();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('Failed to get sync queue count:', error);
+    return 0;
+  }
+};
+
 // Check if we're online
 export const isOnline = (): boolean => {
   return navigator.onLine;

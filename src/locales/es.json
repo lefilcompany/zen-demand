@@ -254,5 +254,12 @@
     "createTeamDesc": "Crea tu propio equipo e invita miembros",
     "joinTeamOption": "Unirse a un Equipo",
     "joinTeamDesc": "Usa un código de acceso para solicitar entrada"
+  },
+  "sync": {
+    "success": "{{count}} operaciones sincronizadas",
+    "successDescription": "Tus cambios offline se guardaron correctamente",
+    "partial": "{{success}} sincronizadas, {{failed}} fallaron",
+    "pending": "{{count}} cambios pendientes",
+    "syncing": "Sincronizando..."
   }
 }
