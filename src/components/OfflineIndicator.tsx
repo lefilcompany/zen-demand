@@ -1,4 +1,4 @@
-import { WifiOff, Cloud, RefreshCw, Database, CheckCircle2, AlertCircle } from 'lucide-react';
+import { WifiOff, Cloud } from 'lucide-react';
 import { useOfflineStatus } from '@/hooks/useOfflineStatus';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -78,54 +78,34 @@ export function OfflineIndicator() {
     return null;
   }
 
+  // Only show offline indicator prominently, others are more discreet
+  if (!showOffline && !showOnline) {
+    return null;
+  }
+
   return (
     <div
       className={cn(
-        'fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-sm font-medium transition-all duration-300',
+        'fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 text-xs font-medium transition-all duration-300 animate-fade-in',
         showOffline
           ? 'bg-destructive text-destructive-foreground'
-          : showOnline || showCacheReady
-          ? 'bg-green-600 text-white'
-          : showCacheError
-          ? 'bg-amber-500 text-white'
-          : 'bg-primary text-primary-foreground'
+          : 'bg-green-600/90 text-white'
       )}
     >
       {showOffline ? (
         <>
-          <WifiOff className="h-4 w-4" />
+          <WifiOff className="h-3.5 w-3.5" />
           <span>{t('offline.viewingCache')}</span>
           {pendingCount > 0 && (
-            <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-xs">
+            <span className="ml-1 px-1.5 py-0.5 bg-white/20 rounded-full text-[10px]">
               {t('sync.pending', { count: pendingCount })}
             </span>
           )}
         </>
       ) : showOnline ? (
         <>
-          <Cloud className="h-4 w-4" />
+          <Cloud className="h-3.5 w-3.5" />
           <span>{t('offline.connectionRestored')}</span>
-        </>
-      ) : showPrecaching ? (
-        <>
-          <Database className="h-4 w-4 animate-pulse" />
-          <span>{t('cache.precaching')}</span>
-        </>
-      ) : showSyncing ? (
-        <>
-          <RefreshCw className="h-4 w-4 animate-spin" />
-          <span>{t('sync.syncing')}</span>
-        </>
-      ) : showCacheReady ? (
-        <>
-          <CheckCircle2 className="h-4 w-4" />
-          <span>{t('cache.ready')}</span>
-          <span className="text-xs opacity-80">({formatLastUpdate()})</span>
-        </>
-      ) : showCacheError ? (
-        <>
-          <AlertCircle className="h-4 w-4" />
-          <span>{t('cache.error')}</span>
         </>
       ) : null}
     </div>
