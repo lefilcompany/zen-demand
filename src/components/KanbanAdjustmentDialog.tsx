@@ -25,6 +25,7 @@ interface KanbanAdjustmentDialogProps {
   onOpenChange: (open: boolean) => void;
   demandId: string | null;
   demandTitle: string | undefined;
+  demandCreatedBy: string | undefined;
   adjustmentType: AdjustmentType;
 }
 
@@ -33,6 +34,7 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
   onOpenChange,
   demandId,
   demandTitle,
+  demandCreatedBy,
   adjustmentType,
 }: KanbanAdjustmentDialogProps) {
   // Estado LOCAL do textarea - não propaga re-render ao pai
@@ -118,15 +120,32 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
         setPendingFiles([]);
       }
       
-      // Enviar notificações para os responsáveis
-      if (assignees && assignees.length > 0) {
+      // Notify all assignees AND the creator about the adjustment request
+      const usersToNotify = new Set<string>();
+      
+      // Add all assignees
+      assignees?.forEach(a => usersToNotify.add(a.user_id));
+      
+      // Always add demand creator (solicitante)
+      if (demandCreatedBy) {
+        usersToNotify.add(demandCreatedBy);
+      }
+      
+      // Remove current user from notification list
+      if (user?.id) {
+        usersToNotify.delete(user.id);
+      }
+      
+      const notifyUserIds = Array.from(usersToNotify);
+      
+      if (notifyUserIds.length > 0) {
         const notificationTitle = isInternal ? "Ajuste interno solicitado" : "Ajuste externo solicitado";
         const notificationMessage = isInternal 
           ? `Foi solicitado um ajuste interno na demanda "${demandTitle}": ${reason.trim().substring(0, 100)}${reason.length > 100 ? '...' : ''}`
           : `O cliente solicitou um ajuste na demanda "${demandTitle}": ${reason.trim().substring(0, 100)}${reason.length > 100 ? '...' : ''}`;
         
-        const notifications = assignees.map((assignee) => ({
-          user_id: assignee.user_id,
+        const notifications = notifyUserIds.map((userId) => ({
+          user_id: userId,
           title: notificationTitle,
           message: notificationMessage,
           type: "warning",
@@ -136,29 +155,35 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
         await supabase.from("notifications").insert(notifications);
         
         // Send push notifications
-        const assigneeIds = assignees.map(a => a.user_id);
         sendAdjustmentPushNotification({
-          assigneeIds,
+          assigneeIds: notifyUserIds,
           demandId,
           demandTitle: demandTitle || "",
           reason: reason.trim(),
           isInternal,
         }).catch(err => console.error("Error sending push notification:", err));
         
-        // Send email notifications
-        for (const assignee of assignees) {
+        // Send email notifications to each user
+        for (const userId of notifyUserIds) {
           try {
+            // Get user profile for name
+            const { data: userProfile } = await supabase
+              .from("profiles")
+              .select("full_name")
+              .eq("id", userId)
+              .single();
+            
             await supabase.functions.invoke("send-email", {
               body: {
-                to: assignee.user_id,
-                subject: `${typeLabel} solicitado: ${demandTitle}`,
+                to: userId,
+                subject: `🔧 ${typeLabel} solicitado: ${demandTitle}`,
                 template: "notification",
                 templateData: {
                   title: notificationTitle,
                   message: `${isInternal ? 'Foi solicitado um ajuste interno' : 'O cliente solicitou um ajuste'} na demanda "${demandTitle}".\n\nMotivo: ${reason.trim()}`,
-                  actionUrl: `https://pla.soma.lefil.com.br/demands/${demandId}`,
+                  actionUrl: `${window.location.origin}/demands/${demandId}`,
                   actionText: "Ver Demanda",
-                  userName: assignee.profile?.full_name || "Responsável",
+                  userName: userProfile?.full_name || "Usuário",
                   type: "warning" as const,
                 },
               },
@@ -177,7 +202,7 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
       });
       setIsSubmitting(false);
     }
-  }, [demandId, adjustmentStatusId, reason, user, assignees, demandTitle, adjustmentType, createInteraction, updateDemand, handleClose]);
+  }, [demandId, adjustmentStatusId, reason, user, assignees, demandTitle, demandCreatedBy, adjustmentType, createInteraction, updateDemand, handleClose, pendingFiles, uploadAttachment]);
 
   const handleReasonChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setReason(e.target.value);

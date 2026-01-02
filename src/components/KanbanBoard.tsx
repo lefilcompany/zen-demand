@@ -316,32 +316,39 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
           }
           
           // Only send notifications if online
-          if (!isOffline && isAdjustmentCompletion && demand && demand.created_by) {
-            // Send push notification
-            sendAdjustmentCompletionPushNotification({
-              creatorId: demand.created_by,
-              demandId: demand.id,
-              demandTitle: demand.title,
-            }).catch(err => console.error("Erro ao enviar push de ajuste concluído:", err));
-            
-            // Send email notification
-            try {
-              await supabase.functions.invoke("send-email", {
-                body: {
-                  to: demand.created_by,
-                  subject: `Ajuste concluído: ${demand.title}`,
-                  template: "notification",
-                  templateData: {
-                    title: "Ajuste Concluído",
-                    message: `O ajuste solicitado na demanda "${demand.title}" foi finalizado com sucesso. A demanda voltou para o status Entregue.`,
-                    actionUrl: `https://pla.soma.lefil.com.br/demands/${demand.id}`,
-                    actionText: "Ver Demanda",
-                    type: "success",
+          if (!isOffline && demand) {
+            // Send email notification to creator for important status changes
+            const importantStatuses = ["Entregue", "Aprovação do Cliente", "Em Ajuste"];
+            if (importantStatuses.includes(columnKey) && demand.created_by && demand.created_by !== user?.id) {
+              try {
+                const statusEmoji = columnKey === "Entregue" ? "✅" : columnKey === "Em Ajuste" ? "🔧" : "📋";
+                await supabase.functions.invoke("send-email", {
+                  body: {
+                    to: demand.created_by,
+                    subject: `${statusEmoji} Status atualizado: ${demand.title}`,
+                    template: "notification",
+                    templateData: {
+                      title: "Status da Demanda Atualizado",
+                      message: `A demanda "${demand.title}" mudou de "${previousStatusName}" para "${columnKey}".`,
+                      actionUrl: `${window.location.origin}/demands/${demand.id}`,
+                      actionText: "Ver Demanda",
+                      type: columnKey === "Entregue" ? "success" : columnKey === "Em Ajuste" ? "warning" : "info",
+                    },
                   },
-                },
-              });
-            } catch (emailError) {
-              console.error("Erro ao enviar email de ajuste concluído:", emailError);
+                });
+              } catch (emailError) {
+                console.error("Erro ao enviar email de status:", emailError);
+              }
+            }
+            
+            // Special handling for adjustment completion
+            if (isAdjustmentCompletion && demand.created_by) {
+              // Send push notification
+              sendAdjustmentCompletionPushNotification({
+                creatorId: demand.created_by,
+                demandId: demand.id,
+                demandTitle: demand.title,
+              }).catch(err => console.error("Erro ao enviar push de ajuste concluído:", err));
             }
           }
         },
@@ -408,32 +415,39 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
           }
           
           // Only send notifications if online
-          if (!isOffline && isAdjustmentCompletion && demand && demand.created_by) {
-            // Send push notification
-            sendAdjustmentCompletionPushNotification({
-              creatorId: demand.created_by,
-              demandId: demand.id,
-              demandTitle: demand.title,
-            }).catch(err => console.error("Erro ao enviar push de ajuste concluído:", err));
-            
-            // Send email notification
-            try {
-              await supabase.functions.invoke("send-email", {
-                body: {
-                  to: demand.created_by,
-                  subject: `Ajuste concluído: ${demand.title}`,
-                  template: "notification",
-                  templateData: {
-                    title: "Ajuste Concluído",
-                    message: `O ajuste solicitado na demanda "${demand.title}" foi finalizado com sucesso.`,
-                    actionUrl: `https://pla.soma.lefil.com.br/demands/${demand.id}`,
-                    actionText: "Ver Demanda",
-                    type: "success",
+          if (!isOffline && demand) {
+            // Send email notification to creator for important status changes
+            const importantStatuses = ["Entregue", "Aprovação do Cliente", "Em Ajuste"];
+            if (importantStatuses.includes(newStatusKey) && demand.created_by && demand.created_by !== user?.id) {
+              try {
+                const statusEmoji = newStatusKey === "Entregue" ? "✅" : newStatusKey === "Em Ajuste" ? "🔧" : "📋";
+                await supabase.functions.invoke("send-email", {
+                  body: {
+                    to: demand.created_by,
+                    subject: `${statusEmoji} Status atualizado: ${demand.title}`,
+                    template: "notification",
+                    templateData: {
+                      title: "Status da Demanda Atualizado",
+                      message: `A demanda "${demand.title}" mudou de "${previousStatusName}" para "${newStatusKey}".`,
+                      actionUrl: `${window.location.origin}/demands/${demand.id}`,
+                      actionText: "Ver Demanda",
+                      type: newStatusKey === "Entregue" ? "success" : newStatusKey === "Em Ajuste" ? "warning" : "info",
+                    },
                   },
-                },
-              });
-            } catch (emailError) {
-              console.error("Erro ao enviar email:", emailError);
+                });
+              } catch (emailError) {
+                console.error("Erro ao enviar email de status:", emailError);
+              }
+            }
+            
+            // Special handling for adjustment completion
+            if (isAdjustmentCompletion && demand.created_by) {
+              // Send push notification
+              sendAdjustmentCompletionPushNotification({
+                creatorId: demand.created_by,
+                demandId: demand.id,
+                demandTitle: demand.title,
+              }).catch(err => console.error("Erro ao enviar push de ajuste concluído:", err));
             }
           }
         },
@@ -803,6 +817,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
           onOpenChange={handleAdjustmentDialogChange}
           demandId={adjustmentDemandId}
           demandTitle={adjustmentDemand?.title}
+          demandCreatedBy={adjustmentDemand?.created_by}
           adjustmentType={adjustmentType}
         />
       </div>
@@ -897,6 +912,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
           onOpenChange={handleAdjustmentDialogChange}
           demandId={adjustmentDemandId}
           demandTitle={adjustmentDemand?.title}
+          demandCreatedBy={adjustmentDemand?.created_by}
           adjustmentType={adjustmentType}
         />
       </div>
@@ -1004,6 +1020,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
           onOpenChange={handleAdjustmentDialogChange}
           demandId={adjustmentDemandId}
           demandTitle={adjustmentDemand?.title}
+          demandCreatedBy={adjustmentDemand?.created_by}
           adjustmentType={adjustmentType}
         />
       </div>
