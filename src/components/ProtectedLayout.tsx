@@ -16,10 +16,10 @@ import { FloatingCreateButton } from "@/components/FloatingCreateButton";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useDataPrecache } from "@/hooks/useDataPrecache";
+
 export function ProtectedLayout() {
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const {
     isOpen,
@@ -30,6 +30,9 @@ export function ProtectedLayout() {
     hasCompleted
   } = useOnboarding();
   const { currentTeam } = useSelectedTeam();
+  
+  // Initialize data precaching for offline support
+  useDataPrecache();
 
   // Detect if tablet/medium screen to collapse sidebar by default
   const [isTablet, setIsTablet] = useState(() => {
@@ -39,6 +42,7 @@ export function ProtectedLayout() {
     }
     return false;
   });
+
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
@@ -47,24 +51,28 @@ export function ProtectedLayout() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  const {
-    data: profile
-  } = useQuery({
+
+  const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const {
-        data
-      } = await supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).single();
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("id", user.id)
+        .single();
       return data;
     },
     enabled: !!user?.id
   });
+
   const initials = profile?.full_name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "U";
 
   // Sidebar starts collapsed on tablet, open on desktop
   const defaultSidebarOpen = !isTablet;
-  return <SidebarProvider defaultOpen={defaultSidebarOpen} key={isTablet ? 'tablet' : 'desktop'}>
+
+  return (
+    <SidebarProvider defaultOpen={defaultSidebarOpen} key={isTablet ? 'tablet' : 'desktop'}>
       <div className="flex h-screen w-full bg-sidebar p-2 md:p-3 overflow-hidden">
         <AppSidebar />
         <main className="flex-1 flex flex-col bg-background rounded-xl shadow-xl min-h-0 overflow-hidden">
@@ -131,10 +139,12 @@ export function ProtectedLayout() {
                   <DropdownMenuItem onClick={() => navigate("/settings")}>
                     Configurações
                   </DropdownMenuItem>
-                  {hasCompleted && <DropdownMenuItem onClick={() => resetOnboarding(() => navigate("/"))}>
+                  {hasCompleted && (
+                    <DropdownMenuItem onClick={() => resetOnboarding(() => navigate("/"))}>
                       <RotateCcw className="h-4 w-4 mr-2" />
                       Rever Tour Guiado
-                    </DropdownMenuItem>}
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -148,5 +158,6 @@ export function ProtectedLayout() {
       
       {/* Onboarding Tour */}
       <OnboardingTour steps={steps} isOpen={isOpen} onClose={closeTour} onComplete={completeOnboarding} />
-    </SidebarProvider>;
+    </SidebarProvider>
+  );
 }

@@ -1,16 +1,26 @@
 const DB_NAME = 'soma-offline-db';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 interface OfflineStore {
   demands: 'demands';
   demandStatuses: 'demandStatuses';
   syncQueue: 'syncQueue';
+  teams: 'teams';
+  boards: 'boards';
+  profiles: 'profiles';
+  services: 'services';
+  cacheMetadata: 'cacheMetadata';
 }
 
 const STORES: OfflineStore = {
   demands: 'demands',
   demandStatuses: 'demandStatuses',
   syncQueue: 'syncQueue',
+  teams: 'teams',
+  boards: 'boards',
+  profiles: 'profiles',
+  services: 'services',
+  cacheMetadata: 'cacheMetadata',
 };
 
 let dbInstance: IDBDatabase | null = null;
@@ -52,6 +62,33 @@ export const openDB = (): Promise<IDBDatabase> => {
       // Store for sync queue (pending operations when offline)
       if (!db.objectStoreNames.contains(STORES.syncQueue)) {
         db.createObjectStore(STORES.syncQueue, { keyPath: 'id', autoIncrement: true });
+      }
+
+      // Store for teams
+      if (!db.objectStoreNames.contains(STORES.teams)) {
+        db.createObjectStore(STORES.teams, { keyPath: 'id' });
+      }
+
+      // Store for boards
+      if (!db.objectStoreNames.contains(STORES.boards)) {
+        const boardsStore = db.createObjectStore(STORES.boards, { keyPath: 'id' });
+        boardsStore.createIndex('team_id', 'team_id', { unique: false });
+      }
+
+      // Store for profiles
+      if (!db.objectStoreNames.contains(STORES.profiles)) {
+        db.createObjectStore(STORES.profiles, { keyPath: 'id' });
+      }
+
+      // Store for services
+      if (!db.objectStoreNames.contains(STORES.services)) {
+        const servicesStore = db.createObjectStore(STORES.services, { keyPath: 'id' });
+        servicesStore.createIndex('team_id', 'team_id', { unique: false });
+      }
+
+      // Store for cache metadata
+      if (!db.objectStoreNames.contains(STORES.cacheMetadata)) {
+        db.createObjectStore(STORES.cacheMetadata, { keyPath: 'key' });
       }
     };
   });
@@ -375,4 +412,130 @@ export const onOnlineStatusChange = (callback: (online: boolean) => void): (() =
     window.removeEventListener('online', handleOnline);
     window.removeEventListener('offline', handleOffline);
   };
+};
+
+// ============= Teams Cache =============
+export const saveTeams = async (teams: unknown[]): Promise<void> => {
+  await saveToStore(STORES.teams, teams);
+  await setCacheTimestamp('teams');
+};
+
+export const getCachedTeams = async (): Promise<unknown[]> => {
+  return getAllFromStore(STORES.teams);
+};
+
+// ============= Boards Cache =============
+export const saveBoards = async (boards: unknown[]): Promise<void> => {
+  await saveToStore(STORES.boards, boards);
+  await setCacheTimestamp('boards');
+};
+
+export const getCachedBoards = async (): Promise<unknown[]> => {
+  return getAllFromStore(STORES.boards);
+};
+
+export const getCachedBoardsByTeam = async (teamId: string): Promise<unknown[]> => {
+  return getByIndex(STORES.boards, 'team_id', teamId);
+};
+
+// ============= Profiles Cache =============
+export const saveProfiles = async (profiles: unknown[]): Promise<void> => {
+  await saveToStore(STORES.profiles, profiles);
+  await setCacheTimestamp('profiles');
+};
+
+export const getCachedProfiles = async (): Promise<unknown[]> => {
+  return getAllFromStore(STORES.profiles);
+};
+
+export const getCachedProfile = async (id: string): Promise<unknown | null> => {
+  return getFromStore(STORES.profiles, id);
+};
+
+// ============= Services Cache =============
+export const saveServices = async (services: unknown[]): Promise<void> => {
+  await saveToStore(STORES.services, services);
+  await setCacheTimestamp('services');
+};
+
+export const getCachedServices = async (): Promise<unknown[]> => {
+  return getAllFromStore(STORES.services);
+};
+
+export const getCachedServicesByTeam = async (teamId: string): Promise<unknown[]> => {
+  return getByIndex(STORES.services, 'team_id', teamId);
+};
+
+// ============= Cache Metadata =============
+interface CacheMetadata {
+  key: string;
+  timestamp: number;
+}
+
+export const setCacheTimestamp = async (key: string): Promise<void> => {
+  try {
+    const db = await openDB();
+    const transaction = db.transaction(STORES.cacheMetadata, 'readwrite');
+    const store = transaction.objectStore(STORES.cacheMetadata);
+
+    const metadata: CacheMetadata = { key, timestamp: Date.now() };
+    await new Promise<void>((resolve, reject) => {
+      const request = store.put(metadata);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('Failed to set cache timestamp:', error);
+  }
+};
+
+export const getCacheTimestamp = async (key: string): Promise<number | null> => {
+  try {
+    const db = await openDB();
+    const transaction = db.transaction(STORES.cacheMetadata, 'readonly');
+    const store = transaction.objectStore(STORES.cacheMetadata);
+
+    return new Promise((resolve, reject) => {
+      const request = store.get(key);
+      request.onsuccess = () => {
+        const result = request.result as CacheMetadata | undefined;
+        resolve(result?.timestamp ?? null);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('Failed to get cache timestamp:', error);
+    return null;
+  }
+};
+
+export const isCacheStale = async (key: string, maxAgeMs: number = 30 * 60 * 1000): Promise<boolean> => {
+  const timestamp = await getCacheTimestamp(key);
+  if (!timestamp) return true;
+  return Date.now() - timestamp > maxAgeMs;
+};
+
+export const getLastCacheUpdate = async (): Promise<Date | null> => {
+  try {
+    const db = await openDB();
+    const transaction = db.transaction(STORES.cacheMetadata, 'readonly');
+    const store = transaction.objectStore(STORES.cacheMetadata);
+
+    return new Promise((resolve, reject) => {
+      const request = store.getAll();
+      request.onsuccess = () => {
+        const results = request.result as CacheMetadata[];
+        if (results.length === 0) {
+          resolve(null);
+          return;
+        }
+        const latestTimestamp = Math.max(...results.map(r => r.timestamp));
+        resolve(new Date(latestTimestamp));
+      };
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('Failed to get last cache update:', error);
+    return null;
+  }
 };
