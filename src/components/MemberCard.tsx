@@ -81,19 +81,19 @@ export function MemberCard({
   const config = roleConfig[member.role];
 
   return (
-    <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
-      <div className="flex items-center gap-4">
-        <Avatar className="h-10 w-10">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-lg border bg-card">
+      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+        <Avatar className="h-10 w-10 shrink-0">
           <AvatarImage src={member.profile.avatar_url || undefined} />
           <AvatarFallback className="bg-primary/10 text-primary">
             {getInitials(member.profile.full_name)}
           </AvatarFallback>
         </Avatar>
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="font-medium">{member.profile.full_name}</span>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-medium truncate">{member.profile.full_name}</span>
             {isCurrentUser && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs shrink-0">
                 Você
               </Badge>
             )}
@@ -104,14 +104,14 @@ export function MemberCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
         {canModify ? (
           <Select
             value={member.role}
             onValueChange={(value) => onRoleChange(member.id, value as TeamRole)}
             disabled={isUpdating}
           >
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-full sm:w-[150px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -144,7 +144,8 @@ export function MemberCard({
         ) : (
           <Badge className={`${config.color} flex items-center gap-1`}>
             {config.icon}
-            {config.label}
+            <span className="hidden sm:inline">{config.label}</span>
+            <span className="sm:hidden">{config.label.slice(0, 5)}...</span>
           </Badge>
         )}
 

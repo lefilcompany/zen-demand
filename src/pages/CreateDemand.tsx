@@ -119,18 +119,18 @@ export default function CreateDemand() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
+    <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fade-in px-1">
       <div>
         <Button
           variant="ghost"
           onClick={() => navigate("/demands")}
-          className="mb-4"
+          className="mb-2 md:mb-4"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar
         </Button>
-        <h1 className="text-3xl font-bold tracking-tight">Nova Demanda</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Nova Demanda</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           Criar demanda para o quadro <span className="font-medium text-primary">{currentBoard?.name}</span>
         </p>
       </div>

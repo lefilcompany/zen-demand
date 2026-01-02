@@ -483,9 +483,9 @@ export default function Profile() {
 
           <form onSubmit={handlePasswordChange} className="space-y-6">
             {/* Step 1: Verify Current Password */}
-            <div className="p-4 rounded-lg border bg-muted/20">
-              <div className="flex items-center gap-2 mb-3">
-                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${currentPasswordVerified ? 'bg-emerald-500 text-white' : 'bg-primary text-primary-foreground'}`}>
+            <div className="p-3 sm:p-4 rounded-lg border bg-muted/20">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${currentPasswordVerified ? 'bg-emerald-500 text-white' : 'bg-primary text-primary-foreground'}`}>
                   {currentPasswordVerified ? <CheckCircle2 className="h-4 w-4" /> : '1'}
                 </div>
                 <Label className="font-medium">Verificar Senha Atual</Label>
@@ -497,7 +497,7 @@ export default function Profile() {
                 )}
               </div>
               
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <div className="relative flex-1">
                   <Input
                     id="currentPassword"

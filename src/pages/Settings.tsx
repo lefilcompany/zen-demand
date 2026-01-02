@@ -352,9 +352,9 @@ export default function Settings() {
 
               {/* Push Notifications Activation */}
               {isPushSupported && (
-                <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30">
-                  <div className="flex items-center gap-3">
-                    <Smartphone className="h-4 w-4 text-muted-foreground" />
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border border-border bg-muted/30">
+                  <div className="flex items-start sm:items-center gap-3">
+                    <Smartphone className="h-4 w-4 text-muted-foreground mt-1 sm:mt-0 shrink-0" />
                     <div>
                       <Label className="cursor-pointer font-medium">
                         Notificações do Navegador
@@ -369,13 +369,14 @@ export default function Settings() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                     {isPushEnabled && (
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={sendTestNotification}
                         disabled={isSendingTest}
+                        className="flex-1 sm:flex-none"
                       >
                         {isSendingTest ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -391,6 +392,7 @@ export default function Settings() {
                         size="sm"
                         onClick={disablePushNotifications}
                         disabled={isPushLoading}
+                        className="flex-1 sm:flex-none"
                       >
                         {isPushLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Desativar
@@ -400,6 +402,7 @@ export default function Settings() {
                         size="sm"
                         onClick={enablePushNotifications}
                         disabled={isPushLoading || permissionStatus === "denied"}
+                        className="flex-1 sm:flex-none"
                       >
                         {isPushLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Ativar

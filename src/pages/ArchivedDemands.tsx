@@ -40,13 +40,13 @@ export default function ArchivedDemands() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-4 md:space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-          <Archive className="h-8 w-8" />
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
+          <Archive className="h-7 w-7 md:h-8 md:w-8" />
           Arquivadas
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm md:text-base text-muted-foreground">
           Demandas arquivadas do sistema
         </p>
       </div>
@@ -56,7 +56,7 @@ export default function ArchivedDemands() {
           <p className="text-muted-foreground">Carregando demandas...</p>
         </div>
       ) : demands && demands.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {demands.map((demand) => (
             <Card 
               key={demand.id} 
