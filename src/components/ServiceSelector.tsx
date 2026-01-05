@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/select";
 import { useServices } from "@/hooks/useServices";
 import { Clock } from "lucide-react";
-import { addHours, format } from "date-fns";
+import { calculateBusinessDueDate, formatDueDate } from "@/lib/dateUtils";
 
 interface ServiceSelectorProps {
   teamId: string | null;
@@ -31,8 +31,9 @@ export function ServiceSelector({
     onChange(serviceId, service?.estimated_hours);
   };
 
-  const calculateDueDate = (estimatedHours: number) => {
-    return format(addHours(new Date(), estimatedHours), "dd/MM/yyyy HH:mm");
+  const calculateDueDateDisplay = (estimatedHours: number) => {
+    const businessDueDate = calculateBusinessDueDate(estimatedHours);
+    return formatDueDate(businessDueDate);
   };
 
   return (
@@ -55,7 +56,7 @@ export function ServiceSelector({
                 {service.estimated_hours}h
               </span>
               <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                (até {calculateDueDate(service.estimated_hours)})
+                (até {calculateDueDateDisplay(service.estimated_hours)})
               </span>
             </div>
           </SelectItem>

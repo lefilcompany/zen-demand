@@ -18,7 +18,7 @@ import { useUploadAttachment } from "@/hooks/useAttachments";
 import { ArrowLeft, AlertTriangle, Ban, CloudOff, WifiOff } from "lucide-react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { addHours, format } from "date-fns";
+import { calculateBusinessDueDate, formatDueDateForInput } from "@/lib/dateUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
@@ -73,8 +73,8 @@ export default function CreateDemand() {
   const handleServiceChange = (newServiceId: string, estimatedHours?: number) => {
     setServiceId(newServiceId);
     if (newServiceId !== "none" && estimatedHours) {
-      const calculatedDate = addHours(new Date(), estimatedHours);
-      setDueDate(format(calculatedDate, "yyyy-MM-dd"));
+      const calculatedDate = calculateBusinessDueDate(estimatedHours);
+      setDueDate(formatDueDateForInput(calculatedDate));
     }
   };
 

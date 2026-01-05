@@ -8,7 +8,8 @@ import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
 import { useTeamRole } from "@/hooks/useTeamRole";
-import { addHours, format } from "date-fns";
+import { format } from "date-fns";
+import { calculateBusinessDueDate, formatDueDateForInput } from "@/lib/dateUtils";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
@@ -57,8 +58,8 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
   const handleServiceChange = (newServiceId: string, estimatedHours?: number) => {
     setServiceId(newServiceId);
     if (newServiceId !== "none" && estimatedHours) {
-      const calculatedDate = addHours(new Date(), estimatedHours);
-      setDueDate(format(calculatedDate, "yyyy-MM-dd"));
+      const calculatedDate = calculateBusinessDueDate(estimatedHours);
+      setDueDate(formatDueDateForInput(calculatedDate));
     }
   };
 
