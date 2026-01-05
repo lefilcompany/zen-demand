@@ -9,9 +9,10 @@ interface MentionInputProps {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  onBlur?: () => void;
 }
 
-export function MentionInput({ value, onChange, placeholder, className }: MentionInputProps) {
+export function MentionInput({ value, onChange, placeholder, className, onBlur }: MentionInputProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
   const [cursorPosition, setCursorPosition] = useState(0);
@@ -69,6 +70,7 @@ export function MentionInput({ value, onChange, placeholder, className }: Mentio
         ref={textareaRef}
         value={value}
         onChange={handleChange}
+        onBlur={onBlur}
         placeholder={placeholder}
         className={className}
       />
