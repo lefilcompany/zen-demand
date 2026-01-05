@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
+import { MentionInput } from "@/components/MentionInput";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -873,16 +874,15 @@ export default function DemandDetail() {
         </CardHeader>
         <CardContent className="space-y-4 p-4 md:p-6 pt-0 md:pt-0">
           <div className="space-y-2">
-            <Textarea
-              placeholder="Adicionar um comentário..."
+            <MentionInput
+              placeholder="Adicionar um comentário... Use @ para mencionar alguém"
               value={comment}
-              onChange={(e) => {
-                setComment(e.target.value);
+              onChange={(value) => {
+                setComment(value);
                 handleInputChange();
               }}
               onBlur={stopTyping}
-              rows={3}
-              className="text-sm md:text-base"
+              className="text-sm md:text-base min-h-[80px]"
             />
             <InlineFileUploader
               pendingFiles={commentPendingFiles}
