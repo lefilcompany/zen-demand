@@ -645,57 +645,6 @@ export default function DemandDetail() {
             <div className="space-y-2 min-w-0">
               <CardTitle className="text-lg md:text-2xl break-words">{demand.title}</CardTitle>
               <div className="flex flex-wrap items-center gap-2">
-                {/* Status Dropdown */}
-                {demand.demand_statuses && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-6 gap-1 text-xs px-2"
-                        style={{
-                          backgroundColor: `${demand.demand_statuses.color}20`,
-                          borderColor: `${demand.demand_statuses.color}40`,
-                          color: demand.demand_statuses.color,
-                        }}
-                        disabled={!canEdit}
-                      >
-                        {demand.demand_statuses.name}
-                        {canEdit && <ChevronDown className="h-3 w-3 opacity-50" />}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="bg-popover">
-                      {statuses?.map((status) => (
-                        <DropdownMenuItem
-                          key={status.id}
-                          onClick={() => {
-                            if (status.id !== demand.status_id) {
-                              updateDemand.mutate(
-                                { id: demand.id, status_id: status.id },
-                                {
-                                  onSuccess: () => {
-                                    toast.success(`Status alterado para "${status.name}"!`);
-                                  },
-                                }
-                              );
-                            }
-                          }}
-                          disabled={status.id === demand.status_id}
-                          className={status.id === demand.status_id ? "bg-accent" : ""}
-                        >
-                          <div 
-                            className="w-3 h-3 rounded-full mr-2 flex-shrink-0" 
-                            style={{ backgroundColor: status.color }}
-                          />
-                          {status.name}
-                          {status.id === demand.status_id && (
-                            <span className="ml-auto text-xs text-muted-foreground">(atual)</span>
-                          )}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
                 {demand.priority && (
                   <Badge variant="outline">{demand.priority}</Badge>
                 )}
@@ -804,6 +753,60 @@ export default function DemandDetail() {
                     </div>
                   </DialogContent>
                 </Dialog>
+              )}
+              {/* Status Dropdown */}
+              {canEdit && demand.demand_statuses && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="flex-1 sm:flex-none gap-2"
+                      style={{
+                        backgroundColor: `${demand.demand_statuses.color}20`,
+                        borderColor: `${demand.demand_statuses.color}40`,
+                        color: demand.demand_statuses.color,
+                      }}
+                    >
+                      <div 
+                        className="w-3 h-3 rounded-full flex-shrink-0" 
+                        style={{ backgroundColor: demand.demand_statuses.color }}
+                      />
+                      {demand.demand_statuses.name}
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="bg-popover">
+                    {statuses?.map((status) => (
+                      <DropdownMenuItem
+                        key={status.id}
+                        onClick={() => {
+                          if (status.id !== demand.status_id) {
+                            updateDemand.mutate(
+                              { id: demand.id, status_id: status.id },
+                              {
+                                onSuccess: () => {
+                                  toast.success(`Status alterado para "${status.name}"!`);
+                                },
+                              }
+                            );
+                          }
+                        }}
+                        disabled={status.id === demand.status_id}
+                        className={status.id === demand.status_id ? "bg-accent" : ""}
+                      >
+                        <div 
+                          className="w-3 h-3 rounded-full mr-2 flex-shrink-0" 
+                          style={{ backgroundColor: status.color }}
+                        />
+                        {status.name}
+                        {status.id === demand.status_id && (
+                          <span className="ml-auto text-xs text-muted-foreground">(atual)</span>
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
               {canEdit && (
                 <Button
