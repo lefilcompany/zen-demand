@@ -64,7 +64,7 @@ export function AppSidebar() {
       title: "Solicitações de Demanda",
       url: "/demand-requests",
       icon: FileText,
-      showDemandRequestBadge: isBoardAdminOrModerator // Only show badge for admins/moderators
+      showDemandRequestBadge: true // Show badge for admins, moderators and executors
     },
     ...(isBoardAdminOrModerator ? [{
       title: "Gerenciamento de Tempo",
