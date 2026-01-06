@@ -98,6 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       (event: AuthChangeEvent, currentSession: Session | null) => {
         console.log("Auth event:", event, currentSession ? "Session exists" : "No session");
         
+        // Update state synchronously
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         setLoading(false);
@@ -107,6 +108,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           case "SIGNED_IN":
           case "TOKEN_REFRESHED":
             // Schedule next automatic refresh
+            scheduleTokenRefresh(currentSession);
+            break;
+          case "PASSWORD_RECOVERY":
+            // User clicked on password recovery link - session is established
+            // Do NOT redirect or logout - let them reset their password
+            console.log("Password recovery event - user can now reset password");
             scheduleTokenRefresh(currentSession);
             break;
           case "SIGNED_OUT":
@@ -136,7 +143,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // If there's a session but "remember me" was not checked and this is a new browser session
-      if (existingSession && shouldLogout && !sessionStorage.getItem("sessionChecked")) {
+      // BUT skip this check if we're on the password reset page (to allow password recovery)
+      const isPasswordResetPage = window.location.pathname === "/reset-password";
+      
+      if (existingSession && shouldLogout && !sessionStorage.getItem("sessionChecked") && !isPasswordResetPage) {
         sessionStorage.setItem("sessionChecked", "true");
         // User didn't check "remember me" and this is a fresh browser session - log them out
         supabase.auth.signOut().then(() => {
