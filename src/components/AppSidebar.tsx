@@ -41,6 +41,7 @@ export function AppSidebar() {
   
   const isTeamAdminOrModerator = role === "admin" || role === "moderator";
   const isBoardAdminOrModerator = boardRole === "admin" || boardRole === "moderator";
+  const isBoardAdminModeratorOrExecutor = boardRole === "admin" || boardRole === "moderator" || boardRole === "executor";
   const isRequester = boardRole === "requester";
 
   const baseMenuItems = [{
@@ -57,19 +58,19 @@ export function AppSidebar() {
     icon: Briefcase
   }];
 
-  // Add demand requests link for admins/moderators
-  const adminMenuItems = isBoardAdminOrModerator ? [
+  // Add demand requests link for admins/moderators/executors
+  const adminMenuItems = isBoardAdminModeratorOrExecutor ? [
     {
       title: "Solicitações de Demanda",
       url: "/demand-requests",
       icon: FileText,
-      showDemandRequestBadge: true
+      showDemandRequestBadge: isBoardAdminOrModerator // Only show badge for admins/moderators
     },
-    {
+    ...(isBoardAdminOrModerator ? [{
       title: "Gerenciamento de Tempo",
       url: "/time-management",
       icon: Clock
-    }
+    }] : [])
   ] : [];
 
   // Add my requests link for requesters
