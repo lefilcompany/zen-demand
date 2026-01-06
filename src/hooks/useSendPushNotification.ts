@@ -6,7 +6,7 @@ interface SendPushNotificationParams {
   body: string;
   link?: string;
   data?: Record<string, string>;
-  notificationType?: "demandUpdates" | "teamUpdates" | "deadlineReminders" | "adjustmentRequests";
+  notificationType?: "demandUpdates" | "teamUpdates" | "deadlineReminders" | "adjustmentRequests" | "mentionNotifications";
 }
 
 /**
@@ -260,13 +260,13 @@ export async function sendMentionPushNotification({
   return sendPushNotification({
     userIds: [mentionedUserId],
     title: "💬 Você foi mencionado",
-    body: `${mentionerName} mencionou você na demanda "${demandTitle.substring(0, 40)}..."`,
+    body: `${mentionerName} mencionou você na demanda "${demandTitle.substring(0, 40)}${demandTitle.length > 40 ? "..." : ""}"`,
     link: `/demands/${demandId}`,
     data: {
       demandId,
       type: "mention",
     },
-    notificationType: "demandUpdates",
+    notificationType: "mentionNotifications",
   });
 }
 

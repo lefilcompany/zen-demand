@@ -56,7 +56,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { sendAdjustmentPushNotification, sendCommentPushNotification } from "@/hooks/useSendPushNotification";
+import { sendAdjustmentPushNotification, sendCommentPushNotification, sendMentionPushNotification } from "@/hooks/useSendPushNotification";
+import { extractMentionedUserIds } from "@/lib/mentionUtils";
 import { useSendEmail } from "@/hooks/useSendEmail";
 import { useRealtimeDemandDetail } from "@/hooks/useRealtimeDemandDetail";
 import { DemandPresenceIndicator } from "@/components/DemandPresenceIndicator";
@@ -416,6 +417,58 @@ export default function DemandDetail() {
                 templateData: {
                   title: "Novo comentário na demanda",
                   message: `${commenterName} comentou na demanda "${demand?.title}":\n\n"${commentContent.substring(0, 200)}${commentContent.length > 200 ? "..." : ""}"`,
+                  actionUrl: `${window.location.origin}/demands/${id}`,
+                  actionText: "Ver demanda",
+                  type: 'info',
+                },
+              });
+            }
+          }
+          
+          // Handle mention notifications separately
+          const mentionedUserIds = extractMentionedUserIds(commentContent);
+          const mentionedToNotify = mentionedUserIds.filter(mentionId => mentionId !== user?.id);
+          
+          if (mentionedToNotify.length > 0) {
+            // Get current user's name for mention notifications
+            const { data: currentProfile } = await supabase
+              .from("profiles")
+              .select("full_name")
+              .eq("id", user?.id || "")
+              .single();
+            
+            const mentionerName = currentProfile?.full_name || "Alguém";
+            
+            // Create in-app notifications for mentions
+            const mentionNotifications = mentionedToNotify.map((mentionedUserId) => ({
+              user_id: mentionedUserId,
+              title: "Você foi mencionado",
+              message: `${mentionerName} mencionou você em um comentário na demanda "${demand?.title}"`,
+              type: "mention",
+              link: `/demands/${id}`,
+            }));
+            
+            await supabase.from("notifications").insert(mentionNotifications);
+            
+            // Send push notifications for mentions
+            for (const mentionedUserId of mentionedToNotify) {
+              sendMentionPushNotification({
+                mentionedUserId,
+                demandId: id,
+                demandTitle: demand?.title || "",
+                mentionerName,
+              }).catch(err => console.error("Error sending mention push notification:", err));
+            }
+            
+            // Send email notifications for mentions
+            for (const mentionedUserId of mentionedToNotify) {
+              sendEmail.mutate({
+                to: mentionedUserId,
+                subject: `💬 ${mentionerName} mencionou você em "${demand?.title}"`,
+                template: 'notification',
+                templateData: {
+                  title: "Você foi mencionado em um comentário",
+                  message: `${mentionerName} mencionou você na demanda "${demand?.title}":\n\n"${commentContent.substring(0, 200)}${commentContent.length > 200 ? "..." : ""}"`,
                   actionUrl: `${window.location.origin}/demands/${id}`,
                   actionText: "Ver demanda",
                   type: 'info',
