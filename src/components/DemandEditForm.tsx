@@ -163,6 +163,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
           <Label>Responsáveis</Label>
           <AssigneeSelector
             teamId={demand.team_id}
+            boardId={demand.board_id}
             selectedUserIds={selectedAssignees}
             onChange={setSelectedAssignees}
           />
