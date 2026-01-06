@@ -46,6 +46,7 @@ export const DemandUpdateSchema = z.object({
   archived: z.boolean().optional(),
   archived_at: z.string().optional().nullable(),
   service_id: z.string().uuid("ID do serviço inválido").optional().nullable(),
+  board_id: z.string().uuid("ID do quadro inválido").optional(),
 });
 
 // ==================== INTERACTION SCHEMAS ====================
