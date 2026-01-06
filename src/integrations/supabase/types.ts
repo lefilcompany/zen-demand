@@ -248,6 +248,7 @@ export type Database = {
       }
       demand_request_attachments: {
         Row: {
+          comment_id: string | null
           created_at: string
           demand_request_id: string
           file_name: string
@@ -258,6 +259,7 @@ export type Database = {
           uploaded_by: string
         }
         Insert: {
+          comment_id?: string | null
           created_at?: string
           demand_request_id: string
           file_name: string
@@ -268,6 +270,7 @@ export type Database = {
           uploaded_by: string
         }
         Update: {
+          comment_id?: string | null
           created_at?: string
           demand_request_id?: string
           file_name?: string
@@ -278,6 +281,13 @@ export type Database = {
           uploaded_by?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "demand_request_attachments_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "demand_request_comments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "demand_request_attachments_demand_request_id_fkey"
             columns: ["demand_request_id"]
