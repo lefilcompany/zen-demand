@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { useDemandById, useDemandInteractions, useCreateInteraction, useUpdateInteraction, useDeleteInteraction, useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
-import { useBoards, useBoard } from "@/hooks/useBoards";
+import { useBoard } from "@/hooks/useBoards";
 import { useUploadAttachment } from "@/hooks/useAttachments";
 import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/components/InlineFileUploader";
 import { InteractionAttachments } from "@/components/InteractionAttachments";
@@ -78,7 +78,6 @@ export default function DemandDetail() {
   const { data: interactions } = useDemandInteractions(id!);
   const { data: assignees } = useDemandAssignees(id || null);
   const { data: statuses } = useDemandStatuses();
-  const { data: boards } = useBoards(demand?.team_id || null);
   const { data: currentBoard } = useBoard(demand?.board_id || null);
   
   // Enable realtime updates for this demand
@@ -704,46 +703,12 @@ export default function DemandDetail() {
                   <Badge variant="secondary">{demand.teams.name}</Badge>
                 )}
                 
-                {/* Board Dropdown */}
-                {boards && boards.length > 0 && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-6 gap-1 text-xs px-2">
-                        <Kanban className="h-3 w-3" />
-                        <span className="max-w-[100px] truncate">
-                          {currentBoard?.name || "Quadro"}
-                        </span>
-                        <ChevronDown className="h-3 w-3 opacity-50" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="bg-popover">
-                      {boards.map((board) => (
-                        <DropdownMenuItem
-                          key={board.id}
-                          onClick={() => {
-                            if (board.id !== demand.board_id && canEdit) {
-                              updateDemand.mutate(
-                                { id: demand.id, board_id: board.id },
-                                {
-                                  onSuccess: () => {
-                                    toast.success("Quadro alterado com sucesso!");
-                                  },
-                                }
-                              );
-                            }
-                          }}
-                          disabled={!canEdit || board.id === demand.board_id}
-                          className={board.id === demand.board_id ? "bg-accent" : ""}
-                        >
-                          <Kanban className="mr-2 h-4 w-4" />
-                          {board.name}
-                          {board.id === demand.board_id && (
-                            <span className="ml-auto text-xs text-muted-foreground">(atual)</span>
-                          )}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                {/* Board Badge (read-only) */}
+                {currentBoard && (
+                  <Badge variant="outline" className="gap-1">
+                    <Kanban className="h-3 w-3" />
+                    {currentBoard.name}
+                  </Badge>
                 )}
               </div>
             </div>
