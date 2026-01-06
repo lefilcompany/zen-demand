@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { MentionInput } from "@/components/MentionInput";
+import { MentionText } from "@/components/MentionText";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -1100,9 +1101,10 @@ export default function DemandDetail() {
                       ) : (
                         <>
                           {interaction.content && (
-                            <p className="text-xs md:text-sm whitespace-pre-wrap break-words">
-                              {interaction.content}
-                            </p>
+                            <MentionText 
+                              text={interaction.content} 
+                              className="text-xs md:text-sm whitespace-pre-wrap break-words block"
+                            />
                           )}
                           <InteractionAttachments interactionId={interaction.id} />
                         </>
