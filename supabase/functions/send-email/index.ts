@@ -205,29 +205,54 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Sending email to ${recipientEmail} with subject: ${subject}`);
 
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: from || "SoMA+ <noreply@pla.soma.lefil.com.br>",
-        to: [recipientEmail],
-        subject,
-        html: emailHtml,
-      }),
-    });
+    // Helper function to send with retry for rate limiting
+    const sendWithRetry = async (maxRetries = 3): Promise<{ success: boolean; data?: any; status?: number }> => {
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: from || "SoMA+ <noreply@pla.soma.lefil.com.br>",
+            to: [recipientEmail],
+            subject,
+            html: emailHtml,
+          }),
+        });
 
-    const data = await res.json();
+        const data = await res.json();
 
-    if (!res.ok) {
-      console.error("Resend API error:", data);
+        if (res.ok) {
+          return { success: true, data };
+        }
+
+        // If rate limited (429), wait and retry
+        if (res.status === 429 && attempt < maxRetries) {
+          const waitTime = Math.pow(2, attempt) * 500; // 1s, 2s, 4s
+          console.log(`Rate limited, waiting ${waitTime}ms before retry ${attempt + 1}/${maxRetries}`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
+
+        console.error("Resend API error:", data);
+        return { success: false, data, status: res.status };
+      }
+      
+      return { success: false, status: 429 };
+    };
+
+    const result = await sendWithRetry();
+
+    if (!result.success) {
       return new Response(JSON.stringify({ error: "Failed to send email" }), {
-        status: res.status,
+        status: result.status || 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
+
+    const data = result.data;
 
     console.log("Email sent successfully:", data);
 
