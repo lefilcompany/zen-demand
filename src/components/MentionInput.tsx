@@ -1,28 +1,27 @@
 import { useState, useRef, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useTeamMembers } from "@/hooks/useTeamMembers";
-import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useBoardMembers } from "@/hooks/useBoardMembers";
 
 interface MentionInputProps {
   value: string;
   onChange: (value: string) => void;
+  boardId: string;
   placeholder?: string;
   className?: string;
   onBlur?: () => void;
 }
 
-export function MentionInput({ value, onChange, placeholder, className, onBlur }: MentionInputProps) {
+export function MentionInput({ value, onChange, boardId, placeholder, className, onBlur }: MentionInputProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
   const [cursorPosition, setCursorPosition] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { selectedTeamId } = useSelectedTeam();
-  const { data: members } = useTeamMembers(selectedTeamId);
+  const { data: members } = useBoardMembers(boardId);
 
   const filteredMembers = members?.filter((m) =>
     m.profile?.full_name?.toLowerCase().includes(mentionQuery.toLowerCase())
-  ).slice(0, 5) || [];
+  ) || [];
 
   useEffect(() => {
     const handleClick = () => setShowSuggestions(false);
