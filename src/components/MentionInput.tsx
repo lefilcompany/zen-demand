@@ -11,6 +11,7 @@ interface MentionInputProps {
   placeholder?: string;
   className?: string;
   onBlur?: () => void;
+  allowedRoles?: ("admin" | "moderator" | "executor" | "requester")[];
 }
 
 interface MentionData {
@@ -18,7 +19,7 @@ interface MentionData {
   name: string;
 }
 
-export function MentionInput({ value, onChange, boardId, placeholder, className, onBlur }: MentionInputProps) {
+export function MentionInput({ value, onChange, boardId, placeholder, className, onBlur, allowedRoles }: MentionInputProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
   const [mentionStartIndex, setMentionStartIndex] = useState<number | null>(null);
@@ -26,9 +27,11 @@ export function MentionInput({ value, onChange, boardId, placeholder, className,
   const editorRef = useRef<HTMLDivElement>(null);
   const { data: members } = useBoardMembers(boardId);
 
-  const filteredMembers = members?.filter((m) =>
-    m.profile?.full_name?.toLowerCase().includes(mentionQuery.toLowerCase())
-  ) || [];
+  const filteredMembers = members?.filter((m) => {
+    const matchesName = m.profile?.full_name?.toLowerCase().includes(mentionQuery.toLowerCase());
+    const matchesRole = !allowedRoles || (m.teamRole && allowedRoles.includes(m.teamRole as any));
+    return matchesName && matchesRole;
+  }) || [];
 
   // Cria elemento de tag de menção
   const createMentionElement = (userId: string, name: string): HTMLSpanElement => {

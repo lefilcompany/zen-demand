@@ -303,7 +303,7 @@ export default function DemandRequests() {
               
               {/* Comment Input */}
               <div className="space-y-2">
-                <MentionInput value={commentText} onChange={setCommentText} boardId={viewing?.board_id || selectedBoardId || ""} placeholder="Adicione um comentário... Use @ para mencionar" className="min-h-[60px]" />
+                <MentionInput value={commentText} onChange={setCommentText} boardId={viewing?.board_id || selectedBoardId || ""} placeholder="Adicione um comentário... Use @ para mencionar" className="min-h-[60px]" allowedRoles={["admin", "moderator", "executor"]} />
                 
                 {/* Buttons side by side: Send first, then Attach */}
                 <div className="flex items-center gap-2">
