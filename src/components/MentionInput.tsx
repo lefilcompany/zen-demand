@@ -19,11 +19,12 @@ interface MentionData {
   name: string;
 }
 
-export function MentionInput({ value, onChange, boardId, placeholder, className, onBlur, allowedRoles }: MentionInputProps) {
+export function MentionInput({ value, onChange, boardId, placeholder = "Digite aqui...", className, onBlur, allowedRoles }: MentionInputProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
   const [mentionStartIndex, setMentionStartIndex] = useState<number | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [isEmpty, setIsEmpty] = useState(!value);
   const editorRef = useRef<HTMLDivElement>(null);
   const { data: members } = useBoardMembers(boardId);
 
@@ -32,6 +33,13 @@ export function MentionInput({ value, onChange, boardId, placeholder, className,
     const matchesRole = !allowedRoles || (m.teamRole && allowedRoles.includes(m.teamRole as any));
     return matchesName && matchesRole;
   }) || [];
+
+  // Check if editor is empty
+  const checkIsEmpty = useCallback(() => {
+    if (!editorRef.current) return true;
+    const text = editorRef.current.textContent || "";
+    return text.trim() === "";
+  }, []);
 
   // Cria elemento de tag de menção
   const createMentionElement = (userId: string, name: string): HTMLSpanElement => {
@@ -108,8 +116,9 @@ export function MentionInput({ value, onChange, boardId, placeholder, className,
       if (value !== currentValue) {
         renderValueToEditor(value);
       }
+      setIsEmpty(checkIsEmpty());
     }
-  }, [value, getStorageValue, renderValueToEditor]);
+  }, [value, getStorageValue, renderValueToEditor, checkIsEmpty]);
 
   // Fecha sugestões ao clicar fora
   useEffect(() => {
@@ -124,6 +133,8 @@ export function MentionInput({ value, onChange, boardId, placeholder, className,
 
   // Detecta digitação de @
   const handleInput = () => {
+    setIsEmpty(checkIsEmpty());
+    
     const selection = window.getSelection();
     if (!selection || !selection.rangeCount) return;
     
@@ -303,20 +314,30 @@ export function MentionInput({ value, onChange, boardId, placeholder, className,
         onKeyDown={handleKeyDown}
         onKeyPress={handleKeyPress}
         onBlur={() => {
+          setIsEmpty(checkIsEmpty());
           // Delay para permitir clique nas sugestões
           setTimeout(() => {
             onBlur?.();
           }, 150);
         }}
-        data-placeholder={placeholder}
+        onFocus={() => setIsEmpty(checkIsEmpty())}
         className={cn(
           "min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-          "empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground empty:before:pointer-events-none",
           "overflow-auto",
           className
         )}
       />
+      
+      {/* Placeholder overlay */}
+      {isEmpty && (
+        <div 
+          className="absolute top-2 left-3 text-sm text-muted-foreground pointer-events-none"
+          aria-hidden="true"
+        >
+          {placeholder}
+        </div>
+      )}
       
       {showSuggestions && filteredMembers.length > 0 && (
         <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
