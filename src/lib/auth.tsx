@@ -244,7 +244,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const resetPassword = async (email: string) => {
     try {
-      const redirectUrl = `${window.location.origin}/reset-password`;
+      // Use production URL when on production domain, otherwise use current origin
+      const productionDomain = 'pla.soma.lefil.com.br';
+      const isProduction = window.location.hostname === productionDomain;
+      const baseUrl = isProduction ? `https://${productionDomain}` : window.location.origin;
+      const redirectUrl = `${baseUrl}/reset-password`;
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,
