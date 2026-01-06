@@ -793,7 +793,7 @@ export default function DemandDetail() {
                           }
                         }}
                         disabled={status.id === demand.status_id}
-                        className={status.id === demand.status_id ? "bg-accent" : ""}
+                        className={status.id === demand.status_id ? "bg-primary/10 text-primary font-medium" : ""}
                       >
                         <div 
                           className="w-3 h-3 rounded-full mr-2 flex-shrink-0" 
@@ -801,7 +801,7 @@ export default function DemandDetail() {
                         />
                         {status.name}
                         {status.id === demand.status_id && (
-                          <span className="ml-auto text-xs text-muted-foreground">(atual)</span>
+                          <span className="ml-auto text-xs text-primary/70">(atual)</span>
                         )}
                       </DropdownMenuItem>
                     ))}
