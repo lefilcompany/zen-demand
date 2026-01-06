@@ -9,14 +9,14 @@ import { RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface AdjustmentTrendChartProps {
-  teamId: string;
+  boardId: string;
 }
 
-export function AdjustmentTrendChart({ teamId }: AdjustmentTrendChartProps) {
+export function AdjustmentTrendChart({ boardId }: AdjustmentTrendChartProps) {
   const thirtyDaysAgo = useMemo(() => subDays(new Date(), 30).toISOString(), []);
 
   const { data: adjustments, isLoading } = useQuery({
-    queryKey: ["adjustment-trend", teamId],
+    queryKey: ["adjustment-trend", boardId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("demand_interactions")
@@ -24,17 +24,17 @@ export function AdjustmentTrendChart({ teamId }: AdjustmentTrendChartProps) {
           id,
           created_at,
           demand_id,
-          demands!inner(team_id)
+          demands!inner(board_id)
         `)
         .eq("interaction_type", "adjustment_request")
-        .eq("demands.team_id", teamId)
+        .eq("demands.board_id", boardId)
         .gte("created_at", thirtyDaysAgo)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;
     },
-    enabled: !!teamId,
+    enabled: !!boardId,
   });
 
   const { totalAdjustments, chartData, dailyAverage } = useMemo(() => {
