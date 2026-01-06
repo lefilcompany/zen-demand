@@ -25,7 +25,10 @@ export function MentionInput({ value, onChange, boardId, placeholder = "Digite a
   const [mentionStartIndex, setMentionStartIndex] = useState<number | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isEmpty, setIsEmpty] = useState(!value);
+  const [dropdownPosition, setDropdownPosition] = useState<"bottom" | "top">("bottom");
   const editorRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { data: members } = useBoardMembers(boardId);
 
   const filteredMembers = members?.filter((m) => {
@@ -40,6 +43,31 @@ export function MentionInput({ value, onChange, boardId, placeholder = "Digite a
     const text = editorRef.current.textContent || "";
     return text.trim() === "";
   }, []);
+
+  // Calculate dropdown position based on available space
+  const calculateDropdownPosition = useCallback(() => {
+    if (!containerRef.current) return;
+    
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const dropdownHeight = 192; // max-h-48 = 12rem = 192px
+    const spaceBelow = viewportHeight - containerRect.bottom;
+    const spaceAbove = containerRect.top;
+    
+    // If not enough space below but enough above, show on top
+    if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+      setDropdownPosition("top");
+    } else {
+      setDropdownPosition("bottom");
+    }
+  }, []);
+
+  // Recalculate position when suggestions are shown
+  useEffect(() => {
+    if (showSuggestions && filteredMembers.length > 0) {
+      calculateDropdownPosition();
+    }
+  }, [showSuggestions, filteredMembers.length, calculateDropdownPosition]);
 
   // Cria elemento de tag de menção
   const createMentionElement = (userId: string, name: string): HTMLSpanElement => {
@@ -306,7 +334,7 @@ export function MentionInput({ value, onChange, boardId, placeholder = "Digite a
   };
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <div
         ref={editorRef}
         contentEditable
@@ -340,7 +368,13 @@ export function MentionInput({ value, onChange, boardId, placeholder = "Digite a
       )}
       
       {showSuggestions && filteredMembers.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+        <div 
+          ref={dropdownRef}
+          className={cn(
+            "absolute z-50 w-full bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto",
+            dropdownPosition === "bottom" ? "top-full mt-1" : "bottom-full mb-1"
+          )}
+        >
           {filteredMembers.map((member, index) => (
             <button
               key={member.user_id}
