@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePendingDemandRequests, useApproveDemandRequest, useReturnDemandRequest } from "@/hooks/useDemandRequests";
-import { ArrowLeft, Clock, CheckCircle, RotateCcw, Users, Layout, Paperclip, Eye } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle, RotateCcw, Users, Layout, Paperclip, MessageSquare, Send, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -20,6 +20,12 @@ import { addDays } from "date-fns";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { RequestAttachmentBadge } from "@/components/RequestAttachmentBadge";
 import { RequestAttachmentUploader } from "@/components/RequestAttachmentUploader";
+import { useBoardRole } from "@/hooks/useBoardMembers";
+import { useRequestComments, useCreateRequestComment, useDeleteRequestComment } from "@/hooks/useRequestComments";
+import { MentionInput } from "@/components/MentionInput";
+import { MentionText } from "@/components/MentionText";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/lib/auth";
 
 const priorityColors: Record<string, string> = {
   baixa: "bg-blue-500/20 text-blue-700 border-blue-500/30",
@@ -29,11 +35,15 @@ const priorityColors: Record<string, string> = {
 
 export default function DemandRequests() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { selectedTeamId } = useSelectedTeam();
   const { selectedBoardId, currentBoard } = useSelectedBoard();
+  const { data: boardRole } = useBoardRole(selectedBoardId);
   const { data: requests, isLoading } = usePendingDemandRequests();
   const approveRequest = useApproveDemandRequest();
   const returnRequest = useReturnDemandRequest();
+
+  const canApproveOrReturn = boardRole === "admin" || boardRole === "moderator";
 
   const [viewing, setViewing] = useState<any | null>(null);
   const [approving, setApproving] = useState<any | null>(null);
@@ -41,6 +51,12 @@ export default function DemandRequests() {
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [dueDate, setDueDate] = useState("");
   const [returnReason, setReturnReason] = useState("");
+  const [commentText, setCommentText] = useState("");
+
+  // Comments hooks
+  const { data: comments, isLoading: commentsLoading } = useRequestComments(viewing?.id || null);
+  const createComment = useCreateRequestComment();
+  const deleteComment = useDeleteRequestComment();
 
   const openApproveDialog = (request: any) => {
     setApproving(request);
@@ -91,6 +107,41 @@ export default function DemandRequests() {
         },
         onError: (error: any) => {
           toast.error("Erro ao devolver", { description: getErrorMessage(error) });
+        },
+      }
+    );
+  };
+
+  const handleAddComment = async () => {
+    if (!viewing || !commentText.trim()) return;
+
+    createComment.mutate(
+      {
+        requestId: viewing.id,
+        content: commentText.trim(),
+      },
+      {
+        onSuccess: () => {
+          setCommentText("");
+          toast.success("Comentário adicionado");
+        },
+        onError: (error: any) => {
+          toast.error("Erro ao adicionar comentário", { description: getErrorMessage(error) });
+        },
+      }
+    );
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    if (!viewing) return;
+    deleteComment.mutate(
+      { commentId, requestId: viewing.id },
+      {
+        onSuccess: () => {
+          toast.success("Comentário removido");
+        },
+        onError: (error: any) => {
+          toast.error("Erro ao remover comentário", { description: getErrorMessage(error) });
         },
       }
     );
@@ -249,32 +300,106 @@ export default function DemandRequests() {
               </div>
             )}
 
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t">
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setViewing(null);
-                  openApproveDialog(viewing);
-                }}
-                className="flex-1"
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Aprovar e Criar Demanda
-              </Button>
-              <Button
-                variant="outline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setViewing(null);
-                  setReturning(viewing);
-                }}
-                className="flex-1"
-              >
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Devolver para Revisão
-              </Button>
+            {/* Comments Section */}
+            <div className="space-y-3 pt-4 border-t">
+              <Label className="flex items-center gap-2 text-sm font-medium">
+                <MessageSquare className="h-4 w-4" />
+                Comentários ({comments?.length || 0})
+              </Label>
+              
+              {/* Comment Input */}
+              <div className="space-y-2">
+                <MentionInput
+                  value={commentText}
+                  onChange={setCommentText}
+                  boardId={viewing?.board_id || selectedBoardId || ""}
+                  placeholder="Adicione um comentário... Use @ para mencionar"
+                  className="min-h-[60px]"
+                />
+                <Button 
+                  onClick={handleAddComment} 
+                  disabled={!commentText.trim() || createComment.isPending}
+                  size="sm"
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  {createComment.isPending ? "Enviando..." : "Enviar"}
+                </Button>
+              </div>
+
+              {/* Comments List */}
+              <ScrollArea className="max-h-48">
+                <div className="space-y-3 pr-2">
+                  {commentsLoading ? (
+                    <p className="text-sm text-muted-foreground text-center py-2">Carregando comentários...</p>
+                  ) : comments && comments.length > 0 ? (
+                    comments.map((comment) => (
+                      <div key={comment.id} className="flex gap-2 p-3 bg-muted/50 rounded-lg group">
+                        <Avatar className="h-7 w-7 shrink-0">
+                          <AvatarImage src={comment.profiles?.avatar_url || undefined} />
+                          <AvatarFallback className="text-[10px]">
+                            {getInitials(comment.profiles?.full_name || "?")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-medium">{comment.profiles?.full_name}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">
+                                {format(new Date(comment.created_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
+                              </span>
+                              {user?.id === comment.user_id && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={() => handleDeleteComment(comment.id)}
+                                >
+                                  <Trash2 className="h-3 w-3 text-destructive" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-sm mt-0.5">
+                            <MentionText text={comment.content} />
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-2">Nenhum comentário ainda</p>
+                  )}
+                </div>
+              </ScrollArea>
             </div>
+
+            {/* Actions - Only for admins/moderators */}
+            {canApproveOrReturn && (
+              <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t">
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setViewing(null);
+                    openApproveDialog(viewing);
+                  }}
+                  className="flex-1"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Aprovar e Criar Demanda
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setViewing(null);
+                    setReturning(viewing);
+                  }}
+                  className="flex-1"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Devolver para Revisão
+                </Button>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
