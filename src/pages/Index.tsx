@@ -408,8 +408,8 @@ const Index = () => {
           {widgets.demandTrend && demands && demands.length > 0 && (
             <DemandTrendChart demands={demands} />
           )}
-          {widgets.adjustmentTrend && (
-            <AdjustmentTrendChart teamId={selectedTeamId} />
+          {widgets.adjustmentTrend && selectedBoardId && (
+            <AdjustmentTrendChart boardId={selectedBoardId} />
           )}
         </div>
       )}
