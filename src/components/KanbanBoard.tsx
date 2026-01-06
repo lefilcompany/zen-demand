@@ -272,6 +272,14 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     
     if (previousStatusName === columnKey) return;
 
+    // Interceptar tentativa de mover para "Em Ajuste" - abrir diálogo ao invés de mover direto
+    if (columnKey === "Em Ajuste") {
+      setAdjustmentDemandId(currentDraggedId);
+      setAdjustmentType("internal");
+      setAdjustmentDialogOpen(true);
+      return;
+    }
+
     // Adicionar a aba de destino às abertas no modo desktop grande para acompanhar o card
     if (isLargeDesktop && !activeColumns.includes(columnKey)) {
       toggleColumn(columnKey);
@@ -370,6 +378,14 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
   // Handle mobile status change via dropdown
   const handleMobileStatusChange = async (demandId: string, newStatusKey: string) => {
     if (!statuses) return;
+
+    // Interceptar tentativa de mover para "Em Ajuste" - abrir diálogo ao invés de mover direto
+    if (newStatusKey === "Em Ajuste") {
+      setAdjustmentDemandId(demandId);
+      setAdjustmentType("internal");
+      setAdjustmentDialogOpen(true);
+      return;
+    }
     
     const targetStatus = statuses.find((s) => s.name === newStatusKey);
     if (!targetStatus) return;
