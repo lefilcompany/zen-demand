@@ -30,6 +30,24 @@ export function useRequestAttachments(requestId: string | null) {
   });
 }
 
+export function useCommentAttachments(commentId: string | null) {
+  return useQuery({
+    queryKey: ["comment-attachments", commentId],
+    queryFn: async () => {
+      if (!commentId) return [];
+      const { data, error } = await supabase
+        .from("demand_request_attachments")
+        .select("*")
+        .eq("comment_id", commentId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      return data as RequestAttachment[];
+    },
+    enabled: !!commentId,
+  });
+}
+
 export function useUploadRequestAttachment() {
   const queryClient = useQueryClient();
 
@@ -37,15 +55,18 @@ export function useUploadRequestAttachment() {
     mutationFn: async ({
       requestId,
       file,
+      commentId,
     }: {
       requestId: string;
       file: File;
+      commentId?: string;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
 
       const ext = file.name.split(".").pop();
-      const filePath = `request-${requestId}/${crypto.randomUUID()}.${ext}`;
+      const folder = commentId ? `comment-${commentId}` : `request-${requestId}`;
+      const filePath = `${folder}/${crypto.randomUUID()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from("demand-attachments")
@@ -62,6 +83,7 @@ export function useUploadRequestAttachment() {
           file_type: file.type,
           file_size: file.size,
           uploaded_by: user.id,
+          comment_id: commentId || null,
         })
         .select()
         .single();
@@ -69,8 +91,11 @@ export function useUploadRequestAttachment() {
       if (dbError) throw dbError;
       return data;
     },
-    onSuccess: (_, { requestId }) => {
+    onSuccess: (_, { requestId, commentId }) => {
       queryClient.invalidateQueries({ queryKey: ["request-attachments", requestId] });
+      if (commentId) {
+        queryClient.invalidateQueries({ queryKey: ["comment-attachments", commentId] });
+      }
     },
   });
 }

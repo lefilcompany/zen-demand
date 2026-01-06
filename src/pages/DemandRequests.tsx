@@ -26,6 +26,9 @@ import { MentionInput } from "@/components/MentionInput";
 import { MentionText } from "@/components/MentionText";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/lib/auth";
+import { useUploadRequestAttachment } from "@/hooks/useRequestAttachments";
+import { CommentAttachmentUploader } from "@/components/CommentAttachmentUploader";
+import { CommentAttachments } from "@/components/CommentAttachments";
 
 const priorityColors: Record<string, string> = {
   baixa: "bg-blue-500/20 text-blue-700 border-blue-500/30",
@@ -52,11 +55,13 @@ export default function DemandRequests() {
   const [dueDate, setDueDate] = useState("");
   const [returnReason, setReturnReason] = useState("");
   const [commentText, setCommentText] = useState("");
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
   // Comments hooks
   const { data: comments, isLoading: commentsLoading } = useRequestComments(viewing?.id || null);
   const createComment = useCreateRequestComment();
   const deleteComment = useDeleteRequestComment();
+  const uploadAttachment = useUploadRequestAttachment();
 
   const openApproveDialog = (request: any) => {
     setApproving(request);
@@ -115,21 +120,31 @@ export default function DemandRequests() {
   const handleAddComment = async () => {
     if (!viewing || !commentText.trim()) return;
 
-    createComment.mutate(
-      {
+    try {
+      // 1. Create the comment
+      const comment = await createComment.mutateAsync({
         requestId: viewing.id,
         content: commentText.trim(),
-      },
-      {
-        onSuccess: () => {
-          setCommentText("");
-          toast.success("Comentário adicionado");
-        },
-        onError: (error: any) => {
-          toast.error("Erro ao adicionar comentário", { description: getErrorMessage(error) });
-        },
+      });
+
+      // 2. Upload attachments if any
+      if (pendingFiles.length > 0) {
+        for (const file of pendingFiles) {
+          await uploadAttachment.mutateAsync({
+            requestId: viewing.id,
+            file,
+            commentId: comment.id,
+          });
+        }
       }
-    );
+
+      // 3. Clear states
+      setCommentText("");
+      setPendingFiles([]);
+      toast.success("Comentário adicionado");
+    } catch (error: any) {
+      toast.error("Erro ao adicionar comentário", { description: getErrorMessage(error) });
+    }
   };
 
   const handleDeleteComment = (commentId: string) => {
@@ -316,13 +331,18 @@ export default function DemandRequests() {
                   placeholder="Adicione um comentário... Use @ para mencionar"
                   className="min-h-[60px]"
                 />
+                <CommentAttachmentUploader
+                  pendingFiles={pendingFiles}
+                  onFilesChange={setPendingFiles}
+                  disabled={createComment.isPending || uploadAttachment.isPending}
+                />
                 <Button 
                   onClick={handleAddComment} 
-                  disabled={!commentText.trim() || createComment.isPending}
+                  disabled={!commentText.trim() || createComment.isPending || uploadAttachment.isPending}
                   size="sm"
                 >
                   <Send className="h-4 w-4 mr-2" />
-                  {createComment.isPending ? "Enviando..." : "Enviar"}
+                  {createComment.isPending || uploadAttachment.isPending ? "Enviando..." : "Enviar"}
                 </Button>
               </div>
 
@@ -362,6 +382,7 @@ export default function DemandRequests() {
                           <div className="text-sm mt-0.5">
                             <MentionText text={comment.content} />
                           </div>
+                          <CommentAttachments commentId={comment.id} />
                         </div>
                       </div>
                     ))
