@@ -181,7 +181,7 @@ export function AppSidebar() {
                           Meus Quadros
                         </NavLink>
                         {selectedTeamId && (
-                          <NavLink to={`/teams/${selectedTeamId}`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                          <NavLink to={`/teams/${selectedTeamId}`} end onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                             <UsersRound className="h-4 w-4" />
                             Participantes
                           </NavLink>
@@ -232,7 +232,7 @@ export function AppSidebar() {
                         {selectedTeamId && (
                           <SidebarMenuSubItem>
                             <SidebarMenuSubButton asChild>
-                              <NavLink to={`/teams/${selectedTeamId}`} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[40px] md:min-h-0 py-2 md:py-1.5" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                              <NavLink to={`/teams/${selectedTeamId}`} end onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[40px] md:min-h-0 py-2 md:py-1.5" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                                 <UsersRound className="h-5 w-5 md:h-4 md:w-4 mr-2" />
                                 <span className="text-base md:text-sm">Participantes</span>
                               </NavLink>
