@@ -331,19 +331,37 @@ export default function DemandRequests() {
                   placeholder="Adicione um comentário... Use @ para mencionar"
                   className="min-h-[60px]"
                 />
+                
+                {/* Buttons side by side: Send first, then Attach */}
+                <div className="flex items-center gap-2">
+                  <Button 
+                    onClick={handleAddComment} 
+                    disabled={!commentText.trim() || createComment.isPending || uploadAttachment.isPending}
+                    size="sm"
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    {createComment.isPending || uploadAttachment.isPending ? "Enviando..." : "Enviar"}
+                  </Button>
+                  <CommentAttachmentUploader
+                    pendingFiles={pendingFiles}
+                    onFilesChange={setPendingFiles}
+                    disabled={createComment.isPending || uploadAttachment.isPending}
+                    buttonOnly
+                  />
+                  {pendingFiles.length > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      {pendingFiles.length}/5 arquivos
+                    </span>
+                  )}
+                </div>
+                
+                {/* Pending files list */}
                 <CommentAttachmentUploader
                   pendingFiles={pendingFiles}
                   onFilesChange={setPendingFiles}
                   disabled={createComment.isPending || uploadAttachment.isPending}
+                  filesListOnly
                 />
-                <Button 
-                  onClick={handleAddComment} 
-                  disabled={!commentText.trim() || createComment.isPending || uploadAttachment.isPending}
-                  size="sm"
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  {createComment.isPending || uploadAttachment.isPending ? "Enviando..." : "Enviar"}
-                </Button>
               </div>
 
               {/* Comments List */}
