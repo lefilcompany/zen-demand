@@ -8,6 +8,8 @@ interface CommentAttachmentUploaderProps {
   onFilesChange: (files: File[]) => void;
   maxSizeMB?: number;
   disabled?: boolean;
+  buttonOnly?: boolean;
+  filesListOnly?: boolean;
 }
 
 const MAX_FILES = 5;
@@ -29,6 +31,8 @@ export function CommentAttachmentUploader({
   onFilesChange,
   maxSizeMB = 10,
   disabled = false,
+  buttonOnly = false,
+  filesListOnly = false,
 }: CommentAttachmentUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -67,63 +71,90 @@ export function CommentAttachmentUploader({
     onFilesChange(newFiles);
   };
 
+  // Hidden file input (always needed)
+  const fileInput = (
+    <input
+      ref={inputRef}
+      type="file"
+      multiple
+      onChange={handleFileSelect}
+      className="hidden"
+      disabled={disabled}
+    />
+  );
+
+  // Button to trigger file selection
+  const attachButton = (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      onClick={() => inputRef.current?.click()}
+      disabled={disabled || pendingFiles.length >= MAX_FILES}
+      className="text-muted-foreground hover:text-foreground"
+    >
+      <Paperclip className="h-4 w-4 mr-1" />
+      Anexar
+    </Button>
+  );
+
+  // List of pending files
+  const filesList = pendingFiles.length > 0 && (
+    <div className="flex flex-wrap gap-2">
+      {pendingFiles.map((file, index) => {
+        const Icon = getFileIcon(file.type);
+        return (
+          <div
+            key={`${file.name}-${index}`}
+            className="flex items-center gap-2 bg-muted px-2 py-1 rounded-md text-sm"
+          >
+            <Icon className="h-3 w-3 shrink-0 text-muted-foreground" />
+            <span className="truncate max-w-[120px]">{file.name}</span>
+            <span className="text-xs text-muted-foreground shrink-0">
+              {formatSize(file.size)}
+            </span>
+            <button
+              type="button"
+              onClick={() => removeFile(index)}
+              className="text-muted-foreground hover:text-destructive"
+              disabled={disabled}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  // Render only button
+  if (buttonOnly) {
+    return (
+      <>
+        {fileInput}
+        {attachButton}
+      </>
+    );
+  }
+
+  // Render only files list
+  if (filesListOnly) {
+    return <>{filesList}</>;
+  }
+
+  // Render full component (default)
   return (
     <div className="space-y-2">
-      <input
-        ref={inputRef}
-        type="file"
-        multiple
-        onChange={handleFileSelect}
-        className="hidden"
-        disabled={disabled}
-      />
-
+      {fileInput}
       <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => inputRef.current?.click()}
-          disabled={disabled || pendingFiles.length >= MAX_FILES}
-          className="text-muted-foreground hover:text-foreground"
-        >
-          <Paperclip className="h-4 w-4 mr-1" />
-          Anexar
-        </Button>
+        {attachButton}
         {pendingFiles.length > 0 && (
           <span className="text-xs text-muted-foreground">
             {pendingFiles.length}/{MAX_FILES} arquivos
           </span>
         )}
       </div>
-
-      {pendingFiles.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {pendingFiles.map((file, index) => {
-            const Icon = getFileIcon(file.type);
-            return (
-              <div
-                key={`${file.name}-${index}`}
-                className="flex items-center gap-2 bg-muted px-2 py-1 rounded-md text-sm"
-              >
-                <Icon className="h-3 w-3 shrink-0 text-muted-foreground" />
-                <span className="truncate max-w-[120px]">{file.name}</span>
-                <span className="text-xs text-muted-foreground shrink-0">
-                  {formatSize(file.size)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => removeFile(index)}
-                  className="text-muted-foreground hover:text-destructive"
-                  disabled={disabled}
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {filesList}
     </div>
   );
 }
