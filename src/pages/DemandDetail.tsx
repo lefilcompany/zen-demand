@@ -962,6 +962,7 @@ export default function DemandDetail() {
             <MentionInput
               placeholder="Adicionar um comentário... Use @ para mencionar alguém"
               value={comment}
+              boardId={demand.board_id}
               onChange={(value) => {
                 setComment(value);
                 handleInputChange();
