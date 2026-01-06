@@ -884,6 +884,7 @@ export default function DemandDetail() {
                   <div className="flex-1">
                     <AssigneeSelector
                       teamId={demand.team_id}
+                      boardId={demand.board_id}
                       selectedUserIds={selectedAssignees}
                       onChange={setSelectedAssignees}
                     />

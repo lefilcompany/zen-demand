@@ -7,6 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useBoardMembers } from "@/hooks/useBoardMembers";
 import { Users, X } from "lucide-react";
@@ -103,40 +104,42 @@ export function AssigneeSelector({
             Selecione os membros {boardId ? "do quadro" : "da equipe"}
           </p>
         </div>
-        <div className="max-h-60 overflow-auto p-2">
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground p-2">Carregando...</p>
-          ) : members && members.length > 0 ? (
-            <div className="space-y-1">
-              {members.map((member) => (
-                <div
-                  key={member.id}
-                  className={cn(
-                    "flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-muted",
-                    selectedUserIds.includes(member.user_id) && "bg-muted"
-                  )}
-                  onClick={() => toggleUser(member.user_id)}
-                >
-                  <Checkbox
-                    checked={selectedUserIds.includes(member.user_id)}
-                    onCheckedChange={() => toggleUser(member.user_id)}
-                  />
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={member.profile?.avatar_url || undefined} />
-                    <AvatarFallback className="text-xs">
-                      {getInitials(member.profile?.full_name || "?")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm flex-1">{member.profile?.full_name}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground p-2">
-              Nenhum membro encontrado
-            </p>
-          )}
-        </div>
+        <ScrollArea className="max-h-60">
+          <div className="p-2">
+            {isLoading ? (
+              <p className="text-sm text-muted-foreground p-2">Carregando...</p>
+            ) : members && members.length > 0 ? (
+              <div className="space-y-1">
+                {members.map((member) => (
+                  <div
+                    key={member.id}
+                    className={cn(
+                      "flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-muted",
+                      selectedUserIds.includes(member.user_id) && "bg-muted"
+                    )}
+                    onClick={() => toggleUser(member.user_id)}
+                  >
+                    <Checkbox
+                      checked={selectedUserIds.includes(member.user_id)}
+                      onCheckedChange={() => toggleUser(member.user_id)}
+                    />
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={member.profile?.avatar_url || undefined} />
+                      <AvatarFallback className="text-xs">
+                        {getInitials(member.profile?.full_name || "?")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm flex-1">{member.profile?.full_name}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground p-2">
+                Nenhum membro encontrado
+              </p>
+            )}
+          </div>
+        </ScrollArea>
         {selectedUserIds.length > 0 && (
           <div className="p-2 border-t">
             <Button
