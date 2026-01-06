@@ -1,5 +1,6 @@
 import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Select,
   SelectContent,
@@ -29,8 +30,20 @@ export function BoardSelector() {
   const { boards, selectedBoardId, setSelectedBoardId, isLoading, currentBoard } =
     useSelectedBoardSafe();
   const { data: boardRole, isLoading: roleLoading } = useBoardRole(selectedBoardId);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const isRequester = boardRole === "requester";
+
+  const handleBoardChange = (newBoardId: string) => {
+    if (newBoardId !== selectedBoardId) {
+      setSelectedBoardId(newBoardId);
+      // Redireciona para o dashboard se não estiver nele
+      if (location.pathname !== "/") {
+        navigate("/");
+      }
+    }
+  };
 
   if (isLoading) {
     return <Skeleton className="h-9 w-[180px]" />;
@@ -42,7 +55,7 @@ export function BoardSelector() {
 
   return (
     <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-      <Select value={selectedBoardId || ""} onValueChange={setSelectedBoardId}>
+      <Select value={selectedBoardId || ""} onValueChange={handleBoardChange}>
         <SelectTrigger className="w-[160px] xs:w-[180px] sm:w-[220px] md:w-[250px] h-8 sm:h-9 text-xs sm:text-sm">
           <div className="flex items-center gap-1.5 min-w-0">
             <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
