@@ -540,6 +540,23 @@ export default function Settings() {
                   disabled={isLoading}
                 />
               </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="mention-notifications" className="cursor-pointer">
+                    Menções
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Notificações quando alguém mencionar você em comentários
+                  </p>
+                </div>
+                <Switch
+                  id="mention-notifications"
+                  checked={preferences.mentionNotifications}
+                  onCheckedChange={(checked) => handleNotificationChange("mentionNotifications", checked)}
+                  disabled={isLoading}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>

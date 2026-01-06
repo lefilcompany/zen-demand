@@ -21,6 +21,7 @@ interface UserPreferences {
   teamUpdates?: boolean;
   deadlineReminders?: boolean;
   adjustmentRequests?: boolean;
+  mentionNotifications?: boolean;
 }
 
 // Get access token for FCM HTTP v1 API
@@ -190,6 +191,8 @@ function shouldSendNotification(
       return preferences.deadlineReminders !== false;
     case "adjustmentRequests":
       return preferences.adjustmentRequests !== false;
+    case "mentionNotifications":
+      return preferences.mentionNotifications !== false;
     default:
       return true;
   }

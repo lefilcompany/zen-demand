@@ -9,6 +9,7 @@ export interface NotificationPreferences {
   teamUpdates: boolean;
   deadlineReminders: boolean;
   adjustmentRequests: boolean;
+  mentionNotifications: boolean;
 }
 
 const defaultPreferences: NotificationPreferences = {
@@ -18,6 +19,7 @@ const defaultPreferences: NotificationPreferences = {
   teamUpdates: true,
   deadlineReminders: true,
   adjustmentRequests: true,
+  mentionNotifications: true,
 };
 
 export function useNotificationPreferences() {
@@ -51,6 +53,7 @@ export function useNotificationPreferences() {
           teamUpdates: typeof value.teamUpdates === 'boolean' ? value.teamUpdates : defaultPreferences.teamUpdates,
           deadlineReminders: typeof value.deadlineReminders === 'boolean' ? value.deadlineReminders : defaultPreferences.deadlineReminders,
           adjustmentRequests: typeof value.adjustmentRequests === 'boolean' ? value.adjustmentRequests : defaultPreferences.adjustmentRequests,
+          mentionNotifications: typeof value.mentionNotifications === 'boolean' ? value.mentionNotifications : defaultPreferences.mentionNotifications,
         };
       }
 
