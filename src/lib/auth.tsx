@@ -244,11 +244,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const resetPassword = async (email: string) => {
     try {
-      // Use production URL when on production domain, otherwise use current origin
-      const productionDomain = 'pla.soma.lefil.com.br';
-      const isProduction = window.location.hostname === productionDomain;
-      const baseUrl = isProduction ? `https://${productionDomain}` : window.location.origin;
+      // Determine the correct base URL for password reset
+      const hostname = window.location.hostname;
+      let baseUrl: string;
+      
+      if (hostname === 'pla.soma.lefil.com.br') {
+        // Production domain
+        baseUrl = 'https://pla.soma.lefil.com.br';
+      } else if (hostname.includes('id-preview--') && hostname.includes('lovable.app')) {
+        // Correct Lovable preview URL
+        baseUrl = window.location.origin;
+      } else if (hostname.includes('lovable.app') && !hostname.includes('id-preview--')) {
+        // Lovable URL without id-preview prefix - add it
+        const projectId = '74839b7a-ef2a-44d4-8ac6-301dbb814ccc';
+        baseUrl = `https://id-preview--${projectId}.lovable.app`;
+      } else {
+        // Local development or other environments
+        baseUrl = window.location.origin;
+      }
+      
       const redirectUrl = `${baseUrl}/reset-password`;
+      console.log('Password reset redirect URL:', redirectUrl);
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,
