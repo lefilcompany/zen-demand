@@ -666,10 +666,13 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
                   (userRole === "admin" || userRole === "moderator" || userRole === "executor") &&
                   (columnKey === "Fazendo" || columnKey === "Em Ajuste");
                 
+                const shouldForceShow = canControlTimer && (columnKey === "Fazendo" || columnKey === "Em Ajuste");
+                
                 return (
                   <KanbanTimeDisplay
                     demandId={demand.id}
                     canControl={canControlTimer}
+                    forceShow={shouldForceShow}
                   />
                 );
               })()}

@@ -8,9 +8,10 @@ import { cn } from "@/lib/utils";
 interface KanbanTimeDisplayProps {
   demandId: string;
   canControl?: boolean;
+  forceShow?: boolean;
 }
 
-export function KanbanTimeDisplay({ demandId, canControl = false }: KanbanTimeDisplayProps) {
+export function KanbanTimeDisplay({ demandId, canControl = false, forceShow = false }: KanbanTimeDisplayProps) {
   const { data: userStats } = useDemandUserTimeStats(demandId);
   const {
     isTimerRunning,
@@ -31,8 +32,8 @@ export function KanbanTimeDisplay({ demandId, canControl = false }: KanbanTimeDi
   const activeUsersCount = userStats?.filter(u => u.isActive).length || 0;
   const displayTime = currentUserLiveTime || formatTimeDisplay(totalSeconds) || "00:00:00:00";
 
-  // Don't show if no time tracked
-  if (totalSeconds === 0 && !isTimerRunning && activeUsersCount === 0) {
+  // Don't show if no time tracked (unless forceShow is true)
+  if (!forceShow && totalSeconds === 0 && !isTimerRunning && activeUsersCount === 0) {
     return null;
   }
 
