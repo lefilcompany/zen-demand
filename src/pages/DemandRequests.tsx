@@ -278,7 +278,7 @@ export default function DemandRequests() {
             {/* Description */}
             {viewing?.description && <div className="space-y-1">
                 <Label className="text-sm font-medium">Descrição</Label>
-                <div className="p-3 rounded-md bg-muted text-sm whitespace-pre-wrap">
+                <div className="p-3 rounded-md bg-muted text-sm whitespace-pre-wrap break-words overflow-hidden">
                   {viewing.description}
                 </div>
               </div>}
