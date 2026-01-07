@@ -217,6 +217,7 @@ export default function MyDemands() {
           columns={demandColumns}
           data={filteredDemands}
           onRowClick={(row) => handleDemandClick(row.id)}
+          defaultSorting={[{ id: "board_sequence_number", desc: false }]}
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -25,14 +25,16 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   onRowClick?: (row: TData) => void;
+  defaultSorting?: SortingState;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   onRowClick,
+  defaultSorting = [],
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>(defaultSorting);
 
   const table = useReactTable({
     data,
