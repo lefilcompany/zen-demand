@@ -181,6 +181,7 @@ export default function Demands() {
           columns={demandColumns}
           data={demandList as unknown as DemandTableRow[]}
           onRowClick={(row) => navigate(`/demands/${row.id}`)}
+          defaultSorting={[{ id: "board_sequence_number", desc: false }]}
         />
       );
     }
