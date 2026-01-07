@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { useMemo } from "react";
-import { format, subDays, startOfDay, eachDayOfInterval } from "date-fns";
+import { format, eachDayOfInterval, startOfDay, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,56 +12,84 @@ interface AdjustmentTrendChartProps {
   boardId: string;
 }
 
-export function AdjustmentTrendChart({ boardId }: AdjustmentTrendChartProps) {
-  const thirtyDaysAgo = useMemo(() => subDays(new Date(), 30).toISOString(), []);
+interface AdjustmentData {
+  id: string;
+  created_at: string;
+  metadata: { adjustment_type?: string } | null;
+  demands: { board_id: string } | null;
+}
 
+export function AdjustmentTrendChart({ boardId }: AdjustmentTrendChartProps) {
   const { data: adjustments, isLoading } = useQuery({
-    queryKey: ["adjustment-trend", boardId],
+    queryKey: ["adjustment-trend-all", boardId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("demand_interactions")
         .select(`
           id,
           created_at,
-          demand_id,
+          metadata,
           demands!inner(board_id)
         `)
         .eq("interaction_type", "adjustment_request")
         .eq("demands.board_id", boardId)
-        .gte("created_at", thirtyDaysAgo)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: true });
 
       if (error) throw error;
-      return data;
+      return data as AdjustmentData[];
     },
     enabled: !!boardId,
   });
 
-  const { totalAdjustments, chartData, dailyAverage } = useMemo(() => {
-    if (!adjustments) return { totalAdjustments: 0, chartData: [], dailyAverage: 0 };
+  const { totalAdjustments, internalCount, externalCount, chartData } = useMemo(() => {
+    if (!adjustments || adjustments.length === 0) {
+      return { totalAdjustments: 0, internalCount: 0, externalCount: 0, chartData: [] };
+    }
 
+    // Get date range from first adjustment to today
+    const firstDate = startOfDay(parseISO(adjustments[0].created_at));
     const today = startOfDay(new Date());
-    const startDate = subDays(today, 29);
-    const days = eachDayOfInterval({ start: startDate, end: today });
+    const days = eachDayOfInterval({ start: firstDate, end: today });
 
+    // Count by type
+    let internal = 0;
+    let external = 0;
+    adjustments.forEach((a) => {
+      const type = a.metadata?.adjustment_type;
+      if (type === 'internal') internal++;
+      else external++; // Default to external if not specified
+    });
+
+    // Build chart data with cumulative counts per day
     const data = days.map((day) => {
       const dayStr = format(day, "yyyy-MM-dd");
-      const dayAdjustments = adjustments.filter((a) => {
-        const adjustmentDate = format(new Date(a.created_at), "yyyy-MM-dd");
-        return adjustmentDate === dayStr;
-      });
+      
+      const dayInternalAdjustments = adjustments.filter((a) => {
+        const adjustmentDate = format(parseISO(a.created_at), "yyyy-MM-dd");
+        const type = a.metadata?.adjustment_type;
+        return adjustmentDate === dayStr && type === 'internal';
+      }).length;
+
+      const dayExternalAdjustments = adjustments.filter((a) => {
+        const adjustmentDate = format(parseISO(a.created_at), "yyyy-MM-dd");
+        const type = a.metadata?.adjustment_type;
+        return adjustmentDate === dayStr && type !== 'internal'; // external or undefined
+      }).length;
 
       return {
         date: format(day, "dd/MM", { locale: ptBR }),
         fullDate: format(day, "dd 'de' MMMM", { locale: ptBR }),
-        ajustes: dayAdjustments.length,
+        interno: dayInternalAdjustments,
+        externo: dayExternalAdjustments,
+        total: dayInternalAdjustments + dayExternalAdjustments,
       };
     });
 
     return {
       totalAdjustments: adjustments.length,
+      internalCount: internal,
+      externalCount: external,
       chartData: data,
-      dailyAverage: (adjustments.length / 30).toFixed(1),
     };
   }, [adjustments]);
 
@@ -89,19 +117,23 @@ export function AdjustmentTrendChart({ boardId }: AdjustmentTrendChartProps) {
               Ajustes Solicitados
             </CardTitle>
             <CardDescription>
-              Solicitações de ajuste nos últimos 30 dias
-              {totalAdjustments > 0 && (
-                <span className="ml-2 text-xs">
-                  (média: {dailyAverage}/dia)
-                </span>
-              )}
+              Histórico completo de solicitações de ajuste
             </CardDescription>
           </div>
-          <div className="text-right">
+          <div className="text-right space-y-1">
             <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
               {totalAdjustments}
             </div>
-            <p className="text-xs text-muted-foreground">total de ajustes</p>
+            <div className="flex items-center justify-end gap-3 text-xs">
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                <span className="text-muted-foreground">Internos: {internalCount}</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span className="text-muted-foreground">Externos: {externalCount}</span>
+              </span>
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -109,24 +141,18 @@ export function AdjustmentTrendChart({ boardId }: AdjustmentTrendChartProps) {
         {totalAdjustments === 0 ? (
           <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
             <RefreshCw className="h-8 w-8 mb-2 opacity-50" />
-            <p className="text-sm">Nenhum ajuste solicitado nos últimos 30 dias</p>
+            <p className="text-sm">Nenhum ajuste solicitado neste quadro</p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="colorAjustes" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#9333ea" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#9333ea" stopOpacity={0} />
-                </linearGradient>
-              </defs>
+            <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis
                 dataKey="date"
                 tick={{ fontSize: 10 }}
                 tickLine={false}
                 axisLine={false}
-                interval={4}
+                interval="preserveStartEnd"
               />
               <YAxis
                 tick={{ fontSize: 11 }}
@@ -142,23 +168,39 @@ export function AdjustmentTrendChart({ boardId }: AdjustmentTrendChartProps) {
                 }}
                 labelFormatter={(_, payload) => {
                   if (payload && payload[0]) {
-                    return `Data: ${payload[0].payload.fullDate}`;
+                    return payload[0].payload.fullDate;
                   }
                   return "";
                 }}
-                formatter={(value: number) => [
-                  `${value} ${value === 1 ? "solicitação" : "solicitações"}`,
-                  "Ajustes"
-                ]}
+                formatter={(value: number, name: string) => {
+                  const label = name === 'interno' ? 'Ajustes Internos' : 'Ajustes Externos';
+                  return [`${value} ${value === 1 ? 'ajuste' : 'ajustes'}`, label];
+                }}
               />
-              <Area
+              <Legend 
+                formatter={(value) => value === 'interno' ? 'Internos' : 'Externos'}
+                iconType="circle"
+                iconSize={8}
+              />
+              <Line
                 type="monotone"
-                dataKey="ajustes"
-                stroke="#9333ea"
+                dataKey="interno"
+                stroke="#3b82f6"
                 strokeWidth={2}
-                fill="url(#colorAjustes)"
+                dot={{ r: 3, fill: "#3b82f6" }}
+                activeDot={{ r: 5 }}
+                name="interno"
               />
-            </AreaChart>
+              <Line
+                type="monotone"
+                dataKey="externo"
+                stroke="#f59e0b"
+                strokeWidth={2}
+                dot={{ r: 3, fill: "#f59e0b" }}
+                activeDot={{ r: 5 }}
+                name="externo"
+              />
+            </LineChart>
           </ResponsiveContainer>
         )}
       </CardContent>
