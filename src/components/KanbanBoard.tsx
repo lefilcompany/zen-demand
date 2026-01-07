@@ -23,7 +23,7 @@ import { getErrorMessage } from "@/lib/errorUtils";
 import { useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { KanbanTimeDisplay } from "@/components/KanbanTimeDisplay";
-import { KanbanAdjustmentDialog, AdjustmentType } from "@/components/KanbanAdjustmentDialog";
+import { KanbanAdjustmentDialog } from "@/components/KanbanAdjustmentDialog";
 import { toast } from "sonner";
 import { useAdjustmentCounts, AdjustmentInfo } from "@/hooks/useAdjustmentCount";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,6 +55,7 @@ interface Demand {
   updated_at?: string;
   time_in_progress_seconds?: number | null;
   last_started_at?: string | null;
+  team_id?: string; // Added for adjustment type determination
   demand_statuses?: { name: string; color: string } | null;
   assigned_profile?: { full_name: string; avatar_url?: string | null } | null;
   teams?: { name: string } | null;
@@ -138,7 +139,6 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
   const [adjustmentDemandId, setAdjustmentDemandId] = useState<string | null>(null);
-  const [adjustmentType, setAdjustmentType] = useState<AdjustmentType>("internal");
   const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, string>>({});
   const { data: statuses } = useDemandStatuses();
   const updateDemand = useUpdateDemand();
@@ -225,7 +225,6 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     setAdjustmentDialogOpen(open);
     if (!open) {
       setAdjustmentDemandId(null);
-      setAdjustmentType("internal");
     }
   }, []);
 
@@ -275,7 +274,6 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     // Interceptar tentativa de mover para "Em Ajuste" - abrir diálogo ao invés de mover direto
     if (columnKey === "Em Ajuste") {
       setAdjustmentDemandId(currentDraggedId);
-      setAdjustmentType("internal");
       setAdjustmentDialogOpen(true);
       return;
     }
@@ -382,7 +380,6 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     // Interceptar tentativa de mover para "Em Ajuste" - abrir diálogo ao invés de mover direto
     if (newStatusKey === "Em Ajuste") {
       setAdjustmentDemandId(demandId);
-      setAdjustmentType("internal");
       setAdjustmentDialogOpen(true);
       return;
     }
@@ -499,10 +496,9 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     return new Date(dueDate) < new Date();
   };
 
-  const handleOpenAdjustmentDialog = useCallback((e: React.MouseEvent, demandId: string, type: AdjustmentType) => {
+  const handleOpenAdjustmentDialog = useCallback((e: React.MouseEvent, demandId: string) => {
     e.stopPropagation();
     setAdjustmentDemandId(demandId);
-    setAdjustmentType(type);
     setAdjustmentDialogOpen(true);
   }, []);
 
@@ -690,7 +686,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={(e) => handleOpenAdjustmentDialog(e, demand.id, "internal")}
+                        onClick={(e) => handleOpenAdjustmentDialog(e, demand.id)}
                         className="w-full border-blue-500/30 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 text-xs"
                       >
                         <Wrench className="h-3 w-3 mr-1" />
@@ -701,7 +697,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={(e) => handleOpenAdjustmentDialog(e, demand.id, "external")}
+                        onClick={(e) => handleOpenAdjustmentDialog(e, demand.id)}
                         className="w-full border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 text-xs"
                       >
                         <Wrench className="h-3 w-3 mr-1" />
@@ -837,7 +833,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
           demandId={adjustmentDemandId}
           demandTitle={adjustmentDemand?.title}
           demandCreatedBy={adjustmentDemand?.created_by}
-          adjustmentType={adjustmentType}
+          teamId={adjustmentDemand?.team_id}
         />
       </div>
     );
@@ -932,7 +928,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
           demandId={adjustmentDemandId}
           demandTitle={adjustmentDemand?.title}
           demandCreatedBy={adjustmentDemand?.created_by}
-          adjustmentType={adjustmentType}
+          teamId={adjustmentDemand?.team_id}
         />
       </div>
     );
@@ -1040,7 +1036,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
           demandId={adjustmentDemandId}
           demandTitle={adjustmentDemand?.title}
           demandCreatedBy={adjustmentDemand?.created_by}
-          adjustmentType={adjustmentType}
+          teamId={adjustmentDemand?.team_id}
         />
       </div>
     );
