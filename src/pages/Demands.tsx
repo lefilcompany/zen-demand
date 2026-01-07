@@ -10,7 +10,7 @@ import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useAuth } from "@/lib/auth";
 import { Plus, Briefcase, LayoutGrid, List, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { DataTable } from "@/components/ui/data-table";
 import { demandColumns, DemandTableRow } from "@/components/demands/columns";
 import { DemandFilters, DemandFiltersState } from "@/components/DemandFilters";
@@ -129,8 +129,6 @@ export default function Demands() {
     });
   }, [demands, searchQuery, filters]);
   
-  const myDemands = filteredDemands.filter((d) => d.assigned_to === user?.id);
-  const createdByMe = filteredDemands.filter((d) => d.created_by === user?.id);
 
   const renderDemandList = (demandList: typeof filteredDemands) => {
     if (isLoading) {
@@ -269,25 +267,7 @@ export default function Demands() {
           </p>
         </div>
       ) : (
-        <Tabs defaultValue="all" className="space-y-4">
-          <TabsList className="bg-muted w-full sm:w-auto grid grid-cols-3 sm:inline-flex">
-            <TabsTrigger value="all" className="text-xs sm:text-sm">{t("common.all")}</TabsTrigger>
-            <TabsTrigger value="mine" className="text-xs sm:text-sm">{t("demands.assignees")}</TabsTrigger>
-            <TabsTrigger value="created" className="text-xs sm:text-sm">{t("demands.createdAt")}</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="all" className="space-y-4">
-            {renderDemandList(filteredDemands)}
-          </TabsContent>
-
-          <TabsContent value="mine" className="space-y-4">
-            {renderDemandList(myDemands)}
-          </TabsContent>
-
-          <TabsContent value="created" className="space-y-4">
-            {renderDemandList(createdByMe)}
-          </TabsContent>
-        </Tabs>
+        renderDemandList(filteredDemands)
       )}
     </div>
   );
