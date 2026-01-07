@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -10,13 +10,14 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
-import { useUpdateDemand, useDemandStatuses, useCreateInteraction } from "@/hooks/useDemands";
+import { useUpdateDemand, useDemandStatuses, useCreateInteraction, useDemandById } from "@/hooks/useDemands";
 import { useDemandAssignees } from "@/hooks/useDemandAssignees";
 import { useUploadAttachment } from "@/hooks/useAttachments";
 import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/components/InlineFileUploader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { sendAdjustmentPushNotification } from "@/hooks/useSendPushNotification";
+import { useTeamRole } from "@/hooks/useTeamRole";
 
 export type AdjustmentType = "internal" | "external";
 
@@ -26,7 +27,7 @@ interface KanbanAdjustmentDialogProps {
   demandId: string | null;
   demandTitle: string | undefined;
   demandCreatedBy: string | undefined;
-  adjustmentType: AdjustmentType;
+  adjustmentType?: AdjustmentType; // Optional - will be auto-determined by role
 }
 
 export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog({
@@ -35,12 +36,24 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
   demandId,
   demandTitle,
   demandCreatedBy,
-  adjustmentType,
 }: KanbanAdjustmentDialogProps) {
   // Estado LOCAL do textarea - não propaga re-render ao pai
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>();
+  
+  // Get demand to access team_id for role lookup
+  const { data: demand } = useDemandById(open ? demandId : null);
+  
+  // Get user role in the team to auto-determine adjustment type
+  const { data: userRole } = useTeamRole(open && demand ? demand.team_id : null);
+  
+  // Auto-determine adjustment type based on user role
+  // Requesters = external, everyone else (admin, moderator, executor) = internal
+  const adjustmentType = useMemo<AdjustmentType>(() => {
+    if (userRole === 'requester') return 'external';
+    return 'internal';
+  }, [userRole]);
   const { user } = useAuth();
   const { data: statuses } = useDemandStatuses();
   const updateDemand = useUpdateDemand();
