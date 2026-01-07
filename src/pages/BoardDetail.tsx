@@ -255,119 +255,119 @@ export default function BoardDetail() {
         )}
       </div>
 
+      {/* Description and Services side by side */}
       <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-        {/* Scope Configuration */}
         <BoardScopeConfig boardId={board.id} canEdit={canManage} />
+      </div>
 
-        {/* Members */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0">
-                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                  <Users className="h-5 w-5 shrink-0" />
-                  <span className="truncate">Membros do Quadro</span>
-                </CardTitle>
-                <CardDescription className="text-sm">
-                  {members?.length || 0} membros neste quadro
-                  <span className="block text-xs mt-1">
-                    Os cargos são gerenciados nas configurações da equipe
-                  </span>
-                </CardDescription>
-              </div>
-              {canManage && (
-                <AddBoardMemberDialog 
-                  boardId={board.id}
-                  trigger={
-                    <Button size="sm" className="hidden sm:inline-flex shrink-0">
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      Adicionar
-                    </Button>
-                  }
-                />
-              )}
+      {/* Members - Full width below */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Users className="h-5 w-5 shrink-0" />
+                <span className="truncate">Membros do Quadro</span>
+              </CardTitle>
+              <CardDescription className="text-sm">
+                {members?.length || 0} membros neste quadro
+                <span className="block text-xs mt-1">
+                  Os cargos são gerenciados nas configurações da equipe
+                </span>
+              </CardDescription>
             </div>
-          </CardHeader>
-          <CardContent>
-            {membersLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <Skeleton key={i} className="h-40 rounded-xl" />
-                ))}
-              </div>
-            ) : members && members.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {members.map((member) => (
-                  <div 
-                    key={member.id} 
-                    className="rounded-xl border bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow relative group"
-                  >
-                    {/* Colored Banner */}
-                    <div className={`h-14 bg-gradient-to-r ${roleBannerColors[member.teamRole] || "from-primary/80 via-primary to-primary/60"}`} />
+            {canManage && (
+              <AddBoardMemberDialog 
+                boardId={board.id}
+                trigger={
+                  <Button size="sm" className="hidden sm:inline-flex shrink-0">
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Adicionar
+                  </Button>
+                }
+              />
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {membersLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-40 rounded-xl" />
+              ))}
+            </div>
+          ) : members && members.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {members.map((member) => (
+                <div 
+                  key={member.id} 
+                  className="rounded-xl border bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow relative group"
+                >
+                  {/* Colored Banner */}
+                  <div className={`h-14 bg-gradient-to-r ${roleBannerColors[member.teamRole] || "from-primary/80 via-primary to-primary/60"}`} />
+                  
+                  {/* Remove Button - positioned on banner */}
+                  {canManage && (
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="secondary" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background text-destructive hover:text-destructive">
+                            <UserMinus className="h-3.5 w-3.5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remover Membro</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja remover {member.profile?.full_name} deste quadro?
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleRemoveMember(member.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Remover
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  )}
+                  
+                  {/* Avatar positioned over banner */}
+                  <div className="relative px-4 pb-4">
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2">
+                      <Avatar className="h-16 w-16 border-4 border-background shadow-lg">
+                        <AvatarImage src={member.profile?.avatar_url || undefined} className="object-cover" />
+                        <AvatarFallback className="text-xl bg-muted font-semibold">
+                          {getInitials(member.profile?.full_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
                     
-                    {/* Remove Button - positioned on banner */}
-                    {canManage && (
-                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="secondary" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background text-destructive hover:text-destructive">
-                              <UserMinus className="h-3.5 w-3.5" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Remover Membro</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja remover {member.profile?.full_name} deste quadro?
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => handleRemoveMember(member.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Remover
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    )}
-                    
-                    {/* Avatar positioned over banner */}
-                    <div className="relative px-4 pb-4">
-                      <div className="absolute -top-8 left-1/2 -translate-x-1/2">
-                        <Avatar className="h-16 w-16 border-4 border-background shadow-lg">
-                          <AvatarImage src={member.profile?.avatar_url || undefined} className="object-cover" />
-                          <AvatarFallback className="text-xl bg-muted font-semibold">
-                            {getInitials(member.profile?.full_name)}
-                          </AvatarFallback>
-                        </Avatar>
-                      </div>
-                      
-                      {/* Member Info */}
-                      <div className="pt-10 text-center">
-                        <p className="font-semibold text-sm line-clamp-2 min-h-[2.5rem]">
-                          {member.profile?.full_name || "Usuário"}
-                        </p>
-                        <Badge className={`text-xs mt-1 ${roleColors[member.teamRole] || ""}`}>
-                          {roleLabels[member.teamRole] || member.teamRole}
-                        </Badge>
-                      </div>
+                    {/* Member Info */}
+                    <div className="pt-10 text-center">
+                      <p className="font-semibold text-sm line-clamp-2 min-h-[2.5rem]">
+                        {member.profile?.full_name || "Usuário"}
+                      </p>
+                      <Badge className={`text-xs mt-1 ${roleColors[member.teamRole] || ""}`}>
+                        {roleLabels[member.teamRole] || member.teamRole}
+                      </Badge>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>Nenhum membro neste quadro</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p>Nenhum membro neste quadro</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

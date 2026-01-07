@@ -128,7 +128,7 @@ export function BoardScopeConfig({ boardId, canEdit = false }: BoardScopeConfigP
   }
 
   return (
-    <div className="space-y-4">
+    <>
       {/* Description Card */}
       <Card>
         <CardHeader>
@@ -350,6 +350,6 @@ export function BoardScopeConfig({ boardId, canEdit = false }: BoardScopeConfigP
           )}
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 }
