@@ -124,7 +124,7 @@ export default function BoardDetail() {
           </Card>
         )}
 
-        {/* Members - Horizontal Scroll */}
+        {/* Members - Grid Layout */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
@@ -137,26 +137,26 @@ export default function BoardDetail() {
           </CardHeader>
           <CardContent>
             {membersLoading ? (
-              <div className="flex gap-3 overflow-x-auto pb-2">
-                {[1, 2, 3, 4].map((i) => (
-                  <Skeleton key={i} className="h-24 w-32 shrink-0 rounded-lg" />
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <Skeleton key={i} className="h-28 rounded-lg" />
                 ))}
               </div>
             ) : members && members.length > 0 ? (
-              <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                 {members.map((member) => (
                   <div 
                     key={member.id} 
-                    className="flex flex-col items-center gap-2 p-3 rounded-lg border bg-card shrink-0 min-w-[120px]"
+                    className="flex flex-col items-center gap-2 p-3 rounded-lg border bg-card"
                   >
-                    <Avatar className="h-12 w-12">
+                    <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
                       <AvatarImage src={member.profile?.avatar_url || undefined} />
-                      <AvatarFallback className="text-lg">
+                      <AvatarFallback className="text-base sm:text-lg">
                         {member.profile?.full_name?.charAt(0)?.toUpperCase() || "?"}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="text-center">
-                      <p className="font-medium text-sm truncate max-w-[100px]">
+                    <div className="text-center w-full">
+                      <p className="font-medium text-xs sm:text-sm truncate">
                         {member.profile?.full_name || "Usuário"}
                       </p>
                       <Badge className={`text-xs mt-1 ${roleColors[member.teamRole] || ""}`}>
