@@ -41,6 +41,7 @@ export default function BoardDetail() {
 
   const canManage = myRole === "admin" || myRole === "moderator";
   const isAdmin = myRole === "admin";
+  const isRequester = myRole === "requester";
 
   const handleDeleteBoard = async () => {
     if (!board) return;
@@ -89,6 +90,95 @@ export default function BoardDetail() {
     );
   }
 
+  // Requester view - simplified with description and horizontal member list
+  if (isRequester) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        {/* Breadcrumbs */}
+        <PageBreadcrumb
+          items={[
+            { label: "Quadros", href: "/boards", icon: LayoutGrid },
+            { label: board.name, isCurrent: true },
+          ]}
+        />
+
+        {/* Header */}
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{board.name}</h1>
+            {board.is_default && (
+              <Badge variant="secondary" className="text-xs shrink-0">Padrão</Badge>
+            )}
+          </div>
+        </div>
+
+        {/* Description Card */}
+        {board.description && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base sm:text-lg">Descrição do Quadro</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{board.description}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Members - Horizontal Scroll */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Users className="h-5 w-5 shrink-0" />
+              Membros do Quadro
+            </CardTitle>
+            <CardDescription className="text-sm">
+              {members?.length || 0} membros neste quadro
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {membersLoading ? (
+              <div className="flex gap-3 overflow-x-auto pb-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <Skeleton key={i} className="h-24 w-32 shrink-0 rounded-lg" />
+                ))}
+              </div>
+            ) : members && members.length > 0 ? (
+              <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+                {members.map((member) => (
+                  <div 
+                    key={member.id} 
+                    className="flex flex-col items-center gap-2 p-3 rounded-lg border bg-card shrink-0 min-w-[120px]"
+                  >
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={member.profile?.avatar_url || undefined} />
+                      <AvatarFallback className="text-lg">
+                        {member.profile?.full_name?.charAt(0)?.toUpperCase() || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="text-center">
+                      <p className="font-medium text-sm truncate max-w-[100px]">
+                        {member.profile?.full_name || "Usuário"}
+                      </p>
+                      <Badge className={`text-xs mt-1 ${roleColors[member.teamRole] || ""}`}>
+                        {roleLabels[member.teamRole] || member.teamRole}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>Nenhum membro neste quadro</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Admin/Moderator/Executor view - full view
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Breadcrumbs */}
