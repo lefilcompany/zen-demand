@@ -106,60 +106,58 @@ export function AssigneeSelector({
       </PopoverTrigger>
 
       <PopoverContent
-        className="w-[calc(100vw-2rem)] max-w-80 p-0"
+        className="w-[calc(100vw-2rem)] max-w-80 p-0 flex flex-col overflow-hidden max-h-[min(70vh,420px)]"
         align="start"
         sideOffset={4}
       >
-        <div className="p-3 border-b bg-popover">
+        <div className="shrink-0 p-3 border-b bg-popover">
           <h4 className="font-medium text-sm">Atribuir responsáveis</h4>
           <p className="text-xs text-muted-foreground">
             Selecione os membros {boardId ? "do quadro" : "da equipe"}
           </p>
         </div>
 
-        {/* Fixed height container ensures scroll works consistently across pages/devices */}
-        <ScrollArea
-          className="h-[60vh] max-h-80"
-          onWheelCapture={(e) => e.stopPropagation()}
-        >
-          <div className="p-2">
-            {isLoading ? (
-              <p className="text-sm text-muted-foreground p-2">Carregando...</p>
-            ) : members && members.length > 0 ? (
-              <div className="space-y-1">
-                {members.map((member) => (
-                  <div
-                    key={member.id}
-                    className={cn(
-                      "flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-muted",
-                      selectedUserIds.includes(member.user_id) && "bg-muted"
-                    )}
-                    onClick={() => toggleUser(member.user_id)}
-                  >
-                    <Checkbox
-                      checked={selectedUserIds.includes(member.user_id)}
-                      onCheckedChange={() => toggleUser(member.user_id)}
-                    />
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={member.profile?.avatar_url || undefined} />
-                      <AvatarFallback className="text-xs">
-                        {getInitials(member.profile?.full_name || "?")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm flex-1">{member.profile?.full_name}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground p-2">
-                Nenhum membro encontrado
-              </p>
-            )}
-          </div>
-        </ScrollArea>
+        <div className="flex-1 min-h-0">
+          <ScrollArea className="h-full">
+            <div className="p-2">
+              {isLoading ? (
+                <p className="text-sm text-muted-foreground p-2">Carregando...</p>
+              ) : members && members.length > 0 ? (
+                <div className="space-y-1">
+                  {members.map((member) => (
+                    <div
+                      key={member.id}
+                      className={cn(
+                        "flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-muted",
+                        selectedUserIds.includes(member.user_id) && "bg-muted"
+                      )}
+                      onClick={() => toggleUser(member.user_id)}
+                    >
+                      <Checkbox
+                        checked={selectedUserIds.includes(member.user_id)}
+                        onCheckedChange={() => toggleUser(member.user_id)}
+                      />
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={member.profile?.avatar_url || undefined} />
+                        <AvatarFallback className="text-xs">
+                          {getInitials(member.profile?.full_name || "?")}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm flex-1">{member.profile?.full_name}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground p-2">
+                  Nenhum membro encontrado
+                </p>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
 
         {selectedUserIds.length > 0 && (
-          <div className="p-2 border-t bg-popover">
+          <div className="shrink-0 p-2 border-t bg-popover">
             <Button
               variant="ghost"
               size="sm"
