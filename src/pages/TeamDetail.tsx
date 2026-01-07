@@ -140,9 +140,9 @@ export default function TeamDetail() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {membersLoading ? <div className="space-y-3">
-              {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
-            </div> : members && members.length > 0 ? <div className="space-y-3">
+          {membersLoading ? <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-40 rounded-xl" />)}
+            </div> : members && members.length > 0 ? <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {members.map(member => <MemberCard key={member.id} member={member} isAdmin={isAdmin} currentUserId={user?.id || ""} onRoleChange={handleRoleChange} onRemove={handleRemoveMember} isUpdating={updateRole.isPending} isRemoving={removeMember.isPending} />)}
             </div> : <p className="text-center text-muted-foreground py-8">
               Nenhum membro encontrado.
