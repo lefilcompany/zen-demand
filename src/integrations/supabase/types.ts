@@ -642,6 +642,7 @@ export type Database = {
           archived_at: string | null
           assigned_to: string | null
           board_id: string
+          board_sequence_number: number | null
           created_at: string
           created_by: string
           delivered_at: string | null
@@ -662,6 +663,7 @@ export type Database = {
           archived_at?: string | null
           assigned_to?: string | null
           board_id: string
+          board_sequence_number?: number | null
           created_at?: string
           created_by: string
           delivered_at?: string | null
@@ -682,6 +684,7 @@ export type Database = {
           archived_at?: string | null
           assigned_to?: string | null
           board_id?: string
+          board_sequence_number?: number | null
           created_at?: string
           created_by?: string
           delivered_at?: string | null

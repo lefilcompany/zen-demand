@@ -50,6 +50,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { cn } from "@/lib/utils";
+import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   DropdownMenu,
@@ -644,6 +645,13 @@ export default function DemandDetail() {
         <CardHeader className="p-4 md:p-6">
           <div className="flex flex-col gap-4">
             <div className="space-y-2 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                {demand.board_sequence_number && (
+                  <Badge variant="outline" className="text-sm bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono">
+                    {formatDemandCode(demand.board_sequence_number)}
+                  </Badge>
+                )}
+              </div>
               <CardTitle className="text-lg md:text-2xl break-words">{demand.title}</CardTitle>
               <div className="flex flex-wrap items-center gap-2">
                 {demand.priority && (
