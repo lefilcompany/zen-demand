@@ -191,30 +191,69 @@ export const demandColumns: ColumnDef<DemandTableRow>[] = [
     accessorKey: "title",
     header: "Título",
     cell: ({ row }) => <TitleCell row={row} />,
+    enableSorting: true,
   },
   {
     id: "assignees",
     header: "Responsável",
     cell: ({ row }) => <AssigneeCell row={row} />,
+    enableSorting: false,
   },
   {
     id: "status",
     header: "Status",
     cell: ({ row }) => <StatusCell row={row} />,
+    enableSorting: true,
+    accessorFn: (row) => row.demand_statuses?.name || "",
+    sortingFn: (rowA, rowB) => {
+      const statusOrder: Record<string, number> = {
+        "A Iniciar": 1,
+        "Fazendo": 2,
+        "Aprovação do Cliente": 3,
+        "Em Ajuste": 4,
+        "Entregue": 5,
+      };
+      const statusA = rowA.original.demand_statuses?.name || "";
+      const statusB = rowB.original.demand_statuses?.name || "";
+      return (statusOrder[statusA] || 99) - (statusOrder[statusB] || 99);
+    },
   },
   {
     accessorKey: "due_date",
     header: "Data de Entrega",
     cell: ({ row }) => <DueDateCell row={row} />,
+    enableSorting: true,
+    sortingFn: (rowA, rowB) => {
+      const dateA = rowA.original.due_date ? new Date(rowA.original.due_date).getTime() : Infinity;
+      const dateB = rowB.original.due_date ? new Date(rowB.original.due_date).getTime() : Infinity;
+      return dateA - dateB;
+    },
   },
   {
     id: "execution_time",
     header: "Tempo Execução",
     cell: ({ row }) => <ExecutionTimeCell row={row} />,
+    enableSorting: true,
+    sortingFn: (rowA, rowB) => {
+      const timeA = rowA.original.time_in_progress_seconds || 0;
+      const timeB = rowB.original.time_in_progress_seconds || 0;
+      return timeA - timeB;
+    },
   },
   {
     accessorKey: "priority",
     header: "Prioridade",
     cell: ({ row }) => <PriorityCell row={row} />,
+    enableSorting: true,
+    sortingFn: (rowA, rowB) => {
+      const priorityOrder: Record<string, number> = {
+        "baixa": 1,
+        "média": 2,
+        "alta": 3,
+      };
+      const priorityA = rowA.original.priority?.toLowerCase() || "";
+      const priorityB = rowB.original.priority?.toLowerCase() || "";
+      return (priorityOrder[priorityA] || 0) - (priorityOrder[priorityB] || 0);
+    },
   },
 ];
