@@ -44,7 +44,7 @@ export default function CreateDemandRequest() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !selectedTeamId || !selectedBoardId || !isTeamActive) return;
+    if (!title.trim() || !selectedTeamId || !selectedBoardId || !isTeamActive || !serviceId || serviceId === "none") return;
 
     createRequest.mutate(
       {
@@ -225,7 +225,7 @@ export default function CreateDemandRequest() {
               </div>
 
               <div className="space-y-2">
-                <Label>Serviço</Label>
+                <Label>Serviço *</Label>
                 <ServiceSelector
                   teamId={selectedTeamId}
                   boardId={selectedBoardId}
@@ -263,7 +263,7 @@ export default function CreateDemandRequest() {
               </Button>
               <Button
                 type="submit"
-                disabled={createRequest.isPending || isUploading || !title.trim() || !isTeamActive || !selectedBoardId}
+                disabled={createRequest.isPending || isUploading || !title.trim() || !isTeamActive || !selectedBoardId || !serviceId || serviceId === "none"}
                 className="flex-1"
               >
                 {(createRequest.isPending || isUploading) ? (
