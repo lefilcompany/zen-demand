@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSelectedBoard } from "@/contexts/BoardContext";
+import { sendDemandRequestPushNotification } from "./useSendPushNotification";
 
 interface DemandRequest {
   id: string;
@@ -172,7 +173,7 @@ export function useCreateDemandRequest() {
 
       if (error) throw error;
 
-      // Send email notification to admins (fire and forget)
+      // Send email and in-app notifications via edge function (fire and forget)
       supabase.functions
         .invoke("notify-demand-request", {
           body: {
@@ -187,14 +188,47 @@ export function useCreateDemandRequest() {
         })
         .then((response) => {
           if (response.error) {
-            console.error("Failed to send email notification:", response.error);
+            console.error("Failed to send email/in-app notifications:", response.error);
           } else {
-            console.log("Email notification sent to admins");
+            console.log("Email and in-app notifications sent to team members");
           }
         })
         .catch((err) => {
-          console.error("Error sending email notification:", err);
+          console.error("Error sending email/in-app notifications:", err);
         });
+
+      // Send push notifications to admins, moderators and executors (fire and forget)
+      (async () => {
+        try {
+          const { data: boardMembers, error: boardError } = await supabase
+            .from("board_members")
+            .select("user_id, role")
+            .eq("board_id", data.board_id)
+            .in("role", ["admin", "moderator", "executor"]);
+
+          if (boardError) {
+            console.error("Error fetching board members for push:", boardError);
+            return;
+          }
+          
+          if (boardMembers && boardMembers.length > 0) {
+            const memberIds = boardMembers
+              .filter(m => m.user_id !== user.id)
+              .map(m => m.user_id);
+            
+            if (memberIds.length > 0) {
+              const pushResult = await sendDemandRequestPushNotification({
+                adminIds: memberIds,
+                requesterName,
+                requestTitle: data.title,
+              });
+              console.log("Push notification result:", pushResult);
+            }
+          }
+        } catch (err) {
+          console.error("Error sending push notifications:", err);
+        }
+      })();
 
       return result;
     },
