@@ -644,6 +644,7 @@ export type Database = {
           board_id: string
           created_at: string
           created_by: string
+          delivered_at: string | null
           description: string | null
           due_date: string | null
           id: string
@@ -663,6 +664,7 @@ export type Database = {
           board_id: string
           created_at?: string
           created_by: string
+          delivered_at?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
@@ -682,6 +684,7 @@ export type Database = {
           board_id?: string
           created_at?: string
           created_by?: string
+          delivered_at?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
