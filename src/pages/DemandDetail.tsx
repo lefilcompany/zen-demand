@@ -49,6 +49,7 @@ import { ptBR } from "date-fns/locale";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
+import { cn } from "@/lib/utils";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   DropdownMenu,
@@ -102,7 +103,6 @@ export default function DemandDetail() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAdjustmentDialogOpen, setIsAdjustmentDialogOpen] = useState(false);
   const [adjustmentReason, setAdjustmentReason] = useState("");
-  const [adjustmentType, setAdjustmentType] = useState<"internal" | "external">("internal");
   const [interactionFilter, setInteractionFilter] = useState<string>("all");
   const [editingInteractionId, setEditingInteractionId] = useState<string | null>(null);
   const [editingInteractionContent, setEditingInteractionContent] = useState("");
@@ -185,7 +185,10 @@ export default function DemandDetail() {
   const handleRequestAdjustment = async () => {
     if (!id || !adjustmentStatusId || !adjustmentReason.trim()) return;
     
-    const isInternal = adjustmentType === "internal";
+    // Auto-determine adjustment type based on user role
+    // Requesters = external, everyone else (admin, moderator, executor) = internal
+    const determinedAdjustmentType: "internal" | "external" = role === 'requester' ? 'external' : 'internal';
+    const isInternal = determinedAdjustmentType === "internal";
     const typeLabel = isInternal ? "Ajuste Interno" : "Ajuste Externo";
     
     try {
@@ -196,7 +199,7 @@ export default function DemandDetail() {
             demand_id: id,
             interaction_type: "adjustment_request",
             content: `Solicitou ajuste: ${adjustmentReason.trim()}`,
-            metadata: { adjustment_type: adjustmentType },
+            metadata: { adjustment_type: determinedAdjustmentType },
           },
           {
             onSuccess: () => resolve(),
@@ -241,7 +244,6 @@ export default function DemandDetail() {
         const notificationMessage = isInternal 
           ? `Foi solicitado um ajuste interno na demanda "${demand?.title}": ${adjustmentReason.trim().substring(0, 100)}${adjustmentReason.length > 100 ? '...' : ''}`
           : `O cliente solicitou um ajuste na demanda "${demand?.title}": ${adjustmentReason.trim().substring(0, 100)}${adjustmentReason.length > 100 ? '...' : ''}`;
-        
         const notifications = notifyUserIds.map((userId) => ({
           user_id: userId,
           title: notificationTitle,
@@ -293,7 +295,6 @@ export default function DemandDetail() {
       }
       
       setAdjustmentReason("");
-      setAdjustmentType("internal");
       setIsAdjustmentDialogOpen(false);
     } catch (error: any) {
       toast.error("Erro ao solicitar ajuste", {
@@ -662,55 +663,38 @@ export default function DemandDetail() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {canRequestInternalAdjustment && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setAdjustmentType("internal");
-                      setIsAdjustmentDialogOpen(true);
-                    }}
-                    className="flex-1 sm:flex-none border-blue-500/30 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
-                  >
-                    <Wrench className="mr-2 h-4 w-4" />
-                    <span className="hidden xs:inline">Ajuste</span> Interno
-                  </Button>
-                </>
-              )}
-              {canRequestExternalAdjustment && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setAdjustmentType("external");
-                      setIsAdjustmentDialogOpen(true);
-                    }}
-                    className="flex-1 sm:flex-none border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
-                  >
-                    <Wrench className="mr-2 h-4 w-4" />
-                    <span className="hidden xs:inline">Ajuste</span> Externo
-                  </Button>
-                </>
+              {canRequestAdjustment && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAdjustmentDialogOpen(true)}
+                  className={cn(
+                    "flex-1 sm:flex-none",
+                    role === 'requester' 
+                      ? "border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
+                      : "border-blue-500/30 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
+                  )}
+                >
+                  <Wrench className="mr-2 h-4 w-4" />
+                  Solicitar Ajuste
+                </Button>
               )}
               {canRequestAdjustment && (
                 <Dialog open={isAdjustmentDialogOpen} onOpenChange={(open) => {
                   setIsAdjustmentDialogOpen(open);
                   if (!open) {
                     setAdjustmentReason("");
-                    setAdjustmentType("internal");
                   }
                 }}>
                   <DialogContent className="w-[calc(100vw-2rem)] max-w-lg mx-auto">
                     <DialogHeader>
                       <DialogTitle>
-                        {adjustmentType === "internal" ? "Solicitar Ajuste Interno" : "Solicitar Ajuste Externo"}
+                        Solicitar Ajuste
                       </DialogTitle>
                       <DialogDescription>
-                        {adjustmentType === "internal" 
-                          ? "Descreva o ajuste interno necessário nesta demanda."
-                          : "Descreva o que precisa ser ajustado nesta demanda. A equipe receberá sua solicitação."}
+                        {role === 'requester' 
+                          ? "Descreva o que precisa ser ajustado nesta demanda. A equipe receberá sua solicitação."
+                          : "Descreva o ajuste necessário nesta demanda."}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
@@ -738,7 +722,6 @@ export default function DemandDetail() {
                         onClick={() => {
                           setIsAdjustmentDialogOpen(false);
                           setAdjustmentReason("");
-                          setAdjustmentType("internal");
                         }}
                       >
                         Cancelar
@@ -746,9 +729,9 @@ export default function DemandDetail() {
                       <Button
                         onClick={handleRequestAdjustment}
                         disabled={!adjustmentReason.trim() || updateDemand.isPending}
-                        className={adjustmentType === "internal" ? "bg-blue-600 hover:bg-blue-700" : "bg-amber-600 hover:bg-amber-700"}
+                        className={role === 'requester' ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"}
                       >
-                        {updateDemand.isPending ? "Enviando..." : adjustmentType === "internal" ? "Solicitar Ajuste Interno" : "Solicitar Ajuste Externo"}
+                        {updateDemand.isPending ? "Enviando..." : "Solicitar Ajuste"}
                       </Button>
                     </div>
                   </DialogContent>
