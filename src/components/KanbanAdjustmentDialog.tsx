@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
-import { useUpdateDemand, useDemandStatuses, useCreateInteraction, useDemandById } from "@/hooks/useDemands";
+import { useUpdateDemand, useDemandStatuses, useCreateInteraction } from "@/hooks/useDemands";
 import { useDemandAssignees } from "@/hooks/useDemandAssignees";
 import { useUploadAttachment } from "@/hooks/useAttachments";
 import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/components/InlineFileUploader";
@@ -27,7 +27,7 @@ interface KanbanAdjustmentDialogProps {
   demandId: string | null;
   demandTitle: string | undefined;
   demandCreatedBy: string | undefined;
-  adjustmentType?: AdjustmentType; // Optional - will be auto-determined by role
+  teamId: string | undefined; // Passed directly from KanbanBoard for immediate role lookup
 }
 
 export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog({
@@ -36,17 +36,16 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
   demandId,
   demandTitle,
   demandCreatedBy,
+  teamId,
 }: KanbanAdjustmentDialogProps) {
   // Estado LOCAL do textarea - não propaga re-render ao pai
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>();
   
-  // Get demand to access team_id for role lookup
-  const { data: demand } = useDemandById(open ? demandId : null);
-  
   // Get user role in the team to auto-determine adjustment type
-  const { data: userRole } = useTeamRole(open && demand ? demand.team_id : null);
+  // Using teamId passed directly for immediate role lookup (no extra query needed)
+  const { data: userRole, isLoading: isLoadingRole } = useTeamRole(open && teamId ? teamId : null);
   
   // Auto-determine adjustment type based on user role
   // Requesters = external, everyone else (admin, moderator, executor) = internal
