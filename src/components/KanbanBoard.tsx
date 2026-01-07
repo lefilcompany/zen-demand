@@ -20,6 +20,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { getErrorMessage } from "@/lib/errorUtils";
+import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { KanbanTimeDisplay } from "@/components/KanbanTimeDisplay";
@@ -56,6 +57,7 @@ interface Demand {
   time_in_progress_seconds?: number | null;
   last_started_at?: string | null;
   team_id?: string; // Added for adjustment type determination
+  board_sequence_number?: number | null; // Sequential ID per board
   demand_statuses?: { name: string; color: string } | null;
   assigned_profile?: { full_name: string; avatar_url?: string | null } | null;
   teams?: { name: string } | null;
@@ -597,6 +599,11 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
               className="flex-1 min-w-0"
               onClick={() => onDemandClick(demand.id)}
             >
+              {demand.board_sequence_number && (
+                <Badge variant="outline" className="text-xs mb-1.5 bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono">
+                  {formatDemandCode(demand.board_sequence_number)}
+                </Badge>
+              )}
               <h4 className="font-medium text-sm line-clamp-2 mb-2">
                 {demand.title}
               </h4>

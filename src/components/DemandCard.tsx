@@ -6,6 +6,7 @@ import { ptBR } from "date-fns/locale";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
 import { cn } from "@/lib/utils";
+import { formatDemandCode } from "@/lib/demandCodeUtils";
 
 interface Assignee {
   user_id: string;
@@ -26,6 +27,7 @@ interface DemandCardProps {
     updated_at?: string;
     time_in_progress_seconds?: number | null;
     last_started_at?: string | null;
+    board_sequence_number?: number | null;
     demand_statuses?: {
       name: string;
       color: string;
@@ -77,12 +79,17 @@ export function DemandCard({ demand, onClick, showFullDetails = false }: DemandC
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1 flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {demand.board_sequence_number && (
+                <Badge variant="outline" className="text-xs bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono shrink-0">
+                  {formatDemandCode(demand.board_sequence_number)}
+                </Badge>
+              )}
               {isHighPriority && (
                 <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
               )}
-              <CardTitle className="text-base sm:text-lg line-clamp-2">{demand.title}</CardTitle>
             </div>
+            <CardTitle className="text-base sm:text-lg line-clamp-2">{demand.title}</CardTitle>
             {demand.description && (
               <CardDescription className="line-clamp-2 text-sm">
                 {demand.description}

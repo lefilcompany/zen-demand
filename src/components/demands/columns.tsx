@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatDemandCode } from "@/lib/demandCodeUtils";
 
 // Define the demand type based on what useDemands returns
 export interface DemandTableRow {
@@ -18,6 +19,7 @@ export interface DemandTableRow {
   updated_at?: string;
   time_in_progress_seconds?: number | null;
   last_started_at?: string | null;
+  board_sequence_number?: number | null;
   demand_statuses?: {
     name: string;
     color: string;
@@ -51,6 +53,25 @@ const priorityConfig: Record<string, {
     className: "bg-destructive/20 border-destructive/30 text-destructive"
   }
 };
+
+// Cell component for code
+function CodeCell({
+  row
+}: {
+  row: {
+    original: DemandTableRow;
+  };
+}) {
+  const code = formatDemandCode(row.original.board_sequence_number);
+  if (!code) {
+    return <span className="text-muted-foreground text-sm">—</span>;
+  }
+  return (
+    <Badge variant="outline" className="text-xs bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono">
+      {code}
+    </Badge>
+  );
+}
 
 // Cell component for title with high priority indicator
 function TitleCell({
@@ -190,6 +211,18 @@ function PriorityCell({
     </Badge>;
 }
 export const demandColumns: ColumnDef<DemandTableRow>[] = [{
+  accessorKey: "board_sequence_number",
+  header: "Código",
+  cell: ({
+    row
+  }) => <CodeCell row={row} />,
+  enableSorting: true,
+  sortingFn: (rowA, rowB) => {
+    const numA = rowA.original.board_sequence_number || 0;
+    const numB = rowB.original.board_sequence_number || 0;
+    return numA - numB;
+  }
+}, {
   accessorKey: "title",
   header: "Título",
   cell: ({
