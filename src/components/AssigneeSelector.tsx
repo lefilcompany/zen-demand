@@ -104,7 +104,7 @@ export function AssigneeSelector({
             Selecione os membros {boardId ? "do quadro" : "da equipe"}
           </p>
         </div>
-        <ScrollArea className="max-h-60">
+        <ScrollArea className="h-[200px]">
           <div className="p-2">
             {isLoading ? (
               <p className="text-sm text-muted-foreground p-2">Carregando...</p>
