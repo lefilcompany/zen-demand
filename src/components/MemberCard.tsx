@@ -35,36 +35,40 @@ interface MemberCardProps {
   isRemoving: boolean;
 }
 
-const roleConfig: Record<TeamRole, { label: string; color: string; icon: React.ReactNode }> = {
+const roleConfig: Record<TeamRole, { label: string; badgeColor: string; bannerColor: string; icon: React.ReactNode }> = {
   admin: {
     label: "Administrador",
-    color: "bg-primary text-primary-foreground",
+    badgeColor: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+    bannerColor: "from-red-500/80 via-red-600 to-red-500/60",
     icon: <ShieldCheck className="h-3 w-3" />,
   },
   moderator: {
     label: "Coordenador",
-    color: "bg-blue-600 text-white",
+    badgeColor: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+    bannerColor: "from-blue-500/80 via-blue-600 to-blue-500/60",
     icon: <Shield className="h-3 w-3" />,
   },
   executor: {
     label: "Agente",
-    color: "bg-emerald-600 text-white",
+    badgeColor: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+    bannerColor: "from-green-500/80 via-green-600 to-green-500/60",
     icon: <Zap className="h-3 w-3" />,
   },
   requester: {
     label: "Solicitante",
-    color: "bg-muted text-muted-foreground",
+    badgeColor: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+    bannerColor: "from-purple-500/80 via-purple-600 to-purple-500/60",
     icon: <User className="h-3 w-3" />,
   },
 };
 
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+function getInitials(name: string | undefined | null): string {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) {
+    return parts[0].charAt(0).toUpperCase();
+  }
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }
 
 export function MemberCard({
@@ -81,84 +85,22 @@ export function MemberCard({
   const config = roleConfig[member.role];
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-lg border bg-card">
-      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-        <Avatar className="h-10 w-10 shrink-0">
-          <AvatarImage src={member.profile.avatar_url || undefined} />
-          <AvatarFallback className="bg-primary/10 text-primary">
-            {getInitials(member.profile.full_name)}
-          </AvatarFallback>
-        </Avatar>
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-medium truncate">{member.profile.full_name}</span>
-            {isCurrentUser && (
-              <Badge variant="outline" className="text-xs shrink-0">
-                Você
-              </Badge>
-            )}
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Entrou em {format(new Date(member.joined_at), "dd/MM/yyyy", { locale: ptBR })}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
-        {canModify ? (
-          <Select
-            value={member.role}
-            onValueChange={(value) => onRoleChange(member.id, value as TeamRole)}
-            disabled={isUpdating}
-          >
-            <SelectTrigger className="w-full sm:w-[150px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="admin">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4" />
-                  Administrador
-                </div>
-              </SelectItem>
-              <SelectItem value="moderator">
-                <div className="flex items-center gap-2">
-                  <Shield className="h-4 w-4" />
-                  Coordenador
-                </div>
-              </SelectItem>
-              <SelectItem value="executor">
-                <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4" />
-                  Agente
-                </div>
-              </SelectItem>
-              <SelectItem value="requester">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  Solicitante
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        ) : (
-          <Badge className={`${config.color} flex items-center gap-1`}>
-            {config.icon}
-            <span className="hidden sm:inline">{config.label}</span>
-            <span className="sm:hidden">{config.label.slice(0, 5)}...</span>
-          </Badge>
-        )}
-
-        {canModify && (
+    <div className="rounded-xl border bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow relative group">
+      {/* Colored Banner */}
+      <div className={`h-14 bg-gradient-to-r ${config.bannerColor}`} />
+      
+      {/* Remove Button - positioned on banner */}
+      {canModify && (
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="icon"
-                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="h-7 w-7 bg-background/80 hover:bg-background text-destructive hover:text-destructive"
                 disabled={isRemoving}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3.5 w-3.5" />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -180,7 +122,85 @@ export function MemberCard({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        )}
+        </div>
+      )}
+      
+      {/* "You" badge positioned on banner */}
+      {isCurrentUser && (
+        <div className="absolute top-2 left-2">
+          <Badge variant="secondary" className="text-xs bg-background/80">
+            Você
+          </Badge>
+        </div>
+      )}
+      
+      {/* Avatar positioned over banner */}
+      <div className="relative px-4 pb-4">
+        <div className="absolute -top-8 left-1/2 -translate-x-1/2">
+          <Avatar className="h-16 w-16 border-4 border-background shadow-lg">
+            <AvatarImage src={member.profile.avatar_url || undefined} className="object-cover" />
+            <AvatarFallback className="text-xl bg-muted font-semibold">
+              {getInitials(member.profile.full_name)}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+        
+        {/* Member Info */}
+        <div className="pt-10 text-center space-y-2">
+          <p className="font-semibold text-sm line-clamp-2 min-h-[2.5rem]">
+            {member.profile.full_name}
+          </p>
+          
+          <p className="text-xs text-muted-foreground">
+            Entrou em {format(new Date(member.joined_at), "dd/MM/yyyy", { locale: ptBR })}
+          </p>
+          
+          {/* Role Badge or Selector */}
+          <div className="pt-1">
+            {canModify ? (
+              <Select
+                value={member.role}
+                onValueChange={(value) => onRoleChange(member.id, value as TeamRole)}
+                disabled={isUpdating}
+              >
+                <SelectTrigger className="w-full max-w-[160px] mx-auto h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4" />
+                      Administrador
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="moderator">
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      Coordenador
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="executor">
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-4 w-4" />
+                      Agente
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="requester">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Solicitante
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <Badge className={`${config.badgeColor} flex items-center gap-1 justify-center`}>
+                {config.icon}
+                {config.label}
+              </Badge>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
