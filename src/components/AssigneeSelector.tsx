@@ -7,6 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useBoardMembers } from "@/hooks/useBoardMembers";
@@ -30,7 +31,9 @@ export function AssigneeSelector({
 }: AssigneeSelectorProps) {
   const [open, setOpen] = useState(false);
   const { data: teamMembers, isLoading: loadingTeam } = useTeamMembers(teamId);
-  const { data: boardMembers, isLoading: loadingBoard } = useBoardMembers(boardId || null);
+  const { data: boardMembers, isLoading: loadingBoard } = useBoardMembers(
+    boardId || null
+  );
 
   // Use board members if boardId is provided, otherwise use team members
   const members = boardId
@@ -80,7 +83,10 @@ export function AssigneeSelector({
             <div className="flex items-center gap-2">
               <div className="flex -space-x-2">
                 {selectedMembers?.slice(0, 3).map((member) => (
-                  <Avatar key={member.user_id} className="h-5 w-5 ring-2 ring-background">
+                  <Avatar
+                    key={member.user_id}
+                    className="h-5 w-5 ring-2 ring-background"
+                  >
                     <AvatarImage src={member.profile?.avatar_url || undefined} />
                     <AvatarFallback className="text-[10px]">
                       {getInitials(member.profile?.full_name || "?")}
@@ -89,7 +95,8 @@ export function AssigneeSelector({
                 ))}
               </div>
               <span className="text-sm">
-                {selectedUserIds.length} selecionado{selectedUserIds.length !== 1 ? "s" : ""}
+                {selectedUserIds.length} selecionado
+                {selectedUserIds.length !== 1 ? "s" : ""}
               </span>
             </div>
           ) : (
@@ -97,23 +104,23 @@ export function AssigneeSelector({
           )}
         </Button>
       </PopoverTrigger>
+
       <PopoverContent
-        className="w-[calc(100vw-2rem)] max-w-80 p-0 flex flex-col overflow-hidden"
+        className="w-[calc(100vw-2rem)] max-w-80 p-0"
         align="start"
         sideOffset={4}
-        style={{ maxHeight: "70vh" }}
       >
-        <div className="shrink-0 p-3 border-b bg-popover">
+        <div className="p-3 border-b bg-popover">
           <h4 className="font-medium text-sm">Atribuir responsáveis</h4>
           <p className="text-xs text-muted-foreground">
             Selecione os membros {boardId ? "do quadro" : "da equipe"}
           </p>
         </div>
 
-        <div
-          className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch]"
+        {/* Fixed height container ensures scroll works consistently across pages/devices */}
+        <ScrollArea
+          className="h-[60vh] max-h-80"
           onWheelCapture={(e) => e.stopPropagation()}
-          onTouchMoveCapture={(e) => e.stopPropagation()}
         >
           <div className="p-2">
             {isLoading ? (
@@ -149,10 +156,10 @@ export function AssigneeSelector({
               </p>
             )}
           </div>
-        </div>
+        </ScrollArea>
 
         {selectedUserIds.length > 0 && (
-          <div className="shrink-0 p-2 border-t bg-popover">
+          <div className="p-2 border-t bg-popover">
             <Button
               variant="ghost"
               size="sm"
@@ -168,3 +175,4 @@ export function AssigneeSelector({
     </Popover>
   );
 }
+
