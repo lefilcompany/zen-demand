@@ -442,7 +442,13 @@ export default function DemandRequests() {
 
             <div className="space-y-2">
               <Label>Motivo da devolução *</Label>
-              <Textarea value={returnReason} onChange={e => setReturnReason(e.target.value)} placeholder="Descreva os ajustes necessários..." rows={3} />
+              <MentionInput 
+                value={returnReason} 
+                onChange={setReturnReason} 
+                boardId={returning?.board_id || selectedBoardId || ""}
+                placeholder="Descreva os ajustes necessários... Use # para mencionar demandas"
+                className="min-h-[80px]"
+              />
             </div>
 
             <div className="flex gap-2 pt-2">
