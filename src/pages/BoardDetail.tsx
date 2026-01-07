@@ -25,14 +25,14 @@ const roleColors: Record<string, string> = {
   admin: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
   moderator: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
   executor: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  requester: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
+  requester: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
 };
 
 const roleBannerColors: Record<string, string> = {
   admin: "from-red-500/80 via-red-600 to-red-500/60",
   moderator: "from-blue-500/80 via-blue-600 to-blue-500/60",
   executor: "from-green-500/80 via-green-600 to-green-500/60",
-  requester: "from-gray-400/80 via-gray-500 to-gray-400/60",
+  requester: "from-purple-500/80 via-purple-600 to-purple-500/60",
 };
 
 const getInitials = (name: string | undefined | null): string => {
