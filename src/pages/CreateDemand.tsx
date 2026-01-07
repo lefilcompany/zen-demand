@@ -10,12 +10,13 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useCanCreateDemandOnBoard } from "@/hooks/useBoardScope";
 import { useTeamRole } from "@/hooks/useTeamRole";
+import { useHasBoardServices, useCanCreateWithService } from "@/hooks/useBoardServices";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { ScopeProgressBar } from "@/components/ScopeProgressBar";
 import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/components/InlineFileUploader";
 import { useUploadAttachment } from "@/hooks/useAttachments";
-import { ArrowLeft, AlertTriangle, Ban, CloudOff, WifiOff } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Ban, CloudOff, WifiOff, Package } from "lucide-react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { calculateBusinessDueDate, formatDueDateForInput } from "@/lib/dateUtils";
@@ -42,6 +43,9 @@ export default function CreateDemand() {
     limit 
   } = useCanCreateDemandOnBoard(selectedBoardId, selectedTeamId);
   const { data: role } = useTeamRole(selectedTeamId);
+  
+  // Board services hooks
+  const { hasBoardServices, isLoading: boardServicesLoading } = useHasBoardServices(selectedBoardId);
 
   const selectedTeam = teams?.find(t => t.id === selectedTeamId);
   const canAssignResponsibles = role !== "requester";
@@ -62,6 +66,12 @@ export default function CreateDemand() {
   
   const uploadAttachment = useUploadAttachment();
 
+  // Check if can create with selected service
+  const { canCreate: canCreateWithService, serviceInfo } = useCanCreateWithService(
+    selectedBoardId, 
+    serviceId && serviceId !== "none" ? serviceId : null
+  );
+
   // Set default status when statuses load
   useEffect(() => {
     if (statuses && statuses.length > 0 && !statusId) {
@@ -78,9 +88,28 @@ export default function CreateDemand() {
     }
   };
 
+  // Validate service selection
+  const isServiceValid = () => {
+    if (!hasBoardServices) return true; // No board services configured, service is optional
+    if (!serviceId || serviceId === "none") return false; // Service required but not selected
+    if (canCreateWithService === false) return false; // Service limit reached
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !selectedTeamId || !selectedBoardId || !statusId || !canCreate) return;
+
+    // Validate service for boards with configured services
+    if (hasBoardServices && (!serviceId || serviceId === "none")) {
+      toast.error("Selecione um serviço para esta demanda");
+      return;
+    }
+
+    if (canCreateWithService === false) {
+      toast.error("Limite mensal deste serviço foi atingido");
+      return;
+    }
 
     createDemand.mutate(
       {
@@ -147,6 +176,13 @@ export default function CreateDemand() {
     );
   };
 
+  const isSubmitDisabled = createDemand.isPending || 
+    !title.trim() || 
+    !statusId || 
+    !selectedBoardId || 
+    canCreate === false || 
+    !isServiceValid();
+
   return (
     <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fade-in px-1">
       <div>
@@ -199,6 +235,16 @@ export default function CreateDemand() {
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             O limite mensal de demandas deste quadro foi atingido. Entre em contato com o administrador para mais informações.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Service Limit Reached Alert */}
+      {canCreateWithService === false && serviceInfo && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            O limite mensal para o serviço selecionado foi atingido ({serviceInfo.currentCount}/{serviceInfo.monthly_limit}).
           </AlertDescription>
         </Alert>
       )}
@@ -267,7 +313,10 @@ export default function CreateDemand() {
             </div>
 
             <div className="space-y-2">
-              <Label>Serviço</Label>
+              <Label className="flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                Serviço {hasBoardServices ? "*" : ""}
+              </Label>
               <ServiceSelector
                 teamId={selectedTeamId}
                 boardId={selectedBoardId}
@@ -275,7 +324,10 @@ export default function CreateDemand() {
                 onChange={handleServiceChange}
               />
               <p className="text-xs text-muted-foreground">
-                Selecione um serviço para calcular automaticamente a data de entrega
+                {hasBoardServices 
+                  ? "Selecione um serviço obrigatório para esta demanda"
+                  : "Selecione um serviço para calcular automaticamente a data de entrega"
+                }
               </p>
             </div>
 
@@ -327,7 +379,7 @@ export default function CreateDemand() {
               </Button>
               <Button
                 type="submit"
-                disabled={createDemand.isPending || !title.trim() || !statusId || !selectedBoardId || canCreate === false}
+                disabled={isSubmitDisabled}
                 className="flex-1"
               >
                 {createDemand.isPending ? "Criando..." : "Criar Demanda"}

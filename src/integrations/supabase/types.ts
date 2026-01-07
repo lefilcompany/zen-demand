@@ -63,6 +63,45 @@ export type Database = {
           },
         ]
       }
+      board_services: {
+        Row: {
+          board_id: string
+          created_at: string
+          id: string
+          monthly_limit: number
+          service_id: string
+        }
+        Insert: {
+          board_id: string
+          created_at?: string
+          id?: string
+          monthly_limit?: number
+          service_id: string
+        }
+        Update: {
+          board_id?: string
+          created_at?: string
+          id?: string
+          monthly_limit?: number
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_services_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "board_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       boards: {
         Row: {
           created_at: string
@@ -1017,10 +1056,18 @@ export type Database = {
     }
     Functions: {
       can_create_demand: { Args: { _team_id: string }; Returns: boolean }
+      can_create_demand_with_service: {
+        Args: { _board_id: string; _service_id: string }
+        Returns: boolean
+      }
       check_access_code_exists: { Args: { code: string }; Returns: boolean }
       get_board_role: {
         Args: { _board_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["team_role"]
+      }
+      get_board_service_demand_count: {
+        Args: { _board_id: string; _service_id: string }
+        Returns: number
       }
       get_monthly_demand_count: {
         Args: { _month: number; _team_id: string; _year: number }
