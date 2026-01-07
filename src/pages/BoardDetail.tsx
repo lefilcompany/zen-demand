@@ -35,6 +35,15 @@ const roleBannerColors: Record<string, string> = {
   requester: "from-gray-400/80 via-gray-500 to-gray-400/60",
 };
 
+const getInitials = (name: string | undefined | null): string => {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) {
+    return parts[0].charAt(0).toUpperCase();
+  }
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+};
+
 export default function BoardDetail() {
   const { boardId } = useParams<{ boardId: string }>();
   const navigate = useNavigate();
@@ -165,7 +174,7 @@ export default function BoardDetail() {
                         <Avatar className="h-20 w-20 border-4 border-background shadow-lg">
                           <AvatarImage src={member.profile?.avatar_url || undefined} className="object-cover" />
                           <AvatarFallback className="text-2xl bg-muted font-semibold">
-                            {member.profile?.full_name?.charAt(0)?.toUpperCase() || "?"}
+                            {getInitials(member.profile?.full_name)}
                           </AvatarFallback>
                         </Avatar>
                       </div>
@@ -297,7 +306,7 @@ export default function BoardDetail() {
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={member.profile?.avatar_url || undefined} />
                         <AvatarFallback>
-                          {member.profile?.full_name?.charAt(0)?.toUpperCase() || "?"}
+                          {getInitials(member.profile?.full_name)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
