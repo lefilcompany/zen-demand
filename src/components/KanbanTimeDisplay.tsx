@@ -51,9 +51,9 @@ export function KanbanTimeDisplay({ demandId, canControl = false, forceShow = fa
       {canControl && (
         <Button
           variant="ghost"
-          size="icon"
+          size="sm"
           className={cn(
-            "h-6 w-6 shrink-0",
+            "h-6 px-2 shrink-0 text-[10px] font-medium gap-1",
             isTimerRunning 
               ? "bg-amber-500/20 text-amber-600 hover:bg-amber-500/30 hover:text-amber-700" 
               : "bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30 hover:text-emerald-700"
@@ -68,14 +68,19 @@ export function KanbanTimeDisplay({ demandId, canControl = false, forceShow = fa
             }
           }}
           disabled={isLoading}
-          title={isTimerRunning ? "Pausar meu timer" : "Iniciar meu timer"}
         >
           {isLoading ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <Loader2 className="h-3 w-3 animate-spin" />
           ) : isTimerRunning ? (
-            <Pause className="h-3.5 w-3.5" />
+            <>
+              <Pause className="h-3 w-3" />
+              Pausar
+            </>
           ) : (
-            <Play className="h-3.5 w-3.5" />
+            <>
+              <Play className="h-3 w-3" />
+              Iniciar
+            </>
           )}
         </Button>
       )}
