@@ -28,6 +28,13 @@ const roleColors: Record<string, string> = {
   requester: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
 };
 
+const roleBannerColors: Record<string, string> = {
+  admin: "from-red-500/80 via-red-600 to-red-500/60",
+  moderator: "from-blue-500/80 via-blue-600 to-blue-500/60",
+  executor: "from-green-500/80 via-green-600 to-green-500/60",
+  requester: "from-gray-400/80 via-gray-500 to-gray-400/60",
+};
+
 export default function BoardDetail() {
   const { boardId } = useParams<{ boardId: string }>();
   const navigate = useNavigate();
@@ -137,31 +144,41 @@ export default function BoardDetail() {
           </CardHeader>
           <CardContent>
             {membersLoading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <Skeleton key={i} className="h-28 rounded-lg" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <Skeleton key={i} className="h-40 rounded-xl" />
                 ))}
               </div>
             ) : members && members.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {members.map((member) => (
                   <div 
                     key={member.id} 
-                    className="flex flex-col items-center gap-2 p-3 rounded-lg border bg-card"
+                    className="rounded-xl border bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                   >
-                    <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
-                      <AvatarImage src={member.profile?.avatar_url || undefined} />
-                      <AvatarFallback className="text-base sm:text-lg">
-                        {member.profile?.full_name?.charAt(0)?.toUpperCase() || "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="text-center w-full">
-                      <p className="font-medium text-xs sm:text-sm truncate">
-                        {member.profile?.full_name || "Usuário"}
-                      </p>
-                      <Badge className={`text-xs mt-1 ${roleColors[member.teamRole] || ""}`}>
-                        {roleLabels[member.teamRole] || member.teamRole}
-                      </Badge>
+                    {/* Colored Banner */}
+                    <div className={`h-16 bg-gradient-to-r ${roleBannerColors[member.teamRole] || "from-primary/80 via-primary to-primary/60"}`} />
+                    
+                    {/* Avatar positioned over banner */}
+                    <div className="relative px-4 pb-4">
+                      <div className="absolute -top-10 left-1/2 -translate-x-1/2">
+                        <Avatar className="h-20 w-20 border-4 border-background shadow-lg">
+                          <AvatarImage src={member.profile?.avatar_url || undefined} className="object-cover" />
+                          <AvatarFallback className="text-2xl bg-muted font-semibold">
+                            {member.profile?.full_name?.charAt(0)?.toUpperCase() || "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
+                      
+                      {/* Member Info */}
+                      <div className="pt-12 text-center">
+                        <p className="font-semibold text-sm sm:text-base line-clamp-2 min-h-[2.5rem]">
+                          {member.profile?.full_name || "Usuário"}
+                        </p>
+                        <Badge className={`text-xs mt-2 ${roleColors[member.teamRole] || ""}`}>
+                          {roleLabels[member.teamRole] || member.teamRole}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                 ))}
