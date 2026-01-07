@@ -53,7 +53,7 @@ export function KanbanTimeDisplay({ demandId, canControl = false, forceShow = fa
           variant="ghost"
           size="sm"
           className={cn(
-            "h-6 px-2 shrink-0 text-[10px] font-medium gap-1",
+            "h-7 px-2.5 shrink-0 text-xs font-medium gap-1",
             isTimerRunning 
               ? "bg-amber-500/20 text-amber-600 hover:bg-amber-500/30 hover:text-amber-700" 
               : "bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30 hover:text-emerald-700"
