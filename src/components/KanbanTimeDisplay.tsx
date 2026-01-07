@@ -38,14 +38,14 @@ export function KanbanTimeDisplay({ demandId, canControl = false, forceShow = fa
   }
 
   return (
-    <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded-lg px-3 py-2 mb-2">
-      <Clock className="h-4 w-4" />
-      <span className="text-xs uppercase font-semibold">Execução:</span>
-      <span className="font-mono font-semibold text-base flex-1">{displayTime}</span>
+    <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded-md px-2 py-1 mb-2">
+      <Clock className="h-3 w-3" />
+      <span className="text-[10px] uppercase font-medium">Execução:</span>
+      <span className="font-mono font-medium flex-1">{displayTime}</span>
       {isTimerRunning && (
-        <span className="relative flex h-2.5 w-2.5">
+        <span className="relative flex h-2 w-2">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
         </span>
       )}
       {canControl && (
@@ -53,7 +53,7 @@ export function KanbanTimeDisplay({ demandId, canControl = false, forceShow = fa
           variant="ghost"
           size="icon"
           className={cn(
-            "h-8 w-8 shrink-0",
+            "h-6 w-6 shrink-0",
             isTimerRunning 
               ? "bg-amber-500/20 text-amber-600 hover:bg-amber-500/30 hover:text-amber-700" 
               : "bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30 hover:text-emerald-700"
@@ -71,11 +71,11 @@ export function KanbanTimeDisplay({ demandId, canControl = false, forceShow = fa
           title={isTimerRunning ? "Pausar meu timer" : "Iniciar meu timer"}
         >
           {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : isTimerRunning ? (
-            <Pause className="h-4 w-4" />
+            <Pause className="h-3.5 w-3.5" />
           ) : (
-            <Play className="h-4 w-4" />
+            <Play className="h-3.5 w-3.5" />
           )}
         </Button>
       )}
