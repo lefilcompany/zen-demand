@@ -44,7 +44,7 @@ export default function CreateDemandRequest() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !selectedTeamId || !selectedBoardId || !isTeamActive || !serviceId || serviceId === "none") return;
+    if (!title.trim() || !description.trim() || !selectedTeamId || !selectedBoardId || !isTeamActive || !serviceId || serviceId === "none") return;
 
     createRequest.mutate(
       {
@@ -199,13 +199,14 @@ export default function CreateDemandRequest() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Descrição</Label>
+              <Label htmlFor="description">Descrição *</Label>
               <Textarea
                 id="description"
                 placeholder="Descreva os detalhes do que você precisa..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
+                required
               />
             </div>
 
@@ -263,7 +264,7 @@ export default function CreateDemandRequest() {
               </Button>
               <Button
                 type="submit"
-                disabled={createRequest.isPending || isUploading || !title.trim() || !isTeamActive || !selectedBoardId || !serviceId || serviceId === "none"}
+                disabled={createRequest.isPending || isUploading || !title.trim() || !description.trim() || !isTeamActive || !selectedBoardId || !serviceId || serviceId === "none"}
                 className="flex-1"
               >
                 {(createRequest.isPending || isUploading) ? (
