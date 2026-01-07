@@ -82,7 +82,8 @@ export default function TimeManagement() {
     queryFn: async () => {
       if (!selectedTeamId) return [];
 
-      const { data, error } = await supabase
+      // First fetch time entries with demands
+      const { data: entries, error: entriesError } = await supabase
         .from("demand_time_entries")
         .select(`
           *,
@@ -93,14 +94,28 @@ export default function TimeManagement() {
             priority,
             team_id,
             status:demand_statuses(name, color)
-          ),
-          profile:profiles!demand_time_entries_user_id_fkey(id, full_name, avatar_url)
+          )
         `)
         .eq("demand.team_id", selectedTeamId)
         .order("started_at", { ascending: false });
 
-      if (error) throw error;
-      return data as unknown as TimeEntryWithDetails[];
+      if (entriesError) throw entriesError;
+      if (!entries || entries.length === 0) return [];
+
+      // Fetch profiles for all unique user_ids
+      const userIds = [...new Set(entries.map(e => e.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .in("id", userIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+      // Combine entries with profiles
+      return entries.map(entry => ({
+        ...entry,
+        profile: profileMap.get(entry.user_id) || { id: entry.user_id, full_name: "Usuário", avatar_url: null },
+      })) as TimeEntryWithDetails[];
     },
     enabled: !!selectedTeamId,
   });
@@ -378,9 +393,9 @@ export default function TimeManagement() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold font-mono">
+            <div className="text-2xl font-bold font-mono">
               {isLoading ? <Skeleton className="h-8 w-24" /> : formatTimeDisplay(totals.totalTime)}
-            </p>
+            </div>
           </CardContent>
         </Card>
 
@@ -393,9 +408,9 @@ export default function TimeManagement() {
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-2">
-              <p className="text-2xl font-bold">
+              <div className="text-2xl font-bold">
                 {isLoading ? <Skeleton className="h-8 w-16" /> : totals.activeUsers}
-              </p>
+              </div>
               {totals.activeTimers > 0 && (
                 <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                   <Play className="h-3 w-3 mr-1 fill-current" />
@@ -414,9 +429,9 @@ export default function TimeManagement() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold font-mono">
+            <div className="text-2xl font-bold font-mono">
               {isLoading ? <Skeleton className="h-8 w-24" /> : formatTimeDisplay(totals.avgTimePerUser)}
-            </p>
+            </div>
           </CardContent>
         </Card>
 
@@ -428,9 +443,9 @@ export default function TimeManagement() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold font-mono">
+            <div className="text-2xl font-bold font-mono">
               {isLoading ? <Skeleton className="h-8 w-24" /> : formatTimeDisplay(totals.avgTimePerDemand)}
-            </p>
+            </div>
           </CardContent>
         </Card>
       </div>
