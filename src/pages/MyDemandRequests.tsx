@@ -3,12 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useMyDemandRequests, useUpdateDemandRequest, useDeleteDemandRequest } from "@/hooks/useDemandRequests";
 import { useRequestAttachments } from "@/hooks/useRequestAttachments";
-import { ArrowLeft, Clock, CheckCircle, XCircle, RotateCcw, Edit, Trash2, Plus, Layout, Paperclip } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle, XCircle, RotateCcw, Edit, Trash2, Plus, Layout, Paperclip, Filter, CalendarIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { format, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,9 @@ import { RequestAttachmentUploader } from "@/components/RequestAttachmentUploade
 import { RequestAttachmentBadge } from "@/components/RequestAttachmentBadge";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { getErrorMessage } from "@/lib/errorUtils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 const statusConfig = {
   pending: { label: "Pendente", icon: Clock, color: "bg-yellow-500/20 text-yellow-700 border-yellow-500/30" },
@@ -39,6 +42,11 @@ export default function MyDemandRequests() {
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("média");
   const [serviceId, setServiceId] = useState("");
+
+  // Filter states
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
 
   const openEditDialog = (request: any) => {
     setEditingRequest(request);
@@ -81,6 +89,47 @@ export default function MyDemandRequests() {
     });
   };
 
+  const clearFilters = () => {
+    setStatusFilter("all");
+    setDateFrom(undefined);
+    setDateTo(undefined);
+  };
+
+  const activeFiltersCount = [
+    statusFilter !== "all",
+    dateFrom,
+    dateTo,
+  ].filter(Boolean).length;
+
+  const filteredRequests = useMemo(() => {
+    if (!requests) return [];
+    
+    return requests.filter((request) => {
+      // Status filter
+      if (statusFilter !== "all" && request.status !== statusFilter) {
+        return false;
+      }
+      
+      // Date from filter
+      if (dateFrom) {
+        const requestDate = new Date(request.created_at);
+        if (isBefore(requestDate, startOfDay(dateFrom))) {
+          return false;
+        }
+      }
+      
+      // Date to filter
+      if (dateTo) {
+        const requestDate = new Date(request.created_at);
+        if (isAfter(requestDate, endOfDay(dateTo))) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  }, [requests, statusFilter, dateFrom, dateTo]);
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -101,11 +150,131 @@ export default function MyDemandRequests() {
         </Button>
       </div>
 
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-3">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Filter className="h-4 w-4" />
+              Filtros
+              {activeFiltersCount > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                  {activeFiltersCount}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80" align="start">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">Filtros</h4>
+                {activeFiltersCount > 0 && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters}>
+                    Limpar
+                  </Button>
+                )}
+              </div>
+
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos os status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="pending">Pendente</SelectItem>
+                    <SelectItem value="approved">Aprovada</SelectItem>
+                    <SelectItem value="rejected">Rejeitada</SelectItem>
+                    <SelectItem value="returned">Devolvida</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Date From Filter */}
+              <div className="space-y-2">
+                <Label>Data de envio (de)</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !dateFrom && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Selecionar data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateFrom}
+                      onSelect={setDateFrom}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Date To Filter */}
+              <div className="space-y-2">
+                <Label>Data de envio (até)</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !dateTo && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateTo ? format(dateTo, "dd/MM/yyyy") : "Selecionar data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateTo}
+                      onSelect={setDateTo}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* Active filter badges */}
+        {statusFilter !== "all" && (
+          <Badge variant="secondary" className="gap-1">
+            Status: {statusConfig[statusFilter as keyof typeof statusConfig]?.label}
+            <button onClick={() => setStatusFilter("all")} className="ml-1 hover:text-destructive">×</button>
+          </Badge>
+        )}
+        {dateFrom && (
+          <Badge variant="secondary" className="gap-1">
+            De: {format(dateFrom, "dd/MM/yyyy")}
+            <button onClick={() => setDateFrom(undefined)} className="ml-1 hover:text-destructive">×</button>
+          </Badge>
+        )}
+        {dateTo && (
+          <Badge variant="secondary" className="gap-1">
+            Até: {format(dateTo, "dd/MM/yyyy")}
+            <button onClick={() => setDateTo(undefined)} className="ml-1 hover:text-destructive">×</button>
+          </Badge>
+        )}
+      </div>
+
       {isLoading ? (
         <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-      ) : requests && requests.length > 0 ? (
+      ) : filteredRequests.length > 0 ? (
         <div className="grid gap-4">
-          {requests.map((request) => {
+          {filteredRequests.map((request) => {
             const status = statusConfig[request.status as keyof typeof statusConfig];
             const StatusIcon = status.icon;
             const canEdit = request.status === "returned" || request.status === "pending";
@@ -195,11 +364,22 @@ export default function MyDemandRequests() {
       ) : (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            <p>Você ainda não tem solicitações neste quadro</p>
-            <Button className="mt-4" onClick={() => navigate("/demands/request")}>
-              <Plus className="mr-2 h-4 w-4" />
-              Criar Solicitação
-            </Button>
+            {activeFiltersCount > 0 ? (
+              <>
+                <p>Nenhuma solicitação encontrada com os filtros aplicados</p>
+                <Button variant="outline" className="mt-4" onClick={clearFilters}>
+                  Limpar Filtros
+                </Button>
+              </>
+            ) : (
+              <>
+                <p>Você ainda não tem solicitações neste quadro</p>
+                <Button className="mt-4" onClick={() => navigate("/demands/request")}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Criar Solicitação
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       )}
