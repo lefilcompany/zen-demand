@@ -97,14 +97,20 @@ export function AssigneeSelector({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[calc(100vw-2rem)] max-w-80 p-0" align="start">
-        <div className="p-3 border-b">
+      <PopoverContent 
+        className="w-[calc(100vw-2rem)] max-w-80 p-0 flex flex-col max-h-[min(70vh,var(--radix-popper-available-height,400px))] overflow-hidden" 
+        align="start"
+      >
+        <div className="shrink-0 p-3 border-b bg-popover">
           <h4 className="font-medium text-sm">Atribuir responsáveis</h4>
           <p className="text-xs text-muted-foreground">
             Selecione os membros {boardId ? "do quadro" : "da equipe"}
           </p>
         </div>
-        <div className="max-h-60 overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch]">
+        <div 
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch]"
+          onWheelCapture={(e) => e.stopPropagation()}
+        >
           <div className="p-2">
             {isLoading ? (
               <p className="text-sm text-muted-foreground p-2">Carregando...</p>
@@ -141,7 +147,7 @@ export function AssigneeSelector({
           </div>
         </div>
         {selectedUserIds.length > 0 && (
-          <div className="p-2 border-t">
+          <div className="shrink-0 p-2 border-t bg-popover">
             <Button
               variant="ghost"
               size="sm"
