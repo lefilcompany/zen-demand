@@ -125,10 +125,10 @@ export function MemberCard({
         </div>
       )}
       
-      {/* "You" badge positioned on banner */}
+      {/* "You" badge positioned on avatar */}
       {isCurrentUser && (
-        <div className="absolute top-2 left-2">
-          <Badge variant="secondary" className="text-xs bg-background/80">
+        <div className="absolute top-[3.25rem] left-1/2 -translate-x-1/2 z-10">
+          <Badge className="text-xs bg-primary text-primary-foreground shadow-md px-2 py-0.5">
             Você
           </Badge>
         </div>
