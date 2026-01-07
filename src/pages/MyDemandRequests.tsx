@@ -54,8 +54,7 @@ export default function MyDemandRequests() {
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [dateFrom, setDateFrom] = useState<Date | undefined>();
-  const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
 
   const openEditDialog = (request: any) => {
     setEditingRequest(request);
@@ -98,12 +97,11 @@ export default function MyDemandRequests() {
     });
   };
 
-  const clearDateFilters = () => {
-    setDateFrom(undefined);
-    setDateTo(undefined);
+  const clearDateFilter = () => {
+    setSelectedDate(undefined);
   };
 
-  const hasDateFilters = dateFrom || dateTo;
+  const hasDateFilter = !!selectedDate;
 
   // Count requests per status for tabs
   const statusCounts = useMemo(() => {
@@ -124,25 +122,19 @@ export default function MyDemandRequests() {
         return false;
       }
       
-      // Date from filter
-      if (dateFrom) {
+      // Date filter - shows requests from selected date
+      if (selectedDate) {
         const requestDate = new Date(request.created_at);
-        if (isBefore(requestDate, startOfDay(dateFrom))) {
-          return false;
-        }
-      }
-      
-      // Date to filter
-      if (dateTo) {
-        const requestDate = new Date(request.created_at);
-        if (isAfter(requestDate, endOfDay(dateTo))) {
+        const start = startOfDay(selectedDate);
+        const end = endOfDay(selectedDate);
+        if (isBefore(requestDate, start) || isAfter(requestDate, end)) {
           return false;
         }
       }
       
       return true;
     });
-  }, [requests, statusFilter, dateFrom, dateTo]);
+  }, [requests, statusFilter, selectedDate]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -166,23 +158,30 @@ export default function MyDemandRequests() {
 
       {/* Status Tabs */}
       <Tabs value={statusFilter} onValueChange={setStatusFilter} className="w-full">
-        <TabsList className="w-full justify-start h-auto flex-wrap gap-1 bg-transparent p-0">
+        <TabsList className="w-full justify-start h-auto flex-wrap gap-2 bg-muted/50 p-1.5 rounded-lg">
           {statusTabs.map((tab) => {
             const TabIcon = tab.icon;
             const count = statusCounts[tab.value] || 0;
+            const isActive = statusFilter === tab.value;
             return (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
-                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2 px-4"
+                className={cn(
+                  "gap-2 px-4 py-2 rounded-md transition-all duration-200",
+                  "hover:bg-background/80 hover:shadow-sm",
+                  "data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:text-primary"
+                )}
               >
-                {TabIcon && <TabIcon className="h-4 w-4" />}
-                {tab.label}
+                {TabIcon && <TabIcon className={cn("h-4 w-4", isActive && "text-primary")} />}
+                <span className="font-medium">{tab.label}</span>
                 <Badge 
                   variant="secondary" 
                   className={cn(
-                    "ml-1 h-5 min-w-5 px-1.5 text-xs",
-                    statusFilter === tab.value && "bg-primary-foreground/20 text-primary-foreground"
+                    "ml-1 h-5 min-w-5 px-1.5 text-xs font-semibold transition-colors",
+                    isActive 
+                      ? "bg-primary/15 text-primary" 
+                      : "bg-muted-foreground/10 text-muted-foreground"
                   )}
                 >
                   {count}
@@ -193,70 +192,42 @@ export default function MyDemandRequests() {
         </TabsList>
       </Tabs>
 
-      {/* Date Filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "gap-2",
-                  dateFrom && "border-primary text-primary"
-                )}
-              >
-                <CalendarIcon className="h-4 w-4" />
-                {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Data inicial"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={dateFrom}
-                onSelect={setDateFrom}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-
-          <span className="text-muted-foreground text-sm">até</span>
-
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "gap-2",
-                  dateTo && "border-primary text-primary"
-                )}
-              >
-                <CalendarIcon className="h-4 w-4" />
-                {dateTo ? format(dateTo, "dd/MM/yyyy") : "Data final"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={dateTo}
-                onSelect={setDateTo}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-
-          {hasDateFilters && (
+      {/* Date Filter */}
+      <div className="flex items-center gap-2">
+        <Popover>
+          <PopoverTrigger asChild>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              onClick={clearDateFilters}
-              className="h-8 px-2 text-muted-foreground hover:text-destructive"
+              className={cn(
+                "gap-2 transition-all",
+                selectedDate && "border-primary bg-primary/5 text-primary"
+              )}
             >
-              <X className="h-4 w-4" />
+              <CalendarIcon className="h-4 w-4" />
+              {selectedDate ? format(selectedDate, "dd/MM/yyyy", { locale: ptBR }) : "Filtrar por data"}
             </Button>
-          )}
-        </div>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
+
+        {hasDateFilter && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearDateFilter}
+            className="h-8 px-2 text-muted-foreground hover:text-destructive"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
@@ -353,7 +324,7 @@ export default function MyDemandRequests() {
       ) : (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            {(statusFilter !== "all" || hasDateFilters) ? (
+            {(statusFilter !== "all" || hasDateFilter) ? (
               <>
                 <p>Nenhuma solicitação encontrada com os filtros aplicados</p>
                 <Button 
@@ -361,7 +332,7 @@ export default function MyDemandRequests() {
                   className="mt-4" 
                   onClick={() => {
                     setStatusFilter("all");
-                    clearDateFilters();
+                    clearDateFilter();
                   }}
                 >
                   Limpar Filtros
