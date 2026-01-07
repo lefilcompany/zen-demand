@@ -7,7 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useBoardMembers } from "@/hooks/useBoardMembers";
 import { Users, X } from "lucide-react";
@@ -104,7 +104,7 @@ export function AssigneeSelector({
             Selecione os membros {boardId ? "do quadro" : "da equipe"}
           </p>
         </div>
-        <ScrollArea className="h-[200px]">
+        <div className="max-h-60 overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch]">
           <div className="p-2">
             {isLoading ? (
               <p className="text-sm text-muted-foreground p-2">Carregando...</p>
@@ -139,7 +139,7 @@ export function AssigneeSelector({
               </p>
             )}
           </div>
-        </ScrollArea>
+        </div>
         {selectedUserIds.length > 0 && (
           <div className="p-2 border-t">
             <Button
