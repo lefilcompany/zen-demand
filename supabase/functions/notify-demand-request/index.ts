@@ -412,17 +412,17 @@ const handler = async (req: Request): Promise<Response> => {
 
     const boardName = board?.name || "Quadro";
 
-    // Get all admins and moderators from the team
-    const { data: admins, error: adminsError } = await supabaseAdmin
+    // Get all admins, moderators and executors from the team
+    const { data: teamMembers, error: membersError } = await supabaseAdmin
       .from("team_members")
       .select("user_id")
       .eq("team_id", teamId)
-      .in("role", ["admin", "moderator"]);
+      .in("role", ["admin", "moderator", "executor"]);
 
-    if (adminsError) {
-      console.error("Error fetching admins:", adminsError);
+    if (membersError) {
+      console.error("Error fetching team members:", membersError);
       return new Response(
-        JSON.stringify({ error: "Failed to fetch team admins" }),
+        JSON.stringify({ error: "Failed to fetch team members" }),
         {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -430,39 +430,66 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    if (!admins || admins.length === 0) {
-      console.log("No admins found for team:", teamId);
-      return new Response(JSON.stringify({ success: true, emailsSent: 0 }), {
+    if (!teamMembers || teamMembers.length === 0) {
+      console.log("No team members found for team:", teamId);
+      return new Response(JSON.stringify({ success: true, emailsSent: 0, notificationsCreated: 0 }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    console.log(`Found ${admins.length} admins/moderators to notify`);
+    console.log(`Found ${teamMembers.length} admins/moderators/executors to notify`);
 
-    // Get emails for all admins
-    const adminEmails: string[] = [];
-    for (const admin of admins) {
-      // Skip the requester (don't notify yourself)
-      if (admin.user_id === userId) continue;
+    // Create in-app notifications for all team members (except the requester)
+    const notificationsToInsert = teamMembers
+      .filter(m => m.user_id !== userId)
+      .map(m => ({
+        user_id: m.user_id,
+        title: "Nova solicitação de demanda",
+        message: `${requesterName} enviou uma nova solicitação: "${title}"`,
+        type: "demand_request",
+        link: "/demand-requests",
+        read: false,
+      }));
 
-      const { data: userData } = await supabaseAdmin.auth.admin.getUserById(
-        admin.user_id
-      );
-      if (userData?.user?.email) {
-        adminEmails.push(userData.user.email);
+    let notificationsCreated = 0;
+    if (notificationsToInsert.length > 0) {
+      const { error: notifError, data: notifData } = await supabaseAdmin
+        .from("notifications")
+        .insert(notificationsToInsert)
+        .select();
+
+      if (notifError) {
+        console.error("Error inserting in-app notifications:", notifError);
+      } else {
+        notificationsCreated = notifData?.length || 0;
+        console.log(`Created ${notificationsCreated} in-app notifications`);
       }
     }
 
-    if (adminEmails.length === 0) {
-      console.log("No admin emails found to notify");
-      return new Response(JSON.stringify({ success: true, emailsSent: 0 }), {
+    // Get emails for all team members (admin, moderator, executor)
+    const memberEmails: string[] = [];
+    for (const member of teamMembers) {
+      // Skip the requester (don't notify yourself)
+      if (member.user_id === userId) continue;
+
+      const { data: userData } = await supabaseAdmin.auth.admin.getUserById(
+        member.user_id
+      );
+      if (userData?.user?.email) {
+        memberEmails.push(userData.user.email);
+      }
+    }
+
+    if (memberEmails.length === 0) {
+      console.log("No member emails found to notify");
+      return new Response(JSON.stringify({ success: true, emailsSent: 0, notificationsCreated }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    console.log(`Sending emails to ${adminEmails.length} admins:`, adminEmails);
+    console.log(`Sending emails to ${memberEmails.length} members:`, memberEmails);
 
     // Generate the action URL
     const appUrl = "https://pla.soma.lefil.com.br"; // Production URL
@@ -480,7 +507,7 @@ const handler = async (req: Request): Promise<Response> => {
       })
     );
 
-    // Send email to all admins
+    // Send email to all team members (admin, moderator, executor)
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -489,7 +516,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "SoMA+ <noreply@pla.soma.lefil.com.br>",
-        to: adminEmails,
+        to: memberEmails,
         subject: `Nova Solicitação de Demanda: ${title.substring(0, 50)}${title.length > 50 ? "..." : ""}`,
         html: emailHtml,
       }),
@@ -508,7 +535,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Emails sent successfully:", data);
 
     return new Response(
-      JSON.stringify({ success: true, emailsSent: adminEmails.length }),
+      JSON.stringify({ success: true, emailsSent: memberEmails.length, notificationsCreated }),
       {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
