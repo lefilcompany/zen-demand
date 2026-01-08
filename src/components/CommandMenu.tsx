@@ -21,15 +21,14 @@ import {
   Search
 } from "lucide-react";
 import { useGlobalSearch } from "@/hooks/useGlobalSearch";
-import { useTeams } from "@/hooks/useTeams";
+import { useSelectedBoard } from "@/contexts/BoardContext";
 
 export function CommandMenu() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
-  const { data: teams } = useTeams();
-  const teamIds = teams?.map((t) => t.id) || [];
-  const { data: searchResults, isLoading } = useGlobalSearch(query, teamIds);
+  const { currentBoard } = useSelectedBoard();
+  const { data: searchResults, isLoading } = useGlobalSearch(query, currentBoard?.id || null);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
