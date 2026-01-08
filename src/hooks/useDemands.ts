@@ -70,6 +70,7 @@ export function useDemands(boardId?: string) {
           profiles!demands_created_by_fkey(full_name, avatar_url),
           assigned_profile:profiles!demands_assigned_to_fkey(full_name, avatar_url),
           teams(name),
+          services(id, name),
           demand_assignees(
             user_id,
             profile:profiles(full_name, avatar_url)
@@ -126,6 +127,7 @@ export function useDemandById(demandId: string | undefined) {
           profiles!demands_created_by_fkey(full_name, avatar_url),
           assigned_profile:profiles!demands_assigned_to_fkey(full_name, avatar_url),
           teams(name),
+          services(id, name),
           demand_assignees(
             user_id,
             profile:profiles(full_name, avatar_url)

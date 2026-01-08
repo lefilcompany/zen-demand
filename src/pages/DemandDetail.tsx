@@ -865,6 +865,23 @@ export default function DemandDetail() {
               </div>
             )}
 
+            {/* Service tag */}
+            <div className="flex items-center gap-2 text-sm">
+              <Wrench className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <span className="text-muted-foreground">Serviço:</span>
+              <Badge 
+                variant="outline" 
+                className={cn(
+                  "text-xs",
+                  demand.services?.name 
+                    ? "bg-primary/5 text-primary border-primary/20" 
+                    : "bg-muted/50 text-muted-foreground border-muted-foreground/20"
+                )}
+              >
+                {demand.services?.name || "Nenhum serviço selecionado"}
+              </Badge>
+            </div>
+
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
