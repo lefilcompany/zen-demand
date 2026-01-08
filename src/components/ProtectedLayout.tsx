@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { BoardSelector } from "@/components/BoardSelector";
+import { GlobalSearchBar } from "@/components/GlobalSearchBar";
 import { Outlet, useNavigate } from "react-router-dom";
 import { Settings, RotateCcw, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -80,14 +81,18 @@ export function ProtectedLayout() {
             <div className="flex items-center gap-1 sm:gap-2 md:gap-4 min-w-0 flex-1">
               <SidebarTrigger className="text-foreground hover:bg-muted shrink-0 h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9" />
               {currentTeam && (
-                <div className="hidden md:flex items-center gap-1.5 text-sm font-medium text-foreground">
+                <div className="hidden lg:flex items-center gap-1.5 text-sm font-medium text-foreground">
                   <Users className="h-4 w-4 text-primary shrink-0" />
-                  <span className="truncate max-w-[100px] lg:max-w-[180px]">{currentTeam.name}</span>
+                  <span className="truncate max-w-[100px] xl:max-w-[150px]">{currentTeam.name}</span>
                 </div>
               )}
-              <div className="h-5 w-px bg-border hidden md:block" />
-              <div className="flex-1 min-w-0">
+              <div className="h-5 w-px bg-border hidden lg:block" />
+              <div className="hidden md:block">
                 <BoardSelector />
+              </div>
+              <div className="h-5 w-px bg-border hidden md:block" />
+              <div className="flex-1 min-w-0 hidden sm:block">
+                <GlobalSearchBar />
               </div>
             </div>
             

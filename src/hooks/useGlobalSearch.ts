@@ -71,7 +71,7 @@ export function useGlobalSearch(query: string, teamIds: string[]) {
             type: "member" as const,
             id: m.id,
             title: m.full_name,
-            link: `/profile`,
+            link: `/user/${m.id}`,
           }))
         );
       }
