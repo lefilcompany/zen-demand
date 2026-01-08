@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -11,6 +12,7 @@ interface AssigneeAvatarsProps {
   }[];
   maxVisible?: number;
   size?: "sm" | "md" | "lg";
+  clickable?: boolean;
 }
 
 const sizeClasses = {
@@ -19,7 +21,9 @@ const sizeClasses = {
   lg: "h-8 w-8 text-sm",
 };
 
-export function AssigneeAvatars({ assignees, maxVisible = 3, size = "md" }: AssigneeAvatarsProps) {
+export function AssigneeAvatars({ assignees, maxVisible = 3, size = "md", clickable = true }: AssigneeAvatarsProps) {
+  const navigate = useNavigate();
+  
   // Filter out any assignees with missing profile data
   const validAssignees = assignees?.filter(a => a?.profile) || [];
   if (validAssignees.length === 0) return null;
@@ -36,12 +40,21 @@ export function AssigneeAvatars({ assignees, maxVisible = 3, size = "md" }: Assi
       .slice(0, 2);
   };
 
+  const handleAvatarClick = (e: React.MouseEvent, userId: string) => {
+    if (!clickable || userId === "legacy") return;
+    e.stopPropagation();
+    navigate(`/user/${userId}`);
+  };
+
   return (
     <div className="flex -space-x-2">
       {visible.map((assignee) => (
         <Tooltip key={assignee.user_id}>
           <TooltipTrigger asChild>
-            <Avatar className={`${sizeClasses[size]} ring-2 ring-background`}>
+            <Avatar 
+              className={`${sizeClasses[size]} ring-2 ring-background ${clickable && assignee.user_id !== "legacy" ? "cursor-pointer hover:ring-primary transition-all" : ""}`}
+              onClick={(e) => handleAvatarClick(e, assignee.user_id)}
+            >
               <AvatarImage src={assignee.profile.avatar_url || undefined} alt={assignee.profile.full_name} />
               <AvatarFallback className={sizeClasses[size]}>
                 {getInitials(assignee.profile.full_name)}
