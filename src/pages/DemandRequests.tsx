@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSelectedBoard } from "@/contexts/BoardContext";
-import { addDays } from "date-fns";
+import { calculateBusinessDueDate, formatDueDateForInput } from "@/lib/dateUtils";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { RequestAttachmentBadge } from "@/components/RequestAttachmentBadge";
 import { RequestAttachmentUploader } from "@/components/RequestAttachmentUploader";
@@ -76,10 +76,10 @@ export default function DemandRequests() {
   const openApproveDialog = (request: any) => {
     setApproving(request);
     setAssigneeIds([]);
-    // Calculate due date based on service
-    if (request.service?.estimated_days) {
-      const calculated = addDays(new Date(), request.service.estimated_days);
-      setDueDate(format(calculated, "yyyy-MM-dd"));
+    // Calculate due date based on service estimated hours FROM approval date
+    if (request.service?.estimated_hours) {
+      const calculatedDate = calculateBusinessDueDate(request.service.estimated_hours);
+      setDueDate(formatDueDateForInput(calculatedDate));
     } else {
       setDueDate("");
     }
@@ -410,7 +410,7 @@ export default function DemandRequests() {
               <Label>Data de Vencimento</Label>
               <Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} />
               {approving?.service && <p className="text-xs text-muted-foreground">
-                  Sugestão baseada no serviço: {approving.service.estimated_days} dias
+                  Prazo sugerido: {approving.service.estimated_hours}h a partir da aprovação (dias úteis)
                 </p>}
             </div>
 
