@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, AlertTriangle, Clock } from "lucide-react";
+import { Calendar, AlertTriangle, Clock, Wrench } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
@@ -28,6 +28,7 @@ interface DemandCardProps {
     time_in_progress_seconds?: number | null;
     last_started_at?: string | null;
     board_sequence_number?: number | null;
+    service_id?: string | null;
     demand_statuses?: {
       name: string;
       color: string;
@@ -37,6 +38,10 @@ interface DemandCardProps {
       avatar_url?: string | null;
     } | null;
     teams?: {
+      name: string;
+    } | null;
+    services?: {
+      id: string;
       name: string;
     } | null;
     demand_assignees?: Assignee[];
@@ -126,6 +131,19 @@ export function DemandCard({ demand, onClick, showFullDetails = false }: DemandC
               {demand.teams.name}
             </Badge>
           )}
+          {/* Service tag */}
+          <Badge 
+            variant="outline" 
+            className={cn(
+              "text-xs flex items-center gap-1",
+              demand.services?.name 
+                ? "bg-primary/5 text-primary border-primary/20" 
+                : "bg-muted/50 text-muted-foreground border-muted-foreground/20"
+            )}
+          >
+            <Wrench className="h-3 w-3" />
+            {demand.services?.name || "Nenhum serviço"}
+          </Badge>
         </div>
 
         {/* Date and Time info */}
