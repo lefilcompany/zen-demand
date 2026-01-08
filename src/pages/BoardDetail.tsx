@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { LayoutGrid, Users, Trash2, UserPlus, UserMinus, ArrowLeft } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { LayoutGrid, Users, Trash2, UserPlus, UserMinus, ArrowLeft, Shield, UserCog, Briefcase, User, ChevronDown, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,9 +10,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { useBoard, useDeleteBoard } from "@/hooks/useBoards";
-import { useBoardMembers, useBoardRole, useRemoveBoardMember } from "@/hooks/useBoardMembers";
+import { useBoardMembers, useBoardRole, useRemoveBoardMember, useUpdateBoardMemberRole, BoardRole } from "@/hooks/useBoardMembers";
 import { BoardScopeConfig } from "@/components/BoardScopeConfig";
 import { AddBoardMemberDialog } from "@/components/AddBoardMemberDialog";
+import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
 const roleLabels: Record<string, string> = {
@@ -35,6 +37,95 @@ const roleBannerColors: Record<string, string> = {
   requester: "from-purple-500/80 via-purple-600 to-purple-500/60",
 };
 
+const roleIcons: Record<string, React.ReactNode> = {
+  admin: <Shield className="h-3.5 w-3.5" />,
+  moderator: <UserCog className="h-3.5 w-3.5" />,
+  executor: <Briefcase className="h-3.5 w-3.5" />,
+  requester: <User className="h-3.5 w-3.5" />,
+};
+
+const roleOptions: BoardRole[] = ["admin", "moderator", "executor", "requester"];
+
+// Native role selector component
+function RoleSelector({
+  currentRole,
+  onRoleChange,
+  isLoading,
+  disabled,
+}: {
+  currentRole: BoardRole;
+  onRoleChange: (role: BoardRole) => void;
+  isLoading: boolean;
+  disabled: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
+
+  if (disabled) {
+    return (
+      <Badge className={`text-xs ${roleColors[currentRole] || ""} flex items-center gap-1`}>
+        {roleIcons[currentRole]}
+        {roleLabels[currentRole] || currentRole}
+      </Badge>
+    );
+  }
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        disabled={isLoading}
+        className={`text-xs px-2 py-1 rounded-full border flex items-center gap-1 transition-colors ${roleColors[currentRole] || ""} hover:opacity-80`}
+      >
+        {isLoading ? (
+          <Loader2 className="h-3 w-3 animate-spin" />
+        ) : (
+          <>
+            {roleIcons[currentRole]}
+            {roleLabels[currentRole] || currentRole}
+            <ChevronDown className="h-3 w-3 ml-0.5" />
+          </>
+        )}
+      </button>
+
+      {isOpen && !isLoading && (
+        <div className="absolute z-50 mt-1 right-0 min-w-[140px] bg-popover border rounded-md shadow-lg py-1">
+          {roleOptions.map((role) => (
+            <button
+              key={role}
+              type="button"
+              onClick={() => {
+                onRoleChange(role);
+                setIsOpen(false);
+              }}
+              className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-accent transition-colors ${
+                role === currentRole ? "bg-accent/50" : ""
+              }`}
+            >
+              {roleIcons[role]}
+              {roleLabels[role]}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const getInitials = (name: string | undefined | null): string => {
   if (!name) return "?";
   const parts = name.trim().split(/\s+/);
@@ -48,12 +139,14 @@ export default function BoardDetail() {
   const { boardId } = useParams<{ boardId: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { user } = useAuth();
   
   const { data: board, isLoading: boardLoading } = useBoard(boardId || null);
   const { data: members, isLoading: membersLoading } = useBoardMembers(boardId || null);
   const { data: myRole } = useBoardRole(boardId || null);
   const deleteBoard = useDeleteBoard();
   const removeMember = useRemoveBoardMember();
+  const updateRole = useUpdateBoardMemberRole();
 
   const canManage = myRole === "admin" || myRole === "moderator";
   const isAdmin = myRole === "admin";
@@ -78,6 +171,16 @@ export default function BoardDetail() {
       await removeMember.mutateAsync({ memberId, boardId });
     } catch (error) {
       toast.error("Erro ao remover membro");
+    }
+  };
+
+  const handleRoleChange = async (memberId: string, newRole: BoardRole) => {
+    if (!boardId) return;
+    
+    try {
+      await updateRole.mutateAsync({ memberId, boardId, newRole });
+    } catch (error) {
+      toast.error("Erro ao alterar cargo");
     }
   };
 
@@ -295,67 +398,81 @@ export default function BoardDetail() {
             </div>
           ) : members && members.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {members.map((member) => (
-                <div 
-                  key={member.id} 
-                  className="rounded-xl border bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow relative group"
-                >
-                  {/* Colored Banner */}
-                  <div className={`h-14 bg-gradient-to-r ${roleBannerColors[member.role] || "from-primary/80 via-primary to-primary/60"}`} />
-                  
-                  {/* Remove Button - positioned on banner */}
-                  {canManage && (
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="secondary" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background text-destructive hover:text-destructive">
-                            <UserMinus className="h-3.5 w-3.5" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Remover Membro</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Tem certeza que deseja remover {member.profile?.full_name} deste quadro?
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction 
-                              onClick={() => handleRemoveMember(member.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              Remover
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  )}
-                  
-                  {/* Avatar positioned over banner */}
-                  <div className="relative px-4 pb-4">
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2">
-                      <Avatar className="h-16 w-16 border-4 border-background shadow-lg">
-                        <AvatarImage src={member.profile?.avatar_url || undefined} className="object-cover" />
-                        <AvatarFallback className="text-xl bg-muted font-semibold">
-                          {getInitials(member.profile?.full_name)}
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
+              {members.map((member) => {
+                const isCurrentUser = member.user_id === user?.id;
+                // Only admins can change roles, and they can't change their own
+                const canChangeRole = isAdmin && !isCurrentUser;
+
+                return (
+                  <div 
+                    key={member.id} 
+                    className="rounded-xl border bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow relative group"
+                  >
+                    {/* Colored Banner */}
+                    <div className={`h-14 bg-gradient-to-r ${roleBannerColors[member.role] || "from-primary/80 via-primary to-primary/60"}`} />
                     
-                    {/* Member Info */}
-                    <div className="pt-10 text-center">
-                      <p className="font-semibold text-sm line-clamp-2 min-h-[2.5rem]">
-                        {member.profile?.full_name || "Usuário"}
-                      </p>
-                      <Badge className={`text-xs mt-1 ${roleColors[member.role] || ""}`}>
-                        {roleLabels[member.role] || member.role}
-                      </Badge>
+                    {/* Remove Button - positioned on banner */}
+                    {canManage && !isCurrentUser && (
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="secondary" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background text-destructive hover:text-destructive">
+                              <UserMinus className="h-3.5 w-3.5" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remover Membro</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja remover {member.profile?.full_name} deste quadro?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleRemoveMember(member.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Remover
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    )}
+                    
+                    {/* Avatar positioned over banner */}
+                    <div className="relative px-4 pb-4">
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2">
+                        <Avatar className="h-16 w-16 border-4 border-background shadow-lg">
+                          <AvatarImage src={member.profile?.avatar_url || undefined} className="object-cover" />
+                          <AvatarFallback className="text-xl bg-muted font-semibold">
+                            {getInitials(member.profile?.full_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
+                      
+                      {/* Member Info */}
+                      <div className="pt-10 text-center flex flex-col items-center">
+                        <p className="font-semibold text-sm line-clamp-2 min-h-[2.5rem] flex items-center gap-1.5">
+                          {member.profile?.full_name || "Usuário"}
+                          {isCurrentUser && (
+                            <Badge variant="secondary" className="text-xs">Você</Badge>
+                          )}
+                        </p>
+                        <div className="mt-1">
+                          <RoleSelector
+                            currentRole={member.role}
+                            onRoleChange={(newRole) => handleRoleChange(member.id, newRole)}
+                            isLoading={updateRole.isPending}
+                            disabled={!canChangeRole}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
