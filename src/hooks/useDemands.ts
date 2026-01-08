@@ -468,3 +468,55 @@ export function useDeleteInteraction() {
     },
   });
 }
+
+export function useArchiveDeliveredDemands() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (boardId: string) => {
+      // First, get the "Entregue" status ID
+      const { data: statuses, error: statusError } = await supabase
+        .from("demand_statuses")
+        .select("id")
+        .eq("name", "Entregue")
+        .single();
+
+      if (statusError) throw statusError;
+
+      const deliveredStatusId = statuses.id;
+
+      // Get all delivered demands for this board
+      const { data: deliveredDemands, error: fetchError } = await supabase
+        .from("demands")
+        .select("id")
+        .eq("board_id", boardId)
+        .eq("status_id", deliveredStatusId)
+        .eq("archived", false);
+
+      if (fetchError) throw fetchError;
+
+      if (!deliveredDemands || deliveredDemands.length === 0) {
+        return { count: 0 };
+      }
+
+      const demandIds = deliveredDemands.map((d) => d.id);
+
+      // Archive all delivered demands
+      const { error: updateError } = await supabase
+        .from("demands")
+        .update({
+          archived: true,
+          archived_at: new Date().toISOString(),
+        })
+        .in("id", demandIds);
+
+      if (updateError) throw updateError;
+
+      return { count: demandIds.length };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["demands"] });
+      queryClient.invalidateQueries({ queryKey: ["archived-demands"] });
+    },
+  });
+}
