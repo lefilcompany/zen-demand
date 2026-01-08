@@ -43,6 +43,7 @@ import Settings from "./pages/Settings";
 import ResetPassword from "./pages/ResetPassword";
 import TimeManagement from "./pages/TimeManagement";
 import UserProfile from "./pages/UserProfile";
+import BoardSummary from "./pages/BoardSummary";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -92,6 +93,7 @@ const App = () => (
                           <Route path="/archived" element={<ArchivedDemands />} />
                           <Route path="/my-demands" element={<MyDemands />} />
                           <Route path="/time-management" element={<TimeManagement />} />
+                          <Route path="/board-summary" element={<BoardSummary />} />
                           <Route path="/user/:userId" element={<UserProfile />} />
                           
                           <Route path="/reports" element={<Reports />} />
