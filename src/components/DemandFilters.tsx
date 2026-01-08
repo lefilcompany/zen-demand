@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -6,21 +6,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
-import { Filter, X, CalendarIcon } from "lucide-react";
+import { Filter, X, CalendarIcon, ChevronDown, Check } from "lucide-react";
 import { useDemandStatuses } from "@/hooks/useDemands";
 import { useBoardMembers } from "@/hooks/useBoardMembers";
 import { useServices } from "@/hooks/useServices";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export interface DemandFiltersState {
   status: string | null;
@@ -35,6 +29,157 @@ interface DemandFiltersProps {
   boardId: string | null;
   filters: DemandFiltersState;
   onChange: (filters: DemandFiltersState) => void;
+}
+
+interface NativeSelectProps {
+  value: string | null;
+  onChange: (value: string | null) => void;
+  options: { value: string; label: string }[];
+  placeholder: string;
+}
+
+function NativeSelect({ value, onChange, options, placeholder }: NativeSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(opt => opt.value === value);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+      >
+        <span className={selectedOption ? "text-foreground" : "text-muted-foreground"}>
+          {selectedOption?.label || placeholder}
+        </span>
+        <ChevronDown className="h-4 w-4 opacity-50" />
+      </button>
+      {isOpen && (
+        <div className="absolute z-50 mt-1 w-full rounded-md border border-border bg-popover p-1 shadow-md">
+          <div className="max-h-60 overflow-y-auto">
+            {options.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value === "all" ? null : option.value);
+                  setIsOpen(false);
+                }}
+                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+              >
+                <div className="flex h-4 w-4 items-center justify-center">
+                  {(option.value === "all" && !value) || option.value === value ? (
+                    <Check className="h-3 w-3" />
+                  ) : null}
+                </div>
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface AssigneeSelectProps {
+  value: string | null;
+  onChange: (value: string | null) => void;
+  members: Array<{ user_id: string; profile?: { full_name: string; avatar_url?: string | null } | null }> | undefined;
+}
+
+function AssigneeSelect({ value, onChange, members }: AssigneeSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedMember = members?.find(m => m.user_id === value);
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+      >
+        <span className={selectedMember ? "text-foreground" : "text-muted-foreground"}>
+          {selectedMember?.profile?.full_name || "Todos"}
+        </span>
+        <ChevronDown className="h-4 w-4 opacity-50" />
+      </button>
+      {isOpen && (
+        <div className="absolute z-50 mt-1 w-full rounded-md border border-border bg-popover p-1 shadow-md">
+          <div className="max-h-60 overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => {
+                onChange(null);
+                setIsOpen(false);
+              }}
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+            >
+              <div className="flex h-4 w-4 items-center justify-center">
+                {!value && <Check className="h-3 w-3" />}
+              </div>
+              Todos
+            </button>
+            {members?.map((member) => (
+              <button
+                key={member.user_id}
+                type="button"
+                onClick={() => {
+                  onChange(member.user_id);
+                  setIsOpen(false);
+                }}
+                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+              >
+                <div className="flex h-4 w-4 items-center justify-center">
+                  {member.user_id === value && <Check className="h-3 w-3" />}
+                </div>
+                <Avatar className="h-5 w-5">
+                  <AvatarImage src={member.profile?.avatar_url || undefined} />
+                  <AvatarFallback className="text-[10px]">
+                    {getInitials(member.profile?.full_name || "?")}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="truncate">{member.profile?.full_name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps) {
@@ -64,6 +209,23 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
     onChange({ ...filters, [key]: value });
   };
 
+  const statusOptions = [
+    { value: "all", label: "Todos" },
+    ...(statuses?.map(s => ({ value: s.id, label: s.name })) || [])
+  ];
+
+  const priorityOptions = [
+    { value: "all", label: "Todas" },
+    { value: "baixa", label: "Baixa" },
+    { value: "média", label: "Média" },
+    { value: "alta", label: "Alta" },
+  ];
+
+  const serviceOptions = [
+    { value: "all", label: "Todos" },
+    ...(services?.map(s => ({ value: s.id, label: s.name })) || [])
+  ];
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -92,80 +254,49 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
           <div className="space-y-3">
             <div>
               <label className="text-sm text-muted-foreground">Status</label>
-              <Select
-                value={filters.status || "all"}
-                onValueChange={(v) => updateFilter("status", v === "all" ? null : v)}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {statuses?.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="mt-1">
+                <NativeSelect
+                  value={filters.status}
+                  onChange={(v) => updateFilter("status", v)}
+                  options={statusOptions}
+                  placeholder="Todos"
+                />
+              </div>
             </div>
 
             <div>
               <label className="text-sm text-muted-foreground">Prioridade</label>
-              <Select
-                value={filters.priority || "all"}
-                onValueChange={(v) => updateFilter("priority", v === "all" ? null : v)}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Todas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="baixa">Baixa</SelectItem>
-                  <SelectItem value="média">Média</SelectItem>
-                  <SelectItem value="alta">Alta</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="mt-1">
+                <NativeSelect
+                  value={filters.priority}
+                  onChange={(v) => updateFilter("priority", v)}
+                  options={priorityOptions}
+                  placeholder="Todas"
+                />
+              </div>
             </div>
 
             <div>
               <label className="text-sm text-muted-foreground">Responsável</label>
-              <Select
-                value={filters.assignee || "all"}
-                onValueChange={(v) => updateFilter("assignee", v === "all" ? null : v)}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {members?.map((m) => (
-                    <SelectItem key={m.user_id} value={m.user_id}>
-                      {m.profile?.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="mt-1">
+                <AssigneeSelect
+                  value={filters.assignee}
+                  onChange={(v) => updateFilter("assignee", v)}
+                  members={members}
+                />
+              </div>
             </div>
 
             <div>
               <label className="text-sm text-muted-foreground">Serviço</label>
-              <Select
-                value={filters.service || "all"}
-                onValueChange={(v) => updateFilter("service", v === "all" ? null : v)}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {services?.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="mt-1">
+                <NativeSelect
+                  value={filters.service}
+                  onChange={(v) => updateFilter("service", v)}
+                  options={serviceOptions}
+                  placeholder="Todos"
+                />
+              </div>
             </div>
 
             <div>
