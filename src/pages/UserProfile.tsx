@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvatarWithStatus } from "@/components/AvatarWithStatus";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -554,12 +554,14 @@ export default function UserProfile() {
           {/* Avatar */}
           <div className="absolute -top-16 left-6 md:left-8">
             <div className="relative">
-              <Avatar className="h-28 w-28 md:h-32 md:w-32 border-4 border-background shadow-xl">
-                <AvatarImage src={profile.avatar_url || undefined} alt={profile.full_name} className="object-cover" />
-                <AvatarFallback className="text-3xl bg-primary/10 text-primary font-semibold">
-                  {profile.full_name ? getInitials(profile.full_name) : <User className="h-12 w-12" />}
-                </AvatarFallback>
-              </Avatar>
+              <AvatarWithStatus
+                userId={userId}
+                src={profile.avatar_url || undefined}
+                fallback={profile.full_name ? getInitials(profile.full_name) : "?"}
+                className="h-28 w-28 md:h-32 md:w-32 border-4 border-background shadow-xl text-3xl"
+                size="xl"
+                showStatus={true}
+              />
               {/* Level badge on avatar */}
               <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-lg border-2 border-background">
                 {levelData.level}
