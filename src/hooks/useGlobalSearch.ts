@@ -7,6 +7,7 @@ interface SearchResult {
   title: string;
   subtitle?: string;
   link: string;
+  avatarUrl?: string;
 }
 
 export function useGlobalSearch(query: string, teamIds: string[]) {
@@ -61,9 +62,9 @@ export function useGlobalSearch(query: string, teamIds: string[]) {
       // Search members
       const { data: members } = await supabase
         .from("profiles")
-        .select("id, full_name")
+        .select("id, full_name, avatar_url, job_title")
         .ilike("full_name", searchTerm)
-        .limit(3);
+        .limit(5);
       
       if (members) {
         results.push(
@@ -71,7 +72,9 @@ export function useGlobalSearch(query: string, teamIds: string[]) {
             type: "member" as const,
             id: m.id,
             title: m.full_name,
+            subtitle: m.job_title || undefined,
             link: `/user/${m.id}`,
+            avatarUrl: m.avatar_url || undefined,
           }))
         );
       }

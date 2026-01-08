@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Search, FileText, Users, User, Loader2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useGlobalSearch } from "@/hooks/useGlobalSearch";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeams } from "@/hooks/useTeams";
@@ -96,14 +97,28 @@ export function GlobalSearchBar() {
     setSelectedIndex(-1);
   };
 
-  const getIcon = (type: string) => {
-    switch (type) {
+  const getIcon = (result: { type: string; avatarUrl?: string; title?: string }) => {
+    if (result.type === "member") {
+      const initials = result.title
+        ?.split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2) || "?";
+      return (
+        <Avatar className="h-7 w-7">
+          <AvatarImage src={result.avatarUrl} />
+          <AvatarFallback className="text-xs bg-primary/10 text-primary">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+      );
+    }
+    switch (result.type) {
       case "demand":
         return <FileText className="h-4 w-4 text-primary" />;
       case "team":
         return <Users className="h-4 w-4 text-secondary-foreground" />;
-      case "member":
-        return <User className="h-4 w-4 text-muted-foreground" />;
       default:
         return <Search className="h-4 w-4" />;
     }
@@ -186,7 +201,7 @@ export function GlobalSearchBar() {
                     selectedIndex === index ? "bg-muted" : "hover:bg-muted/50"
                   )}
                 >
-                  <div className="shrink-0">{getIcon(result.type)}</div>
+                  <div className="shrink-0">{getIcon(result)}</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{result.title}</p>
                     {result.subtitle && (
