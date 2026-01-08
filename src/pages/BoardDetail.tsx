@@ -449,6 +449,18 @@ export default function BoardDetail() {
                     {/* Colored Banner */}
                     <div className={`h-14 bg-gradient-to-r rounded-t-xl ${roleBannerColors[member.role] || "from-primary/80 via-primary to-primary/60"}`} />
                     
+                    {/* "Você" Badge - top right corner */}
+                    {isCurrentUser && (
+                      <div className="absolute top-2 right-2">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/90 dark:bg-background/90 text-primary shadow-md backdrop-blur-sm border border-white/50 dark:border-border">
+                          <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                          </svg>
+                          Você
+                        </span>
+                      </div>
+                    )}
+                    
                     {/* Remove Button - positioned on banner */}
                     {canManage && !isCurrentUser && (
                       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -492,11 +504,8 @@ export default function BoardDetail() {
                       
                       {/* Member Info */}
                       <div className="pt-10 text-center flex flex-col items-center">
-                        <p className="font-semibold text-sm line-clamp-2 min-h-[2.5rem] flex items-center gap-1.5">
+                        <p className="font-semibold text-sm line-clamp-2 min-h-[2.5rem]">
                           {member.profile?.full_name || "Usuário"}
-                          {isCurrentUser && (
-                            <Badge variant="secondary" className="text-xs">Você</Badge>
-                          )}
                         </p>
                         <div className="mt-1">
                           <RoleSelector
