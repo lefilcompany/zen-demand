@@ -19,23 +19,38 @@ export function useGlobalSearch(query: string, teamIds: string[]) {
       const results: SearchResult[] = [];
       const searchTerm = `%${query}%`;
       
-      // Search demands
-      const { data: demands } = await supabase
+      // Check if query looks like a demand code (e.g., "EQUIPE-123" or just "123")
+      const codeMatch = query.match(/^(?:([A-Za-z]+)-)?(\d+)$/);
+      const sequenceNumber = codeMatch ? parseInt(codeMatch[2], 10) : null;
+      
+      // Search demands by title, description, or sequence number
+      let demandsQuery = supabase
         .from("demands")
-        .select("id, title, teams(name)")
-        .in("team_id", teamIds)
-        .or(`title.ilike.${searchTerm},description.ilike.${searchTerm}`)
-        .limit(5);
+        .select("id, title, board_sequence_number, boards(name), teams(name)")
+        .in("team_id", teamIds);
+      
+      if (sequenceNumber !== null) {
+        // Search by sequence number OR title/description
+        demandsQuery = demandsQuery.or(`board_sequence_number.eq.${sequenceNumber},title.ilike.${searchTerm},description.ilike.${searchTerm}`);
+      } else {
+        demandsQuery = demandsQuery.or(`title.ilike.${searchTerm},description.ilike.${searchTerm}`);
+      }
+      
+      const { data: demands } = await demandsQuery.limit(8);
       
       if (demands) {
         results.push(
-          ...demands.map((d) => ({
-            type: "demand" as const,
-            id: d.id,
-            title: d.title,
-            subtitle: (d.teams as any)?.name,
-            link: `/demands/${d.id}`,
-          }))
+          ...demands.map((d) => {
+            const boardName = (d.boards as any)?.name || "EQUIPE";
+            const code = `${boardName}-${d.board_sequence_number}`;
+            return {
+              type: "demand" as const,
+              id: d.id,
+              title: d.title,
+              subtitle: code,
+              link: `/demands/${d.id}`,
+            };
+          })
         );
       }
       
