@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, FileText, User, Loader2, X } from "lucide-react";
+import { Search, FileText, User, Users, Loader2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -95,7 +95,7 @@ export function GlobalSearchBar() {
   };
 
   const getIcon = (result: { type: string; avatarUrl?: string; title?: string }) => {
-    if (result.type === "member") {
+    if (result.type === "member" || result.type === "user") {
       const initials = result.title
         ?.split(" ")
         .map((n) => n[0])
@@ -105,7 +105,7 @@ export function GlobalSearchBar() {
       return (
         <Avatar className="h-7 w-7">
           <AvatarImage src={result.avatarUrl} />
-          <AvatarFallback className="text-xs bg-primary/10 text-primary">
+          <AvatarFallback className={`text-xs ${result.type === "member" ? "bg-primary/10 text-primary" : "bg-secondary text-secondary-foreground"}`}>
             {initials}
           </AvatarFallback>
         </Avatar>
@@ -125,6 +125,8 @@ export function GlobalSearchBar() {
         return "Demanda";
       case "member":
         return "Membro";
+      case "user":
+        return "Usuário";
       default:
         return type;
     }
