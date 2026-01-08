@@ -406,10 +406,10 @@ export default function BoardDetail() {
                 return (
                   <div 
                     key={member.id} 
-                    className="rounded-xl border bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow relative group"
+                    className="rounded-xl border bg-card shadow-sm hover:shadow-md transition-shadow relative group"
                   >
                     {/* Colored Banner */}
-                    <div className={`h-14 bg-gradient-to-r ${roleBannerColors[member.role] || "from-primary/80 via-primary to-primary/60"}`} />
+                    <div className={`h-14 bg-gradient-to-r rounded-t-xl ${roleBannerColors[member.role] || "from-primary/80 via-primary to-primary/60"}`} />
                     
                     {/* Remove Button - positioned on banner */}
                     {canManage && !isCurrentUser && (
