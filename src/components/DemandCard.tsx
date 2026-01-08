@@ -76,7 +76,7 @@ export function DemandCard({ demand, onClick, showFullDetails = false }: DemandC
   return (
     <Card
       className={cn(
-        "hover:shadow-lg transition-all cursor-pointer",
+        "hover:shadow-lg transition-all cursor-pointer overflow-hidden w-full max-w-full",
         isHighPriority && "border-l-4 border-l-destructive"
       )}
       onClick={onClick}
