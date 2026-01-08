@@ -12,10 +12,11 @@ import {
   ArrowLeft, Loader2, User, Calendar, Briefcase, CheckCircle2, Clock, Edit, 
   Trophy, Target, Flame, Star, TrendingUp, Award, Zap, MapPin, Link as LinkIcon,
   Github, Linkedin, Shield, Users, Layout, ShieldCheck, ClipboardCheck, MessageSquare,
-  Wrench, Rocket, Timer, Cog, UserCheck, PlusCircle, MessageCircle, Layers
+  Wrench, Rocket, Timer, Cog, UserCheck, PlusCircle, MessageCircle, Layers, Circle
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { usePresence } from "@/contexts/PresenceContext";
 
 interface Achievement {
   id: string;
@@ -32,8 +33,10 @@ export default function UserProfile() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isUserOnline } = usePresence();
   
   const isOwnProfile = user?.id === userId;
+  const isOnline = userId ? isUserOnline(userId) : false;
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["user-profile", userId],
@@ -580,6 +583,10 @@ export default function UserProfile() {
                   <p className="text-primary font-medium mt-1">{(profile as any).job_title}</p>
                 )}
                 <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
+                  <span className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full ${isOnline ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
+                    <Circle className={`h-2 w-2 fill-current ${isOnline ? 'animate-pulse' : ''}`} />
+                    {isOnline ? 'Online' : 'Offline'}
+                  </span>
                   <span className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
                     Membro desde {formatDate(profile.created_at)}
