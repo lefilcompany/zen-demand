@@ -78,7 +78,7 @@ export function ProtectedLayout() {
         <AppSidebar />
         <main className="flex-1 flex flex-col bg-background rounded-xl shadow-xl min-h-0 overflow-hidden">
           <header className="flex h-12 sm:h-14 md:h-16 shrink-0 items-center justify-between gap-1 sm:gap-2 bg-background px-2 sm:px-3 md:px-6 border-b border-border rounded-t-xl overflow-visible">
-            <div className="flex items-center gap-1 sm:gap-2 md:gap-4 min-w-0 flex-1">
+            <div className="flex items-center gap-1 sm:gap-2 md:gap-4 min-w-0">
               <SidebarTrigger className="text-foreground hover:bg-muted shrink-0 h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9" />
               {currentTeam && (
                 <div className="hidden lg:flex items-center gap-1.5 text-sm font-medium text-foreground">
@@ -90,13 +90,13 @@ export function ProtectedLayout() {
               <div className="hidden md:block">
                 <BoardSelector />
               </div>
-              <div className="h-5 w-px bg-border hidden md:block" />
-              <div className="flex-1 min-w-0 hidden sm:block">
-                <GlobalSearchBar />
-              </div>
             </div>
             
-            <div className="flex items-center gap-2 sm:gap-1.5 md:gap-2 shrink-0">
+            <div className="flex items-center gap-2 sm:gap-1.5 md:gap-2 flex-1 justify-end">
+              <div className="flex-1 min-w-0 max-w-md hidden sm:block">
+                <GlobalSearchBar />
+              </div>
+              <div className="h-5 w-px bg-border hidden sm:block" />
               {/* Theme Toggle - Hidden on very small screens */}
               <div className="hidden xs:block">
                 <ThemeToggle />
