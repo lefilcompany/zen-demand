@@ -46,7 +46,7 @@ const roleIcons: Record<string, React.ReactNode> = {
 
 const roleOptions: BoardRole[] = ["admin", "moderator", "executor", "requester"];
 
-// Native role selector component
+// Native role selector component with smart positioning
 function RoleSelector({
   currentRole,
   onRoleChange,
@@ -59,11 +59,13 @@ function RoleSelector({
   disabled: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [openUpward, setOpenUpward] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -73,6 +75,23 @@ function RoleSelector({
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
+
+  const handleToggle = () => {
+    if (!isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const dropdownHeight = 180; // approximate height of dropdown
+      setOpenUpward(spaceBelow < dropdownHeight);
+    }
+    setIsOpen(!isOpen);
+  };
+
+  const roleButtonColors: Record<string, string> = {
+    admin: "bg-red-50 text-red-700 border-red-200 hover:bg-red-100 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800 dark:hover:bg-red-900/50",
+    moderator: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800 dark:hover:bg-blue-900/50",
+    executor: "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 dark:bg-green-950/50 dark:text-green-300 dark:border-green-800 dark:hover:bg-green-900/50",
+    requester: "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800 dark:hover:bg-purple-900/50",
+  };
 
   if (disabled) {
     return (
@@ -84,42 +103,61 @@ function RoleSelector({
   }
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative" ref={containerRef}>
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         disabled={isLoading}
-        className={`text-xs px-2 py-1 rounded-full border flex items-center gap-1 transition-colors ${roleColors[currentRole] || ""} hover:opacity-80`}
+        className={`text-xs px-3 py-1.5 rounded-full border font-medium flex items-center gap-1.5 transition-all duration-200 shadow-sm ${roleButtonColors[currentRole] || ""}`}
       >
         {isLoading ? (
-          <Loader2 className="h-3 w-3 animate-spin" />
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
         ) : (
           <>
             {roleIcons[currentRole]}
             {roleLabels[currentRole] || currentRole}
-            <ChevronDown className="h-3 w-3 ml-0.5" />
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
           </>
         )}
       </button>
 
       {isOpen && !isLoading && (
-        <div className="absolute z-50 mt-1 right-0 min-w-[140px] bg-popover border rounded-md shadow-lg py-1">
-          {roleOptions.map((role) => (
-            <button
-              key={role}
-              type="button"
-              onClick={() => {
-                onRoleChange(role);
-                setIsOpen(false);
-              }}
-              className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-accent transition-colors ${
-                role === currentRole ? "bg-accent/50" : ""
-              }`}
-            >
-              {roleIcons[role]}
-              {roleLabels[role]}
-            </button>
-          ))}
+        <div 
+          className={`absolute z-50 left-1/2 -translate-x-1/2 min-w-[160px] bg-popover border rounded-xl shadow-xl py-1.5 animate-scale-in ${
+            openUpward ? "bottom-full mb-2" : "top-full mt-2"
+          }`}
+        >
+          {roleOptions.map((role) => {
+            const isSelected = role === currentRole;
+            return (
+              <button
+                key={role}
+                type="button"
+                onClick={() => {
+                  onRoleChange(role);
+                  setIsOpen(false);
+                }}
+                className={`w-full px-3 py-2.5 text-left text-sm flex items-center gap-2.5 transition-all duration-150 ${
+                  isSelected 
+                    ? "bg-primary/10 text-primary font-medium" 
+                    : "hover:bg-accent text-foreground"
+                }`}
+              >
+                <span className={`flex items-center justify-center w-6 h-6 rounded-full ${
+                  isSelected ? "bg-primary/20" : "bg-muted"
+                }`}>
+                  {roleIcons[role]}
+                </span>
+                <span className="flex-1">{roleLabels[role]}</span>
+                {isSelected && (
+                  <svg className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
