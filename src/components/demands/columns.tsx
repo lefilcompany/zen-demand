@@ -6,6 +6,7 @@ import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
+import { Wrench } from "lucide-react";
 
 // Define the demand type based on what useDemands returns
 export interface DemandTableRow {
@@ -20,9 +21,14 @@ export interface DemandTableRow {
   time_in_progress_seconds?: number | null;
   last_started_at?: string | null;
   board_sequence_number?: number | null;
+  service_id?: string | null;
   demand_statuses?: {
     name: string;
     color: string;
+  } | null;
+  services?: {
+    id: string;
+    name: string;
   } | null;
   demand_assignees?: Array<{
     user_id: string;
@@ -210,6 +216,30 @@ function PriorityCell({
       {config.label}
     </Badge>;
 }
+// Cell component for service
+function ServiceCell({
+  row
+}: {
+  row: {
+    original: DemandTableRow;
+  };
+}) {
+  const service = row.original.services;
+  return (
+    <Badge 
+      variant="outline" 
+      className={`text-xs flex items-center gap-1 w-fit ${
+        service?.name 
+          ? "bg-primary/5 text-primary border-primary/20" 
+          : "bg-muted/50 text-muted-foreground border-muted-foreground/20"
+      }`}
+    >
+      <Wrench className="h-3 w-3" />
+      {service?.name || "Nenhum serviço"}
+    </Badge>
+  );
+}
+
 export const demandColumns: ColumnDef<DemandTableRow>[] = [{
   accessorKey: "board_sequence_number",
   header: "Código",
@@ -229,6 +259,19 @@ export const demandColumns: ColumnDef<DemandTableRow>[] = [{
     row
   }) => <TitleCell row={row} />,
   enableSorting: true
+}, {
+  id: "service",
+  header: "Serviço",
+  cell: ({
+    row
+  }) => <ServiceCell row={row} />,
+  enableSorting: true,
+  accessorFn: row => row.services?.name || "",
+  sortingFn: (rowA, rowB) => {
+    const serviceA = rowA.original.services?.name || "";
+    const serviceB = rowB.original.services?.name || "";
+    return serviceA.localeCompare(serviceB);
+  }
 }, {
   id: "assignees",
   header: "Responsável",
