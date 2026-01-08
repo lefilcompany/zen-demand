@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { KanbanBoard } from "@/components/KanbanBoard";
@@ -6,16 +7,19 @@ import { KanbanNotifications } from "@/components/KanbanNotifications";
 import { useDemands } from "@/hooks/useDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
-import { Plus, LayoutGrid } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { Plus, LayoutGrid, User, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRealtimeDemands, useKanbanRealtimeNotifications } from "@/hooks/useRealtimeDemands";
 
 export default function Kanban() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { selectedBoardId } = useSelectedBoard();
   const { data: demands, isLoading } = useDemands(selectedBoardId || undefined);
   const { data: role } = useBoardRole(selectedBoardId);
+  const [showOnlyMine, setShowOnlyMine] = useState(false);
   
   // Enable realtime updates for demands
   useRealtimeDemands(selectedBoardId || undefined);
@@ -29,6 +33,30 @@ export default function Kanban() {
 
   const isReadOnly = role === "requester";
 
+  // Filter demands to show only user's demands when toggle is active
+  const filteredDemands = useMemo(() => {
+    if (!demands) return [];
+    if (!showOnlyMine || !user?.id) return demands;
+    
+    return demands.filter((d) => {
+      const isAssigned = d.demand_assignees?.some(
+        (a) => a.user_id === user.id
+      ) || d.assigned_to === user.id;
+      return isAssigned;
+    });
+  }, [demands, showOnlyMine, user?.id]);
+
+  // Count user's demands
+  const myDemandsCount = useMemo(() => {
+    if (!demands || !user?.id) return 0;
+    return demands.filter((d) => {
+      const isAssigned = d.demand_assignees?.some(
+        (a) => a.user_id === user.id
+      ) || d.assigned_to === user.id;
+      return isAssigned;
+    }).length;
+  }, [demands, user?.id]);
+
   return (
     <div className="flex flex-col h-full animate-fade-in space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between shrink-0 pb-4 md:pb-6">
@@ -41,11 +69,35 @@ export default function Kanban() {
           </p>
         </div>
 
-        <Button onClick={() => navigate("/demands/create")} className="shadow-primary w-full sm:w-auto">
-          <Plus className="mr-2 h-4 w-4" />
-          <span className="sm:hidden">{t("demands.newDemand").split(" ")[0]}</span>
-          <span className="hidden sm:inline">{t("demands.newDemand")}</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Toggle to show only my demands */}
+          {myDemandsCount > 0 && (
+            <Button 
+              variant={showOnlyMine ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowOnlyMine(!showOnlyMine)}
+              className="gap-2"
+            >
+              {showOnlyMine ? (
+                <User className="h-4 w-4" />
+              ) : (
+                <Users className="h-4 w-4" />
+              )}
+              <span className="hidden sm:inline">
+                {showOnlyMine ? "Minhas Demandas" : "Todas"}
+              </span>
+              <span className="bg-primary-foreground text-primary text-xs px-1.5 py-0.5 rounded-full">
+                {showOnlyMine ? myDemandsCount : demands?.length || 0}
+              </span>
+            </Button>
+          )}
+
+          <Button onClick={() => navigate("/demands/create")} className="shadow-primary">
+            <Plus className="mr-2 h-4 w-4" />
+            <span className="sm:hidden">{t("demands.newDemand").split(" ")[0]}</span>
+            <span className="hidden sm:inline">{t("demands.newDemand")}</span>
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 min-h-0 overflow-hidden">
@@ -64,9 +116,9 @@ export default function Kanban() {
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
             <p className="text-muted-foreground mt-4">{t("common.loading")}</p>
           </div>
-        ) : demands && demands.length > 0 ? (
+        ) : filteredDemands && filteredDemands.length > 0 ? (
           <KanbanBoard 
-            demands={demands} 
+            demands={filteredDemands} 
             onDemandClick={id => navigate(`/demands/${id}`, { state: { from: "kanban" } })} 
             readOnly={isReadOnly}
             userRole={role || undefined}
@@ -75,17 +127,19 @@ export default function Kanban() {
           <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
             <LayoutGrid className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold text-foreground">
-              {t("demands.noDemands")}
+              {showOnlyMine ? "Nenhuma demanda atribuída a você" : t("demands.noDemands")}
             </h3>
             <p className="text-muted-foreground mt-2">
               {isReadOnly ? t("common.noResults") : t("demands.createFirst")}
             </p>
-            <div className="mt-6">
-              <Button onClick={() => navigate("/demands/create")}>
-                <Plus className="mr-2 h-4 w-4" />
-                {t("demands.createFirst")}
-              </Button>
-            </div>
+            {!showOnlyMine && (
+              <div className="mt-6">
+                <Button onClick={() => navigate("/demands/create")}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t("demands.createFirst")}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
