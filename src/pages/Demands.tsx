@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DemandCard } from "@/components/DemandCard";
 
-import { useDemands } from "@/hooks/useDemands";
+import { useDemands, useArchiveDeliveredDemands } from "@/hooks/useDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useAuth } from "@/lib/auth";
-import { Plus, Briefcase, LayoutGrid, List, Search } from "lucide-react";
+import { Plus, Briefcase, LayoutGrid, List, Search, Archive } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { DataTable } from "@/components/ui/data-table";
@@ -16,6 +16,18 @@ import { demandColumns, DemandTableRow } from "@/components/demands/columns";
 import { DemandFilters, DemandFiltersState } from "@/components/DemandFilters";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { useRealtimeDemands } from "@/hooks/useRealtimeDemands";
+import { toast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type ViewMode = "table" | "grid";
 
@@ -28,6 +40,7 @@ export default function Demands() {
   const { selectedBoardId } = useSelectedBoard();
   const { data: demands, isLoading } = useDemands(selectedBoardId || undefined);
   const { data: role } = useBoardRole(selectedBoardId);
+  const archiveDeliveredMutation = useArchiveDeliveredDemands();
   
   // Enable realtime updates for demands
   useRealtimeDemands(selectedBoardId || undefined);
@@ -58,6 +71,30 @@ export default function Demands() {
   const effectiveViewMode = isTabletOrSmaller ? "grid" : viewMode;
 
   const isReadOnly = role === "requester";
+
+  // Count delivered demands
+  const deliveredCount = useMemo(() => {
+    if (!demands) return 0;
+    return demands.filter((d) => d.demand_statuses?.name === "Entregue").length;
+  }, [demands]);
+
+  const handleArchiveDelivered = async () => {
+    if (!selectedBoardId) return;
+    
+    try {
+      const result = await archiveDeliveredMutation.mutateAsync(selectedBoardId);
+      toast({
+        title: "Demandas arquivadas",
+        description: `${result.count} demanda(s) entregue(s) foram arquivadas com sucesso.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao arquivar",
+        description: "Não foi possível arquivar as demandas entregues.",
+        variant: "destructive",
+      });
+    }
+  };
   
   const filteredDemands = useMemo(() => {
     if (!demands) return [];
@@ -227,6 +264,43 @@ export default function Demands() {
               filters={filters} 
               onChange={setFilters} 
             />
+            {/* Archive delivered button */}
+            {!isReadOnly && deliveredCount > 0 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    disabled={archiveDeliveredMutation.isPending}
+                    className="gap-2"
+                  >
+                    <Archive className="h-4 w-4" />
+                    <span className="hidden sm:inline">Arquivar Entregues</span>
+                    <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">
+                      {deliveredCount}
+                    </span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Arquivar demandas entregues?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Você está prestes a arquivar {deliveredCount} demanda(s) com status "Entregue".
+                      As demandas arquivadas podem ser restauradas posteriormente na seção de arquivados.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleArchiveDelivered}
+                      disabled={archiveDeliveredMutation.isPending}
+                    >
+                      {archiveDeliveredMutation.isPending ? "Arquivando..." : "Arquivar"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
             {/* View toggle - hidden on mobile/tablet */}
             <div className="hidden lg:flex items-center border border-border rounded-md">
               <Button
