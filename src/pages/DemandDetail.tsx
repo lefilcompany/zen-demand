@@ -1056,9 +1056,13 @@ export default function DemandDetail() {
                     <div className="flex-1 space-y-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 flex-1 min-w-0">
-                          <span className="font-semibold text-xs md:text-sm truncate">
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/user/${interaction.user_id}`)}
+                            className="font-semibold text-xs md:text-sm truncate hover:text-primary hover:underline cursor-pointer transition-colors text-left"
+                          >
                             {interaction.profiles?.full_name}
-                          </span>
+                          </button>
                           {isInternalAdjustment && (
                             <span className="text-[10px] md:text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-500/20 px-1.5 py-0.5 rounded">
                               Ajuste Interno

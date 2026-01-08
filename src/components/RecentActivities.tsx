@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 interface DemandInteraction {
   id: string;
   demand_id: string;
+  user_id: string;
   interaction_type: string;
   content: string | null;
   created_at: string;
@@ -37,6 +38,7 @@ export function RecentActivities() {
         .select(`
           id,
           demand_id,
+          user_id,
           interaction_type,
           content,
           created_at,
@@ -64,17 +66,25 @@ export function RecentActivities() {
     }
   };
 
-  const getActivityText = (activity: DemandInteraction) => {
-    const userName = activity.profiles?.full_name || "Usuário";
-    switch (activity.interaction_type) {
+  const getActivityText = (type: string) => {
+    switch (type) {
       case "comment":
-        return `${userName} comentou`;
+        return "comentou";
       case "status_change":
-        return `${userName} alterou o status`;
+        return "alterou o status";
       case "created":
-        return `${userName} criou a demanda`;
+        return "criou a demanda";
       default:
-        return `${userName} atualizou`;
+        return "atualizou";
+    }
+  };
+
+  const handleUserClick = (e: React.MouseEvent, activity: DemandInteraction) => {
+    e.stopPropagation();
+    // Extract user_id from the query - profiles is joined via user_id
+    const userId = (activity as any).user_id;
+    if (userId) {
+      navigate(`/user/${userId}`);
     }
   };
 
@@ -109,7 +119,14 @@ export function RecentActivities() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{activity.demands?.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      {getActivityText(activity)}
+                      <button
+                        type="button"
+                        onClick={(e) => handleUserClick(e, activity)}
+                        className="font-medium hover:text-primary hover:underline cursor-pointer transition-colors"
+                      >
+                        {activity.profiles?.full_name || "Usuário"}
+                      </button>
+                      {" "}{getActivityText(activity.interaction_type)}
                     </p>
                     {activity.content && (
                       <p className="text-xs text-muted-foreground mt-1 line-clamp-1">

@@ -201,7 +201,17 @@ export default function DemandRequests() {
                           {getInitials(request.creator?.full_name || "?")}
                         </AvatarFallback>
                       </Avatar>
-                      {request.creator?.full_name} •{" "}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/user/${request.created_by}`);
+                        }}
+                        className="hover:text-primary hover:underline cursor-pointer transition-colors"
+                      >
+                        {request.creator?.full_name}
+                      </button>
+                      {" "}•{" "}
                       {format(new Date(request.created_at), "dd/MM 'às' HH:mm", {
                   locale: ptBR
                 })}
@@ -256,7 +266,14 @@ export default function DemandRequests() {
                 </AvatarFallback>
               </Avatar>
               <span>
-                {viewing?.creator?.full_name} •{" "}
+                <button
+                  type="button"
+                  onClick={() => viewing?.created_by && navigate(`/user/${viewing.created_by}`)}
+                  className="hover:text-primary hover:underline cursor-pointer transition-colors"
+                >
+                  {viewing?.creator?.full_name}
+                </button>
+                {" "}•{" "}
                 {viewing && format(new Date(viewing.created_at), "dd/MM/yyyy 'às' HH:mm", {
                 locale: ptBR
               })}
@@ -333,7 +350,16 @@ export default function DemandRequests() {
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-sm font-medium">{comment.profiles?.full_name}</span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/user/${comment.user_id}`);
+                              }}
+                              className="text-sm font-medium hover:text-primary hover:underline cursor-pointer transition-colors"
+                            >
+                              {comment.profiles?.full_name}
+                            </button>
                             <div className="flex items-center gap-2">
                               <span className="text-xs text-muted-foreground">
                                 {format(new Date(comment.created_at), "dd/MM 'às' HH:mm", {

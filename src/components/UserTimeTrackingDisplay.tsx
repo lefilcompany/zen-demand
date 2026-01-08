@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { Clock, Play, Pause, Loader2, Users } from "lucide-react";
 import { useLiveTimer, formatTimeDisplay } from "@/hooks/useLiveTimer";
 import { useDemandTimeEntries, useDemandUserTimeStats, useUserTimerControl } from "@/hooks/useUserTimeTracking";
@@ -16,18 +17,21 @@ interface UserTimeTrackingDisplayProps {
 
 // Individual user time row with live timer
 function UserTimeRow({ 
+  userId,
   profile, 
   totalSeconds, 
   isActive, 
   activeStartedAt,
   isCurrentUser,
 }: {
+  userId: string;
   profile: { full_name: string; avatar_url: string | null };
   totalSeconds: number;
   isActive: boolean;
   activeStartedAt: string | null;
   isCurrentUser?: boolean;
 }) {
+  const navigate = useNavigate();
   const liveTime = useLiveTimer({
     isActive,
     baseSeconds: totalSeconds,
@@ -46,14 +50,21 @@ function UserTimeRow({
       "flex items-center gap-2 py-1",
       isCurrentUser && "bg-primary/5 rounded px-2 -mx-2"
     )}>
-      <Avatar className="h-5 w-5">
+      <Avatar 
+        className="h-5 w-5 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+        onClick={() => navigate(`/user/${userId}`)}
+      >
         <AvatarImage src={profile.avatar_url || undefined} />
         <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
       </Avatar>
-      <span className="text-xs text-muted-foreground flex-1 truncate">
+      <button
+        type="button"
+        onClick={() => navigate(`/user/${userId}`)}
+        className="text-xs text-muted-foreground flex-1 truncate text-left hover:text-primary hover:underline cursor-pointer transition-colors"
+      >
         {profile.full_name}
         {isCurrentUser && <span className="text-primary ml-1">(você)</span>}
-      </span>
+      </button>
       <div className="flex items-center gap-1">
         {isActive && (
           <span className="relative flex h-2 w-2">
@@ -249,13 +260,14 @@ export function UserTimeTrackingDisplay({
             )}
           </div>
           <div className="space-y-1">
-            {userStats.map((user) => (
+            {userStats.map((userStat) => (
               <UserTimeRow
-                key={user.userId}
-                profile={user.profile}
-                totalSeconds={user.totalSeconds}
-                isActive={user.isActive}
-                activeStartedAt={user.activeStartedAt}
+                key={userStat.userId}
+                userId={userStat.userId}
+                profile={userStat.profile}
+                totalSeconds={userStat.totalSeconds}
+                isActive={userStat.isActive}
+                activeStartedAt={userStat.activeStartedAt}
               />
             ))}
           </div>
