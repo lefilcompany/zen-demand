@@ -166,7 +166,7 @@ export default function BoardDetail() {
                     className="rounded-xl border bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                   >
                     {/* Colored Banner */}
-                    <div className={`h-16 bg-gradient-to-r ${roleBannerColors[member.teamRole] || "from-primary/80 via-primary to-primary/60"}`} />
+                    <div className={`h-16 bg-gradient-to-r ${roleBannerColors[member.role] || "from-primary/80 via-primary to-primary/60"}`} />
                     
                     {/* Avatar positioned over banner */}
                     <div className="relative px-4 pb-4">
@@ -184,8 +184,8 @@ export default function BoardDetail() {
                         <p className="font-semibold text-sm sm:text-base line-clamp-2 min-h-[2.5rem]">
                           {member.profile?.full_name || "Usuário"}
                         </p>
-                        <Badge className={`text-xs mt-2 ${roleColors[member.teamRole] || ""}`}>
-                          {roleLabels[member.teamRole] || member.teamRole}
+                        <Badge className={`text-xs mt-2 ${roleColors[member.role] || ""}`}>
+                          {roleLabels[member.role] || member.role}
                         </Badge>
                       </div>
                     </div>
@@ -271,9 +271,6 @@ export default function BoardDetail() {
               </CardTitle>
               <CardDescription className="text-sm">
                 {members?.length || 0} membros neste quadro
-                <span className="block text-xs mt-1">
-                  Os cargos são gerenciados nas configurações da equipe
-                </span>
               </CardDescription>
             </div>
             {canManage && (
@@ -304,7 +301,7 @@ export default function BoardDetail() {
                   className="rounded-xl border bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow relative group"
                 >
                   {/* Colored Banner */}
-                  <div className={`h-14 bg-gradient-to-r ${roleBannerColors[member.teamRole] || "from-primary/80 via-primary to-primary/60"}`} />
+                  <div className={`h-14 bg-gradient-to-r ${roleBannerColors[member.role] || "from-primary/80 via-primary to-primary/60"}`} />
                   
                   {/* Remove Button - positioned on banner */}
                   {canManage && (
@@ -352,8 +349,8 @@ export default function BoardDetail() {
                       <p className="font-semibold text-sm line-clamp-2 min-h-[2.5rem]">
                         {member.profile?.full_name || "Usuário"}
                       </p>
-                      <Badge className={`text-xs mt-1 ${roleColors[member.teamRole] || ""}`}>
-                        {roleLabels[member.teamRole] || member.teamRole}
+                      <Badge className={`text-xs mt-1 ${roleColors[member.role] || ""}`}>
+                        {roleLabels[member.role] || member.role}
                       </Badge>
                     </div>
                   </div>

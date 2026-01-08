@@ -3,13 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
+export type BoardRole = "admin" | "moderator" | "executor" | "requester";
+
 export interface BoardMember {
   id: string;
   board_id: string;
   user_id: string;
+  role: BoardRole;
   added_by: string | null;
   joined_at: string;
-  teamRole: "admin" | "moderator" | "executor" | "requester";
   profile?: {
     id: string;
     full_name: string;
@@ -17,7 +19,7 @@ export interface BoardMember {
   };
 }
 
-// Fetch board members with team role
+// Fetch board members with their board role
 export function useBoardMembers(boardId: string | null) {
   const { user } = useAuth();
 
@@ -26,13 +28,13 @@ export function useBoardMembers(boardId: string | null) {
     queryFn: async () => {
       if (!boardId) return [];
 
-      // First get board members
-      const { data: boardData, error: boardError } = await supabase
+      const { data, error } = await supabase
         .from("board_members")
         .select(`
           id,
           board_id,
           user_id,
+          role,
           added_by,
           joined_at,
           profiles:user_id (
@@ -44,38 +46,15 @@ export function useBoardMembers(boardId: string | null) {
         .eq("board_id", boardId)
         .order("joined_at", { ascending: true });
 
-      if (boardError) throw boardError;
+      if (error) throw error;
 
-      // Get the board's team_id
-      const { data: boardInfo, error: boardInfoError } = await supabase
-        .from("boards")
-        .select("team_id")
-        .eq("id", boardId)
-        .single();
-
-      if (boardInfoError) throw boardInfoError;
-
-      // Get team members to fetch their roles
-      const { data: teamMembers, error: teamError } = await supabase
-        .from("team_members")
-        .select("user_id, role")
-        .eq("team_id", boardInfo.team_id);
-
-      if (teamError) throw teamError;
-
-      // Create a map of user_id -> team role
-      const teamRoleMap = new Map<string, string>();
-      teamMembers?.forEach((tm) => {
-        teamRoleMap.set(tm.user_id, tm.role);
-      });
-
-      return boardData.map((member: any) => ({
+      return data.map((member: any) => ({
         id: member.id,
         board_id: member.board_id,
         user_id: member.user_id,
+        role: member.role as BoardRole,
         added_by: member.added_by,
         joined_at: member.joined_at,
-        teamRole: teamRoleMap.get(member.user_id) || "requester",
         profile: member.profiles,
       })) as BoardMember[];
     },
@@ -83,7 +62,7 @@ export function useBoardMembers(boardId: string | null) {
   });
 }
 
-// Get user's role in a board (fetched from team_members)
+// Get user's role in a board (from board_members table)
 export function useBoardRole(boardId: string | null) {
   const { user } = useAuth();
 
@@ -92,31 +71,21 @@ export function useBoardRole(boardId: string | null) {
     queryFn: async () => {
       if (!boardId || !user) return null;
 
-      // Get the board's team_id
-      const { data: boardInfo, error: boardInfoError } = await supabase
-        .from("boards")
-        .select("team_id")
-        .eq("id", boardId)
-        .single();
-
-      if (boardInfoError) throw boardInfoError;
-
-      // Get user's team role
       const { data, error } = await supabase
-        .from("team_members")
+        .from("board_members")
         .select("role")
-        .eq("team_id", boardInfo.team_id)
+        .eq("board_id", boardId)
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (error) throw error;
-      return data?.role as BoardMember["teamRole"] | null;
+      return data?.role as BoardRole | null;
     },
     enabled: !!user && !!boardId,
   });
 }
 
-// Add member to board (inherits role from team)
+// Add member to board with specified role
 export function useAddBoardMember() {
   const queryClient = useQueryClient();
 
@@ -125,10 +94,12 @@ export function useAddBoardMember() {
       boardId,
       userId,
       addedBy,
+      role,
     }: {
       boardId: string;
       userId: string;
       addedBy: string;
+      role: BoardRole;
     }) => {
       const { data, error } = await supabase
         .from("board_members")
@@ -136,6 +107,7 @@ export function useAddBoardMember() {
           board_id: boardId,
           user_id: userId,
           added_by: addedBy,
+          role: role,
         })
         .select()
         .single();
@@ -154,6 +126,41 @@ export function useAddBoardMember() {
       } else {
         toast.error(error.message || "Erro ao adicionar membro");
       }
+    },
+  });
+}
+
+// Update member role in board
+export function useUpdateBoardMemberRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      memberId,
+      boardId,
+      newRole,
+    }: {
+      memberId: string;
+      boardId: string;
+      newRole: BoardRole;
+    }) => {
+      const { data, error } = await supabase
+        .from("board_members")
+        .update({ role: newRole })
+        .eq("id", memberId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { ...data, boardId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["board-members", data.boardId] });
+      queryClient.invalidateQueries({ queryKey: ["board-role"] });
+      toast.success("Cargo atualizado com sucesso!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Erro ao atualizar cargo");
     },
   });
 }
@@ -189,7 +196,7 @@ export function useRemoveBoardMember() {
   });
 }
 
-// Get team members not in board (for adding) - includes their team role
+// Get team members not in board (for adding)
 export function useAvailableTeamMembers(teamId: string | null, boardId: string | null) {
   const { user } = useAuth();
 
@@ -198,12 +205,11 @@ export function useAvailableTeamMembers(teamId: string | null, boardId: string |
     queryFn: async () => {
       if (!teamId || !boardId) return [];
 
-      // Get team members with their roles
+      // Get team members with their profiles
       const { data: teamMembers, error: teamError } = await supabase
         .from("team_members")
         .select(`
           user_id,
-          role,
           profiles:user_id (
             id,
             full_name,
@@ -224,12 +230,11 @@ export function useAvailableTeamMembers(teamId: string | null, boardId: string |
 
       const boardMemberIds = new Set(boardMembers?.map((m) => m.user_id) || []);
 
-      // Filter out users already in board and include their role
+      // Filter out users already in board
       return teamMembers
         .filter((tm: any) => !boardMemberIds.has(tm.user_id))
         .map((tm: any) => ({
           user_id: tm.user_id,
-          teamRole: tm.role,
           ...tm.profiles,
         }));
     },

@@ -4,6 +4,8 @@ import {
   useBoardMembers,
   useBoardRole,
   useRemoveBoardMember,
+  useUpdateBoardMemberRole,
+  BoardRole,
 } from "@/hooks/useBoardMembers";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -20,9 +22,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Users, Trash2, Shield, UserCog, User, Briefcase } from "lucide-react";
+import { ArrowLeft, Users, Trash2, Shield, UserCog, User, Briefcase, Loader2 } from "lucide-react";
 import { AddBoardMemberDialog } from "@/components/AddBoardMemberDialog";
 
 const roleLabels: Record<string, string> = {
@@ -46,6 +55,8 @@ const roleColors: Record<string, string> = {
   requester: "bg-amber-500/10 text-amber-500 border-amber-500/20",
 };
 
+const roleOptions: BoardRole[] = ["admin", "moderator", "executor", "requester"];
+
 export default function BoardMembers() {
   const { boardId } = useParams<{ boardId: string }>();
   const navigate = useNavigate();
@@ -55,6 +66,7 @@ export default function BoardMembers() {
   const { data: members, isLoading: membersLoading } = useBoardMembers(boardId || null);
   const { data: userRole } = useBoardRole(boardId || null);
   const removeMember = useRemoveBoardMember();
+  const updateRole = useUpdateBoardMemberRole();
 
   const isAdmin = userRole === "admin";
   const isModerator = userRole === "moderator";
@@ -63,6 +75,11 @@ export default function BoardMembers() {
   const handleRemoveMember = async (memberId: string) => {
     if (!boardId) return;
     await removeMember.mutateAsync({ memberId, boardId });
+  };
+
+  const handleRoleChange = async (memberId: string, newRole: BoardRole) => {
+    if (!boardId) return;
+    await updateRole.mutateAsync({ memberId, boardId, newRole });
   };
 
   if (boardLoading || membersLoading) {
@@ -122,16 +139,18 @@ export default function BoardMembers() {
             {members?.length || 0} {members?.length === 1 ? "membro" : "membros"}
           </CardTitle>
           <CardDescription>
-            Os cargos são gerenciados nas configurações da equipe
+            Os cargos são definidos por quadro e podem ser alterados por admins e coordenadores
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {members?.map((member) => {
               const isCurrentUser = member.user_id === user?.id;
-              const memberIsAdmin = member.teamRole === "admin";
+              const memberIsAdmin = member.role === "admin";
               // Can't remove yourself or admins (unless you're admin)
               const canRemove = canManage && !isCurrentUser && (!memberIsAdmin || isAdmin);
+              // Can change role if admin (moderators can't change roles)
+              const canChangeRole = isAdmin && !isCurrentUser;
 
               return (
                 <div
@@ -162,14 +181,40 @@ export default function BoardMembers() {
                   </div>
 
                   <div className="flex items-center gap-2 justify-between sm:justify-end">
-                    <Badge
-                      variant="outline"
-                      className={`${roleColors[member.teamRole]} flex items-center gap-1`}
-                    >
-                      {roleIcons[member.teamRole]}
-                      <span className="hidden sm:inline">{roleLabels[member.teamRole]}</span>
-                      <span className="sm:hidden">{roleLabels[member.teamRole].slice(0, 5)}...</span>
-                    </Badge>
+                    {canChangeRole ? (
+                      <Select
+                        value={member.role}
+                        onValueChange={(value) => handleRoleChange(member.id, value as BoardRole)}
+                        disabled={updateRole.isPending}
+                      >
+                        <SelectTrigger className="w-[140px]">
+                          {updateRole.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <SelectValue />
+                          )}
+                        </SelectTrigger>
+                        <SelectContent>
+                          {roleOptions.map((role) => (
+                            <SelectItem key={role} value={role}>
+                              <div className="flex items-center gap-2">
+                                {roleIcons[role]}
+                                {roleLabels[role]}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className={`${roleColors[member.role]} flex items-center gap-1`}
+                      >
+                        {roleIcons[member.role]}
+                        <span className="hidden sm:inline">{roleLabels[member.role]}</span>
+                        <span className="sm:hidden">{roleLabels[member.role].slice(0, 5)}...</span>
+                      </Badge>
+                    )}
 
                     {canRemove && (
                       <AlertDialog>

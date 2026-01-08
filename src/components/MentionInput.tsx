@@ -54,7 +54,7 @@ export function MentionInput({
 
   const filteredMembers = members?.filter((m) => {
     const matchesName = m.profile?.full_name?.toLowerCase().includes(userQuery.toLowerCase());
-    const matchesRole = !allowedRoles || (m.teamRole && allowedRoles.includes(m.teamRole as any));
+    const matchesRole = !allowedRoles || (m.role && allowedRoles.includes(m.role));
     return matchesName && matchesRole;
   }) || [];
 
