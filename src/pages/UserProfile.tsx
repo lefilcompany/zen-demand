@@ -11,7 +11,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { 
   ArrowLeft, Loader2, User, Calendar, Briefcase, CheckCircle2, Clock, Edit, 
   Trophy, Target, Flame, Star, TrendingUp, Award, Zap, MapPin, Link as LinkIcon,
-  Github, Linkedin
+  Github, Linkedin, Shield, Users, Layout, ShieldCheck, ClipboardCheck, MessageSquare,
+  Wrench, Rocket, Timer, Cog, UserCheck, PlusCircle, MessageCircle, Layers
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -24,6 +25,7 @@ interface Achievement {
   unlocked: boolean;
   progress?: number;
   maxProgress?: number;
+  category?: "general" | "admin" | "moderator" | "executor" | "requester";
 }
 
 export default function UserProfile() {
@@ -226,13 +228,30 @@ export default function UserProfile() {
     return { level, xp, nextLevelXp: xpNeeded, currentLevelXp, progress };
   };
 
+  // Get user roles from teams
+  const getUserRoles = () => {
+    if (!userTeams) return { isAdmin: false, isModerator: false, isExecutor: false, isRequester: false };
+    
+    const roles = userTeams.map((tm: any) => tm.role);
+    return {
+      isAdmin: roles.includes("admin"),
+      isModerator: roles.includes("moderator"),
+      isExecutor: roles.includes("executor"),
+      isRequester: roles.includes("requester"),
+    };
+  };
+
+  const userRoles = getUserRoles();
+
   // Generate achievements
   const getAchievements = (): Achievement[] => {
     if (!stats || !profile) return [];
     
     const memberDays = differenceInDays(new Date(), new Date(profile.created_at));
+    const teamsCount = userTeams?.length || 0;
+    const boardsCount = userBoards?.length || 0;
     
-    return [
+    const generalAchievements: Achievement[] = [
       {
         id: "first-demand",
         name: "Primeira Demanda",
@@ -241,6 +260,7 @@ export default function UserProfile() {
         unlocked: stats.created >= 1,
         progress: Math.min(stats.created, 1),
         maxProgress: 1,
+        category: "general",
       },
       {
         id: "task-master",
@@ -250,6 +270,7 @@ export default function UserProfile() {
         unlocked: stats.completed >= 10,
         progress: Math.min(stats.completed, 10),
         maxProgress: 10,
+        category: "general",
       },
       {
         id: "super-achiever",
@@ -259,6 +280,7 @@ export default function UserProfile() {
         unlocked: stats.completed >= 50,
         progress: Math.min(stats.completed, 50),
         maxProgress: 50,
+        category: "general",
       },
       {
         id: "communicator",
@@ -268,6 +290,7 @@ export default function UserProfile() {
         unlocked: stats.comments >= 20,
         progress: Math.min(stats.comments, 20),
         maxProgress: 20,
+        category: "general",
       },
       {
         id: "time-tracker",
@@ -277,6 +300,7 @@ export default function UserProfile() {
         unlocked: stats.totalTimeSeconds >= 36000,
         progress: Math.min(Math.floor(stats.totalTimeSeconds / 3600), 10),
         maxProgress: 10,
+        category: "general",
       },
       {
         id: "veteran",
@@ -286,8 +310,187 @@ export default function UserProfile() {
         unlocked: memberDays >= 30,
         progress: Math.min(memberDays, 30),
         maxProgress: 30,
+        category: "general",
       },
     ];
+
+    // Admin specific achievements
+    const adminAchievements: Achievement[] = userRoles.isAdmin ? [
+      {
+        id: "admin-leader",
+        name: "Líder Nato",
+        description: "Seja admin de uma equipe",
+        icon: <Shield className="h-5 w-5" />,
+        unlocked: true,
+        category: "admin",
+      },
+      {
+        id: "admin-multi-team",
+        name: "Multi-Equipes",
+        description: "Seja admin em 3 equipes",
+        icon: <Users className="h-5 w-5" />,
+        unlocked: userTeams?.filter((tm: any) => tm.role === "admin").length >= 3,
+        progress: userTeams?.filter((tm: any) => tm.role === "admin").length || 0,
+        maxProgress: 3,
+        category: "admin",
+      },
+      {
+        id: "admin-board-master",
+        name: "Arquiteto de Quadros",
+        description: "Gerencie 5 quadros",
+        icon: <Layout className="h-5 w-5" />,
+        unlocked: boardsCount >= 5,
+        progress: Math.min(boardsCount, 5),
+        maxProgress: 5,
+        category: "admin",
+      },
+    ] : [];
+
+    // Moderator specific achievements
+    const moderatorAchievements: Achievement[] = userRoles.isModerator ? [
+      {
+        id: "mod-guardian",
+        name: "Guardião",
+        description: "Seja moderador de uma equipe",
+        icon: <ShieldCheck className="h-5 w-5" />,
+        unlocked: true,
+        category: "moderator",
+      },
+      {
+        id: "mod-reviewer",
+        name: "Revisor Experiente",
+        description: "Revise 25 demandas",
+        icon: <ClipboardCheck className="h-5 w-5" />,
+        unlocked: stats.completed >= 25,
+        progress: Math.min(stats.completed, 25),
+        maxProgress: 25,
+        category: "moderator",
+      },
+      {
+        id: "mod-helper",
+        name: "Ajudante",
+        description: "Faça 50 comentários",
+        icon: <MessageSquare className="h-5 w-5" />,
+        unlocked: stats.comments >= 50,
+        progress: Math.min(stats.comments, 50),
+        maxProgress: 50,
+        category: "moderator",
+      },
+    ] : [];
+
+    // Executor specific achievements
+    const executorAchievements: Achievement[] = userRoles.isExecutor ? [
+      {
+        id: "exec-worker",
+        name: "Trabalhador",
+        description: "Seja executor de uma equipe",
+        icon: <Wrench className="h-5 w-5" />,
+        unlocked: true,
+        category: "executor",
+      },
+      {
+        id: "exec-speedster",
+        name: "Velocista",
+        description: "Complete 20 demandas",
+        icon: <Rocket className="h-5 w-5" />,
+        unlocked: stats.completed >= 20,
+        progress: Math.min(stats.completed, 20),
+        maxProgress: 20,
+        category: "executor",
+      },
+      {
+        id: "exec-dedicated",
+        name: "Dedicado",
+        description: "Registre 50 horas de trabalho",
+        icon: <Timer className="h-5 w-5" />,
+        unlocked: stats.totalTimeSeconds >= 180000,
+        progress: Math.min(Math.floor(stats.totalTimeSeconds / 3600), 50),
+        maxProgress: 50,
+        category: "executor",
+      },
+      {
+        id: "exec-machine",
+        name: "Máquina de Entregas",
+        description: "Complete 100 demandas",
+        icon: <Cog className="h-5 w-5" />,
+        unlocked: stats.completed >= 100,
+        progress: Math.min(stats.completed, 100),
+        maxProgress: 100,
+        category: "executor",
+      },
+    ] : [];
+
+    // Requester specific achievements
+    const requesterAchievements: Achievement[] = userRoles.isRequester ? [
+      {
+        id: "req-starter",
+        name: "Iniciante",
+        description: "Seja solicitante de uma equipe",
+        icon: <UserCheck className="h-5 w-5" />,
+        unlocked: true,
+        category: "requester",
+      },
+      {
+        id: "req-creator",
+        name: "Criador Ativo",
+        description: "Crie 10 demandas",
+        icon: <PlusCircle className="h-5 w-5" />,
+        unlocked: stats.created >= 10,
+        progress: Math.min(stats.created, 10),
+        maxProgress: 10,
+        category: "requester",
+      },
+      {
+        id: "req-engaged",
+        name: "Engajado",
+        description: "Faça 10 comentários",
+        icon: <MessageCircle className="h-5 w-5" />,
+        unlocked: stats.comments >= 10,
+        progress: Math.min(stats.comments, 10),
+        maxProgress: 10,
+        category: "requester",
+      },
+      {
+        id: "req-prolific",
+        name: "Prolífico",
+        description: "Crie 50 demandas",
+        icon: <Layers className="h-5 w-5" />,
+        unlocked: stats.created >= 50,
+        progress: Math.min(stats.created, 50),
+        maxProgress: 50,
+        category: "requester",
+      },
+    ] : [];
+
+    return [
+      ...generalAchievements,
+      ...adminAchievements,
+      ...moderatorAchievements,
+      ...executorAchievements,
+      ...requesterAchievements,
+    ];
+  };
+
+  const getCategoryLabel = (category?: string) => {
+    const labels: Record<string, string> = {
+      general: "Geral",
+      admin: "Administrador",
+      moderator: "Moderador",
+      executor: "Executor",
+      requester: "Solicitante",
+    };
+    return labels[category || "general"] || "Geral";
+  };
+
+  const getCategoryColor = (category?: string) => {
+    const colors: Record<string, string> = {
+      general: "bg-primary",
+      admin: "bg-destructive",
+      moderator: "bg-secondary",
+      executor: "bg-success",
+      requester: "bg-accent",
+    };
+    return colors[category || "general"] || "bg-primary";
   };
 
   const levelData = calculateLevel();
@@ -545,46 +748,65 @@ export default function UserProfile() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {achievements.map((achievement) => (
-              <div
-                key={achievement.id}
-                className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                  achievement.unlocked 
-                    ? "bg-primary/5 border-primary/20" 
-                    : "bg-muted/30 border-transparent opacity-60"
-                }`}
-              >
-                <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${
-                  achievement.unlocked 
-                    ? "bg-primary text-primary-foreground" 
-                    : "bg-muted text-muted-foreground"
-                }`}>
-                  {achievement.icon}
+          {/* Group achievements by category */}
+          {["general", "admin", "moderator", "executor", "requester"].map((category) => {
+            const categoryAchievements = achievements.filter(a => a.category === category);
+            if (categoryAchievements.length === 0) return null;
+            
+            return (
+              <div key={category} className="mb-6 last:mb-0">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className={`h-2 w-2 rounded-full ${getCategoryColor(category)}`} />
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                    {getCategoryLabel(category)}
+                  </h3>
+                  <span className="text-xs text-muted-foreground">
+                    ({categoryAchievements.filter(a => a.unlocked).length}/{categoryAchievements.length})
+                  </span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`font-medium text-sm ${achievement.unlocked ? "" : "text-muted-foreground"}`}>
-                    {achievement.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">{achievement.description}</p>
-                  {!achievement.unlocked && achievement.progress !== undefined && (
-                    <div className="mt-1">
-                      <Progress 
-                        value={(achievement.progress / (achievement.maxProgress || 1)) * 100} 
-                        className="h-1" 
-                      />
-                      <span className="text-xs text-muted-foreground">
-                        {achievement.progress}/{achievement.maxProgress}
-                      </span>
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                  {categoryAchievements.map((achievement) => (
+                    <div
+                      key={achievement.id}
+                      className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                        achievement.unlocked 
+                          ? "bg-primary/5 border-primary/20" 
+                          : "bg-muted/30 border-transparent opacity-60"
+                      }`}
+                    >
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${
+                        achievement.unlocked 
+                          ? getCategoryColor(achievement.category) + " text-white"
+                          : "bg-muted text-muted-foreground"
+                      }`}>
+                        {achievement.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-medium text-sm ${achievement.unlocked ? "" : "text-muted-foreground"}`}>
+                          {achievement.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">{achievement.description}</p>
+                        {!achievement.unlocked && achievement.progress !== undefined && (
+                          <div className="mt-1">
+                            <Progress 
+                              value={(achievement.progress / (achievement.maxProgress || 1)) * 100} 
+                              className="h-1" 
+                            />
+                            <span className="text-xs text-muted-foreground">
+                              {achievement.progress}/{achievement.maxProgress}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {achievement.unlocked && (
+                        <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+                      )}
                     </div>
-                  )}
+                  ))}
                 </div>
-                {achievement.unlocked && (
-                  <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
-                )}
               </div>
-            ))}
-          </div>
+            );
+          })}
         </CardContent>
       </Card>
 
