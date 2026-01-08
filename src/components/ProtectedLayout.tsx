@@ -91,7 +91,7 @@ export function ProtectedLayout() {
               </div>
             </div>
             
-            <div className="flex items-center gap-0.5 sm:gap-1.5 md:gap-2 shrink-0">
+            <div className="flex items-center gap-2 sm:gap-1.5 md:gap-2 shrink-0">
               {/* Theme Toggle - Hidden on very small screens */}
               <div className="hidden xs:block">
                 <ThemeToggle />
