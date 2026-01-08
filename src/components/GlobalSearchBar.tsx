@@ -1,12 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, FileText, Users, User, Loader2, X } from "lucide-react";
+import { Search, FileText, User, Loader2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useGlobalSearch } from "@/hooks/useGlobalSearch";
-import { useSelectedTeam } from "@/contexts/TeamContext";
-import { useTeams } from "@/hooks/useTeams";
+import { useSelectedBoard } from "@/contexts/BoardContext";
 import { cn } from "@/lib/utils";
 
 export function GlobalSearchBar() {
@@ -18,11 +17,9 @@ export function GlobalSearchBar() {
   const containerRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { currentTeam } = useSelectedTeam();
-  const { data: teams } = useTeams();
+  const { currentBoard } = useSelectedBoard();
 
-  const teamIds = teams?.map((t) => t.id) || [];
-  const { data: results, isLoading } = useGlobalSearch(query, teamIds);
+  const { data: results, isLoading } = useGlobalSearch(query, currentBoard?.id || null);
 
   // Reset selected index when results change
   useEffect(() => {
@@ -117,8 +114,6 @@ export function GlobalSearchBar() {
     switch (result.type) {
       case "demand":
         return <FileText className="h-4 w-4 text-primary" />;
-      case "team":
-        return <Users className="h-4 w-4 text-secondary-foreground" />;
       default:
         return <Search className="h-4 w-4" />;
     }
@@ -128,10 +123,8 @@ export function GlobalSearchBar() {
     switch (type) {
       case "demand":
         return "Demanda";
-      case "team":
-        return "Equipe";
       case "member":
-        return "Pessoa";
+        return "Membro";
       default:
         return type;
     }
