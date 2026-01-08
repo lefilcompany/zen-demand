@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Clock, User, Calendar, Filter, ChevronDown, ChevronUp, ExternalLink, CalendarIcon, Users, BarChart3, TrendingUp, Play, Download } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,6 +67,7 @@ interface GroupedByUser {
 }
 
 export default function TimeManagement() {
+  const navigate = useNavigate();
   const { selectedTeamId } = useSelectedTeam();
   const [searchTerm, setSearchTerm] = useState("");
   const [userFilter, setUserFilter] = useState<string>("all");
@@ -574,7 +575,10 @@ export default function TimeManagement() {
                     <span className="text-lg font-bold text-muted-foreground w-6">
                       {index + 1}º
                     </span>
-                    <Avatar className="h-8 w-8">
+                    <Avatar 
+                      className="h-8 w-8 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                      onClick={() => navigate(`/user/${user.profile.id}`)}
+                    >
                       <AvatarImage src={user.profile.avatar_url || undefined} />
                       <AvatarFallback className="text-xs">
                         {user.profile.full_name
@@ -587,7 +591,13 @@ export default function TimeManagement() {
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium truncate">{user.profile.full_name}</span>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/user/${user.profile.id}`)}
+                          className="font-medium truncate hover:text-primary hover:underline cursor-pointer transition-colors"
+                        >
+                          {user.profile.full_name}
+                        </button>
                         {hasActiveTimer && (
                           <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] h-5">
                             <Play className="h-2.5 w-2.5 mr-0.5 fill-current" />
@@ -685,9 +695,16 @@ export default function TimeManagement() {
                                 </Avatar>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="font-medium truncate">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(`/user/${userData.profile.id}`);
+                                      }}
+                                      className="font-medium truncate hover:text-primary hover:underline cursor-pointer transition-colors"
+                                    >
                                       {userData.profile.full_name}
-                                    </span>
+                                    </button>
                                     {hasActiveTimer && (
                                       <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                                         <Play className="h-3 w-3 mr-1 fill-current" />

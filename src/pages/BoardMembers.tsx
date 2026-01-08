@@ -166,7 +166,16 @@ export default function BoardMembers() {
                     </Avatar>
                     <div className="min-w-0">
                       <p className="font-medium flex flex-wrap items-center gap-2">
-                        <span className="truncate">{member.profile?.full_name || "Usuário"}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/user/${member.user_id}`);
+                          }}
+                          className="truncate hover:text-primary hover:underline cursor-pointer transition-colors"
+                        >
+                          {member.profile?.full_name || "Usuário"}
+                        </button>
                         {isCurrentUser && (
                           <Badge variant="secondary" className="text-xs shrink-0">
                             Você

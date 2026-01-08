@@ -286,7 +286,18 @@ export default function MyDemandRequests() {
                       <p className="text-sm text-muted-foreground">{request.rejection_reason}</p>
                       {request.responder && (
                         <p className="text-xs text-muted-foreground mt-2">
-                          Por {request.responder.full_name} em{" "}
+                          Por{" "}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/user/${request.responded_by}`);
+                            }}
+                            className="font-medium hover:text-primary hover:underline cursor-pointer transition-colors"
+                          >
+                            {request.responder.full_name}
+                          </button>
+                          {" "}em{" "}
                           {request.responded_at && format(new Date(request.responded_at), "dd/MM/yyyy 'às' HH:mm")}
                         </p>
                       )}

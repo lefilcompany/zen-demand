@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -80,9 +81,15 @@ export function MemberCard({
   isUpdating,
   isRemoving,
 }: MemberCardProps) {
+  const navigate = useNavigate();
   const isCurrentUser = member.user_id === currentUserId;
   const canModify = isAdmin && !isCurrentUser;
   const config = roleConfig[member.role];
+
+  const handleNameClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/user/${member.user_id}`);
+  };
 
   return (
     <div className="rounded-xl border bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow relative group">
@@ -147,9 +154,13 @@ export function MemberCard({
         
         {/* Member Info */}
         <div className="pt-10 text-center space-y-2">
-          <p className="font-semibold text-sm line-clamp-2 min-h-[2.5rem]">
+          <button
+            type="button"
+            onClick={handleNameClick}
+            className="font-semibold text-sm line-clamp-2 min-h-[2.5rem] hover:text-primary hover:underline cursor-pointer transition-colors"
+          >
             {member.profile.full_name}
-          </p>
+          </button>
           
           <p className="text-xs text-muted-foreground">
             Entrou em {format(new Date(member.joined_at), "dd/MM/yyyy", { locale: ptBR })}
