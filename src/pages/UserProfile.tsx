@@ -3,12 +3,28 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Loader2, User, Calendar, Briefcase, CheckCircle2, Clock, Edit } from "lucide-react";
-import { format } from "date-fns";
+import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { 
+  ArrowLeft, Loader2, User, Calendar, Briefcase, CheckCircle2, Clock, Edit, 
+  Trophy, Target, Flame, Star, TrendingUp, Award, Zap, MapPin, Link as LinkIcon,
+  Github, Linkedin
+} from "lucide-react";
+import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+  unlocked: boolean;
+  progress?: number;
+  maxProgress?: number;
+}
 
 export default function UserProfile() {
   const { userId } = useParams<{ userId: string }>();
@@ -41,6 +57,7 @@ export default function UserProfile() {
         .from("team_members")
         .select(`
           role,
+          joined_at,
           teams:team_id (
             id,
             name
@@ -53,9 +70,30 @@ export default function UserProfile() {
     enabled: !!userId,
   });
 
-  // Get user's stats
+  // Get user's boards
+  const { data: userBoards } = useQuery({
+    queryKey: ["user-boards", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase
+        .from("board_members")
+        .select(`
+          role,
+          boards:board_id (
+            id,
+            name
+          )
+        `)
+        .eq("user_id", userId);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userId,
+  });
+
+  // Get user's extended stats
   const { data: stats } = useQuery({
-    queryKey: ["user-stats", userId],
+    queryKey: ["user-stats-extended", userId],
     queryFn: async () => {
       if (!userId) return null;
       
@@ -87,11 +125,39 @@ export default function UserProfile() {
           .eq("status_id", deliveredStatus.id);
         completedCount = count || 0;
       }
+
+      // Get total time tracked
+      const { data: timeEntries } = await supabase
+        .from("demand_time_entries")
+        .select("duration_seconds")
+        .eq("user_id", userId);
+      
+      const totalSeconds = timeEntries?.reduce((acc, entry) => acc + (entry.duration_seconds || 0), 0) || 0;
+
+      // Get comments count
+      const { count: commentsCount } = await supabase
+        .from("demand_interactions")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("interaction_type", "comment");
+
+      // Get recent activity (last 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const { count: recentActivity } = await supabase
+        .from("demand_interactions")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .gte("created_at", thirtyDaysAgo.toISOString());
       
       return {
         created: createdCount || 0,
         assigned: assignedCount || 0,
         completed: completedCount,
+        totalTimeSeconds: totalSeconds,
+        comments: commentsCount || 0,
+        recentActivity: recentActivity || 0,
       };
     },
     enabled: !!userId,
@@ -110,6 +176,15 @@ export default function UserProfile() {
     return format(new Date(dateString), "MMMM 'de' yyyy", { locale: ptBR });
   };
 
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
+
   const getRoleLabel = (role: string) => {
     const roles: Record<string, string> = {
       admin: "Administrador",
@@ -119,6 +194,105 @@ export default function UserProfile() {
     };
     return roles[role] || role;
   };
+
+  const getRoleBadgeVariant = (role: string) => {
+    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+      admin: "destructive",
+      moderator: "default",
+      executor: "secondary",
+      requester: "outline",
+    };
+    return variants[role] || "secondary";
+  };
+
+  // Calculate user level based on activity
+  const calculateLevel = () => {
+    if (!stats) return { level: 1, xp: 0, nextLevelXp: 100, progress: 0 };
+    
+    const xp = (stats.completed * 50) + (stats.created * 20) + (stats.comments * 5) + Math.floor(stats.totalTimeSeconds / 3600) * 10;
+    let level = 1;
+    let totalXpForLevel = 0;
+    let xpNeeded = 100;
+    
+    while (xp >= totalXpForLevel + xpNeeded) {
+      totalXpForLevel += xpNeeded;
+      level++;
+      xpNeeded = Math.floor(xpNeeded * 1.5);
+    }
+    
+    const currentLevelXp = xp - totalXpForLevel;
+    const progress = (currentLevelXp / xpNeeded) * 100;
+    
+    return { level, xp, nextLevelXp: xpNeeded, currentLevelXp, progress };
+  };
+
+  // Generate achievements
+  const getAchievements = (): Achievement[] => {
+    if (!stats || !profile) return [];
+    
+    const memberDays = differenceInDays(new Date(), new Date(profile.created_at));
+    
+    return [
+      {
+        id: "first-demand",
+        name: "Primeira Demanda",
+        description: "Crie sua primeira demanda",
+        icon: <Target className="h-5 w-5" />,
+        unlocked: stats.created >= 1,
+        progress: Math.min(stats.created, 1),
+        maxProgress: 1,
+      },
+      {
+        id: "task-master",
+        name: "Mestre das Tarefas",
+        description: "Complete 10 demandas",
+        icon: <Trophy className="h-5 w-5" />,
+        unlocked: stats.completed >= 10,
+        progress: Math.min(stats.completed, 10),
+        maxProgress: 10,
+      },
+      {
+        id: "super-achiever",
+        name: "Super Realizador",
+        description: "Complete 50 demandas",
+        icon: <Star className="h-5 w-5" />,
+        unlocked: stats.completed >= 50,
+        progress: Math.min(stats.completed, 50),
+        maxProgress: 50,
+      },
+      {
+        id: "communicator",
+        name: "Comunicador",
+        description: "Faça 20 comentários",
+        icon: <Zap className="h-5 w-5" />,
+        unlocked: stats.comments >= 20,
+        progress: Math.min(stats.comments, 20),
+        maxProgress: 20,
+      },
+      {
+        id: "time-tracker",
+        name: "Controlador do Tempo",
+        description: "Registre 10 horas de trabalho",
+        icon: <Clock className="h-5 w-5" />,
+        unlocked: stats.totalTimeSeconds >= 36000,
+        progress: Math.min(Math.floor(stats.totalTimeSeconds / 3600), 10),
+        maxProgress: 10,
+      },
+      {
+        id: "veteran",
+        name: "Veterano",
+        description: "Seja membro por 30 dias",
+        icon: <Award className="h-5 w-5" />,
+        unlocked: memberDays >= 30,
+        progress: Math.min(memberDays, 30),
+        maxProgress: 30,
+      },
+    ];
+  };
+
+  const levelData = calculateLevel();
+  const achievements = getAchievements();
+  const unlockedAchievements = achievements.filter(a => a.unlocked).length;
 
   if (isLoading) {
     return (
@@ -148,7 +322,7 @@ export default function UserProfile() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in pb-8">
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <Button variant="ghost" onClick={() => navigate(-1)} className="shrink-0">
@@ -166,97 +340,315 @@ export default function UserProfile() {
 
       {/* Profile Hero Section */}
       <Card className="overflow-hidden">
-        <div className="h-32 bg-gradient-to-r from-primary/80 via-primary to-primary/60" />
+        <div className="h-36 bg-gradient-to-r from-primary via-secondary to-primary/60 relative">
+          <div className="absolute inset-0 bg-black/10" />
+          <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-full px-3 py-1.5">
+            <Trophy className="h-4 w-4 text-primary" />
+            <span className="text-sm font-semibold">Nível {levelData.level}</span>
+          </div>
+        </div>
         <CardContent className="relative pb-6">
           {/* Avatar */}
           <div className="absolute -top-16 left-6 md:left-8">
-            <Avatar className="h-28 w-28 md:h-32 md:w-32 border-4 border-background shadow-xl">
-              <AvatarImage src={profile.avatar_url || undefined} alt={profile.full_name} className="object-cover" />
-              <AvatarFallback className="text-3xl bg-primary/10 text-primary font-semibold">
-                {profile.full_name ? getInitials(profile.full_name) : <User className="h-12 w-12" />}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="h-28 w-28 md:h-32 md:w-32 border-4 border-background shadow-xl">
+                <AvatarImage src={profile.avatar_url || undefined} alt={profile.full_name} className="object-cover" />
+                <AvatarFallback className="text-3xl bg-primary/10 text-primary font-semibold">
+                  {profile.full_name ? getInitials(profile.full_name) : <User className="h-12 w-12" />}
+                </AvatarFallback>
+              </Avatar>
+              {/* Level badge on avatar */}
+              <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-lg border-2 border-background">
+                {levelData.level}
+              </div>
+            </div>
           </div>
 
           {/* Profile Info Header */}
           <div className="pt-16 md:pt-20 md:pl-40">
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-              {profile.full_name}
-            </h1>
-            <p className="text-muted-foreground mt-1 flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Membro desde {formatDate(profile.created_at)}
-            </p>
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                  {profile.full_name}
+                </h1>
+                {(profile as any).job_title && (
+                  <p className="text-primary font-medium mt-1">{(profile as any).job_title}</p>
+                )}
+                <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    Membro desde {formatDate(profile.created_at)}
+                  </span>
+                  {(profile as any).location && (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-4 w-4" />
+                      {(profile as any).location}
+                    </span>
+                  )}
+                </div>
+                {(profile as any).bio && (
+                  <p className="text-muted-foreground mt-3 max-w-2xl">{(profile as any).bio}</p>
+                )}
+              </div>
+              
+              {/* Social links */}
+              <div className="flex items-center gap-2">
+                {(profile as any).website && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="outline" size="icon" asChild>
+                          <a href={(profile as any).website} target="_blank" rel="noopener noreferrer">
+                            <LinkIcon className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Website</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {(profile as any).github_url && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="outline" size="icon" asChild>
+                          <a href={(profile as any).github_url} target="_blank" rel="noopener noreferrer">
+                            <Github className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>GitHub</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {(profile as any).linkedin_url && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="outline" size="icon" asChild>
+                          <a href={(profile as any).linkedin_url} target="_blank" rel="noopener noreferrer">
+                            <Linkedin className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>LinkedIn</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
+            </div>
+
+            {/* XP Progress bar */}
+            <div className="mt-6 bg-muted/50 rounded-lg p-4">
+              <div className="flex items-center justify-between text-sm mb-2">
+                <span className="font-medium flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  Progresso para Nível {levelData.level + 1}
+                </span>
+                <span className="text-muted-foreground">
+                  {levelData.currentLevelXp} / {levelData.nextLevelXp} XP
+                </span>
+              </div>
+              <Progress value={levelData.progress} className="h-2" />
+              <p className="text-xs text-muted-foreground mt-2">
+                Total de {levelData.xp} XP acumulados
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Briefcase className="h-6 w-6 text-primary" />
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
+        <Card className="col-span-1">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex flex-col items-center text-center">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+                <Briefcase className="h-5 w-5 text-primary" />
               </div>
-              <div>
-                <p className="text-2xl font-bold">{stats?.assigned || 0}</p>
-                <p className="text-sm text-muted-foreground">Demandas Atribuídas</p>
-              </div>
+              <p className="text-2xl font-bold">{stats?.assigned || 0}</p>
+              <p className="text-xs text-muted-foreground">Atribuídas</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-success/10 flex items-center justify-center">
-                <CheckCircle2 className="h-6 w-6 text-success" />
+        <Card className="col-span-1">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex flex-col items-center text-center">
+              <div className="h-10 w-10 rounded-full bg-success/10 flex items-center justify-center mb-2">
+                <CheckCircle2 className="h-5 w-5 text-success" />
               </div>
-              <div>
-                <p className="text-2xl font-bold">{stats?.completed || 0}</p>
-                <p className="text-sm text-muted-foreground">Demandas Concluídas</p>
-              </div>
+              <p className="text-2xl font-bold">{stats?.completed || 0}</p>
+              <p className="text-xs text-muted-foreground">Concluídas</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center">
-                <Clock className="h-6 w-6 text-accent-foreground" />
+        <Card className="col-span-1">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex flex-col items-center text-center">
+              <div className="h-10 w-10 rounded-full bg-secondary/10 flex items-center justify-center mb-2">
+                <Target className="h-5 w-5 text-secondary" />
               </div>
-              <div>
-                <p className="text-2xl font-bold">{stats?.created || 0}</p>
-                <p className="text-sm text-muted-foreground">Demandas Criadas</p>
+              <p className="text-2xl font-bold">{stats?.created || 0}</p>
+              <p className="text-xs text-muted-foreground">Criadas</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="col-span-1">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex flex-col items-center text-center">
+              <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center mb-2">
+                <Clock className="h-5 w-5 text-foreground" />
               </div>
+              <p className="text-2xl font-bold">{formatTime(stats?.totalTimeSeconds || 0)}</p>
+              <p className="text-xs text-muted-foreground">Tempo Total</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="col-span-1">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex flex-col items-center text-center">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+                <Zap className="h-5 w-5 text-primary" />
+              </div>
+              <p className="text-2xl font-bold">{stats?.comments || 0}</p>
+              <p className="text-xs text-muted-foreground">Comentários</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="col-span-1">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex flex-col items-center text-center">
+              <div className="h-10 w-10 rounded-full bg-warning/20 flex items-center justify-center mb-2">
+                <Flame className="h-5 w-5 text-warning" />
+              </div>
+              <p className="text-2xl font-bold">{stats?.recentActivity || 0}</p>
+              <p className="text-xs text-muted-foreground">Ações (30d)</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Teams */}
-      {userTeams && userTeams.length > 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
-              <Briefcase className="h-5 w-5 text-primary" />
-              Equipes
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {userTeams.map((tm: any) => (
-                <Badge key={tm.teams?.id} variant="secondary" className="text-sm py-1.5 px-3">
-                  {tm.teams?.name}
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    ({getRoleLabel(tm.role)})
-                  </span>
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Achievements */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Trophy className="h-5 w-5 text-primary" />
+            Conquistas
+            <Badge variant="secondary" className="ml-2">
+              {unlockedAchievements}/{achievements.length}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {achievements.map((achievement) => (
+              <div
+                key={achievement.id}
+                className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                  achievement.unlocked 
+                    ? "bg-primary/5 border-primary/20" 
+                    : "bg-muted/30 border-transparent opacity-60"
+                }`}
+              >
+                <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${
+                  achievement.unlocked 
+                    ? "bg-primary text-primary-foreground" 
+                    : "bg-muted text-muted-foreground"
+                }`}>
+                  {achievement.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`font-medium text-sm ${achievement.unlocked ? "" : "text-muted-foreground"}`}>
+                    {achievement.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">{achievement.description}</p>
+                  {!achievement.unlocked && achievement.progress !== undefined && (
+                    <div className="mt-1">
+                      <Progress 
+                        value={(achievement.progress / (achievement.maxProgress || 1)) * 100} 
+                        className="h-1" 
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        {achievement.progress}/{achievement.maxProgress}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                {achievement.unlocked && (
+                  <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+                )}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Teams & Boards Grid */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Teams */}
+        {userTeams && userTeams.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Briefcase className="h-5 w-5 text-primary" />
+                Equipes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {userTeams.map((tm: any) => (
+                  <div 
+                    key={tm.teams?.id} 
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                  >
+                    <div>
+                      <p className="font-medium">{tm.teams?.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Desde {format(new Date(tm.joined_at), "dd/MM/yyyy")}
+                      </p>
+                    </div>
+                    <Badge variant={getRoleBadgeVariant(tm.role)}>
+                      {getRoleLabel(tm.role)}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Boards */}
+        {userBoards && userBoards.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Target className="h-5 w-5 text-primary" />
+                Quadros
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {userBoards.map((bm: any) => (
+                  <div 
+                    key={bm.boards?.id} 
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                  >
+                    <p className="font-medium">{bm.boards?.name}</p>
+                    <Badge variant={getRoleBadgeVariant(bm.role)}>
+                      {getRoleLabel(bm.role)}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

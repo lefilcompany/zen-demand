@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Camera, Loader2, Save, User, Mail, Calendar, Shield, Lock, Eye, EyeOff, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Camera, Loader2, Save, User, Mail, Calendar, Shield, Lock, Eye, EyeOff, CheckCircle2, XCircle, AlertCircle, MapPin, Link as LinkIcon, Github, Linkedin, Briefcase } from "lucide-react";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -20,6 +21,12 @@ export default function Profile() {
   
   const [fullName, setFullName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [bio, setBio] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [location, setLocation] = useState("");
+  const [website, setWebsite] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [githubUrl, setGithubUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   
   // Password change state
@@ -84,11 +91,26 @@ export default function Profile() {
     if (profile) {
       setFullName(profile.full_name || "");
       setAvatarUrl(profile.avatar_url || "");
+      setBio((profile as any).bio || "");
+      setJobTitle((profile as any).job_title || "");
+      setLocation((profile as any).location || "");
+      setWebsite((profile as any).website || "");
+      setLinkedinUrl((profile as any).linkedin_url || "");
+      setGithubUrl((profile as any).github_url || "");
     }
   }, [profile]);
 
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: { full_name: string; avatar_url: string | null }) => {
+    mutationFn: async (data: { 
+      full_name: string; 
+      avatar_url: string | null;
+      bio: string | null;
+      job_title: string | null;
+      location: string | null;
+      website: string | null;
+      linkedin_url: string | null;
+      github_url: string | null;
+    }) => {
       if (!user) throw new Error("Usuário não autenticado");
       
       const { error } = await supabase
@@ -96,13 +118,20 @@ export default function Profile() {
         .update({
           full_name: data.full_name,
           avatar_url: data.avatar_url,
-        })
+          bio: data.bio,
+          job_title: data.job_title,
+          location: data.location,
+          website: data.website,
+          linkedin_url: data.linkedin_url,
+          github_url: data.github_url,
+        } as any)
         .eq("id", user.id);
       
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
       toast.success("Perfil atualizado com sucesso!");
     },
     onError: (error) => {
@@ -165,6 +194,12 @@ export default function Profile() {
     updateProfileMutation.mutate({
       full_name: fullName.trim(),
       avatar_url: avatarUrl || null,
+      bio: bio.trim() || null,
+      job_title: jobTitle.trim() || null,
+      location: location.trim() || null,
+      website: website.trim() || null,
+      linkedin_url: linkedinUrl.trim() || null,
+      github_url: githubUrl.trim() || null,
     });
   };
 
@@ -390,6 +425,49 @@ export default function Profile() {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="jobTitle" className="flex items-center gap-2">
+                  <Briefcase className="h-4 w-4 text-muted-foreground" />
+                  Cargo / Função
+                </Label>
+                <Input
+                  id="jobTitle"
+                  value={jobTitle}
+                  onChange={(e) => setJobTitle(e.target.value)}
+                  placeholder="Ex: Desenvolvedor Full Stack"
+                  className="h-11"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea
+                  id="bio"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Conte um pouco sobre você..."
+                  className="min-h-[80px] resize-none"
+                  maxLength={200}
+                />
+                <p className="text-xs text-muted-foreground text-right">
+                  {bio.length}/200 caracteres
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="location" className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  Localização
+                </Label>
+                <Input
+                  id="location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="Ex: São Paulo, Brasil"
+                  className="h-11"
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
                 <Input
                   id="email"
@@ -400,6 +478,54 @@ export default function Profile() {
                 <p className="text-xs text-muted-foreground">
                   O e-mail não pode ser alterado
                 </p>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <p className="text-sm font-medium text-muted-foreground">Links e Redes Sociais</p>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="website" className="flex items-center gap-2">
+                    <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                    Website
+                  </Label>
+                  <Input
+                    id="website"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                    placeholder="https://seusite.com"
+                    className="h-11"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="linkedinUrl" className="flex items-center gap-2">
+                    <Linkedin className="h-4 w-4 text-muted-foreground" />
+                    LinkedIn
+                  </Label>
+                  <Input
+                    id="linkedinUrl"
+                    value={linkedinUrl}
+                    onChange={(e) => setLinkedinUrl(e.target.value)}
+                    placeholder="https://linkedin.com/in/seuperfil"
+                    className="h-11"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="githubUrl" className="flex items-center gap-2">
+                    <Github className="h-4 w-4 text-muted-foreground" />
+                    GitHub
+                  </Label>
+                  <Input
+                    id="githubUrl"
+                    value={githubUrl}
+                    onChange={(e) => setGithubUrl(e.target.value)}
+                    placeholder="https://github.com/seuperfil"
+                    className="h-11"
+                  />
+                </div>
               </div>
 
               <Button
