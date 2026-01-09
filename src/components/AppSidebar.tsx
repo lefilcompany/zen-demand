@@ -301,7 +301,12 @@ export function AppSidebar() {
                   activeClassName="bg-primary/15 border-primary/50"
                 >
                   <ShoppingCart className="h-5 w-5 md:h-4 md:w-4" />
-                  {(isMobile || !isCollapsed) && <span className="text-base md:text-sm">Loja de Serviços</span>}
+                  {(isMobile || !isCollapsed) && (
+                    <span className="flex items-center gap-1.5 text-base md:text-sm">
+                      Loja de Serviços
+                      <Sparkles className="h-4 w-4 md:h-3 md:w-3 text-amber-500" />
+                    </span>
+                  )}
                 </NavLink>
               </SidebarMenuItem>
               <SidebarMenuItem>
