@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
+import { formatPrice, parsePriceToCents, centsToDecimal } from "@/lib/priceUtils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +32,7 @@ import {
 import { useTeams } from "@/hooks/useTeams";
 import { useServices, useCreateService, useUpdateService, useDeleteService } from "@/hooks/useServices";
 import { useIsTeamAdmin } from "@/hooks/useTeamRole";
-import { ArrowLeft, Plus, Clock, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Clock, Pencil, Trash2, DollarSign } from "lucide-react";
 
 export default function ServicesManagement() {
   const { id } = useParams<{ id: string }>();
@@ -49,11 +50,13 @@ export default function ServicesManagement() {
     name: string;
     description: string;
     estimated_hours: number;
+    price_cents: number;
   } | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     estimated_hours: 24,
+    price: "0,00",
   });
 
   const team = teams?.find((t) => t.id === id);
@@ -65,16 +68,19 @@ export default function ServicesManagement() {
         name: service.name,
         description: service.description || "",
         estimated_hours: service.estimated_hours,
+        price: centsToDecimal(service.price_cents || 0),
       });
     } else {
       setEditingService(null);
-      setFormData({ name: "", description: "", estimated_hours: 24 });
+      setFormData({ name: "", description: "", estimated_hours: 24, price: "0,00" });
     }
     setDialogOpen(true);
   };
 
   const handleSubmit = () => {
     if (!formData.name.trim() || !id) return;
+
+    const priceCents = parsePriceToCents(formData.price);
 
     if (editingService) {
       updateService.mutate(
@@ -84,6 +90,7 @@ export default function ServicesManagement() {
           name: formData.name.trim(),
           description: formData.description.trim() || undefined,
           estimated_hours: formData.estimated_hours,
+          price_cents: priceCents,
         },
         {
           onSuccess: () => {
@@ -105,6 +112,7 @@ export default function ServicesManagement() {
           description: formData.description.trim() || undefined,
           team_id: id,
           estimated_hours: formData.estimated_hours,
+          price_cents: priceCents,
         },
         {
           onSuccess: () => {
@@ -279,6 +287,7 @@ export default function ServicesManagement() {
                           name: service.name,
                           description: service.description || "",
                           estimated_hours: service.estimated_hours,
+                          price_cents: service.price_cents || 0,
                         })
                       }
                     >
