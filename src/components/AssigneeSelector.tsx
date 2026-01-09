@@ -1,8 +1,18 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useBoardMembers } from "@/hooks/useBoardMembers";
 import { Users, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface AssigneeSelectorProps {
   teamId: string | null;
@@ -20,8 +30,7 @@ export function AssigneeSelector({
   disabled = false,
 }: AssigneeSelectorProps) {
   const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  
+
   const { data: teamMembers, isLoading: loadingTeam } = useTeamMembers(teamId);
   const { data: boardMembers, isLoading: loadingBoard } = useBoardMembers(
     boardId || null
@@ -37,23 +46,6 @@ export function AssigneeSelector({
     : teamMembers;
 
   const isLoading = boardId ? loadingBoard : loadingTeam;
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-
-    if (open) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [open]);
 
   const toggleUser = (userId: string) => {
     if (selectedUserIds.includes(userId)) {
@@ -76,18 +68,18 @@ export function AssigneeSelector({
     selectedUserIds.includes(m.user_id)
   );
 
-  const handleToggle = () => {
+  const handleOpen = () => {
     if (!disabled && (teamId || boardId)) {
-      setOpen(!open);
+      setOpen(true);
     }
   };
 
   return (
-    <div className="relative" ref={containerRef}>
+    <>
       {/* Trigger Button */}
       <button
         type="button"
-        onClick={handleToggle}
+        onClick={handleOpen}
         disabled={disabled || (!teamId && !boardId)}
         className={cn(
           "w-full flex items-center justify-start gap-2 px-4 py-2 rounded-md border border-input bg-background text-sm",
@@ -129,103 +121,90 @@ export function AssigneeSelector({
         )}
       </button>
 
-      {/* Dropdown */}
-      {open && (
-        <div 
-          className="absolute z-50 mt-1 w-full max-w-80 bg-popover border rounded-md shadow-md overflow-hidden"
-          style={{ minWidth: "calc(100vw - 2rem)", maxWidth: "20rem" }}
-        >
-          {/* Header */}
-          <div className="p-3 border-b bg-popover">
-            <h4 className="font-medium text-sm">Atribuir responsáveis</h4>
-            <p className="text-xs text-muted-foreground">
-              Selecione os membros {boardId ? "do quadro" : "da equipe"}
-            </p>
-          </div>
+      {/* Dialog with Member Cards */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Selecionar Responsáveis</DialogTitle>
+          </DialogHeader>
 
-          {/* Content */}
-          <div className="max-h-[240px] overflow-y-auto p-2">
+          <ScrollArea className="max-h-[60vh] pr-3">
             {isLoading ? (
-              <p className="text-sm text-muted-foreground p-2">Carregando...</p>
+              <p className="text-sm text-muted-foreground p-4 text-center">
+                Carregando...
+              </p>
             ) : members && members.length > 0 ? (
-              <div className="space-y-1">
+              <div className="grid grid-cols-2 gap-3">
                 {members.map((member) => {
                   const isSelected = selectedUserIds.includes(member.user_id);
                   return (
-                    <div
+                    <button
                       key={member.id}
-                      role="button"
-                      tabIndex={0}
+                      type="button"
                       onClick={() => toggleUser(member.user_id)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          toggleUser(member.user_id);
-                        }
-                      }}
                       className={cn(
-                        "flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors",
-                        "hover:bg-muted focus:bg-muted focus:outline-none",
-                        isSelected && "bg-muted"
+                        "relative flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
+                        "hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                        isSelected
+                          ? "border-primary bg-primary/5"
+                          : "border-border bg-card"
                       )}
                     >
-                      {/* Custom Checkbox */}
-                      <div
-                        className={cn(
-                          "h-4 w-4 rounded border flex items-center justify-center shrink-0 transition-colors",
-                          isSelected
-                            ? "bg-primary border-primary text-primary-foreground"
-                            : "border-input bg-background"
-                        )}
-                      >
-                        {isSelected && <Check className="h-3 w-3" />}
-                      </div>
+                      {/* Selection indicator */}
+                      {isSelected && (
+                        <div className="absolute top-2 right-2 h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                          <Check className="h-3 w-3 text-primary-foreground" />
+                        </div>
+                      )}
 
                       {/* Avatar */}
-                      <div className="h-6 w-6 rounded-full overflow-hidden bg-muted flex items-center justify-center shrink-0">
-                        {member.profile?.avatar_url ? (
-                          <img
-                            src={member.profile.avatar_url}
-                            alt={member.profile?.full_name || ""}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-xs font-medium text-muted-foreground">
-                            {getInitials(member.profile?.full_name || "?")}
-                          </span>
-                        )}
-                      </div>
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage
+                          src={member.profile?.avatar_url || undefined}
+                          alt={member.profile?.full_name || ""}
+                        />
+                        <AvatarFallback className="text-sm font-medium">
+                          {getInitials(member.profile?.full_name || "?")}
+                        </AvatarFallback>
+                      </Avatar>
 
                       {/* Name */}
-                      <span className="text-sm flex-1 truncate">
+                      <span className="text-sm font-medium text-center line-clamp-2">
                         {member.profile?.full_name}
                       </span>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground p-2">
+              <p className="text-sm text-muted-foreground p-4 text-center">
                 Nenhum membro encontrado
               </p>
             )}
-          </div>
+          </ScrollArea>
 
-          {/* Footer - Clear Button */}
-          {selectedUserIds.length > 0 && (
-            <div className="p-2 border-t bg-popover">
-              <button
+          <DialogFooter className="flex-row gap-2 sm:gap-2">
+            {selectedUserIds.length > 0 && (
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => onChange([])}
-                className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-sm rounded-md hover:bg-muted transition-colors"
+                className="flex-1 sm:flex-none"
               >
-                <X className="h-4 w-4" />
-                Limpar seleção
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+                <X className="h-4 w-4 mr-2" />
+                Limpar
+              </Button>
+            )}
+            <Button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="flex-1 sm:flex-none"
+            >
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
