@@ -931,6 +931,7 @@ export default function DemandDetail() {
                 variant="detail"
                 showControls={canControlTimer}
                 canControl={canControlTimer}
+                canEdit={role === "admin" || role === "moderator" || role === "executor"}
               />
             </div>
           )}

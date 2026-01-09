@@ -13,6 +13,7 @@ interface UserTimeTrackingDisplayProps {
   variant?: "card" | "detail";
   showControls?: boolean;
   canControl?: boolean;
+  canEdit?: boolean;
 }
 
 // Individual user time row with live timer
@@ -88,6 +89,7 @@ export function UserTimeTrackingDisplay({
   variant = "detail",
   showControls = true,
   canControl = true,
+  canEdit = true,
 }: UserTimeTrackingDisplayProps) {
   const { user } = useAuth();
   const { data: userStats, isLoading: isLoadingStats } = useDemandUserTimeStats(demandId);
@@ -205,7 +207,7 @@ export function UserTimeTrackingDisplay({
           </span>
         )}
         <div className="ml-auto flex items-center gap-1">
-          {demandId && (
+          {demandId && canEdit && (
             <TimeEntryEditDialog
               entries={currentUserEntries}
               demandId={demandId}
