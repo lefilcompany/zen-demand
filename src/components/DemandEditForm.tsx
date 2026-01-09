@@ -8,8 +8,7 @@ import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
 import { useTeamRole } from "@/hooks/useTeamRole";
-import { format } from "date-fns";
-import { calculateBusinessDueDate, formatDueDateForInput } from "@/lib/dateUtils";
+import { calculateBusinessDueDate, formatDueDateForInput, toDateOnly } from "@/lib/dateUtils";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
@@ -44,7 +43,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
   const [statusId, setStatusId] = useState(demand.status_id);
   const [priority, setPriority] = useState(demand.priority || "média");
   const [dueDate, setDueDate] = useState(
-    demand.due_date ? format(new Date(demand.due_date), "yyyy-MM-dd") : ""
+    toDateOnly(demand.due_date) || ""
   );
   const [serviceId, setServiceId] = useState(demand.service_id || "");
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);

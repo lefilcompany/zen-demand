@@ -46,6 +46,7 @@ import { UserTimeTrackingDisplay } from "@/components/UserTimeTrackingDisplay";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatDateOnlyBR } from "@/lib/dateUtils";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
@@ -858,9 +859,7 @@ export default function DemandDetail() {
                 <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <span className="text-muted-foreground">Vencimento:</span>
                 <span className="font-medium">
-                  {format(new Date(demand.due_date), "dd/MM/yyyy", {
-                    locale: ptBR,
-                  })}
+                  {formatDateOnlyBR(demand.due_date)}
                 </span>
               </div>
             )}

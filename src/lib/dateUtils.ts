@@ -1,4 +1,5 @@
-import { addHours, addDays, isSaturday, isSunday, format, getYear } from "date-fns";
+import { addHours, addDays, isSaturday, isSunday, format, getYear, startOfDay } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 /**
  * Get Brazilian national holidays for a given year
@@ -103,4 +104,49 @@ export const formatDueDate = (date: Date): string => {
  */
 export const formatDueDateForInput = (date: Date): string => {
   return format(date, "yyyy-MM-dd");
+};
+
+/**
+ * Extract the date-only portion (YYYY-MM-DD) from an ISO timestamp string.
+ * This avoids timezone conversion issues by working with the string directly.
+ */
+export const toDateOnly = (isoString: string | null | undefined): string | null => {
+  if (!isoString) return null;
+  // Handle both "2026-01-14T00:00:00Z" and "2026-01-14 00:00:00+00" formats
+  return isoString.slice(0, 10);
+};
+
+/**
+ * Parse a date-only string (YYYY-MM-DD) into a local Date object at midnight.
+ * This ensures consistent display regardless of the user's timezone.
+ */
+export const parseDateOnly = (dateOnlyString: string | null | undefined): Date | null => {
+  if (!dateOnlyString) return null;
+  const [year, month, day] = dateOnlyString.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
+/**
+ * Format a date-only string or ISO timestamp to Brazilian format (dd/MM/yyyy).
+ * Handles timezone issues by extracting the date portion first.
+ */
+export const formatDateOnlyBR = (isoString: string | null | undefined): string | null => {
+  const dateOnly = toDateOnly(isoString);
+  if (!dateOnly) return null;
+  const date = parseDateOnly(dateOnly);
+  if (!date) return null;
+  return format(date, "dd/MM/yyyy", { locale: ptBR });
+};
+
+/**
+ * Check if a due date is overdue (past), using date-only comparison.
+ * This avoids timezone issues by comparing only the date portions.
+ */
+export const isDateOverdue = (isoString: string | null | undefined): boolean => {
+  const dateOnly = toDateOnly(isoString);
+  if (!dateOnly) return false;
+  const dueDate = parseDateOnly(dateOnly);
+  if (!dueDate) return false;
+  const today = startOfDay(new Date());
+  return dueDate < today;
 };

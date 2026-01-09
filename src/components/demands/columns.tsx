@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { Wrench } from "lucide-react";
+import { formatDateOnlyBR, isDateOverdue, toDateOnly, parseDateOnly } from "@/lib/dateUtils";
 
 // Define the demand type based on what useDemands returns
 export interface DemandTableRow {
@@ -167,12 +168,10 @@ function DueDateCell({
   if (!dueDate) {
     return <span className="text-muted-foreground text-sm">—</span>;
   }
-  const date = new Date(dueDate);
-  const isOverdue = date < new Date();
+  const isOverdue = isDateOverdue(dueDate);
+  const formattedDate = formatDateOnlyBR(dueDate);
   return <span className={isOverdue ? "text-destructive font-medium" : "text-foreground"}>
-      {format(date, "dd/MM/yyyy", {
-      locale: ptBR
-    })}
+      {formattedDate}
     </span>;
 }
 
@@ -307,8 +306,8 @@ export const demandColumns: ColumnDef<DemandTableRow>[] = [{
   }) => <DueDateCell row={row} />,
   enableSorting: true,
   sortingFn: (rowA, rowB) => {
-    const dateA = rowA.original.due_date ? new Date(rowA.original.due_date).getTime() : Infinity;
-    const dateB = rowB.original.due_date ? new Date(rowB.original.due_date).getTime() : Infinity;
+    const dateA = parseDateOnly(toDateOnly(rowA.original.due_date))?.getTime() ?? Infinity;
+    const dateB = parseDateOnly(toDateOnly(rowB.original.due_date))?.getTime() ?? Infinity;
     return dateA - dateB;
   }
 }, {

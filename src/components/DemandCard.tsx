@@ -1,12 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, AlertTriangle, Clock, Wrench } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
 import { cn } from "@/lib/utils";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
+import { formatDateOnlyBR, isDateOverdue } from "@/lib/dateUtils";
 
 interface Assignee {
   user_id: string;
@@ -64,7 +63,7 @@ export function DemandCard({ demand, onClick, showFullDetails = false }: DemandC
   const isDelivered = statusName === "Entregue";
   
   // Check if due date is overdue
-  const isOverdue = demand.due_date && new Date(demand.due_date) < new Date() && statusName !== "Entregue";
+  const isOverdue = statusName !== "Entregue" && isDateOverdue(demand.due_date);
   
   // Fallback to assigned_profile if no assignees
   const displayAssignees = assignees.length > 0 
@@ -159,9 +158,7 @@ export function DemandCard({ demand, onClick, showFullDetails = false }: DemandC
                 <Calendar className="h-3.5 w-3.5" />
               )}
               <span>
-                {format(new Date(demand.due_date), "dd/MM/yyyy", {
-                  locale: ptBR,
-                })}
+                {formatDateOnlyBR(demand.due_date)}
               </span>
             </div>
           )}
