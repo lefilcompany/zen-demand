@@ -94,6 +94,10 @@ export const ServiceCreateSchema = z.object({
     .int("Horas estimadas deve ser um número inteiro")
     .min(1, "Horas estimadas deve ser pelo menos 1")
     .max(8760, "Horas estimadas deve ser no máximo 8760 (1 ano)"),
+  price_cents: z.number()
+    .int("Preço deve ser um número inteiro")
+    .min(0, "Preço não pode ser negativo")
+    .default(0),
 });
 
 export const ServiceUpdateSchema = z.object({
@@ -110,6 +114,10 @@ export const ServiceUpdateSchema = z.object({
     .int("Horas estimadas deve ser um número inteiro")
     .min(1, "Horas estimadas deve ser pelo menos 1")
     .max(8760, "Horas estimadas deve ser no máximo 8760 (1 ano)")
+    .optional(),
+  price_cents: z.number()
+    .int("Preço deve ser um número inteiro")
+    .min(0, "Preço não pode ser negativo")
     .optional(),
 });
 
