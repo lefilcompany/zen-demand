@@ -7,13 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useTeams, generateAccessCode, checkAccessCodeAvailable } from "@/hooks/useTeams";
-import { useTeamMembers, useUpdateMemberRole, useRemoveMember } from "@/hooks/useTeamMembers";
+import { useTeamMembers, useRemoveMember } from "@/hooks/useTeamMembers";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useTeamScope } from "@/hooks/useTeamScope";
@@ -48,7 +47,6 @@ export default function TeamConfig() {
   const { data: members, isLoading: membersLoading } = useTeamMembers(selectedTeamId);
   const { data: myRole, isLoading: roleLoading } = useTeamRole(selectedTeamId);
   const { data: teamScope } = useTeamScope(selectedTeamId);
-  const updateRole = useUpdateMemberRole();
   const removeMember = useRemoveMember();
   const queryClient = useQueryClient();
   
@@ -82,24 +80,6 @@ export default function TeamConfig() {
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       toast.error("Erro ao copiar código");
-    }
-  };
-
-  const handleRoleChange = async (memberId: string, newRole: string) => {
-    try {
-      await updateRole.mutateAsync({ 
-        memberId, 
-        newRole: newRole as "admin" | "moderator" | "executor" | "requester" 
-      });
-      toast.success("Cargo atualizado com sucesso!");
-    } catch (error: any) {
-      console.error("Error updating role:", error);
-      const message = error?.message || "Erro ao atualizar cargo";
-      if (message.includes("row-level security") || message.includes("policy")) {
-        toast.error("Você não tem permissão para alterar cargos");
-      } else {
-        toast.error("Erro ao atualizar cargo: " + message);
-      }
     }
   };
 
@@ -423,7 +403,6 @@ export default function TeamConfig() {
             </CardTitle>
             <CardDescription>
               {members?.length || 0} membros na equipe
-              {isAdmin && " • Apenas administradores podem alterar cargos"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -466,22 +445,6 @@ export default function TeamConfig() {
                       
                       {canEditMember && (
                         <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                          <Select 
-                            value={member.role} 
-                            onValueChange={(value) => handleRoleChange(member.id, value)}
-                            disabled={updateRole.isPending}
-                          >
-                            <SelectTrigger className="w-full sm:w-36">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="admin">Administrador</SelectItem>
-                              <SelectItem value="moderator">Coordenador</SelectItem>
-                              <SelectItem value="executor">Agente</SelectItem>
-                              <SelectItem value="requester">Solicitante</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          
                           <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button 

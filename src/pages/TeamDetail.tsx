@@ -13,7 +13,7 @@ import { ptBR } from "date-fns/locale";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useTeams, useDeleteTeam } from "@/hooks/useTeams";
-import { useTeamMembers, useUpdateMemberRole, useRemoveMember } from "@/hooks/useTeamMembers";
+import { useTeamMembers, useRemoveMember } from "@/hooks/useTeamMembers";
 import { useIsTeamAdmin, useTeamRole } from "@/hooks/useTeamRole";
 import { useTeamScope } from "@/hooks/useTeamScope";
 import { MemberCard } from "@/components/MemberCard";
@@ -47,7 +47,6 @@ export default function TeamDetail() {
   const {
     data: scope
   } = useTeamScope(id || undefined);
-  const updateRole = useUpdateMemberRole();
   const removeMember = useRemoveMember();
   const deleteTeam = useDeleteTeam();
   const team = teams?.find(t => t.id === id);
@@ -59,21 +58,6 @@ export default function TeamDetail() {
       toast.success("Código copiado!");
       setTimeout(() => setCopied(false), 2000);
     }
-  };
-  const handleRoleChange = (memberId: string, newRole: TeamRole) => {
-    updateRole.mutate({
-      memberId,
-      newRole
-    }, {
-      onSuccess: () => {
-        toast.success("Papel atualizado com sucesso!");
-      },
-      onError: (error: any) => {
-        toast.error("Erro ao atualizar papel", {
-          description: getErrorMessage(error)
-        });
-      }
-    });
   };
   const handleRemoveMember = (memberId: string) => {
     removeMember.mutate(memberId, {
@@ -125,6 +109,31 @@ export default function TeamDetail() {
         ]}
       />
 
+      {/* Team Access Code Card - For Admins/Moderators */}
+      {canManage && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Key className="h-5 w-5" />
+              Código de Acesso da Equipe
+            </CardTitle>
+            <CardDescription>
+              Compartilhe este código para convidar novos membros para a equipe
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 px-3 py-2 rounded-md bg-muted font-mono text-sm">
+                {team.access_code}
+              </code>
+              <Button variant="outline" size="icon" onClick={handleCopyCode}>
+                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Scope Configuration - Only for Admins */}
       {isAdmin && id && <TeamScopeConfig teamId={id} currentScope={scope || null} />}
 
@@ -143,7 +152,7 @@ export default function TeamDetail() {
           {membersLoading ? <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-40 rounded-xl" />)}
             </div> : members && members.length > 0 ? <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {members.map(member => <MemberCard key={member.id} member={member} isAdmin={isAdmin} currentUserId={user?.id || ""} onRoleChange={handleRoleChange} onRemove={handleRemoveMember} isUpdating={updateRole.isPending} isRemoving={removeMember.isPending} />)}
+              {members.map(member => <MemberCard key={member.id} member={member} isAdmin={isAdmin} currentUserId={user?.id || ""} onRemove={handleRemoveMember} isRemoving={removeMember.isPending} />)}
             </div> : <p className="text-center text-muted-foreground py-8">
               Nenhum membro encontrado.
             </p>}
