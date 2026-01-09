@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, ClipboardList, Settings2, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock, Sparkles } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, ClipboardList, Settings2, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock, Sparkles, ShoppingCart } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import logoSoma from "@/assets/logo-soma-dark.png";
 import { NavLink } from "@/components/NavLink";
@@ -74,12 +74,19 @@ export function AppSidebar() {
   ] : [];
 
   // Add my requests link for requesters
-  const requesterMenuItems = isRequester ? [{
-    title: "Minhas Solicitações",
-    url: "/my-requests",
-    icon: Send,
-    showReturnedBadge: true
-  }] : [];
+  const requesterMenuItems = isRequester ? [
+    {
+      title: "Loja de Serviços",
+      url: "/store",
+      icon: ShoppingCart
+    },
+    {
+      title: "Minhas Solicitações",
+      url: "/my-requests",
+      icon: Send,
+      showReturnedBadge: true
+    }
+  ] : [];
 
   // "Minhas Demandas" only for non-requesters
   const myDemandsItems = !isRequester ? [{

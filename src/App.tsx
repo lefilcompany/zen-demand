@@ -44,6 +44,7 @@ import ResetPassword from "./pages/ResetPassword";
 import TimeManagement from "./pages/TimeManagement";
 import UserProfile from "./pages/UserProfile";
 import BoardSummary from "./pages/BoardSummary";
+import Store from "./pages/Store";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -89,6 +90,7 @@ const App = () => (
                           <Route path="/demands/:id" element={<DemandDetail />} />
                           <Route path="/my-requests" element={<MyDemandRequests />} />
                           <Route path="/demand-requests" element={<DemandRequests />} />
+                          <Route path="/store" element={<Store />} />
                           <Route path="/kanban" element={<Kanban />} />
                           <Route path="/archived" element={<ArchivedDemands />} />
                           <Route path="/my-demands" element={<MyDemands />} />

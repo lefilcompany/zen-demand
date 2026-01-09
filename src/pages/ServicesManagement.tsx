@@ -237,6 +237,20 @@ export default function ServicesManagement() {
                   }
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="price">Preço (R$)</Label>
+                <Input
+                  id="price"
+                  placeholder="0,00"
+                  value={formData.price}
+                  onChange={(e) =>
+                    setFormData({ ...formData, price: e.target.value })
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Deixe 0,00 para serviço gratuito
+                </p>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDialogOpen(false)}>
@@ -287,7 +301,7 @@ export default function ServicesManagement() {
                           name: service.name,
                           description: service.description || "",
                           estimated_hours: service.estimated_hours,
-                          price_cents: service.price_cents || 0,
+                          price_cents: (service as any).price_cents || 0,
                         })
                       }
                     >
@@ -327,9 +341,17 @@ export default function ServicesManagement() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  <span>Prazo estimado: {service.estimated_hours} horas</span>
+                <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    <span>Prazo estimado: {service.estimated_hours} horas</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4" />
+                    <span className="font-medium text-foreground">
+                      {formatPrice((service as any).price_cents || 0)}
+                    </span>
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -385,6 +385,8 @@ export type Database = {
           created_by: string
           description: string | null
           id: string
+          payment_required: boolean | null
+          payment_status: string | null
           priority: string | null
           rejection_reason: string | null
           responded_at: string | null
@@ -401,6 +403,8 @@ export type Database = {
           created_by: string
           description?: string | null
           id?: string
+          payment_required?: boolean | null
+          payment_status?: string | null
           priority?: string | null
           rejection_reason?: string | null
           responded_at?: string | null
@@ -417,6 +421,8 @@ export type Database = {
           created_by?: string
           description?: string | null
           id?: string
+          payment_required?: boolean | null
+          payment_status?: string | null
           priority?: string | null
           rejection_reason?: string | null
           responded_at?: string | null
@@ -886,6 +892,7 @@ export type Database = {
           estimated_hours: number
           id: string
           name: string
+          price_cents: number
           team_id: string
           updated_at: string
         }
@@ -897,6 +904,7 @@ export type Database = {
           estimated_hours?: number
           id?: string
           name: string
+          price_cents?: number
           team_id: string
           updated_at?: string
         }
@@ -908,6 +916,7 @@ export type Database = {
           estimated_hours?: number
           id?: string
           name?: string
+          price_cents?: number
           team_id?: string
           updated_at?: string
         }

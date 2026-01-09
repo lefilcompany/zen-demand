@@ -14,29 +14,40 @@ import { ServiceSelector } from "@/components/ServiceSelector";
 import { RequestAttachmentUploader } from "@/components/RequestAttachmentUploader";
 import { PendingFileUploader, PendingFile } from "@/components/PendingFileUploader";
 import { ArrowLeft, Ban, Send, Layout, Paperclip, Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 
 export default function CreateDemandRequest() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const createRequest = useCreateDemandRequest();
   const { selectedTeamId } = useSelectedTeam();
   const { selectedBoardId, currentBoard } = useSelectedBoard();
   const { data: scope } = useTeamScope();
 
   const isTeamActive = scope?.active ?? true;
+  
+  // Get serviceId from URL query params
+  const preselectedServiceId = searchParams.get("serviceId");
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("média");
-  const [serviceId, setServiceId] = useState("");
+  const [serviceId, setServiceId] = useState(preselectedServiceId || "");
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [createdRequestId, setCreatedRequestId] = useState<string | null>(null);
   
   const uploadAttachment = useUploadRequestAttachment();
+
+  // Update serviceId when preselectedServiceId changes
+  useEffect(() => {
+    if (preselectedServiceId && !serviceId) {
+      setServiceId(preselectedServiceId);
+    }
+  }, [preselectedServiceId]);
 
   const handleServiceChange = (newServiceId: string) => {
     setServiceId(newServiceId);
