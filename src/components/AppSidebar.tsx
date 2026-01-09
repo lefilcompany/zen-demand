@@ -95,11 +95,18 @@ export function AppSidebar() {
     icon: ClipboardList
   }] : [];
 
-  const aiMenuItems = [{
-    title: "Resumo IA",
-    url: "/board-summary",
-    icon: Sparkles
-  }];
+  const aiMenuItems = [
+    {
+      title: "Resumo IA",
+      url: "/board-summary",
+      icon: Sparkles
+    },
+    {
+      title: "Meu Contrato",
+      url: "/contract",
+      icon: FileText
+    }
+  ];
 
   const endMenuItems = [{
     title: t("demands.archived"),

@@ -146,6 +146,53 @@ export type Database = {
           },
         ]
       }
+      contracts: {
+        Row: {
+          created_at: string
+          file_name: string | null
+          file_url: string | null
+          id: string
+          original_content: string | null
+          processed_content: string | null
+          status: string
+          team_id: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          original_content?: string | null
+          processed_content?: string | null
+          status?: string
+          team_id: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          original_content?: string | null
+          processed_content?: string | null
+          status?: string
+          team_id?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demand_assignees: {
         Row: {
           assigned_at: string | null
