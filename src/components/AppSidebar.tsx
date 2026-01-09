@@ -300,6 +300,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarSyncIndicator isCollapsed={isCollapsed && !isMobile} />
             <SidebarMenu>
+              {/* TODO: Loja de Serviços - Em desenvolvimento
               <SidebarMenuItem>
                 <NavLink 
                   to="/store" 
@@ -316,6 +317,7 @@ export function AppSidebar() {
                   )}
                 </NavLink>
               </SidebarMenuItem>
+              */}
               <SidebarMenuItem>
                 <LogoutDialog isCollapsed={isCollapsed && !isMobile} isMobile={isMobile} />
               </SidebarMenuItem>
