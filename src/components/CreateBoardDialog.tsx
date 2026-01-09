@@ -198,8 +198,8 @@ export function CreateBoardDialog({ trigger }: CreateBoardDialogProps) {
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
               ) : (
-                <ScrollArea className="flex-1 border rounded-md p-3 max-h-[200px]">
-                  <div className="space-y-3">
+                <ScrollArea className="flex-1 border rounded-md max-h-[200px]">
+                  <div className="space-y-3 p-3">
                     {teamServices?.map((service) => {
                       const isSelected = selectedServices.some(s => s.serviceId === service.id);
                       const selectedService = selectedServices.find(s => s.serviceId === service.id);
