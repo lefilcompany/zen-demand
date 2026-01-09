@@ -9,6 +9,11 @@ interface ErrorMapping {
 }
 
 const ERROR_MAPPINGS: ErrorMapping[] = [
+  // Zod validation errors (show original message)
+  { pattern: /deve ter no máximo/i, message: "__PASS_THROUGH__" },
+  { pattern: /Este campo é obrigatório/i, message: "__PASS_THROUGH__" },
+  { pattern: /inválido/i, message: "__PASS_THROUGH__" },
+  
   // Authentication errors
   { pattern: /user already registered/i, message: "Este e-mail já está cadastrado." },
   { pattern: /already been registered/i, message: "Este e-mail já está cadastrado." },
@@ -81,6 +86,10 @@ export function getErrorMessage(error: unknown): string {
         return mapping.message;
       }
     } else if (mapping.pattern.test(errorMessage)) {
+      // Pass through validation messages as-is
+      if (mapping.message === "__PASS_THROUGH__") {
+        return errorMessage;
+      }
       return mapping.message;
     }
   }
