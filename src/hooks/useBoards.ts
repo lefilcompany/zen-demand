@@ -19,7 +19,7 @@ export interface CreateBoardData {
   team_id: string;
   name: string;
   description?: string | null;
-  monthly_demand_limit?: number;
+  services?: Array<{ service_id: string; monthly_limit: number }>;
 }
 
 export interface UpdateBoardData {
@@ -29,7 +29,7 @@ export interface UpdateBoardData {
   monthly_demand_limit?: number;
 }
 
-// Fetch boards for a team (only boards the user belongs to)
+// Fetch boards for a team (only boards the user belongs to or is team admin/mod)
 export function useBoards(teamId: string | null) {
   const { user } = useAuth();
 
@@ -38,26 +38,11 @@ export function useBoards(teamId: string | null) {
     queryFn: async () => {
       if (!teamId || !user) return [];
 
-      // Get board IDs where the user is a member
-      const { data: memberBoards, error: memberError } = await supabase
-        .from("board_members")
-        .select("board_id")
-        .eq("user_id", user.id);
-
-      if (memberError) {
-        console.error("Erro ao buscar membros de quadros:", memberError);
-        throw memberError;
-      }
-
-      const boardIds = memberBoards?.map((m) => m.board_id) || [];
-      
-      if (boardIds.length === 0) return [];
-
+      // The RLS policy now handles visibility properly
       const { data, error } = await supabase
         .from("boards")
         .select("*")
         .eq("team_id", teamId)
-        .in("id", boardIds)
         .order("is_default", { ascending: false })
         .order("name", { ascending: true });
 
@@ -96,7 +81,7 @@ export function useBoard(boardId: string | null) {
   });
 }
 
-// Create a new board
+// Create a new board using RPC (atomic operation with services)
 export function useCreateBoard() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -115,30 +100,38 @@ export function useCreateBoard() {
         throw new Error("Nome do quadro é obrigatório");
       }
 
-      const insertData = {
+      // Build services array for RPC
+      const servicesJson = (input.services || []).map(s => ({
+        service_id: s.service_id,
+        monthly_limit: s.monthly_limit || 0
+      }));
+
+      console.log("Criando quadro via RPC:", {
         team_id: input.team_id,
         name: input.name.trim(),
         description: input.description?.trim() || null,
-        monthly_demand_limit: input.monthly_demand_limit ?? 0,
-        created_by: user.id,
-      };
+        services: servicesJson
+      });
 
-      console.log("Criando quadro com dados:", insertData);
-
-      const { data, error } = await supabase
-        .from("boards")
-        .insert(insertData)
-        .select()
-        .single();
+      const { data, error } = await supabase.rpc("create_board_with_services", {
+        p_team_id: input.team_id,
+        p_name: input.name.trim(),
+        p_description: input.description?.trim() || null,
+        p_services: servicesJson
+      });
 
       if (error) {
-        console.error("Erro Supabase ao criar quadro:", error);
+        console.error("Erro ao criar quadro:", error);
         
-        if (error.code === "42501") {
-          throw new Error("Você não tem permissão para criar quadros nesta equipe");
+        // Map error codes to user-friendly messages
+        if (error.code === "42501" || error.message?.includes("Permission denied")) {
+          throw new Error("Você não tem permissão para criar quadros nesta equipe. É necessário ser administrador ou moderador.");
         }
-        if (error.code === "23505") {
-          throw new Error("Já existe um quadro com este nome");
+        if (error.code === "23505" || error.message?.includes("already exists")) {
+          throw new Error("Já existe um quadro com este nome nesta equipe");
+        }
+        if (error.code === "PGRST301" || error.message?.includes("Not authenticated")) {
+          throw new Error("Sessão expirada. Por favor, faça login novamente.");
         }
         throw new Error(error.message || "Erro ao criar quadro");
       }
@@ -151,6 +144,7 @@ export function useCreateBoard() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["boards", data.team_id] });
+      queryClient.invalidateQueries({ queryKey: ["board-members"] });
       toast.success("Quadro criado com sucesso!");
     },
     onError: (error: Error) => {

@@ -1198,6 +1198,31 @@ export type Database = {
         Returns: boolean
       }
       check_access_code_exists: { Args: { code: string }; Returns: boolean }
+      create_board_with_services: {
+        Args: {
+          p_description?: string
+          p_name: string
+          p_services?: Json
+          p_team_id: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_default: boolean | null
+          monthly_demand_limit: number | null
+          name: string
+          team_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "boards"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       get_board_role: {
         Args: { _board_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["team_role"]
