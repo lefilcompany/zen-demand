@@ -2,13 +2,6 @@ import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -30,9 +23,7 @@ interface MemberCardProps {
   member: TeamMember;
   isAdmin: boolean;
   currentUserId: string;
-  onRoleChange: (memberId: string, newRole: TeamRole) => void;
   onRemove: (memberId: string) => void;
-  isUpdating: boolean;
   isRemoving: boolean;
 }
 
@@ -76,9 +67,7 @@ export function MemberCard({
   member,
   isAdmin,
   currentUserId,
-  onRoleChange,
   onRemove,
-  isUpdating,
   isRemoving,
 }: MemberCardProps) {
   const navigate = useNavigate();
@@ -166,50 +155,12 @@ export function MemberCard({
             Entrou em {format(new Date(member.joined_at), "dd/MM/yyyy", { locale: ptBR })}
           </p>
           
-          {/* Role Badge or Selector */}
+          {/* Role Badge - Fixed (not editable in team context) */}
           <div className="pt-1">
-            {canModify ? (
-              <Select
-                value={member.role}
-                onValueChange={(value) => onRoleChange(member.id, value as TeamRole)}
-                disabled={isUpdating}
-              >
-                <SelectTrigger className="w-full max-w-[160px] mx-auto h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="h-4 w-4" />
-                      Administrador
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="moderator">
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      Coordenador
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="executor">
-                    <div className="flex items-center gap-2">
-                      <Zap className="h-4 w-4" />
-                      Agente
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="requester">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      Solicitante
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            ) : (
-              <Badge className={`${config.badgeColor} flex items-center gap-1 justify-center`}>
-                {config.icon}
-                {config.label}
-              </Badge>
-            )}
+            <Badge className={`${config.badgeColor} flex items-center gap-1 justify-center`}>
+              {config.icon}
+              {config.label}
+            </Badge>
           </div>
         </div>
       </div>
