@@ -307,7 +307,7 @@ export function AppSidebar() {
                   className="flex items-center gap-2 w-full px-3 py-2.5 rounded-lg border-2 border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/40 transition-all font-medium min-h-[44px] md:min-h-0"
                   activeClassName="bg-primary/15 border-primary/50"
                 >
-                  <ShoppingCart className="h-5 w-5 md:h-4 md:w-4" />
+                  <ShoppingCart className="h-6 w-6 md:h-5 md:w-5" />
                   {(isMobile || !isCollapsed) && (
                     <span className="flex items-center gap-1.5 text-base md:text-sm">
                       Loja de Serviços
