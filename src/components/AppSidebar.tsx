@@ -297,11 +297,11 @@ export function AppSidebar() {
                 <NavLink 
                   to="/store" 
                   onClick={closeMobileSidebar} 
-                  className="flex items-center gap-2 w-full px-3 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm font-medium min-h-[44px] md:min-h-0"
-                  activeClassName="ring-2 ring-primary/30"
+                  className="flex items-center justify-center gap-3 w-full px-4 py-4 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 transition-all shadow-lg hover:shadow-xl font-semibold min-h-[56px] md:min-h-[48px] text-lg md:text-base"
+                  activeClassName="ring-2 ring-primary/40 ring-offset-2"
                 >
-                  <ShoppingCart className="h-5 w-5 md:h-4 md:w-4" />
-                  {(isMobile || !isCollapsed) && <span className="text-base md:text-sm">Loja de Serviços</span>}
+                  <ShoppingCart className="h-6 w-6 md:h-5 md:w-5" />
+                  {(isMobile || !isCollapsed) && <span>Loja de Serviços</span>}
                 </NavLink>
               </SidebarMenuItem>
               <SidebarMenuItem>
