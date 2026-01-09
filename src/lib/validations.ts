@@ -16,7 +16,7 @@ const priorityValues = ["baixa", "média", "alta", "urgente"] as const;
 
 export const DemandCreateSchema = z.object({
   title: nonEmptyString
-    .max(200, "Título deve ter no máximo 200 caracteres"),
+    .max(500, "Título deve ter no máximo 500 caracteres"),
   description: trimmedString
     .max(5000, "Descrição deve ter no máximo 5000 caracteres")
     .optional()
@@ -33,7 +33,7 @@ export const DemandCreateSchema = z.object({
 export const DemandUpdateSchema = z.object({
   id: z.string().uuid("ID da demanda inválido"),
   title: nonEmptyString
-    .max(200, "Título deve ter no máximo 200 caracteres")
+    .max(500, "Título deve ter no máximo 500 caracteres")
     .optional(),
   description: trimmedString
     .max(5000, "Descrição deve ter no máximo 5000 caracteres")
