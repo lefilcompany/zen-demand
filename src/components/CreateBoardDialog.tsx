@@ -198,7 +198,7 @@ export function CreateBoardDialog({ trigger }: CreateBoardDialogProps) {
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
               ) : (
-                <ScrollArea className="flex-1 border rounded-md max-h-[200px]">
+                <div className="border rounded-md max-h-[200px] overflow-y-auto">
                   <div className="space-y-3 p-3">
                     {teamServices?.map((service) => {
                       const isSelected = selectedServices.some(s => s.serviceId === service.id);
@@ -249,7 +249,7 @@ export function CreateBoardDialog({ trigger }: CreateBoardDialogProps) {
                       );
                     })}
                   </div>
-                </ScrollArea>
+                </div>
               )}
               
               {selectedServices.length > 0 && (
