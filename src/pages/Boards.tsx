@@ -85,7 +85,7 @@ export default function Boards() {
   const { data: boards, isLoading } = useBoards(selectedTeamId);
   const { data: teamRole } = useTeamRole(selectedTeamId);
   
-  const canCreateBoard = teamRole === "admin" || teamRole === "moderator" || teamRole === "executor";
+  const canCreateBoard = teamRole === "admin";
 
   if (isLoading) {
     return (
