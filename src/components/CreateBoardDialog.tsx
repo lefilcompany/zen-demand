@@ -156,8 +156,8 @@ export function CreateBoardDialog({ trigger }: CreateBoardDialogProps) {
             </AlertDescription>
           </Alert>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4 flex-1 overflow-hidden flex flex-col">
-            <div className="space-y-2">
+          <form onSubmit={handleSubmit} className="space-y-4 flex-1 min-h-0 flex flex-col">
+            <div className="space-y-2 shrink-0">
               <Label htmlFor="board-name">Nome do Quadro *</Label>
               <Input
                 id="board-name"
@@ -170,7 +170,7 @@ export function CreateBoardDialog({ trigger }: CreateBoardDialogProps) {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 shrink-0">
               <Label htmlFor="board-description">Descrição</Label>
               <Textarea
                 id="board-description"
@@ -184,12 +184,12 @@ export function CreateBoardDialog({ trigger }: CreateBoardDialogProps) {
               />
             </div>
 
-            <div className="space-y-2 flex-1 overflow-hidden flex flex-col">
-              <Label className="flex items-center gap-2">
+            <div className="space-y-2 flex-1 min-h-0 flex flex-col">
+              <Label className="flex items-center gap-2 shrink-0">
                 <Package className="h-4 w-4" />
                 Serviços Disponíveis *
               </Label>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground shrink-0">
                 Selecione os serviços que podem ser solicitados neste quadro e defina o limite mensal para cada um (0 = ilimitado)
               </p>
               
@@ -198,7 +198,7 @@ export function CreateBoardDialog({ trigger }: CreateBoardDialogProps) {
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
               ) : (
-                <div className="border rounded-md max-h-[200px] overflow-y-auto">
+                <div className="border rounded-md flex-1 min-h-[120px] max-h-[250px] overflow-y-auto overscroll-contain">
                   <div className="space-y-3 p-3">
                     {teamServices?.map((service) => {
                       const isSelected = selectedServices.some(s => s.serviceId === service.id);
@@ -253,7 +253,7 @@ export function CreateBoardDialog({ trigger }: CreateBoardDialogProps) {
               )}
               
               {selectedServices.length > 0 && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground shrink-0">
                   {selectedServices.length} serviço(s) selecionado(s)
                 </p>
               )}
