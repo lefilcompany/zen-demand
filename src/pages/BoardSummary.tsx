@@ -6,6 +6,7 @@ import { Sparkles, RefreshCw, AlertCircle, TrendingUp, AlertTriangle, CheckCircl
 import { toast } from "sonner";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 // Component to render formatted AI response with visual enhancements
 function FormattedSummary({ content }: { content: string }) {
@@ -152,13 +153,20 @@ export default function BoardSummary() {
     setSummary("");
 
     try {
+      // Get user's session token for authentication
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session?.access_token) {
+        throw new Error("Você precisa estar logado para gerar o resumo");
+      }
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/board-summary`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ boardId: currentBoard.id }),
         }
