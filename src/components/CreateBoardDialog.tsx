@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useCreateBoard } from "@/hooks/useBoards";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useServices } from "@/hooks/useServices";
-import { useAddBoardServices } from "@/hooks/useBoardServices";
 import {
   Dialog,
   DialogContent,
@@ -17,7 +16,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Loader2, AlertCircle, Package } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -40,7 +38,6 @@ export function CreateBoardDialog({ trigger }: CreateBoardDialogProps) {
 
   const { selectedTeamId } = useSelectedTeam();
   const createBoard = useCreateBoard();
-  const addBoardServices = useAddBoardServices();
   const { data: teamServices, isLoading: servicesLoading } = useServices(selectedTeamId);
 
   const resetForm = () => {
@@ -101,33 +98,26 @@ export function CreateBoardDialog({ trigger }: CreateBoardDialogProps) {
     }
 
     try {
-      // Create the board
-      const newBoard = await createBoard.mutateAsync({
+      // Create board with services atomically via RPC
+      await createBoard.mutateAsync({
         team_id: selectedTeamId,
         name: trimmedName,
         description: description.trim() || null,
-        monthly_demand_limit: 0, // No longer using global limit
+        services: selectedServices.map(s => ({
+          service_id: s.serviceId,
+          monthly_limit: s.monthlyLimit,
+        })),
       });
-
-      // Add services to the board
-      if (newBoard && selectedServices.length > 0) {
-        await addBoardServices.mutateAsync({
-          boardId: newBoard.id,
-          services: selectedServices.map(s => ({
-            serviceId: s.serviceId,
-            monthlyLimit: s.monthlyLimit,
-          })),
-        });
-      }
 
       resetForm();
       setOpen(false);
     } catch (err) {
+      // Error is already handled by the mutation's onError
       console.error("Erro ao criar quadro:", err);
     }
   };
 
-  const isSubmitting = createBoard.isPending || addBoardServices.isPending;
+  const isSubmitting = createBoard.isPending;
   const hasNoServices = !servicesLoading && (!teamServices || teamServices.length === 0);
 
   return (
