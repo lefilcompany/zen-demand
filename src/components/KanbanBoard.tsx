@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight, X, WifiOff, CloudOff } from "lucide-react";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatDateOnlyBR, isDateOverdue } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
@@ -493,10 +493,9 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     });
   };
 
-  const isOverdue = (dueDate: string | null | undefined) => {
-    if (!dueDate) return false;
-    return new Date(dueDate) < new Date();
-  };
+  const isOverdue = useCallback((dueDate: string | null | undefined) => {
+    return isDateOverdue(dueDate);
+  }, []);
 
   const handleOpenAdjustmentDialog = useCallback((e: React.MouseEvent, demandId: string) => {
     e.stopPropagation();
@@ -730,7 +729,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
                     ) : (
                       <Calendar className="h-3 w-3" />
                     )}
-                    {format(new Date(demand.due_date), "dd MMM", { locale: ptBR })}
+                    {formatDateOnlyBR(demand.due_date)?.slice(0, 6) || ""}
                   </div>
                 )}
 
