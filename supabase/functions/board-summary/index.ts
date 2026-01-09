@@ -12,6 +12,45 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      console.error("Missing or invalid Authorization header");
+      return new Response(
+        JSON.stringify({ error: "Não autorizado" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    
+    // Create authenticated client using the user's token
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Verify user JWT and get claims
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error("Failed to verify JWT:", claimsError);
+      return new Response(
+        JSON.stringify({ error: "Token inválido ou expirado" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+    if (!userId) {
+      console.error("No user ID in token claims");
+      return new Response(
+        JSON.stringify({ error: "Usuário não identificado" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { boardId } = await req.json();
     
     if (!boardId) {
@@ -21,17 +60,41 @@ serve(async (req) => {
       );
     }
 
+    // Verify user has access to the board (must be a board member)
+    const { data: membership, error: membershipError } = await supabase
+      .from("board_members")
+      .select("user_id")
+      .eq("board_id", boardId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (membershipError) {
+      console.error("Error checking board membership:", membershipError);
+      return new Response(
+        JSON.stringify({ error: "Erro ao verificar permissões" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!membership) {
+      console.error("User", userId, "is not a member of board", boardId);
+      return new Response(
+        JSON.stringify({ error: "Você não tem acesso a este quadro" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    // Use service role for data fetching (RLS will apply via authenticated client for verification above)
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get board info
-    const { data: board, error: boardError } = await supabase
+    const { data: board, error: boardError } = await supabaseAdmin
       .from("boards")
       .select("id, name, description")
       .eq("id", boardId)
@@ -46,7 +109,7 @@ serve(async (req) => {
     }
 
     // Get demands with status
-    const { data: demands, error: demandsError } = await supabase
+    const { data: demands, error: demandsError } = await supabaseAdmin
       .from("demands")
       .select(`
         id,
@@ -73,7 +136,7 @@ serve(async (req) => {
     }
 
     // Get pending requests
-    const { data: requests, error: requestsError } = await supabase
+    const { data: requests, error: requestsError } = await supabaseAdmin
       .from("demand_requests")
       .select("id, title, status, priority, created_at")
       .eq("board_id", boardId)
