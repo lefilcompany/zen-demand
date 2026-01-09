@@ -294,6 +294,14 @@ export function AppSidebar() {
             <SidebarSyncIndicator isCollapsed={isCollapsed && !isMobile} />
             <SidebarMenu>
               <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Loja de Serviços" size={isMobile ? "lg" : "default"}>
+                  <NavLink to="/store" onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[44px] md:min-h-0" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                    <ShoppingCart className="h-5 w-5 md:h-4 md:w-4" />
+                    {(isMobile || !isCollapsed) && <span className="text-base md:text-sm">Loja de Serviços</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
                 <LogoutDialog isCollapsed={isCollapsed && !isMobile} isMobile={isMobile} />
               </SidebarMenuItem>
             </SidebarMenu>
