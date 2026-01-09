@@ -7,8 +7,9 @@ import {
 } from "@/components/ui/select";
 import { useServices } from "@/hooks/useServices";
 import { useBoardServicesWithUsage, useHasBoardServices } from "@/hooks/useBoardServices";
-import { Clock, AlertTriangle, Infinity, Info } from "lucide-react";
+import { Clock, AlertTriangle, Infinity, Info, DollarSign } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { formatPrice } from "@/lib/priceUtils";
 
 interface ServiceSelectorProps {
   teamId: string | null;
@@ -38,6 +39,7 @@ export function ServiceSelector({
         name: bs.service?.name || "",
         estimated_hours: bs.service?.estimated_hours || 0,
         description: bs.service?.description || null,
+        price_cents: (bs.service as any)?.price_cents || 0,
         currentCount: bs.currentCount,
         monthlyLimit: bs.monthly_limit,
         remaining: bs.remaining,
@@ -48,6 +50,7 @@ export function ServiceSelector({
         name: s.name,
         estimated_hours: s.estimated_hours,
         description: s.description,
+        price_cents: (s as any).price_cents || 0,
         currentCount: 0,
         monthlyLimit: 0,
         remaining: Infinity,
@@ -96,6 +99,11 @@ export function ServiceSelector({
             >
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <span className="font-medium truncate max-w-[120px] sm:max-w-none">{service.name}</span>
+                {service.price_cents > 0 && (
+                  <span className="text-xs font-semibold text-primary flex items-center gap-0.5 whitespace-nowrap">
+                    {formatPrice(service.price_cents)}
+                  </span>
+                )}
                 <span className="text-xs text-muted-foreground flex items-center gap-1 whitespace-nowrap">
                   <Clock className="h-3 w-3 shrink-0" />
                   {service.estimated_hours}h
