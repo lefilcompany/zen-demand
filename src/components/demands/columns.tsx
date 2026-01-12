@@ -2,6 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -31,6 +32,10 @@ export interface DemandTableRow {
   services?: {
     id: string;
     name: string;
+  } | null;
+  profiles?: {
+    full_name: string;
+    avatar_url: string | null;
   } | null;
   demand_assignees?: Array<{
     user_id: string;
@@ -240,6 +245,39 @@ function ServiceCell({
   );
 }
 
+// Cell component for creator
+function CreatorCell({
+  row
+}: {
+  row: {
+    original: DemandTableRow;
+  };
+}) {
+  const creator = row.original.profiles;
+  if (!creator) {
+    return <span className="text-muted-foreground text-sm">—</span>;
+  }
+  
+  const initials = creator.full_name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  return (
+    <div className="flex items-center gap-2">
+      <Avatar className="h-6 w-6">
+        <AvatarImage src={creator.avatar_url || undefined} alt={creator.full_name} />
+        <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+      </Avatar>
+      <span className="text-sm truncate max-w-[100px]" title={creator.full_name}>
+        {creator.full_name}
+      </span>
+    </div>
+  );
+}
+
 export const demandColumns: ColumnDef<DemandTableRow>[] = [{
   accessorKey: "board_sequence_number",
   header: "Código",
@@ -271,6 +309,19 @@ export const demandColumns: ColumnDef<DemandTableRow>[] = [{
     const serviceA = rowA.original.services?.name || "";
     const serviceB = rowB.original.services?.name || "";
     return serviceA.localeCompare(serviceB);
+  }
+}, {
+  id: "creator",
+  header: "Solicitante",
+  cell: ({
+    row
+  }) => <CreatorCell row={row} />,
+  enableSorting: true,
+  accessorFn: row => row.profiles?.full_name || "",
+  sortingFn: (rowA, rowB) => {
+    const creatorA = rowA.original.profiles?.full_name || "";
+    const creatorB = rowB.original.profiles?.full_name || "";
+    return creatorA.localeCompare(creatorB);
   }
 }, {
   id: "assignees",

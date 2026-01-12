@@ -15,7 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight, X, WifiOff, CloudOff } from "lucide-react";
+import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight, X, WifiOff, CloudOff, User } from "lucide-react";
 import { format } from "date-fns";
 import { formatDateOnlyBR, isDateOverdue } from "@/lib/dateUtils";
 import { cn, truncateText } from "@/lib/utils";
@@ -59,6 +59,7 @@ interface Demand {
   team_id?: string; // Added for adjustment type determination
   board_sequence_number?: number | null; // Sequential ID per board
   demand_statuses?: { name: string; color: string } | null;
+  profiles?: { full_name: string; avatar_url?: string | null } | null;
   assigned_profile?: { full_name: string; avatar_url?: string | null } | null;
   teams?: { name: string } | null;
   demand_assignees?: Assignee[];
@@ -714,6 +715,16 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
                   </div>
                 );
               })()}
+
+              {/* Creator info */}
+              {demand.profiles?.full_name && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
+                  <User className="h-3 w-3" />
+                  <span className="truncate" title={demand.profiles.full_name}>
+                    {demand.profiles.full_name.split(" ")[0]}
+                  </span>
+                </div>
+              )}
 
               <div className="flex items-center justify-between mt-2">
                 {demand.due_date && (

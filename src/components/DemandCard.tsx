@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, AlertTriangle, Clock, Wrench } from "lucide-react";
+import { Calendar, AlertTriangle, Clock, Wrench, User } from "lucide-react";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
 import { cn, truncateText } from "@/lib/utils";
@@ -31,6 +31,10 @@ interface DemandCardProps {
     demand_statuses?: {
       name: string;
       color: string;
+    } | null;
+    profiles?: {
+      full_name: string;
+      avatar_url?: string | null;
     } | null;
     assigned_profile?: {
       full_name: string;
@@ -145,8 +149,16 @@ export function DemandCard({ demand, onClick, showFullDetails = false }: DemandC
           </Badge>
         </div>
 
-        {/* Date and Time info */}
+        {/* Creator and Date info */}
         <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+          {demand.profiles?.full_name && (
+            <div className="flex items-center gap-1">
+              <User className="h-3.5 w-3.5" />
+              <span className="truncate max-w-[120px]" title={demand.profiles.full_name}>
+                {demand.profiles.full_name}
+              </span>
+            </div>
+          )}
           {demand.due_date && (
             <div className={cn(
               "flex items-center gap-1",
