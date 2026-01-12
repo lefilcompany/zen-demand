@@ -412,17 +412,17 @@ const handler = async (req: Request): Promise<Response> => {
 
     const boardName = board?.name || "Quadro";
 
-    // Get all admins, moderators and executors from the team
-    const { data: teamMembers, error: membersError } = await supabaseAdmin
-      .from("team_members")
+    // Get all admins, moderators and executors from the specific board
+    const { data: boardMembers, error: membersError } = await supabaseAdmin
+      .from("board_members")
       .select("user_id")
-      .eq("team_id", teamId)
+      .eq("board_id", boardId)
       .in("role", ["admin", "moderator", "executor"]);
 
     if (membersError) {
-      console.error("Error fetching team members:", membersError);
+      console.error("Error fetching board members:", membersError);
       return new Response(
-        JSON.stringify({ error: "Failed to fetch team members" }),
+        JSON.stringify({ error: "Failed to fetch board members" }),
         {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -430,20 +430,20 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    if (!teamMembers || teamMembers.length === 0) {
-      console.log("No team members found for team:", teamId);
+    if (!boardMembers || boardMembers.length === 0) {
+      console.log("No board members found for board:", boardId);
       return new Response(JSON.stringify({ success: true, emailsSent: 0, notificationsCreated: 0 }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    console.log(`Found ${teamMembers.length} admins/moderators/executors to notify`);
+    console.log(`Found ${boardMembers.length} admins/moderators/executors to notify for board ${boardId}`);
 
-    // Create in-app notifications for all team members (except the requester)
-    const notificationsToInsert = teamMembers
-      .filter(m => m.user_id !== userId)
-      .map(m => ({
+    // Create in-app notifications for all board members (except the requester)
+    const notificationsToInsert = boardMembers
+      .filter((m: { user_id: string }) => m.user_id !== userId)
+      .map((m: { user_id: string }) => ({
         user_id: m.user_id,
         title: "Nova solicitação de demanda",
         message: `${requesterName} enviou uma nova solicitação: "${title}"`,
@@ -467,9 +467,9 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Get emails for all team members (admin, moderator, executor)
+    // Get emails for all board members (admin, moderator, executor)
     const memberEmails: string[] = [];
-    for (const member of teamMembers) {
+    for (const member of boardMembers) {
       // Skip the requester (don't notify yourself)
       if (member.user_id === userId) continue;
 
@@ -489,7 +489,7 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    console.log(`Sending emails to ${memberEmails.length} members:`, memberEmails);
+    console.log(`Sending emails to ${memberEmails.length} board members:`, memberEmails);
 
     // Generate the action URL
     const appUrl = "https://pla.soma.lefil.com.br"; // Production URL
@@ -507,7 +507,7 @@ const handler = async (req: Request): Promise<Response> => {
       })
     );
 
-    // Send email to all team members (admin, moderator, executor)
+    // Send email to all board members (admin, moderator, executor)
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
