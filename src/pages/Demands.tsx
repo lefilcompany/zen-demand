@@ -297,7 +297,7 @@ export default function Demands() {
               <Button
                 variant={viewMode === "grid" ? "secondary" : "ghost"}
                 size="icon"
-                className={`hidden lg:flex ${viewMode === "grid" ? "bg-primary text-primary-foreground" : ""}`}
+                className={`hidden lg:flex rounded-none ${viewMode === "grid" ? "bg-primary text-primary-foreground" : ""}`}
                 onClick={() => setViewMode("grid")}
                 title={t("demands.gridView")}
               >
