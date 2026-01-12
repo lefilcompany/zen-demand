@@ -1,4 +1,4 @@
-import { Bell, Check, CheckCheck, ExternalLink } from "lucide-react";
+import { Bell, Check, CheckCheck, ExternalLink, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,7 +12,17 @@ import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+
+// Extract board name from notification title if present (format: "[Board Name] Title")
+function extractBoardName(title: string): { boardName: string | null; cleanTitle: string } {
+  const match = title.match(/^\[([^\]]+)\]\s*(.*)$/);
+  if (match) {
+    return { boardName: match[1], cleanTitle: match[2] };
+  }
+  return { boardName: null, cleanTitle: title };
+}
 
 export function NotificationDropdown() {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
@@ -75,52 +85,64 @@ export function NotificationDropdown() {
               <p className="text-sm">Nenhuma notificação</p>
             </div>
           ) : (
-            notifications.map((notification) => (
-              <DropdownMenuItem
-                key={notification.id}
-                className={cn(
-                  "flex flex-col items-start gap-1 p-3 cursor-pointer border-b border-border/30 last:border-b-0",
-                  "hover:!bg-muted focus:!bg-muted",
-                  "data-[highlighted]:!bg-muted",
-                  !notification.read && "bg-primary/5"
-                )}
-                onClick={() => handleNotificationClick(notification)}
-              >
-                <div className="flex items-start gap-2 w-full">
-                  <div className={cn("w-2 h-2 rounded-full mt-1.5 shrink-0", getTypeColor(notification.type))} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium leading-tight">{notification.title}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                      {notification.message}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] text-muted-foreground">
-                        {formatDistanceToNow(new Date(notification.created_at), {
-                          addSuffix: true,
-                          locale: ptBR,
-                        })}
-                      </span>
-                      {notification.link && (
-                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                      )}
-                    </div>
-                  </div>
-                  {!notification.read && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 shrink-0"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        markAsRead(notification.id);
-                      }}
-                    >
-                      <Check className="h-3 w-3" />
-                    </Button>
+            notifications.map((notification) => {
+              const { boardName, cleanTitle } = extractBoardName(notification.title);
+              
+              return (
+                <DropdownMenuItem
+                  key={notification.id}
+                  className={cn(
+                    "flex flex-col items-start gap-1 p-3 cursor-pointer border-b border-border/30 last:border-b-0",
+                    "hover:!bg-muted focus:!bg-muted",
+                    "data-[highlighted]:!bg-muted",
+                    !notification.read && "bg-primary/5"
                   )}
-                </div>
-              </DropdownMenuItem>
-            ))
+                  onClick={() => handleNotificationClick(notification)}
+                >
+                  <div className="flex items-start gap-2 w-full">
+                    <div className={cn("w-2 h-2 rounded-full mt-1.5 shrink-0", getTypeColor(notification.type))} />
+                    <div className="flex-1 min-w-0">
+                      {boardName && (
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-normal text-muted-foreground border-muted-foreground/30">
+                            <LayoutGrid className="h-2.5 w-2.5 mr-1" />
+                            {boardName}
+                          </Badge>
+                        </div>
+                      )}
+                      <p className="text-sm font-medium leading-tight">{cleanTitle}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                        {notification.message}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatDistanceToNow(new Date(notification.created_at), {
+                            addSuffix: true,
+                            locale: ptBR,
+                          })}
+                        </span>
+                        {notification.link && (
+                          <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                        )}
+                      </div>
+                    </div>
+                    {!notification.read && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markAsRead(notification.id);
+                        }}
+                      >
+                        <Check className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                </DropdownMenuItem>
+              );
+            })
           )}
         </ScrollArea>
       </DropdownMenuContent>
