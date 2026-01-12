@@ -39,7 +39,7 @@ import { DemandEditForm } from "@/components/DemandEditForm";
 import { AttachmentUploader } from "@/components/AttachmentUploader";
 import { AttachmentCounter } from "@/components/AttachmentCounter";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter, MoreHorizontal, Trash2, AlertTriangle, LayoutGrid, List, ChevronDown, Kanban } from "lucide-react";
+import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter, MoreHorizontal, Trash2, AlertTriangle, LayoutGrid, List, ChevronDown, Kanban, CalendarDays, LucideIcon } from "lucide-react";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Link } from "react-router-dom";
 import { UserTimeTrackingDisplay } from "@/components/UserTimeTrackingDisplay";
@@ -73,9 +73,30 @@ export default function DemandDetail() {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Check if user came from kanban
-  const cameFromKanban = location.state?.from === "kanban" || document.referrer.includes("/kanban");
-  const backPath = cameFromKanban ? "/kanban" : "/demands";
+  // Check origin view mode from location state
+  const fromState = location.state as { from?: string; viewMode?: string } | null;
+  const cameFromKanban = fromState?.from === "kanban" || document.referrer.includes("/kanban");
+  const demandsViewMode = fromState?.viewMode || "table";
+  
+  // Determine origin info for breadcrumb and back navigation
+  const getOriginInfo = (): { label: string; icon: LucideIcon; path: string; viewMode?: string } => {
+    if (cameFromKanban) {
+      return { label: "Kanban", icon: Kanban, path: "/kanban" };
+    }
+    
+    switch (demandsViewMode) {
+      case "calendar":
+        return { label: "Calendário", icon: CalendarDays, path: "/demands", viewMode: "calendar" };
+      case "grid":
+        return { label: "Blocos", icon: LayoutGrid, path: "/demands", viewMode: "grid" };
+      case "table":
+      default:
+        return { label: "Lista", icon: List, path: "/demands", viewMode: "table" };
+    }
+  };
+  
+  const originInfo = getOriginInfo();
+  const backPath = originInfo.path;
   const { user } = useAuth();
   const { data: demand, isLoading, isError, error } = useDemandById(id);
   const { data: interactions } = useDemandInteractions(id!);
@@ -318,7 +339,7 @@ export default function DemandDetail() {
       {
         onSuccess: () => {
           toast.success("Demanda arquivada com sucesso!");
-          navigate("/demands");
+          navigate(originInfo.path, { state: originInfo.viewMode ? { viewMode: originInfo.viewMode } : undefined });
         },
         onError: (error: any) => {
           toast.error("Erro ao arquivar demanda", {
@@ -572,8 +593,8 @@ export default function DemandDetail() {
       <div className="text-center py-12">
         <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
         <p className="text-muted-foreground">Demanda não encontrada</p>
-        <Button onClick={() => navigate("/demands")} className="mt-4">
-          Voltar para Demandas
+        <Button onClick={() => navigate(originInfo.path, { state: originInfo.viewMode ? { viewMode: originInfo.viewMode } : undefined })} className="mt-4">
+          Voltar para {originInfo.label}
         </Button>
       </div>
     );
@@ -597,9 +618,9 @@ export default function DemandDetail() {
         <PageBreadcrumb
           items={[
             {
-              label: cameFromKanban ? "Kanban" : "Demandas",
-              href: backPath,
-              icon: cameFromKanban ? LayoutGrid : List,
+              label: originInfo.label,
+              href: originInfo.path,
+              icon: originInfo.icon,
             },
             {
               label: demand?.title || "Carregando...",
