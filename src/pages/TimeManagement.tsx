@@ -552,12 +552,11 @@ export default function TimeManagement() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-1">
+            <div className="space-y-2">
               {filteredUserStats.slice(0, 10).map((stats, index) => (
                 <LiveUserTimeRow 
                   key={stats.userId} 
                   stats={stats} 
-                  maxTime={maxUserTime} 
                   rank={index + 1}
                 />
               ))}
