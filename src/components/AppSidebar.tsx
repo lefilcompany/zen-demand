@@ -100,12 +100,13 @@ export function AppSidebar() {
       title: "Resumo IA",
       url: "/board-summary",
       icon: Sparkles
-    },
-    {
-      title: "Meu Contrato",
-      url: "/contract",
-      icon: FileText
     }
+    // Contract hidden for now
+    // {
+    //   title: "Meu Contrato",
+    //   url: "/contract",
+    //   icon: FileText
+    // }
   ];
 
   const endMenuItems = [{
