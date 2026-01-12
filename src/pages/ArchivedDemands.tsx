@@ -3,7 +3,7 @@ import { DemandCard } from "@/components/DemandCard";
 import { useArchivedDemands } from "@/hooks/useArchivedDemands";
 import { useUpdateDemand } from "@/hooks/useDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
-import { Archive, RotateCcw } from "lucide-react";
+import { Archive, RotateCcw, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -103,6 +103,12 @@ export default function ArchivedDemands() {
                     <Badge variant="secondary">{demand.teams.name}</Badge>
                   )}
                 </div>
+                {(demand as any).profiles?.full_name && (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <User className="h-3 w-3" />
+                    <span>Solicitante: {(demand as any).profiles.full_name}</span>
+                  </div>
+                )}
                 {demand.archived_at && (
                   <p className="text-xs text-muted-foreground">
                     Arquivada em {format(new Date(demand.archived_at), "dd/MM/yyyy", { locale: ptBR })}
