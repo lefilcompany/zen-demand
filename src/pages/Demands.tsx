@@ -9,7 +9,7 @@ import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useAuth } from "@/lib/auth";
 import { Plus, Briefcase, LayoutGrid, List, Search, Eye, EyeOff, CalendarDays } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import { DataTable } from "@/components/ui/data-table";
 import { demandColumns, DemandTableRow } from "@/components/demands/columns";
@@ -26,6 +26,7 @@ const TABLET_BREAKPOINT = 1024;
 export default function Demands() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { selectedBoardId } = useSelectedBoard();
   const { data: demands, isLoading } = useDemands(selectedBoardId || undefined);
@@ -35,7 +36,12 @@ export default function Demands() {
   // Enable realtime updates for demands
   useRealtimeDemands(selectedBoardId || undefined);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>("table");
+  
+  // Initialize viewMode from location state or default to "table"
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const stateViewMode = (location.state as { viewMode?: ViewMode })?.viewMode;
+    return stateViewMode || "table";
+  });
   const [filters, setFilters] = useState<DemandFiltersState>({
     status: null,
     priority: null,
@@ -204,7 +210,7 @@ export default function Demands() {
       return (
         <DemandsCalendarView
           demands={demandList}
-          onDemandClick={(demandId) => navigate(`/demands/${demandId}`)}
+          onDemandClick={(demandId) => navigate(`/demands/${demandId}`, { state: { from: "demands", viewMode: "calendar" } })}
           onDayClick={handleDayClick}
         />
       );
@@ -215,7 +221,7 @@ export default function Demands() {
         <DataTable
           columns={demandColumns}
           data={demandList as unknown as DemandTableRow[]}
-          onRowClick={(row) => navigate(`/demands/${row.id}`)}
+          onRowClick={(row) => navigate(`/demands/${row.id}`, { state: { from: "demands", viewMode: "table" } })}
           defaultSorting={[{ id: "board_sequence_number", desc: false }]}
         />
       );
@@ -227,7 +233,7 @@ export default function Demands() {
           <DemandCard
             key={demand.id}
             demand={demand}
-            onClick={() => navigate(`/demands/${demand.id}`)}
+            onClick={() => navigate(`/demands/${demand.id}`, { state: { from: "demands", viewMode: "grid" } })}
             showFullDetails
           />
         ))}
