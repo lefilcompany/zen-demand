@@ -15,10 +15,37 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!;
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // 1. Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.error('Missing or invalid Authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - missing authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+
+    // 2. Create authenticated client to verify user
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
+    if (authError || !user) {
+      console.error('Auth error:', authError?.message || 'No user found');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`Authenticated user: ${user.id}`);
 
     const { contractId, originalContent } = await req.json();
 
@@ -30,10 +57,54 @@ serve(async (req) => {
       );
     }
 
+    // 3. Use service role client to get contract and verify access
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get contract to find team_id
+    const { data: contract, error: contractError } = await supabaseAdmin
+      .from('contracts')
+      .select('team_id')
+      .eq('id', contractId)
+      .single();
+
+    if (contractError || !contract) {
+      console.error('Contract not found:', contractError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Contract not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 4. Check if user is admin/moderator of the team
+    const { data: membership, error: membershipError } = await supabaseAdmin
+      .from('team_members')
+      .select('role')
+      .eq('team_id', contract.team_id)
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'moderator'])
+      .maybeSingle();
+
+    if (membershipError) {
+      console.error('Membership check error:', membershipError.message);
+      return new Response(
+        JSON.stringify({ error: 'Failed to verify permissions' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!membership) {
+      console.error(`User ${user.id} does not have admin/moderator access to team ${contract.team_id}`);
+      return new Response(
+        JSON.stringify({ error: 'Insufficient permissions - admin or moderator role required' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`User ${user.id} authorized as ${membership.role} for team ${contract.team_id}`);
     console.log(`Processing contract ${contractId}, content length: ${originalContent.length}`);
 
     // Update status to processing
-    await supabase
+    await supabaseAdmin
       .from('contracts')
       .update({ status: 'processing', original_content: originalContent })
       .eq('id', contractId);
@@ -74,6 +145,13 @@ Responda APENAS com o contrato reescrito, sem comentários adicionais.`
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
       console.error('AI API error:', errorText);
+      
+      // Update status to error
+      await supabaseAdmin
+        .from('contracts')
+        .update({ status: 'error' })
+        .eq('id', contractId);
+        
       throw new Error(`Erro na API de IA: ${aiResponse.status}`);
     }
 
@@ -83,7 +161,7 @@ Responda APENAS com o contrato reescrito, sem comentários adicionais.`
     console.log(`Contract processed successfully, result length: ${processedContent.length}`);
 
     // Update contract with processed content
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('contracts')
       .update({ 
         processed_content: processedContent, 
