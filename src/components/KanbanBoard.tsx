@@ -18,7 +18,7 @@ import {
 import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight, X, WifiOff, CloudOff } from "lucide-react";
 import { format } from "date-fns";
 import { formatDateOnlyBR, isDateOverdue } from "@/lib/dateUtils";
-import { cn } from "@/lib/utils";
+import { cn, truncateText } from "@/lib/utils";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
@@ -604,8 +604,8 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
                   {formatDemandCode(demand.board_sequence_number)}
                 </Badge>
               )}
-              <h4 className="font-medium text-sm line-clamp-2 mb-2">
-                {demand.title}
+              <h4 className="font-medium text-sm line-clamp-2 mb-2" title={demand.title}>
+                {truncateText(demand.title)}
               </h4>
 
               {demand.description && (

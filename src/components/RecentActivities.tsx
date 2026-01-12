@@ -7,6 +7,7 @@ import { ptBR } from "date-fns/locale";
 import { Activity, FileText, MessageSquare, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { truncateText } from "@/lib/utils";
 
 interface DemandInteraction {
   id: string;
@@ -117,7 +118,7 @@ export function RecentActivities() {
                 >
                   <div className="mt-0.5">{getActivityIcon(activity.interaction_type)}</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{activity.demands?.title}</p>
+                    <p className="text-sm font-medium truncate" title={activity.demands?.title}>{truncateText(activity.demands?.title)}</p>
                     <p className="text-xs text-muted-foreground">
                       <button
                         type="button"

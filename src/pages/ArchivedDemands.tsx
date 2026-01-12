@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
+import { truncateText } from "@/lib/utils";
 
 export default function ArchivedDemands() {
   const navigate = useNavigate();
@@ -65,8 +66,8 @@ export default function ArchivedDemands() {
             >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-base line-clamp-2">
-                    {demand.title}
+                  <CardTitle className="text-base line-clamp-2" title={demand.title}>
+                    {truncateText(demand.title)}
                   </CardTitle>
                   <Button
                     variant="ghost"
