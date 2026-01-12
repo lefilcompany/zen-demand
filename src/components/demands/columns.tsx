@@ -266,15 +266,10 @@ function CreatorCell({
     .toUpperCase();
 
   return (
-    <div className="flex items-center gap-2">
-      <Avatar className="h-6 w-6">
-        <AvatarImage src={creator.avatar_url || undefined} alt={creator.full_name} />
-        <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
-      </Avatar>
-      <span className="text-sm truncate max-w-[100px]" title={creator.full_name}>
-        {creator.full_name}
-      </span>
-    </div>
+    <Avatar className="h-7 w-7 cursor-pointer" title={creator.full_name}>
+      <AvatarImage src={creator.avatar_url || undefined} alt={creator.full_name} />
+      <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+    </Avatar>
   );
 }
 
