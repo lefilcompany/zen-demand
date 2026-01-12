@@ -50,6 +50,7 @@ interface DemandsCalendarViewProps {
   demands: Demand[];
   onDemandClick: (demandId: string) => void;
   onDayClick: (date: Date) => void;
+  isRequester?: boolean;
 }
 
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -68,6 +69,7 @@ export function DemandsCalendarView({
   demands,
   onDemandClick,
   onDayClick,
+  isRequester = false,
 }: DemandsCalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<CalendarViewMode>("month");
@@ -163,7 +165,7 @@ export function DemandsCalendarView({
               className="gap-2"
             >
               <Plus className="h-4 w-4" />
-              Nova demanda
+              {isRequester ? "Nova solicitação" : "Nova demanda"}
             </Button>
           )}
         </div>
@@ -181,7 +183,7 @@ export function DemandsCalendarView({
                 >
                   <Plus className="h-8 w-8 mb-2" />
                   <p>Nenhuma demanda para este dia</p>
-                  <p className="text-sm">Clique para adicionar</p>
+                  <p className="text-sm">Clique para {isRequester ? "solicitar" : "adicionar"}</p>
                 </div>
               )
             ) : (
@@ -466,7 +468,7 @@ export function DemandsCalendarView({
                   className="gap-2"
                 >
                   <Plus className="h-4 w-4" />
-                  Nova demanda
+                  {isRequester ? "Nova solicitação" : "Nova demanda"}
                 </Button>
               )}
             </div>

@@ -18,6 +18,7 @@ import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { useRealtimeDemands } from "@/hooks/useRealtimeDemands";
 import { DemandsCalendarView } from "@/components/DemandsCalendarView";
 import { CreateDemandQuickDialog } from "@/components/CreateDemandQuickDialog";
+import { CreateRequestQuickDialog } from "@/components/CreateRequestQuickDialog";
 
 type ViewMode = "table" | "grid" | "calendar";
 
@@ -212,6 +213,7 @@ export default function Demands() {
           demands={demandList}
           onDemandClick={(demandId) => navigate(`/demands/${demandId}`, { state: { from: "demands", viewMode: "calendar" } })}
           onDayClick={handleDayClick}
+          isRequester={isReadOnly}
         />
       );
     }
@@ -342,12 +344,20 @@ export default function Demands() {
         renderDemandList(filteredDemands)
       )}
 
-      {/* Quick create dialog for calendar */}
-      <CreateDemandQuickDialog
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        selectedDate={selectedDateForCreate}
-      />
+      {/* Quick create dialog for calendar - show request dialog for requesters, demand dialog for others */}
+      {isReadOnly ? (
+        <CreateRequestQuickDialog
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+          selectedDate={selectedDateForCreate}
+        />
+      ) : (
+        <CreateDemandQuickDialog
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+          selectedDate={selectedDateForCreate}
+        />
+      )}
     </div>
   );
 }
