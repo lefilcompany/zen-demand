@@ -621,6 +621,7 @@ export default function DemandDetail() {
               label: originInfo.label,
               href: originInfo.path,
               icon: originInfo.icon,
+              state: originInfo.viewMode ? { viewMode: originInfo.viewMode } : undefined,
             },
             {
               label: demand?.title || "Carregando...",

@@ -14,6 +14,7 @@ export interface BreadcrumbItemConfig {
   href?: string;
   icon?: LucideIcon;
   isCurrent?: boolean;
+  state?: Record<string, unknown>;
 }
 
 interface PageBreadcrumbProps {
@@ -63,6 +64,7 @@ export function PageBreadcrumb({ items, showHome = true }: PageBreadcrumbProps) 
                   <BreadcrumbLink asChild>
                     <Link 
                       to={item.href || "#"} 
+                      state={item.state}
                       className="flex items-center gap-1 transition-colors duration-200 hover:text-primary"
                     >
                       {Icon && <Icon className="h-3.5 w-3.5 shrink-0 transition-transform duration-200 hover:scale-110" />}
