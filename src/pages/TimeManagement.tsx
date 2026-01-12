@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Clock, User, Calendar, Filter, ChevronDown, ChevronUp, ExternalLink, CalendarIcon, Users, BarChart3, TrendingUp, Play, Download, LayoutGrid } from "lucide-react";
+import { Clock, User, Calendar, Filter, ChevronDown, ChevronUp, ExternalLink, CalendarIcon, Users, BarChart3, TrendingUp, Play, Download, LayoutGrid, CheckCircle2, CircleDashed } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSelectedBoard } from "@/contexts/BoardContext";
@@ -48,6 +48,7 @@ export default function TimeManagement() {
   const [startDate, setStartDate] = useState<Date | undefined>(startOfMonth(new Date()));
   const [endDate, setEndDate] = useState<Date | undefined>(endOfMonth(new Date()));
   const [activeTab, setActiveTab] = useState<string>("users");
+  const [deliveryFilter, setDeliveryFilter] = useState<string>("all"); // "all" | "delivered" | "not_delivered"
 
   // Fetch time entries for the board with realtime updates
   const { data: timeEntries, isLoading: entriesLoading } = useBoardTimeEntries(selectedBoardId);
@@ -102,15 +103,26 @@ export default function TimeManagement() {
       filtered = filtered.filter((entry) => entry.user_id === userFilter);
     }
 
+    // Apply delivery status filter
+    if (deliveryFilter === "delivered") {
+      filtered = filtered.filter((entry) => 
+        entry.demand.status?.name?.toLowerCase() === "entregue"
+      );
+    } else if (deliveryFilter === "not_delivered") {
+      filtered = filtered.filter((entry) => 
+        entry.demand.status?.name?.toLowerCase() !== "entregue"
+      );
+    }
+
     return filtered;
-  }, [timeEntries, searchTerm, userFilter, startDate, endDate]);
+  }, [timeEntries, searchTerm, userFilter, startDate, endDate, deliveryFilter]);
 
   // Filter user stats based on filters
   const filteredUserStats = useMemo(() => {
     if (!userStats) return [];
     
     // If we have filters active, recalculate from filtered entries
-    if (searchTerm || userFilter !== "all" || startDate || endDate) {
+    if (searchTerm || userFilter !== "all" || startDate || endDate || deliveryFilter !== "all") {
       const userMap = new Map<string, typeof userStats[0]>();
       const userDemands = new Map<string, Set<string>>();
 
@@ -159,7 +171,7 @@ export default function TimeManagement() {
     }
 
     return userStats;
-  }, [userStats, filteredEntries, searchTerm, userFilter, startDate, endDate]);
+  }, [userStats, filteredEntries, searchTerm, userFilter, startDate, endDate, deliveryFilter]);
 
   // Group by demand
   const groupedByDemand = useMemo(() => {
@@ -465,6 +477,31 @@ export default function TimeManagement() {
                   ))}
                 </SelectContent>
               </Select>
+              <Select value={deliveryFilter} onValueChange={setDeliveryFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="Status de entrega" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    <div className="flex items-center gap-2">
+                      <CircleDashed className="h-4 w-4" />
+                      Todas as demandas
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="delivered">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                      Somente entregues
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="not_delivered">
+                    <div className="flex items-center gap-2">
+                      <Play className="h-4 w-4 text-blue-600" />
+                      Somente não entregues
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
@@ -531,6 +568,25 @@ export default function TimeManagement() {
                 </Button>
               )}
             </div>
+            
+            {/* Clear all filters button */}
+            {(searchTerm || userFilter !== "all" || deliveryFilter !== "all" || startDate || endDate) && (
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setUserFilter("all");
+                    setDeliveryFilter("all");
+                    setStartDate(startOfMonth(new Date()));
+                    setEndDate(endOfMonth(new Date()));
+                  }}
+                >
+                  Limpar todos os filtros
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
