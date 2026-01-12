@@ -18,6 +18,7 @@ import {
   isSameMonth,
   isSameDay,
   isToday,
+  isBefore,
   addMonths,
   subMonths,
 } from "date-fns";
@@ -145,6 +146,8 @@ export function DemandsCalendarView({
     const day = calendarDays[0];
     const dateKey = format(day, "yyyy-MM-dd");
     const dayDemands = demandsByDate[dateKey] || [];
+    const today = startOfDay(new Date());
+    const isPastDay = isBefore(day, today);
 
     return (
       <div className="min-h-[500px] p-4">
@@ -152,27 +155,35 @@ export function DemandsCalendarView({
           <h3 className="text-lg font-medium">
             {dayDemands.length} {dayDemands.length === 1 ? "demanda" : "demandas"}
           </h3>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onDayClick(day)}
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Nova demanda
-          </Button>
+          {!isPastDay && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onDayClick(day)}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Nova demanda
+            </Button>
+          )}
         </div>
         <ScrollArea className="h-[450px]">
           <div className="space-y-2">
             {dayDemands.length === 0 ? (
-              <div 
-                className="flex flex-col items-center justify-center h-[300px] text-muted-foreground cursor-pointer hover:bg-muted/30 rounded-lg transition-colors"
-                onClick={() => onDayClick(day)}
-              >
-                <Plus className="h-8 w-8 mb-2" />
-                <p>Nenhuma demanda para este dia</p>
-                <p className="text-sm">Clique para adicionar</p>
-              </div>
+              isPastDay ? (
+                <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
+                  <p>Nenhuma demanda para este dia</p>
+                </div>
+              ) : (
+                <div 
+                  className="flex flex-col items-center justify-center h-[300px] text-muted-foreground cursor-pointer hover:bg-muted/30 rounded-lg transition-colors"
+                  onClick={() => onDayClick(day)}
+                >
+                  <Plus className="h-8 w-8 mb-2" />
+                  <p>Nenhuma demanda para este dia</p>
+                  <p className="text-sm">Clique para adicionar</p>
+                </div>
+              )
             ) : (
               dayDemands.map((demand) => (
                 <div key={demand.id} className="p-2 border rounded-lg hover:bg-muted/30 transition-colors">
@@ -190,6 +201,8 @@ export function DemandsCalendarView({
   };
 
   const renderWeekView = () => {
+    const today = startOfDay(new Date());
+
     return (
       <div className="grid grid-cols-7">
         {/* Weekday Headers */}
@@ -208,6 +221,7 @@ export function DemandsCalendarView({
           const dateKey = format(day, "yyyy-MM-dd");
           const dayDemands = demandsByDate[dateKey] || [];
           const isTodayDate = isToday(day);
+          const isPastDay = isBefore(day, today);
           const hasMoreDemands = dayDemands.length > MAX_VISIBLE_DEMANDS_WEEK;
           const visibleDemands = dayDemands.slice(0, MAX_VISIBLE_DEMANDS_WEEK);
           const hiddenCount = dayDemands.length - MAX_VISIBLE_DEMANDS_WEEK;
@@ -217,15 +231,17 @@ export function DemandsCalendarView({
               key={dateKey}
               className={cn(
                 "min-h-[200px] border-b border-r border-border p-1 sm:p-2 transition-colors",
-                "hover:bg-muted/30 cursor-pointer"
+                !isPastDay && "hover:bg-muted/30 cursor-pointer",
+                isPastDay && "bg-muted/10 opacity-70"
               )}
-              onClick={() => onDayClick(day)}
+              onClick={() => !isPastDay && onDayClick(day)}
             >
               <div className="flex items-center justify-between mb-1">
                 <span
                   className={cn(
                     "text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full",
-                    isTodayDate && "bg-primary text-primary-foreground font-bold"
+                    isTodayDate && "bg-primary text-primary-foreground font-bold",
+                    isPastDay && "text-muted-foreground"
                   )}
                 >
                   {format(day, "d")}
@@ -259,7 +275,7 @@ export function DemandsCalendarView({
                 )}
               </div>
 
-              {dayDemands.length === 0 && (
+              {dayDemands.length === 0 && !isPastDay && (
                 <div className="flex items-center justify-center h-full opacity-0 hover:opacity-100 transition-opacity -mt-6">
                   <Plus className="h-5 w-5 text-muted-foreground" />
                 </div>
@@ -272,6 +288,8 @@ export function DemandsCalendarView({
   };
 
   const renderMonthView = () => {
+    const today = startOfDay(new Date());
+
     return (
       <>
         {/* Weekday Headers */}
@@ -293,6 +311,7 @@ export function DemandsCalendarView({
             const dayDemands = demandsByDate[dateKey] || [];
             const isCurrentMonth = isSameMonth(day, currentDate);
             const isTodayDate = isToday(day);
+            const isPastDay = isBefore(day, today);
             const hasMoreDemands = dayDemands.length > MAX_VISIBLE_DEMANDS_MONTH;
             const visibleDemands = dayDemands.slice(0, MAX_VISIBLE_DEMANDS_MONTH);
             const hiddenCount = dayDemands.length - MAX_VISIBLE_DEMANDS_MONTH;
@@ -302,12 +321,13 @@ export function DemandsCalendarView({
                 key={dateKey}
                 className={cn(
                   "min-h-[120px] sm:min-h-[140px] border-b border-r border-border p-1 sm:p-2 transition-colors",
-                  "hover:bg-muted/30 cursor-pointer",
+                  !isPastDay && "hover:bg-muted/30 cursor-pointer",
                   !isCurrentMonth && "bg-muted/10 text-muted-foreground",
+                  isPastDay && "bg-muted/10 opacity-70",
                   index % 7 === 0 && "border-l-0",
                   index < 7 && "border-t-0"
                 )}
-                onClick={() => onDayClick(day)}
+                onClick={() => !isPastDay && onDayClick(day)}
               >
                 {/* Day Number */}
                 <div className="flex items-center justify-between mb-1">
@@ -316,7 +336,8 @@ export function DemandsCalendarView({
                       "text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full",
                       isTodayDate &&
                         "bg-primary text-primary-foreground font-bold",
-                      !isCurrentMonth && "text-muted-foreground/50"
+                      !isCurrentMonth && "text-muted-foreground/50",
+                      isPastDay && "text-muted-foreground"
                     )}
                   >
                     {format(day, "d")}
@@ -353,7 +374,7 @@ export function DemandsCalendarView({
                 </div>
 
                 {/* Add demand button (visible on hover) */}
-                {dayDemands.length === 0 && (
+                {dayDemands.length === 0 && !isPastDay && (
                   <div className="flex items-center justify-center h-full opacity-0 hover:opacity-100 transition-opacity -mt-6">
                     <Plus className="h-5 w-5 text-muted-foreground" />
                   </div>
@@ -432,20 +453,22 @@ export function DemandsCalendarView({
               <span className="text-sm text-muted-foreground">
                 {selectedDaySheet?.demands.length} {selectedDaySheet?.demands.length === 1 ? "demanda" : "demandas"}
               </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (selectedDaySheet) {
-                    onDayClick(selectedDaySheet.date);
-                    setSelectedDaySheet(null);
-                  }
-                }}
-                className="gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Nova demanda
-              </Button>
+              {selectedDaySheet && !isBefore(selectedDaySheet.date, startOfDay(new Date())) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (selectedDaySheet) {
+                      onDayClick(selectedDaySheet.date);
+                      setSelectedDaySheet(null);
+                    }
+                  }}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Nova demanda
+                </Button>
+              )}
             </div>
             <ScrollArea className="h-[calc(100vh-180px)]">
               <div className="space-y-2 pr-4">
