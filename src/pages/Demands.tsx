@@ -8,7 +8,7 @@ import { useDemands } from "@/hooks/useDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useAuth } from "@/lib/auth";
-import { Plus, Briefcase, LayoutGrid, List, Search, Eye, EyeOff } from "lucide-react";
+import { Plus, Briefcase, LayoutGrid, List, Search, Eye, EyeOff, CalendarDays } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { DataTable } from "@/components/ui/data-table";
@@ -16,8 +16,10 @@ import { demandColumns, DemandTableRow } from "@/components/demands/columns";
 import { DemandFilters, DemandFiltersState } from "@/components/DemandFilters";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { useRealtimeDemands } from "@/hooks/useRealtimeDemands";
+import { DemandsCalendarView } from "@/components/DemandsCalendarView";
+import { CreateDemandQuickDialog } from "@/components/CreateDemandQuickDialog";
 
-type ViewMode = "table" | "grid";
+type ViewMode = "table" | "grid" | "calendar";
 
 const TABLET_BREAKPOINT = 1024;
 
@@ -44,6 +46,10 @@ export default function Demands() {
   });
   const [hideDelivered, setHideDelivered] = useState(false);
   
+  // Calendar quick create dialog
+  const [selectedDateForCreate, setSelectedDateForCreate] = useState<Date | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  
   // Detect if screen is mobile or tablet (< 1024px)
   const [isTabletOrSmaller, setIsTabletOrSmaller] = useState(false);
   
@@ -56,8 +62,8 @@ export default function Demands() {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
   
-  // Force grid view on mobile/tablet (screens < 1024px)
-  const effectiveViewMode = isTabletOrSmaller ? "grid" : viewMode;
+  // Force grid view on mobile/tablet (screens < 1024px), but allow calendar on all devices
+  const effectiveViewMode = isTabletOrSmaller && viewMode !== "calendar" ? "grid" : viewMode;
 
   const isReadOnly = role === "requester";
 
@@ -143,6 +149,12 @@ export default function Demands() {
   }, [demands, searchQuery, filters, hideDelivered]);
   
 
+  // Handle calendar day click
+  const handleDayClick = (date: Date) => {
+    setSelectedDateForCreate(date);
+    setIsCreateDialogOpen(true);
+  };
+
   const renderDemandList = (demandList: typeof filteredDemands) => {
     if (isLoading) {
       return (
@@ -153,7 +165,7 @@ export default function Demands() {
       );
     }
 
-    if (demandList.length === 0) {
+    if (demandList.length === 0 && effectiveViewMode !== "calendar") {
       if (searchQuery) {
         return (
           <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
@@ -185,6 +197,16 @@ export default function Demands() {
             </div>
           )}
         </div>
+      );
+    }
+
+    if (effectiveViewMode === "calendar") {
+      return (
+        <DemandsCalendarView
+          demands={demandList}
+          onDemandClick={(demandId) => navigate(`/demands/${demandId}`)}
+          onDayClick={handleDayClick}
+        />
       );
     }
 
@@ -261,12 +283,12 @@ export default function Demands() {
                 </span>
               </Button>
             )}
-            {/* View toggle - hidden on mobile/tablet */}
-            <div className="hidden lg:flex items-center border border-border rounded-md">
+            {/* View toggle - calendar visible on all devices, table/grid hidden on mobile/tablet */}
+            <div className="flex items-center border border-border rounded-md">
               <Button
                 variant={viewMode === "table" ? "secondary" : "ghost"}
                 size="icon"
-                className={viewMode === "table" ? "rounded-r-none bg-primary text-primary-foreground" : "rounded-r-none"}
+                className={`hidden lg:flex ${viewMode === "table" ? "rounded-r-none bg-primary text-primary-foreground" : "rounded-r-none"}`}
                 onClick={() => setViewMode("table")}
                 title={t("demands.tableView")}
               >
@@ -275,11 +297,20 @@ export default function Demands() {
               <Button
                 variant={viewMode === "grid" ? "secondary" : "ghost"}
                 size="icon"
-                className={viewMode === "grid" ? "rounded-l-none bg-primary text-primary-foreground" : "rounded-l-none"}
+                className={`hidden lg:flex ${viewMode === "grid" ? "bg-primary text-primary-foreground" : ""}`}
                 onClick={() => setViewMode("grid")}
                 title={t("demands.gridView")}
               >
                 <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === "calendar" ? "secondary" : "ghost"}
+                size="icon"
+                className={viewMode === "calendar" ? "lg:rounded-l-none bg-primary text-primary-foreground" : "lg:rounded-l-none"}
+                onClick={() => setViewMode("calendar")}
+                title="Visualização em calendário"
+              >
+                <CalendarDays className="h-4 w-4" />
               </Button>
             </div>
             <Button onClick={() => navigate("/demands/create")} className="shadow-primary flex-1 sm:flex-none">
@@ -304,6 +335,13 @@ export default function Demands() {
       ) : (
         renderDemandList(filteredDemands)
       )}
+
+      {/* Quick create dialog for calendar */}
+      <CreateDemandQuickDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        selectedDate={selectedDateForCreate}
+      />
     </div>
   );
 }
