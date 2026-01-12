@@ -445,7 +445,7 @@ const handler = async (req: Request): Promise<Response> => {
       .filter((m: { user_id: string }) => m.user_id !== userId)
       .map((m: { user_id: string }) => ({
         user_id: m.user_id,
-        title: "Nova solicitação de demanda",
+        title: `[${boardName}] Nova solicitação de demanda`,
         message: `${requesterName} enviou uma nova solicitação: "${title}"`,
         type: "demand_request",
         link: "/demand-requests",

@@ -66,14 +66,17 @@ export async function sendAdjustmentPushNotification({
   demandTitle,
   reason,
   isInternal,
+  boardName,
 }: {
   assigneeIds: string[];
   demandId: string;
   demandTitle: string;
   reason: string;
   isInternal: boolean;
+  boardName?: string;
 }) {
-  const title = isInternal ? "🔧 Ajuste interno solicitado" : "📋 Ajuste externo solicitado";
+  const boardPrefix = boardName ? `[${boardName}] ` : "";
+  const title = isInternal ? `🔧 ${boardPrefix}Ajuste interno solicitado` : `📋 ${boardPrefix}Ajuste externo solicitado`;
   const body = isInternal
     ? `Ajuste interno na demanda "${demandTitle.substring(0, 50)}${demandTitle.length > 50 ? "..." : ""}"`
     : `Cliente solicitou ajuste na demanda "${demandTitle.substring(0, 50)}${demandTitle.length > 50 ? "..." : ""}"`;
@@ -86,6 +89,7 @@ export async function sendAdjustmentPushNotification({
     data: {
       demandId,
       type: isInternal ? "internal_adjustment" : "external_adjustment",
+      boardName: boardName || "",
     },
     notificationType: "adjustmentRequests",
   });
@@ -98,19 +102,23 @@ export async function sendAdjustmentCompletionPushNotification({
   creatorId,
   demandId,
   demandTitle,
+  boardName,
 }: {
   creatorId: string;
   demandId: string;
   demandTitle: string;
+  boardName?: string;
 }) {
+  const boardPrefix = boardName ? `[${boardName}] ` : "";
   return sendPushNotification({
     userIds: [creatorId],
-    title: "✅ Ajuste concluído",
+    title: `✅ ${boardPrefix}Ajuste concluído`,
     body: `O ajuste na demanda "${demandTitle.substring(0, 50)}${demandTitle.length > 50 ? "..." : ""}" foi finalizado`,
     link: `/demands/${demandId}`,
     data: {
       demandId,
       type: "adjustment_completed",
+      boardName: boardName || "",
     },
     notificationType: "adjustmentRequests",
   });
@@ -123,19 +131,23 @@ export async function sendAssignmentPushNotification({
   assigneeId,
   demandId,
   demandTitle,
+  boardName,
 }: {
   assigneeId: string;
   demandId: string;
   demandTitle: string;
+  boardName?: string;
 }) {
+  const boardPrefix = boardName ? `[${boardName}] ` : "";
   return sendPushNotification({
     userIds: [assigneeId],
-    title: "📌 Você foi atribuído a uma demanda",
+    title: `📌 ${boardPrefix}Você foi atribuído a uma demanda`,
     body: `Você foi designado para trabalhar na demanda "${demandTitle.substring(0, 50)}${demandTitle.length > 50 ? "..." : ""}"`,
     link: `/demands/${demandId}`,
     data: {
       demandId,
       type: "demand_assigned",
+      boardName: boardName || "",
     },
     notificationType: "demandUpdates",
   });
@@ -150,15 +162,18 @@ export async function sendStatusChangePushNotification({
   demandTitle,
   oldStatus,
   newStatus,
+  boardName,
 }: {
   userIds: string[];
   demandId: string;
   demandTitle: string;
   oldStatus: string;
   newStatus: string;
+  boardName?: string;
 }) {
+  const boardPrefix = boardName ? `[${boardName}] ` : "";
   const isDelivered = newStatus === "Entregue";
-  const title = isDelivered ? "🎉 Demanda entregue!" : "📊 Status atualizado";
+  const title = isDelivered ? `🎉 ${boardPrefix}Demanda entregue!` : `📊 ${boardPrefix}Status atualizado`;
   const body = `"${demandTitle.substring(0, 40)}${demandTitle.length > 40 ? "..." : ""}" mudou para "${newStatus}"`;
 
   return sendPushNotification({
@@ -171,6 +186,7 @@ export async function sendStatusChangePushNotification({
       type: "status_changed",
       oldStatus,
       newStatus,
+      boardName: boardName || "",
     },
     notificationType: "demandUpdates",
   });
@@ -185,18 +201,21 @@ export async function sendDeadlinePushNotification({
   demandTitle,
   hoursRemaining,
   isOverdue,
+  boardName,
 }: {
   userIds: string[];
   demandId: string;
   demandTitle: string;
   hoursRemaining: number;
   isOverdue: boolean;
+  boardName?: string;
 }) {
+  const boardPrefix = boardName ? `[${boardName}] ` : "";
   const title = isOverdue
-    ? "🚨 Prazo vencido!"
+    ? `🚨 ${boardPrefix}Prazo vencido!`
     : hoursRemaining <= 2
-      ? "⚠️ Prazo urgente!"
-      : "⏰ Prazo se aproximando";
+      ? `⚠️ ${boardPrefix}Prazo urgente!`
+      : `⏰ ${boardPrefix}Prazo se aproximando`;
 
   const body = isOverdue
     ? `A demanda "${demandTitle.substring(0, 40)}..." está com prazo vencido!`
@@ -211,6 +230,7 @@ export async function sendDeadlinePushNotification({
       demandId,
       type: isOverdue ? "deadline_overdue" : "deadline_approaching",
       hoursRemaining: String(hoursRemaining),
+      boardName: boardName || "",
     },
     notificationType: "deadlineReminders",
   });
@@ -224,20 +244,24 @@ export async function sendNewDemandPushNotification({
   demandId,
   demandTitle,
   creatorName,
+  boardName,
 }: {
   teamMemberIds: string[];
   demandId: string;
   demandTitle: string;
   creatorName: string;
+  boardName?: string;
 }) {
+  const boardPrefix = boardName ? `[${boardName}] ` : "";
   return sendPushNotification({
     userIds: teamMemberIds,
-    title: "📝 Nova demanda criada",
+    title: `📝 ${boardPrefix}Nova demanda criada`,
     body: `${creatorName} criou "${demandTitle.substring(0, 50)}${demandTitle.length > 50 ? "..." : ""}"`,
     link: `/demands/${demandId}`,
     data: {
       demandId,
       type: "new_demand",
+      boardName: boardName || "",
     },
     notificationType: "demandUpdates",
   });
@@ -251,20 +275,24 @@ export async function sendMentionPushNotification({
   demandId,
   demandTitle,
   mentionerName,
+  boardName,
 }: {
   mentionedUserId: string;
   demandId: string;
   demandTitle: string;
   mentionerName: string;
+  boardName?: string;
 }) {
+  const boardPrefix = boardName ? `[${boardName}] ` : "";
   return sendPushNotification({
     userIds: [mentionedUserId],
-    title: "💬 Você foi mencionado",
+    title: `💬 ${boardPrefix}Você foi mencionado`,
     body: `${mentionerName} mencionou você na demanda "${demandTitle.substring(0, 40)}${demandTitle.length > 40 ? "..." : ""}"`,
     link: `/demands/${demandId}`,
     data: {
       demandId,
       type: "mention",
+      boardName: boardName || "",
     },
     notificationType: "mentionNotifications",
   });
@@ -279,21 +307,25 @@ export async function sendCommentPushNotification({
   demandTitle,
   commenterName,
   commentPreview,
+  boardName,
 }: {
   userIds: string[];
   demandId: string;
   demandTitle: string;
   commenterName: string;
   commentPreview: string;
+  boardName?: string;
 }) {
+  const boardPrefix = boardName ? `[${boardName}] ` : "";
   return sendPushNotification({
     userIds,
-    title: "💬 Novo comentário",
+    title: `💬 ${boardPrefix}Novo comentário`,
     body: `${commenterName} comentou em "${demandTitle.substring(0, 30)}...": ${commentPreview.substring(0, 50)}${commentPreview.length > 50 ? "..." : ""}`,
     link: `/demands/${demandId}`,
     data: {
       demandId,
       type: "new_comment",
+      boardName: boardName || "",
     },
     notificationType: "demandUpdates",
   });
@@ -330,18 +362,22 @@ export async function sendDemandRequestPushNotification({
   adminIds,
   requesterName,
   requestTitle,
+  boardName,
 }: {
   adminIds: string[];
   requesterName: string;
   requestTitle: string;
+  boardName?: string;
 }) {
+  const boardPrefix = boardName ? `[${boardName}] ` : "";
   return sendPushNotification({
     userIds: adminIds,
-    title: "📋 Nova solicitação de demanda",
+    title: `📋 ${boardPrefix}Nova solicitação de demanda`,
     body: `${requesterName} solicitou: "${requestTitle.substring(0, 50)}${requestTitle.length > 50 ? "..." : ""}"`,
     link: "/demand-requests",
     data: {
       type: "demand_request",
+      boardName: boardName || "",
     },
     notificationType: "demandUpdates",
   });
@@ -355,25 +391,28 @@ export async function sendDemandRequestStatusPushNotification({
   requestTitle,
   status,
   responderName,
+  boardName,
 }: {
   requesterId: string;
   requestTitle: string;
   status: "approved" | "rejected" | "returned";
   responderName: string;
+  boardName?: string;
 }) {
+  const boardPrefix = boardName ? `[${boardName}] ` : "";
   const statusConfig = {
     approved: {
-      title: "✅ Solicitação aprovada!",
+      title: `✅ ${boardPrefix}Solicitação aprovada!`,
       body: `Sua solicitação "${requestTitle.substring(0, 40)}..." foi aprovada por ${responderName}`,
       link: "/demands",
     },
     rejected: {
-      title: "❌ Solicitação rejeitada",
+      title: `❌ ${boardPrefix}Solicitação rejeitada`,
       body: `Sua solicitação "${requestTitle.substring(0, 40)}..." foi rejeitada`,
       link: "/my-requests",
     },
     returned: {
-      title: "↩️ Solicitação devolvida",
+      title: `↩️ ${boardPrefix}Solicitação devolvida`,
       body: `Sua solicitação "${requestTitle.substring(0, 40)}..." foi devolvida para revisão`,
       link: "/my-requests",
     },
@@ -388,6 +427,7 @@ export async function sendDemandRequestStatusPushNotification({
     link: config.link,
     data: {
       type: `demand_request_${status}`,
+      boardName: boardName || "",
     },
     notificationType: "demandUpdates",
   });

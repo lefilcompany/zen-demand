@@ -242,7 +242,8 @@ export default function DemandDetail() {
       const notifyUserIds = Array.from(usersToNotify);
       
       if (notifyUserIds.length > 0) {
-        const notificationTitle = isInternal ? "Ajuste interno solicitado" : "Ajuste externo solicitado";
+        const boardPrefix = currentBoard?.name ? `[${currentBoard.name}] ` : "";
+        const notificationTitle = isInternal ? `${boardPrefix}Ajuste interno solicitado` : `${boardPrefix}Ajuste externo solicitado`;
         const notificationMessage = isInternal 
           ? `Foi solicitado um ajuste interno na demanda "${demand?.title}": ${adjustmentReason.trim().substring(0, 100)}${adjustmentReason.length > 100 ? '...' : ''}`
           : `O cliente solicitou um ajuste na demanda "${demand?.title}": ${adjustmentReason.trim().substring(0, 100)}${adjustmentReason.length > 100 ? '...' : ''}`;
@@ -263,6 +264,7 @@ export default function DemandDetail() {
           demandTitle: demand?.title || "",
           reason: adjustmentReason.trim(),
           isInternal,
+          boardName: currentBoard?.name,
         }).catch(err => console.error("Error sending push notification:", err));
         
         // Send email notifications to each user
@@ -278,7 +280,7 @@ export default function DemandDetail() {
             await supabase.functions.invoke("send-email", {
               body: {
                 to: userId,
-                subject: `🔧 ${typeLabel} solicitado: ${demand?.title}`,
+                subject: `🔧 ${currentBoard?.name ? `[${currentBoard.name}] ` : ""}${typeLabel} solicitado: ${demand?.title}`,
                 template: "notification",
                 templateData: {
                   title: notificationTitle,

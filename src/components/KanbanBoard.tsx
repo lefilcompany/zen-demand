@@ -70,6 +70,7 @@ interface KanbanBoardProps {
   onDemandClick: (id: string) => void;
   readOnly?: boolean;
   userRole?: string;
+  boardName?: string;
 }
 
 const priorityColors: Record<string, string> = {
@@ -126,7 +127,7 @@ function useIsLargeDesktop() {
 
 const MAX_OPEN_COLUMNS = 3;
 
-export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole }: KanbanBoardProps) {
+export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole, boardName }: KanbanBoardProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -840,6 +841,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
           demandTitle={adjustmentDemand?.title}
           demandCreatedBy={adjustmentDemand?.created_by}
           teamId={adjustmentDemand?.team_id}
+          boardName={boardName}
         />
       </div>
     );
@@ -935,6 +937,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
           demandTitle={adjustmentDemand?.title}
           demandCreatedBy={adjustmentDemand?.created_by}
           teamId={adjustmentDemand?.team_id}
+          boardName={boardName}
         />
       </div>
     );
@@ -1043,6 +1046,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
           demandTitle={adjustmentDemand?.title}
           demandCreatedBy={adjustmentDemand?.created_by}
           teamId={adjustmentDemand?.team_id}
+          boardName={boardName}
         />
       </div>
     );
