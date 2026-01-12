@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -266,10 +267,19 @@ function CreatorCell({
     .toUpperCase();
 
   return (
-    <Avatar className="h-7 w-7 cursor-pointer" title={creator.full_name}>
-      <AvatarImage src={creator.avatar_url || undefined} alt={creator.full_name} />
-      <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
-    </Avatar>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Avatar className="h-7 w-7 cursor-pointer">
+            <AvatarImage src={creator.avatar_url || undefined} alt={creator.full_name} />
+            <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+          </Avatar>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{creator.full_name}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
