@@ -1,11 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Clock, User, Calendar, Filter, ChevronDown, ChevronUp, ExternalLink, CalendarIcon, Users, BarChart3, TrendingUp, Play, Download } from "lucide-react";
+import { Clock, User, Calendar, Filter, ChevronDown, ChevronUp, ExternalLink, CalendarIcon, Users, BarChart3, TrendingUp, Play, Download, LayoutGrid } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useSelectedBoard } from "@/contexts/BoardContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,55 +20,25 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { formatTimeDisplay } from "@/hooks/useLiveTimer";
+import { useBoardTimeEntries, useBoardUserTimeStats, BoardTimeEntry } from "@/hooks/useBoardTimeEntries";
+import { LiveUserTimeRow } from "@/components/LiveUserTimeRow";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
 
-interface TimeEntryWithDetails {
-  id: string;
-  demand_id: string;
-  user_id: string;
-  started_at: string;
-  ended_at: string | null;
-  duration_seconds: number;
-  created_at: string;
-  demand: {
-    id: string;
-    title: string;
-    status_id: string;
-    priority: string | null;
-    status: {
-      name: string;
-      color: string;
-    };
-  };
-  profile: {
-    id: string;
-    full_name: string;
-    avatar_url: string | null;
-  };
-}
-
 interface GroupedByDemand {
-  demand: TimeEntryWithDetails["demand"];
-  entries: TimeEntryWithDetails[];
+  demand: BoardTimeEntry["demand"];
+  entries: BoardTimeEntry[];
   totalSeconds: number;
-  users: Map<string, { profile: TimeEntryWithDetails["profile"]; totalSeconds: number }>;
-}
-
-interface GroupedByUser {
-  profile: TimeEntryWithDetails["profile"];
-  totalSeconds: number;
-  demandIds: Set<string>;
-  entries: TimeEntryWithDetails[];
-  demands: Map<string, { demand: TimeEntryWithDetails["demand"]; totalSeconds: number; entries: TimeEntryWithDetails[] }>;
+  users: Map<string, { profile: BoardTimeEntry["profile"]; totalSeconds: number }>;
+  hasActiveTimer: boolean;
 }
 
 export default function TimeManagement() {
   const navigate = useNavigate();
-  const { selectedTeamId } = useSelectedTeam();
+  const { selectedBoardId, currentBoard } = useSelectedBoard();
   const [searchTerm, setSearchTerm] = useState("");
   const [userFilter, setUserFilter] = useState<string>("all");
   const [expandedDemands, setExpandedDemands] = useState<Set<string>>(new Set());
@@ -77,54 +47,18 @@ export default function TimeManagement() {
   const [endDate, setEndDate] = useState<Date | undefined>(endOfMonth(new Date()));
   const [activeTab, setActiveTab] = useState<string>("users");
 
-  // Fetch all time entries for the team
-  const { data: timeEntries, isLoading } = useQuery({
-    queryKey: ["team-time-entries", selectedTeamId],
-    queryFn: async () => {
-      if (!selectedTeamId) return [];
+  // Fetch time entries for the board with realtime updates
+  const { data: timeEntries, isLoading: entriesLoading } = useBoardTimeEntries(selectedBoardId);
+  
+  // Get user stats with live timer support
+  const { data: userStats, isLoading: statsLoading, activeTimersCount } = useBoardUserTimeStats(selectedBoardId);
 
-      // First fetch time entries with demands
-      const { data: entries, error: entriesError } = await supabase
-        .from("demand_time_entries")
-        .select(`
-          *,
-          demand:demands!inner(
-            id,
-            title,
-            status_id,
-            priority,
-            team_id,
-            status:demand_statuses(name, color)
-          )
-        `)
-        .eq("demand.team_id", selectedTeamId)
-        .order("started_at", { ascending: false });
-
-      if (entriesError) throw entriesError;
-      if (!entries || entries.length === 0) return [];
-
-      // Fetch profiles for all unique user_ids
-      const userIds = [...new Set(entries.map(e => e.user_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, full_name, avatar_url")
-        .in("id", userIds);
-
-      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
-
-      // Combine entries with profiles
-      return entries.map(entry => ({
-        ...entry,
-        profile: profileMap.get(entry.user_id) || { id: entry.user_id, full_name: "Usuário", avatar_url: null },
-      })) as TimeEntryWithDetails[];
-    },
-    enabled: !!selectedTeamId,
-  });
+  const isLoading = entriesLoading || statsLoading;
 
   // Get unique users for filter
   const uniqueUsers = useMemo(() => {
     if (!timeEntries) return [];
-    const usersMap = new Map<string, TimeEntryWithDetails["profile"]>();
+    const usersMap = new Map<string, BoardTimeEntry["profile"]>();
     timeEntries.forEach((entry) => {
       if (entry.profile && !usersMap.has(entry.profile.id)) {
         usersMap.set(entry.profile.id, entry.profile);
@@ -169,48 +103,61 @@ export default function TimeManagement() {
     return filtered;
   }, [timeEntries, searchTerm, userFilter, startDate, endDate]);
 
-  // Group by user
-  const groupedByUser = useMemo(() => {
-    const userMap = new Map<string, GroupedByUser>();
+  // Filter user stats based on filters
+  const filteredUserStats = useMemo(() => {
+    if (!userStats) return [];
+    
+    // If we have filters active, recalculate from filtered entries
+    if (searchTerm || userFilter !== "all" || startDate || endDate) {
+      const userMap = new Map<string, typeof userStats[0]>();
+      const userDemands = new Map<string, Set<string>>();
 
-    filteredEntries.forEach((entry) => {
-      if (!entry.profile) return;
+      for (const entry of filteredEntries) {
+        const userId = entry.user_id;
+        const existing = userMap.get(userId);
+        
+        const entrySeconds = entry.duration_seconds || 0;
+        const isActive = !entry.ended_at;
 
-      const userId = entry.user_id;
-      const duration = entry.ended_at
-        ? Math.floor((new Date(entry.ended_at).getTime() - new Date(entry.started_at).getTime()) / 1000)
-        : 0;
-
-      if (!userMap.has(userId)) {
-        userMap.set(userId, {
-          profile: entry.profile,
-          totalSeconds: 0,
-          demandIds: new Set(),
-          entries: [],
-          demands: new Map(),
-        });
+        if (!userDemands.has(userId)) {
+          userDemands.set(userId, new Set());
+        }
+        userDemands.get(userId)!.add(entry.demand_id);
+        
+        if (existing) {
+          existing.totalSeconds += entrySeconds;
+          existing.entries.push(entry);
+          if (isActive && !existing.isActive) {
+            existing.isActive = true;
+            existing.activeStartedAt = entry.started_at;
+          }
+        } else {
+          userMap.set(userId, {
+            userId,
+            profile: entry.profile,
+            totalSeconds: entrySeconds,
+            isActive,
+            activeStartedAt: isActive ? entry.started_at : null,
+            demandCount: 0,
+            entries: [entry],
+          });
+        }
       }
 
-      const userData = userMap.get(userId)!;
-      userData.totalSeconds += duration;
-      userData.demandIds.add(entry.demand_id);
-      userData.entries.push(entry);
-
-      // Track per-demand time for this user
-      if (!userData.demands.has(entry.demand_id)) {
-        userData.demands.set(entry.demand_id, {
-          demand: entry.demand,
-          totalSeconds: 0,
-          entries: [],
-        });
+      // Set demand counts
+      for (const [userId, stats] of userMap) {
+        stats.demandCount = userDemands.get(userId)?.size || 0;
       }
-      const demandData = userData.demands.get(entry.demand_id)!;
-      demandData.totalSeconds += duration;
-      demandData.entries.push(entry);
-    });
 
-    return Array.from(userMap.values()).sort((a, b) => b.totalSeconds - a.totalSeconds);
-  }, [filteredEntries]);
+      return Array.from(userMap.values()).sort((a, b) => {
+        if (a.isActive && !b.isActive) return -1;
+        if (!a.isActive && b.isActive) return 1;
+        return b.totalSeconds - a.totalSeconds;
+      });
+    }
+
+    return userStats;
+  }, [userStats, filteredEntries, searchTerm, userFilter, startDate, endDate]);
 
   // Group by demand
   const groupedByDemand = useMemo(() => {
@@ -221,6 +168,7 @@ export default function TimeManagement() {
       const duration = entry.ended_at
         ? Math.floor((new Date(entry.ended_at).getTime() - new Date(entry.started_at).getTime()) / 1000)
         : 0;
+      const isActive = !entry.ended_at;
 
       if (!grouped.has(demandId)) {
         grouped.set(demandId, {
@@ -228,12 +176,14 @@ export default function TimeManagement() {
           entries: [],
           totalSeconds: 0,
           users: new Map(),
+          hasActiveTimer: false,
         });
       }
 
       const group = grouped.get(demandId)!;
       group.entries.push(entry);
       group.totalSeconds += duration;
+      if (isActive) group.hasActiveTimer = true;
 
       // Track per-user time
       if (entry.profile) {
@@ -245,29 +195,38 @@ export default function TimeManagement() {
       }
     });
 
-    return Array.from(grouped.values()).sort((a, b) => b.totalSeconds - a.totalSeconds);
+    return Array.from(grouped.values()).sort((a, b) => {
+      if (a.hasActiveTimer && !b.hasActiveTimer) return -1;
+      if (!a.hasActiveTimer && b.hasActiveTimer) return 1;
+      return b.totalSeconds - a.totalSeconds;
+    });
   }, [filteredEntries]);
 
-  // Calculate totals
+  // Calculate totals with live time consideration
   const totals = useMemo(() => {
-    const totalTime = groupedByDemand.reduce((sum, group) => sum + group.totalSeconds, 0);
+    let totalTime = 0;
+    
+    // Calculate from filtered user stats for accurate live time
+    filteredUserStats.forEach(user => {
+      totalTime += user.totalSeconds;
+    });
+    
     const totalDemands = groupedByDemand.length;
-    const totalEntries = groupedByDemand.reduce((sum, group) => sum + group.entries.length, 0);
-    const activeUsers = groupedByUser.length;
+    const totalEntries = filteredEntries.length;
+    const activeUsers = filteredUserStats.length;
     const avgTimePerUser = activeUsers > 0 ? Math.round(totalTime / activeUsers) : 0;
     const avgTimePerDemand = totalDemands > 0 ? Math.round(totalTime / totalDemands) : 0;
     
-    // Count active timers
-    const activeTimers = filteredEntries.filter(e => !e.ended_at).length;
+    const activeTimers = filteredUserStats.filter(u => u.isActive).length;
 
     return { totalTime, totalDemands, totalEntries, activeUsers, avgTimePerUser, avgTimePerDemand, activeTimers };
-  }, [groupedByDemand, groupedByUser, filteredEntries]);
+  }, [filteredUserStats, groupedByDemand, filteredEntries]);
 
   // Max time for progress calculation
   const maxUserTime = useMemo(() => {
-    if (groupedByUser.length === 0) return 0;
-    return groupedByUser[0].totalSeconds;
-  }, [groupedByUser]);
+    if (filteredUserStats.length === 0) return 0;
+    return filteredUserStats[0].totalSeconds;
+  }, [filteredUserStats]);
 
   const toggleDemand = (demandId: string) => {
     setExpandedDemands((prev) => {
@@ -311,27 +270,34 @@ export default function TimeManagement() {
       
       doc.setFontSize(12);
       doc.setTextColor(100);
+      
+      // Board name
+      if (currentBoard) {
+        doc.text(`Quadro: ${currentBoard.name}`, pageWidth / 2, 28, { align: "center" });
+      }
+      
       if (startDate && endDate) {
-        doc.text(`Período: ${format(startDate, "dd/MM/yyyy")} - ${format(endDate, "dd/MM/yyyy")}`, pageWidth / 2, 28, { align: "center" });
+        doc.text(`Período: ${format(startDate, "dd/MM/yyyy")} - ${format(endDate, "dd/MM/yyyy")}`, pageWidth / 2, 36, { align: "center" });
       }
       
       // Stats summary
       doc.setFontSize(10);
       doc.setTextColor(60);
       const statsText = `Tempo Total: ${formatTimeDisplay(totals.totalTime)} | Usuários: ${totals.activeUsers} | Demandas: ${totals.totalDemands}`;
-      doc.text(statsText, pageWidth / 2, 38, { align: "center" });
+      doc.text(statsText, pageWidth / 2, 46, { align: "center" });
 
       // User time table
-      const tableData = groupedByUser.map(user => [
+      const tableData = filteredUserStats.map(user => [
         user.profile.full_name,
-        user.demandIds.size.toString(),
+        user.demandCount.toString(),
         user.entries.length.toString(),
-        formatTimeDisplay(user.totalSeconds)
+        formatTimeDisplay(user.totalSeconds) || "00:00:00:00",
+        user.isActive ? "Sim" : "Não"
       ]);
 
       autoTable(doc, {
-        startY: 48,
-        head: [["Usuário", "Demandas", "Entradas", "Tempo Total"]],
+        startY: 56,
+        head: [["Usuário", "Demandas", "Entradas", "Tempo Total", "Timer Ativo"]],
         body: tableData,
         theme: "striped",
         headStyles: { 
@@ -359,7 +325,7 @@ export default function TimeManagement() {
         );
       }
 
-      doc.save(`relatorio-tempo-${format(new Date(), "yyyy-MM-dd")}.pdf`);
+      doc.save(`relatorio-tempo-${currentBoard?.name || 'board'}-${format(new Date(), "yyyy-MM-dd")}.pdf`);
       toast.success("Relatório PDF exportado com sucesso!");
     } catch (error) {
       toast.error("Erro ao exportar PDF");
@@ -373,9 +339,24 @@ export default function TimeManagement() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Gerenciamento de Tempo</h1>
-          <p className="text-muted-foreground">
-            Acompanhe o tempo gasto por cada membro da equipe nas demandas.
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-2xl font-bold">Gerenciamento de Tempo</h1>
+            {activeTimersCount > 0 && (
+              <Badge 
+                variant="secondary" 
+                className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 animate-pulse"
+              >
+                <Play className="h-3 w-3 mr-1 fill-current" />
+                {activeTimersCount} timer{activeTimersCount > 1 ? 's' : ''} ativo{activeTimersCount > 1 ? 's' : ''}
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <LayoutGrid className="h-4 w-4" />
+            <span>Quadro: <span className="font-medium text-foreground">{currentBoard?.name || "Selecione um quadro"}</span></span>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            Acompanhe o tempo em tempo real dos membros deste quadro.
           </p>
         </div>
         <Button onClick={exportToPDF} variant="outline" className="gap-2">
@@ -395,7 +376,7 @@ export default function TimeManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono">
-              {isLoading ? <Skeleton className="h-8 w-24" /> : formatTimeDisplay(totals.totalTime)}
+              {isLoading ? <Skeleton className="h-8 w-24" /> : formatTimeDisplay(totals.totalTime) || "00:00:00:00"}
             </div>
           </CardContent>
         </Card>
@@ -413,7 +394,7 @@ export default function TimeManagement() {
                 {isLoading ? <Skeleton className="h-8 w-16" /> : totals.activeUsers}
               </div>
               {totals.activeTimers > 0 && (
-                <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 animate-pulse">
                   <Play className="h-3 w-3 mr-1 fill-current" />
                   {totals.activeTimers} ativo{totals.activeTimers > 1 ? 's' : ''}
                 </Badge>
@@ -431,7 +412,7 @@ export default function TimeManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono">
-              {isLoading ? <Skeleton className="h-8 w-24" /> : formatTimeDisplay(totals.avgTimePerUser)}
+              {isLoading ? <Skeleton className="h-8 w-24" /> : formatTimeDisplay(totals.avgTimePerUser) || "00:00:00:00"}
             </div>
           </CardContent>
         </Card>
@@ -445,7 +426,7 @@ export default function TimeManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mono">
-              {isLoading ? <Skeleton className="h-8 w-24" /> : formatTimeDisplay(totals.avgTimePerDemand)}
+              {isLoading ? <Skeleton className="h-8 w-24" /> : formatTimeDisplay(totals.avgTimePerDemand) || "00:00:00:00"}
             </div>
           </CardContent>
         </Card>
@@ -552,73 +533,37 @@ export default function TimeManagement() {
         </CardContent>
       </Card>
 
-      {/* User Ranking Card */}
-      {!isLoading && groupedByUser.length > 0 && (
+      {/* User Ranking Card - Real-time */}
+      {!isLoading && filteredUserStats.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Ranking de Tempo por Usuário
+              Ranking de Tempo em Tempo Real
+              {activeTimersCount > 0 && (
+                <Badge variant="outline" className="ml-2 text-emerald-600 border-emerald-300">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-full mr-1.5 animate-pulse" />
+                  Ao vivo
+                </Badge>
+              )}
             </CardTitle>
             <CardDescription>
-              Visualização rápida do tempo trabalhado por cada membro da equipe
+              Os tempos atualizam automaticamente quando há timers ativos
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {groupedByUser.slice(0, 5).map((user, index) => {
-                const percentage = maxUserTime > 0 ? (user.totalSeconds / maxUserTime) * 100 : 0;
-                const hasActiveTimer = user.entries.some(e => !e.ended_at);
-                
-                return (
-                  <div key={user.profile.id} className="flex items-center gap-4">
-                    <span className="text-lg font-bold text-muted-foreground w-6">
-                      {index + 1}º
-                    </span>
-                    <Avatar 
-                      className="h-8 w-8 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-                      onClick={() => navigate(`/user/${user.profile.id}`)}
-                    >
-                      <AvatarImage src={user.profile.avatar_url || undefined} />
-                      <AvatarFallback className="text-xs">
-                        {user.profile.full_name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .slice(0, 2)
-                          .toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/user/${user.profile.id}`)}
-                          className="font-medium truncate hover:text-primary hover:underline cursor-pointer transition-colors"
-                        >
-                          {user.profile.full_name}
-                        </button>
-                        {hasActiveTimer && (
-                          <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] h-5">
-                            <Play className="h-2.5 w-2.5 mr-0.5 fill-current" />
-                            Ativo
-                          </Badge>
-                        )}
-                      </div>
-                      <Progress value={percentage} className="h-2" />
-                    </div>
-                    <div className="text-right shrink-0">
-                      <span className="font-mono font-bold">{formatTimeDisplay(user.totalSeconds)}</span>
-                      <div className="text-xs text-muted-foreground">
-                        {user.demandIds.size} demanda{user.demandIds.size !== 1 ? 's' : ''}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-              {groupedByUser.length > 5 && (
-                <p className="text-sm text-muted-foreground text-center pt-2">
-                  E mais {groupedByUser.length - 5} usuário(s)...
+            <div className="space-y-1">
+              {filteredUserStats.slice(0, 10).map((stats, index) => (
+                <LiveUserTimeRow 
+                  key={stats.userId} 
+                  stats={stats} 
+                  maxTime={maxUserTime} 
+                  rank={index + 1}
+                />
+              ))}
+              {filteredUserStats.length > 10 && (
+                <p className="text-sm text-muted-foreground text-center pt-4">
+                  E mais {filteredUserStats.length - 10} usuário(s)...
                 </p>
               )}
             </div>
@@ -660,28 +605,26 @@ export default function TimeManagement() {
                     <Skeleton key={i} className="h-16 w-full" />
                   ))}
                 </div>
-              ) : groupedByUser.length === 0 ? (
+              ) : filteredUserStats.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
-                  Nenhuma entrada de tempo encontrada.
+                  Nenhuma entrada de tempo encontrada para este quadro.
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {groupedByUser.map((userData) => {
-                    const hasActiveTimer = userData.entries.some(e => !e.ended_at);
-                    
-                    return (
-                      <Collapsible
-                        key={userData.profile.id}
-                        open={expandedUsers.has(userData.profile.id)}
-                        onOpenChange={() => toggleUser(userData.profile.id)}
-                      >
-                        <div className="border border-border rounded-lg overflow-hidden">
-                          <CollapsibleTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              className="w-full justify-between p-4 h-auto hover:bg-muted/50"
-                            >
-                              <div className="flex items-center gap-3 text-left flex-1 min-w-0">
+                  {filteredUserStats.map((userData) => (
+                    <Collapsible
+                      key={userData.userId}
+                      open={expandedUsers.has(userData.userId)}
+                      onOpenChange={() => toggleUser(userData.userId)}
+                    >
+                      <div className="border border-border rounded-lg overflow-hidden">
+                        <CollapsibleTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-between p-4 h-auto hover:bg-muted/50"
+                          >
+                            <div className="flex items-center gap-3 text-left flex-1 min-w-0">
+                              <div className="relative">
                                 <Avatar className="h-10 w-10">
                                   <AvatarImage src={userData.profile.avatar_url || undefined} />
                                   <AvatarFallback>
@@ -693,110 +636,132 @@ export default function TimeManagement() {
                                       .toUpperCase()}
                                   </AvatarFallback>
                                 </Avatar>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        navigate(`/user/${userData.profile.id}`);
-                                      }}
-                                      className="font-medium truncate hover:text-primary hover:underline cursor-pointer transition-colors"
-                                    >
-                                      {userData.profile.full_name}
-                                    </button>
-                                    {hasActiveTimer && (
-                                      <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                                        <Play className="h-3 w-3 mr-1 fill-current" />
-                                        Timer Ativo
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                                    <span>{userData.demandIds.size} demanda(s)</span>
-                                    <span>{userData.entries.length} entrada(s)</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <span className="font-mono font-bold text-lg">
-                                  {formatTimeDisplay(userData.totalSeconds)}
-                                </span>
-                                {expandedUsers.has(userData.profile.id) ? (
-                                  <ChevronUp className="h-4 w-4" />
-                                ) : (
-                                  <ChevronDown className="h-4 w-4" />
+                                {userData.isActive && (
+                                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-background rounded-full animate-pulse" />
                                 )}
                               </div>
-                            </Button>
-                          </CollapsibleTrigger>
-
-                          <CollapsibleContent>
-                            <div className="border-t border-border bg-muted/30 p-4">
-                              <h4 className="text-sm font-medium mb-4">Demandas Trabalhadas</h4>
-
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>Demanda</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-center">Entradas</TableHead>
-                                    <TableHead className="text-right">Tempo</TableHead>
-                                    <TableHead className="w-10"></TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {Array.from(userData.demands.values())
-                                    .sort((a, b) => b.totalSeconds - a.totalSeconds)
-                                    .map((demandData) => {
-                                      const hasActive = demandData.entries.some(e => !e.ended_at);
-                                      return (
-                                        <TableRow key={demandData.demand.id}>
-                                          <TableCell>
-                                            <div className="flex items-center gap-2">
-                                              <span className="truncate max-w-[200px]">
-                                                {demandData.demand.title}
-                                              </span>
-                                              {hasActive && (
-                                                <Play className="h-3 w-3 text-emerald-500 fill-current shrink-0" />
-                                              )}
-                                            </div>
-                                          </TableCell>
-                                          <TableCell>
-                                            <Badge
-                                              variant="outline"
-                                              style={{
-                                                borderColor: demandData.demand.status.color,
-                                                color: demandData.demand.status.color,
-                                              }}
-                                            >
-                                              {demandData.demand.status.name}
-                                            </Badge>
-                                          </TableCell>
-                                          <TableCell className="text-center">
-                                            {demandData.entries.length}
-                                          </TableCell>
-                                          <TableCell className="text-right font-mono">
-                                            {formatTimeDisplay(demandData.totalSeconds)}
-                                          </TableCell>
-                                          <TableCell>
-                                            <Button variant="ghost" size="icon" asChild className="h-8 w-8">
-                                              <Link to={`/demands/${demandData.demand.id}`}>
-                                                <ExternalLink className="h-3.5 w-3.5" />
-                                              </Link>
-                                            </Button>
-                                          </TableCell>
-                                        </TableRow>
-                                      );
-                                    })}
-                                </TableBody>
-                              </Table>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate(`/user/${userData.userId}`);
+                                    }}
+                                    className="font-medium truncate hover:text-primary hover:underline cursor-pointer transition-colors"
+                                  >
+                                    {userData.profile.full_name}
+                                  </button>
+                                  {userData.isActive && (
+                                    <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] h-5">
+                                      <Play className="h-2.5 w-2.5 mr-0.5 fill-current" />
+                                      Timer Ativo
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  {userData.demandCount} demanda{userData.demandCount !== 1 ? 's' : ''} • {userData.entries.length} entrada{userData.entries.length !== 1 ? 's' : ''}
+                                </p>
+                              </div>
                             </div>
-                          </CollapsibleContent>
-                        </div>
-                      </Collapsible>
-                    );
-                  })}
+                            <div className="flex items-center gap-2">
+                              <span className={cn(
+                                "font-mono font-bold",
+                                userData.isActive && "text-emerald-600 dark:text-emerald-400"
+                              )}>
+                                {formatTimeDisplay(userData.totalSeconds) || "00:00:00:00"}
+                              </span>
+                              {expandedUsers.has(userData.userId) ? (
+                                <ChevronUp className="h-4 w-4" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4" />
+                              )}
+                            </div>
+                          </Button>
+                        </CollapsibleTrigger>
+
+                        <CollapsibleContent>
+                          <div className="border-t border-border bg-muted/30 p-4">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Demanda</TableHead>
+                                  <TableHead>Status</TableHead>
+                                  <TableHead>Prioridade</TableHead>
+                                  <TableHead className="text-right">Tempo</TableHead>
+                                  <TableHead className="text-right">Ações</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {/* Group entries by demand */}
+                                {(() => {
+                                  const demandMap = new Map<string, { demand: BoardTimeEntry["demand"]; totalSeconds: number; hasActive: boolean }>();
+                                  userData.entries.forEach(entry => {
+                                    const d = demandMap.get(entry.demand_id) || { 
+                                      demand: entry.demand, 
+                                      totalSeconds: 0, 
+                                      hasActive: false 
+                                    };
+                                    d.totalSeconds += entry.duration_seconds || 0;
+                                    if (!entry.ended_at) d.hasActive = true;
+                                    demandMap.set(entry.demand_id, d);
+                                  });
+                                  
+                                  return Array.from(demandMap.values()).map(({ demand, totalSeconds, hasActive }) => (
+                                    <TableRow key={demand.id}>
+                                      <TableCell>
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-medium">{demand.title}</span>
+                                          {hasActive && (
+                                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                                          )}
+                                        </div>
+                                      </TableCell>
+                                      <TableCell>
+                                        <Badge
+                                          variant="outline"
+                                          style={{
+                                            borderColor: demand.status?.color,
+                                            color: demand.status?.color,
+                                          }}
+                                        >
+                                          {demand.status?.name || "—"}
+                                        </Badge>
+                                      </TableCell>
+                                      <TableCell>
+                                        {demand.priority && (
+                                          <Badge className={priorityColors[demand.priority.toLowerCase()] || "bg-muted"}>
+                                            {demand.priority}
+                                          </Badge>
+                                        )}
+                                      </TableCell>
+                                      <TableCell className={cn(
+                                        "text-right font-mono",
+                                        hasActive && "text-emerald-600 dark:text-emerald-400"
+                                      )}>
+                                        {formatTimeDisplay(totalSeconds) || "00:00:00:00"}
+                                      </TableCell>
+                                      <TableCell className="text-right">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          asChild
+                                        >
+                                          <Link to={`/demands/${demand.id}`}>
+                                            <ExternalLink className="h-4 w-4" />
+                                          </Link>
+                                        </Button>
+                                      </TableCell>
+                                    </TableRow>
+                                  ));
+                                })()}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </CollapsibleContent>
+                      </div>
+                    </Collapsible>
+                  ))}
                 </div>
               )}
             </CardContent>
@@ -807,14 +772,9 @@ export default function TimeManagement() {
         <TabsContent value="demands" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Tempo por Demanda</CardTitle>
+              <CardTitle>Detalhamento por Demanda</CardTitle>
               <CardDescription>
-                Clique em uma demanda para ver os detalhes de tempo por usuário.
-                {startDate && endDate && (
-                  <span className="ml-2 text-xs">
-                    (Período: {format(startDate, "dd/MM/yyyy")} - {format(endDate, "dd/MM/yyyy")})
-                  </span>
-                )}
+                Clique em uma demanda para ver os usuários que trabalharam nela.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -826,209 +786,161 @@ export default function TimeManagement() {
                 </div>
               ) : groupedByDemand.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
-                  Nenhuma entrada de tempo encontrada.
+                  Nenhuma entrada de tempo encontrada para este quadro.
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {groupedByDemand.map((group) => {
-                    const hasActiveTimer = group.entries.some(e => !e.ended_at);
-                    
-                    return (
-                      <Collapsible
-                        key={group.demand.id}
-                        open={expandedDemands.has(group.demand.id)}
-                        onOpenChange={() => toggleDemand(group.demand.id)}
-                      >
-                        <div className="border border-border rounded-lg overflow-hidden">
-                          <CollapsibleTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              className="w-full justify-between p-4 h-auto hover:bg-muted/50"
-                            >
-                              <div className="flex items-center gap-3 text-left flex-1 min-w-0">
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="font-medium truncate">
-                                      {group.demand.title}
-                                    </span>
-                                    {hasActiveTimer && (
-                                      <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                                        <Play className="h-3 w-3 mr-1 fill-current" />
-                                        Em Andamento
-                                      </Badge>
-                                    )}
-                                    <Badge
-                                      variant="outline"
-                                      style={{
-                                        borderColor: group.demand.status.color,
-                                        color: group.demand.status.color,
-                                      }}
-                                    >
-                                      {group.demand.status.name}
+                  {groupedByDemand.map((demandData) => (
+                    <Collapsible
+                      key={demandData.demand.id}
+                      open={expandedDemands.has(demandData.demand.id)}
+                      onOpenChange={() => toggleDemand(demandData.demand.id)}
+                    >
+                      <div className="border border-border rounded-lg overflow-hidden">
+                        <CollapsibleTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-between p-4 h-auto hover:bg-muted/50"
+                          >
+                            <div className="flex items-center gap-3 text-left flex-1 min-w-0">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap mb-1">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate(`/demands/${demandData.demand.id}`);
+                                    }}
+                                    className="font-medium truncate hover:text-primary hover:underline cursor-pointer transition-colors"
+                                  >
+                                    {demandData.demand.title}
+                                  </button>
+                                  {demandData.hasActiveTimer && (
+                                    <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] h-5">
+                                      <Play className="h-2.5 w-2.5 mr-0.5 fill-current" />
+                                      Timer Ativo
                                     </Badge>
-                                    {group.demand.priority && (
-                                      <Badge
-                                        variant="secondary"
-                                        className={priorityColors[group.demand.priority] || ""}
-                                      >
-                                        {group.demand.priority}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                                    <span>{group.users.size} usuário(s)</span>
-                                    <span>{group.entries.length} entrada(s)</span>
-                                  </div>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Badge
+                                    variant="outline"
+                                    style={{
+                                      borderColor: demandData.demand.status?.color,
+                                      color: demandData.demand.status?.color,
+                                    }}
+                                  >
+                                    {demandData.demand.status?.name || "—"}
+                                  </Badge>
+                                  {demandData.demand.priority && (
+                                    <Badge className={priorityColors[demandData.demand.priority.toLowerCase()] || "bg-muted"}>
+                                      {demandData.demand.priority}
+                                    </Badge>
+                                  )}
+                                  <span className="text-sm text-muted-foreground">
+                                    {demandData.users.size} usuário{demandData.users.size !== 1 ? 's' : ''}
+                                  </span>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-3">
-                                <span className="font-mono font-bold text-lg">
-                                  {formatTimeDisplay(group.totalSeconds)}
-                                </span>
-                                {expandedDemands.has(group.demand.id) ? (
-                                  <ChevronUp className="h-4 w-4" />
-                                ) : (
-                                  <ChevronDown className="h-4 w-4" />
-                                )}
-                              </div>
-                            </Button>
-                          </CollapsibleTrigger>
-
-                          <CollapsibleContent>
-                            <div className="border-t border-border bg-muted/30 p-4">
-                              <div className="flex justify-between items-center mb-4">
-                                <h4 className="text-sm font-medium">Tempo por Usuário</h4>
-                                <Button variant="outline" size="sm" asChild>
-                                  <Link to={`/demands/${group.demand.id}`}>
-                                    <ExternalLink className="h-3 w-3 mr-1" />
-                                    Ver Demanda
-                                  </Link>
-                                </Button>
-                              </div>
-
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>Usuário</TableHead>
-                                    <TableHead className="text-center">Entradas</TableHead>
-                                    <TableHead className="text-right">Tempo Total</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {Array.from(group.users.values())
-                                    .sort((a, b) => b.totalSeconds - a.totalSeconds)
-                                    .map(({ profile, totalSeconds }) => {
-                                      const userEntries = group.entries.filter(
-                                        (e) => e.user_id === profile.id
-                                      );
-                                      const hasActive = userEntries.some(e => !e.ended_at);
-                                      return (
-                                        <TableRow key={profile.id}>
-                                          <TableCell>
-                                            <div className="flex items-center gap-2">
-                                              <Avatar className="h-6 w-6">
-                                                <AvatarImage src={profile.avatar_url || undefined} />
-                                                <AvatarFallback className="text-xs">
-                                                  {profile.full_name
-                                                    .split(" ")
-                                                    .map((n) => n[0])
-                                                    .join("")
-                                                    .slice(0, 2)
-                                                    .toUpperCase()}
-                                                </AvatarFallback>
-                                              </Avatar>
-                                              <span className="text-sm">{profile.full_name}</span>
-                                              {hasActive && (
-                                                <Play className="h-3 w-3 text-emerald-500 fill-current" />
-                                              )}
-                                            </div>
-                                          </TableCell>
-                                          <TableCell className="text-center">
-                                            {userEntries.length}
-                                          </TableCell>
-                                          <TableCell className="text-right font-mono">
-                                            {formatTimeDisplay(totalSeconds)}
-                                          </TableCell>
-                                        </TableRow>
-                                      );
-                                    })}
-                                </TableBody>
-                              </Table>
-
-                              {/* Detailed entries */}
-                              <details className="mt-4">
-                                <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground">
-                                  Ver todas as entradas ({group.entries.length})
-                                </summary>
-                                <div className="mt-2 space-y-1 text-sm">
-                                  {group.entries.map((entry) => {
-                                    const duration = entry.ended_at
-                                      ? Math.floor(
-                                          (new Date(entry.ended_at).getTime() -
-                                            new Date(entry.started_at).getTime()) /
-                                            1000
-                                        )
-                                      : 0;
-                                    return (
-                                      <div
-                                        key={entry.id}
-                                        className={cn(
-                                          "flex items-center justify-between py-1.5 px-2 rounded",
-                                          !entry.ended_at 
-                                            ? "bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800" 
-                                            : "bg-background"
-                                        )}
-                                      >
-                                        <div className="flex items-center gap-2">
-                                          {!entry.ended_at && (
-                                            <Play className="h-3 w-3 text-emerald-500 fill-current" />
-                                          )}
-                                          <span className="text-muted-foreground">
-                                            {format(new Date(entry.started_at), "dd/MM HH:mm", {
-                                              locale: ptBR,
-                                            })}
-                                            {" → "}
-                                            {entry.ended_at
-                                              ? format(new Date(entry.ended_at), "HH:mm", {
-                                                  locale: ptBR,
-                                                })
-                                              : "em andamento"}
-                                          </span>
-                                          <Avatar className="h-4 w-4">
-                                            <AvatarImage
-                                              src={entry.profile?.avatar_url || undefined}
-                                            />
-                                            <AvatarFallback className="text-[8px]">
-                                              {entry.profile?.full_name
-                                                .split(" ")
-                                                .map((n) => n[0])
-                                                .join("")
-                                                .slice(0, 2)
-                                                .toUpperCase()}
-                                            </AvatarFallback>
-                                          </Avatar>
-                                          <span>{entry.profile?.full_name}</span>
-                                        </div>
-                                        <span className="font-mono">
-                                          {entry.ended_at ? formatTimeDisplay(duration) : "—"}
-                                        </span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </details>
                             </div>
-                          </CollapsibleContent>
-                        </div>
-                      </Collapsible>
-                    );
-                  })}
+                            <div className="flex items-center gap-2">
+                              <span className={cn(
+                                "font-mono font-bold",
+                                demandData.hasActiveTimer && "text-emerald-600 dark:text-emerald-400"
+                              )}>
+                                {formatTimeDisplay(demandData.totalSeconds) || "00:00:00:00"}
+                              </span>
+                              {expandedDemands.has(demandData.demand.id) ? (
+                                <ChevronUp className="h-4 w-4" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4" />
+                              )}
+                            </div>
+                          </Button>
+                        </CollapsibleTrigger>
+
+                        <CollapsibleContent>
+                          <div className="border-t border-border bg-muted/30 p-4">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Usuário</TableHead>
+                                  <TableHead className="text-right">Tempo</TableHead>
+                                  <TableHead className="text-right">Ações</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {Array.from(demandData.users.entries()).map(([userId, { profile, totalSeconds }]) => {
+                                  const hasActive = demandData.entries.some(e => e.user_id === userId && !e.ended_at);
+                                  return (
+                                    <TableRow key={userId}>
+                                      <TableCell>
+                                        <div className="flex items-center gap-2">
+                                          <div className="relative">
+                                            <Avatar className="h-8 w-8">
+                                              <AvatarImage src={profile.avatar_url || undefined} />
+                                              <AvatarFallback className="text-xs">
+                                                {profile.full_name
+                                                  .split(" ")
+                                                  .map((n) => n[0])
+                                                  .join("")
+                                                  .slice(0, 2)
+                                                  .toUpperCase()}
+                                              </AvatarFallback>
+                                            </Avatar>
+                                            {hasActive && (
+                                              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-background rounded-full animate-pulse" />
+                                            )}
+                                          </div>
+                                          <span className="font-medium">{profile.full_name}</span>
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className={cn(
+                                        "text-right font-mono",
+                                        hasActive && "text-emerald-600 dark:text-emerald-400"
+                                      )}>
+                                        {formatTimeDisplay(totalSeconds) || "00:00:00:00"}
+                                      </TableCell>
+                                      <TableCell className="text-right">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          asChild
+                                        >
+                                          <Link to={`/user/${userId}`}>
+                                            <ExternalLink className="h-4 w-4" />
+                                          </Link>
+                                        </Button>
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </CollapsibleContent>
+                      </div>
+                    </Collapsible>
+                  ))}
                 </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Empty State */}
+      {!isLoading && !selectedBoardId && (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <LayoutGrid className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">Selecione um Quadro</h3>
+            <p className="text-muted-foreground">
+              Selecione um quadro na barra lateral para visualizar o gerenciamento de tempo.
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
