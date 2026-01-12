@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { CalendarDemandCard } from "@/components/CalendarDemandCard";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   format,
@@ -22,16 +22,17 @@ import {
   subMonths,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui/toggle-group";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 interface Demand {
   id: string;
@@ -57,6 +58,11 @@ const MAX_VISIBLE_DEMANDS_WEEK = 5;
 
 type CalendarViewMode = "day" | "week" | "month";
 
+interface SelectedDaySheet {
+  date: Date;
+  demands: Demand[];
+}
+
 export function DemandsCalendarView({
   demands,
   onDemandClick,
@@ -64,6 +70,7 @@ export function DemandsCalendarView({
 }: DemandsCalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<CalendarViewMode>("month");
+  const [selectedDaySheet, setSelectedDaySheet] = useState<SelectedDaySheet | null>(null);
 
   // Group demands by date
   const demandsByDate = useMemo(() => {
@@ -240,35 +247,15 @@ export function DemandsCalendarView({
                 ))}
 
                 {hasMoreDemands && (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button
-                        className="w-full text-xs text-primary hover:text-primary/80 font-medium py-1 hover:bg-primary/5 rounded transition-colors"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        +{hiddenCount} mais
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-72 p-2"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="mb-2 font-medium text-sm">
-                        {format(day, "EEEE, d 'de' MMMM", { locale: ptBR })}
-                      </div>
-                      <ScrollArea className="max-h-[300px]">
-                        <div className="space-y-1">
-                          {dayDemands.map((demand) => (
-                            <CalendarDemandCard
-                              key={demand.id}
-                              demand={demand}
-                              onClick={() => onDemandClick(demand.id)}
-                            />
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    </PopoverContent>
-                  </Popover>
+                  <button
+                    className="w-full text-xs text-primary hover:text-primary/80 font-medium py-1 hover:bg-primary/5 rounded transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedDaySheet({ date: day, demands: dayDemands });
+                    }}
+                  >
+                    +{hiddenCount} mais
+                  </button>
                 )}
               </div>
 
@@ -353,35 +340,15 @@ export function DemandsCalendarView({
 
                   {/* More demands indicator */}
                   {hasMoreDemands && (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button
-                          className="w-full text-xs text-primary hover:text-primary/80 font-medium py-1 hover:bg-primary/5 rounded transition-colors"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          +{hiddenCount} mais
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        className="w-72 p-2"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div className="mb-2 font-medium text-sm">
-                          {format(day, "d 'de' MMMM", { locale: ptBR })}
-                        </div>
-                        <ScrollArea className="max-h-[300px]">
-                          <div className="space-y-1">
-                            {dayDemands.map((demand) => (
-                              <CalendarDemandCard
-                                key={demand.id}
-                                demand={demand}
-                                onClick={() => onDemandClick(demand.id)}
-                              />
-                            ))}
-                          </div>
-                        </ScrollArea>
-                      </PopoverContent>
-                    </Popover>
+                    <button
+                      className="w-full text-xs text-primary hover:text-primary/80 font-medium py-1 hover:bg-primary/5 rounded transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedDaySheet({ date: day, demands: dayDemands });
+                      }}
+                    >
+                      +{hiddenCount} mais
+                    </button>
                   )}
                 </div>
 
@@ -451,6 +418,60 @@ export function DemandsCalendarView({
       {viewMode === "day" && renderDayView()}
       {viewMode === "week" && renderWeekView()}
       {viewMode === "month" && renderMonthView()}
+
+      {/* Side Sheet for more demands */}
+      <Sheet open={!!selectedDaySheet} onOpenChange={(open) => !open && setSelectedDaySheet(null)}>
+        <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+          <SheetHeader>
+            <SheetTitle className="capitalize">
+              {selectedDaySheet && format(selectedDaySheet.date, "EEEE, d 'de' MMMM", { locale: ptBR })}
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm text-muted-foreground">
+                {selectedDaySheet?.demands.length} {selectedDaySheet?.demands.length === 1 ? "demanda" : "demandas"}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (selectedDaySheet) {
+                    onDayClick(selectedDaySheet.date);
+                    setSelectedDaySheet(null);
+                  }
+                }}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Nova demanda
+              </Button>
+            </div>
+            <ScrollArea className="h-[calc(100vh-180px)]">
+              <div className="space-y-2 pr-4">
+                {selectedDaySheet?.demands.map((demand) => (
+                  <div 
+                    key={demand.id} 
+                    className="p-3 border rounded-lg hover:bg-muted/30 transition-colors cursor-pointer"
+                    onClick={() => {
+                      onDemandClick(demand.id);
+                      setSelectedDaySheet(null);
+                    }}
+                  >
+                    <CalendarDemandCard
+                      demand={demand}
+                      onClick={() => {
+                        onDemandClick(demand.id);
+                        setSelectedDaySheet(null);
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
