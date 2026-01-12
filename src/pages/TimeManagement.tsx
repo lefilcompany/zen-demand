@@ -23,7 +23,7 @@ import { formatTimeDisplay } from "@/hooks/useLiveTimer";
 import { useBoardTimeEntries, useBoardUserTimeStats, BoardTimeEntry } from "@/hooks/useBoardTimeEntries";
 import { LiveUserTimeRow } from "@/components/LiveUserTimeRow";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
-import { cn } from "@/lib/utils";
+import { cn, truncateText } from "@/lib/utils";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
@@ -710,7 +710,7 @@ export default function TimeManagement() {
                                     <TableRow key={demand.id}>
                                       <TableCell>
                                         <div className="flex items-center gap-2">
-                                          <span className="font-medium">{demand.title}</span>
+                                          <span className="font-medium" title={demand.title}>{truncateText(demand.title)}</span>
                                           {hasActive && (
                                             <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                                           )}
@@ -811,8 +811,9 @@ export default function TimeManagement() {
                                       navigate(`/demands/${demandData.demand.id}`);
                                     }}
                                     className="font-medium truncate hover:text-primary hover:underline cursor-pointer transition-colors"
+                                    title={demandData.demand.title}
                                   >
-                                    {demandData.demand.title}
+                                    {truncateText(demandData.demand.title)}
                                   </button>
                                   {demandData.hasActiveTimer && (
                                     <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] h-5">

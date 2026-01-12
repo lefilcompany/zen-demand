@@ -8,6 +8,7 @@ import { ptBR } from "date-fns/locale";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { Wrench } from "lucide-react";
 import { formatDateOnlyBR, isDateOverdue, toDateOnly, parseDateOnly } from "@/lib/dateUtils";
+import { truncateText } from "@/lib/utils";
 
 // Define the demand type based on what useDemands returns
 export interface DemandTableRow {
@@ -91,8 +92,8 @@ function TitleCell({
   const isHighPriority = row.original.priority?.toLowerCase() === "alta";
   return <div className="flex items-center gap-2">
       {isHighPriority}
-      <span className="font-medium text-foreground">
-        {row.original.title}
+      <span className="font-medium text-foreground" title={row.original.title}>
+        {truncateText(row.original.title)}
       </span>
     </div>;
 }

@@ -5,7 +5,7 @@ import { useBoardMembers } from "@/hooks/useBoardMembers";
 import { useDemandsList } from "@/hooks/useDemandsList";
 import { formatMentionForStorage, formatDemandMentionForStorage, parseMentionsToArray } from "@/lib/mentionUtils";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
-import { cn } from "@/lib/utils";
+import { cn, truncateText } from "@/lib/utils";
 
 interface MentionInputProps {
   value: string;
@@ -551,7 +551,7 @@ export function MentionInput({
               <Badge variant="outline" className="bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border-cyan-500/20 font-mono">
                 {formatDemandCode(demand.board_sequence_number)}
               </Badge>
-              <span className="text-sm truncate flex-1">{demand.title}</span>
+              <span className="text-sm truncate flex-1" title={demand.title}>{truncateText(demand.title)}</span>
             </button>
           ))}
         </div>

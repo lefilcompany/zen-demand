@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, AlertTriangle, Clock, Wrench } from "lucide-react";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
-import { cn } from "@/lib/utils";
+import { cn, truncateText } from "@/lib/utils";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { formatDateOnlyBR, isDateOverdue } from "@/lib/dateUtils";
 
@@ -93,7 +93,7 @@ export function DemandCard({ demand, onClick, showFullDetails = false }: DemandC
                 <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
               )}
             </div>
-            <CardTitle className="text-base sm:text-lg line-clamp-2">{demand.title}</CardTitle>
+            <CardTitle className="text-base sm:text-lg line-clamp-2" title={demand.title}>{truncateText(demand.title)}</CardTitle>
             {demand.description && (
               <CardDescription className="line-clamp-2 text-sm">
                 {demand.description}
