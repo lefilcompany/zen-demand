@@ -7,6 +7,7 @@ import { KanbanNotifications } from "@/components/KanbanNotifications";
 import { useDemands } from "@/hooks/useDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
+import { useBoard } from "@/hooks/useBoards";
 import { useAuth } from "@/lib/auth";
 import { Plus, LayoutGrid, User, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +20,7 @@ export default function Kanban() {
   const { selectedBoardId } = useSelectedBoard();
   const { data: demands, isLoading } = useDemands(selectedBoardId || undefined);
   const { data: role } = useBoardRole(selectedBoardId);
+  const { data: currentBoard } = useBoard(selectedBoardId);
   const [showOnlyMine, setShowOnlyMine] = useState(false);
   
   // Enable realtime updates for demands
@@ -122,6 +124,7 @@ export default function Kanban() {
             onDemandClick={id => navigate(`/demands/${id}`, { state: { from: "kanban" } })} 
             readOnly={isReadOnly}
             userRole={role || undefined}
+            boardName={currentBoard?.name}
           />
         ) : (
           <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">

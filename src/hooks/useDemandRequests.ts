@@ -200,6 +200,15 @@ export function useCreateDemandRequest() {
       // Send push notifications to admins, moderators and executors (fire and forget)
       (async () => {
         try {
+          // Get board name for the notification
+          const { data: boardData } = await supabase
+            .from("boards")
+            .select("name")
+            .eq("id", data.board_id)
+            .single();
+          
+          const boardName = boardData?.name || "";
+          
           const { data: boardMembers, error: boardError } = await supabase
             .from("board_members")
             .select("user_id, role")
@@ -221,6 +230,7 @@ export function useCreateDemandRequest() {
                 adminIds: memberIds,
                 requesterName,
                 requestTitle: data.title,
+                boardName,
               });
               console.log("Push notification result:", pushResult);
             }

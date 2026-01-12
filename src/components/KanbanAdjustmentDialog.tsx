@@ -28,6 +28,7 @@ interface KanbanAdjustmentDialogProps {
   demandTitle: string | undefined;
   demandCreatedBy: string | undefined;
   teamId: string | undefined; // Passed directly from KanbanBoard for immediate role lookup
+  boardName?: string;
 }
 
 export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog({
@@ -37,6 +38,7 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
   demandTitle,
   demandCreatedBy,
   teamId,
+  boardName,
 }: KanbanAdjustmentDialogProps) {
   // Estado LOCAL do textarea - não propaga re-render ao pai
   const [reason, setReason] = useState("");
@@ -151,7 +153,8 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
       const notifyUserIds = Array.from(usersToNotify);
       
       if (notifyUserIds.length > 0) {
-        const notificationTitle = isInternal ? "Ajuste interno solicitado" : "Ajuste externo solicitado";
+        const boardPrefix = boardName ? `[${boardName}] ` : "";
+        const notificationTitle = isInternal ? `${boardPrefix}Ajuste interno solicitado` : `${boardPrefix}Ajuste externo solicitado`;
         const notificationMessage = isInternal 
           ? `Foi solicitado um ajuste interno na demanda "${demandTitle}": ${reason.trim().substring(0, 100)}${reason.length > 100 ? '...' : ''}`
           : `O cliente solicitou um ajuste na demanda "${demandTitle}": ${reason.trim().substring(0, 100)}${reason.length > 100 ? '...' : ''}`;
@@ -173,6 +176,7 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
           demandTitle: demandTitle || "",
           reason: reason.trim(),
           isInternal,
+          boardName,
         }).catch(err => console.error("Error sending push notification:", err));
         
         // Send email notifications to each user
