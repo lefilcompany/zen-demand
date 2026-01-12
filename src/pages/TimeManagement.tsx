@@ -19,7 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { formatTimeDisplay } from "@/hooks/useLiveTimer";
+import { formatTimeDisplay, useLiveTimer } from "@/hooks/useLiveTimer";
 import { useBoardTimeEntries, useBoardUserTimeStats, BoardTimeEntry } from "@/hooks/useBoardTimeEntries";
 import { LiveUserTimeRow } from "@/components/LiveUserTimeRow";
 import { UserDetailTimeRow } from "@/components/UserDetailTimeRow";
@@ -219,10 +219,17 @@ export default function TimeManagement() {
   // Calculate totals with live time consideration
   const totals = useMemo(() => {
     let totalTime = 0;
+    let earliestActiveStart: string | null = null;
     
     // Calculate from filtered user stats for accurate live time
     filteredUserStats.forEach(user => {
       totalTime += user.totalSeconds;
+      // Find earliest active timer start time for live calculation
+      if (user.isActive && user.activeStartedAt) {
+        if (!earliestActiveStart || new Date(user.activeStartedAt) < new Date(earliestActiveStart)) {
+          earliestActiveStart = user.activeStartedAt;
+        }
+      }
     });
     
     const totalDemands = groupedByDemand.length;
@@ -233,8 +240,24 @@ export default function TimeManagement() {
     
     const activeTimers = filteredUserStats.filter(u => u.isActive).length;
 
-    return { totalTime, totalDemands, totalEntries, activeUsers, avgTimePerUser, avgTimePerDemand, activeTimers };
+    return { 
+      totalTime, 
+      totalDemands, 
+      totalEntries, 
+      activeUsers, 
+      avgTimePerUser, 
+      avgTimePerDemand, 
+      activeTimers,
+      earliestActiveStart 
+    };
   }, [filteredUserStats, groupedByDemand, filteredEntries]);
+
+  // Live timer for total time
+  const liveTotalTime = useLiveTimer({
+    isActive: totals.activeTimers > 0,
+    baseSeconds: totals.totalTime,
+    lastStartedAt: totals.earliestActiveStart,
+  });
 
   // Max time for progress calculation
   const maxUserTime = useMemo(() => {
@@ -386,11 +409,17 @@ export default function TimeManagement() {
             <CardDescription className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
               Tempo Total
+              {totals.activeTimers > 0 && (
+                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-mono">
-              {isLoading ? <Skeleton className="h-8 w-24" /> : formatTimeDisplay(totals.totalTime) || "00:00:00:00"}
+            <div className={cn(
+              "text-2xl font-bold font-mono",
+              totals.activeTimers > 0 && "text-emerald-600 dark:text-emerald-400"
+            )}>
+              {isLoading ? <Skeleton className="h-8 w-24" /> : liveTotalTime || formatTimeDisplay(totals.totalTime) || "00:00:00:00"}
             </div>
           </CardContent>
         </Card>
