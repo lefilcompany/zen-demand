@@ -8,12 +8,12 @@ import {
   Activity, 
   FileText, 
   CheckCircle2, 
-  Clock, 
   PlayCircle, 
   AlertCircle,
   FileCheck,
   FilePlus,
-  RefreshCw
+  UserCheck,
+  Package
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -22,14 +22,13 @@ import { Badge } from "@/components/ui/badge";
 
 interface SystemActivity {
   id: string;
-  type: 'demand_created' | 'demand_delivered' | 'demand_started' | 'demand_delayed' | 'request_created' | 'request_approved' | 'request_rejected' | 'status_change';
+  type: 'demand_created' | 'demand_delivered' | 'demand_started' | 'request_created' | 'request_approved' | 'request_rejected';
   title: string;
   demandId?: string;
   requestId?: string;
   timestamp: string;
-  userName?: string;
-  statusName?: string;
-  statusColor?: string;
+  actionBy?: string; // Quem realizou a ação
+  createdBy?: string; // Quem criou originalmente
 }
 
 export function RecentActivities() {
@@ -48,9 +47,7 @@ export function RecentActivities() {
           id,
           title,
           created_at,
-          status_id,
-          demand_statuses(name, color),
-          profiles!demands_created_by_fkey(full_name)
+          creator:profiles!demands_created_by_fkey(full_name)
         `)
         .eq("team_id", selectedTeamId)
         .order("created_at", { ascending: false })
@@ -62,7 +59,7 @@ export function RecentActivities() {
     enabled: !!selectedTeamId,
   });
 
-  // Buscar demandas entregues recentemente
+  // Buscar demandas entregues recentemente (com assignee que entregou)
   const { data: deliveredDemands } = useQuery({
     queryKey: ["recent-demands-delivered", selectedTeamId],
     queryFn: async () => {
@@ -82,7 +79,8 @@ export function RecentActivities() {
           id,
           title,
           updated_at,
-          profiles!demands_created_by_fkey(full_name)
+          creator:profiles!demands_created_by_fkey(full_name),
+          assignee:profiles!demands_assigned_to_fkey(full_name)
         `)
         .eq("team_id", selectedTeamId)
         .eq("status_id", deliveredStatus.id)
@@ -109,7 +107,8 @@ export function RecentActivities() {
           status,
           created_at,
           updated_at,
-          profiles:created_by(full_name)
+          creator:profiles!demand_requests_created_by_fkey(full_name),
+          responder:profiles!demand_requests_responded_by_fkey(full_name)
         `)
         .eq("team_id", selectedTeamId)
         .order("updated_at", { ascending: false })
@@ -132,9 +131,7 @@ export function RecentActivities() {
       title: demand.title,
       demandId: demand.id,
       timestamp: demand.created_at,
-      userName: demand.profiles?.full_name,
-      statusName: demand.demand_statuses?.name,
-      statusColor: demand.demand_statuses?.color,
+      actionBy: demand.creator?.full_name,
     });
   });
 
@@ -146,23 +143,32 @@ export function RecentActivities() {
       title: demand.title,
       demandId: demand.id,
       timestamp: demand.updated_at,
-      userName: demand.profiles?.full_name,
+      actionBy: demand.assignee?.full_name || demand.creator?.full_name, // Responsável pela entrega
+      createdBy: demand.creator?.full_name,
     });
   });
 
   // Adicionar solicitações
   recentRequests?.forEach((request: any) => {
     let type: SystemActivity['type'] = 'request_created';
-    if (request.status === 'approved') type = 'request_approved';
-    else if (request.status === 'rejected') type = 'request_rejected';
+    let actionBy = request.creator?.full_name;
+    
+    if (request.status === 'approved') {
+      type = 'request_approved';
+      actionBy = request.responder?.full_name; // Quem aprovou
+    } else if (request.status === 'rejected') {
+      type = 'request_rejected';
+      actionBy = request.responder?.full_name; // Quem rejeitou
+    }
     
     activities.push({
-      id: `request-${request.id}`,
+      id: `request-${request.id}-${request.status}`,
       type,
       title: request.title,
       requestId: request.id,
       timestamp: request.status === 'pending' ? request.created_at : request.updated_at,
-      userName: request.profiles?.full_name,
+      actionBy,
+      createdBy: request.creator?.full_name,
     });
   });
 
@@ -176,64 +182,50 @@ export function RecentActivities() {
       case 'demand_created':
         return {
           icon: <FilePlus className="h-4 w-4 text-primary" />,
-          label: "Nova demanda criada",
-          badgeVariant: "default" as const,
+          label: "Nova demanda",
+          actionLabel: "Criada por",
           badgeClass: "bg-primary/10 text-primary border-primary/20",
         };
       case 'demand_delivered':
         return {
-          icon: <CheckCircle2 className="h-4 w-4 text-green-500" />,
-          label: "Demanda entregue",
-          badgeVariant: "default" as const,
+          icon: <Package className="h-4 w-4 text-green-500" />,
+          label: "Entregue",
+          actionLabel: "Entregue por",
           badgeClass: "bg-green-500/10 text-green-600 border-green-500/20",
         };
       case 'demand_started':
         return {
           icon: <PlayCircle className="h-4 w-4 text-blue-500" />,
           label: "Em execução",
-          badgeVariant: "default" as const,
+          actionLabel: "Iniciada por",
           badgeClass: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-        };
-      case 'demand_delayed':
-        return {
-          icon: <AlertCircle className="h-4 w-4 text-red-500" />,
-          label: "Demanda atrasada",
-          badgeVariant: "destructive" as const,
-          badgeClass: "bg-red-500/10 text-red-600 border-red-500/20",
         };
       case 'request_created':
         return {
           icon: <FileText className="h-4 w-4 text-amber-500" />,
           label: "Nova solicitação",
-          badgeVariant: "default" as const,
+          actionLabel: "Solicitada por",
           badgeClass: "bg-amber-500/10 text-amber-600 border-amber-500/20",
         };
       case 'request_approved':
         return {
-          icon: <FileCheck className="h-4 w-4 text-green-500" />,
-          label: "Solicitação aprovada",
-          badgeVariant: "default" as const,
+          icon: <UserCheck className="h-4 w-4 text-green-500" />,
+          label: "Aprovada",
+          actionLabel: "Aprovada por",
           badgeClass: "bg-green-500/10 text-green-600 border-green-500/20",
         };
       case 'request_rejected':
         return {
           icon: <AlertCircle className="h-4 w-4 text-red-500" />,
-          label: "Solicitação rejeitada",
-          badgeVariant: "destructive" as const,
+          label: "Rejeitada",
+          actionLabel: "Rejeitada por",
           badgeClass: "bg-red-500/10 text-red-600 border-red-500/20",
-        };
-      case 'status_change':
-        return {
-          icon: <RefreshCw className="h-4 w-4 text-muted-foreground" />,
-          label: "Status alterado",
-          badgeVariant: "secondary" as const,
-          badgeClass: "bg-muted text-muted-foreground",
         };
       default:
         return {
           icon: <Activity className="h-4 w-4 text-muted-foreground" />,
           label: "Atividade",
-          badgeVariant: "secondary" as const,
+          actionLabel: "Por",
           badgeClass: "bg-muted text-muted-foreground",
         };
     }
@@ -299,11 +291,15 @@ export function RecentActivities() {
                       <p className="text-sm font-medium truncate" title={activity.title}>
                         {truncateText(activity.title, 50)}
                       </p>
-                      {activity.userName && (
-                        <p className="text-xs text-muted-foreground">
-                          por {activity.userName}
-                        </p>
-                      )}
+                      <p className="text-xs text-muted-foreground">
+                        <span className="text-muted-foreground/70">{config.actionLabel}:</span>{" "}
+                        <span className="font-medium">{activity.actionBy || "Sistema"}</span>
+                        {activity.createdBy && activity.createdBy !== activity.actionBy && (
+                          <span className="text-muted-foreground/60">
+                            {" "}• Solicitante: {activity.createdBy}
+                          </span>
+                        )}
+                      </p>
                     </div>
                   </div>
                 );
