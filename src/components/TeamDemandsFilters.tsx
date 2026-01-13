@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Filter, X, CalendarIcon, ChevronDown, Check, Briefcase, LayoutGrid } from "lucide-react";
-import { useDemandStatuses } from "@/hooks/useDemands";
 import { useServices } from "@/hooks/useServices";
 import { useTeamPositions } from "@/hooks/useTeamPositions";
 import { useBoards } from "@/hooks/useBoards";
@@ -220,13 +219,15 @@ function AssigneeSelect({ value, onChange, members }: AssigneeSelectProps) {
 
 export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFiltersProps) {
   const [open, setOpen] = useState(false);
-  const { data: statuses } = useDemandStatuses();
   const { data: services } = useServices(teamId, null);
   const { data: positions } = useTeamPositions(teamId);
   const { data: boards } = useBoards(teamId);
   const { data: members } = useTeamMembers(teamId);
 
-  const activeFiltersCount = Object.values(filters).filter(Boolean).length;
+  // Count active filters excluding status (since it's now in tabs)
+  const activeFiltersCount = Object.entries(filters)
+    .filter(([key, value]) => key !== 'status' && Boolean(value))
+    .length;
 
   // Persist position filter to localStorage
   useEffect(() => {
@@ -256,11 +257,6 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
   ) => {
     onChange({ ...filters, [key]: value });
   };
-
-  const statusOptions = [
-    { value: "all", label: "Todos" },
-    ...(statuses?.map(s => ({ value: s.id, label: s.name })) || [])
-  ];
 
   const priorityOptions = [
     { value: "all", label: "Todas" },
@@ -304,8 +300,8 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[360px] p-0" align="start">
-        <div className="border-b border-border bg-muted/30 px-4 py-3 rounded-t-lg">
+      <PopoverContent className="w-[320px] p-0 max-h-[80vh] overflow-y-auto" align="start" sideOffset={8}>
+        <div className="border-b border-border bg-muted/30 px-4 py-3 rounded-t-lg sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <h4 className="font-semibold text-sm">Filtros</h4>
             {activeFiltersCount > 0 && (
@@ -316,26 +312,16 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
                 className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
               >
                 <X className="mr-1 h-3 w-3" />
-                Limpar tudo
+                Limpar
               </Button>
             )}
           </div>
         </div>
 
-        <div className="p-4 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</label>
-              <NativeSelect
-                value={filters.status}
-                onChange={(v) => updateFilter("status", v)}
-                options={statusOptions}
-                placeholder="Todos"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Prioridade</label>
+        <div className="p-3 space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Prioridade</label>
               <NativeSelect
                 value={filters.priority}
                 onChange={(v) => updateFilter("priority", v)}
@@ -343,22 +329,22 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
                 placeholder="Todas"
               />
             </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                <LayoutGrid className="h-3 w-3" /> Quadro
+              </label>
+              <NativeSelect
+                value={filters.board}
+                onChange={(v) => updateFilter("board", v)}
+                options={boardOptions}
+                placeholder="Todos"
+              />
+            </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-              <LayoutGrid className="h-3 w-3" /> Quadro
-            </label>
-            <NativeSelect
-              value={filters.board}
-              onChange={(v) => updateFilter("board", v)}
-              options={boardOptions}
-              placeholder="Todos"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Responsável</label>
+          <div className="space-y-1">
+            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Responsável</label>
             <AssigneeSelect
               value={filters.assignee}
               onChange={(v) => updateFilter("assignee", v)}
@@ -366,9 +352,9 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
             />
           </div>
 
-          <div className="flex flex-col gap-3">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Serviço</label>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Serviço</label>
               <NativeSelect
                 value={filters.service}
                 onChange={(v) => updateFilter("service", v)}
@@ -378,8 +364,8 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
             </div>
 
             {positions && positions.length > 0 && (
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+              <div className="space-y-1">
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                   <Briefcase className="h-3 w-3" /> Cargo
                 </label>
                 <NativeSelect
@@ -393,25 +379,25 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Data de vencimento</label>
-            <div className="flex gap-2">
+          <div className="space-y-1">
+            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Vencimento</label>
+            <div className="flex gap-1.5">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className={`flex-1 justify-start h-8 rounded-lg bg-background/50 hover:bg-accent/50 ${
+                    className={`flex-1 justify-start h-8 rounded-lg bg-background/50 hover:bg-accent/50 text-xs px-2 ${
                       filters.dueDateFrom ? "text-foreground" : "text-muted-foreground"
                     }`}
                   >
-                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    <CalendarIcon className="mr-1.5 h-3 w-3" />
                     {filters.dueDateFrom
-                      ? format(filters.dueDateFrom, "dd/MM/yy", { locale: ptBR })
+                      ? format(filters.dueDateFrom, "dd/MM", { locale: ptBR })
                       : "De"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0" side="bottom" align="start">
                   <Calendar
                     mode="single"
                     selected={filters.dueDateFrom || undefined}
@@ -425,17 +411,17 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className={`flex-1 justify-start h-8 rounded-lg bg-background/50 hover:bg-accent/50 ${
+                    className={`flex-1 justify-start h-8 rounded-lg bg-background/50 hover:bg-accent/50 text-xs px-2 ${
                       filters.dueDateTo ? "text-foreground" : "text-muted-foreground"
                     }`}
                   >
-                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    <CalendarIcon className="mr-1.5 h-3 w-3" />
                     {filters.dueDateTo
-                      ? format(filters.dueDateTo, "dd/MM/yy", { locale: ptBR })
+                      ? format(filters.dueDateTo, "dd/MM", { locale: ptBR })
                       : "Até"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0" side="bottom" align="end">
                   <Calendar
                     mode="single"
                     selected={filters.dueDateTo || undefined}
