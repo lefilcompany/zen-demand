@@ -3,25 +3,37 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { KanbanNotifications } from "@/components/KanbanNotifications";
+import { KanbanFilters, KanbanFiltersState } from "@/components/KanbanFilters";
 
 import { useDemands } from "@/hooks/useDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useBoard } from "@/hooks/useBoards";
 import { useAuth } from "@/lib/auth";
-import { Plus, LayoutGrid, User, Users } from "lucide-react";
+import { useMembersByPosition } from "@/hooks/useMembersByPosition";
+import { Plus, LayoutGrid } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRealtimeDemands, useKanbanRealtimeNotifications } from "@/hooks/useRealtimeDemands";
+import { isToday, isThisWeek, isPast } from "date-fns";
 
 export default function Kanban() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { selectedBoardId } = useSelectedBoard();
+  const { selectedBoardId, currentTeamId } = useSelectedBoard();
   const { data: demands, isLoading } = useDemands(selectedBoardId || undefined);
   const { data: role } = useBoardRole(selectedBoardId);
   const { data: currentBoard } = useBoard(selectedBoardId);
-  const [showOnlyMine, setShowOnlyMine] = useState(false);
+  
+  const [filters, setFilters] = useState<KanbanFiltersState>({
+    myTasks: false,
+    priority: null,
+    dueDate: null,
+    position: null,
+  });
+  
+  // Fetch members with selected position for filtering
+  const { data: membersByPosition } = useMembersByPosition(currentTeamId, filters.position);
   
   // Enable realtime updates for demands
   useRealtimeDemands(selectedBoardId || undefined);
@@ -35,18 +47,45 @@ export default function Kanban() {
 
   const isReadOnly = role === "requester";
 
-  // Filter demands to show only user's demands when toggle is active
+  // Filter demands based on all filters
   const filteredDemands = useMemo(() => {
     if (!demands) return [];
-    if (!showOnlyMine || !user?.id) return demands;
     
     return demands.filter((d) => {
-      const isAssigned = d.demand_assignees?.some(
-        (a) => a.user_id === user.id
-      ) || d.assigned_to === user.id;
-      return isAssigned;
+      // My tasks filter
+      if (filters.myTasks && user?.id) {
+        const isAssigned = d.demand_assignees?.some(
+          (a) => a.user_id === user.id
+        ) || d.assigned_to === user.id;
+        if (!isAssigned) return false;
+      }
+      
+      // Priority filter
+      if (filters.priority && d.priority !== filters.priority) {
+        return false;
+      }
+      
+      // Due date filter
+      if (filters.dueDate && d.due_date) {
+        const dueDate = new Date(d.due_date);
+        if (filters.dueDate === "overdue" && !isPast(dueDate)) return false;
+        if (filters.dueDate === "today" && !isToday(dueDate)) return false;
+        if (filters.dueDate === "week" && !isThisWeek(dueDate)) return false;
+      } else if (filters.dueDate && !d.due_date) {
+        return false;
+      }
+      
+      // Position filter - filter by members with selected position
+      if (filters.position && membersByPosition) {
+        const hasAssigneeWithPosition = d.demand_assignees?.some(
+          (a) => membersByPosition.includes(a.user_id)
+        ) || (d.assigned_to && membersByPosition.includes(d.assigned_to));
+        if (!hasAssigneeWithPosition) return false;
+      }
+      
+      return true;
     });
-  }, [demands, showOnlyMine, user?.id]);
+  }, [demands, filters, user?.id, membersByPosition]);
 
   // Count user's demands
   const myDemandsCount = useMemo(() => {
@@ -72,27 +111,12 @@ export default function Kanban() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Toggle to show only my demands */}
-          {myDemandsCount > 0 && (
-            <Button 
-              variant={showOnlyMine ? "default" : "outline"}
-              size="sm"
-              onClick={() => setShowOnlyMine(!showOnlyMine)}
-              className="gap-2"
-            >
-              {showOnlyMine ? (
-                <User className="h-4 w-4" />
-              ) : (
-                <Users className="h-4 w-4" />
-              )}
-              <span className="hidden sm:inline">
-                {showOnlyMine ? "Minhas Demandas" : "Todas"}
-              </span>
-              <span className="bg-primary-foreground text-primary text-xs px-1.5 py-0.5 rounded-full">
-                {showOnlyMine ? myDemandsCount : demands?.length || 0}
-              </span>
-            </Button>
-          )}
+          {/* Kanban Filters */}
+          <KanbanFilters 
+            teamId={currentTeamId} 
+            filters={filters} 
+            onChange={setFilters} 
+          />
 
           <Button onClick={() => navigate("/demands/create")} className="shadow-primary">
             <Plus className="mr-2 h-4 w-4" />
@@ -130,12 +154,12 @@ export default function Kanban() {
           <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
             <LayoutGrid className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold text-foreground">
-              {showOnlyMine ? "Nenhuma demanda atribuída a você" : t("demands.noDemands")}
+              {filters.myTasks ? "Nenhuma demanda atribuída a você" : t("demands.noDemands")}
             </h3>
             <p className="text-muted-foreground mt-2">
               {isReadOnly ? t("common.noResults") : t("demands.createFirst")}
             </p>
-            {!showOnlyMine && (
+            {!filters.myTasks && (
               <div className="mt-6">
                 <Button onClick={() => navigate("/demands/create")}>
                   <Plus className="mr-2 h-4 w-4" />
