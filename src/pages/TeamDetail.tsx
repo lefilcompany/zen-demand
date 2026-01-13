@@ -16,8 +16,10 @@ import { useTeams, useDeleteTeam } from "@/hooks/useTeams";
 import { useTeamMembers, useRemoveMember } from "@/hooks/useTeamMembers";
 import { useIsTeamAdmin, useTeamRole } from "@/hooks/useTeamRole";
 import { useTeamScope } from "@/hooks/useTeamScope";
+import { useTeamPositions, useAssignPosition } from "@/hooks/useTeamPositions";
 import { MemberCard } from "@/components/MemberCard";
 import { TeamScopeConfig } from "@/components/TeamScopeConfig";
+import { TeamPositionsManager } from "@/components/TeamPositionsManager";
 import { TeamRole } from "@/hooks/useTeamRole";
 export default function TeamDetail() {
   const {
@@ -47,10 +49,22 @@ export default function TeamDetail() {
   const {
     data: scope
   } = useTeamScope(id || undefined);
+  const { data: positions } = useTeamPositions(id);
   const removeMember = useRemoveMember();
+  const assignPosition = useAssignPosition();
   const deleteTeam = useDeleteTeam();
   const team = teams?.find(t => t.id === id);
   const canManage = role === "admin" || role === "moderator";
+
+  const handlePositionChange = (memberId: string, positionId: string | null) => {
+    assignPosition.mutate(
+      { memberId, positionId },
+      {
+        onSuccess: () => toast.success("Cargo atribuído!"),
+        onError: () => toast.error("Erro ao atribuir cargo"),
+      }
+    );
+  };
   const handleCopyCode = () => {
     if (team?.access_code) {
       navigator.clipboard.writeText(team.access_code);
@@ -137,6 +151,15 @@ export default function TeamDetail() {
       {/* Scope Configuration - Only for Admins */}
       {isAdmin && id && <TeamScopeConfig teamId={id} currentScope={scope || null} />}
 
+      {/* Team Positions Manager */}
+      {canManage && id && (
+        <TeamPositionsManager 
+          teamId={id} 
+          canManage={canManage} 
+          isAdmin={isAdmin} 
+        />
+      )}
+
       {/* Members List */}
       <Card>
         <CardHeader>
@@ -152,7 +175,20 @@ export default function TeamDetail() {
           {membersLoading ? <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-40 rounded-xl" />)}
             </div> : members && members.length > 0 ? <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {members.map(member => <MemberCard key={member.id} member={member} isAdmin={isAdmin} currentUserId={user?.id || ""} onRemove={handleRemoveMember} isRemoving={removeMember.isPending} />)}
+              {members.map(member => (
+                <MemberCard 
+                  key={member.id} 
+                  member={member} 
+                  isAdmin={isAdmin} 
+                  currentUserId={user?.id || ""} 
+                  onRemove={handleRemoveMember} 
+                  isRemoving={removeMember.isPending}
+                  canManage={canManage}
+                  positions={positions || []}
+                  onPositionChange={handlePositionChange}
+                  isChangingPosition={assignPosition.isPending}
+                />
+              ))}
             </div> : <p className="text-center text-muted-foreground py-8">
               Nenhum membro encontrado.
             </p>}
