@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Users, TrendingUp, Target, Activity } from "lucide-react";
 import {
   BarChart,
@@ -292,52 +293,56 @@ export function WorkloadDistributionChart({ demands }: WorkloadDistributionChart
               </div>
 
               {/* Member Details List */}
-              <div className="flex-1 min-w-0 space-y-2 lg:border-l lg:border-border lg:pl-4">
+              <div className="flex-1 min-w-0 lg:border-l lg:border-border lg:pl-4" style={{ maxHeight: workloadData.length * 50 + 20 }}>
                 <p className="text-xs font-medium text-muted-foreground mb-2">Detalhamento por Membro</p>
-                {workloadData.map((member) => {
-                  const initials = member.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .slice(0, 2)
-                    .toUpperCase();
+                <ScrollArea className="h-full pr-2" style={{ height: workloadData.length * 50 - 10 }}>
+                  <div className="space-y-2">
+                    {workloadData.map((member) => {
+                      const initials = member.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase();
 
-                  return (
-                    <div key={member.id} className="py-2 px-2 rounded-md hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={member.avatar || undefined} />
-                            <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
-                              {initials}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm font-medium truncate max-w-[120px]">{member.name}</span>
+                      return (
+                        <div key={member.id} className="py-2 px-2 rounded-md hover:bg-muted/50 transition-colors">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage src={member.avatar || undefined} />
+                                <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
+                                  {initials}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm font-medium truncate max-w-[120px]">{member.name}</span>
+                            </div>
+                            <div className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                              {member.deliveryRate}% entregue
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4 text-xs pl-8">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: STATUS_COLORS.toStart }} />
+                              <span className="text-muted-foreground">Iniciar:</span>
+                              <span className="font-medium text-foreground">{member.toStart}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: STATUS_COLORS.inProgress }} />
+                              <span className="text-muted-foreground">Andamento:</span>
+                              <span className="font-medium text-foreground">{member.inProgress}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: STATUS_COLORS.delivered }} />
+                              <span className="text-muted-foreground">Entregue:</span>
+                              <span className="font-medium text-foreground">{member.delivered}</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                          {member.deliveryRate}% entregue
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4 text-xs pl-8">
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: STATUS_COLORS.toStart }} />
-                          <span className="text-muted-foreground">Iniciar:</span>
-                          <span className="font-medium text-foreground">{member.toStart}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: STATUS_COLORS.inProgress }} />
-                          <span className="text-muted-foreground">Andamento:</span>
-                          <span className="font-medium text-foreground">{member.inProgress}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: STATUS_COLORS.delivered }} />
-                          <span className="text-muted-foreground">Entregue:</span>
-                          <span className="font-medium text-foreground">{member.delivered}</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
               </div>
             </div>
           </div>
