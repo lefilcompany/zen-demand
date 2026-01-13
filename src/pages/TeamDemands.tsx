@@ -2,18 +2,35 @@ import { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { DemandCard } from "@/components/DemandCard";
 import { useAllTeamDemands } from "@/hooks/useAllTeamDemands";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useMembersByPosition } from "@/hooks/useMembersByPosition";
 import { useTeamRole } from "@/hooks/useTeamRole";
-import { Layers, LayoutGrid, List, Search, Eye, EyeOff, CalendarDays, ShieldAlert } from "lucide-react";
+import { useBoards } from "@/hooks/useBoards";
+import { 
+  Layers, 
+  LayoutGrid, 
+  List, 
+  Search, 
+  Eye, 
+  EyeOff, 
+  CalendarDays, 
+  ShieldAlert,
+  ClipboardList,
+  Clock,
+  CheckCircle2,
+  AlertTriangle
+} from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table";
 import { teamDemandColumns, TeamDemandTableRow } from "@/components/team-demands/columns";
 import { TeamDemandsFilters, TeamDemandsFiltersState } from "@/components/TeamDemandsFilters";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { DemandsCalendarView } from "@/components/DemandsCalendarView";
+import { isDateOverdue } from "@/lib/dateUtils";
 
 type ViewMode = "table" | "grid" | "calendar";
 
@@ -24,10 +41,11 @@ export default function TeamDemands() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const { selectedTeamId } = useSelectedTeam();
+  const { selectedTeamId, currentTeam } = useSelectedTeam();
   const { data: role, isLoading: isRoleLoading } = useTeamRole(selectedTeamId);
   const isTeamAdminOrModerator = role === "admin" || role === "moderator";
   const { data: demands, isLoading } = useAllTeamDemands(isTeamAdminOrModerator ? selectedTeamId : null);
+  const { data: boards } = useBoards(selectedTeamId);
   
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -72,10 +90,19 @@ export default function TeamDemands() {
   // Force grid view on mobile/tablet (screens < 1024px), but allow calendar on all devices
   const effectiveViewMode = isTabletOrSmaller && viewMode !== "calendar" ? "grid" : viewMode;
 
-  // Count delivered demands
-  const deliveredCount = useMemo(() => {
-    if (!demands) return 0;
-    return demands.filter((d) => d.demand_statuses?.name === "Entregue").length;
+  // Statistics
+  const stats = useMemo(() => {
+    if (!demands) return { total: 0, inProgress: 0, delivered: 0, overdue: 0 };
+    
+    const total = demands.length;
+    const inProgress = demands.filter(d => d.demand_statuses?.name === "Fazendo").length;
+    const delivered = demands.filter(d => d.demand_statuses?.name === "Entregue").length;
+    const overdue = demands.filter(d => {
+      if (!d.due_date || d.demand_statuses?.name === "Entregue") return false;
+      return isDateOverdue(d.due_date);
+    }).length;
+    
+    return { total, inProgress, delivered, overdue };
   }, [demands]);
 
   const filteredDemands = useMemo(() => {
@@ -174,7 +201,7 @@ export default function TeamDemands() {
     if (demandList.length === 0 && effectiveViewMode !== "calendar") {
       if (searchQuery) {
         return (
-          <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
+          <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-muted/20">
             <Search className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold text-foreground">
               {t("common.noResults")}
@@ -186,7 +213,7 @@ export default function TeamDemands() {
         );
       }
       return (
-        <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
+        <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-muted/20">
           <Layers className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-lg font-semibold text-foreground">
             Nenhuma demanda encontrada
@@ -211,12 +238,16 @@ export default function TeamDemands() {
 
     if (effectiveViewMode === "table") {
       return (
-        <DataTable
-          columns={teamDemandColumns}
-          data={demandList as unknown as TeamDemandTableRow[]}
-          onRowClick={(row) => navigate(`/demands/${row.id}`, { state: { from: "team-demands", viewMode: "table" } })}
-          defaultSorting={[{ id: "due_date", desc: false }]}
-        />
+        <Card className="border-border/50 shadow-sm">
+          <CardContent className="p-0">
+            <DataTable
+              columns={teamDemandColumns}
+              data={demandList as unknown as TeamDemandTableRow[]}
+              onRowClick={(row) => navigate(`/demands/${row.id}`, { state: { from: "team-demands", viewMode: "table" } })}
+              defaultSorting={[{ id: "due_date", desc: false }]}
+            />
+          </CardContent>
+        </Card>
       );
     }
 
@@ -234,123 +265,227 @@ export default function TeamDemands() {
     );
   };
 
-  return (
-    <div className="space-y-4 md:space-y-6 animate-fade-in">
-      <div className="flex flex-col gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-            Visão Geral da Equipe
-          </h1>
-          <p className="text-sm md:text-base text-muted-foreground">
-            Todas as demandas de todos os quadros
-          </p>
+  // Loading state
+  if (isRoleLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
+          <p className="text-muted-foreground mt-4">Verificando permissões...</p>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <div className="relative flex-1 sm:flex-none">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t("common.search")}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-full sm:w-[200px] md:w-[250px]"
-            />
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <TeamDemandsFilters 
-              teamId={selectedTeamId} 
-              filters={filters} 
-              onChange={setFilters} 
-            />
-            {/* Toggle hide/show delivered */}
-            {deliveredCount > 0 && (
-              <Button 
-                variant={hideDelivered ? "default" : "outline"}
-                size="sm"
-                onClick={() => setHideDelivered(!hideDelivered)}
-                className="gap-2"
-              >
-                {hideDelivered ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-                <span className="hidden sm:inline">
-                  {hideDelivered ? "Exibir Entregues" : "Ocultar Entregues"}
-                </span>
-                <span className="bg-primary-foreground text-primary text-xs px-1.5 py-0.5 rounded-full">
-                  {deliveredCount}
-                </span>
-              </Button>
-            )}
-            {/* View toggle - calendar visible on all devices, table/grid hidden on mobile/tablet */}
-            <div className="flex items-center border border-border rounded-md">
-              <Button
-                variant={viewMode === "table" ? "secondary" : "ghost"}
-                size="icon"
-                className={`hidden lg:flex ${viewMode === "table" ? "rounded-r-none bg-primary text-primary-foreground" : "rounded-r-none"}`}
-                onClick={() => setViewMode("table")}
-                title="Visualização em tabela"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "grid" ? "secondary" : "ghost"}
-                size="icon"
-                className={`hidden lg:flex rounded-none ${viewMode === "grid" ? "bg-primary text-primary-foreground" : ""}`}
-                onClick={() => setViewMode("grid")}
-                title="Visualização em blocos"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "calendar" ? "secondary" : "ghost"}
-                size="icon"
-                className={viewMode === "calendar" ? "lg:rounded-l-none bg-primary text-primary-foreground" : "lg:rounded-l-none"}
-                onClick={() => setViewMode("calendar")}
-                title="Visualização em calendário"
-              >
-                <CalendarDays className="h-4 w-4" />
-              </Button>
+      </div>
+    );
+  }
+
+  // Access denied state
+  if (!isTeamAdminOrModerator) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="max-w-md w-full border-destructive/20">
+          <CardContent className="pt-6 text-center">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+              <ShieldAlert className="h-8 w-8 text-destructive" />
             </div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">
+              Acesso Restrito
+            </h3>
+            <p className="text-muted-foreground mb-6">
+              Apenas administradores e moderadores podem acessar a visão geral da equipe.
+            </p>
+            <Button onClick={() => navigate("/")} className="w-full">
+              Voltar ao Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // No team selected
+  if (!selectedTeamId) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6 text-center">
+            <Layers className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              Selecione uma equipe
+            </h3>
+            <p className="text-muted-foreground">
+              Escolha uma equipe para ver todas as demandas
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Layers className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+              Visão Geral
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {currentTeam?.name ? `Equipe ${currentTeam.name}` : "Todas as demandas"} • {boards?.length || 0} quadros
+            </p>
           </div>
         </div>
       </div>
 
-      {isRoleLoading ? (
-        <div className="text-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
-          <p className="text-muted-foreground mt-4">{t("common.loading")}</p>
-        </div>
-      ) : !isTeamAdminOrModerator ? (
-        <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
-          <ShieldAlert className="mx-auto h-12 w-12 text-destructive" />
-          <h3 className="mt-4 text-lg font-semibold text-foreground">
-            Acesso Restrito
-          </h3>
-          <p className="text-muted-foreground mt-2">
-            Apenas administradores e moderadores podem acessar esta página
-          </p>
-          <Button 
-            variant="outline" 
-            className="mt-4"
-            onClick={() => navigate("/")}
-          >
-            Voltar ao Dashboard
-          </Button>
-        </div>
-      ) : !selectedTeamId ? (
-        <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
-          <Layers className="mx-auto h-12 w-12 text-muted-foreground" />
-          <h3 className="mt-4 text-lg font-semibold text-foreground">
-            Selecione uma equipe
-          </h3>
-          <p className="text-muted-foreground mt-2">
-            Escolha uma equipe para ver todas as demandas
-          </p>
-        </div>
-      ) : (
-        renderDemandList(filteredDemands)
-      )}
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="border-border/50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <ClipboardList className="h-5 w-5 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-2xl font-bold text-foreground">{stats.total}</p>
+                <p className="text-xs text-muted-foreground truncate">Total</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                <Clock className="h-5 w-5 text-blue-500" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-2xl font-bold text-foreground">{stats.inProgress}</p>
+                <p className="text-xs text-muted-foreground truncate">Em Andamento</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-2xl font-bold text-foreground">{stats.delivered}</p>
+                <p className="text-xs text-muted-foreground truncate">Entregues</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className={`border-border/50 ${stats.overdue > 0 ? "border-destructive/30 bg-destructive/5" : ""}`}>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${stats.overdue > 0 ? "bg-destructive/10" : "bg-muted"}`}>
+                <AlertTriangle className={`h-5 w-5 ${stats.overdue > 0 ? "text-destructive" : "text-muted-foreground"}`} />
+              </div>
+              <div className="min-w-0">
+                <p className={`text-2xl font-bold ${stats.overdue > 0 ? "text-destructive" : "text-foreground"}`}>{stats.overdue}</p>
+                <p className="text-xs text-muted-foreground truncate">Atrasadas</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters and Actions */}
+      <Card className="border-border/50">
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="relative flex-1 sm:flex-none">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={t("common.search")}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 w-full sm:w-[220px] md:w-[280px]"
+              />
+            </div>
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:ml-auto">
+              <TeamDemandsFilters 
+                teamId={selectedTeamId} 
+                filters={filters} 
+                onChange={setFilters} 
+              />
+              
+              {/* Toggle hide/show delivered */}
+              {stats.delivered > 0 && (
+                <Button 
+                  variant={hideDelivered ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setHideDelivered(!hideDelivered)}
+                  className="gap-2"
+                >
+                  {hideDelivered ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {hideDelivered ? "Exibir" : "Ocultar"} Entregues
+                  </span>
+                  <Badge variant="secondary" className="ml-0.5 h-5 px-1.5">
+                    {stats.delivered}
+                  </Badge>
+                </Button>
+              )}
+              
+              {/* View toggle */}
+              <div className="flex items-center border border-border rounded-lg overflow-hidden">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`hidden lg:flex rounded-none h-8 w-8 ${viewMode === "table" ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}`}
+                  onClick={() => setViewMode("table")}
+                  title="Visualização em tabela"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`hidden lg:flex rounded-none h-8 w-8 ${viewMode === "grid" ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}`}
+                  onClick={() => setViewMode("grid")}
+                  title="Visualização em blocos"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`rounded-none h-8 w-8 ${viewMode === "calendar" ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}`}
+                  onClick={() => setViewMode("calendar")}
+                  title="Visualização em calendário"
+                >
+                  <CalendarDays className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Active filters indicator */}
+          {filteredDemands.length !== stats.total && (
+            <div className="mt-3 pt-3 border-t border-border">
+              <p className="text-sm text-muted-foreground">
+                Exibindo <span className="font-medium text-foreground">{filteredDemands.length}</span> de {stats.total} demandas
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Content */}
+      {renderDemandList(filteredDemands)}
     </div>
   );
 }
