@@ -334,7 +334,7 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-3">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Serviço</label>
               <NativeSelect
