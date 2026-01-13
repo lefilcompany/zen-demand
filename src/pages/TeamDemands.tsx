@@ -28,6 +28,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table";
 import { teamDemandColumns, TeamDemandTableRow } from "@/components/team-demands/columns";
 import { TeamDemandsFilters, TeamDemandsFiltersState } from "@/components/TeamDemandsFilters";
+import { StatusFilterTabs } from "@/components/StatusFilterTabs";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { DemandsCalendarView } from "@/components/DemandsCalendarView";
 import { isDateOverdue } from "@/lib/dateUtils";
@@ -483,6 +484,14 @@ export default function TeamDemands() {
           )}
         </CardContent>
       </Card>
+
+      {/* Status Filter Tabs */}
+      <div className="flex items-center gap-3 overflow-x-auto pb-2 -mb-2">
+        <StatusFilterTabs
+          value={filters.status}
+          onChange={(status) => setFilters({ ...filters, status })}
+        />
+      </div>
 
       {/* Content */}
       {renderDemandList(filteredDemands)}
