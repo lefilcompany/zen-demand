@@ -242,10 +242,6 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
     onChange({ ...filters, [key]: value });
   };
 
-  const statusOptions = [
-    { value: "all", label: "Todos" },
-    ...(statuses?.map(s => ({ value: s.id, label: s.name })) || [])
-  ];
 
   const priorityOptions = [
     { value: "all", label: "Todas" },
@@ -303,26 +299,14 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
         </div>
 
         <div className="p-4 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</label>
-              <NativeSelect
-                value={filters.status}
-                onChange={(v) => updateFilter("status", v)}
-                options={statusOptions}
-                placeholder="Todos"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Prioridade</label>
-              <NativeSelect
-                value={filters.priority}
-                onChange={(v) => updateFilter("priority", v)}
-                options={priorityOptions}
-                placeholder="Todas"
-              />
-            </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Prioridade</label>
+            <NativeSelect
+              value={filters.priority}
+              onChange={(v) => updateFilter("priority", v)}
+              options={priorityOptions}
+              placeholder="Todas"
+            />
           </div>
 
           <div className="space-y-1.5">
