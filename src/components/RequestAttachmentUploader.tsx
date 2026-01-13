@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Paperclip, X, Download, FileText, Image, File, Trash2, Loader2 } from "lucide-react";
+import { Paperclip, X, Download, FileText, Image, File, Trash2, Loader2, Maximize2 } from "lucide-react";
 import { 
   useRequestAttachments, 
   useUploadRequestAttachment, 
@@ -31,27 +31,161 @@ interface AttachmentItemProps {
   onDelete: (id: string, filePath: string) => void;
 }
 
-function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+function ImageAttachment({ attachment, readOnly, onDelete, url }: AttachmentItemProps & { url: string }) {
   const [downloading, setDownloading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  useEffect(() => {
-    let mounted = true;
-    
-    getRequestAttachmentUrl(attachment.file_path).then((signedUrl) => {
-      if (mounted) {
-        setUrl(signedUrl);
-        setLoading(false);
-      }
-    });
-    
-    return () => { mounted = false; };
-  }, [attachment.file_path]);
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = attachment.file_name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      toast.error("Erro ao baixar arquivo");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="relative rounded-lg overflow-hidden border bg-muted/30 group">
+        {/* Imagem grande */}
+        <div className="relative w-full max-h-80 overflow-hidden">
+          <img
+            src={url}
+            alt={attachment.file_name}
+            className="w-full h-auto max-h-80 object-contain bg-background"
+          />
+          
+          {/* Overlay com informações */}
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+            <div className="flex items-end justify-between gap-2">
+              <div className="text-white min-w-0">
+                <p className="text-sm font-medium truncate">{attachment.file_name}</p>
+                <p className="text-xs text-white/80">
+                  {formatSize(attachment.file_size)} • {format(new Date(attachment.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="h-8 w-8 bg-white/20 hover:bg-white/30 text-white border-0"
+                  onClick={() => setPreviewOpen(true)}
+                  title="Ampliar imagem"
+                >
+                  <Maximize2 className="h-4 w-4" />
+                </Button>
+                
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="h-8 w-8 bg-white/20 hover:bg-white/30 text-white border-0"
+                  onClick={handleDownload}
+                  disabled={downloading}
+                  title="Baixar arquivo"
+                >
+                  {downloading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                </Button>
+                
+                {!readOnly && (
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-8 w-8 bg-white/20 hover:bg-destructive/80 text-white border-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => onDelete(attachment.id, attachment.file_path)}
+                    title="Remover anexo"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal de preview ampliado */}
+      {previewOpen && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setPreviewOpen(false)}
+        >
+          <div className="relative max-w-6xl max-h-[95vh] w-full flex flex-col items-center">
+            <div className="absolute top-0 right-0 flex gap-2 z-10">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="bg-white/20 hover:bg-white/30 text-white border-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDownload();
+                }}
+                disabled={downloading}
+              >
+                {downloading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Download className="h-4 w-4 mr-2" />
+                )}
+                Baixar
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-white hover:bg-white/20"
+                onClick={() => setPreviewOpen(false)}
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            
+            <img
+              src={url}
+              alt={attachment.file_name}
+              className="max-w-full max-h-[85vh] object-contain rounded-lg mt-12"
+              onClick={(e) => e.stopPropagation()}
+            />
+            
+            <div className="mt-3 text-center text-white">
+              <p className="text-sm font-medium">{attachment.file_name}</p>
+              <p className="text-xs text-white/70">
+                {formatSize(attachment.file_size)} • {format(new Date(attachment.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function FileAttachment({ attachment, readOnly, onDelete, url }: AttachmentItemProps & { url: string | null }) {
+  const [downloading, setDownloading] = useState(false);
 
   const getFileIcon = (type: string) => {
-    if (type.startsWith("image/")) return Image;
     if (type.includes("pdf") || type.includes("document")) return FileText;
     return File;
   };
@@ -87,115 +221,87 @@ function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps)
   };
 
   const Icon = getFileIcon(attachment.file_type);
-  const isImage = attachment.file_type.startsWith("image/");
 
   return (
-    <>
-      <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 group">
-        {loading ? (
-          <div className="h-12 w-12 flex items-center justify-center">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : isImage && url ? (
-          <button
-            type="button"
-            onClick={() => setPreviewOpen(true)}
-            className="h-12 w-12 rounded overflow-hidden border hover:ring-2 hover:ring-primary transition-all cursor-pointer flex-shrink-0"
-          >
-            <img
-              src={url}
-              alt={attachment.file_name}
-              className="h-full w-full object-cover"
-            />
-          </button>
-        ) : (
-          <div className="h-12 w-12 flex items-center justify-center bg-background rounded border">
-            <Icon className="h-6 w-6 text-muted-foreground" />
-          </div>
-        )}
-        
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">{attachment.file_name}</p>
-          <p className="text-xs text-muted-foreground">
-            {formatSize(attachment.file_size)} • {format(new Date(attachment.created_at), "dd/MM/yyyy", { locale: ptBR })}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-1">
-          {url && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={handleDownload}
-              disabled={downloading}
-              title="Baixar arquivo"
-            >
-              {downloading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Download className="h-4 w-4" />
-              )}
-            </Button>
-          )}
-          
-          {!readOnly && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 opacity-0 group-hover:opacity-100"
-              onClick={() => onDelete(attachment.id, attachment.file_path)}
-              title="Remover anexo"
-            >
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
-          )}
-        </div>
+    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 group">
+      <div className="h-12 w-12 flex items-center justify-center bg-background rounded border flex-shrink-0">
+        <Icon className="h-6 w-6 text-muted-foreground" />
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{attachment.file_name}</p>
+        <p className="text-xs text-muted-foreground">
+          {formatSize(attachment.file_size)} • {format(new Date(attachment.created_at), "dd/MM/yyyy", { locale: ptBR })}
+        </p>
       </div>
 
-      {/* Modal de preview de imagem */}
-      {isImage && url && previewOpen && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-          onClick={() => setPreviewOpen(false)}
-        >
-          <div className="relative max-w-4xl max-h-[90vh] w-full">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute -top-12 right-0 text-white hover:bg-white/20"
-              onClick={() => setPreviewOpen(false)}
-            >
-              <X className="h-6 w-6" />
-            </Button>
-            <img
-              src={url}
-              alt={attachment.file_name}
-              className="w-full h-full object-contain rounded-lg"
-              onClick={(e) => e.stopPropagation()}
-            />
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-              <Button
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDownload();
-                }}
-                disabled={downloading}
-              >
-                {downloading ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Download className="h-4 w-4 mr-2" />
-                )}
-                Baixar
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+      <div className="flex items-center gap-1">
+        {url && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={handleDownload}
+            disabled={downloading}
+            title="Baixar arquivo"
+          >
+            {downloading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+          </Button>
+        )}
+        
+        {!readOnly && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 opacity-0 group-hover:opacity-100"
+            onClick={() => onDelete(attachment.id, attachment.file_path)}
+            title="Remover anexo"
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        )}
+      </div>
+    </div>
   );
+}
+
+function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    
+    getRequestAttachmentUrl(attachment.file_path).then((signedUrl) => {
+      if (mounted) {
+        setUrl(signedUrl);
+        setLoading(false);
+      }
+    });
+    
+    return () => { mounted = false; };
+  }, [attachment.file_path]);
+
+  const isImage = attachment.file_type.startsWith("image/");
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">Carregando...</span>
+      </div>
+    );
+  }
+
+  if (isImage && url) {
+    return <ImageAttachment attachment={attachment} readOnly={readOnly} onDelete={onDelete} url={url} />;
+  }
+
+  return <FileAttachment attachment={attachment} readOnly={readOnly} onDelete={onDelete} url={url} />;
 }
 
 export function RequestAttachmentUploader({ requestId, readOnly = false }: RequestAttachmentUploaderProps) {
