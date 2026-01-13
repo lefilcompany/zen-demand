@@ -7,6 +7,7 @@ interface PositionBadgeProps {
   color: string;
   className?: string;
   showIcon?: boolean;
+  size?: "sm" | "md";
 }
 
 // Helper to determine if a color is light or dark
@@ -20,15 +21,25 @@ function isLightColor(hexColor: string): boolean {
   return luminance > 0.5;
 }
 
-export function PositionBadge({ name, color, className, showIcon = true }: PositionBadgeProps) {
+const sizeClasses = {
+  sm: "text-[10px] px-1.5 py-0 h-4",
+  md: "text-xs px-2 py-0.5",
+};
+
+const iconSizeClasses = {
+  sm: "h-2.5 w-2.5",
+  md: "h-3 w-3",
+};
+
+export function PositionBadge({ name, color, className, showIcon = true, size = "md" }: PositionBadgeProps) {
   const textColor = isLightColor(color) ? "#1F2937" : "#FFFFFF";
 
   return (
     <Badge
-      className={cn("flex items-center gap-1 justify-center border-0", className)}
+      className={cn("flex items-center gap-1 justify-center border-0", sizeClasses[size], className)}
       style={{ backgroundColor: color, color: textColor }}
     >
-      {showIcon && <Briefcase className="h-3 w-3" />}
+      {showIcon && <Briefcase className={iconSizeClasses[size]} />}
       {name}
     </Badge>
   );

@@ -7,11 +7,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Filter, X, CalendarIcon, ChevronDown, Check } from "lucide-react";
+import { Filter, X, CalendarIcon, ChevronDown, Check, Briefcase } from "lucide-react";
 import { useDemandStatuses } from "@/hooks/useDemands";
 import { useBoardMembers } from "@/hooks/useBoardMembers";
 import { useServices } from "@/hooks/useServices";
 import { useSelectedBoard } from "@/contexts/BoardContext";
+import { useTeamPositions } from "@/hooks/useTeamPositions";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,6 +22,7 @@ export interface DemandFiltersState {
   priority: string | null;
   assignee: string | null;
   service: string | null;
+  position: string | null;
   dueDateFrom: Date | null;
   dueDateTo: Date | null;
 }
@@ -188,6 +190,7 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
   const { data: statuses } = useDemandStatuses();
   const { data: members } = useBoardMembers(boardId);
   const { data: services } = useServices(currentTeamId, boardId);
+  const { data: positions } = useTeamPositions(currentTeamId);
 
   const activeFiltersCount = Object.values(filters).filter(Boolean).length;
 
@@ -197,6 +200,7 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
       priority: null,
       assignee: null,
       service: null,
+      position: null,
       dueDateFrom: null,
       dueDateTo: null,
     });
@@ -224,6 +228,11 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
   const serviceOptions = [
     { value: "all", label: "Todos" },
     ...(services?.map(s => ({ value: s.id, label: s.name })) || [])
+  ];
+
+  const positionOptions = [
+    { value: "all", label: "Todos" },
+    ...(positions?.map(p => ({ value: p.id, label: p.name })) || [])
   ];
 
   return (
@@ -298,6 +307,22 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
                 />
               </div>
             </div>
+
+            {positions && positions.length > 0 && (
+              <div>
+                <label className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Briefcase className="h-3 w-3" /> Cargo
+                </label>
+                <div className="mt-1">
+                  <NativeSelect
+                    value={filters.position}
+                    onChange={(v) => updateFilter("position", v)}
+                    options={positionOptions}
+                    placeholder="Todos"
+                  />
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="text-sm text-muted-foreground">Data de vencimento</label>

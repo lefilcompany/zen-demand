@@ -48,6 +48,7 @@ export default function Demands() {
     priority: null,
     assignee: null,
     service: null,
+    position: null,
     dueDateFrom: null,
     dueDateTo: null,
   });
@@ -115,6 +116,15 @@ export default function Demands() {
           (a) => a.user_id === filters.assignee
         ) || d.assigned_to === filters.assignee;
         if (!isAssigned) return false;
+      }
+      
+      // Position filter - filter by assignees that have a specific position
+      if (filters.position) {
+        const hasAssigneeWithPosition = d.demand_assignees?.some((a: any) => {
+          const position = a.team_member?.position;
+          return position?.id === filters.position;
+        });
+        if (!hasAssigneeWithPosition) return false;
       }
       
       // Service filter
