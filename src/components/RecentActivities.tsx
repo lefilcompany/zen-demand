@@ -4,90 +4,250 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Activity, FileText, MessageSquare, RefreshCw } from "lucide-react";
+import { 
+  Activity, 
+  FileText, 
+  CheckCircle2, 
+  Clock, 
+  PlayCircle, 
+  AlertCircle,
+  FileCheck,
+  FilePlus,
+  RefreshCw
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { truncateText } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
-interface DemandInteraction {
+interface SystemActivity {
   id: string;
-  demand_id: string;
-  user_id: string;
-  interaction_type: string;
-  content: string | null;
-  created_at: string;
-  demands: {
-    id: string;
-    title: string;
-  };
-  profiles: {
-    full_name: string;
-  };
+  type: 'demand_created' | 'demand_delivered' | 'demand_started' | 'demand_delayed' | 'request_created' | 'request_approved' | 'request_rejected' | 'status_change';
+  title: string;
+  demandId?: string;
+  requestId?: string;
+  timestamp: string;
+  userName?: string;
+  statusName?: string;
+  statusColor?: string;
 }
 
 export function RecentActivities() {
   const { selectedTeamId } = useSelectedTeam();
   const navigate = useNavigate();
 
-  const { data: activities, isLoading } = useQuery({
-    queryKey: ["recent-activities", selectedTeamId],
+  // Buscar demandas recentes criadas
+  const { data: recentDemands } = useQuery({
+    queryKey: ["recent-demands-created", selectedTeamId],
     queryFn: async () => {
       if (!selectedTeamId) return [];
       
       const { data, error } = await supabase
-        .from("demand_interactions")
+        .from("demands")
         .select(`
           id,
-          demand_id,
-          user_id,
-          interaction_type,
-          content,
+          title,
           created_at,
-          demands!inner(id, title, team_id),
-          profiles:user_id(full_name)
+          status_id,
+          demand_statuses(name, color),
+          profiles!demands_created_by_fkey(full_name)
         `)
-        .eq("demands.team_id", selectedTeamId)
+        .eq("team_id", selectedTeamId)
         .order("created_at", { ascending: false })
         .limit(10);
       
       if (error) throw error;
-      return data as unknown as DemandInteraction[];
+      return data;
     },
     enabled: !!selectedTeamId,
   });
 
-  const getActivityIcon = (type: string) => {
+  // Buscar demandas entregues recentemente
+  const { data: deliveredDemands } = useQuery({
+    queryKey: ["recent-demands-delivered", selectedTeamId],
+    queryFn: async () => {
+      if (!selectedTeamId) return [];
+      
+      const { data: deliveredStatus } = await supabase
+        .from("demand_statuses")
+        .select("id")
+        .eq("name", "Entregue")
+        .single();
+      
+      if (!deliveredStatus) return [];
+      
+      const { data, error } = await supabase
+        .from("demands")
+        .select(`
+          id,
+          title,
+          updated_at,
+          profiles!demands_created_by_fkey(full_name)
+        `)
+        .eq("team_id", selectedTeamId)
+        .eq("status_id", deliveredStatus.id)
+        .order("updated_at", { ascending: false })
+        .limit(5);
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedTeamId,
+  });
+
+  // Buscar solicitações de demanda recentes
+  const { data: recentRequests } = useQuery({
+    queryKey: ["recent-requests", selectedTeamId],
+    queryFn: async () => {
+      if (!selectedTeamId) return [];
+      
+      const { data, error } = await supabase
+        .from("demand_requests")
+        .select(`
+          id,
+          title,
+          status,
+          created_at,
+          updated_at,
+          profiles:created_by(full_name)
+        `)
+        .eq("team_id", selectedTeamId)
+        .order("updated_at", { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedTeamId,
+  });
+
+  // Combinar e ordenar todas as atividades
+  const activities: SystemActivity[] = [];
+
+  // Adicionar demandas criadas
+  recentDemands?.forEach((demand: any) => {
+    activities.push({
+      id: `demand-created-${demand.id}`,
+      type: 'demand_created',
+      title: demand.title,
+      demandId: demand.id,
+      timestamp: demand.created_at,
+      userName: demand.profiles?.full_name,
+      statusName: demand.demand_statuses?.name,
+      statusColor: demand.demand_statuses?.color,
+    });
+  });
+
+  // Adicionar demandas entregues
+  deliveredDemands?.forEach((demand: any) => {
+    activities.push({
+      id: `demand-delivered-${demand.id}`,
+      type: 'demand_delivered',
+      title: demand.title,
+      demandId: demand.id,
+      timestamp: demand.updated_at,
+      userName: demand.profiles?.full_name,
+    });
+  });
+
+  // Adicionar solicitações
+  recentRequests?.forEach((request: any) => {
+    let type: SystemActivity['type'] = 'request_created';
+    if (request.status === 'approved') type = 'request_approved';
+    else if (request.status === 'rejected') type = 'request_rejected';
+    
+    activities.push({
+      id: `request-${request.id}`,
+      type,
+      title: request.title,
+      requestId: request.id,
+      timestamp: request.status === 'pending' ? request.created_at : request.updated_at,
+      userName: request.profiles?.full_name,
+    });
+  });
+
+  // Ordenar por timestamp (mais recente primeiro)
+  const sortedActivities = activities
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 15);
+
+  const getActivityConfig = (type: SystemActivity['type']) => {
     switch (type) {
-      case "comment":
-        return <MessageSquare className="h-4 w-4 text-primary" />;
-      case "status_change":
-        return <RefreshCw className="h-4 w-4 text-warning" />;
+      case 'demand_created':
+        return {
+          icon: <FilePlus className="h-4 w-4 text-primary" />,
+          label: "Nova demanda criada",
+          badgeVariant: "default" as const,
+          badgeClass: "bg-primary/10 text-primary border-primary/20",
+        };
+      case 'demand_delivered':
+        return {
+          icon: <CheckCircle2 className="h-4 w-4 text-green-500" />,
+          label: "Demanda entregue",
+          badgeVariant: "default" as const,
+          badgeClass: "bg-green-500/10 text-green-600 border-green-500/20",
+        };
+      case 'demand_started':
+        return {
+          icon: <PlayCircle className="h-4 w-4 text-blue-500" />,
+          label: "Em execução",
+          badgeVariant: "default" as const,
+          badgeClass: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+        };
+      case 'demand_delayed':
+        return {
+          icon: <AlertCircle className="h-4 w-4 text-red-500" />,
+          label: "Demanda atrasada",
+          badgeVariant: "destructive" as const,
+          badgeClass: "bg-red-500/10 text-red-600 border-red-500/20",
+        };
+      case 'request_created':
+        return {
+          icon: <FileText className="h-4 w-4 text-amber-500" />,
+          label: "Nova solicitação",
+          badgeVariant: "default" as const,
+          badgeClass: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+        };
+      case 'request_approved':
+        return {
+          icon: <FileCheck className="h-4 w-4 text-green-500" />,
+          label: "Solicitação aprovada",
+          badgeVariant: "default" as const,
+          badgeClass: "bg-green-500/10 text-green-600 border-green-500/20",
+        };
+      case 'request_rejected':
+        return {
+          icon: <AlertCircle className="h-4 w-4 text-red-500" />,
+          label: "Solicitação rejeitada",
+          badgeVariant: "destructive" as const,
+          badgeClass: "bg-red-500/10 text-red-600 border-red-500/20",
+        };
+      case 'status_change':
+        return {
+          icon: <RefreshCw className="h-4 w-4 text-muted-foreground" />,
+          label: "Status alterado",
+          badgeVariant: "secondary" as const,
+          badgeClass: "bg-muted text-muted-foreground",
+        };
       default:
-        return <FileText className="h-4 w-4 text-muted-foreground" />;
+        return {
+          icon: <Activity className="h-4 w-4 text-muted-foreground" />,
+          label: "Atividade",
+          badgeVariant: "secondary" as const,
+          badgeClass: "bg-muted text-muted-foreground",
+        };
     }
   };
 
-  const getActivityText = (type: string) => {
-    switch (type) {
-      case "comment":
-        return "comentou";
-      case "status_change":
-        return "alterou o status";
-      case "created":
-        return "criou a demanda";
-      default:
-        return "atualizou";
+  const handleClick = (activity: SystemActivity) => {
+    if (activity.demandId) {
+      navigate(`/demands/${activity.demandId}`);
+    } else if (activity.requestId) {
+      navigate(`/demand-requests`);
     }
   };
 
-  const handleUserClick = (e: React.MouseEvent, activity: DemandInteraction) => {
-    e.stopPropagation();
-    // Extract user_id from the query - profiles is joined via user_id
-    const userId = (activity as any).user_id;
-    if (userId) {
-      navigate(`/user/${userId}`);
-    }
-  };
+  const isLoading = !recentDemands && !deliveredDemands && !recentRequests;
 
   if (!selectedTeamId) {
     return null;
@@ -98,51 +258,56 @@ export function RecentActivities() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <Activity className="h-5 w-5 text-primary" />
-          Atividades Recentes
+          Atividades do Sistema
         </CardTitle>
-        <CardDescription>Últimas atualizações nas demandas</CardDescription>
+        <CardDescription>Atualizações gerais sobre demandas e solicitações</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
-        ) : activities && activities.length > 0 ? (
+        ) : sortedActivities.length > 0 ? (
           <ScrollArea className="h-[280px] pr-4">
-            <div className="space-y-4">
-              {activities.map((activity) => (
-                <div
-                  key={activity.id}
-                  className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                  onClick={() => navigate(`/demands/${activity.demand_id}`)}
-                >
-                  <div className="mt-0.5">{getActivityIcon(activity.interaction_type)}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate" title={activity.demands?.title}>{truncateText(activity.demands?.title)}</p>
-                    <p className="text-xs text-muted-foreground">
-                      <button
-                        type="button"
-                        onClick={(e) => handleUserClick(e, activity)}
-                        className="font-medium hover:text-primary hover:underline cursor-pointer transition-colors"
-                      >
-                        {activity.profiles?.full_name || "Usuário"}
-                      </button>
-                      {" "}{getActivityText(activity.interaction_type)}
-                    </p>
-                    {activity.content && (
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                        "{activity.content}"
+            <div className="space-y-3">
+              {sortedActivities.map((activity) => {
+                const config = getActivityConfig(activity.type);
+                return (
+                  <div
+                    key={activity.id}
+                    className="flex items-start gap-3 p-3 rounded-lg border border-border/50 hover:bg-muted/50 cursor-pointer transition-colors"
+                    onClick={() => handleClick(activity)}
+                  >
+                    <div className="mt-0.5 p-1.5 rounded-full bg-muted/50">
+                      {config.icon}
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge 
+                          variant="outline" 
+                          className={`text-[10px] px-1.5 py-0 h-5 ${config.badgeClass}`}
+                        >
+                          {config.label}
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatDistanceToNow(new Date(activity.timestamp), {
+                            addSuffix: true,
+                            locale: ptBR,
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium truncate" title={activity.title}>
+                        {truncateText(activity.title, 50)}
                       </p>
-                    )}
+                      {activity.userName && (
+                        <p className="text-xs text-muted-foreground">
+                          por {activity.userName}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                    {formatDistanceToNow(new Date(activity.created_at), {
-                      addSuffix: true,
-                      locale: ptBR,
-                    })}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </ScrollArea>
         ) : (
