@@ -2,11 +2,19 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamRole } from "./useTeamRole";
 
+export interface TeamMemberPosition {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface TeamMember {
   id: string;
   user_id: string;
   role: TeamRole;
   joined_at: string;
+  position_id: string | null;
+  position: TeamMemberPosition | null;
   profile: {
     full_name: string;
     avatar_url: string | null;
@@ -26,7 +34,9 @@ export function useTeamMembers(teamId: string | null) {
           user_id,
           role,
           joined_at,
-          profiles!team_members_user_id_fkey(full_name, avatar_url)
+          position_id,
+          profiles!team_members_user_id_fkey(full_name, avatar_url),
+          team_positions(id, name, color)
         `)
         .eq("team_id", teamId)
         .order("joined_at", { ascending: true });
@@ -38,6 +48,12 @@ export function useTeamMembers(teamId: string | null) {
         user_id: member.user_id,
         role: member.role as TeamRole,
         joined_at: member.joined_at,
+        position_id: member.position_id,
+        position: member.team_positions ? {
+          id: (member.team_positions as any).id,
+          name: (member.team_positions as any).name,
+          color: (member.team_positions as any).color,
+        } : null,
         profile: {
           full_name: (member.profiles as any)?.full_name || "Usuário",
           avatar_url: (member.profiles as any)?.avatar_url || null,

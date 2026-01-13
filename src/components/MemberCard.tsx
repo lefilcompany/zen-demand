@@ -18,6 +18,9 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { TeamMember } from "@/hooks/useTeamMembers";
 import { TeamRole } from "@/hooks/useTeamRole";
+import { PositionBadge } from "@/components/PositionBadge";
+import { PositionSelector } from "@/components/PositionSelector";
+import { TeamPosition } from "@/hooks/useTeamPositions";
 
 interface MemberCardProps {
   member: TeamMember;
@@ -25,6 +28,10 @@ interface MemberCardProps {
   currentUserId: string;
   onRemove: (memberId: string) => void;
   isRemoving: boolean;
+  canManage?: boolean;
+  positions?: TeamPosition[];
+  onPositionChange?: (memberId: string, positionId: string | null) => void;
+  isChangingPosition?: boolean;
 }
 
 const roleConfig: Record<TeamRole, { label: string; badgeColor: string; bannerColor: string; icon: React.ReactNode }> = {
@@ -69,6 +76,10 @@ export function MemberCard({
   currentUserId,
   onRemove,
   isRemoving,
+  canManage = false,
+  positions = [],
+  onPositionChange,
+  isChangingPosition = false,
 }: MemberCardProps) {
   const navigate = useNavigate();
   const isCurrentUser = member.user_id === currentUserId;
@@ -78,6 +89,12 @@ export function MemberCard({
   const handleNameClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     navigate(`/user/${member.user_id}`);
+  };
+
+  const handlePositionChange = (positionId: string | null) => {
+    if (onPositionChange) {
+      onPositionChange(member.id, positionId);
+    }
   };
 
   return (
@@ -156,11 +173,27 @@ export function MemberCard({
           </p>
           
           {/* Role Badge - Fixed (not editable in team context) */}
-          <div className="pt-1">
+          <div className="pt-1 space-y-2">
             <Badge className={`${config.badgeColor} flex items-center gap-1 justify-center`}>
               {config.icon}
               {config.label}
             </Badge>
+            
+            {/* Position Badge or Selector */}
+            {canManage && positions.length > 0 ? (
+              <PositionSelector
+                positions={positions}
+                value={member.position_id}
+                onChange={handlePositionChange}
+                disabled={isChangingPosition}
+                placeholder="Atribuir cargo"
+              />
+            ) : member.position ? (
+              <PositionBadge
+                name={member.position.name}
+                color={member.position.color}
+              />
+            ) : null}
           </div>
         </div>
       </div>

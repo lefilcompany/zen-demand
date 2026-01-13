@@ -1043,6 +1043,7 @@ export type Database = {
         Row: {
           id: string
           joined_at: string
+          position_id: string | null
           role: Database["public"]["Enums"]["team_role"]
           team_id: string
           user_id: string
@@ -1050,6 +1051,7 @@ export type Database = {
         Insert: {
           id?: string
           joined_at?: string
+          position_id?: string | null
           role?: Database["public"]["Enums"]["team_role"]
           team_id: string
           user_id: string
@@ -1057,11 +1059,19 @@ export type Database = {
         Update: {
           id?: string
           joined_at?: string
+          position_id?: string | null
           role?: Database["public"]["Enums"]["team_role"]
           team_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "team_members_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "team_positions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "team_members_team_id_fkey"
             columns: ["team_id"]
@@ -1074,6 +1084,44 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_positions: {
+        Row: {
+          color: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          team_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+          team_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_positions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
         ]
@@ -1279,6 +1327,10 @@ export type Database = {
       }
       is_board_member: {
         Args: { _board_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_team_admin: {
+        Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
       is_team_admin_or_moderator: {

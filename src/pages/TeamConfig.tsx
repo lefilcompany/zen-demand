@@ -16,7 +16,11 @@ import { useTeamMembers, useRemoveMember } from "@/hooks/useTeamMembers";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useTeamScope } from "@/hooks/useTeamScope";
+import { useTeamPositions, useAssignPosition } from "@/hooks/useTeamPositions";
 import { TeamScopeConfig } from "@/components/TeamScopeConfig";
+import { TeamPositionsManager } from "@/components/TeamPositionsManager";
+import { PositionBadge } from "@/components/PositionBadge";
+import { PositionSelector } from "@/components/PositionSelector";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -47,7 +51,9 @@ export default function TeamConfig() {
   const { data: members, isLoading: membersLoading } = useTeamMembers(selectedTeamId);
   const { data: myRole, isLoading: roleLoading } = useTeamRole(selectedTeamId);
   const { data: teamScope } = useTeamScope(selectedTeamId);
+  const { data: positions } = useTeamPositions(selectedTeamId);
   const removeMember = useRemoveMember();
+  const assignPosition = useAssignPosition();
   const queryClient = useQueryClient();
   
   const [copied, setCopied] = useState(false);
@@ -394,6 +400,15 @@ export default function TeamConfig() {
           <TeamScopeConfig teamId={selectedTeamId} currentScope={teamScope || null} />
         )}
 
+        {/* Team Positions Manager */}
+        {isAdminOrModerator && selectedTeamId && (
+          <TeamPositionsManager 
+            teamId={selectedTeamId} 
+            canManage={isAdminOrModerator} 
+            isAdmin={isAdmin} 
+          />
+        )}
+
         {/* Team Members */}
         <Card className="lg:col-span-2">
           <CardHeader>
@@ -430,18 +445,47 @@ export default function TeamConfig() {
                             {member.profile?.full_name?.charAt(0)?.toUpperCase() || "?"}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium truncate">
                             {member.profile?.full_name || "Usuário"}
                             {isCurrentUser && <span className="text-muted-foreground ml-2">(você)</span>}
                           </p>
-                          {!canEditMember && (
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1">
                             <Badge className={`text-xs pointer-events-none ${roleColors[member.role] || ""}`}>
                               {roleLabels[member.role] || member.role}
                             </Badge>
-                          )}
+                            {member.position && (
+                              <PositionBadge 
+                                name={member.position.name} 
+                                color={member.position.color}
+                                showIcon={false}
+                                className="text-xs"
+                              />
+                            )}
+                          </div>
                         </div>
                       </div>
+                      
+                      {/* Position Selector for Admins/Moderators */}
+                      {isAdminOrModerator && positions && positions.length > 0 && (
+                        <div className="w-full sm:w-40 shrink-0">
+                          <PositionSelector
+                            positions={positions}
+                            value={member.position_id}
+                            onChange={(positionId) => {
+                              assignPosition.mutate(
+                                { memberId: member.id, positionId },
+                                {
+                                  onSuccess: () => toast.success("Cargo atribuído!"),
+                                  onError: () => toast.error("Erro ao atribuir cargo"),
+                                }
+                              );
+                            }}
+                            disabled={assignPosition.isPending}
+                            placeholder="Atribuir cargo"
+                          />
+                        </div>
+                      )}
                       
                       {canEditMember && (
                         <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
