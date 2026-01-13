@@ -15,6 +15,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table";
 import { demandColumns, DemandTableRow } from "@/components/demands/columns";
 import { DemandFilters, DemandFiltersState } from "@/components/DemandFilters";
+import { StatusFilterTabs } from "@/components/StatusFilterTabs";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { useRealtimeDemands } from "@/hooks/useRealtimeDemands";
 import { DemandsCalendarView } from "@/components/DemandsCalendarView";
@@ -341,6 +342,14 @@ export default function Demands() {
             </Button>
           </div>
         </div>
+      </div>
+
+      {/* Status filter tabs */}
+      <div className="flex items-center gap-3 overflow-x-auto pb-2 -mb-2">
+        <StatusFilterTabs
+          value={filters.status}
+          onChange={(status) => setFilters({ ...filters, status })}
+        />
       </div>
 
       {!selectedBoardId ? (
