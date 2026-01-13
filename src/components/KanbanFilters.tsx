@@ -12,16 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Filter, X, User, Flag, Clock, Briefcase } from "lucide-react";
+import { Filter, X, User, Flag, Clock } from "lucide-react";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
-import { useTeamPositions } from "@/hooks/useTeamPositions";
 import { useAuth } from "@/lib/auth";
 
 export interface KanbanFiltersState {
   myTasks: boolean;
   priority: string | null;
   dueDate: "overdue" | "today" | "week" | null;
-  position: string | null;
 }
 
 interface KanbanFiltersProps {
@@ -33,16 +31,14 @@ interface KanbanFiltersProps {
 export function KanbanFilters({ teamId, filters, onChange }: KanbanFiltersProps) {
   const { user } = useAuth();
   const { data: members } = useTeamMembers(teamId);
-  const { data: positions } = useTeamPositions(teamId);
   
   const activeFiltersCount = 
     (filters.myTasks ? 1 : 0) + 
     (filters.priority ? 1 : 0) + 
-    (filters.dueDate ? 1 : 0) +
-    (filters.position ? 1 : 0);
+    (filters.dueDate ? 1 : 0);
 
   const clearFilters = () => {
-    onChange({ myTasks: false, priority: null, dueDate: null, position: null });
+    onChange({ myTasks: false, priority: null, dueDate: null });
   };
 
   return (
@@ -120,36 +116,6 @@ export function KanbanFilters({ teamId, filters, onChange }: KanbanFiltersProps)
                   </SelectContent>
                 </Select>
               </div>
-
-              {positions && positions.length > 0 && (
-                <div>
-                  <label className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Briefcase className="h-3 w-3" /> Cargo
-                  </label>
-                  <Select
-                    value={filters.position || "all"}
-                    onValueChange={(v) => onChange({ ...filters, position: v === "all" ? null : v })}
-                  >
-                    <SelectTrigger className="mt-1 h-8">
-                      <SelectValue placeholder="Todos" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      {positions.map((pos) => (
-                        <SelectItem key={pos.id} value={pos.id}>
-                          <span className="flex items-center gap-2">
-                            <span 
-                              className="h-2 w-2 rounded-full" 
-                              style={{ backgroundColor: pos.color }}
-                            />
-                            {pos.name}
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
             </div>
           </div>
         </PopoverContent>
