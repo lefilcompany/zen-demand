@@ -59,7 +59,7 @@ export function RecentActivities() {
     enabled: !!selectedTeamId,
   });
 
-  // Buscar demandas entregues recentemente (com assignee que entregou)
+  // Buscar demandas entregues recentemente (com responsáveis que entregaram)
   const { data: deliveredDemands } = useQuery({
     queryKey: ["recent-demands-delivered", selectedTeamId],
     queryFn: async () => {
@@ -80,7 +80,9 @@ export function RecentActivities() {
           title,
           updated_at,
           creator:profiles!demands_created_by_fkey(full_name),
-          assignee:profiles!demands_assigned_to_fkey(full_name)
+          demand_assignees(
+            profile:profiles(full_name)
+          )
         `)
         .eq("team_id", selectedTeamId)
         .eq("status_id", deliveredStatus.id)
@@ -137,13 +139,19 @@ export function RecentActivities() {
 
   // Adicionar demandas entregues
   deliveredDemands?.forEach((demand: any) => {
+    // Pegar os nomes dos responsáveis da demanda
+    const assigneeNames = demand.demand_assignees
+      ?.map((a: any) => a.profile?.full_name)
+      .filter(Boolean)
+      .join(", ");
+    
     activities.push({
       id: `demand-delivered-${demand.id}`,
       type: 'demand_delivered',
       title: demand.title,
       demandId: demand.id,
       timestamp: demand.updated_at,
-      actionBy: demand.assignee?.full_name || demand.creator?.full_name, // Responsável pela entrega
+      actionBy: assigneeNames || demand.creator?.full_name, // Responsáveis pela entrega
       createdBy: demand.creator?.full_name,
     });
   });
