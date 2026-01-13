@@ -6,7 +6,8 @@ import { DemandCard } from "@/components/DemandCard";
 import { useAllTeamDemands } from "@/hooks/useAllTeamDemands";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useMembersByPosition } from "@/hooks/useMembersByPosition";
-import { Layers, LayoutGrid, List, Search, Eye, EyeOff, CalendarDays } from "lucide-react";
+import { useTeamRole } from "@/hooks/useTeamRole";
+import { Layers, LayoutGrid, List, Search, Eye, EyeOff, CalendarDays, ShieldAlert } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table";
 import { teamDemandColumns, TeamDemandTableRow } from "@/components/team-demands/columns";
@@ -24,7 +25,9 @@ export default function TeamDemands() {
   const navigate = useNavigate();
   const location = useLocation();
   const { selectedTeamId } = useSelectedTeam();
-  const { data: demands, isLoading } = useAllTeamDemands(selectedTeamId);
+  const { data: role, isLoading: isRoleLoading } = useTeamRole(selectedTeamId);
+  const isTeamAdminOrModerator = role === "admin" || role === "moderator";
+  const { data: demands, isLoading } = useAllTeamDemands(isTeamAdminOrModerator ? selectedTeamId : null);
   
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -313,7 +316,29 @@ export default function TeamDemands() {
         </div>
       </div>
 
-      {!selectedTeamId ? (
+      {isRoleLoading ? (
+        <div className="text-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
+          <p className="text-muted-foreground mt-4">{t("common.loading")}</p>
+        </div>
+      ) : !isTeamAdminOrModerator ? (
+        <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
+          <ShieldAlert className="mx-auto h-12 w-12 text-destructive" />
+          <h3 className="mt-4 text-lg font-semibold text-foreground">
+            Acesso Restrito
+          </h3>
+          <p className="text-muted-foreground mt-2">
+            Apenas administradores e moderadores podem acessar esta página
+          </p>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={() => navigate("/")}
+          >
+            Voltar ao Dashboard
+          </Button>
+        </div>
+      ) : !selectedTeamId ? (
         <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
           <Layers className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-lg font-semibold text-foreground">
