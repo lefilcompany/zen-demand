@@ -165,10 +165,12 @@ function BoardCell({ row }: { row: { original: TeamDemandTableRow } }) {
     return <span className="text-muted-foreground text-sm">—</span>;
   }
   return (
-    <Badge variant="outline" className="text-xs bg-secondary/50 text-secondary-foreground border-secondary gap-1">
-      <LayoutGrid className="h-3 w-3" />
-      {board.name}
-    </Badge>
+    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      <LayoutGrid className="h-3.5 w-3.5 shrink-0" />
+      <span className="truncate max-w-[120px]" title={board.name}>
+        {board.name}
+      </span>
+    </div>
   );
 }
 
