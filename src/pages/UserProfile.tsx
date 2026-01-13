@@ -14,7 +14,6 @@ import {
   Github, Linkedin, Shield, Users, Layout, ShieldCheck, ClipboardCheck, MessageSquare,
   Wrench, Rocket, Timer, Cog, UserCheck, PlusCircle, MessageCircle, Layers, Circle
 } from "lucide-react";
-import { PositionBadge } from "@/components/PositionBadge";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { usePresence } from "@/contexts/PresenceContext";
@@ -54,7 +53,7 @@ export default function UserProfile() {
     enabled: !!userId,
   });
 
-  // Get user's teams with positions
+  // Get user's teams
   const { data: userTeams } = useQuery({
     queryKey: ["user-teams", userId],
     queryFn: async () => {
@@ -64,15 +63,9 @@ export default function UserProfile() {
         .select(`
           role,
           joined_at,
-          position_id,
           teams:team_id (
             id,
             name
-          ),
-          team_positions (
-            id,
-            name,
-            color
           )
         `)
         .eq("user_id", userId);
@@ -605,19 +598,6 @@ export default function UserProfile() {
                     </span>
                   )}
                 </div>
-                {/* Position badges from teams */}
-                {userTeams && userTeams.some((tm: any) => tm.team_positions) && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {userTeams.filter((tm: any) => tm.team_positions).map((tm: any, idx: number) => (
-                      <PositionBadge 
-                        key={idx}
-                        name={tm.team_positions.name}
-                        color={tm.team_positions.color}
-                        size="sm"
-                      />
-                    ))}
-                  </div>
-                )}
                 {(profile as any).bio && (
                   <p className="text-muted-foreground mt-3 max-w-2xl">{(profile as any).bio}</p>
                 )}

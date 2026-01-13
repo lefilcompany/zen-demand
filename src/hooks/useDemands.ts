@@ -73,10 +73,7 @@ export function useDemands(boardId?: string) {
           services(id, name),
           demand_assignees(
             user_id,
-            profile:profiles(full_name, avatar_url),
-            team_member:team_members!inner(
-              position:team_positions(id, name, color)
-            )
+            profile:profiles(full_name, avatar_url)
           )
         `)
         .eq("archived", false);
@@ -133,10 +130,7 @@ export function useDemandById(demandId: string | undefined) {
           services(id, name),
           demand_assignees(
             user_id,
-            profile:profiles(full_name, avatar_url),
-            team_member:team_members!inner(
-              position:team_positions(id, name, color)
-            )
+            profile:profiles(full_name, avatar_url)
           )
         `)
         .eq("id", demandId)
