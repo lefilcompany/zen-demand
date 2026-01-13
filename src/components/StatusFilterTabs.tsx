@@ -1,5 +1,16 @@
+import { useMemo } from "react";
 import { useDemandStatuses } from "@/hooks/useDemands";
 import { cn } from "@/lib/utils";
+
+// Ordem fixa dos status
+const STATUS_ORDER = [
+  "A Iniciar",
+  "Fazendo",
+  "Em Ajuste",
+  "Aprovação do Cliente",
+  "Entregue",
+  "Atrasado",
+];
 
 interface StatusFilterTabsProps {
   value: string | null;
@@ -8,6 +19,19 @@ interface StatusFilterTabsProps {
 
 export function StatusFilterTabs({ value, onChange }: StatusFilterTabsProps) {
   const { data: statuses } = useDemandStatuses();
+
+  // Ordenar status conforme ordem definida
+  const orderedStatuses = useMemo(() => {
+    if (!statuses) return [];
+    return [...statuses].sort((a, b) => {
+      const indexA = STATUS_ORDER.indexOf(a.name);
+      const indexB = STATUS_ORDER.indexOf(b.name);
+      // Se não encontrar na lista, coloca no final
+      const orderA = indexA === -1 ? 999 : indexA;
+      const orderB = indexB === -1 ? 999 : indexB;
+      return orderA - orderB;
+    });
+  }, [statuses]);
 
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
@@ -21,7 +45,7 @@ export function StatusFilterTabs({ value, onChange }: StatusFilterTabsProps) {
       >
         Todos
       </button>
-      {statuses?.map((status) => (
+      {orderedStatuses.map((status) => (
         <button
           key={status.id}
           onClick={() => onChange(status.id)}
