@@ -13,6 +13,13 @@ interface Assignee {
     full_name: string;
     avatar_url: string | null;
   };
+  team_member?: {
+    position?: {
+      id: string;
+      name: string;
+      color: string;
+    } | null;
+  } | null;
 }
 
 interface DemandCardProps {
@@ -70,10 +77,22 @@ export function DemandCard({ demand, onClick, showFullDetails = false }: DemandC
   const isOverdue = statusName !== "Entregue" && isDateOverdue(demand.due_date);
   
   // Fallback to assigned_profile if no assignees
+  // Transform assignees to include position data
   const displayAssignees = assignees.length > 0 
-    ? assignees 
+    ? assignees.map(a => ({
+        user_id: a.user_id,
+        profile: a.profile,
+        position: a.team_member?.position || null,
+      }))
     : demand.assigned_profile 
-      ? [{ user_id: "legacy", profile: { full_name: demand.assigned_profile.full_name, avatar_url: demand.assigned_profile.avatar_url || null } }]
+      ? [{ 
+          user_id: "legacy", 
+          profile: { 
+            full_name: demand.assigned_profile.full_name, 
+            avatar_url: demand.assigned_profile.avatar_url || null 
+          },
+          position: null
+        }]
       : [];
 
   return (
@@ -193,7 +212,7 @@ export function DemandCard({ demand, onClick, showFullDetails = false }: DemandC
         {displayAssignees.length > 0 && (
           <div className="flex items-center justify-between pt-1 border-t border-border/50">
             <span className="text-xs text-muted-foreground">Responsáveis:</span>
-            <AssigneeAvatars assignees={displayAssignees} size="sm" maxVisible={4} />
+            <AssigneeAvatars assignees={displayAssignees} size="sm" maxVisible={4} showPositions />
           </div>
         )}
       </CardContent>
