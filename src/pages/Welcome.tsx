@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
+import { useSelectedTeam } from "@/contexts/TeamContext";
 import { LogOut, Plus, Users, ArrowRight, Sparkles } from "lucide-react";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
@@ -10,6 +11,21 @@ export default function Welcome() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { hasTeams, isLoading } = useSelectedTeam();
+
+  // Show loading while checking teams
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  // If user already has teams, redirect to home
+  if (hasTeams) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen">
