@@ -8,6 +8,7 @@ import { useDemands } from "@/hooks/useDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useAuth } from "@/lib/auth";
+import { useMembersByPosition } from "@/hooks/useMembersByPosition";
 import { Plus, Briefcase, LayoutGrid, List, Search, Eye, EyeOff, CalendarDays } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -29,7 +30,7 @@ export default function Demands() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { selectedBoardId } = useSelectedBoard();
+  const { selectedBoardId, currentTeamId } = useSelectedBoard();
   const { data: demands, isLoading } = useDemands(selectedBoardId || undefined);
   const { data: role } = useBoardRole(selectedBoardId);
   
@@ -50,8 +51,12 @@ export default function Demands() {
     service: null,
     dueDateFrom: null,
     dueDateTo: null,
+    position: null,
   });
   const [hideDelivered, setHideDelivered] = useState(false);
+  
+  // Fetch members with selected position for filtering
+  const { data: membersByPosition } = useMembersByPosition(currentTeamId, filters.position);
   
   // Calendar quick create dialog
   const [selectedDateForCreate, setSelectedDateForCreate] = useState<Date | null>(null);
@@ -122,6 +127,14 @@ export default function Demands() {
         return false;
       }
       
+      // Position filter - filter by members with selected position
+      if (filters.position && membersByPosition) {
+        const hasAssigneeWithPosition = d.demand_assignees?.some(
+          (a) => membersByPosition.includes(a.user_id)
+        ) || (d.assigned_to && membersByPosition.includes(d.assigned_to));
+        if (!hasAssigneeWithPosition) return false;
+      }
+      
       // Due date range filter
       if (d.due_date) {
         const dueDate = new Date(d.due_date);
@@ -153,7 +166,7 @@ export default function Demands() {
       const dateB = new Date(b.due_date).getTime();
       return dateA - dateB;
     });
-  }, [demands, searchQuery, filters, hideDelivered]);
+  }, [demands, searchQuery, filters, hideDelivered, membersByPosition]);
   
 
   // Handle calendar day click

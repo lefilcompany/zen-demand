@@ -7,11 +7,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Filter, X, CalendarIcon, ChevronDown, Check } from "lucide-react";
+import { Filter, X, CalendarIcon, ChevronDown, Check, Briefcase } from "lucide-react";
 import { useDemandStatuses } from "@/hooks/useDemands";
 import { useBoardMembers } from "@/hooks/useBoardMembers";
 import { useServices } from "@/hooks/useServices";
 import { useSelectedBoard } from "@/contexts/BoardContext";
+import { useTeamPositions } from "@/hooks/useTeamPositions";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,6 +24,7 @@ export interface DemandFiltersState {
   service: string | null;
   dueDateFrom: Date | null;
   dueDateTo: Date | null;
+  position: string | null;
 }
 
 interface DemandFiltersProps {
@@ -34,11 +36,12 @@ interface DemandFiltersProps {
 interface NativeSelectProps {
   value: string | null;
   onChange: (value: string | null) => void;
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; color?: string }[];
   placeholder: string;
+  showColorDot?: boolean;
 }
 
-function NativeSelect({ value, onChange, options, placeholder }: NativeSelectProps) {
+function NativeSelect({ value, onChange, options, placeholder, showColorDot }: NativeSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -61,7 +64,13 @@ function NativeSelect({ value, onChange, options, placeholder }: NativeSelectPro
         onClick={() => setIsOpen(!isOpen)}
         className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
       >
-        <span className={selectedOption ? "text-foreground" : "text-muted-foreground"}>
+        <span className={`flex items-center gap-2 ${selectedOption ? "text-foreground" : "text-muted-foreground"}`}>
+          {showColorDot && selectedOption?.color && (
+            <div 
+              className="w-2 h-2 rounded-full" 
+              style={{ backgroundColor: selectedOption.color }} 
+            />
+          )}
           {selectedOption?.label || placeholder}
         </span>
         <ChevronDown className="h-4 w-4 opacity-50" />
@@ -84,6 +93,12 @@ function NativeSelect({ value, onChange, options, placeholder }: NativeSelectPro
                     <Check className="h-3 w-3" />
                   ) : null}
                 </div>
+                {showColorDot && option.color && (
+                  <div 
+                    className="w-2 h-2 rounded-full" 
+                    style={{ backgroundColor: option.color }} 
+                  />
+                )}
                 {option.label}
               </button>
             ))}
@@ -188,6 +203,7 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
   const { data: statuses } = useDemandStatuses();
   const { data: members } = useBoardMembers(boardId);
   const { data: services } = useServices(currentTeamId, boardId);
+  const { data: positions } = useTeamPositions(currentTeamId);
 
   const activeFiltersCount = Object.values(filters).filter(Boolean).length;
 
@@ -199,6 +215,7 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
       service: null,
       dueDateFrom: null,
       dueDateTo: null,
+      position: null,
     });
   };
 
@@ -224,6 +241,11 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
   const serviceOptions = [
     { value: "all", label: "Todos" },
     ...(services?.map(s => ({ value: s.id, label: s.name })) || [])
+  ];
+
+  const positionOptions = [
+    { value: "all", label: "Todos" },
+    ...(positions?.map(p => ({ value: p.id, label: p.name, color: p.color })) || [])
   ];
 
   return (
@@ -298,6 +320,23 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
                 />
               </div>
             </div>
+
+            {positions && positions.length > 0 && (
+              <div>
+                <label className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Briefcase className="h-3 w-3" /> Cargo
+                </label>
+                <div className="mt-1">
+                  <NativeSelect
+                    value={filters.position}
+                    onChange={(v) => updateFilter("position", v)}
+                    options={positionOptions}
+                    placeholder="Todos"
+                    showColorDot
+                  />
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="text-sm text-muted-foreground">Data de vencimento</label>
