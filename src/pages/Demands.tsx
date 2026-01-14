@@ -8,7 +8,7 @@ import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useAuth } from "@/lib/auth";
 import { useMembersByPosition } from "@/hooks/useMembersByPosition";
-import { Plus, Briefcase, LayoutGrid, List, Search, Eye, EyeOff, CalendarDays } from "lucide-react";
+import { Plus, Briefcase, LayoutGrid, List, Search, Eye, EyeOff, CalendarDays, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table";
 import { demandColumns, DemandTableRow } from "@/components/demands/columns";
@@ -19,6 +19,7 @@ import { useRealtimeDemands } from "@/hooks/useRealtimeDemands";
 import { DemandsCalendarView } from "@/components/DemandsCalendarView";
 import { CreateDemandQuickDialog } from "@/components/CreateDemandQuickDialog";
 import { CreateRequestQuickDialog } from "@/components/CreateRequestQuickDialog";
+import { useDemandAssignees } from "@/hooks/useDemandAssignees";
 type ViewMode = "table" | "grid" | "calendar";
 const TABLET_BREAKPOINT = 1024;
 export default function Demands() {
@@ -63,6 +64,7 @@ export default function Demands() {
     position: null
   });
   const [hideDelivered, setHideDelivered] = useState(false);
+  const [showOnlyMine, setShowOnlyMine] = useState(false);
 
   // Fetch members with selected position for filtering
   const {
@@ -93,9 +95,24 @@ export default function Demands() {
     if (!demands) return 0;
     return demands.filter(d => d.demand_statuses?.name === "Entregue").length;
   }, [demands]);
+
+  // Count demands assigned to the current user
+  const myDemandsCount = useMemo(() => {
+    if (!demands || !user?.id) return 0;
+    return demands.filter(d => {
+      const isAssigned = d.demand_assignees?.some(a => a.user_id === user.id) || d.assigned_to === user.id;
+      return isAssigned;
+    }).length;
+  }, [demands, user?.id]);
   const filteredDemands = useMemo(() => {
     if (!demands) return [];
     const filtered = demands.filter(d => {
+      // Show only my demands filter
+      if (showOnlyMine && user?.id) {
+        const isAssigned = d.demand_assignees?.some(a => a.user_id === user.id) || d.assigned_to === user.id;
+        if (!isAssigned) return false;
+      }
+
       // Hide delivered filter
       if (hideDelivered && d.demand_statuses?.name === "Entregue") {
         return false;
@@ -165,7 +182,7 @@ export default function Demands() {
       const dateB = new Date(b.due_date).getTime();
       return dateA - dateB;
     });
-  }, [demands, searchQuery, filters, hideDelivered, membersByPosition]);
+  }, [demands, searchQuery, filters, hideDelivered, showOnlyMine, user?.id, membersByPosition]);
 
   // Handle calendar day click
   const handleDayClick = (date: Date) => {
@@ -257,6 +274,24 @@ export default function Demands() {
         <div className="flex flex-wrap items-center gap-2">
           {/* Filters Button */}
           <DemandFilters boardId={selectedBoardId} filters={filters} onChange={setFilters} />
+
+          {/* Toggle show only my demands - only for non-requesters */}
+          {!isReadOnly && myDemandsCount > 0 && (
+            <Button 
+              variant={showOnlyMine ? "default" : "outline"} 
+              size="sm" 
+              onClick={() => setShowOnlyMine(!showOnlyMine)} 
+              className="gap-1.5 h-9 px-2 sm:px-3"
+            >
+              <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden md:inline text-xs sm:text-sm">
+                Minhas Demandas
+              </span>
+              <span className="bg-primary-foreground text-primary text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded-full font-medium">
+                {myDemandsCount}
+              </span>
+            </Button>
+          )}
 
           {/* Toggle hide/show delivered */}
           {deliveredCount > 0 && <Button variant={hideDelivered ? "default" : "outline"} size="sm" onClick={() => setHideDelivered(!hideDelivered)} className="gap-1.5 h-9 px-2 sm:px-3">

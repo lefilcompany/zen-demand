@@ -1,10 +1,9 @@
-import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, ClipboardList, Settings2, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock, Sparkles, ShoppingCart, Layers } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, ChevronUp, Settings, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock, Sparkles, ShoppingCart, Layers, LogOut, RotateCcw, User } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import logoSoma from "@/assets/logo-soma-dark.png";
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton, useSidebar } from "@/components/ui/sidebar";
-import { LogoutDialog } from "@/components/LogoutDialog";
 import { Badge } from "@/components/ui/badge";
 import { usePendingRequestsCount as usePendingDemandRequestsCount, useReturnedRequestsCount } from "@/hooks/useDemandRequests";
 import { usePendingRequestsCount as usePendingJoinRequestsCount } from "@/hooks/useTeamJoinRequests";
@@ -13,13 +12,29 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { SidebarSyncIndicator } from "@/components/SidebarSyncIndicator";
-
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/lib/auth";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function AppSidebar() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const {
     state,
     setOpenMobile,
@@ -38,11 +53,31 @@ export function AppSidebar() {
   const { data: pendingDemandRequests } = usePendingDemandRequestsCount();
   const { data: pendingJoinRequests } = usePendingJoinRequestsCount(selectedTeamId);
   const { data: returnedRequestsCount } = useReturnedRequestsCount();
+  const { user, signOut } = useAuth();
+  const { resetOnboarding, hasCompleted } = useOnboarding();
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   
   const isTeamAdminOrModerator = role === "admin" || role === "moderator";
   const isBoardAdminOrModerator = boardRole === "admin" || boardRole === "moderator";
   const isBoardAdminModeratorOrExecutor = boardRole === "admin" || boardRole === "moderator" || boardRole === "executor";
   const isRequester = boardRole === "requester";
+
+  // Fetch user profile
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("id", user.id)
+        .single();
+      return data;
+    },
+    enabled: !!user?.id
+  });
+
+  const initials = profile?.full_name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "U";
 
   const baseMenuItems = [{
     title: t("dashboard.title"),
@@ -64,7 +99,7 @@ export function AppSidebar() {
       title: "Solicitações de Demanda",
       url: "/demand-requests",
       icon: FileText,
-      showDemandRequestBadge: true // Show badge for admins, moderators and executors
+      showDemandRequestBadge: true
     },
     ...(isBoardAdminOrModerator ? [{
       title: "Gerenciamento de Tempo",
@@ -88,25 +123,12 @@ export function AppSidebar() {
     }
   ] : [];
 
-  // "Minhas Demandas" only for non-requesters
-  const myDemandsItems = !isRequester ? [{
-    title: "Minhas Demandas",
-    url: "/my-demands",
-    icon: ClipboardList
-  }] : [];
-
   const aiMenuItems = [
     {
       title: "Resumo IA",
       url: "/board-summary",
       icon: Sparkles
     }
-    // Contract hidden for now
-    // {
-    //   title: "Meu Contrato",
-    //   url: "/contract",
-    //   icon: FileText
-    // }
   ];
 
   const endMenuItems = [{
@@ -115,7 +137,7 @@ export function AppSidebar() {
     icon: Archive
   }];
 
-  const menuItems = [...baseMenuItems, ...adminMenuItems, ...requesterMenuItems, ...myDemandsItems, ...aiMenuItems, ...endMenuItems];
+  const menuItems = [...baseMenuItems, ...adminMenuItems, ...requesterMenuItems, ...aiMenuItems, ...endMenuItems];
 
   // Keep team section expanded if on team/board routes
   const isOnTeamRoute = location.pathname.startsWith("/boards") || location.pathname.startsWith("/team-config") || location.pathname.includes("/services") || location.pathname.includes("/requests") || location.pathname === "/team-demands";
@@ -128,9 +150,16 @@ export function AppSidebar() {
     }
   };
 
+  const handleLogout = async () => {
+    await signOut();
+    setLogoutDialogOpen(false);
+  };
+
+  const showText = isMobile || !isCollapsed;
+
   return (
     <Sidebar collapsible="icon" data-tour="sidebar">
-      <SidebarContent className="overflow-y-auto">
+      <SidebarContent className="overflow-y-auto flex flex-col">
         <div className="p-4 items-center justify-center px-0 py-0 mx-0 my-4 md:my-6 flex flex-col">
           {isCollapsed && !isMobile ? (
             <img alt="SoMA" src="/lovable-uploads/8967ad53-156a-4e31-a5bd-b472b7cde839.png" className="h-5 w-5 object-scale-down" />
@@ -147,11 +176,9 @@ export function AppSidebar() {
                 const tourId = item.url === "/" ? "dashboard-link" 
                   : item.url === "/kanban" ? "kanban-link"
                   : item.url === "/demands" ? "demands-link"
-                  : item.url === "/my-demands" ? "my-demands-link"
                   : item.url === "/archived" ? "archived-link"
                   : undefined;
                 
-                const showText = isMobile || !isCollapsed;
                 return (
                   <SidebarMenuItem key={item.title} className="relative" data-tour={tourId}>
                     <SidebarMenuButton asChild tooltip={item.title} size={isMobile ? "lg" : "default"}>
@@ -183,7 +210,14 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 );
               })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
+        {/* Team section - Moved to the end */}
+        <SidebarGroup className="mt-auto">
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-1">
               {/* Equipe - Collapsible section for team and board management */}
               {isCollapsed && !isMobile ? (
                 <SidebarMenuItem data-tour="teams-link">
@@ -216,7 +250,7 @@ export function AppSidebar() {
                         )}
                         {isTeamAdminOrModerator && selectedTeamId && (
                           <NavLink to={`/teams/${selectedTeamId}/services`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                            <Settings2 className="h-4 w-4" />
+                            <Settings className="h-4 w-4" />
                             Serviços
                           </NavLink>
                         )}
@@ -283,7 +317,7 @@ export function AppSidebar() {
                           <SidebarMenuSubItem data-tour="services-link">
                             <SidebarMenuSubButton asChild>
                               <NavLink to={`/teams/${selectedTeamId}/services`} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[40px] md:min-h-0 py-2 md:py-1.5" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                                <Settings2 className="h-5 w-5 md:h-4 md:w-4 mr-2" />
+                                <Settings className="h-5 w-5 md:h-4 md:w-4 mr-2" />
                                 <span className="text-base md:text-sm">Serviços</span>
                               </NavLink>
                             </SidebarMenuSubButton>
@@ -314,35 +348,112 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup className="mt-auto pb-4 md:pb-2">
+        {/* Footer section with sync indicator and profile */}
+        <SidebarGroup className="pb-4 md:pb-2">
           <SidebarGroupContent>
             <SidebarSyncIndicator isCollapsed={isCollapsed && !isMobile} />
             <SidebarMenu>
-              {/* TODO: Loja de Serviços - Em desenvolvimento
+              {/* User Profile Dropdown */}
               <SidebarMenuItem>
-                <NavLink 
-                  to="/store" 
-                  onClick={closeMobileSidebar} 
-                  className="flex items-center gap-2 w-full px-3 py-2.5 rounded-lg border-2 border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/40 transition-all font-medium min-h-[44px] md:min-h-0"
-                  activeClassName="bg-primary/15 border-primary/50"
-                >
-                  <ShoppingCart className="h-6 w-6 md:h-5 md:w-5" />
-                  {(isMobile || !isCollapsed) && (
-                    <span className="flex items-center gap-1.5 text-base md:text-sm">
-                      Loja de Serviços
-                      <Sparkles className="h-4 w-4 md:h-3 md:w-3 text-amber-500" />
-                    </span>
-                  )}
-                </NavLink>
-              </SidebarMenuItem>
-              */}
-              <SidebarMenuItem>
-                <LogoutDialog isCollapsed={isCollapsed && !isMobile} isMobile={isMobile} />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <SidebarMenuButton
+                      size={isMobile ? "lg" : "default"}
+                      className="hover:bg-sidebar-accent transition-colors min-h-[44px] md:min-h-0 w-full"
+                      tooltip="Perfil"
+                    >
+                      <Avatar className="h-6 w-6 shrink-0">
+                        <AvatarImage src={profile?.avatar_url || undefined} />
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      {showText && (
+                        <>
+                          <div className="flex flex-col items-start flex-1 min-w-0">
+                            <span className="text-sm font-medium truncate w-full text-left">
+                              {profile?.full_name || "Usuário"}
+                            </span>
+                            <span className="text-xs text-sidebar-foreground/60 truncate w-full text-left">
+                              {user?.email}
+                            </span>
+                          </div>
+                          <ChevronUp className="h-4 w-4 shrink-0 opacity-50" />
+                        </>
+                      )}
+                    </SidebarMenuButton>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    side="top"
+                    align="start"
+                    sideOffset={8}
+                    className="w-56 rounded-xl shadow-lg border bg-popover/95 backdrop-blur-sm animate-slide-up-fade"
+                  >
+                    {/* Avatar and info */}
+                    <div className="flex items-center gap-3 p-3">
+                      <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+                        <AvatarImage src={profile?.avatar_url || undefined} />
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-medium truncate">{profile?.full_name || "Usuário"}</span>
+                        <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    
+                    <DropdownMenuItem onClick={() => { navigate("/profile"); closeMobileSidebar(); }}>
+                      <User className="h-4 w-4 mr-2" />
+                      Meu Perfil
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => { navigate("/settings"); closeMobileSidebar(); }}>
+                      <Settings className="h-4 w-4 mr-2" />
+                      Configurações
+                    </DropdownMenuItem>
+                    
+                    {hasCompleted && (
+                      <DropdownMenuItem onClick={() => resetOnboarding(() => { navigate("/"); closeMobileSidebar(); })}>
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Rever Tour Guiado
+                      </DropdownMenuItem>
+                    )}
+                    
+                    <DropdownMenuSeparator />
+                    
+                    <DropdownMenuItem
+                      onClick={() => setLogoutDialogOpen(true)}
+                      className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sair
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      {/* Logout confirmation dialog */}
+      <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("auth.logoutConfirm")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("auth.logoutDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLogout} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t("auth.logout")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sidebar>
   );
 }
