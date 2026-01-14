@@ -467,7 +467,7 @@ export default function ServicesManagement() {
           {hierarchicalServices.filter(s => !s.isCategory).length > 0 && (
             <div className="space-y-3">
               {hierarchicalServices.filter(s => s.isCategory).length > 0 && (
-                <h3 className="text-base font-semibold text-muted-foreground">Serviços</h3>
+                <h3 className="text-base font-semibold text-muted-foreground">Serviços independentes</h3>
               )}
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {hierarchicalServices.filter(s => !s.isCategory).map((service) => renderServiceCard(service))}
