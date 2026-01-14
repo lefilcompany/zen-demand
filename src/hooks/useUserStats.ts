@@ -185,12 +185,12 @@ export const badges: Badge[] = [
     requirement: (stats) => stats.deliveredDemands >= 10,
   },
   {
-    id: "team_player",
-    name: "Jogador de Equipe",
-    description: "Faz parte de 2 ou mais equipes",
-    icon: "👥",
+    id: "board_master",
+    name: "Mestre dos Quadros",
+    description: "Participa de 3 ou mais quadros",
+    icon: "📊",
     color: "#6366F1",
-    requirement: (stats) => stats.teamsCount >= 2,
+    requirement: (stats) => stats.boardsCount >= 3,
   },
   {
     id: "commentator",
