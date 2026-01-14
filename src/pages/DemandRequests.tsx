@@ -4,15 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { 
-  Pagination, 
-  PaginationContent, 
-  PaginationItem, 
-  PaginationLink, 
-  PaginationNext, 
-  PaginationPrevious,
-  PaginationEllipsis
-} from "@/components/ui/pagination";
-import { 
   usePendingDemandRequests, 
   useApprovedDemandRequests,
   useReturnedDemandRequests,
@@ -392,52 +383,36 @@ export default function DemandRequests() {
             <div className="text-center py-12 text-muted-foreground">Carregando...</div>
           ) : approvedRequests && approvedRequests.length > 0 ? (
             <div className="space-y-4">
+              {paginatedApproved.totalPages > 1 && (
+                <div className="flex justify-end">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Página {approvedPage} de {paginatedApproved.totalPages}</span>
+                    <div className="flex items-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setApprovedPage(p => Math.max(1, p - 1))}
+                        disabled={approvedPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setApprovedPage(p => Math.min(paginatedApproved.totalPages, p + 1))}
+                        disabled={approvedPage === paginatedApproved.totalPages}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="grid gap-4">
                 {paginatedApproved.items.map(request => renderRequestCard(request))}
               </div>
-              {paginatedApproved.totalPages > 1 && (
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        onClick={() => setApprovedPage(p => Math.max(1, p - 1))}
-                        className={approvedPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                      />
-                    </PaginationItem>
-                    {Array.from({ length: paginatedApproved.totalPages }, (_, i) => i + 1)
-                      .filter(page => {
-                        if (paginatedApproved.totalPages <= 5) return true;
-                        if (page === 1 || page === paginatedApproved.totalPages) return true;
-                        if (Math.abs(page - approvedPage) <= 1) return true;
-                        return false;
-                      })
-                      .map((page, idx, arr) => (
-                        <>
-                          {idx > 0 && arr[idx - 1] !== page - 1 && (
-                            <PaginationItem key={`ellipsis-${page}`}>
-                              <PaginationEllipsis />
-                            </PaginationItem>
-                          )}
-                          <PaginationItem key={page}>
-                            <PaginationLink 
-                              onClick={() => setApprovedPage(page)}
-                              isActive={approvedPage === page}
-                              className="cursor-pointer"
-                            >
-                              {page}
-                            </PaginationLink>
-                          </PaginationItem>
-                        </>
-                      ))}
-                    <PaginationItem>
-                      <PaginationNext 
-                        onClick={() => setApprovedPage(p => Math.min(paginatedApproved.totalPages, p + 1))}
-                        className={approvedPage === paginatedApproved.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              )}
             </div>
           ) : (
             renderEmptyState("Não há solicitações aprovadas para este quadro")
@@ -449,52 +424,36 @@ export default function DemandRequests() {
             <div className="text-center py-12 text-muted-foreground">Carregando...</div>
           ) : returnedRequests && returnedRequests.length > 0 ? (
             <div className="space-y-4">
+              {paginatedReturned.totalPages > 1 && (
+                <div className="flex justify-end">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Página {returnedPage} de {paginatedReturned.totalPages}</span>
+                    <div className="flex items-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setReturnedPage(p => Math.max(1, p - 1))}
+                        disabled={returnedPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setReturnedPage(p => Math.min(paginatedReturned.totalPages, p + 1))}
+                        disabled={returnedPage === paginatedReturned.totalPages}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="grid gap-4">
                 {paginatedReturned.items.map(request => renderRequestCard(request, true))}
               </div>
-              {paginatedReturned.totalPages > 1 && (
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        onClick={() => setReturnedPage(p => Math.max(1, p - 1))}
-                        className={returnedPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                      />
-                    </PaginationItem>
-                    {Array.from({ length: paginatedReturned.totalPages }, (_, i) => i + 1)
-                      .filter(page => {
-                        if (paginatedReturned.totalPages <= 5) return true;
-                        if (page === 1 || page === paginatedReturned.totalPages) return true;
-                        if (Math.abs(page - returnedPage) <= 1) return true;
-                        return false;
-                      })
-                      .map((page, idx, arr) => (
-                        <>
-                          {idx > 0 && arr[idx - 1] !== page - 1 && (
-                            <PaginationItem key={`ellipsis-${page}`}>
-                              <PaginationEllipsis />
-                            </PaginationItem>
-                          )}
-                          <PaginationItem key={page}>
-                            <PaginationLink 
-                              onClick={() => setReturnedPage(page)}
-                              isActive={returnedPage === page}
-                              className="cursor-pointer"
-                            >
-                              {page}
-                            </PaginationLink>
-                          </PaginationItem>
-                        </>
-                      ))}
-                    <PaginationItem>
-                      <PaginationNext 
-                        onClick={() => setReturnedPage(p => Math.min(paginatedReturned.totalPages, p + 1))}
-                        className={returnedPage === paginatedReturned.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              )}
             </div>
           ) : (
             renderEmptyState("Não há solicitações devolvidas para este quadro")
