@@ -3,7 +3,7 @@ import { AlertTriangle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isDateOverdue } from "@/lib/dateUtils";
 
-interface CalendarDemandCardProps {
+export interface CalendarDemandCardProps {
   demand: {
     id: string;
     title: string;
@@ -15,6 +15,7 @@ interface CalendarDemandCardProps {
     } | null;
   };
   onClick?: () => void;
+  compact?: boolean;
 }
 
 const priorityIndicatorColors = {
@@ -23,11 +24,40 @@ const priorityIndicatorColors = {
   alta: "bg-destructive",
 };
 
-export function CalendarDemandCard({ demand, onClick }: CalendarDemandCardProps) {
+export function CalendarDemandCard({ demand, onClick, compact = false }: CalendarDemandCardProps) {
   const isHighPriority = demand.priority === "alta";
   const statusName = demand.demand_statuses?.name;
   const isDelivered = statusName === "Entregue";
   const isOverdue = !isDelivered && isDateOverdue(demand.due_date);
+
+  if (compact) {
+    // Compact version for mobile - just a colored bar with minimal info
+    return (
+      <div
+        className={cn(
+          "relative px-1.5 py-1 rounded text-[9px] cursor-pointer transition-all truncate",
+          "hover:ring-1 hover:ring-primary/50",
+          isDelivered && "opacity-60",
+          isOverdue && "ring-1 ring-destructive/50 bg-destructive/10",
+          !isOverdue && !isDelivered && "bg-muted/60"
+        )}
+        style={{
+          borderLeft: demand.demand_statuses 
+            ? `3px solid ${demand.demand_statuses.color}` 
+            : undefined
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick?.();
+        }}
+        title={demand.title}
+      >
+        <span className="font-medium text-foreground truncate block">
+          {demand.title}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div
