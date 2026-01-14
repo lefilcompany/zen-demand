@@ -1145,6 +1145,7 @@ export type Database = {
           id: string
           name: string
           team_id: string
+          text_color: string | null
         }
         Insert: {
           color?: string
@@ -1154,6 +1155,7 @@ export type Database = {
           id?: string
           name: string
           team_id: string
+          text_color?: string | null
         }
         Update: {
           color?: string
@@ -1163,6 +1165,7 @@ export type Database = {
           id?: string
           name?: string
           team_id?: string
+          text_color?: string | null
         }
         Relationships: [
           {

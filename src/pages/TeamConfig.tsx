@@ -458,6 +458,7 @@ export default function TeamConfig() {
                               <PositionBadge 
                                 name={member.position.name} 
                                 color={member.position.color}
+                                textColor={member.position.text_color}
                                 showIcon={false}
                                 className="text-xs"
                               />

@@ -15,11 +15,12 @@ import { ColorPicker } from "@/components/ColorPicker";
 import { PositionBadge } from "@/components/PositionBadge";
 import { Loader2 } from "lucide-react";
 import { TeamPosition } from "@/hooks/useTeamPositions";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface CreatePositionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: { name: string; description?: string; color: string }) => Promise<void>;
+  onSubmit: (data: { name: string; description?: string; color: string; textColor: string }) => Promise<void>;
   isLoading?: boolean;
   editingPosition?: TeamPosition | null;
 }
@@ -34,6 +35,7 @@ export function CreatePositionDialog({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState("#3B82F6");
+  const [textColor, setTextColor] = useState("auto");
 
   // Reset form when dialog opens/closes or editing position changes
   useEffect(() => {
@@ -42,10 +44,12 @@ export function CreatePositionDialog({
         setName(editingPosition.name);
         setDescription(editingPosition.description || "");
         setColor(editingPosition.color);
+        setTextColor(editingPosition.text_color || "auto");
       } else {
         setName("");
         setDescription("");
         setColor("#3B82F6");
+        setTextColor("auto");
       }
     }
   }, [open, editingPosition]);
@@ -58,6 +62,7 @@ export function CreatePositionDialog({
       name: name.trim(),
       description: description.trim() || undefined,
       color,
+      textColor,
     });
   };
 
@@ -108,11 +113,30 @@ export function CreatePositionDialog({
             label="Cor do badge"
           />
 
+          {/* Text Color Selection */}
+          <div className="space-y-2">
+            <Label>Cor do texto</Label>
+            <RadioGroup value={textColor} onValueChange={setTextColor} className="flex gap-4">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="auto" id="auto" />
+                <Label htmlFor="auto" className="cursor-pointer font-normal">Automático</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="light" id="light" />
+                <Label htmlFor="light" className="cursor-pointer font-normal">Claro</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="dark" id="dark" />
+                <Label htmlFor="dark" className="cursor-pointer font-normal">Escuro</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
           {/* Preview */}
           <div className="space-y-2">
             <Label>Preview</Label>
             <div className="p-4 rounded-lg bg-muted/50 flex items-center justify-center">
-              <PositionBadge name={name || "Cargo"} color={color} />
+              <PositionBadge name={name || "Cargo"} color={color} textColor={textColor} />
             </div>
           </div>
 

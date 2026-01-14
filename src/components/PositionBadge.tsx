@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 interface PositionBadgeProps {
   name: string;
   color: string;
+  textColor?: string;
   className?: string;
   showIcon?: boolean;
   size?: "sm" | "md";
@@ -21,6 +22,13 @@ function isLightColor(hexColor: string): boolean {
   return luminance > 0.5;
 }
 
+function getTextColor(bgColor: string, textColorPref?: string): string {
+  if (textColorPref === "light") return "#FFFFFF";
+  if (textColorPref === "dark") return "#1F2937";
+  // auto - determine based on background
+  return isLightColor(bgColor) ? "#1F2937" : "#FFFFFF";
+}
+
 const sizeClasses = {
   sm: "text-[10px] px-1.5 py-0 h-4",
   md: "text-xs px-2 py-0.5",
@@ -31,8 +39,8 @@ const iconSizeClasses = {
   md: "h-3 w-3",
 };
 
-export function PositionBadge({ name, color, className, showIcon = true, size = "md" }: PositionBadgeProps) {
-  const textColor = isLightColor(color) ? "#1F2937" : "#FFFFFF";
+export function PositionBadge({ name, color, textColor: textColorPref, className, showIcon = true, size = "md" }: PositionBadgeProps) {
+  const textColor = getTextColor(color, textColorPref);
 
   return (
     <Badge
