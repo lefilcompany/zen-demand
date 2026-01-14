@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,12 +11,13 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ProfileEditDrawer } from "@/components/ProfileEditDrawer";
 import { AnimatedBadge } from "@/components/AnimatedBadge";
+import { ImageCropDialog } from "@/components/ImageCropDialog";
 import { useUserStats, badges, calculateLevel } from "@/hooks/useUserStats";
 import { 
   ArrowLeft, Settings, User, Calendar, MapPin, Briefcase, 
   Link as LinkIcon, Github, Linkedin, Target, CheckCircle2, 
   Clock, MessageSquare, Users, Loader2, Award, TrendingUp,
-  Zap, Trophy, ChevronDown, ChevronUp
+  Zap, Trophy, ChevronDown, ChevronUp, Camera
 } from "lucide-react";
 
 const INITIAL_BADGES_COUNT = 12;
@@ -23,8 +25,13 @@ const INITIAL_BADGES_COUNT = 12;
 export default function Profile() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [editDrawerOpen, setEditDrawerOpen] = useState(false);
   const [showAllBadges, setShowAllBadges] = useState(false);
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["profile", user?.id],
@@ -75,6 +82,71 @@ export default function Profile() {
   const earnedBadges = stats ? badges.filter((b) => b.requirement(stats)) : [];
   const lockedBadges = stats ? badges.filter((b) => !b.requirement(stats)) : badges;
 
+  const handleBannerClick = () => {
+    bannerInputRef.current?.click();
+  };
+
+  const handleBannerSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Por favor, selecione uma imagem válida");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 5MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSelectedImage(reader.result as string);
+      setCropDialogOpen(true);
+    };
+    reader.readAsDataURL(file);
+    
+    // Reset input
+    e.target.value = "";
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    if (!user) return;
+
+    setIsUploadingBanner(true);
+    try {
+      const fileName = `banner_${Date.now()}.jpg`;
+      const filePath = `${user.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, croppedBlob, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ banner_url: publicUrl } as any)
+        .eq("id", user.id);
+
+      if (updateError) throw updateError;
+
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      toast.success("Banner atualizado com sucesso!");
+    } catch (error) {
+      console.error("Error uploading banner:", error);
+      toast.error("Erro ao atualizar o banner");
+    } finally {
+      setIsUploadingBanner(false);
+      setSelectedImage(null);
+    }
+  };
+
   if (profileLoading || statsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -99,12 +171,46 @@ export default function Profile() {
 
       {/* Profile Hero with Level */}
       <Card className="overflow-hidden">
-        <div className="h-32 bg-gradient-to-r from-primary/80 via-primary to-primary/60 relative">
+        <div 
+          className="h-32 md:h-40 relative group cursor-pointer"
+          onClick={handleBannerClick}
+        >
+          {(profile as any)?.banner_url ? (
+            <img 
+              src={(profile as any).banner_url} 
+              alt="Banner" 
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/80 via-primary to-primary/60" />
+          )}
+          
+          {/* Overlay on hover */}
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            {isUploadingBanner ? (
+              <Loader2 className="h-8 w-8 text-white animate-spin" />
+            ) : (
+              <div className="flex items-center gap-2 text-white">
+                <Camera className="h-5 w-5" />
+                <span className="text-sm font-medium">Alterar banner</span>
+              </div>
+            )}
+          </div>
+
           {/* Level Badge */}
-          <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-4 py-2">
+          <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-4 py-2 z-10">
             <Trophy className="h-5 w-5 text-yellow-400" />
             <span className="text-white font-bold">Nível {levelInfo.level}</span>
           </div>
+
+          {/* Hidden input */}
+          <input
+            ref={bannerInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleBannerSelect}
+          />
         </div>
         <CardContent className="relative pb-6">
           {/* Avatar */}
@@ -373,6 +479,17 @@ export default function Profile() {
 
       {/* Edit Drawer */}
       <ProfileEditDrawer open={editDrawerOpen} onOpenChange={setEditDrawerOpen} />
+
+      {/* Image Crop Dialog */}
+      {selectedImage && (
+        <ImageCropDialog
+          open={cropDialogOpen}
+          onOpenChange={setCropDialogOpen}
+          imageSrc={selectedImage}
+          aspectRatio={16 / 5}
+          onCropComplete={handleCropComplete}
+        />
+      )}
     </div>
   );
 }
