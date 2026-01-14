@@ -336,7 +336,7 @@ export default function DemandRequests() {
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "pending" | "approved" | "returned")} className="w-full">
-        <TabsList className="w-full grid grid-cols-3 mb-4">
+        <TabsList className={`w-full grid mb-4 ${canApproveOrReturn ? 'grid-cols-3' : 'grid-cols-1'}`}>
           <TabsTrigger value="pending" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
             <span className="hidden sm:inline">Pendentes</span>
@@ -346,24 +346,28 @@ export default function DemandRequests() {
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="approved" className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4" />
-            <span className="hidden sm:inline">Aprovadas</span>
-            {approvedRequests && approvedRequests.length > 0 && (
-              <Badge variant="secondary" className="ml-1 h-5 px-1.5">
-                {approvedRequests.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="returned" className="flex items-center gap-2">
-            <XCircle className="h-4 w-4" />
-            <span className="hidden sm:inline">Devolvidas</span>
-            {returnedRequests && returnedRequests.length > 0 && (
-              <Badge variant="secondary" className="ml-1 h-5 px-1.5">
-                {returnedRequests.length}
-              </Badge>
-            )}
-          </TabsTrigger>
+          {canApproveOrReturn && (
+            <TabsTrigger value="approved" className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">Aprovadas</span>
+              {approvedRequests && approvedRequests.length > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+                  {approvedRequests.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          )}
+          {canApproveOrReturn && (
+            <TabsTrigger value="returned" className="flex items-center gap-2">
+              <XCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">Devolvidas</span>
+              {returnedRequests && returnedRequests.length > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+                  {returnedRequests.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="pending">
@@ -378,87 +382,91 @@ export default function DemandRequests() {
           )}
         </TabsContent>
 
-        <TabsContent value="approved">
-          {approvedLoading ? (
-            <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-          ) : approvedRequests && approvedRequests.length > 0 ? (
-            <div className="space-y-4">
-              {paginatedApproved.totalPages > 1 && (
-                <div className="flex justify-end">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>Página {approvedPage} de {paginatedApproved.totalPages}</span>
-                    <div className="flex items-center">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setApprovedPage(p => Math.max(1, p - 1))}
-                        disabled={approvedPage === 1}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setApprovedPage(p => Math.min(paginatedApproved.totalPages, p + 1))}
-                        disabled={approvedPage === paginatedApproved.totalPages}
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
+        {canApproveOrReturn && (
+          <TabsContent value="approved">
+            {approvedLoading ? (
+              <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+            ) : approvedRequests && approvedRequests.length > 0 ? (
+              <div className="space-y-4">
+                {paginatedApproved.totalPages > 1 && (
+                  <div className="flex justify-end">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>Página {approvedPage} de {paginatedApproved.totalPages}</span>
+                      <div className="flex items-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setApprovedPage(p => Math.max(1, p - 1))}
+                          disabled={approvedPage === 1}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setApprovedPage(p => Math.min(paginatedApproved.totalPages, p + 1))}
+                          disabled={approvedPage === paginatedApproved.totalPages}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
+                )}
+                <div className="grid gap-4">
+                  {paginatedApproved.items.map(request => renderRequestCard(request))}
                 </div>
-              )}
-              <div className="grid gap-4">
-                {paginatedApproved.items.map(request => renderRequestCard(request))}
               </div>
-            </div>
-          ) : (
-            renderEmptyState("Não há solicitações aprovadas para este quadro")
-          )}
-        </TabsContent>
+            ) : (
+              renderEmptyState("Não há solicitações aprovadas para este quadro")
+            )}
+          </TabsContent>
+        )}
 
-        <TabsContent value="returned">
-          {returnedLoading ? (
-            <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-          ) : returnedRequests && returnedRequests.length > 0 ? (
-            <div className="space-y-4">
-              {paginatedReturned.totalPages > 1 && (
-                <div className="flex justify-end">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>Página {returnedPage} de {paginatedReturned.totalPages}</span>
-                    <div className="flex items-center">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setReturnedPage(p => Math.max(1, p - 1))}
-                        disabled={returnedPage === 1}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setReturnedPage(p => Math.min(paginatedReturned.totalPages, p + 1))}
-                        disabled={returnedPage === paginatedReturned.totalPages}
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
+        {canApproveOrReturn && (
+          <TabsContent value="returned">
+            {returnedLoading ? (
+              <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+            ) : returnedRequests && returnedRequests.length > 0 ? (
+              <div className="space-y-4">
+                {paginatedReturned.totalPages > 1 && (
+                  <div className="flex justify-end">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>Página {returnedPage} de {paginatedReturned.totalPages}</span>
+                      <div className="flex items-center">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setReturnedPage(p => Math.max(1, p - 1))}
+                          disabled={returnedPage === 1}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setReturnedPage(p => Math.min(paginatedReturned.totalPages, p + 1))}
+                          disabled={returnedPage === paginatedReturned.totalPages}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
+                )}
+                <div className="grid gap-4">
+                  {paginatedReturned.items.map(request => renderRequestCard(request, true))}
                 </div>
-              )}
-              <div className="grid gap-4">
-                {paginatedReturned.items.map(request => renderRequestCard(request, true))}
               </div>
-            </div>
-          ) : (
-            renderEmptyState("Não há solicitações devolvidas para este quadro")
-          )}
-        </TabsContent>
+            ) : (
+              renderEmptyState("Não há solicitações devolvidas para este quadro")
+            )}
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* View Details Dialog */}
