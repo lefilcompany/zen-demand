@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { RichTextDisplay } from "@/components/ui/rich-text-editor";
 import { MentionText } from "@/components/MentionText";
 import { useSharedDemand, useSharedDemandInteractions, useSharedDemandAttachments } from "@/hooks/useShareDemand";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Calendar, Users, Wrench, ExternalLink, Lock, MessageSquare, Kanban } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -14,12 +14,23 @@ import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { cn } from "@/lib/utils";
 import logoSoma from "@/assets/logo-soma.png";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
+import { useEffect } from "react";
 
 export default function SharedDemand() {
   const { token } = useParams<{ token: string }>();
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const { data: demand, isLoading, error } = useSharedDemand(token || null);
   const { data: interactions } = useSharedDemandInteractions(token || null, demand?.id || null);
   const { data: attachments } = useSharedDemandAttachments(token || null, demand?.id || null);
+
+  // Redirect logged-in users to the full demand page
+  useEffect(() => {
+    if (!authLoading && user && demand?.id) {
+      navigate(`/demands/${demand.id}`, { replace: true });
+    }
+  }, [authLoading, user, demand?.id, navigate]);
 
   // Filter only comments for public view
   const comments = interactions?.filter(i => i.interaction_type === "comment") || [];
