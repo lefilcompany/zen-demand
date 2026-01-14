@@ -21,8 +21,12 @@ export function LinkifiedText({ text, className }: LinkifiedTextProps) {
             href={part.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary hover:underline break-all"
-            onClick={(e) => e.stopPropagation()}
+            className="text-primary hover:underline break-all cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              window.open(part.url, '_blank', 'noopener,noreferrer');
+            }}
           >
             {part.displayText}
           </a>
