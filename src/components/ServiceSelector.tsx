@@ -11,7 +11,7 @@ import { useBoardServicesWithUsage, useHasBoardServices } from "@/hooks/useBoard
 import { Clock, AlertTriangle, Infinity as InfinityIcon, Info, Folder, ChevronRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatPrice } from "@/lib/priceUtils";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 interface ServiceSelectorProps {
   teamId: string | null;
@@ -40,14 +40,25 @@ function CollapsibleCategory({
   category, 
   children, 
   renderServiceItem,
-  hasBoardServices 
+  hasBoardServices,
+  selectedValue
 }: { 
   category: DisplayService; 
   children: DisplayService[]; 
   renderServiceItem: (service: DisplayService, indented?: boolean) => React.ReactNode;
   hasBoardServices: boolean;
+  selectedValue: string;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  // Auto-open if a child is selected
+  const hasSelectedChild = children.some(child => child.id === selectedValue);
+  const [isOpen, setIsOpen] = useState(hasSelectedChild);
+
+  // Keep open if child becomes selected
+  useEffect(() => {
+    if (hasSelectedChild) {
+      setIsOpen(true);
+    }
+  }, [hasSelectedChild]);
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -226,6 +237,7 @@ export function ServiceSelector({
               children={children}
               renderServiceItem={renderServiceItem}
               hasBoardServices={hasBoardServices}
+              selectedValue={value}
             />
           ))}
           
