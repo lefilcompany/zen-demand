@@ -5,10 +5,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useHierarchicalServices, ServiceWithHierarchy } from "@/hooks/useServices";
 import { useBoardServicesWithUsage, useHasBoardServices } from "@/hooks/useBoardServices";
-import { Clock, AlertTriangle, Infinity as InfinityIcon, Info, Folder, ChevronRight } from "lucide-react";
+import { Clock, AlertTriangle, Infinity as InfinityIcon, Info, Folder, ChevronDown } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatPrice } from "@/lib/priceUtils";
 import { useMemo, useState, useEffect } from "react";
@@ -35,46 +34,6 @@ interface DisplayService {
   parent_id?: string | null;
 }
 
-// Collapsible category component
-function CollapsibleCategory({ 
-  category, 
-  children, 
-  renderServiceItem,
-  hasBoardServices,
-  selectedValue
-}: { 
-  category: DisplayService; 
-  children: DisplayService[]; 
-  renderServiceItem: (service: DisplayService, indented?: boolean) => React.ReactNode;
-  hasBoardServices: boolean;
-  selectedValue: string;
-}) {
-  // Auto-open if a child is selected
-  const hasSelectedChild = children.some(child => child.id === selectedValue);
-  const [isOpen, setIsOpen] = useState(hasSelectedChild);
-
-  // Keep open if child becomes selected
-  useEffect(() => {
-    if (hasSelectedChild) {
-      setIsOpen(true);
-    }
-  }, [hasSelectedChild]);
-
-  return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger className="flex items-center gap-2 w-full px-2 py-1.5 text-sm font-semibold text-muted-foreground hover:bg-muted rounded-sm transition-colors cursor-pointer">
-        <ChevronRight className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-90" : ""}`} />
-        <Folder className="h-4 w-4 shrink-0" />
-        <span className="flex-1 text-left">{category.name}</span>
-        <span className="text-xs text-muted-foreground/70">{children.length}</span>
-      </CollapsibleTrigger>
-      <CollapsibleContent className="pl-4 border-l-2 border-muted ml-3 mt-1 space-y-0.5">
-        {children.map((child) => renderServiceItem(child, true))}
-      </CollapsibleContent>
-    </Collapsible>
-  );
-}
-
 export function ServiceSelector({
   teamId,
   boardId,
@@ -85,6 +44,9 @@ export function ServiceSelector({
   const { data: hierarchicalServices, isLoading: servicesLoading, rawServices } = useHierarchicalServices(teamId, boardId);
   const { hasBoardServices, isLoading: boardServicesLoading } = useHasBoardServices(boardId);
   const { data: boardServicesUsage, isLoading: usageLoading } = useBoardServicesWithUsage(boardId);
+  
+  // Track which categories are expanded
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   const isLoading = servicesLoading || boardServicesLoading || usageLoading;
 
@@ -152,27 +114,57 @@ export function ServiceSelector({
     return { categories: cats, standaloneServices: standalone, allDisplayServices: allDisplay };
   }, [hierarchicalServices, rawServices, boardServicesUsage, hasBoardServices]);
 
+  // Auto-expand category if a child is selected
+  useEffect(() => {
+    if (value && value !== "none") {
+      categories.forEach(({ category, children }) => {
+        if (children.some(child => child.id === value)) {
+          setExpandedCategories(prev => new Set(prev).add(category.id));
+        }
+      });
+    }
+  }, [value, categories]);
+
+  const toggleCategory = (categoryId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
+  };
+
   const handleChange = (serviceId: string) => {
     if (serviceId === "none") {
       onChange("none", undefined);
       return;
     }
     
+    // Ignore category clicks
+    if (serviceId.startsWith("category-")) {
+      return;
+    }
+    
     const service = allDisplayServices.find((s) => s.id === serviceId);
     if (service?.isLimitReached) {
-      return; // Don't allow selection of limit-reached services
+      return;
     }
     onChange(serviceId, service?.estimated_hours);
   };
 
   const selectedService = allDisplayServices.find(s => s.id === value);
 
-  const renderServiceItem = (service: DisplayService, indented: boolean = false, onClick?: () => void) => (
+  const renderServiceItem = (service: DisplayService, indented: boolean = false) => (
     <SelectItem 
       key={service.id} 
       value={service.id}
       disabled={service.isLimitReached}
-      className={`${service.isLimitReached ? "opacity-50" : ""} ${indented ? "pl-8" : ""}`}
+      className={`${service.isLimitReached ? "opacity-50" : ""} ${indented ? "pl-6 border-l-2 border-muted ml-2" : ""}`}
     >
       <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
         <span className="font-medium truncate max-w-[120px] sm:max-w-none">{service.name}</span>
@@ -207,6 +199,25 @@ export function ServiceSelector({
     </SelectItem>
   );
 
+  const renderCategoryHeader = (category: DisplayService, childCount: number) => {
+    const isExpanded = expandedCategories.has(category.id);
+    
+    return (
+      <div
+        key={`header-${category.id}`}
+        onClick={(e) => toggleCategory(category.id, e)}
+        className="flex items-center gap-2 px-2 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted rounded-sm cursor-pointer select-none transition-colors"
+      >
+        <ChevronDown 
+          className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isExpanded ? "" : "-rotate-90"}`} 
+        />
+        <Folder className="h-4 w-4 shrink-0" />
+        <span className="flex-1">{category.name}</span>
+        <span className="text-xs text-muted-foreground/60 tabular-nums">{childCount}</span>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-2">
       <Select
@@ -229,16 +240,16 @@ export function ServiceSelector({
           {/* Standalone services (no category) */}
           {standaloneServices.map((service) => renderServiceItem(service))}
           
-          {/* Categories with their children - collapsible */}
+          {/* Categories with expandable children */}
           {categories.map(({ category, children }) => (
-            <CollapsibleCategory 
-              key={category.id} 
-              category={category} 
-              children={children}
-              renderServiceItem={renderServiceItem}
-              hasBoardServices={hasBoardServices}
-              selectedValue={value}
-            />
+            <div key={category.id}>
+              {renderCategoryHeader(category, children.length)}
+              {expandedCategories.has(category.id) && (
+                <div className="space-y-0.5">
+                  {children.map((child) => renderServiceItem(child, true))}
+                </div>
+              )}
+            </div>
           ))}
           
           {allDisplayServices.length === 0 && standaloneServices.length === 0 && (
