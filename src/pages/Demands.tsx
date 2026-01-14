@@ -270,66 +270,74 @@ export default function Demands() {
           <Input placeholder={t("common.search")} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9 w-full" />
         </div>
 
-        {/* Filters and Actions Row */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Filters Button */}
-          <DemandFilters boardId={selectedBoardId} filters={filters} onChange={setFilters} />
+        {/* Filters and Actions - Two rows layout */}
+        <div className="flex flex-col gap-2">
+          {/* Top row: Filters, View toggle, Create button */}
+          <div className="flex items-center gap-2">
+            {/* Filters Button */}
+            <DemandFilters boardId={selectedBoardId} filters={filters} onChange={setFilters} />
 
-          {/* Toggle show only my demands - only for non-requesters */}
-          {!isReadOnly && myDemandsCount > 0 && (
-            <Button 
-              variant={showOnlyMine ? "default" : "outline"} 
-              size="sm" 
-              onClick={() => setShowOnlyMine(!showOnlyMine)} 
-              className="h-9 px-2.5 gap-1.5"
-              title={showOnlyMine ? "Ver todas as demandas" : "Ver apenas minhas demandas"}
-            >
-              <User className="h-4 w-4" />
-              <span className="hidden sm:inline text-xs font-medium">Minhas</span>
-              <span className="bg-primary-foreground/20 text-current text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
-                {myDemandsCount}
-              </span>
-            </Button>
-          )}
+            {/* Spacer */}
+            <div className="flex-1" />
 
-          {/* Toggle hide/show delivered */}
-          {deliveredCount > 0 && (
-            <Button 
-              variant={hideDelivered ? "default" : "outline"} 
-              size="sm" 
-              onClick={() => setHideDelivered(!hideDelivered)} 
-              className="h-9 px-2.5 gap-1.5"
-              title={hideDelivered ? "Mostrar demandas entregues" : "Ocultar demandas entregues"}
-            >
-              {hideDelivered ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              <span className="hidden sm:inline text-xs font-medium">{hideDelivered ? "Ocultas" : "Entregues"}</span>
-              <span className="bg-primary-foreground/20 text-current text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
-                {deliveredCount}
-              </span>
-            </Button>
-          )}
+            {/* View toggle */}
+            <div className="border border-border rounded-md overflow-hidden shrink-0 flex">
+              <Button variant={viewMode === "table" ? "secondary" : "ghost"} size="icon" className={`hidden lg:flex h-8 w-8 rounded-none ${viewMode === "table" ? "bg-primary text-primary-foreground" : ""}`} onClick={() => setViewMode("table")} title={t("demands.tableView")}>
+                <List className="h-4 w-4" />
+              </Button>
+              <Button variant={viewMode === "grid" ? "secondary" : "ghost"} size="icon" className={`hidden lg:flex h-8 w-8 rounded-none ${viewMode === "grid" ? "bg-primary text-primary-foreground" : ""}`} onClick={() => setViewMode("grid")} title={t("demands.gridView")}>
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button variant={viewMode === "calendar" ? "secondary" : "ghost"} size="icon" className={`h-8 w-8 rounded-none ${viewMode === "calendar" ? "bg-primary text-primary-foreground" : ""}`} onClick={() => setViewMode("calendar")} title="Visualização em calendário">
+                <CalendarDays className="h-4 w-4" />
+              </Button>
+            </div>
 
-          {/* Spacer to push view toggle and create to the right */}
-          <div className="flex-1 hidden sm:block" />
-
-          {/* View toggle */}
-          <div className="border border-border rounded-md overflow-hidden shrink-0 flex">
-            <Button variant={viewMode === "table" ? "secondary" : "ghost"} size="icon" className={`hidden lg:flex h-8 w-8 rounded-none ${viewMode === "table" ? "bg-primary text-primary-foreground" : ""}`} onClick={() => setViewMode("table")} title={t("demands.tableView")}>
-              <List className="h-4 w-4" />
-            </Button>
-            <Button variant={viewMode === "grid" ? "secondary" : "ghost"} size="icon" className={`hidden lg:flex h-8 w-8 rounded-none ${viewMode === "grid" ? "bg-primary text-primary-foreground" : ""}`} onClick={() => setViewMode("grid")} title={t("demands.gridView")}>
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button variant={viewMode === "calendar" ? "secondary" : "ghost"} size="icon" className={`h-8 w-8 rounded-none ${viewMode === "calendar" ? "bg-primary text-primary-foreground" : ""}`} onClick={() => setViewMode("calendar")} title="Visualização em calendário">
-              <CalendarDays className="h-4 w-4" />
+            {/* Create Button */}
+            <Button onClick={() => navigate("/demands/create")} className="shadow-primary h-9 px-3" size="sm">
+              <Plus className="h-4 w-4 sm:mr-1.5" />
+              <span className="hidden sm:inline text-sm">{t("demands.newDemand")}</span>
             </Button>
           </div>
 
-          {/* Create Button */}
-          <Button onClick={() => navigate("/demands/create")} className="shadow-primary h-9 px-3" size="sm">
-            <Plus className="h-4 w-4 sm:mr-1.5" />
-            <span className="hidden sm:inline text-sm">{t("demands.newDemand")}</span>
-          </Button>
+          {/* Bottom row: Toggle filters */}
+          {((!isReadOnly && myDemandsCount > 0) || deliveredCount > 0) && (
+            <div className="flex items-center gap-2">
+              {/* Toggle show only my demands - only for non-requesters */}
+              {!isReadOnly && myDemandsCount > 0 && (
+                <Button 
+                  variant={showOnlyMine ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={() => setShowOnlyMine(!showOnlyMine)} 
+                  className="h-8 px-3 gap-2"
+                  title={showOnlyMine ? "Ver todas as demandas" : "Ver apenas minhas demandas"}
+                >
+                  <User className="h-3.5 w-3.5" />
+                  <span className="text-xs font-medium">Minhas Demandas</span>
+                  <span className="bg-primary-foreground/20 text-current text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
+                    {myDemandsCount}
+                  </span>
+                </Button>
+              )}
+
+              {/* Toggle hide/show delivered */}
+              {deliveredCount > 0 && (
+                <Button 
+                  variant={hideDelivered ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={() => setHideDelivered(!hideDelivered)} 
+                  className="h-8 px-3 gap-2"
+                  title={hideDelivered ? "Mostrar demandas entregues" : "Ocultar demandas entregues"}
+                >
+                  {hideDelivered ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  <span className="text-xs font-medium">{hideDelivered ? "Exibir Entregues" : "Ocultar Entregues"}</span>
+                  <span className="bg-primary-foreground/20 text-current text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
+                    {deliveredCount}
+                  </span>
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
