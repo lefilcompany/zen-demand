@@ -283,10 +283,12 @@ export default function Demands() {
                 variant={showOnlyMine ? "default" : "outline"} 
                 size="sm" 
                 onClick={() => setShowOnlyMine(!showOnlyMine)} 
-                className="gap-1.5 h-9 px-2.5 shrink-0 whitespace-nowrap"
+                className="gap-1.5 h-9 px-3 shrink-0 whitespace-nowrap"
+                title={showOnlyMine ? "Ver todas as demandas" : "Ver apenas minhas demandas"}
               >
-                <User className="h-4 w-4" />
-                <span className="text-xs">
+                <User className="h-4 w-4 shrink-0" />
+                <span className="text-xs font-medium">Minhas</span>
+                <span className="bg-primary-foreground/20 text-current text-[10px] px-1.5 py-0.5 rounded-full font-semibold min-w-[20px] text-center">
                   {myDemandsCount}
                 </span>
               </Button>
@@ -298,10 +300,12 @@ export default function Demands() {
                 variant={hideDelivered ? "default" : "outline"} 
                 size="sm" 
                 onClick={() => setHideDelivered(!hideDelivered)} 
-                className="gap-1.5 h-9 px-2.5 shrink-0 whitespace-nowrap"
+                className="gap-1.5 h-9 px-3 shrink-0 whitespace-nowrap"
+                title={hideDelivered ? "Mostrar demandas entregues" : "Ocultar demandas entregues"}
               >
-                {hideDelivered ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                <span className="text-xs">
+                {hideDelivered ? <EyeOff className="h-4 w-4 shrink-0" /> : <Eye className="h-4 w-4 shrink-0" />}
+                <span className="text-xs font-medium">{hideDelivered ? "Ocultas" : "Entregues"}</span>
+                <span className="bg-primary-foreground/20 text-current text-[10px] px-1.5 py-0.5 rounded-full font-semibold min-w-[20px] text-center">
                   {deliveredCount}
                 </span>
               </Button>
