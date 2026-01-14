@@ -53,9 +53,9 @@ export function sanitizeHtml(html: string): string {
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: [
       "p", "br", "strong", "em", "u", "s", "span", "img", 
-      "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "mark"
+      "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "mark", "a"
     ],
-    ALLOWED_ATTR: ["style", "src", "alt", "class", "data-color"],
+    ALLOWED_ATTR: ["style", "src", "alt", "class", "data-color", "href", "target", "rel"],
     ADD_ATTR: ["style", "data-color"],
   });
 }
@@ -433,6 +433,44 @@ export function RichTextEditor({
   );
 }
 
+// Convert plain URLs in text to clickable links
+function linkifyText(text: string): string {
+  const urlRegex = /(https?:\/\/[^\s<>\[\]\{\}]+)/g;
+  return text.replace(urlRegex, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline break-all">${url}</a>`;
+  });
+}
+
+// Process HTML content to make URLs clickable
+function processContentWithLinks(html: string): string {
+  // If it's plain text, linkify it directly
+  if (!/<[a-z][\s\S]*>/i.test(html)) {
+    return `<p class="whitespace-pre-wrap">${linkifyText(html)}</p>`;
+  }
+  
+  // For HTML content, we need to process text nodes only
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  
+  const processTextNodes = (node: Node) => {
+    if (node.nodeType === Node.TEXT_NODE && node.textContent) {
+      const text = node.textContent;
+      if (/(https?:\/\/[^\s<>\[\]\{\}]+)/.test(text)) {
+        const span = document.createElement("span");
+        span.innerHTML = linkifyText(text);
+        node.parentNode?.replaceChild(span, node);
+      }
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      // Don't process links that are already anchors
+      if ((node as Element).tagName !== "A") {
+        Array.from(node.childNodes).forEach(processTextNodes);
+      }
+    }
+  };
+  
+  processTextNodes(doc.body);
+  return doc.body.innerHTML;
+}
+
 // Component for displaying rich text content (read-only)
 interface RichTextDisplayProps {
   content: string | null | undefined;
@@ -442,22 +480,24 @@ interface RichTextDisplayProps {
 export function RichTextDisplay({ content, className }: RichTextDisplayProps) {
   if (!content) return null;
 
-  // Check if content looks like HTML
-  const isHtml = /<[a-z][\s\S]*>/i.test(content);
-  
-  if (!isHtml) {
-    // Plain text - wrap in paragraph
-    return (
-      <div className={cn("prose prose-sm dark:prose-invert max-w-none", className)}>
-        <p className="whitespace-pre-wrap">{content}</p>
-      </div>
-    );
-  }
+  const processedContent = processContentWithLinks(content);
 
   return (
     <div 
-      className={cn("prose prose-sm dark:prose-invert max-w-none", className)}
-      dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
+      className={cn("prose prose-sm dark:prose-invert max-w-none [&_a]:text-primary [&_a]:hover:underline [&_a]:break-all [&_a]:cursor-pointer", className)}
+      dangerouslySetInnerHTML={{ __html: sanitizeHtml(processedContent) }}
+      onClick={(e) => {
+        // Handle clicks on links
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'A') {
+          e.preventDefault();
+          e.stopPropagation();
+          const href = target.getAttribute('href');
+          if (href) {
+            window.open(href, '_blank', 'noopener,noreferrer');
+          }
+        }
+      }}
     />
   );
 }
