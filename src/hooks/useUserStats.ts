@@ -107,15 +107,23 @@ export function useUserStats(userId: string | undefined) {
 
       // Calculate average delivery time
       const deliveredWithTime = uniqueDemands.filter(
-        (d: any) => d.delivered_at && d.demand_statuses?.name === "Entregue"
+        (d: any) => d.delivered_at && d.created_at && d.demand_statuses?.name === "Entregue"
       );
       
       const avgDeliveryTime = deliveredWithTime.length > 0
         ? deliveredWithTime.reduce((sum, d: any) => {
-            const created = new Date(d.created_at || 0).getTime();
+            const created = new Date(d.created_at).getTime();
             const delivered = new Date(d.delivered_at).getTime();
-            return sum + (delivered - created) / (1000 * 60 * 60);
-          }, 0) / deliveredWithTime.length
+            const hours = (delivered - created) / (1000 * 60 * 60);
+            // Ignore invalid values (negative or > 1 year)
+            if (hours < 0 || hours > 8760) return sum;
+            return sum + hours;
+          }, 0) / deliveredWithTime.filter((d: any) => {
+            const created = new Date(d.created_at).getTime();
+            const delivered = new Date(d.delivered_at).getTime();
+            const hours = (delivered - created) / (1000 * 60 * 60);
+            return hours >= 0 && hours <= 8760;
+          }).length || 0
         : 0;
 
       return {
