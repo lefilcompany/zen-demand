@@ -64,6 +64,64 @@ export function usePendingDemandRequests() {
   });
 }
 
+// Fetch approved requests - filtered by board
+export function useApprovedDemandRequests() {
+  const { selectedBoardId } = useSelectedBoard();
+
+  return useQuery({
+    queryKey: ["demand-requests", "approved", selectedBoardId],
+    queryFn: async () => {
+      if (!selectedBoardId) return [];
+
+      const { data, error } = await supabase
+        .from("demand_requests")
+        .select(`
+          *,
+          creator:profiles!demand_requests_created_by_fkey(full_name, avatar_url),
+          responder:profiles!demand_requests_responded_by_fkey(full_name, avatar_url),
+          service:services(name, estimated_hours),
+          board:boards(name)
+        `)
+        .eq("board_id", selectedBoardId)
+        .eq("status", "approved")
+        .order("responded_at", { ascending: false });
+
+      if (error) throw error;
+      return data as DemandRequest[];
+    },
+    enabled: !!selectedBoardId,
+  });
+}
+
+// Fetch returned requests - filtered by board
+export function useReturnedDemandRequests() {
+  const { selectedBoardId } = useSelectedBoard();
+
+  return useQuery({
+    queryKey: ["demand-requests", "returned", selectedBoardId],
+    queryFn: async () => {
+      if (!selectedBoardId) return [];
+
+      const { data, error } = await supabase
+        .from("demand_requests")
+        .select(`
+          *,
+          creator:profiles!demand_requests_created_by_fkey(full_name, avatar_url),
+          responder:profiles!demand_requests_responded_by_fkey(full_name, avatar_url),
+          service:services(name, estimated_hours),
+          board:boards(name)
+        `)
+        .eq("board_id", selectedBoardId)
+        .eq("status", "returned")
+        .order("responded_at", { ascending: false });
+
+      if (error) throw error;
+      return data as DemandRequest[];
+    },
+    enabled: !!selectedBoardId,
+  });
+}
+
 // Fetch user's own requests (for Solicitantes) - filtered by board
 export function useMyDemandRequests() {
   const { user } = useAuth();
