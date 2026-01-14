@@ -170,38 +170,56 @@ export default function Profile() {
       </div>
 
       {/* Profile Hero with Level */}
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden shadow-lg">
         <div 
-          className="h-32 md:h-40 relative group cursor-pointer"
+          className="h-40 md:h-48 lg:h-56 relative group cursor-pointer"
           onClick={handleBannerClick}
         >
           {(profile as any)?.banner_url ? (
-            <img 
-              src={(profile as any).banner_url} 
-              alt="Banner" 
-              className="absolute inset-0 w-full h-full object-cover"
-            />
+            <>
+              <img 
+                src={(profile as any).banner_url} 
+                alt="Banner" 
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              {/* Gradient overlay for better text readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+            </>
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/80 via-primary to-primary/60" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-secondary/60">
+              {/* Pattern overlay for default banner */}
+              <div className="absolute inset-0 opacity-10" style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+              }} />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+            </div>
           )}
           
-          {/* Overlay on hover */}
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          {/* Hover overlay with edit prompt */}
+          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px]">
             {isUploadingBanner ? (
-              <Loader2 className="h-8 w-8 text-white animate-spin" />
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="h-8 w-8 text-white animate-spin" />
+                <span className="text-white text-sm">Enviando...</span>
+              </div>
             ) : (
-              <div className="flex items-center gap-2 text-white">
-                <Camera className="h-5 w-5" />
-                <span className="text-sm font-medium">Alterar banner</span>
+              <div className="flex flex-col items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                <div className="h-12 w-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <Camera className="h-6 w-6 text-white" />
+                </div>
+                <span className="text-white text-sm font-medium">Alterar banner</span>
               </div>
             )}
           </div>
 
           {/* Level Badge */}
-          <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-4 py-2 z-10">
-            <Trophy className="h-5 w-5 text-yellow-400" />
-            <span className="text-white font-bold">Nível {levelInfo.level}</span>
+          <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full px-4 py-2 z-10 border border-white/10">
+            <Trophy className="h-5 w-5 text-yellow-400 drop-shadow-md" />
+            <span className="text-white font-bold drop-shadow-md">Nível {levelInfo.level}</span>
           </div>
+
+          {/* Decorative bottom edge */}
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-secondary to-primary" />
 
           {/* Hidden input */}
           <input

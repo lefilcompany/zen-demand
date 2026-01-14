@@ -294,22 +294,36 @@ export default function UserProfile() {
       </div>
 
       {/* Profile Hero Section */}
-      <Card className="overflow-hidden">
-        <div className="h-36 md:h-40 relative">
+      <Card className="overflow-hidden shadow-lg">
+        <div className="h-40 md:h-48 lg:h-56 relative">
           {(profile as any)?.banner_url ? (
-            <img 
-              src={(profile as any).banner_url} 
-              alt="Banner" 
-              className="absolute inset-0 w-full h-full object-cover"
-            />
+            <>
+              <img 
+                src={(profile as any).banner_url} 
+                alt="Banner" 
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              {/* Gradient overlay for better text readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+            </>
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-r from-primary via-secondary to-primary/60" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-secondary/60">
+              {/* Pattern overlay for default banner */}
+              <div className="absolute inset-0 opacity-10" style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+              }} />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+            </div>
           )}
-          <div className="absolute inset-0 bg-black/10" />
-          <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-full px-3 py-1.5 z-10">
-            <Trophy className="h-4 w-4 text-primary" />
-            <span className="text-sm font-semibold">Nível {levelData.level}</span>
+          
+          {/* Level Badge */}
+          <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full px-4 py-2 z-10 border border-white/10">
+            <Trophy className="h-5 w-5 text-yellow-400 drop-shadow-md" />
+            <span className="text-white font-bold drop-shadow-md">Nível {levelData.level}</span>
           </div>
+
+          {/* Decorative bottom edge */}
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-secondary to-primary" />
         </div>
         <CardContent className="relative pb-6">
           {/* Avatar */}
