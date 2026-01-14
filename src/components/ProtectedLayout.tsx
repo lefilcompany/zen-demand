@@ -4,7 +4,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { BoardSelector } from "@/components/BoardSelector";
 import { GlobalSearchBar } from "@/components/GlobalSearchBar";
 import { Outlet, useNavigate } from "react-router-dom";
-import { Settings, RotateCcw, Users, LogOut } from "lucide-react";
+import { RotateCcw, LogOut, User, Users, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
@@ -152,6 +152,7 @@ export function ProtectedLayout() {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => navigate("/profile")}>
+                    <User className="h-4 w-4 mr-2" />
                     Meu Perfil
                   </DropdownMenuItem>
                   {hasCompleted && (
