@@ -144,6 +144,7 @@ export interface Badge {
 }
 
 export const badges: Badge[] = [
+  // Demandas criadas
   {
     id: "first_demand",
     name: "Primeira Demanda",
@@ -169,6 +170,31 @@ export const badges: Badge[] = [
     requirement: (stats) => stats.totalDemands >= 10,
   },
   {
+    id: "veteran",
+    name: "Veterano",
+    description: "Criou 25 demandas",
+    icon: "⭐",
+    color: "#F97316",
+    requirement: (stats) => stats.totalDemands >= 25,
+  },
+  {
+    id: "legend",
+    name: "Lenda",
+    description: "Criou 50 demandas",
+    icon: "👑",
+    color: "#EAB308",
+    requirement: (stats) => stats.totalDemands >= 50,
+  },
+  {
+    id: "centurion",
+    name: "Centurião",
+    description: "Criou 100 demandas",
+    icon: "🏛️",
+    color: "#A855F7",
+    requirement: (stats) => stats.totalDemands >= 100,
+  },
+  // Entregas
+  {
     id: "first_delivery",
     name: "Entregador",
     description: "Primeira entrega realizada",
@@ -185,6 +211,23 @@ export const badges: Badge[] = [
     requirement: (stats) => stats.deliveredDemands >= 10,
   },
   {
+    id: "delivery_expert",
+    name: "Especialista",
+    description: "25 demandas entregues",
+    icon: "💎",
+    color: "#06B6D4",
+    requirement: (stats) => stats.deliveredDemands >= 25,
+  },
+  {
+    id: "delivery_machine",
+    name: "Máquina de Entregas",
+    description: "50 demandas entregues",
+    icon: "⚡",
+    color: "#FACC15",
+    requirement: (stats) => stats.deliveredDemands >= 50,
+  },
+  // Quadros
+  {
     id: "board_master",
     name: "Mestre dos Quadros",
     description: "Participa de 3 ou mais quadros",
@@ -192,6 +235,15 @@ export const badges: Badge[] = [
     color: "#6366F1",
     requirement: (stats) => stats.boardsCount >= 3,
   },
+  {
+    id: "board_explorer",
+    name: "Explorador",
+    description: "Participa de 5 ou mais quadros",
+    icon: "🗺️",
+    color: "#0EA5E9",
+    requirement: (stats) => stats.boardsCount >= 5,
+  },
+  // Comentários
   {
     id: "commentator",
     name: "Comunicador",
@@ -201,12 +253,62 @@ export const badges: Badge[] = [
     requirement: (stats) => stats.totalComments >= 10,
   },
   {
+    id: "chatterbox",
+    name: "Tagarela",
+    description: "Fez 25 comentários",
+    icon: "🗣️",
+    color: "#F472B6",
+    requirement: (stats) => stats.totalComments >= 25,
+  },
+  {
+    id: "influencer",
+    name: "Influenciador",
+    description: "Fez 50 comentários",
+    icon: "📢",
+    color: "#E11D48",
+    requirement: (stats) => stats.totalComments >= 50,
+  },
+  // Tempo
+  {
     id: "time_tracker",
     name: "Controlador de Tempo",
-    description: "Registrou mais de 10 horas de trabalho",
+    description: "Registrou mais de 10 horas",
     icon: "⏱️",
     color: "#14B8A6",
-    requirement: (stats) => stats.totalTimeSpent >= 36000, // 10 hours in seconds
+    requirement: (stats) => stats.totalTimeSpent >= 36000,
+  },
+  {
+    id: "dedicated_worker",
+    name: "Dedicado",
+    description: "Registrou mais de 25 horas",
+    icon: "💪",
+    color: "#0D9488",
+    requirement: (stats) => stats.totalTimeSpent >= 90000,
+  },
+  {
+    id: "workaholic",
+    name: "Workaholic",
+    description: "Registrou mais de 50 horas",
+    icon: "🔥",
+    color: "#DC2626",
+    requirement: (stats) => stats.totalTimeSpent >= 180000,
+  },
+  // Velocidade
+  {
+    id: "fast_delivery",
+    name: "Veloz",
+    description: "Tempo médio de entrega menor que 24h",
+    icon: "🏃",
+    color: "#22D3EE",
+    requirement: (stats) => stats.avgDeliveryTime > 0 && stats.avgDeliveryTime < 24,
+  },
+  {
+    id: "lightning",
+    name: "Relâmpago",
+    description: "Tempo médio de entrega menor que 8h",
+    icon: "⚡",
+    color: "#FBBF24",
+    requirement: (stats) => stats.avgDeliveryTime > 0 && stats.avgDeliveryTime < 8,
   },
 ];
 
