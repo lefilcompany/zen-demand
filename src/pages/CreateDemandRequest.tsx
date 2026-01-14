@@ -13,9 +13,12 @@ import { useUploadRequestAttachment } from "@/hooks/useRequestAttachments";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { RequestAttachmentUploader } from "@/components/RequestAttachmentUploader";
 import { PendingFileUploader, PendingFile } from "@/components/PendingFileUploader";
+import { UnsavedChangesDialog } from "@/components/UnsavedChangesDialog";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { useNavigationBlock } from "@/hooks/useNavigationBlock";
 import { ArrowLeft, Ban, Send, Layout, Paperclip, Loader2 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 
@@ -41,6 +44,43 @@ export default function CreateDemandRequest() {
   const [createdRequestId, setCreatedRequestId] = useState<string | null>(null);
   
   const uploadAttachment = useUploadRequestAttachment();
+
+  // Draft persistence
+  const draftFields = useMemo(
+    () => ({
+      title,
+      description,
+      priority,
+      serviceId,
+    }),
+    [title, description, priority, serviceId]
+  );
+
+  const draftSetters = useMemo(
+    () => ({
+      title: setTitle,
+      description: setDescription,
+      priority: setPriority,
+      serviceId: setServiceId,
+    }),
+    []
+  );
+
+  const { hasContent, clearDraft } = useFormDraft({
+    formId: `create-request-${selectedBoardId || "default"}`,
+    fields: draftFields,
+    setters: draftSetters,
+  });
+
+  // Navigation blocking (only when not in attachment step)
+  const {
+    isBlocked,
+    confirmNavigation,
+    cancelNavigation,
+    setDontShowAgain,
+  } = useNavigationBlock({
+    shouldBlock: hasContent() && !createdRequestId,
+  });
 
   // Update serviceId when preselectedServiceId changes
   useEffect(() => {
@@ -68,6 +108,9 @@ export default function CreateDemandRequest() {
       },
       {
         onSuccess: async (data) => {
+          // Clear draft on success
+          clearDraft();
+          
           // Upload pending files
           if (pendingFiles.length > 0) {
             setIsUploading(true);
@@ -153,6 +196,14 @@ export default function CreateDemandRequest() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fade-in px-1">
+      {/* Unsaved Changes Dialog */}
+      <UnsavedChangesDialog
+        open={isBlocked}
+        onConfirm={confirmNavigation}
+        onCancel={cancelNavigation}
+        onDontShowAgain={setDontShowAgain}
+      />
+
       <div>
         <Button
           variant="ghost"

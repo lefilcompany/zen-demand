@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -24,6 +24,7 @@ import {
 import { useCreateDemandRequest } from "@/hooks/useDemandRequests";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardServices } from "@/hooks/useBoardServices";
+import { useFormDraft } from "@/hooks/useFormDraft";
 import { toast } from "sonner";
 import { Calendar, Loader2, Send } from "lucide-react";
 import { getErrorMessage } from "@/lib/errorUtils";
@@ -48,6 +49,33 @@ export function CreateRequestQuickDialog({
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<string>("média");
   const [serviceId, setServiceId] = useState<string>("");
+
+  // Draft persistence
+  const draftFields = useMemo(
+    () => ({
+      title,
+      description,
+      priority,
+      serviceId,
+    }),
+    [title, description, priority, serviceId]
+  );
+
+  const draftSetters = useMemo(
+    () => ({
+      title: setTitle,
+      description: setDescription,
+      priority: setPriority,
+      serviceId: setServiceId,
+    }),
+    []
+  );
+
+  const { clearDraft } = useFormDraft({
+    formId: `quick-request-${selectedBoardId || "default"}`,
+    fields: draftFields,
+    setters: draftSetters,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,6 +110,9 @@ export function CreateRequestQuickDialog({
         service_id: serviceId,
       });
 
+      // Clear draft on success
+      clearDraft();
+
       toast.success("Solicitação enviada!", {
         description: "Aguarde a aprovação de um administrador ou coordenador.",
       });
@@ -108,6 +139,7 @@ export function CreateRequestQuickDialog({
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
       resetForm();
+      clearDraft();
     }
     onOpenChange(isOpen);
   };
