@@ -17,7 +17,7 @@ import {
   ArrowLeft, Settings, User, Calendar, MapPin, Briefcase, 
   Link as LinkIcon, Github, Linkedin, Target, CheckCircle2, 
   Clock, MessageSquare, Users, Loader2, Award, TrendingUp,
-  Zap, Trophy, ChevronDown, ChevronUp, Camera
+  Zap, Trophy, ChevronDown, ChevronUp, Camera, Trash2
 } from "lucide-react";
 
 const INITIAL_BADGES_COUNT = 12;
@@ -147,6 +147,26 @@ export default function Profile() {
     }
   };
 
+  const handleRemoveBanner = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ banner_url: null } as any)
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      toast.success("Banner removido com sucesso!");
+    } catch (error) {
+      console.error("Error removing banner:", error);
+      toast.error("Erro ao remover o banner");
+    }
+  };
+
   if (profileLoading || statsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -204,11 +224,24 @@ export default function Profile() {
                 <span className="text-white text-sm">Enviando...</span>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                <div className="h-12 w-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <Camera className="h-6 w-6 text-white" />
+              <div className="flex items-center gap-6">
+                <div className="flex flex-col items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                  <div className="h-12 w-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <Camera className="h-6 w-6 text-white" />
+                  </div>
+                  <span className="text-white text-sm font-medium">Alterar banner</span>
                 </div>
-                <span className="text-white text-sm font-medium">Alterar banner</span>
+                {(profile as any)?.banner_url && (
+                  <div 
+                    className="flex flex-col items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300 cursor-pointer"
+                    onClick={handleRemoveBanner}
+                  >
+                    <div className="h-12 w-12 rounded-full bg-red-500/30 backdrop-blur-sm flex items-center justify-center hover:bg-red-500/50 transition-colors">
+                      <Trash2 className="h-6 w-6 text-white" />
+                    </div>
+                    <span className="text-white text-sm font-medium">Remover</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
