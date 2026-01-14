@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { DemandCard } from "@/components/DemandCard";
 import { useArchivedDemands } from "@/hooks/useArchivedDemands";
 import { useUpdateDemand } from "@/hooks/useDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
@@ -12,6 +11,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { truncateText } from "@/lib/utils";
+import { RichTextDisplay } from "@/components/ui/rich-text-editor";
 
 export default function ArchivedDemands() {
   const navigate = useNavigate();
@@ -82,9 +82,9 @@ export default function ArchivedDemands() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {demand.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {demand.description}
-                  </p>
+                  <div className="text-sm text-muted-foreground line-clamp-2">
+                    <RichTextDisplay content={demand.description} />
+                  </div>
                 )}
                 <div className="flex flex-wrap gap-2">
                   {demand.demand_statuses && (

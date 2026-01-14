@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor, RichTextDisplay } from "@/components/ui/rich-text-editor";
 import { Input } from "@/components/ui/input";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { useSelectedTeam } from "@/contexts/TeamContext";
@@ -24,7 +24,7 @@ import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useRequestComments, useCreateRequestComment, useDeleteRequestComment } from "@/hooks/useRequestComments";
 import { MentionInput } from "@/components/MentionInput";
 import { MentionText } from "@/components/MentionText";
-import { LinkifiedText } from "@/components/LinkifiedText";
+
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/lib/auth";
 import { useUploadRequestAttachment } from "@/hooks/useRequestAttachments";
@@ -296,8 +296,8 @@ export default function DemandRequests() {
             {/* Description */}
             {viewing?.description && <div className="space-y-1">
                 <Label className="text-sm font-medium">Descrição</Label>
-                <div className="p-3 rounded-md bg-muted text-sm whitespace-pre-wrap break-words overflow-hidden">
-                  <LinkifiedText text={viewing.description} />
+                <div className="p-3 rounded-md bg-muted text-sm overflow-hidden">
+                  <RichTextDisplay content={viewing.description} />
                 </div>
               </div>}
 
