@@ -518,6 +518,44 @@ export type Database = {
           },
         ]
       }
+      demand_share_tokens: {
+        Row: {
+          created_at: string
+          created_by: string
+          demand_id: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          demand_id: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          token: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          demand_id?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_share_tokens_demand_id_fkey"
+            columns: ["demand_id"]
+            isOneToOne: false
+            referencedRelation: "demands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demand_statuses: {
         Row: {
           color: string
