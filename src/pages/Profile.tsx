@@ -62,6 +62,15 @@ export default function Profile() {
     return `${mins}m`;
   };
 
+  const formatDeliveryTime = (hours: number) => {
+    if (hours <= 0) return "-";
+    if (hours < 1) return `${Math.round(hours * 60)}min`;
+    if (hours < 24) return `${Math.round(hours)}h`;
+    if (hours < 168) return `${Math.round(hours / 24)}d`; // Less than a week
+    if (hours < 720) return `${Math.round(hours / 168)}sem`; // Less than a month
+    return `${Math.round(hours / 720)}mês`;
+  };
+
   const levelInfo = stats ? calculateLevel(stats) : { level: 1, xp: 0, xpForNext: 100, progress: 0 };
   const earnedBadges = stats ? badges.filter((b) => b.requirement(stats)) : [];
   const lockedBadges = stats ? badges.filter((b) => !b.requirement(stats)) : badges;
@@ -290,7 +299,7 @@ export default function Profile() {
                 <span className="text-muted-foreground">Tempo médio de entrega</span>
               </div>
               <span className="text-xl font-bold">
-                {stats?.avgDeliveryTime ? `${stats.avgDeliveryTime}h` : "-"}
+                {formatDeliveryTime(stats?.avgDeliveryTime || 0)}
               </span>
             </div>
           </CardContent>
