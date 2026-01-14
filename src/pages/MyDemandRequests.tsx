@@ -23,6 +23,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { LinkifiedText } from "@/components/LinkifiedText";
 
 const statusConfig = {
   pending: { label: "Pendente", icon: Clock, color: "bg-yellow-500/20 text-yellow-700 border-yellow-500/30" },
@@ -263,7 +264,7 @@ export default function MyDemandRequests() {
                 </CardHeader>
                 <CardContent>
                   {request.description && (
-                    <p className="text-sm text-muted-foreground mb-3">{request.description}</p>
+                    <LinkifiedText text={request.description} className="text-sm text-muted-foreground mb-3 block" />
                   )}
 
                   <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -283,7 +284,7 @@ export default function MyDemandRequests() {
                       <p className="text-sm font-medium mb-1">
                         {request.status === "returned" ? "Motivo da devolução:" : "Motivo da rejeição:"}
                       </p>
-                      <p className="text-sm text-muted-foreground">{request.rejection_reason}</p>
+                      <LinkifiedText text={request.rejection_reason || ""} className="text-sm text-muted-foreground block" />
                       {request.responder && (
                         <p className="text-xs text-muted-foreground mt-2">
                           Por{" "}

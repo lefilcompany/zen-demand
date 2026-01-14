@@ -37,6 +37,20 @@ export function MentionText({ text, className }: MentionTextProps) {
             />
           );
         }
+        if (part.type === "link") {
+          return (
+            <a
+              key={`link-${index}`}
+              href={part.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline break-all"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {part.displayText}
+            </a>
+          );
+        }
         return null;
       })}
     </span>

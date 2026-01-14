@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { MentionInput } from "@/components/MentionInput";
 import { MentionText } from "@/components/MentionText";
+import { LinkifiedText } from "@/components/LinkifiedText";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useDemandById, useDemandInteractions, useCreateInteraction, useUpdateInteraction, useDeleteInteraction, useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
@@ -634,9 +635,10 @@ export default function DemandDetail() {
               {isInternalAlert ? "Ajuste Interno Solicitado" : "Ajuste Externo Solicitado"}
             </AlertTitle>
             <AlertDescription className="mt-2 space-y-2 overflow-hidden">
-              <p className="text-xs sm:text-sm text-foreground whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-                {latestAdjustmentRequest.content}
-              </p>
+              <LinkifiedText 
+                text={latestAdjustmentRequest.content || ""} 
+                className="text-xs sm:text-sm text-foreground whitespace-pre-wrap break-words [overflow-wrap:anywhere] block" 
+              />
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span className="font-medium">
                   {latestAdjustmentRequest.profiles?.full_name}
@@ -786,9 +788,10 @@ export default function DemandDetail() {
           {demand.description && <div className="w-full overflow-hidden">
               <h3 className="font-semibold mb-2 text-sm md:text-base">Descrição</h3>
               <div className="w-full overflow-x-auto">
-                <p className="text-xs sm:text-sm md:text-base text-muted-foreground whitespace-pre-wrap break-words max-w-full [overflow-wrap:anywhere]">
-                  {demand.description}
-                </p>
+                <LinkifiedText 
+                  text={demand.description} 
+                  className="text-xs sm:text-sm md:text-base text-muted-foreground whitespace-pre-wrap break-words max-w-full [overflow-wrap:anywhere] block" 
+                />
               </div>
             </div>}
 
