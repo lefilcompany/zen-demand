@@ -939,6 +939,7 @@ export type Database = {
           estimated_hours: number
           id: string
           name: string
+          parent_id: string | null
           price_cents: number
           team_id: string
           updated_at: string
@@ -951,6 +952,7 @@ export type Database = {
           estimated_hours?: number
           id?: string
           name: string
+          parent_id?: string | null
           price_cents?: number
           team_id: string
           updated_at?: string
@@ -963,6 +965,7 @@ export type Database = {
           estimated_hours?: number
           id?: string
           name?: string
+          parent_id?: string | null
           price_cents?: number
           team_id?: string
           updated_at?: string
@@ -973,6 +976,13 @@ export type Database = {
             columns: ["board_id"]
             isOneToOne: false
             referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "services"
             referencedColumns: ["id"]
           },
           {

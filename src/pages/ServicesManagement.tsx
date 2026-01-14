@@ -29,16 +29,32 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useTeams } from "@/hooks/useTeams";
-import { useServices, useCreateService, useUpdateService, useDeleteService } from "@/hooks/useServices";
+import { 
+  useHierarchicalServices, 
+  usePotentialParentServices,
+  useCreateService, 
+  useUpdateService, 
+  useDeleteService,
+  ServiceWithHierarchy
+} from "@/hooks/useServices";
 import { useIsTeamAdmin } from "@/hooks/useTeamRole";
-import { ArrowLeft, Plus, Clock, Pencil, Trash2, DollarSign } from "lucide-react";
+import { ArrowLeft, Plus, Clock, Pencil, Trash2, DollarSign, Folder, ChevronDown, ChevronRight } from "lucide-react";
 
 export default function ServicesManagement() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: teams, isLoading: teamsLoading } = useTeams();
-  const { data: services, isLoading: servicesLoading } = useServices(id || null);
+  const { data: hierarchicalServices, isLoading: servicesLoading } = useHierarchicalServices(id || null);
   const { isAdmin } = useIsTeamAdmin(id || null);
   const createService = useCreateService();
   const updateService = useUpdateService();
@@ -51,15 +67,32 @@ export default function ServicesManagement() {
     description: string;
     estimated_hours: number;
     price_cents: number;
+    parent_id: string | null;
   } | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     estimated_hours: 24,
     price: "0,00",
+    parent_id: null as string | null,
   });
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  const { data: potentialParents } = usePotentialParentServices(id || null, editingService?.id);
 
   const team = teams?.find((t) => t.id === id);
+
+  const toggleCategory = (categoryId: string) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
+  };
 
   const handleOpenDialog = (service?: typeof editingService) => {
     if (service) {
@@ -69,10 +102,11 @@ export default function ServicesManagement() {
         description: service.description || "",
         estimated_hours: service.estimated_hours,
         price: centsToDecimal(service.price_cents || 0),
+        parent_id: service.parent_id,
       });
     } else {
       setEditingService(null);
-      setFormData({ name: "", description: "", estimated_hours: 24, price: "0,00" });
+      setFormData({ name: "", description: "", estimated_hours: 24, price: "0,00", parent_id: null });
     }
     setDialogOpen(true);
   };
@@ -91,6 +125,7 @@ export default function ServicesManagement() {
           description: formData.description.trim() || undefined,
           estimated_hours: formData.estimated_hours,
           price_cents: priceCents,
+          parent_id: formData.parent_id,
         },
         {
           onSuccess: () => {
@@ -113,6 +148,7 @@ export default function ServicesManagement() {
           team_id: id,
           estimated_hours: formData.estimated_hours,
           price_cents: priceCents,
+          parent_id: formData.parent_id,
         },
         {
           onSuccess: () => {
@@ -145,6 +181,101 @@ export default function ServicesManagement() {
       }
     );
   };
+
+  const renderServiceCard = (service: ServiceWithHierarchy, isChild: boolean = false) => (
+    <Card key={service.id} className={isChild ? "border-l-4 border-l-primary/30" : ""}>
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div className="space-y-1 flex-1">
+            <div className="flex items-center gap-2">
+              {service.isCategory && (
+                <Badge variant="secondary" className="text-xs">
+                  <Folder className="h-3 w-3 mr-1" />
+                  Categoria
+                </Badge>
+              )}
+              <CardTitle className="text-lg">{service.name}</CardTitle>
+            </div>
+            {service.description && (
+              <CardDescription className="line-clamp-2">
+                {service.description}
+              </CardDescription>
+            )}
+          </div>
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() =>
+                handleOpenDialog({
+                  id: service.id,
+                  name: service.name,
+                  description: service.description || "",
+                  estimated_hours: service.estimated_hours,
+                  price_cents: service.price_cents || 0,
+                  parent_id: service.parent_id,
+                })
+              }
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            {isAdmin && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excluir serviço?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tem certeza que deseja excluir o serviço "{service.name}"? 
+                      {service.isCategory && service.children.length > 0 && (
+                        <span className="block mt-2 text-destructive font-medium">
+                          Atenção: Este serviço é uma categoria com {service.children.length} subserviço(s). 
+                          Os subserviços ficarão órfãos.
+                        </span>
+                      )}
+                      Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleDelete(service.id)}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Excluir
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            <span>Prazo estimado: {service.estimated_hours} horas</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            <span className="font-medium text-foreground">
+              {formatPrice(service.price_cents || 0)}
+            </span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   if (teamsLoading || servicesLoading) {
     return (
@@ -195,10 +326,37 @@ export default function ServicesManagement() {
               <DialogDescription>
                 {editingService
                   ? "Atualize as informações do serviço"
-                  : "Crie um novo serviço com prazo estimado"}
+                  : "Crie um novo serviço ou subserviço"}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="parent_id">Categoria Pai (opcional)</Label>
+                <Select
+                  value={formData.parent_id || "none"}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, parent_id: value === "none" ? null : value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Nenhuma (serviço raiz)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhuma (serviço raiz)</SelectItem>
+                    {potentialParents?.map((parent) => (
+                      <SelectItem key={parent.id} value={parent.id}>
+                        <div className="flex items-center gap-2">
+                          <Folder className="h-4 w-4" />
+                          {parent.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Se selecionar uma categoria, este serviço será um subserviço. Categorias não podem ser selecionadas diretamente.
+                </p>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="name">Nome do Serviço *</Label>
                 <Input
@@ -276,85 +434,43 @@ export default function ServicesManagement() {
       </div>
 
       {/* Services List */}
-      {services && services.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {services.map((service) => (
-            <Card key={service.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-lg">{service.name}</CardTitle>
-                    {service.description && (
-                      <CardDescription className="line-clamp-2">
-                        {service.description}
-                      </CardDescription>
-                    )}
+      {hierarchicalServices && hierarchicalServices.length > 0 ? (
+        <div className="space-y-6">
+          {hierarchicalServices.map((service) => (
+            <div key={service.id}>
+              {service.isCategory ? (
+                <Collapsible
+                  open={expandedCategories.has(service.id)}
+                  onOpenChange={() => toggleCategory(service.id)}
+                >
+                  <div className="space-y-4">
+                    <CollapsibleTrigger asChild>
+                      <div className="flex items-center gap-2 cursor-pointer hover:opacity-80">
+                        {expandedCategories.has(service.id) ? (
+                          <ChevronDown className="h-5 w-5" />
+                        ) : (
+                          <ChevronRight className="h-5 w-5" />
+                        )}
+                        <Folder className="h-5 w-5 text-primary" />
+                        <h3 className="text-lg font-semibold">{service.name}</h3>
+                        <Badge variant="outline" className="ml-2">
+                          {service.children.length} subserviço(s)
+                        </Badge>
+                      </div>
+                    </CollapsibleTrigger>
+                    
+                    {/* Category card */}
+                    {renderServiceCard(service)}
+                    
+                    <CollapsibleContent className="pl-8 space-y-4">
+                      {service.children.map((child) => renderServiceCard(child, true))}
+                    </CollapsibleContent>
                   </div>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() =>
-                        handleOpenDialog({
-                          id: service.id,
-                          name: service.name,
-                          description: service.description || "",
-                          estimated_hours: service.estimated_hours,
-                          price_cents: (service as any).price_cents || 0,
-                        })
-                      }
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    {isAdmin && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Excluir serviço?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Tem certeza que deseja excluir o serviço "{service.name}"? Esta ação não pode ser desfeita.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(service.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              Excluir
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    <span>Prazo estimado: {service.estimated_hours} horas</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4" />
-                    <span className="font-medium text-foreground">
-                      {formatPrice((service as any).price_cents || 0)}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </Collapsible>
+              ) : (
+                renderServiceCard(service)
+              )}
+            </div>
           ))}
         </div>
       ) : (

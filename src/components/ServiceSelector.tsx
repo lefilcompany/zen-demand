@@ -1,15 +1,18 @@
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useServices } from "@/hooks/useServices";
+import { useHierarchicalServices, ServiceWithHierarchy } from "@/hooks/useServices";
 import { useBoardServicesWithUsage, useHasBoardServices } from "@/hooks/useBoardServices";
-import { Clock, AlertTriangle, Infinity, Info, DollarSign } from "lucide-react";
+import { Clock, AlertTriangle, Infinity as InfinityIcon, Info, Folder } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatPrice } from "@/lib/priceUtils";
+import { useMemo } from "react";
 
 interface ServiceSelectorProps {
   teamId: string | null;
@@ -19,6 +22,20 @@ interface ServiceSelectorProps {
   disabled?: boolean;
 }
 
+interface DisplayService {
+  id: string;
+  name: string;
+  estimated_hours: number;
+  description: string | null;
+  price_cents: number;
+  currentCount: number;
+  monthlyLimit: number;
+  remaining: number;
+  isLimitReached: boolean;
+  isCategory?: boolean;
+  parent_id?: string | null;
+}
+
 export function ServiceSelector({
   teamId,
   boardId,
@@ -26,36 +43,75 @@ export function ServiceSelector({
   onChange,
   disabled = false,
 }: ServiceSelectorProps) {
-  const { data: teamServices, isLoading: teamServicesLoading } = useServices(teamId, boardId);
+  const { data: hierarchicalServices, isLoading: servicesLoading, rawServices } = useHierarchicalServices(teamId, boardId);
   const { hasBoardServices, isLoading: boardServicesLoading } = useHasBoardServices(boardId);
   const { data: boardServicesUsage, isLoading: usageLoading } = useBoardServicesWithUsage(boardId);
 
-  const isLoading = teamServicesLoading || boardServicesLoading || usageLoading;
+  const isLoading = servicesLoading || boardServicesLoading || usageLoading;
 
-  // Determine which services to show
-  const services = hasBoardServices && boardServicesUsage
-    ? boardServicesUsage.map(bs => ({
-        id: bs.service_id,
-        name: bs.service?.name || "",
-        estimated_hours: bs.service?.estimated_hours || 0,
-        description: bs.service?.description || null,
-        price_cents: (bs.service as any)?.price_cents || 0,
-        currentCount: bs.currentCount,
-        monthlyLimit: bs.monthly_limit,
-        remaining: bs.remaining,
-        isLimitReached: bs.isLimitReached,
-      }))
-    : teamServices?.map(s => ({
-        id: s.id,
-        name: s.name,
-        estimated_hours: s.estimated_hours,
-        description: s.description,
-        price_cents: (s as any).price_cents || 0,
+  // Build services list with board usage info if applicable
+  const { categories, standaloneServices, allDisplayServices } = useMemo(() => {
+    if (!rawServices) return { categories: [], standaloneServices: [], allDisplayServices: [] };
+
+    // Create a map for board service usage
+    const boardUsageMap = new Map(
+      boardServicesUsage?.map(bs => [bs.service_id, bs]) || []
+    );
+
+    const buildDisplayService = (service: any): DisplayService => {
+      const boardUsage = boardUsageMap.get(service.id);
+      
+      if (hasBoardServices && boardUsage) {
+        return {
+          id: service.id,
+          name: service.name,
+          estimated_hours: service.estimated_hours || 0,
+          description: service.description || null,
+          price_cents: service.price_cents || 0,
+          currentCount: boardUsage.currentCount || 0,
+          monthlyLimit: boardUsage.monthly_limit || 0,
+          remaining: boardUsage.remaining || 0,
+          isLimitReached: boardUsage.isLimitReached || false,
+          isCategory: service.isCategory,
+          parent_id: service.parent_id,
+        };
+      }
+      
+      return {
+        id: service.id,
+        name: service.name,
+        estimated_hours: service.estimated_hours || 0,
+        description: service.description || null,
+        price_cents: service.price_cents || 0,
         currentCount: 0,
         monthlyLimit: 0,
         remaining: Infinity,
         isLimitReached: false,
-      })) || [];
+        isCategory: service.isCategory,
+        parent_id: service.parent_id,
+      };
+    };
+
+    // Separate categories and standalone services
+    const cats: { category: DisplayService; children: DisplayService[] }[] = [];
+    const standalone: DisplayService[] = [];
+    const allDisplay: DisplayService[] = [];
+
+    hierarchicalServices?.forEach(service => {
+      if (service.isCategory) {
+        const categoryDisplay = buildDisplayService(service);
+        const childrenDisplay = service.children.map(child => buildDisplayService(child));
+        cats.push({ category: categoryDisplay, children: childrenDisplay });
+        allDisplay.push(...childrenDisplay);
+      } else {
+        const display = buildDisplayService(service);
+        standalone.push(display);
+        allDisplay.push(display);
+      }
+    });
+
+    return { categories: cats, standaloneServices: standalone, allDisplayServices: allDisplay };
+  }, [hierarchicalServices, rawServices, boardServicesUsage, hasBoardServices]);
 
   const handleChange = (serviceId: string) => {
     if (serviceId === "none") {
@@ -63,14 +119,54 @@ export function ServiceSelector({
       return;
     }
     
-    const service = services.find((s) => s.id === serviceId);
+    const service = allDisplayServices.find((s) => s.id === serviceId);
     if (service?.isLimitReached) {
       return; // Don't allow selection of limit-reached services
     }
     onChange(serviceId, service?.estimated_hours);
   };
 
-  const selectedService = services.find(s => s.id === value);
+  const selectedService = allDisplayServices.find(s => s.id === value);
+
+  const renderServiceItem = (service: DisplayService, indented: boolean = false) => (
+    <SelectItem 
+      key={service.id} 
+      value={service.id}
+      disabled={service.isLimitReached}
+      className={`${service.isLimitReached ? "opacity-50" : ""} ${indented ? "pl-8" : ""}`}
+    >
+      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+        <span className="font-medium truncate max-w-[120px] sm:max-w-none">{service.name}</span>
+        {service.price_cents > 0 && (
+          <span className="text-xs font-semibold text-primary flex items-center gap-0.5 whitespace-nowrap">
+            {formatPrice(service.price_cents)}
+          </span>
+        )}
+        <span className="text-xs text-muted-foreground flex items-center gap-1 whitespace-nowrap">
+          <Clock className="h-3 w-3 shrink-0" />
+          {service.estimated_hours}h
+        </span>
+        {hasBoardServices && (
+          <>
+            {service.isLimitReached ? (
+              <span className="text-xs font-medium text-destructive flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3 shrink-0" />
+                LIMITE
+              </span>
+            ) : service.monthlyLimit > 0 ? (
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                ({service.remaining} restantes)
+              </span>
+            ) : (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <InfinityIcon className="h-3 w-3 shrink-0" />
+              </span>
+            )}
+          </>
+        )}
+      </div>
+    </SelectItem>
+  );
 
   return (
     <div className="space-y-2">
@@ -90,46 +186,22 @@ export function ServiceSelector({
           {!hasBoardServices && (
             <SelectItem value="none">Nenhum serviço</SelectItem>
           )}
-          {services.map((service) => (
-            <SelectItem 
-              key={service.id} 
-              value={service.id}
-              disabled={service.isLimitReached}
-              className={service.isLimitReached ? "opacity-50" : ""}
-            >
-              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                <span className="font-medium truncate max-w-[120px] sm:max-w-none">{service.name}</span>
-                {service.price_cents > 0 && (
-                  <span className="text-xs font-semibold text-primary flex items-center gap-0.5 whitespace-nowrap">
-                    {formatPrice(service.price_cents)}
-                  </span>
-                )}
-                <span className="text-xs text-muted-foreground flex items-center gap-1 whitespace-nowrap">
-                  <Clock className="h-3 w-3 shrink-0" />
-                  {service.estimated_hours}h
-                </span>
-                {hasBoardServices && (
-                  <>
-                    {service.isLimitReached ? (
-                      <span className="text-xs font-medium text-destructive flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3 shrink-0" />
-                        LIMITE
-                      </span>
-                    ) : service.monthlyLimit > 0 ? (
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        ({service.remaining} restantes)
-                      </span>
-                    ) : (
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Infinity className="h-3 w-3 shrink-0" />
-                      </span>
-                    )}
-                  </>
-                )}
-              </div>
-            </SelectItem>
+          
+          {/* Standalone services (no category) */}
+          {standaloneServices.map((service) => renderServiceItem(service))}
+          
+          {/* Categories with their children */}
+          {categories.map(({ category, children }) => (
+            <SelectGroup key={category.id}>
+              <SelectLabel className="flex items-center gap-2 text-muted-foreground font-semibold">
+                <Folder className="h-4 w-4" />
+                {category.name}
+              </SelectLabel>
+              {children.map((child) => renderServiceItem(child, true))}
+            </SelectGroup>
           ))}
-          {services.length === 0 && (
+          
+          {allDisplayServices.length === 0 && standaloneServices.length === 0 && (
             <SelectItem value="no-services" disabled>
               Nenhum serviço disponível
             </SelectItem>
