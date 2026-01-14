@@ -14,7 +14,13 @@ import { useBoardRole } from "@/hooks/useBoardMembers";
 import { SidebarSyncIndicator } from "@/components/SidebarSyncIndicator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function AppSidebar() {
   const { t } = useTranslation();
@@ -180,54 +186,63 @@ export function AppSidebar() {
               {/* Equipe - Collapsible section for team and board management */}
               {isCollapsed && !isMobile ? (
                 <SidebarMenuItem data-tour="teams-link">
-                  <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                    <PopoverTrigger asChild>
+                  <DropdownMenu open={popoverOpen} onOpenChange={setPopoverOpen}>
+                    <DropdownMenuTrigger asChild>
                       <SidebarMenuButton 
                         tooltip="Equipe" 
                         className="hover:bg-primary/10 border border-sidebar-border/50 hover:border-primary/30 transition-all duration-200"
                       >
                         <Users className="h-4 w-4 text-primary" />
                       </SidebarMenuButton>
-                    </PopoverTrigger>
-                    <PopoverContent 
-                      side="right" 
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent 
+                      side="top" 
                       align="start" 
                       sideOffset={8} 
-                      className="w-52 p-2 bg-popover/95 backdrop-blur-sm border-border shadow-lg rounded-xl animate-slide-up-fade z-50"
+                      className="w-52 p-2 animate-slide-up-fade"
                     >
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2 px-2 py-2 mb-1">
-                          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Users className="h-4 w-4 text-primary" />
-                          </div>
-                          <span className="text-sm font-semibold text-foreground">
-                            Equipe
-                          </span>
+                      <div className="flex items-center gap-2 px-2 py-2 mb-1">
+                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Users className="h-4 w-4 text-primary" />
                         </div>
-                        {isTeamAdminOrModerator && (
-                          <NavLink to="/team-demands" onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-lg text-sm text-foreground hover:bg-accent transition-colors" activeClassName="bg-accent text-primary font-medium">
+                        <span className="text-sm font-semibold text-foreground">
+                          Equipe
+                        </span>
+                      </div>
+                      <DropdownMenuSeparator />
+                      {isTeamAdminOrModerator && (
+                        <DropdownMenuItem asChild>
+                          <NavLink to="/team-demands" onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 cursor-pointer" activeClassName="bg-muted text-primary font-medium">
                             <Layers className="h-4 w-4" />
                             Visão Geral
                           </NavLink>
-                        )}
-                        <NavLink to="/boards" onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-lg text-sm text-foreground hover:bg-accent transition-colors" activeClassName="bg-accent text-primary font-medium">
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem asChild>
+                        <NavLink to="/boards" onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 cursor-pointer" activeClassName="bg-muted text-primary font-medium">
                           <LayoutGrid className="h-4 w-4" />
                           Meus Quadros
                         </NavLink>
-                        {selectedTeamId && (
-                          <NavLink to={`/teams/${selectedTeamId}`} end onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-lg text-sm text-foreground hover:bg-accent transition-colors" activeClassName="bg-accent text-primary font-medium">
+                      </DropdownMenuItem>
+                      {selectedTeamId && (
+                        <DropdownMenuItem asChild>
+                          <NavLink to={`/teams/${selectedTeamId}`} end onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 cursor-pointer" activeClassName="bg-muted text-primary font-medium">
                             <UsersRound className="h-4 w-4" />
                             Participantes
                           </NavLink>
-                        )}
-                        {isTeamAdminOrModerator && selectedTeamId && (
-                          <NavLink to={`/teams/${selectedTeamId}/services`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-lg text-sm text-foreground hover:bg-accent transition-colors" activeClassName="bg-accent text-primary font-medium">
+                        </DropdownMenuItem>
+                      )}
+                      {isTeamAdminOrModerator && selectedTeamId && (
+                        <DropdownMenuItem asChild>
+                          <NavLink to={`/teams/${selectedTeamId}/services`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 cursor-pointer" activeClassName="bg-muted text-primary font-medium">
                             <Settings className="h-4 w-4" />
                             Serviços
                           </NavLink>
-                        )}
-                        {isTeamAdminOrModerator && selectedTeamId && (
-                          <NavLink to={`/teams/${selectedTeamId}/requests`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-lg text-sm text-foreground hover:bg-accent transition-colors relative" activeClassName="bg-accent text-primary font-medium">
+                        </DropdownMenuItem>
+                      )}
+                      {isTeamAdminOrModerator && selectedTeamId && (
+                        <DropdownMenuItem asChild>
+                          <NavLink to={`/teams/${selectedTeamId}/requests`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 cursor-pointer" activeClassName="bg-muted text-primary font-medium">
                             <UserPlus className="h-4 w-4" />
                             Solicitações
                             {typeof pendingJoinRequests === "number" && pendingJoinRequests > 0 && (
@@ -236,10 +251,10 @@ export function AppSidebar() {
                               </Badge>
                             )}
                           </NavLink>
-                        )}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </SidebarMenuItem>
               ) : (
                 <Collapsible open={teamOpen} onOpenChange={setTeamOpen} className="group/collapsible">
