@@ -308,9 +308,9 @@ export default function CreateDemand() {
 
       {/* Form */}
       <form onSubmit={handleSubmit}>
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-8 lg:grid-cols-2">
           {/* Main Content - Left Column */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6">
             {/* Title */}
             <div className="space-y-2">
               <Label htmlFor="title" className="text-base font-semibold">Título *</Label>
@@ -331,7 +331,7 @@ export default function CreateDemand() {
                 value={description}
                 onChange={setDescription}
                 placeholder="Descreva os detalhes da demanda... (cole imagens diretamente no editor)"
-                minHeight="200px"
+                minHeight="250px"
               />
             </div>
 
@@ -354,17 +354,18 @@ export default function CreateDemand() {
 
           {/* Sidebar - Right Column */}
           <div className="space-y-6">
-            <Card className="border-muted">
+            <Card>
               <CardHeader className="pb-4">
-                <CardTitle className="text-base">Configurações</CardTitle>
+                <CardTitle className="text-lg">Configurações</CardTitle>
+                <CardDescription>Configure os detalhes da demanda</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-5">
                 {/* Status & Priority - 2 columns */}
-                <div className="grid gap-3 grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="status" className="text-sm">Status *</Label>
+                <div className="grid gap-4 grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Status *</Label>
                     <Select value={statusId} onValueChange={setStatusId} required>
-                      <SelectTrigger className="h-9">
+                      <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
                       <SelectContent>
@@ -377,10 +378,10 @@ export default function CreateDemand() {
                     </Select>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="priority" className="text-sm">Prioridade</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="priority">Prioridade</Label>
                     <Select value={priority} onValueChange={setPriority}>
-                      <SelectTrigger className="h-9">
+                      <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -393,9 +394,9 @@ export default function CreateDemand() {
                 </div>
 
                 {/* Service */}
-                <div className="space-y-1.5">
-                  <Label className="text-sm flex items-center gap-1.5">
-                    <Package className="h-3.5 w-3.5" />
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1.5">
+                    <Package className="h-4 w-4" />
                     Serviço {hasBoardServices ? "*" : ""}
                   </Label>
                   <ServiceSelector
@@ -404,7 +405,7 @@ export default function CreateDemand() {
                     value={serviceId}
                     onChange={handleServiceChange}
                   />
-                  <p className="text-[11px] text-muted-foreground leading-tight">
+                  <p className="text-xs text-muted-foreground">
                     {hasBoardServices 
                       ? "Obrigatório para este quadro"
                       : "Calcula automaticamente a data de entrega"
@@ -413,21 +414,20 @@ export default function CreateDemand() {
                 </div>
 
                 {/* Due Date */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="dueDate" className="text-sm">Data de Entrega</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="dueDate">Data de Entrega</Label>
                   <Input
                     id="dueDate"
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="h-9"
                   />
                 </div>
 
                 {/* Assignees */}
                 {canAssignResponsibles && (
-                  <div className="space-y-1.5">
-                    <Label className="text-sm">Responsáveis</Label>
+                  <div className="space-y-2">
+                    <Label>Responsáveis</Label>
                     <AssigneeSelector
                       teamId={selectedTeamId}
                       boardId={selectedBoardId}
@@ -440,18 +440,18 @@ export default function CreateDemand() {
             </Card>
 
             {/* Action Buttons */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
               <Button
                 type="submit"
                 disabled={isSubmitDisabled}
-                className="w-full h-11"
+                className="w-full h-12 text-base"
                 size="lg"
               >
                 {createDemand.isPending ? "Criando..." : "Criar Demanda"}
               </Button>
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 onClick={() => attemptNavigation("/demands")}
                 className="w-full"
               >
