@@ -5,6 +5,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +42,7 @@ export default function Profile() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+  const [showRemoveBannerDialog, setShowRemoveBannerDialog] = useState(false);
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["profile", user?.id],
@@ -147,8 +158,12 @@ export default function Profile() {
     }
   };
 
-  const handleRemoveBanner = async (e: React.MouseEvent) => {
+  const handleRemoveBannerClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    setShowRemoveBannerDialog(true);
+  };
+
+  const handleConfirmRemoveBanner = async () => {
     if (!user) return;
 
     try {
@@ -164,6 +179,8 @@ export default function Profile() {
     } catch (error) {
       console.error("Error removing banner:", error);
       toast.error("Erro ao remover o banner");
+    } finally {
+      setShowRemoveBannerDialog(false);
     }
   };
 
@@ -234,7 +251,7 @@ export default function Profile() {
                 {(profile as any)?.banner_url && (
                   <div 
                     className="flex flex-col items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300 cursor-pointer"
-                    onClick={handleRemoveBanner}
+                    onClick={handleRemoveBannerClick}
                   >
                     <div className="h-12 w-12 rounded-full bg-red-500/30 backdrop-blur-sm flex items-center justify-center hover:bg-red-500/50 transition-colors">
                       <Trash2 className="h-6 w-6 text-white" />
@@ -545,6 +562,24 @@ export default function Profile() {
           userLevel={levelInfo.level}
         />
       )}
+
+      {/* Remove Banner Confirmation Dialog */}
+      <AlertDialog open={showRemoveBannerDialog} onOpenChange={setShowRemoveBannerDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover banner</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover o banner? O gradiente padrão será restaurado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmRemoveBanner} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
