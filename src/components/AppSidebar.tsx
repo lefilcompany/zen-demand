@@ -1,8 +1,8 @@
-import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, ChevronUp, Settings, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock, Sparkles, ShoppingCart, Layers, LogOut, RotateCcw, User } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, Settings, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock, Sparkles, ShoppingCart, Layers } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import logoSoma from "@/assets/logo-soma-dark.png";
 import { NavLink } from "@/components/NavLink";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton, useSidebar } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { usePendingRequestsCount as usePendingDemandRequestsCount, useReturnedRequestsCount } from "@/hooks/useDemandRequests";
@@ -15,26 +15,9 @@ import { SidebarSyncIndicator } from "@/components/SidebarSyncIndicator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/lib/auth";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useOnboarding } from "@/hooks/useOnboarding";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 export function AppSidebar() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const {
     state,
     setOpenMobile,
@@ -53,31 +36,11 @@ export function AppSidebar() {
   const { data: pendingDemandRequests } = usePendingDemandRequestsCount();
   const { data: pendingJoinRequests } = usePendingJoinRequestsCount(selectedTeamId);
   const { data: returnedRequestsCount } = useReturnedRequestsCount();
-  const { user, signOut } = useAuth();
-  const { resetOnboarding, hasCompleted } = useOnboarding();
-  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   
   const isTeamAdminOrModerator = role === "admin" || role === "moderator";
   const isBoardAdminOrModerator = boardRole === "admin" || boardRole === "moderator";
   const isBoardAdminModeratorOrExecutor = boardRole === "admin" || boardRole === "moderator" || boardRole === "executor";
   const isRequester = boardRole === "requester";
-
-  // Fetch user profile
-  const { data: profile } = useQuery({
-    queryKey: ["profile", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data } = await supabase
-        .from("profiles")
-        .select("full_name, avatar_url")
-        .eq("id", user.id)
-        .single();
-      return data;
-    },
-    enabled: !!user?.id
-  });
-
-  const initials = profile?.full_name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "U";
 
   const baseMenuItems = [{
     title: t("dashboard.title"),
@@ -150,10 +113,6 @@ export function AppSidebar() {
     }
   };
 
-  const handleLogout = async () => {
-    await signOut();
-    setLogoutDialogOpen(false);
-  };
 
   const showText = isMobile || !isCollapsed;
 
@@ -214,7 +173,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Team section - Moved to the end */}
+        {/* Team section - Moved to the end with enhanced styling */}
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
@@ -223,39 +182,52 @@ export function AppSidebar() {
                 <SidebarMenuItem data-tour="teams-link">
                   <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                     <PopoverTrigger asChild>
-                      <SidebarMenuButton tooltip="Equipe" className="hover:bg-sidebar-accent transition-colors">
-                        <Users className="h-4 w-4" />
+                      <SidebarMenuButton 
+                        tooltip="Equipe" 
+                        className="hover:bg-primary/10 border border-sidebar-border/50 hover:border-primary/30 transition-all duration-200"
+                      >
+                        <Users className="h-4 w-4 text-primary" />
                       </SidebarMenuButton>
                     </PopoverTrigger>
-                    <PopoverContent side="right" align="start" sideOffset={8} className="w-48 p-2 bg-sidebar border-sidebar-border z-50">
+                    <PopoverContent 
+                      side="right" 
+                      align="start" 
+                      sideOffset={8} 
+                      className="w-52 p-2 bg-popover/95 backdrop-blur-sm border-border shadow-lg rounded-xl animate-slide-up-fade z-50"
+                    >
                       <div className="flex flex-col gap-1">
-                        <span className="text-xs font-medium text-sidebar-foreground/70 px-2 py-1">
-                          Equipe
-                        </span>
+                        <div className="flex items-center gap-2 px-2 py-2 mb-1">
+                          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <Users className="h-4 w-4 text-primary" />
+                          </div>
+                          <span className="text-sm font-semibold text-foreground">
+                            Equipe
+                          </span>
+                        </div>
                         {isTeamAdminOrModerator && (
-                          <NavLink to="/team-demands" onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                          <NavLink to="/team-demands" onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-lg text-sm text-foreground hover:bg-accent transition-colors" activeClassName="bg-accent text-primary font-medium">
                             <Layers className="h-4 w-4" />
                             Visão Geral
                           </NavLink>
                         )}
-                        <NavLink to="/boards" onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                        <NavLink to="/boards" onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-lg text-sm text-foreground hover:bg-accent transition-colors" activeClassName="bg-accent text-primary font-medium">
                           <LayoutGrid className="h-4 w-4" />
                           Meus Quadros
                         </NavLink>
                         {selectedTeamId && (
-                          <NavLink to={`/teams/${selectedTeamId}`} end onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                          <NavLink to={`/teams/${selectedTeamId}`} end onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-lg text-sm text-foreground hover:bg-accent transition-colors" activeClassName="bg-accent text-primary font-medium">
                             <UsersRound className="h-4 w-4" />
                             Participantes
                           </NavLink>
                         )}
                         {isTeamAdminOrModerator && selectedTeamId && (
-                          <NavLink to={`/teams/${selectedTeamId}/services`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                          <NavLink to={`/teams/${selectedTeamId}/services`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-lg text-sm text-foreground hover:bg-accent transition-colors" activeClassName="bg-accent text-primary font-medium">
                             <Settings className="h-4 w-4" />
                             Serviços
                           </NavLink>
                         )}
                         {isTeamAdminOrModerator && selectedTeamId && (
-                          <NavLink to={`/teams/${selectedTeamId}/requests`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors relative" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                          <NavLink to={`/teams/${selectedTeamId}/requests`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 px-2 py-2 rounded-lg text-sm text-foreground hover:bg-accent transition-colors relative" activeClassName="bg-accent text-primary font-medium">
                             <UserPlus className="h-4 w-4" />
                             Solicitações
                             {typeof pendingJoinRequests === "number" && pendingJoinRequests > 0 && (
@@ -273,14 +245,20 @@ export function AppSidebar() {
                 <Collapsible open={teamOpen} onOpenChange={setTeamOpen} className="group/collapsible">
                   <SidebarMenuItem data-tour="teams-link">
                     <CollapsibleTrigger asChild>
-                      <SidebarMenuButton tooltip="Equipe" size={isMobile ? "lg" : "default"} className="hover:bg-sidebar-accent transition-colors min-h-[44px] md:min-h-0">
-                        <Users className="h-5 w-5 md:h-4 md:w-4" />
-                        <span className="flex-1 text-base md:text-sm">Equipe</span>
-                        <ChevronRight className="h-5 w-5 md:h-4 md:w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                      <SidebarMenuButton 
+                        tooltip="Equipe" 
+                        size={isMobile ? "lg" : "default"} 
+                        className="border border-sidebar-border/50 hover:border-primary/30 hover:bg-primary/10 transition-all duration-200 min-h-[44px] md:min-h-0"
+                      >
+                        <div className="h-6 w-6 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                          <Users className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="flex-1 text-base md:text-sm font-medium">Equipe</span>
+                        <ChevronRight className="h-5 w-5 md:h-4 md:w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 opacity-50" />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
                     
-                    <CollapsibleContent>
+                    <CollapsibleContent className="animate-accordion-down">
                       <SidebarMenuSub>
                         {isTeamAdminOrModerator && (
                           <SidebarMenuSubItem>
@@ -348,112 +326,13 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Footer section with sync indicator and profile */}
+        {/* Footer section with sync indicator only */}
         <SidebarGroup className="pb-4 md:pb-2">
           <SidebarGroupContent>
             <SidebarSyncIndicator isCollapsed={isCollapsed && !isMobile} />
-            <SidebarMenu>
-              {/* User Profile Dropdown */}
-              <SidebarMenuItem>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <SidebarMenuButton
-                      size={isMobile ? "lg" : "default"}
-                      className="hover:bg-sidebar-accent transition-colors min-h-[44px] md:min-h-0 w-full"
-                      tooltip="Perfil"
-                    >
-                      <Avatar className="h-6 w-6 shrink-0">
-                        <AvatarImage src={profile?.avatar_url || undefined} />
-                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      {showText && (
-                        <>
-                          <div className="flex flex-col items-start flex-1 min-w-0">
-                            <span className="text-sm font-medium truncate w-full text-left">
-                              {profile?.full_name || "Usuário"}
-                            </span>
-                            <span className="text-xs text-sidebar-foreground/60 truncate w-full text-left">
-                              {user?.email}
-                            </span>
-                          </div>
-                          <ChevronUp className="h-4 w-4 shrink-0 opacity-50" />
-                        </>
-                      )}
-                    </SidebarMenuButton>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    side="top"
-                    align="start"
-                    sideOffset={8}
-                    className="w-56 rounded-xl shadow-lg border bg-popover/95 backdrop-blur-sm animate-slide-up-fade"
-                  >
-                    {/* Avatar and info */}
-                    <div className="flex items-center gap-3 p-3">
-                      <Avatar className="h-10 w-10 ring-2 ring-primary/20">
-                        <AvatarImage src={profile?.avatar_url || undefined} />
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-medium truncate">{profile?.full_name || "Usuário"}</span>
-                        <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
-                      </div>
-                    </div>
-                    <DropdownMenuSeparator />
-                    
-                    <DropdownMenuItem onClick={() => { navigate("/profile"); closeMobileSidebar(); }}>
-                      <User className="h-4 w-4 mr-2" />
-                      Meu Perfil
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => { navigate("/settings"); closeMobileSidebar(); }}>
-                      <Settings className="h-4 w-4 mr-2" />
-                      Configurações
-                    </DropdownMenuItem>
-                    
-                    {hasCompleted && (
-                      <DropdownMenuItem onClick={() => resetOnboarding(() => { navigate("/"); closeMobileSidebar(); })}>
-                        <RotateCcw className="h-4 w-4 mr-2" />
-                        Rever Tour Guiado
-                      </DropdownMenuItem>
-                    )}
-                    
-                    <DropdownMenuSeparator />
-                    
-                    <DropdownMenuItem
-                      onClick={() => setLogoutDialogOpen(true)}
-                      className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                    >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Sair
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </SidebarMenuItem>
-            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-
-      {/* Logout confirmation dialog */}
-      <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("auth.logoutConfirm")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("auth.logoutDescription")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLogout} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {t("auth.logout")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Sidebar>
   );
 }
