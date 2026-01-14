@@ -302,7 +302,7 @@ export default function Demands() {
 
           {/* Bottom row: Toggle filters */}
           {((!isReadOnly && myDemandsCount > 0) || deliveredCount > 0) && (
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               {/* Toggle show only my demands - only for non-requesters */}
               {!isReadOnly && myDemandsCount > 0 && (
                 <Button 
