@@ -262,14 +262,14 @@ export function ImageCropDialog({
             
             {/* Profile Preview Card */}
             <div className="rounded-xl overflow-hidden border bg-card shadow-lg">
-              {/* Banner Preview */}
-              <div className="h-32 md:h-40 relative">
+              {/* Banner Preview - using exact aspect ratio */}
+              <div className="relative w-full" style={{ aspectRatio: `${aspectRatio}` }}>
                 {previewUrl ? (
                   <>
                     <img 
                       src={previewUrl} 
                       alt="Preview do banner" 
-                      className="absolute inset-0 w-full h-full object-cover"
+                      className="absolute inset-0 w-full h-full object-fill"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                   </>
