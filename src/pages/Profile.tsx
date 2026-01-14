@@ -506,6 +506,9 @@ export default function Profile() {
           imageSrc={selectedImage}
           aspectRatio={16 / 5}
           onCropComplete={handleCropComplete}
+          userAvatarUrl={profile?.avatar_url || undefined}
+          userName={profile?.full_name || "Usuário"}
+          userLevel={levelInfo.level}
         />
       )}
     </div>
