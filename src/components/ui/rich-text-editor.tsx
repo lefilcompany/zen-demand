@@ -38,7 +38,6 @@ interface RichTextEditorProps {
   disabled?: boolean;
   className?: string;
   minHeight?: string;
-  demandId?: string; // For uploading images to the correct demand folder
 }
 
 const HIGHLIGHT_COLORS = [
@@ -233,7 +232,6 @@ export function RichTextEditor({
   disabled = false,
   className,
   minHeight = "120px",
-  demandId,
 }: RichTextEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isUploadingRef = useRef(false);
@@ -252,21 +250,25 @@ export function RichTextEditor({
     isUploadingRef.current = true;
 
     try {
+      // Get current user for folder organization
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id || "anonymous";
+      
       const ext = file.name.split(".").pop() || "png";
       const fileName = `${crypto.randomUUID()}.${ext}`;
-      const folder = demandId ? `${demandId}/inline` : "inline-images";
-      const filePath = `${folder}/${fileName}`;
+      const filePath = `${userId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from("demand-attachments")
+        .from("inline-images")
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage
-        .from("demand-attachments")
+        .from("inline-images")
         .getPublicUrl(filePath);
 
+      toast.success("Imagem inserida!");
       return urlData.publicUrl;
     } catch (error) {
       console.error("Erro ao fazer upload da imagem:", error);
@@ -275,7 +277,7 @@ export function RichTextEditor({
     } finally {
       isUploadingRef.current = false;
     }
-  }, [demandId]);
+  }, []);
 
   const editor = useEditor({
     extensions: [
