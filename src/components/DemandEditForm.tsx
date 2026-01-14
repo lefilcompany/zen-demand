@@ -90,7 +90,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
     setters: draftSetters,
   });
 
-  // Navigation blocking
+  // Navigation blocking (for edit form, we only use beforeunload)
   const {
     isBlocked,
     confirmNavigation,
