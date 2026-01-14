@@ -75,6 +75,24 @@ interface EditorToolbarProps {
 function EditorToolbar({ editor, onImageUpload, isUploading }: EditorToolbarProps) {
   if (!editor) return null;
 
+  // Function to handle text alignment
+  // If there's a selection, align only the selected paragraphs
+  // If no selection, select all and align
+  const handleAlignment = (alignment: "left" | "center" | "right" | "justify") => {
+    const { from, to } = editor.state.selection;
+    const hasSelection = from !== to;
+
+    if (hasSelection) {
+      // Align only the selected content (paragraphs containing the selection)
+      editor.chain().focus().setTextAlign(alignment).run();
+    } else {
+      // No selection - select all content first, then align
+      editor.chain().focus().selectAll().setTextAlign(alignment).run();
+      // Move cursor to the end after aligning all
+      editor.commands.setTextSelection(editor.state.doc.content.size - 1);
+    }
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-0.5 p-1 border-b border-border bg-muted/30">
       {/* Text formatting */}
@@ -121,7 +139,7 @@ function EditorToolbar({ editor, onImageUpload, isUploading }: EditorToolbarProp
       <Toggle
         size="sm"
         pressed={editor.isActive({ textAlign: "left" })}
-        onPressedChange={() => editor.chain().focus().setTextAlign("left").run()}
+        onPressedChange={() => handleAlignment("left")}
         aria-label="Alinhar à esquerda"
         title="Alinhar à esquerda"
       >
@@ -130,7 +148,7 @@ function EditorToolbar({ editor, onImageUpload, isUploading }: EditorToolbarProp
       <Toggle
         size="sm"
         pressed={editor.isActive({ textAlign: "center" })}
-        onPressedChange={() => editor.chain().focus().setTextAlign("center").run()}
+        onPressedChange={() => handleAlignment("center")}
         aria-label="Centralizar"
         title="Centralizar"
       >
@@ -139,7 +157,7 @@ function EditorToolbar({ editor, onImageUpload, isUploading }: EditorToolbarProp
       <Toggle
         size="sm"
         pressed={editor.isActive({ textAlign: "right" })}
-        onPressedChange={() => editor.chain().focus().setTextAlign("right").run()}
+        onPressedChange={() => handleAlignment("right")}
         aria-label="Alinhar à direita"
         title="Alinhar à direita"
       >
@@ -148,7 +166,7 @@ function EditorToolbar({ editor, onImageUpload, isUploading }: EditorToolbarProp
       <Toggle
         size="sm"
         pressed={editor.isActive({ textAlign: "justify" })}
-        onPressedChange={() => editor.chain().focus().setTextAlign("justify").run()}
+        onPressedChange={() => handleAlignment("justify")}
         aria-label="Justificar"
         title="Justificar"
       >
