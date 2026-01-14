@@ -170,7 +170,7 @@ export function AssigneeSelector({
                 Carregando...
               </p>
             ) : members && members.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 p-2">
                 {members.map((member) => {
                   const isSelected = selectedUserIds.includes(member.user_id);
                   const config = roleConfig[member.role] || roleConfig.requester;
