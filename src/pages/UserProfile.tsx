@@ -9,13 +9,14 @@ import { AvatarWithStatus } from "@/components/AvatarWithStatus";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { badges as gamificationBadges, Badge as GamificationBadge } from "@/hooks/useUserStats";
+import { AnimatedBadge } from "@/components/AnimatedBadge";
+import { badges as gamificationBadges } from "@/hooks/useUserStats";
 import { 
   ArrowLeft, Loader2, User, Calendar, Briefcase, CheckCircle2, Clock, Edit, 
   Trophy, Target, Flame, Zap, MapPin, Link as LinkIcon,
   Github, Linkedin, TrendingUp, Award, Circle, ChevronDown, ChevronUp
 } from "lucide-react";
-import { format, differenceInDays } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { usePresence } from "@/contexts/PresenceContext";
 
@@ -515,39 +516,19 @@ export default function UserProfile() {
             return (
               <>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {displayedBadges.map((badge) => {
-                    const isEarned = earnedBadges.some(b => b.id === badge.id);
-                    
-                    return (
-                      <TooltipProvider key={badge.id}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            {isEarned ? (
-                              <div 
-                                className="flex flex-col items-center p-4 rounded-xl border-2 transition-all hover:scale-105 cursor-pointer"
-                                style={{ 
-                                  borderColor: badge.color,
-                                  backgroundColor: `${badge.color}15`
-                                }}
-                              >
-                                <span className="text-3xl mb-2">{badge.icon}</span>
-                                <span className="text-xs font-medium text-center line-clamp-2">{badge.name}</span>
-                              </div>
-                            ) : (
-                              <div className="flex flex-col items-center p-4 rounded-xl border-2 border-muted bg-muted/30 opacity-50 cursor-pointer">
-                                <span className="text-3xl mb-2 grayscale">{badge.icon}</span>
-                                <span className="text-xs font-medium text-center text-muted-foreground">???</span>
-                              </div>
-                            )}
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="font-medium">{isEarned ? badge.name : "🔒 Bloqueado"}</p>
-                            <p className="text-xs text-muted-foreground">{badge.description}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    );
-                  })}
+                  <TooltipProvider>
+                    {displayedBadges.map((badge, index) => {
+                      const isEarned = earnedBadges.some(b => b.id === badge.id);
+                      return (
+                        <AnimatedBadge 
+                          key={badge.id} 
+                          badge={badge} 
+                          isEarned={isEarned} 
+                          index={index} 
+                        />
+                      );
+                    })}
+                  </TooltipProvider>
                 </div>
                 
                 {hasMoreBadges && (
