@@ -294,3 +294,43 @@ body {
 .fixed-bottom-safe {
   bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* Rich text editor highlight styles */
+.ProseMirror mark,
+.prose mark {
+  background-color: var(--highlight-color, #fef08a);
+  padding: 0.125em 0;
+  border-radius: 0.125em;
+}
+
+.ProseMirror mark[data-color="#fef08a"],
+.prose mark[data-color="#fef08a"] {
+  background-color: #fef08a;
+}
+
+.ProseMirror mark[data-color="#bbf7d0"],
+.prose mark[data-color="#bbf7d0"] {
+  background-color: #bbf7d0;
+}
+
+.ProseMirror mark[data-color="#bfdbfe"],
+.prose mark[data-color="#bfdbfe"] {
+  background-color: #bfdbfe;
+}
+
+.ProseMirror mark[data-color="#fbcfe8"],
+.prose mark[data-color="#fbcfe8"] {
+  background-color: #fbcfe8;
+}
+
+.ProseMirror mark[data-color="#fed7aa"],
+.prose mark[data-color="#fed7aa"] {
+  background-color: #fed7aa;
+}
+
+/* TipTap highlight with inline style support */
+.ProseMirror mark[style*="background-color"],
+.prose mark[style*="background-color"] {
+  padding: 0.125em 0;
+  border-radius: 0.125em;
+}
