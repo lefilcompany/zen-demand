@@ -440,22 +440,22 @@ export default function CreateDemand() {
             </Card>
 
             {/* Action Buttons */}
-            <div className="flex flex-col gap-3">
-              <Button
-                type="submit"
-                disabled={isSubmitDisabled}
-                className="w-full h-12 text-base"
-                size="lg"
-              >
-                {createDemand.isPending ? "Criando..." : "Criar Demanda"}
-              </Button>
+            <div className="flex gap-3">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => attemptNavigation("/demands")}
-                className="w-full"
+                className="flex-1 h-12"
               >
                 Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitDisabled}
+                className="flex-1 h-12 text-base"
+                size="lg"
+              >
+                {createDemand.isPending ? "Criando..." : "Criar Demanda"}
               </Button>
             </div>
           </div>
