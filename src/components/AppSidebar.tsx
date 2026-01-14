@@ -1,9 +1,9 @@
-import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronRight, Settings, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock, Sparkles, ShoppingCart, Layers } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronUp, Settings, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock, Sparkles, ShoppingCart, Layers } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import logoSoma from "@/assets/logo-soma-dark.png";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton, useSidebar } from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { usePendingRequestsCount as usePendingDemandRequestsCount, useReturnedRequestsCount } from "@/hooks/useDemandRequests";
 import { usePendingRequestsCount as usePendingJoinRequestsCount } from "@/hooks/useTeamJoinRequests";
@@ -12,7 +12,7 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { SidebarSyncIndicator } from "@/components/SidebarSyncIndicator";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
 import { useState } from "react";
 import {
   DropdownMenu,
@@ -183,197 +183,127 @@ export function AppSidebar() {
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
-              {/* Equipe - Collapsible section for team and board management */}
-              {isCollapsed && !isMobile ? (
-                <SidebarMenuItem data-tour="teams-link">
-                  <DropdownMenu open={popoverOpen} onOpenChange={setPopoverOpen}>
-                    <DropdownMenuTrigger asChild>
-                      <SidebarMenuButton 
-                        tooltip="Equipe" 
-                        className="hover:bg-primary/10 border border-sidebar-border/50 hover:border-primary/30 transition-all duration-200"
-                      >
-                        <Users className="h-4 w-4 text-primary" />
-                      </SidebarMenuButton>
-                    </DropdownMenuTrigger>
-<DropdownMenuContent 
-                      side="top" 
-                      align="start" 
-                      sideOffset={8} 
-                      className="w-56 rounded-xl shadow-lg border bg-popover/95 backdrop-blur-sm animate-slide-up-fade p-1.5"
+{/* Equipe - Dropdown style like reference image */}
+              <SidebarMenuItem data-tour="teams-link">
+                <DropdownMenu open={popoverOpen} onOpenChange={setPopoverOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <button 
+                      className={`
+                        w-full flex items-center gap-3 p-2.5 rounded-xl
+                        border border-sidebar-border/50 
+                        hover:border-primary/30 hover:bg-sidebar-accent/50
+                        transition-all duration-200
+                        focus:outline-none focus:ring-2 focus:ring-primary/20
+                        ${popoverOpen ? 'bg-sidebar-accent/50 border-primary/30' : ''}
+                      `}
                     >
-                      <div className="flex items-center gap-3 p-3 mb-1">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center ring-2 ring-primary/20 shadow-sm">
-                          <Users className="h-5 w-5 text-primary" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-semibold text-foreground">Equipe</span>
-                          <span className="text-xs text-muted-foreground">Gerenciamento</span>
-                        </div>
+                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center ring-1 ring-primary/20">
+                        <Users className="h-4 w-4 text-primary" />
                       </div>
-                      <DropdownMenuSeparator className="my-1.5" />
-                      {isTeamAdminOrModerator && (
-                        <DropdownMenuItem asChild className="py-0 focus:bg-transparent">
-                          <NavLink 
-                            to="/team-demands" 
-                            onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
-                            className="flex items-center gap-2.5 cursor-pointer py-2.5 px-2 rounded-lg transition-all duration-200 hover:bg-muted/80 w-full" 
-                            activeClassName="bg-muted text-primary font-medium"
-                          >
-                            <div className="h-7 w-7 rounded-md bg-muted/50 flex items-center justify-center shrink-0">
-                              <Layers className="h-4 w-4" />
-                            </div>
-                            <span>Visão Geral</span>
-                          </NavLink>
-                        </DropdownMenuItem>
+                      {(!isCollapsed || isMobile) && (
+                        <>
+                          <span className="flex-1 text-left text-sm font-medium text-sidebar-foreground">Equipe</span>
+                          <ChevronUp className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${popoverOpen ? '' : 'rotate-180'}`} />
+                        </>
                       )}
-                      <DropdownMenuItem asChild className="py-0 focus:bg-transparent">
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent 
+                    side="top" 
+                    align="start" 
+                    sideOffset={8} 
+                    className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl shadow-xl border bg-popover/98 backdrop-blur-md animate-slide-up-fade p-2"
+                  >
+                    {/* Header with icon and info */}
+                    <div className="flex items-center gap-3 p-3 mb-1 rounded-lg bg-muted/30">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/25 to-primary/10 flex items-center justify-center ring-2 ring-primary/20 shadow-sm">
+                        <Users className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-foreground">Equipe</span>
+                        <span className="text-xs text-muted-foreground">Gerenciamento</span>
+                      </div>
+                    </div>
+                    
+                    <DropdownMenuSeparator className="my-2" />
+                    
+                    {/* Menu items with icons */}
+                    {isTeamAdminOrModerator && (
+                      <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
                         <NavLink 
-                          to="/boards" 
+                          to="/team-demands" 
                           onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
-                          className="flex items-center gap-2.5 cursor-pointer py-2.5 px-2 rounded-lg transition-all duration-200 hover:bg-muted/80 w-full" 
+                          className="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-lg transition-all duration-200 hover:bg-muted/60 w-full" 
                           activeClassName="bg-muted text-primary font-medium"
                         >
-                          <div className="h-7 w-7 rounded-md bg-muted/50 flex items-center justify-center shrink-0">
-                            <LayoutGrid className="h-4 w-4" />
-                          </div>
-                          <span>Meus Quadros</span>
+                          <Layers className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">Visão Geral</span>
                         </NavLink>
                       </DropdownMenuItem>
-                      {selectedTeamId && (
-                        <DropdownMenuItem asChild className="py-0 focus:bg-transparent">
-                          <NavLink 
-                            to={`/teams/${selectedTeamId}`} 
-                            end 
-                            onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
-                            className="flex items-center gap-2.5 cursor-pointer py-2.5 px-2 rounded-lg transition-all duration-200 hover:bg-muted/80 w-full" 
-                            activeClassName="bg-muted text-primary font-medium"
-                          >
-                            <div className="h-7 w-7 rounded-md bg-muted/50 flex items-center justify-center shrink-0">
-                              <UsersRound className="h-4 w-4" />
-                            </div>
-                            <span>Participantes</span>
-                          </NavLink>
-                        </DropdownMenuItem>
-                      )}
-                      {isTeamAdminOrModerator && selectedTeamId && (
-                        <DropdownMenuItem asChild className="py-0 focus:bg-transparent">
-                          <NavLink 
-                            to={`/teams/${selectedTeamId}/services`} 
-                            onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
-                            className="flex items-center gap-2.5 cursor-pointer py-2.5 px-2 rounded-lg transition-all duration-200 hover:bg-muted/80 w-full" 
-                            activeClassName="bg-muted text-primary font-medium"
-                          >
-                            <div className="h-7 w-7 rounded-md bg-muted/50 flex items-center justify-center shrink-0">
-                              <Settings className="h-4 w-4" />
-                            </div>
-                            <span>Serviços</span>
-                          </NavLink>
-                        </DropdownMenuItem>
-                      )}
-                      {isTeamAdminOrModerator && selectedTeamId && (
-                        <DropdownMenuItem asChild className="py-0 focus:bg-transparent">
-                          <NavLink 
-                            to={`/teams/${selectedTeamId}/requests`} 
-                            onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
-                            className="flex items-center gap-2.5 cursor-pointer py-2.5 px-2 rounded-lg transition-all duration-200 hover:bg-muted/80 w-full" 
-                            activeClassName="bg-muted text-primary font-medium"
-                          >
-                            <div className="h-7 w-7 rounded-md bg-muted/50 flex items-center justify-center shrink-0">
-                              <UserPlus className="h-4 w-4" />
-                            </div>
-                            <span>Solicitações</span>
-                            {typeof pendingJoinRequests === "number" && pendingJoinRequests > 0 && (
-                              <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs">
-                                {pendingJoinRequests}
-                              </Badge>
-                            )}
-                          </NavLink>
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </SidebarMenuItem>
-              ) : (
-                <Collapsible open={teamOpen} onOpenChange={setTeamOpen} className="group/collapsible">
-                  <SidebarMenuItem data-tour="teams-link">
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuButton 
-                        tooltip="Equipe" 
-                        size={isMobile ? "lg" : "default"} 
-                        className="border border-sidebar-border/50 hover:border-primary/30 hover:bg-primary/10 transition-all duration-200 min-h-[44px] md:min-h-0"
-                      >
-                        <div className="h-6 w-6 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
-                          <Users className="h-4 w-4 text-primary" />
-                        </div>
-                        <span className="flex-1 text-base md:text-sm font-medium">Equipe</span>
-                        <ChevronRight className="h-5 w-5 md:h-4 md:w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 opacity-50" />
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
+                    )}
                     
-                    <CollapsibleContent className="animate-accordion-down">
-                      <SidebarMenuSub>
-                        {isTeamAdminOrModerator && (
-                          <SidebarMenuSubItem>
-                            <SidebarMenuSubButton asChild>
-                              <NavLink to="/team-demands" onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[40px] md:min-h-0 py-2 md:py-1.5" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                                <Layers className="h-5 w-5 md:h-4 md:w-4 mr-2" />
-                                <span className="text-base md:text-sm">Visão Geral</span>
-                              </NavLink>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        )}
-                        
-                        <SidebarMenuSubItem>
-                          <SidebarMenuSubButton asChild>
-                            <NavLink to="/boards" onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[40px] md:min-h-0 py-2 md:py-1.5" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                              <LayoutGrid className="h-5 w-5 md:h-4 md:w-4 mr-2" />
-                              <span className="text-base md:text-sm">Meus Quadros</span>
-                            </NavLink>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                        
-                        {selectedTeamId && (
-                          <SidebarMenuSubItem>
-                            <SidebarMenuSubButton asChild>
-                              <NavLink to={`/teams/${selectedTeamId}`} end onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[40px] md:min-h-0 py-2 md:py-1.5" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                                <UsersRound className="h-5 w-5 md:h-4 md:w-4 mr-2" />
-                                <span className="text-base md:text-sm">Participantes</span>
-                              </NavLink>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        )}
-                        
-                        {isTeamAdminOrModerator && selectedTeamId && (
-                          <SidebarMenuSubItem data-tour="services-link">
-                            <SidebarMenuSubButton asChild>
-                              <NavLink to={`/teams/${selectedTeamId}/services`} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[40px] md:min-h-0 py-2 md:py-1.5" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                                <Settings className="h-5 w-5 md:h-4 md:w-4 mr-2" />
-                                <span className="text-base md:text-sm">Serviços</span>
-                              </NavLink>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        )}
-                        
-                        {isTeamAdminOrModerator && selectedTeamId && (
-                          <SidebarMenuSubItem className="relative">
-                            <SidebarMenuSubButton asChild>
-                              <NavLink to={`/teams/${selectedTeamId}/requests`} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[40px] md:min-h-0 py-2 md:py-1.5" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                                <UserPlus className="h-5 w-5 md:h-4 md:w-4 mr-2" />
-                                <span className="text-base md:text-sm">Solicitações de Entrada</span>
-                                {typeof pendingJoinRequests === "number" && pendingJoinRequests > 0 && (
-                                  <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs">
-                                    {pendingJoinRequests}
-                                  </Badge>
-                                )}
-                              </NavLink>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        )}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  </SidebarMenuItem>
-                </Collapsible>
-              )}
+                    <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
+                      <NavLink 
+                        to="/boards" 
+                        onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
+                        className="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-lg transition-all duration-200 hover:bg-muted/60 w-full" 
+                        activeClassName="bg-muted text-primary font-medium"
+                      >
+                        <LayoutGrid className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">Meus Quadros</span>
+                      </NavLink>
+                    </DropdownMenuItem>
+                    
+                    {selectedTeamId && (
+                      <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
+                        <NavLink 
+                          to={`/teams/${selectedTeamId}`} 
+                          end 
+                          onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
+                          className="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-lg transition-all duration-200 hover:bg-muted/60 w-full" 
+                          activeClassName="bg-muted text-primary font-medium"
+                        >
+                          <UsersRound className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">Participantes</span>
+                        </NavLink>
+                      </DropdownMenuItem>
+                    )}
+                    
+                    {isTeamAdminOrModerator && selectedTeamId && (
+                      <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
+                        <NavLink 
+                          to={`/teams/${selectedTeamId}/services`} 
+                          onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
+                          className="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-lg transition-all duration-200 hover:bg-muted/60 w-full" 
+                          activeClassName="bg-muted text-primary font-medium"
+                        >
+                          <Settings className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">Serviços</span>
+                        </NavLink>
+                      </DropdownMenuItem>
+                    )}
+                    
+                    {isTeamAdminOrModerator && selectedTeamId && (
+                      <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
+                        <NavLink 
+                          to={`/teams/${selectedTeamId}/requests`} 
+                          onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
+                          className="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-lg transition-all duration-200 hover:bg-muted/60 w-full" 
+                          activeClassName="bg-muted text-primary font-medium"
+                        >
+                          <UserPlus className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">Solicitações</span>
+                          {typeof pendingJoinRequests === "number" && pendingJoinRequests > 0 && (
+                            <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs">
+                              {pendingJoinRequests}
+                            </Badge>
+                          )}
+                        </NavLink>
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
