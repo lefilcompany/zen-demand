@@ -295,9 +295,18 @@ export default function UserProfile() {
 
       {/* Profile Hero Section */}
       <Card className="overflow-hidden">
-        <div className="h-36 bg-gradient-to-r from-primary via-secondary to-primary/60 relative">
+        <div className="h-36 md:h-40 relative">
+          {(profile as any)?.banner_url ? (
+            <img 
+              src={(profile as any).banner_url} 
+              alt="Banner" 
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-r from-primary via-secondary to-primary/60" />
+          )}
           <div className="absolute inset-0 bg-black/10" />
-          <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-full px-3 py-1.5">
+          <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-full px-3 py-1.5 z-10">
             <Trophy className="h-4 w-4 text-primary" />
             <span className="text-sm font-semibold">Nível {levelData.level}</span>
           </div>
