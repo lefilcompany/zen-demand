@@ -1,16 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Users, TrendingUp, Target, Activity } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   BarChart,
   Bar,
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
   ResponsiveContainer,
-  Cell,
 } from "recharts";
 
 interface Demand {
@@ -113,6 +111,8 @@ const CustomLegend = () => (
 );
 
 export function WorkloadDistributionChart({ demands }: WorkloadDistributionChartProps) {
+  const isMobile = useIsMobile();
+  
   // Calculate workload per member
   const workloadMap = new Map<string, MemberWorkload>();
 
@@ -171,7 +171,12 @@ export function WorkloadDistributionChart({ demands }: WorkloadDistributionChart
     ? Math.round(workloadData.reduce((acc, m) => acc + m.inProgress, 0) / workloadData.length)
     : 0;
 
-  // Custom Y-axis tick with avatar
+  // Responsive chart dimensions
+  const yAxisWidth = isMobile ? 100 : 170;
+  const barSize = isMobile ? 16 : 20;
+  const rowHeight = isMobile ? 40 : 50;
+
+  // Custom Y-axis tick with avatar - responsive
   const CustomYAxisTick = ({ x, y, payload }: { x: number; y: number; payload: { value: string } }) => {
     const member = workloadData.find((m) => m.name === payload.value);
     if (!member) return null;
@@ -183,18 +188,27 @@ export function WorkloadDistributionChart({ demands }: WorkloadDistributionChart
       .slice(0, 2)
       .toUpperCase();
 
+    // Truncate name for mobile
+    const displayName = isMobile 
+      ? member.name.split(" ").slice(0, 2).join(" ")
+      : member.name;
+    const maxNameLength = isMobile ? 12 : 20;
+    const truncatedName = displayName.length > maxNameLength 
+      ? displayName.slice(0, maxNameLength) + "..." 
+      : displayName;
+
     return (
       <g transform={`translate(0,${y})`}>
-        <foreignObject x={0} y={-12} width={160} height={24}>
-          <div className="flex items-center gap-2 justify-start pl-2">
-            <Avatar className="h-5 w-5 shrink-0">
+        <foreignObject x={0} y={-12} width={yAxisWidth - 10} height={24}>
+          <div className="flex items-center gap-1.5 justify-start pl-1">
+            <Avatar className={isMobile ? "h-4 w-4 shrink-0" : "h-5 w-5 shrink-0"}>
               <AvatarImage src={member.avatar || undefined} />
-              <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
+              <AvatarFallback className={`${isMobile ? "text-[6px]" : "text-[8px]"} bg-primary/10 text-primary`}>
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <span className="text-xs text-foreground truncate" title={member.name}>
-              {member.name}
+            <span className={`${isMobile ? "text-[10px]" : "text-xs"} text-foreground truncate`} title={member.name}>
+              {truncatedName}
             </span>
           </div>
         </foreignObject>
@@ -214,27 +228,27 @@ export function WorkloadDistributionChart({ demands }: WorkloadDistributionChart
         {hasData ? (
           <div className="space-y-4">
             {/* Summary Cards */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-center">
-                <div className="flex items-center justify-center gap-1.5 mb-1">
-                  <Target className="h-4 w-4 text-blue-500" />
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-2 sm:p-3 text-center">
+                <div className="flex items-center justify-center gap-1 mb-0.5 sm:mb-1">
+                  <Target className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
                 </div>
-                <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{totalDemands}</p>
-                <p className="text-[10px] text-muted-foreground leading-tight">Demandas Atribuídas</p>
+                <p className="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400">{totalDemands}</p>
+                <p className="text-[8px] sm:text-[10px] text-muted-foreground leading-tight">Atribuídas</p>
               </div>
-              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-center">
-                <div className="flex items-center justify-center gap-1.5 mb-1">
-                  <TrendingUp className="h-4 w-4 text-emerald-500" />
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2 sm:p-3 text-center">
+                <div className="flex items-center justify-center gap-1 mb-0.5 sm:mb-1">
+                  <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-emerald-500" />
                 </div>
-                <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{avgDeliveryRate}%</p>
-                <p className="text-[10px] text-muted-foreground leading-tight">Taxa de Entrega</p>
+                <p className="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400">{avgDeliveryRate}%</p>
+                <p className="text-[8px] sm:text-[10px] text-muted-foreground leading-tight">Entrega</p>
               </div>
-              <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-center">
-                <div className="flex items-center justify-center gap-1.5 mb-1">
-                  <Activity className="h-4 w-4 text-amber-500" />
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 sm:p-3 text-center">
+                <div className="flex items-center justify-center gap-1 mb-0.5 sm:mb-1">
+                  <Activity className="h-3 w-3 sm:h-4 sm:w-4 text-amber-500" />
                 </div>
-                <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{avgInProgress}</p>
-                <p className="text-[10px] text-muted-foreground leading-tight">Média em Andamento</p>
+                <p className="text-lg sm:text-xl font-bold text-amber-600 dark:text-amber-400">{avgInProgress}</p>
+                <p className="text-[8px] sm:text-[10px] text-muted-foreground leading-tight">Andamento</p>
               </div>
             </div>
 
@@ -244,20 +258,20 @@ export function WorkloadDistributionChart({ demands }: WorkloadDistributionChart
             {/* Chart and Details - Responsive Layout */}
             <div className="flex flex-col gap-4">
               {/* Stacked Bar Chart */}
-              <div className="w-full overflow-x-auto">
-                <div className="min-w-[300px]">
-                  <ResponsiveContainer width="100%" height={workloadData.length * 50 + 20}>
+              <div className="w-full overflow-x-auto -mx-2 px-2">
+                <div className={isMobile ? "min-w-[280px]" : "min-w-[400px]"}>
+                  <ResponsiveContainer width="100%" height={workloadData.length * rowHeight + 20}>
                     <BarChart
                       layout="vertical"
                       data={workloadData}
-                      margin={{ top: 0, right: 20, left: 10, bottom: 0 }}
-                      barSize={20}
+                      margin={{ top: 0, right: isMobile ? 10 : 20, left: isMobile ? 0 : 10, bottom: 0 }}
+                      barSize={barSize}
                     >
                       <XAxis
                         type="number"
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                        tick={{ fontSize: isMobile ? 9 : 11, fill: "hsl(var(--muted-foreground))" }}
                       />
                       <YAxis
                         dataKey="name"
@@ -265,7 +279,7 @@ export function WorkloadDistributionChart({ demands }: WorkloadDistributionChart
                         axisLine={false}
                         tickLine={false}
                         tick={CustomYAxisTick as any}
-                        width={170}
+                        width={yAxisWidth}
                       />
                       <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.3)" }} />
                       <Bar
@@ -294,9 +308,9 @@ export function WorkloadDistributionChart({ demands }: WorkloadDistributionChart
               </div>
 
               {/* Member Details List */}
-              <div className="border-t border-border pt-4">
-                <p className="text-xs font-medium text-muted-foreground mb-3">Detalhamento por Membro</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              <div className="border-t border-border pt-3 sm:pt-4">
+                <p className="text-[10px] sm:text-xs font-medium text-muted-foreground mb-2 sm:mb-3">Detalhamento por Membro</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-1.5 sm:gap-2">
                   {workloadData.map((member) => {
                     const initials = member.name
                       .split(" ")
@@ -306,35 +320,35 @@ export function WorkloadDistributionChart({ demands }: WorkloadDistributionChart
                       .toUpperCase();
 
                     return (
-                      <div key={member.id} className="p-3 rounded-lg border border-border/50 bg-muted/30 hover:bg-muted/50 transition-colors">
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                          <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <Avatar className="h-6 w-6 shrink-0">
+                      <div key={member.id} className="p-2 sm:p-3 rounded-lg border border-border/50 bg-muted/30 hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center justify-between gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+                          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+                            <Avatar className="h-5 w-5 sm:h-6 sm:w-6 shrink-0">
                               <AvatarImage src={member.avatar || undefined} />
-                              <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
+                              <AvatarFallback className="text-[8px] sm:text-[9px] bg-primary/10 text-primary">
                                 {initials}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-sm font-medium truncate">{member.name}</span>
+                            <span className="text-xs sm:text-sm font-medium truncate">{member.name}</span>
                           </div>
-                          <div className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+                          <div className="px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
                             {member.deliveryRate}%
                           </div>
                         </div>
-                        <div className="flex items-center gap-3 text-xs flex-wrap">
+                        <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs flex-wrap">
                           <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: STATUS_COLORS.toStart }} />
-                            <span className="text-muted-foreground">Iniciar:</span>
+                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0" style={{ backgroundColor: STATUS_COLORS.toStart }} />
+                            <span className="text-muted-foreground">Ini:</span>
                             <span className="font-medium text-foreground">{member.toStart}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: STATUS_COLORS.inProgress }} />
-                            <span className="text-muted-foreground">Andamento:</span>
+                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0" style={{ backgroundColor: STATUS_COLORS.inProgress }} />
+                            <span className="text-muted-foreground">And:</span>
                             <span className="font-medium text-foreground">{member.inProgress}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: STATUS_COLORS.delivered }} />
-                            <span className="text-muted-foreground">Entregue:</span>
+                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0" style={{ backgroundColor: STATUS_COLORS.delivered }} />
+                            <span className="text-muted-foreground">Ent:</span>
                             <span className="font-medium text-foreground">{member.delivered}</span>
                           </div>
                         </div>
