@@ -24,7 +24,7 @@ export function ShareDemandButton({ demandId }: ShareDemandButtonProps) {
   const [customDate, setCustomDate] = useState("");
   const { user } = useAuth();
   
-  const { data: existingToken, isLoading: isLoadingToken } = useShareToken(demandId);
+  const { data: existingToken, isLoading: isLoadingToken, refetch } = useShareToken(demandId);
   const createToken = useCreateShareToken();
   const revokeToken = useRevokeShareToken();
 
@@ -85,6 +85,8 @@ export function ShareDemandButton({ demandId }: ShareDemandButtonProps) {
     try {
       await revokeToken.mutateAsync(existingToken.id);
       toast.success("Link de compartilhamento revogado!");
+      // Refetch to update UI immediately
+      await refetch();
     } catch (error) {
       toast.error("Erro ao revogar link");
     }
