@@ -76,20 +76,26 @@ function EditorToolbar({ editor, onImageUpload, isUploading }: EditorToolbarProp
   if (!editor) return null;
 
   // Function to handle text alignment
-  // If there's a selection, align only the selected paragraphs
-  // If no selection, select all and align
+  // TextAlign in TipTap works at block (paragraph) level
+  // - With selection: aligns paragraphs containing the selection
+  // - Without selection (cursor only): if we want to align all, we select all first
   const handleAlignment = (alignment: "left" | "center" | "right" | "justify") => {
     const { from, to } = editor.state.selection;
     const hasSelection = from !== to;
 
     if (hasSelection) {
-      // Align only the selected content (paragraphs containing the selection)
+      // User has selected text - align only the paragraphs containing the selection
       editor.chain().focus().setTextAlign(alignment).run();
     } else {
-      // No selection - select all content first, then align
-      editor.chain().focus().selectAll().setTextAlign(alignment).run();
-      // Move cursor to the end after aligning all
-      editor.commands.setTextSelection(editor.state.doc.content.size - 1);
+      // No selection (just cursor) - select all content and align everything
+      const currentPos = from;
+      editor
+        .chain()
+        .focus()
+        .selectAll()
+        .setTextAlign(alignment)
+        .setTextSelection(currentPos) // Return cursor to original position
+        .run();
     }
   };
 
