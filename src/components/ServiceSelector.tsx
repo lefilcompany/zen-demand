@@ -1,18 +1,17 @@
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useHierarchicalServices, ServiceWithHierarchy } from "@/hooks/useServices";
 import { useBoardServicesWithUsage, useHasBoardServices } from "@/hooks/useBoardServices";
-import { Clock, AlertTriangle, Infinity as InfinityIcon, Info, Folder } from "lucide-react";
+import { Clock, AlertTriangle, Infinity as InfinityIcon, Info, Folder, ChevronRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatPrice } from "@/lib/priceUtils";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 interface ServiceSelectorProps {
   teamId: string | null;
@@ -34,6 +33,35 @@ interface DisplayService {
   isLimitReached: boolean;
   isCategory?: boolean;
   parent_id?: string | null;
+}
+
+// Collapsible category component
+function CollapsibleCategory({ 
+  category, 
+  children, 
+  renderServiceItem,
+  hasBoardServices 
+}: { 
+  category: DisplayService; 
+  children: DisplayService[]; 
+  renderServiceItem: (service: DisplayService, indented?: boolean) => React.ReactNode;
+  hasBoardServices: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger className="flex items-center gap-2 w-full px-2 py-1.5 text-sm font-semibold text-muted-foreground hover:bg-muted rounded-sm transition-colors cursor-pointer">
+        <ChevronRight className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-90" : ""}`} />
+        <Folder className="h-4 w-4 shrink-0" />
+        <span className="flex-1 text-left">{category.name}</span>
+        <span className="text-xs text-muted-foreground/70">{children.length}</span>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="pl-4 border-l-2 border-muted ml-3 mt-1 space-y-0.5">
+        {children.map((child) => renderServiceItem(child, true))}
+      </CollapsibleContent>
+    </Collapsible>
+  );
 }
 
 export function ServiceSelector({
@@ -128,7 +156,7 @@ export function ServiceSelector({
 
   const selectedService = allDisplayServices.find(s => s.id === value);
 
-  const renderServiceItem = (service: DisplayService, indented: boolean = false) => (
+  const renderServiceItem = (service: DisplayService, indented: boolean = false, onClick?: () => void) => (
     <SelectItem 
       key={service.id} 
       value={service.id}
@@ -190,15 +218,15 @@ export function ServiceSelector({
           {/* Standalone services (no category) */}
           {standaloneServices.map((service) => renderServiceItem(service))}
           
-          {/* Categories with their children */}
+          {/* Categories with their children - collapsible */}
           {categories.map(({ category, children }) => (
-            <SelectGroup key={category.id}>
-              <SelectLabel className="flex items-center gap-2 text-muted-foreground font-semibold">
-                <Folder className="h-4 w-4" />
-                {category.name}
-              </SelectLabel>
-              {children.map((child) => renderServiceItem(child, true))}
-            </SelectGroup>
+            <CollapsibleCategory 
+              key={category.id} 
+              category={category} 
+              children={children}
+              renderServiceItem={renderServiceItem}
+              hasBoardServices={hasBoardServices}
+            />
           ))}
           
           {allDisplayServices.length === 0 && standaloneServices.length === 0 && (
