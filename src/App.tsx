@@ -31,7 +31,7 @@ import DemandRequests from "./pages/DemandRequests";
 import DemandDetail from "./pages/DemandDetail";
 import Kanban from "./pages/Kanban";
 import ArchivedDemands from "./pages/ArchivedDemands";
-import MyDemands from "./pages/MyDemands";
+
 import BoardMembers from "./pages/BoardMembers";
 import Boards from "./pages/Boards";
 import BoardDetail from "./pages/BoardDetail";
@@ -97,7 +97,7 @@ const App = () => (
                           {/* <Route path="/contract" element={<Contract />} /> */}
                           <Route path="/kanban" element={<Kanban />} />
                           <Route path="/archived" element={<ArchivedDemands />} />
-                          <Route path="/my-demands" element={<MyDemands />} />
+                          
                           <Route path="/time-management" element={<TimeManagement />} />
                           <Route path="/board-summary" element={<BoardSummary />} />
                           <Route path="/user/:userId" element={<UserProfile />} />

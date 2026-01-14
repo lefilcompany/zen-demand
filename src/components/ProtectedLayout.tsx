@@ -4,7 +4,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { BoardSelector } from "@/components/BoardSelector";
 import { GlobalSearchBar } from "@/components/GlobalSearchBar";
 import { Outlet, useNavigate } from "react-router-dom";
-import { Settings, RotateCcw, Users } from "lucide-react";
+import { Settings, RotateCcw, Users, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
@@ -18,10 +18,23 @@ import { OnboardingTour } from "@/components/OnboardingTour";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useDataPrecache } from "@/hooks/useDataPrecache";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useTranslation } from "react-i18next";
 
 export function ProtectedLayout() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const {
     isOpen,
     steps,
