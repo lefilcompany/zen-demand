@@ -271,9 +271,9 @@ export default function Demands() {
         </div>
 
         {/* Filters and Actions Row */}
-        <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2">
-          {/* First row on mobile: Filters + Toggle buttons */}
-          <div className="flex flex-wrap items-center gap-2 flex-1">
+        <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center">
+          {/* Filters + Toggle buttons row */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
             {/* Filters Button */}
             <DemandFilters boardId={selectedBoardId} filters={filters} onChange={setFilters} />
 
@@ -283,13 +283,10 @@ export default function Demands() {
                 variant={showOnlyMine ? "default" : "outline"} 
                 size="sm" 
                 onClick={() => setShowOnlyMine(!showOnlyMine)} 
-                className="gap-1.5 h-9 px-2 md:px-3 flex-shrink-0"
+                className="gap-1.5 h-9 px-2.5 shrink-0 whitespace-nowrap"
               >
-                <User className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                <span className="hidden lg:inline text-xs md:text-sm">
-                  Minhas Demandas
-                </span>
-                <span className="bg-primary-foreground text-primary text-[10px] md:text-xs px-1 md:px-1.5 py-0.5 rounded-full font-medium">
+                <User className="h-4 w-4" />
+                <span className="text-xs">
                   {myDemandsCount}
                 </span>
               </Button>
@@ -301,21 +298,18 @@ export default function Demands() {
                 variant={hideDelivered ? "default" : "outline"} 
                 size="sm" 
                 onClick={() => setHideDelivered(!hideDelivered)} 
-                className="gap-1.5 h-9 px-2 md:px-3 flex-shrink-0"
+                className="gap-1.5 h-9 px-2.5 shrink-0 whitespace-nowrap"
               >
-                {hideDelivered ? <EyeOff className="h-3.5 w-3.5 md:h-4 md:w-4" /> : <Eye className="h-3.5 w-3.5 md:h-4 md:w-4" />}
-                <span className="hidden lg:inline text-xs md:text-sm">
-                  {hideDelivered ? "Exibir Entregues" : "Ocultar Entregues"}
-                </span>
-                <span className="bg-primary-foreground text-primary text-[10px] md:text-xs px-1 md:px-1.5 py-0.5 rounded-full font-medium">
+                {hideDelivered ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                <span className="text-xs">
                   {deliveredCount}
                 </span>
               </Button>
             )}
           </div>
 
-          {/* Second group: View toggle + Create Button */}
-          <div className="flex items-center gap-2 sm:ml-auto">
+          {/* View toggle + Create Button - right side */}
+          <div className="flex items-center gap-2 md:ml-auto">
             {/* View toggle */}
             <div className="border border-border rounded-md overflow-hidden shrink-0 flex">
               <Button variant={viewMode === "table" ? "secondary" : "ghost"} size="icon" className={`hidden lg:flex h-8 w-8 rounded-none ${viewMode === "table" ? "bg-primary text-primary-foreground" : ""}`} onClick={() => setViewMode("table")} title={t("demands.tableView")}>
@@ -330,9 +324,9 @@ export default function Demands() {
             </div>
 
             {/* Create Button */}
-            <Button onClick={() => navigate("/demands/create")} className="shadow-primary h-9 px-3 flex-shrink-0" size="sm">
-              <Plus className="h-4 w-4 sm:mr-1.5" />
-              <span className="hidden sm:inline text-sm">{t("demands.newDemand")}</span>
+            <Button onClick={() => navigate("/demands/create")} className="shadow-primary h-9 px-3 shrink-0" size="sm">
+              <Plus className="h-4 w-4 md:mr-1.5" />
+              <span className="hidden md:inline text-sm">{t("demands.newDemand")}</span>
             </Button>
           </div>
         </div>
