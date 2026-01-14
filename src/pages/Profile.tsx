@@ -172,7 +172,8 @@ export default function Profile() {
       {/* Profile Hero with Level */}
       <Card className="overflow-hidden shadow-lg">
         <div 
-          className="h-40 md:h-48 lg:h-56 relative group cursor-pointer"
+          className="relative group cursor-pointer w-full"
+          style={{ aspectRatio: "16 / 5" }}
           onClick={handleBannerClick}
         >
           {(profile as any)?.banner_url ? (

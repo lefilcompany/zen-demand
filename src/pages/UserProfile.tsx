@@ -295,7 +295,10 @@ export default function UserProfile() {
 
       {/* Profile Hero Section */}
       <Card className="overflow-hidden shadow-lg">
-        <div className="h-40 md:h-48 lg:h-56 relative">
+        <div 
+          className="relative w-full"
+          style={{ aspectRatio: "16 / 5" }}
+        >
           {(profile as any)?.banner_url ? (
             <>
               <img 
