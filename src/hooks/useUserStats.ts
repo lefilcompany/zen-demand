@@ -564,7 +564,7 @@ export function calculateLevel(stats: UserStats): { level: number; xp: number; x
     stats.totalDemands * 10 +
     stats.deliveredDemands * 25 +
     stats.totalComments * 5 +
-    Math.floor(stats.totalTimeSpent / 3600) * 15 +
+    Math.floor(stats.totalTimeSpent / 3600) * 20 +
     stats.teamsCount * 20 +
     stats.boardsCount * 10;
 
