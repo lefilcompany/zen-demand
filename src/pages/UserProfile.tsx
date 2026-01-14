@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,32 +9,24 @@ import { AvatarWithStatus } from "@/components/AvatarWithStatus";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { badges as gamificationBadges, Badge as GamificationBadge } from "@/hooks/useUserStats";
 import { 
   ArrowLeft, Loader2, User, Calendar, Briefcase, CheckCircle2, Clock, Edit, 
-  Trophy, Target, Flame, Star, TrendingUp, Award, Zap, MapPin, Link as LinkIcon,
-  Github, Linkedin, Shield, Users, Layout, ShieldCheck, ClipboardCheck, MessageSquare,
-  Wrench, Rocket, Timer, Cog, UserCheck, PlusCircle, MessageCircle, Layers, Circle
+  Trophy, Target, Flame, Zap, MapPin, Link as LinkIcon,
+  Github, Linkedin, TrendingUp, Award, Circle, ChevronDown, ChevronUp
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { usePresence } from "@/contexts/PresenceContext";
 
-interface Achievement {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  unlocked: boolean;
-  progress?: number;
-  maxProgress?: number;
-  category?: "general" | "admin" | "moderator" | "executor" | "requester";
-}
+const INITIAL_BADGES_COUNT = 12;
 
 export default function UserProfile() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isUserOnline } = usePresence();
+  const [showAllBadges, setShowAllBadges] = useState(false);
   
   const isOwnProfile = user?.id === userId;
   const isOnline = userId ? isUserOnline(userId) : false;
@@ -231,274 +224,29 @@ export default function UserProfile() {
     return { level, xp, nextLevelXp: xpNeeded, currentLevelXp, progress };
   };
 
-  // Get user roles from teams
-  const getUserRoles = () => {
-    if (!userTeams) return { isAdmin: false, isModerator: false, isExecutor: false, isRequester: false };
-    
-    const roles = userTeams.map((tm: any) => tm.role);
-    return {
-      isAdmin: roles.includes("admin"),
-      isModerator: roles.includes("moderator"),
-      isExecutor: roles.includes("executor"),
-      isRequester: roles.includes("requester"),
-    };
-  };
-
-  const userRoles = getUserRoles();
-
-  // Generate achievements
-  const getAchievements = (): Achievement[] => {
-    if (!stats || !profile) return [];
-    
-    const memberDays = differenceInDays(new Date(), new Date(profile.created_at));
+  // Get user stats for gamification badges
+  const getUserBadgeStats = () => {
+    if (!stats) return null;
     const teamsCount = userTeams?.length || 0;
     const boardsCount = userBoards?.length || 0;
     
-    const generalAchievements: Achievement[] = [
-      {
-        id: "first-demand",
-        name: "Primeira Demanda",
-        description: "Crie sua primeira demanda",
-        icon: <Target className="h-5 w-5" />,
-        unlocked: stats.created >= 1,
-        progress: Math.min(stats.created, 1),
-        maxProgress: 1,
-        category: "general",
-      },
-      {
-        id: "task-master",
-        name: "Mestre das Tarefas",
-        description: "Complete 10 demandas",
-        icon: <Trophy className="h-5 w-5" />,
-        unlocked: stats.completed >= 10,
-        progress: Math.min(stats.completed, 10),
-        maxProgress: 10,
-        category: "general",
-      },
-      {
-        id: "super-achiever",
-        name: "Super Realizador",
-        description: "Complete 50 demandas",
-        icon: <Star className="h-5 w-5" />,
-        unlocked: stats.completed >= 50,
-        progress: Math.min(stats.completed, 50),
-        maxProgress: 50,
-        category: "general",
-      },
-      {
-        id: "communicator",
-        name: "Comunicador",
-        description: "Faça 20 comentários",
-        icon: <Zap className="h-5 w-5" />,
-        unlocked: stats.comments >= 20,
-        progress: Math.min(stats.comments, 20),
-        maxProgress: 20,
-        category: "general",
-      },
-      {
-        id: "time-tracker",
-        name: "Controlador do Tempo",
-        description: "Registre 10 horas de trabalho",
-        icon: <Clock className="h-5 w-5" />,
-        unlocked: stats.totalTimeSeconds >= 36000,
-        progress: Math.min(Math.floor(stats.totalTimeSeconds / 3600), 10),
-        maxProgress: 10,
-        category: "general",
-      },
-      {
-        id: "veteran",
-        name: "Veterano",
-        description: "Seja membro por 30 dias",
-        icon: <Award className="h-5 w-5" />,
-        unlocked: memberDays >= 30,
-        progress: Math.min(memberDays, 30),
-        maxProgress: 30,
-        category: "general",
-      },
-    ];
-
-    // Admin specific achievements
-    const adminAchievements: Achievement[] = userRoles.isAdmin ? [
-      {
-        id: "admin-leader",
-        name: "Líder Nato",
-        description: "Seja admin de uma equipe",
-        icon: <Shield className="h-5 w-5" />,
-        unlocked: true,
-        category: "admin",
-      },
-      {
-        id: "admin-multi-team",
-        name: "Multi-Equipes",
-        description: "Seja admin em 3 equipes",
-        icon: <Users className="h-5 w-5" />,
-        unlocked: userTeams?.filter((tm: any) => tm.role === "admin").length >= 3,
-        progress: userTeams?.filter((tm: any) => tm.role === "admin").length || 0,
-        maxProgress: 3,
-        category: "admin",
-      },
-      {
-        id: "admin-board-master",
-        name: "Arquiteto de Quadros",
-        description: "Gerencie 5 quadros",
-        icon: <Layout className="h-5 w-5" />,
-        unlocked: boardsCount >= 5,
-        progress: Math.min(boardsCount, 5),
-        maxProgress: 5,
-        category: "admin",
-      },
-    ] : [];
-
-    // Moderator specific achievements
-    const moderatorAchievements: Achievement[] = userRoles.isModerator ? [
-      {
-        id: "mod-guardian",
-        name: "Guardião",
-        description: "Seja moderador de uma equipe",
-        icon: <ShieldCheck className="h-5 w-5" />,
-        unlocked: true,
-        category: "moderator",
-      },
-      {
-        id: "mod-reviewer",
-        name: "Revisor Experiente",
-        description: "Revise 25 demandas",
-        icon: <ClipboardCheck className="h-5 w-5" />,
-        unlocked: stats.completed >= 25,
-        progress: Math.min(stats.completed, 25),
-        maxProgress: 25,
-        category: "moderator",
-      },
-      {
-        id: "mod-helper",
-        name: "Ajudante",
-        description: "Faça 50 comentários",
-        icon: <MessageSquare className="h-5 w-5" />,
-        unlocked: stats.comments >= 50,
-        progress: Math.min(stats.comments, 50),
-        maxProgress: 50,
-        category: "moderator",
-      },
-    ] : [];
-
-    // Executor specific achievements
-    const executorAchievements: Achievement[] = userRoles.isExecutor ? [
-      {
-        id: "exec-worker",
-        name: "Trabalhador",
-        description: "Seja executor de uma equipe",
-        icon: <Wrench className="h-5 w-5" />,
-        unlocked: true,
-        category: "executor",
-      },
-      {
-        id: "exec-speedster",
-        name: "Velocista",
-        description: "Complete 20 demandas",
-        icon: <Rocket className="h-5 w-5" />,
-        unlocked: stats.completed >= 20,
-        progress: Math.min(stats.completed, 20),
-        maxProgress: 20,
-        category: "executor",
-      },
-      {
-        id: "exec-dedicated",
-        name: "Dedicado",
-        description: "Registre 50 horas de trabalho",
-        icon: <Timer className="h-5 w-5" />,
-        unlocked: stats.totalTimeSeconds >= 180000,
-        progress: Math.min(Math.floor(stats.totalTimeSeconds / 3600), 50),
-        maxProgress: 50,
-        category: "executor",
-      },
-      {
-        id: "exec-machine",
-        name: "Máquina de Entregas",
-        description: "Complete 100 demandas",
-        icon: <Cog className="h-5 w-5" />,
-        unlocked: stats.completed >= 100,
-        progress: Math.min(stats.completed, 100),
-        maxProgress: 100,
-        category: "executor",
-      },
-    ] : [];
-
-    // Requester specific achievements
-    const requesterAchievements: Achievement[] = userRoles.isRequester ? [
-      {
-        id: "req-starter",
-        name: "Iniciante",
-        description: "Seja solicitante de uma equipe",
-        icon: <UserCheck className="h-5 w-5" />,
-        unlocked: true,
-        category: "requester",
-      },
-      {
-        id: "req-creator",
-        name: "Criador Ativo",
-        description: "Crie 10 demandas",
-        icon: <PlusCircle className="h-5 w-5" />,
-        unlocked: stats.created >= 10,
-        progress: Math.min(stats.created, 10),
-        maxProgress: 10,
-        category: "requester",
-      },
-      {
-        id: "req-engaged",
-        name: "Engajado",
-        description: "Faça 10 comentários",
-        icon: <MessageCircle className="h-5 w-5" />,
-        unlocked: stats.comments >= 10,
-        progress: Math.min(stats.comments, 10),
-        maxProgress: 10,
-        category: "requester",
-      },
-      {
-        id: "req-prolific",
-        name: "Prolífico",
-        description: "Crie 50 demandas",
-        icon: <Layers className="h-5 w-5" />,
-        unlocked: stats.created >= 50,
-        progress: Math.min(stats.created, 50),
-        maxProgress: 50,
-        category: "requester",
-      },
-    ] : [];
-
-    return [
-      ...generalAchievements,
-      ...adminAchievements,
-      ...moderatorAchievements,
-      ...executorAchievements,
-      ...requesterAchievements,
-    ];
-  };
-
-  const getCategoryLabel = (category?: string) => {
-    const labels: Record<string, string> = {
-      general: "Geral",
-      admin: "Administrador",
-      moderator: "Moderador",
-      executor: "Executor",
-      requester: "Solicitante",
+    return {
+      totalDemands: stats.created,
+      deliveredDemands: stats.completed,
+      inProgressDemands: 0,
+      totalComments: stats.comments,
+      totalTimeSpent: stats.totalTimeSeconds,
+      teamsCount,
+      boardsCount,
+      avgDeliveryTime: 0, // We don't have this data here
     };
-    return labels[category || "general"] || "Geral";
   };
 
-  const getCategoryColor = (category?: string) => {
-    const colors: Record<string, string> = {
-      general: "bg-primary",
-      admin: "bg-destructive",
-      moderator: "bg-secondary",
-      executor: "bg-success",
-      requester: "bg-accent",
-    };
-    return colors[category || "general"] || "bg-primary";
-  };
+  const badgeStats = getUserBadgeStats();
+  const earnedBadges = badgeStats ? gamificationBadges.filter((b) => b.requirement(badgeStats)) : [];
+  const lockedBadges = badgeStats ? gamificationBadges.filter((b) => !b.requirement(badgeStats)) : gamificationBadges;
 
   const levelData = calculateLevel();
-  const achievements = getAchievements();
-  const unlockedAchievements = achievements.filter(a => a.unlocked).length;
 
   if (isLoading) {
     return (
@@ -745,77 +493,87 @@ export default function UserProfile() {
         </Card>
       </div>
 
-      {/* Achievements */}
+      {/* Badges Section - Same as Profile */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Trophy className="h-5 w-5 text-primary" />
+            <Award className="h-5 w-5 text-yellow-500" />
             Conquistas
             <Badge variant="secondary" className="ml-2">
-              {unlockedAchievements}/{achievements.length}
+              {earnedBadges.length}/{gamificationBadges.length}
             </Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          {/* Group achievements by category */}
-          {["general", "admin", "moderator", "executor", "requester"].map((category) => {
-            const categoryAchievements = achievements.filter(a => a.category === category);
-            if (categoryAchievements.length === 0) return null;
-            
+        <CardContent className="space-y-4">
+          {(() => {
+            const allBadgesSorted = [...earnedBadges, ...lockedBadges];
+            const displayedBadges = showAllBadges 
+              ? allBadgesSorted 
+              : allBadgesSorted.slice(0, INITIAL_BADGES_COUNT);
+            const hasMoreBadges = allBadgesSorted.length > INITIAL_BADGES_COUNT;
+
             return (
-              <div key={category} className="mb-6 last:mb-0">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className={`h-2 w-2 rounded-full ${getCategoryColor(category)}`} />
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                    {getCategoryLabel(category)}
-                  </h3>
-                  <span className="text-xs text-muted-foreground">
-                    ({categoryAchievements.filter(a => a.unlocked).length}/{categoryAchievements.length})
-                  </span>
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {displayedBadges.map((badge) => {
+                    const isEarned = earnedBadges.some(b => b.id === badge.id);
+                    
+                    return (
+                      <TooltipProvider key={badge.id}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            {isEarned ? (
+                              <div 
+                                className="flex flex-col items-center p-4 rounded-xl border-2 transition-all hover:scale-105 cursor-pointer"
+                                style={{ 
+                                  borderColor: badge.color,
+                                  backgroundColor: `${badge.color}15`
+                                }}
+                              >
+                                <span className="text-3xl mb-2">{badge.icon}</span>
+                                <span className="text-xs font-medium text-center line-clamp-2">{badge.name}</span>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center p-4 rounded-xl border-2 border-muted bg-muted/30 opacity-50 cursor-pointer">
+                                <span className="text-3xl mb-2 grayscale">{badge.icon}</span>
+                                <span className="text-xs font-medium text-center text-muted-foreground">???</span>
+                              </div>
+                            )}
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="font-medium">{isEarned ? badge.name : "🔒 Bloqueado"}</p>
+                            <p className="text-xs text-muted-foreground">{badge.description}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    );
+                  })}
                 </div>
-                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                  {categoryAchievements.map((achievement) => (
-                    <div
-                      key={achievement.id}
-                      className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                        achievement.unlocked 
-                          ? "bg-primary/5 border-primary/20" 
-                          : "bg-muted/30 border-transparent opacity-60"
-                      }`}
+                
+                {hasMoreBadges && (
+                  <div className="flex justify-center pt-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowAllBadges(!showAllBadges)}
+                      className="gap-2"
                     >
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${
-                        achievement.unlocked 
-                          ? getCategoryColor(achievement.category) + " text-white"
-                          : "bg-muted text-muted-foreground"
-                      }`}>
-                        {achievement.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`font-medium text-sm ${achievement.unlocked ? "" : "text-muted-foreground"}`}>
-                          {achievement.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">{achievement.description}</p>
-                        {!achievement.unlocked && achievement.progress !== undefined && (
-                          <div className="mt-1">
-                            <Progress 
-                              value={(achievement.progress / (achievement.maxProgress || 1)) * 100} 
-                              className="h-1" 
-                            />
-                            <span className="text-xs text-muted-foreground">
-                              {achievement.progress}/{achievement.maxProgress}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      {achievement.unlocked && (
-                        <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+                      {showAllBadges ? (
+                        <>
+                          <ChevronUp className="h-4 w-4" />
+                          Ver menos
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-4 w-4" />
+                          Ver mais conquistas ({allBadgesSorted.length - INITIAL_BADGES_COUNT})
+                        </>
                       )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+                    </Button>
+                  </div>
+                )}
+              </>
             );
-          })}
+          })()}
         </CardContent>
       </Card>
 
