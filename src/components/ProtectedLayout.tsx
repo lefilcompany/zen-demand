@@ -154,9 +154,6 @@ export function ProtectedLayout() {
                   <DropdownMenuItem onClick={() => navigate("/profile")}>
                     Meu Perfil
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/settings")}>
-                    Configurações
-                  </DropdownMenuItem>
                   {hasCompleted && (
                     <DropdownMenuItem onClick={() => resetOnboarding(() => navigate("/"))}>
                       <RotateCcw className="h-4 w-4 mr-2" />
