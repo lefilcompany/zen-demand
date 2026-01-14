@@ -144,7 +144,7 @@ export interface Badge {
 }
 
 export const badges: Badge[] = [
-  // Demandas criadas
+  // === DEMANDAS CRIADAS ===
   {
     id: "first_demand",
     name: "Primeira Demanda",
@@ -152,6 +152,14 @@ export const badges: Badge[] = [
     icon: "🎯",
     color: "#3B82F6",
     requirement: (stats) => stats.totalDemands >= 1,
+  },
+  {
+    id: "three_demands",
+    name: "Iniciante",
+    description: "Criou 3 demandas",
+    icon: "📝",
+    color: "#60A5FA",
+    requirement: (stats) => stats.totalDemands >= 3,
   },
   {
     id: "five_demands",
@@ -170,6 +178,14 @@ export const badges: Badge[] = [
     requirement: (stats) => stats.totalDemands >= 10,
   },
   {
+    id: "twenty_demands",
+    name: "Focado",
+    description: "Criou 20 demandas",
+    icon: "🎪",
+    color: "#7C3AED",
+    requirement: (stats) => stats.totalDemands >= 20,
+  },
+  {
     id: "veteran",
     name: "Veterano",
     description: "Criou 25 demandas",
@@ -186,6 +202,14 @@ export const badges: Badge[] = [
     requirement: (stats) => stats.totalDemands >= 50,
   },
   {
+    id: "seventy_five_demands",
+    name: "Elite",
+    description: "Criou 75 demandas",
+    icon: "🌟",
+    color: "#F59E0B",
+    requirement: (stats) => stats.totalDemands >= 75,
+  },
+  {
     id: "centurion",
     name: "Centurião",
     description: "Criou 100 demandas",
@@ -193,7 +217,24 @@ export const badges: Badge[] = [
     color: "#A855F7",
     requirement: (stats) => stats.totalDemands >= 100,
   },
-  // Entregas
+  {
+    id: "demand_titan",
+    name: "Titã",
+    description: "Criou 200 demandas",
+    icon: "🗿",
+    color: "#6D28D9",
+    requirement: (stats) => stats.totalDemands >= 200,
+  },
+  {
+    id: "demand_god",
+    name: "Deus das Demandas",
+    description: "Criou 500 demandas",
+    icon: "⚜️",
+    color: "#4C1D95",
+    requirement: (stats) => stats.totalDemands >= 500,
+  },
+
+  // === ENTREGAS ===
   {
     id: "first_delivery",
     name: "Entregador",
@@ -203,12 +244,28 @@ export const badges: Badge[] = [
     requirement: (stats) => stats.deliveredDemands >= 1,
   },
   {
+    id: "five_deliveries",
+    name: "Eficiente",
+    description: "5 demandas entregues",
+    icon: "📦",
+    color: "#4ADE80",
+    requirement: (stats) => stats.deliveredDemands >= 5,
+  },
+  {
     id: "ten_deliveries",
     name: "Mestre das Entregas",
     description: "10 demandas entregues",
     icon: "🏆",
     color: "#F59E0B",
     requirement: (stats) => stats.deliveredDemands >= 10,
+  },
+  {
+    id: "twenty_deliveries",
+    name: "Confiável",
+    description: "20 demandas entregues",
+    icon: "🤝",
+    color: "#34D399",
+    requirement: (stats) => stats.deliveredDemands >= 20,
   },
   {
     id: "delivery_expert",
@@ -226,7 +283,48 @@ export const badges: Badge[] = [
     color: "#FACC15",
     requirement: (stats) => stats.deliveredDemands >= 50,
   },
-  // Quadros
+  {
+    id: "seventy_five_deliveries",
+    name: "Incansável",
+    description: "75 demandas entregues",
+    icon: "🦾",
+    color: "#84CC16",
+    requirement: (stats) => stats.deliveredDemands >= 75,
+  },
+  {
+    id: "delivery_god",
+    name: "Deus das Entregas",
+    description: "100 demandas entregues",
+    icon: "🌈",
+    color: "#059669",
+    requirement: (stats) => stats.deliveredDemands >= 100,
+  },
+  {
+    id: "delivery_titan",
+    name: "Titã das Entregas",
+    description: "200 demandas entregues",
+    icon: "🔱",
+    color: "#047857",
+    requirement: (stats) => stats.deliveredDemands >= 200,
+  },
+
+  // === QUADROS ===
+  {
+    id: "first_board",
+    name: "Primeiro Quadro",
+    description: "Participa de 1 quadro",
+    icon: "📌",
+    color: "#818CF8",
+    requirement: (stats) => stats.boardsCount >= 1,
+  },
+  {
+    id: "two_boards",
+    name: "Multi-Quadros",
+    description: "Participa de 2 quadros",
+    icon: "📍",
+    color: "#A78BFA",
+    requirement: (stats) => stats.boardsCount >= 2,
+  },
   {
     id: "board_master",
     name: "Mestre dos Quadros",
@@ -243,7 +341,32 @@ export const badges: Badge[] = [
     color: "#0EA5E9",
     requirement: (stats) => stats.boardsCount >= 5,
   },
-  // Comentários
+  {
+    id: "board_king",
+    name: "Rei dos Quadros",
+    description: "Participa de 10 ou mais quadros",
+    icon: "🎯",
+    color: "#4F46E5",
+    requirement: (stats) => stats.boardsCount >= 10,
+  },
+
+  // === COMENTÁRIOS ===
+  {
+    id: "first_comment",
+    name: "Primeiro Comentário",
+    description: "Fez seu primeiro comentário",
+    icon: "💭",
+    color: "#F9A8D4",
+    requirement: (stats) => stats.totalComments >= 1,
+  },
+  {
+    id: "five_comments",
+    name: "Participativo",
+    description: "Fez 5 comentários",
+    icon: "🗨️",
+    color: "#F472B6",
+    requirement: (stats) => stats.totalComments >= 5,
+  },
   {
     id: "commentator",
     name: "Comunicador",
@@ -257,7 +380,7 @@ export const badges: Badge[] = [
     name: "Tagarela",
     description: "Fez 25 comentários",
     icon: "🗣️",
-    color: "#F472B6",
+    color: "#DB2777",
     requirement: (stats) => stats.totalComments >= 25,
   },
   {
@@ -268,7 +391,56 @@ export const badges: Badge[] = [
     color: "#E11D48",
     requirement: (stats) => stats.totalComments >= 50,
   },
-  // Tempo
+  {
+    id: "consistent_commenter",
+    name: "Consistente",
+    description: "Fez 75 comentários",
+    icon: "🎤",
+    color: "#BE185D",
+    requirement: (stats) => stats.totalComments >= 75,
+  },
+  {
+    id: "comment_master",
+    name: "Mestre da Comunicação",
+    description: "Fez 100 comentários",
+    icon: "📣",
+    color: "#9D174D",
+    requirement: (stats) => stats.totalComments >= 100,
+  },
+  {
+    id: "mega_commenter",
+    name: "Mega Comunicador",
+    description: "Fez 150 comentários",
+    icon: "🎙️",
+    color: "#831843",
+    requirement: (stats) => stats.totalComments >= 150,
+  },
+  {
+    id: "comment_legend",
+    name: "Lenda da Comunicação",
+    description: "Fez 200 comentários",
+    icon: "📡",
+    color: "#701A75",
+    requirement: (stats) => stats.totalComments >= 200,
+  },
+
+  // === TEMPO ===
+  {
+    id: "first_hour",
+    name: "Primeira Hora",
+    description: "Registrou 1 hora de trabalho",
+    icon: "⏰",
+    color: "#5EEAD4",
+    requirement: (stats) => stats.totalTimeSpent >= 3600,
+  },
+  {
+    id: "five_hours",
+    name: "Dedicado Iniciante",
+    description: "Registrou 5 horas de trabalho",
+    icon: "⌚",
+    color: "#2DD4BF",
+    requirement: (stats) => stats.totalTimeSpent >= 18000,
+  },
   {
     id: "time_tracker",
     name: "Controlador de Tempo",
@@ -278,12 +450,28 @@ export const badges: Badge[] = [
     requirement: (stats) => stats.totalTimeSpent >= 36000,
   },
   {
+    id: "fifteen_hours",
+    name: "Comprometido",
+    description: "Registrou 15 horas de trabalho",
+    icon: "🕐",
+    color: "#0D9488",
+    requirement: (stats) => stats.totalTimeSpent >= 54000,
+  },
+  {
     id: "dedicated_worker",
     name: "Dedicado",
     description: "Registrou mais de 25 horas",
     icon: "💪",
-    color: "#0D9488",
+    color: "#0F766E",
     requirement: (stats) => stats.totalTimeSpent >= 90000,
+  },
+  {
+    id: "forty_hours",
+    name: "Semana Completa",
+    description: "Registrou 40 horas de trabalho",
+    icon: "📅",
+    color: "#115E59",
+    requirement: (stats) => stats.totalTimeSpent >= 144000,
   },
   {
     id: "workaholic",
@@ -293,7 +481,40 @@ export const badges: Badge[] = [
     color: "#DC2626",
     requirement: (stats) => stats.totalTimeSpent >= 180000,
   },
-  // Velocidade
+  {
+    id: "seventy_five_hours",
+    name: "Maratonista",
+    description: "Registrou 75 horas de trabalho",
+    icon: "🏃‍♂️",
+    color: "#B91C1C",
+    requirement: (stats) => stats.totalTimeSpent >= 270000,
+  },
+  {
+    id: "time_master",
+    name: "Mestre do Tempo",
+    description: "Registrou 100 horas de trabalho",
+    icon: "⏳",
+    color: "#991B1B",
+    requirement: (stats) => stats.totalTimeSpent >= 360000,
+  },
+  {
+    id: "time_legend",
+    name: "Lenda do Tempo",
+    description: "Registrou 200 horas de trabalho",
+    icon: "🕰️",
+    color: "#7F1D1D",
+    requirement: (stats) => stats.totalTimeSpent >= 720000,
+  },
+  {
+    id: "time_god",
+    name: "Deus do Tempo",
+    description: "Registrou 500 horas de trabalho",
+    icon: "⌛",
+    color: "#450A0A",
+    requirement: (stats) => stats.totalTimeSpent >= 1800000,
+  },
+
+  // === VELOCIDADE ===
   {
     id: "fast_delivery",
     name: "Veloz",
@@ -309,6 +530,22 @@ export const badges: Badge[] = [
     icon: "⚡",
     color: "#FBBF24",
     requirement: (stats) => stats.avgDeliveryTime > 0 && stats.avgDeliveryTime < 8,
+  },
+  {
+    id: "super_fast",
+    name: "Super Veloz",
+    description: "Tempo médio de entrega menor que 4h",
+    icon: "💨",
+    color: "#F97316",
+    requirement: (stats) => stats.avgDeliveryTime > 0 && stats.avgDeliveryTime < 4,
+  },
+  {
+    id: "instant",
+    name: "Instantâneo",
+    description: "Tempo médio de entrega menor que 2h",
+    icon: "🌪️",
+    color: "#EF4444",
+    requirement: (stats) => stats.avgDeliveryTime > 0 && stats.avgDeliveryTime < 2,
   },
 ];
 

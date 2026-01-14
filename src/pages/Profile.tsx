@@ -15,13 +15,16 @@ import {
   ArrowLeft, Settings, User, Calendar, MapPin, Briefcase, 
   Link as LinkIcon, Github, Linkedin, Target, CheckCircle2, 
   Clock, MessageSquare, Users, Loader2, Award, TrendingUp,
-  Zap, Trophy
+  Zap, Trophy, ChevronDown, ChevronUp
 } from "lucide-react";
+
+const INITIAL_BADGES_COUNT = 12;
 
 export default function Profile() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [editDrawerOpen, setEditDrawerOpen] = useState(false);
+  const [showAllBadges, setShowAllBadges] = useState(false);
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["profile", user?.id],
@@ -305,46 +308,74 @@ export default function Profile() {
             </Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {/* Earned Badges */}
-            {earnedBadges.map((badge) => (
-              <Tooltip key={badge.id}>
-                <TooltipTrigger asChild>
-                  <div 
-                    className="flex flex-col items-center p-4 rounded-xl border-2 transition-all hover:scale-105 cursor-pointer"
-                    style={{ 
-                      borderColor: badge.color,
-                      backgroundColor: `${badge.color}15`
-                    }}
-                  >
-                    <span className="text-4xl mb-2">{badge.icon}</span>
-                    <span className="text-sm font-medium text-center">{badge.name}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="font-medium">{badge.name}</p>
-                  <p className="text-xs text-muted-foreground">{badge.description}</p>
-                </TooltipContent>
-              </Tooltip>
-            ))}
+        <CardContent className="space-y-4">
+          {(() => {
+            const allBadgesSorted = [...earnedBadges, ...lockedBadges];
+            const displayedBadges = showAllBadges 
+              ? allBadgesSorted 
+              : allBadgesSorted.slice(0, INITIAL_BADGES_COUNT);
+            const hasMoreBadges = allBadgesSorted.length > INITIAL_BADGES_COUNT;
 
-            {/* Locked Badges */}
-            {lockedBadges.map((badge) => (
-              <Tooltip key={badge.id}>
-                <TooltipTrigger asChild>
-                  <div className="flex flex-col items-center p-4 rounded-xl border-2 border-muted bg-muted/30 opacity-50 cursor-pointer">
-                    <span className="text-4xl mb-2 grayscale">{badge.icon}</span>
-                    <span className="text-sm font-medium text-center text-muted-foreground">???</span>
+            return (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {displayedBadges.map((badge) => {
+                    const isEarned = earnedBadges.some(b => b.id === badge.id);
+                    
+                    return (
+                      <Tooltip key={badge.id}>
+                        <TooltipTrigger asChild>
+                          {isEarned ? (
+                            <div 
+                              className="flex flex-col items-center p-4 rounded-xl border-2 transition-all hover:scale-105 cursor-pointer"
+                              style={{ 
+                                borderColor: badge.color,
+                                backgroundColor: `${badge.color}15`
+                              }}
+                            >
+                              <span className="text-3xl mb-2">{badge.icon}</span>
+                              <span className="text-xs font-medium text-center line-clamp-2">{badge.name}</span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center p-4 rounded-xl border-2 border-muted bg-muted/30 opacity-50 cursor-pointer">
+                              <span className="text-3xl mb-2 grayscale">{badge.icon}</span>
+                              <span className="text-xs font-medium text-center text-muted-foreground">???</span>
+                            </div>
+                          )}
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="font-medium">{isEarned ? badge.name : "🔒 Bloqueado"}</p>
+                          <p className="text-xs text-muted-foreground">{badge.description}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
+                </div>
+                
+                {hasMoreBadges && (
+                  <div className="flex justify-center pt-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowAllBadges(!showAllBadges)}
+                      className="gap-2"
+                    >
+                      {showAllBadges ? (
+                        <>
+                          <ChevronUp className="h-4 w-4" />
+                          Ver menos
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-4 w-4" />
+                          Ver mais conquistas ({allBadgesSorted.length - INITIAL_BADGES_COUNT})
+                        </>
+                      )}
+                    </Button>
                   </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="font-medium">🔒 Bloqueado</p>
-                  <p className="text-xs text-muted-foreground">{badge.description}</p>
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </div>
+                )}
+              </>
+            );
+          })()}
         </CardContent>
       </Card>
 
