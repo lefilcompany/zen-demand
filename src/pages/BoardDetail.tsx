@@ -1,7 +1,9 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState, useRef, useEffect } from "react";
-import { LayoutGrid, Users, Trash2, UserPlus, UserMinus, ArrowLeft, Shield, UserCog, Briefcase, User, ChevronDown, Loader2 } from "lucide-react";
+import { LayoutGrid, Users, Trash2, UserPlus, UserMinus, ArrowLeft, Shield, UserCog, Briefcase, User, ChevronDown, Loader2, Pencil, Check, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
-import { useBoard, useDeleteBoard } from "@/hooks/useBoards";
+import { useBoard, useDeleteBoard, useUpdateBoard } from "@/hooks/useBoards";
 import { useBoardMembers, useBoardRole, useRemoveBoardMember, useUpdateBoardMemberRole, BoardRole } from "@/hooks/useBoardMembers";
 import { BoardScopeConfig } from "@/components/BoardScopeConfig";
 import { AddBoardMemberDialog } from "@/components/AddBoardMemberDialog";
@@ -183,12 +185,57 @@ export default function BoardDetail() {
   const { data: members, isLoading: membersLoading } = useBoardMembers(boardId || null);
   const { data: myRole } = useBoardRole(boardId || null);
   const deleteBoard = useDeleteBoard();
+  const updateBoard = useUpdateBoard();
   const removeMember = useRemoveBoardMember();
   const updateRole = useUpdateBoardMemberRole();
+
+  // Edit state
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
   const canManage = myRole === "admin" || myRole === "moderator";
   const isAdmin = myRole === "admin";
   const isRequester = myRole === "requester";
+
+  // Initialize edit values when board loads
+  useEffect(() => {
+    if (board) {
+      setEditName(board.name);
+      setEditDescription(board.description || "");
+    }
+  }, [board]);
+
+  const handleSaveName = async () => {
+    if (!board || !editName.trim()) return;
+    try {
+      await updateBoard.mutateAsync({ id: board.id, name: editName.trim() });
+      setIsEditingName(false);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleSaveDescription = async () => {
+    if (!board) return;
+    try {
+      await updateBoard.mutateAsync({ id: board.id, description: editDescription.trim() || null });
+      setIsEditingDescription(false);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleCancelName = () => {
+    setEditName(board?.name || "");
+    setIsEditingName(false);
+  };
+
+  const handleCancelDescription = () => {
+    setEditDescription(board?.description || "");
+    setIsEditingDescription(false);
+  };
 
   const handleDeleteBoard = async () => {
     if (!board) return;
@@ -357,16 +404,90 @@ export default function BoardDetail() {
       />
 
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 flex-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1 space-y-2">
+          {/* Editable Name */}
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight truncate">{board.name}</h1>
+            {isEditingName && canManage ? (
+              <div className="flex items-center gap-2 flex-1 max-w-md">
+                <Input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="text-xl font-bold"
+                  placeholder="Nome do quadro"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSaveName();
+                    if (e.key === "Escape") handleCancelName();
+                  }}
+                />
+                <Button size="icon" variant="ghost" onClick={handleSaveName} disabled={!editName.trim() || updateBoard.isPending}>
+                  {updateBoard.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4 text-green-600" />}
+                </Button>
+                <Button size="icon" variant="ghost" onClick={handleCancelName}>
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 group">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight truncate">{board.name}</h1>
+                {canManage && (
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => setIsEditingName(true)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            )}
             {board.is_default && (
               <Badge variant="secondary" className="text-xs shrink-0">Padrão</Badge>
             )}
           </div>
-          {board.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">{board.description}</p>
+
+          {/* Editable Description */}
+          {isEditingDescription && canManage ? (
+            <div className="flex items-start gap-2 max-w-lg">
+              <Textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                className="text-sm min-h-[60px]"
+                placeholder="Descrição do quadro (opcional)"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") handleCancelDescription();
+                }}
+              />
+              <div className="flex flex-col gap-1">
+                <Button size="icon" variant="ghost" onClick={handleSaveDescription} disabled={updateBoard.isPending}>
+                  {updateBoard.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4 text-green-600" />}
+                </Button>
+                <Button size="icon" variant="ghost" onClick={handleCancelDescription}>
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 group">
+              {board.description ? (
+                <p className="text-sm text-muted-foreground line-clamp-2">{board.description}</p>
+              ) : canManage ? (
+                <p className="text-sm text-muted-foreground/60 italic">Clique para adicionar descrição</p>
+              ) : null}
+              {canManage && (
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  onClick={() => setIsEditingDescription(true)}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
           )}
         </div>
         
