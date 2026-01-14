@@ -195,56 +195,93 @@ export function AppSidebar() {
                         <Users className="h-4 w-4 text-primary" />
                       </SidebarMenuButton>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent 
+<DropdownMenuContent 
                       side="top" 
                       align="start" 
                       sideOffset={8} 
-                      className="w-52 p-2 animate-slide-up-fade"
+                      className="w-56 rounded-xl shadow-lg border bg-popover/95 backdrop-blur-sm animate-slide-up-fade p-1.5"
                     >
-                      <div className="flex items-center gap-2 px-2 py-2 mb-1">
-                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <Users className="h-4 w-4 text-primary" />
+                      <div className="flex items-center gap-3 p-3 mb-1">
+                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center ring-2 ring-primary/20 shadow-sm">
+                          <Users className="h-5 w-5 text-primary" />
                         </div>
-                        <span className="text-sm font-semibold text-foreground">
-                          Equipe
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-semibold text-foreground">Equipe</span>
+                          <span className="text-xs text-muted-foreground">Gerenciamento</span>
+                        </div>
                       </div>
-                      <DropdownMenuSeparator />
+                      <DropdownMenuSeparator className="my-1.5" />
                       {isTeamAdminOrModerator && (
-                        <DropdownMenuItem asChild>
-                          <NavLink to="/team-demands" onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 cursor-pointer" activeClassName="bg-muted text-primary font-medium">
-                            <Layers className="h-4 w-4" />
-                            Visão Geral
+                        <DropdownMenuItem asChild className="py-0 focus:bg-transparent">
+                          <NavLink 
+                            to="/team-demands" 
+                            onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
+                            className="flex items-center gap-2.5 cursor-pointer py-2.5 px-2 rounded-lg transition-all duration-200 hover:bg-muted/80 w-full" 
+                            activeClassName="bg-muted text-primary font-medium"
+                          >
+                            <div className="h-7 w-7 rounded-md bg-muted/50 flex items-center justify-center shrink-0">
+                              <Layers className="h-4 w-4" />
+                            </div>
+                            <span>Visão Geral</span>
                           </NavLink>
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem asChild>
-                        <NavLink to="/boards" onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 cursor-pointer" activeClassName="bg-muted text-primary font-medium">
-                          <LayoutGrid className="h-4 w-4" />
-                          Meus Quadros
+                      <DropdownMenuItem asChild className="py-0 focus:bg-transparent">
+                        <NavLink 
+                          to="/boards" 
+                          onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
+                          className="flex items-center gap-2.5 cursor-pointer py-2.5 px-2 rounded-lg transition-all duration-200 hover:bg-muted/80 w-full" 
+                          activeClassName="bg-muted text-primary font-medium"
+                        >
+                          <div className="h-7 w-7 rounded-md bg-muted/50 flex items-center justify-center shrink-0">
+                            <LayoutGrid className="h-4 w-4" />
+                          </div>
+                          <span>Meus Quadros</span>
                         </NavLink>
                       </DropdownMenuItem>
                       {selectedTeamId && (
-                        <DropdownMenuItem asChild>
-                          <NavLink to={`/teams/${selectedTeamId}`} end onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 cursor-pointer" activeClassName="bg-muted text-primary font-medium">
-                            <UsersRound className="h-4 w-4" />
-                            Participantes
+                        <DropdownMenuItem asChild className="py-0 focus:bg-transparent">
+                          <NavLink 
+                            to={`/teams/${selectedTeamId}`} 
+                            end 
+                            onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
+                            className="flex items-center gap-2.5 cursor-pointer py-2.5 px-2 rounded-lg transition-all duration-200 hover:bg-muted/80 w-full" 
+                            activeClassName="bg-muted text-primary font-medium"
+                          >
+                            <div className="h-7 w-7 rounded-md bg-muted/50 flex items-center justify-center shrink-0">
+                              <UsersRound className="h-4 w-4" />
+                            </div>
+                            <span>Participantes</span>
                           </NavLink>
                         </DropdownMenuItem>
                       )}
                       {isTeamAdminOrModerator && selectedTeamId && (
-                        <DropdownMenuItem asChild>
-                          <NavLink to={`/teams/${selectedTeamId}/services`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 cursor-pointer" activeClassName="bg-muted text-primary font-medium">
-                            <Settings className="h-4 w-4" />
-                            Serviços
+                        <DropdownMenuItem asChild className="py-0 focus:bg-transparent">
+                          <NavLink 
+                            to={`/teams/${selectedTeamId}/services`} 
+                            onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
+                            className="flex items-center gap-2.5 cursor-pointer py-2.5 px-2 rounded-lg transition-all duration-200 hover:bg-muted/80 w-full" 
+                            activeClassName="bg-muted text-primary font-medium"
+                          >
+                            <div className="h-7 w-7 rounded-md bg-muted/50 flex items-center justify-center shrink-0">
+                              <Settings className="h-4 w-4" />
+                            </div>
+                            <span>Serviços</span>
                           </NavLink>
                         </DropdownMenuItem>
                       )}
                       {isTeamAdminOrModerator && selectedTeamId && (
-                        <DropdownMenuItem asChild>
-                          <NavLink to={`/teams/${selectedTeamId}/requests`} onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} className="flex items-center gap-2 cursor-pointer" activeClassName="bg-muted text-primary font-medium">
-                            <UserPlus className="h-4 w-4" />
-                            Solicitações
+                        <DropdownMenuItem asChild className="py-0 focus:bg-transparent">
+                          <NavLink 
+                            to={`/teams/${selectedTeamId}/requests`} 
+                            onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
+                            className="flex items-center gap-2.5 cursor-pointer py-2.5 px-2 rounded-lg transition-all duration-200 hover:bg-muted/80 w-full" 
+                            activeClassName="bg-muted text-primary font-medium"
+                          >
+                            <div className="h-7 w-7 rounded-md bg-muted/50 flex items-center justify-center shrink-0">
+                              <UserPlus className="h-4 w-4" />
+                            </div>
+                            <span>Solicitações</span>
                             {typeof pendingJoinRequests === "number" && pendingJoinRequests > 0 && (
                               <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs">
                                 {pendingJoinRequests}
