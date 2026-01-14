@@ -95,6 +95,39 @@ export default {
           "0%, 100%": { boxShadow: "0 0 0 0 hsl(33 95% 49% / 0.4)" },
           "50%": { boxShadow: "0 0 0 8px hsl(33 95% 49% / 0)" },
         },
+        "badge-unlock": {
+          "0%": { 
+            transform: "scale(0) rotate(-180deg)", 
+            opacity: "0" 
+          },
+          "50%": { 
+            transform: "scale(1.2) rotate(10deg)", 
+            opacity: "1" 
+          },
+          "75%": { 
+            transform: "scale(0.9) rotate(-5deg)" 
+          },
+          "100%": { 
+            transform: "scale(1) rotate(0deg)", 
+            opacity: "1" 
+          },
+        },
+        "badge-shine": {
+          "0%": { 
+            backgroundPosition: "-200% center" 
+          },
+          "100%": { 
+            backgroundPosition: "200% center" 
+          },
+        },
+        "badge-pulse": {
+          "0%, 100%": { 
+            boxShadow: "0 0 0 0 var(--badge-color, hsl(var(--primary) / 0.5))" 
+          },
+          "50%": { 
+            boxShadow: "0 0 20px 5px var(--badge-color, hsl(var(--primary) / 0))" 
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -102,6 +135,9 @@ export default {
         "fade-in": "fade-in 0.3s ease-out",
         "slide-in": "slide-in 0.3s ease-out",
         "pulse-glow": "pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "badge-unlock": "badge-unlock 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
+        "badge-shine": "badge-shine 2s ease-in-out infinite",
+        "badge-pulse": "badge-pulse 2s ease-in-out infinite",
       },
       boxShadow: {
         'sm': 'var(--shadow-sm)',
