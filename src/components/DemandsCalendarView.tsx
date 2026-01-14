@@ -489,20 +489,21 @@ export function DemandsCalendarView({
 
       {/* Side Sheet for more demands */}
       <Sheet open={!!selectedDaySheet} onOpenChange={(open) => !open && setSelectedDaySheet(null)}>
-        <SheetContent side="right" className="w-full sm:w-[400px] md:w-[540px] p-4 sm:p-6">
-          <SheetHeader className="pb-2">
-            <SheetTitle className="capitalize text-base sm:text-lg">
-              {selectedDaySheet && format(selectedDaySheet.date, isMobile ? "d MMM" : "EEEE, d 'de' MMMM", { locale: ptBR })}
-            </SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm text-muted-foreground">
+        <SheetContent side="right" className="w-full sm:w-[400px] md:w-[480px] p-0 flex flex-col">
+          {/* Header */}
+          <div className="p-3 sm:p-4 border-b border-border bg-muted/30 shrink-0">
+            <SheetHeader className="mb-0">
+              <SheetTitle className="capitalize text-sm sm:text-lg font-semibold">
+                {selectedDaySheet && format(selectedDaySheet.date, isMobile ? "EEE, d 'de' MMM" : "EEEE, d 'de' MMMM", { locale: ptBR })}
+              </SheetTitle>
+            </SheetHeader>
+            <div className="flex items-center justify-between mt-2 sm:mt-3 gap-2">
+              <span className="text-xs sm:text-sm text-muted-foreground font-medium">
                 {selectedDaySheet?.demands.length} {selectedDaySheet?.demands.length === 1 ? "demanda" : "demandas"}
               </span>
               {selectedDaySheet && !isBefore(selectedDaySheet.date, startOfDay(new Date())) && (
                 <Button
-                  variant="outline"
+                  variant="default"
                   size="sm"
                   onClick={() => {
                     if (selectedDaySheet) {
@@ -510,36 +511,73 @@ export function DemandsCalendarView({
                       setSelectedDaySheet(null);
                     }
                   }}
-                  className="gap-2"
+                  className="gap-1.5 h-8 px-3 text-xs sm:text-sm"
                 >
-                  <Plus className="h-4 w-4" />
-                  {isRequester ? "Nova solicitação" : "Nova demanda"}
+                  <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">{isRequester ? "Nova solicitação" : "Nova demanda"}</span>
+                  <span className="sm:hidden">Nova</span>
                 </Button>
               )}
             </div>
-            <ScrollArea className="h-[calc(100vh-180px)]">
-              <div className="space-y-2 pr-4">
-                {selectedDaySheet?.demands.map((demand) => (
-                  <div 
-                    key={demand.id} 
-                    className="p-3 border rounded-lg hover:bg-muted/30 transition-colors cursor-pointer"
-                    onClick={() => {
-                      onDemandClick(demand.id);
-                      setSelectedDaySheet(null);
-                    }}
-                  >
-                    <CalendarDemandCard
-                      demand={demand}
-                      onClick={() => {
-                        onDemandClick(demand.id);
-                        setSelectedDaySheet(null);
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
           </div>
+
+          {/* Demands List */}
+          <ScrollArea className="flex-1 min-h-0">
+            <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
+              {selectedDaySheet?.demands.map((demand) => (
+                <div 
+                  key={demand.id} 
+                  className="p-2.5 sm:p-3 border border-border/60 rounded-lg hover:bg-muted/40 hover:border-border transition-all cursor-pointer bg-card shadow-sm"
+                  onClick={() => {
+                    onDemandClick(demand.id);
+                    setSelectedDaySheet(null);
+                  }}
+                >
+                  <div className="flex items-start gap-2 sm:gap-3">
+                    {/* Status indicator */}
+                    <div 
+                      className="w-1 sm:w-1.5 h-full min-h-[40px] rounded-full shrink-0"
+                      style={{ backgroundColor: demand.demand_statuses?.color || '#94a3b8' }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-xs sm:text-sm text-foreground line-clamp-2 mb-1">
+                        {demand.title}
+                      </p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {demand.demand_statuses && (
+                          <span 
+                            className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium"
+                            style={{
+                              backgroundColor: `${demand.demand_statuses.color}15`,
+                              color: demand.demand_statuses.color,
+                            }}
+                          >
+                            {demand.demand_statuses.name}
+                          </span>
+                        )}
+                        {demand.priority && (
+                          <span className={cn(
+                            "text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full font-medium",
+                            demand.priority === "alta" && "bg-destructive/10 text-destructive",
+                            demand.priority === "média" && "bg-warning/10 text-warning",
+                            demand.priority === "baixa" && "bg-success/10 text-success"
+                          )}>
+                            {demand.priority}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {selectedDaySheet?.demands.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+                  <p className="text-sm">Nenhuma demanda para este dia</p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
         </SheetContent>
       </Sheet>
     </div>
