@@ -259,97 +259,110 @@ export default function Demands() {
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
-      <div className="flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-foreground">
             {t("demands.title")}
           </h1>
-          <p className="text-sm md:text-base text-muted-foreground">
+          <p className="text-xs sm:text-sm md:text-base text-muted-foreground">
             {isReadOnly ? t("common.view") : t("common.actions")}
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <div className="relative flex-1 sm:flex-none">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t("common.search")}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-full sm:w-[200px] md:w-[250px]"
-            />
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <DemandFilters 
-              boardId={selectedBoardId} 
-              filters={filters} 
-              onChange={setFilters} 
-            />
-            {/* Toggle hide/show delivered */}
-            {deliveredCount > 0 && (
-              <Button 
-                variant={hideDelivered ? "default" : "outline"}
-                size="sm"
-                onClick={() => setHideDelivered(!hideDelivered)}
-                className="gap-2"
-              >
-                {hideDelivered ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-                <span className="hidden sm:inline">
-                  {hideDelivered ? "Exibir Entregues" : "Ocultar Entregues"}
-                </span>
-                <span className="bg-primary-foreground text-primary text-xs px-1.5 py-0.5 rounded-full">
-                  {deliveredCount}
-                </span>
-              </Button>
-            )}
-            {/* View toggle - calendar visible on all devices, table/grid hidden on mobile/tablet */}
-            <div className="flex items-center border border-border rounded-md">
-              <Button
-                variant={viewMode === "table" ? "secondary" : "ghost"}
-                size="icon"
-                className={`hidden lg:flex ${viewMode === "table" ? "rounded-r-none bg-primary text-primary-foreground" : "rounded-r-none"}`}
-                onClick={() => setViewMode("table")}
-                title={t("demands.tableView")}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "grid" ? "secondary" : "ghost"}
-                size="icon"
-                className={`hidden lg:flex rounded-none ${viewMode === "grid" ? "bg-primary text-primary-foreground" : ""}`}
-                onClick={() => setViewMode("grid")}
-                title={t("demands.gridView")}
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "calendar" ? "secondary" : "ghost"}
-                size="icon"
-                className={viewMode === "calendar" ? "lg:rounded-l-none bg-primary text-primary-foreground" : "lg:rounded-l-none"}
-                onClick={() => setViewMode("calendar")}
-                title="Visualização em calendário"
-              >
-                <CalendarDays className="h-4 w-4" />
-              </Button>
-            </div>
-            <Button onClick={() => navigate("/demands/create")} className="shadow-primary flex-1 sm:flex-none">
-              <Plus className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">{t("demands.newDemand")}</span>
-              <span className="sm:hidden">{t("demands.newDemand").split(" ")[0]}</span>
+
+        {/* Search Bar - Full width on mobile */}
+        <div className="relative w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={t("common.search")}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 w-full"
+          />
+        </div>
+
+        {/* Filters and Actions Row */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Filters Button */}
+          <DemandFilters 
+            boardId={selectedBoardId} 
+            filters={filters} 
+            onChange={setFilters} 
+          />
+
+          {/* Toggle hide/show delivered */}
+          {deliveredCount > 0 && (
+            <Button 
+              variant={hideDelivered ? "default" : "outline"}
+              size="sm"
+              onClick={() => setHideDelivered(!hideDelivered)}
+              className="gap-1.5 h-9 px-2 sm:px-3"
+            >
+              {hideDelivered ? (
+                <EyeOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              ) : (
+                <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              )}
+              <span className="hidden md:inline text-xs sm:text-sm">
+                {hideDelivered ? "Exibir Entregues" : "Ocultar Entregues"}
+              </span>
+              <span className="bg-primary-foreground text-primary text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded-full font-medium">
+                {deliveredCount}
+              </span>
+            </Button>
+          )}
+
+          {/* View toggle */}
+          <div className="flex items-center border border-border rounded-md h-9 shrink-0">
+            <Button
+              variant={viewMode === "table" ? "secondary" : "ghost"}
+              size="icon"
+              className={`hidden lg:flex h-8 w-8 ${viewMode === "table" ? "rounded-r-none bg-primary text-primary-foreground" : "rounded-r-none"}`}
+              onClick={() => setViewMode("table")}
+              title={t("demands.tableView")}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "grid" ? "secondary" : "ghost"}
+              size="icon"
+              className={`hidden lg:flex h-8 w-8 rounded-none ${viewMode === "grid" ? "bg-primary text-primary-foreground" : ""}`}
+              onClick={() => setViewMode("grid")}
+              title={t("demands.gridView")}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "calendar" ? "secondary" : "ghost"}
+              size="icon"
+              className={`h-8 w-8 ${viewMode === "calendar" ? "lg:rounded-l-none bg-primary text-primary-foreground" : "lg:rounded-l-none"}`}
+              onClick={() => setViewMode("calendar")}
+              title="Visualização em calendário"
+            >
+              <CalendarDays className="h-4 w-4" />
             </Button>
           </div>
+
+          {/* Create Button - Pushes to end on larger screens */}
+          <Button 
+            onClick={() => navigate("/demands/create")} 
+            className="shadow-primary h-9 px-3 ml-auto"
+            size="sm"
+          >
+            <Plus className="h-4 w-4 sm:mr-1.5" />
+            <span className="hidden sm:inline text-sm">{t("demands.newDemand")}</span>
+          </Button>
         </div>
       </div>
 
-      {/* Status filter tabs */}
-      <div className="flex items-center gap-3 overflow-x-auto pb-2 -mb-2">
-        <StatusFilterTabs
-          value={filters.status}
-          onChange={(status) => setFilters({ ...filters, status })}
-        />
+      {/* Status filter tabs - Scrollable horizontally */}
+      <div className="w-full overflow-x-auto -mx-1 px-1">
+        <div className="min-w-max pb-1">
+          <StatusFilterTabs
+            value={filters.status}
+            onChange={(status) => setFilters({ ...filters, status })}
+          />
+        </div>
       </div>
 
       {!selectedBoardId ? (
