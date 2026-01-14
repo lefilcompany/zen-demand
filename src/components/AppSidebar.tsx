@@ -208,20 +208,20 @@ export function AppSidebar() {
                       )}
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent 
+<DropdownMenuContent 
                     side="top" 
                     align="start" 
                     sideOffset={8} 
-                    className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl shadow-xl border bg-popover/98 backdrop-blur-md animate-slide-up-fade p-2"
+                    className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl shadow-xl border border-border bg-white dark:bg-zinc-900 backdrop-blur-md animate-slide-up-fade p-2"
                   >
                     {/* Header with icon and info */}
-                    <div className="flex items-center gap-3 p-3 mb-1 rounded-lg bg-muted/30">
+                    <div className="flex items-center gap-3 p-3 mb-1 rounded-lg bg-gray-100 dark:bg-zinc-800">
                       <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/25 to-primary/10 flex items-center justify-center ring-2 ring-primary/20 shadow-sm">
                         <Users className="h-5 w-5 text-primary" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-foreground">Equipe</span>
-                        <span className="text-xs text-muted-foreground">Gerenciamento</span>
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white">Equipe</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Gerenciamento</span>
                       </div>
                     </div>
                     
@@ -233,11 +233,11 @@ export function AppSidebar() {
                         <NavLink 
                           to="/team-demands" 
                           onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
-                          className="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-lg transition-all duration-200 hover:bg-muted/60 w-full" 
-                          activeClassName="bg-muted text-primary font-medium"
+                          className="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-zinc-800 w-full" 
+                          activeClassName="bg-gray-100 dark:bg-zinc-800 text-primary font-medium"
                         >
-                          <Layers className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">Visão Geral</span>
+                          <Layers className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                          <span className="text-sm text-gray-700 dark:text-gray-200">Visão Geral</span>
                         </NavLink>
                       </DropdownMenuItem>
                     )}
@@ -246,11 +246,11 @@ export function AppSidebar() {
                       <NavLink 
                         to="/boards" 
                         onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
-                        className="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-lg transition-all duration-200 hover:bg-muted/60 w-full" 
-                        activeClassName="bg-muted text-primary font-medium"
+                        className="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-zinc-800 w-full" 
+                        activeClassName="bg-gray-100 dark:bg-zinc-800 text-primary font-medium"
                       >
-                        <LayoutGrid className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">Meus Quadros</span>
+                        <LayoutGrid className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                        <span className="text-sm text-gray-700 dark:text-gray-200">Meus Quadros</span>
                       </NavLink>
                     </DropdownMenuItem>
                     
@@ -260,11 +260,11 @@ export function AppSidebar() {
                           to={`/teams/${selectedTeamId}`} 
                           end 
                           onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
-                          className="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-lg transition-all duration-200 hover:bg-muted/60 w-full" 
-                          activeClassName="bg-muted text-primary font-medium"
+                          className="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-zinc-800 w-full" 
+                          activeClassName="bg-gray-100 dark:bg-zinc-800 text-primary font-medium"
                         >
-                          <UsersRound className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">Participantes</span>
+                          <UsersRound className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                          <span className="text-sm text-gray-700 dark:text-gray-200">Participantes</span>
                         </NavLink>
                       </DropdownMenuItem>
                     )}
@@ -274,11 +274,11 @@ export function AppSidebar() {
                         <NavLink 
                           to={`/teams/${selectedTeamId}/services`} 
                           onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
-                          className="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-lg transition-all duration-200 hover:bg-muted/60 w-full" 
-                          activeClassName="bg-muted text-primary font-medium"
+                          className="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-zinc-800 w-full" 
+                          activeClassName="bg-gray-100 dark:bg-zinc-800 text-primary font-medium"
                         >
-                          <Settings className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">Serviços</span>
+                          <Settings className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                          <span className="text-sm text-gray-700 dark:text-gray-200">Serviços</span>
                         </NavLink>
                       </DropdownMenuItem>
                     )}
@@ -288,11 +288,11 @@ export function AppSidebar() {
                         <NavLink 
                           to={`/teams/${selectedTeamId}/requests`} 
                           onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
-                          className="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-lg transition-all duration-200 hover:bg-muted/60 w-full" 
-                          activeClassName="bg-muted text-primary font-medium"
+                          className="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-zinc-800 w-full" 
+                          activeClassName="bg-gray-100 dark:bg-zinc-800 text-primary font-medium"
                         >
-                          <UserPlus className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">Solicitações</span>
+                          <UserPlus className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                          <span className="text-sm text-gray-700 dark:text-gray-200">Solicitações</span>
                           {typeof pendingJoinRequests === "number" && pendingJoinRequests > 0 && (
                             <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs">
                               {pendingJoinRequests}
