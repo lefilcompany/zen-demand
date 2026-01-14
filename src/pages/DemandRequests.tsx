@@ -280,7 +280,9 @@ export default function DemandRequests() {
         {request.status === "returned" && request.rejection_reason && (
           <div className="mt-3 p-3 bg-orange-500/10 border border-orange-500/20 rounded-md">
             <p className="text-sm font-medium text-orange-700 dark:text-orange-400 mb-1">Motivo da devolução:</p>
-            <p className="text-sm text-muted-foreground">{request.rejection_reason}</p>
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
+              <MentionText text={request.rejection_reason} />
+            </p>
           </div>
         )}
 
@@ -529,7 +531,7 @@ export default function DemandRequests() {
             {viewing?.status === "returned" && viewing?.rejection_reason && (
               <div className="p-3 bg-orange-500/10 border border-orange-500/20 rounded-md">
                 <p className="text-sm font-medium text-orange-700 dark:text-orange-400 mb-1">Motivo da devolução:</p>
-                <div className="text-sm">
+                <div className="text-sm whitespace-pre-wrap break-words">
                   <MentionText text={viewing.rejection_reason} />
                 </div>
               </div>
