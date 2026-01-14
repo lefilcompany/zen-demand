@@ -24,8 +24,9 @@ import { DemandEditForm } from "@/components/DemandEditForm";
 import { AttachmentUploader } from "@/components/AttachmentUploader";
 import { AttachmentCounter } from "@/components/AttachmentCounter";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter, MoreHorizontal, Trash2, AlertTriangle, LayoutGrid, List, ChevronDown, Kanban, CalendarDays, LucideIcon } from "lucide-react";
+import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter, MoreHorizontal, Trash2, AlertTriangle, LayoutGrid, List, ChevronDown, Kanban, CalendarDays, LucideIcon, Share2 } from "lucide-react";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import { ShareDemandButton } from "@/components/ShareDemandButton";
 import { Link } from "react-router-dom";
 import { UserTimeTrackingDisplay } from "@/components/UserTimeTrackingDisplay";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
@@ -676,6 +677,9 @@ export default function DemandDetail() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
+              {/* Share Button */}
+              <ShareDemandButton demandId={demand.id} />
+              
               {canRequestAdjustment && <Button variant="outline" size="sm" onClick={() => setIsAdjustmentDialogOpen(true)} className={cn("flex-1 sm:flex-none", role === 'requester' ? "border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950" : "border-blue-500/30 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950")}>
                   <Wrench className="mr-2 h-4 w-4" />
                   Solicitar Ajuste
