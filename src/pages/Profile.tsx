@@ -173,7 +173,7 @@ export default function Profile() {
       <Card className="overflow-hidden shadow-lg">
         <div 
           className="relative group cursor-pointer w-full"
-          style={{ aspectRatio: "16 / 5" }}
+          style={{ aspectRatio: "4 / 1" }}
           onClick={handleBannerClick}
         >
           {(profile as any)?.banner_url ? (
@@ -505,7 +505,7 @@ export default function Profile() {
           open={cropDialogOpen}
           onOpenChange={setCropDialogOpen}
           imageSrc={selectedImage}
-          aspectRatio={16 / 5}
+          aspectRatio={4 / 1}
           onCropComplete={handleCropComplete}
           userAvatarUrl={profile?.avatar_url || undefined}
           userName={profile?.full_name || "Usuário"}

@@ -297,7 +297,7 @@ export default function UserProfile() {
       <Card className="overflow-hidden shadow-lg">
         <div 
           className="relative w-full"
-          style={{ aspectRatio: "16 / 5" }}
+          style={{ aspectRatio: "4 / 1" }}
         >
           {(profile as any)?.banner_url ? (
             <>
