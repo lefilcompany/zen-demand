@@ -34,45 +34,51 @@ export function StatusFilterTabs({ value, onChange }: StatusFilterTabsProps) {
   }, [statuses]);
 
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
+    <div className="flex items-center gap-1 sm:gap-1.5">
       <button
         onClick={() => onChange(null)}
         className={cn(
-          "px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+          "px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-medium transition-all whitespace-nowrap shrink-0",
           "border border-border hover:bg-accent",
           !value && "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
         )}
       >
         Todos
       </button>
-      {orderedStatuses.map((status) => (
-        <button
-          key={status.id}
-          onClick={() => onChange(status.id)}
-          className={cn(
-            "px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5",
-            "border hover:opacity-80",
-            value === status.id
-              ? "text-white"
-              : "bg-background/50 text-foreground"
-          )}
-          style={{
-            backgroundColor: value === status.id ? status.color : undefined,
-            borderColor: status.color,
-          }}
-        >
-          <span
+      {orderedStatuses.map((status) => {
+        // Abreviar nomes longos no mobile
+        const shortName = status.name === "Aprovação do Cliente" ? "Aprovação" : status.name;
+        
+        return (
+          <button
+            key={status.id}
+            onClick={() => onChange(status.id)}
             className={cn(
-              "w-2 h-2 rounded-full",
-              value === status.id && "bg-white/80"
+              "px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-medium transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap shrink-0",
+              "border hover:opacity-80",
+              value === status.id
+                ? "text-white"
+                : "bg-background/50 text-foreground"
             )}
             style={{
-              backgroundColor: value !== status.id ? status.color : undefined,
+              backgroundColor: value === status.id ? status.color : undefined,
+              borderColor: status.color,
             }}
-          />
-          {status.name}
-        </button>
-      ))}
+          >
+            <span
+              className={cn(
+                "w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0",
+                value === status.id && "bg-white/80"
+              )}
+              style={{
+                backgroundColor: value !== status.id ? status.color : undefined,
+              }}
+            />
+            <span className="hidden sm:inline">{status.name}</span>
+            <span className="sm:hidden">{shortName}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
