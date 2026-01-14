@@ -186,19 +186,25 @@ export function AppSidebar() {
 {/* Equipe - Dropdown style like reference image */}
               <SidebarMenuItem data-tour="teams-link">
                 <DropdownMenu open={popoverOpen} onOpenChange={setPopoverOpen}>
-                  <DropdownMenuTrigger asChild>
+<DropdownMenuTrigger asChild>
                     <button 
                       className={`
-                        w-full flex items-center gap-3 p-2.5 rounded-xl
-                        border border-sidebar-border/50 
-                        hover:border-primary/30 hover:bg-sidebar-accent/50
-                        transition-all duration-200
+                        flex items-center transition-all duration-200
                         focus:outline-none focus:ring-2 focus:ring-primary/20
-                        ${popoverOpen ? 'bg-sidebar-accent/50 border-primary/30' : ''}
+                        ${isCollapsed && !isMobile 
+                          ? `w-10 h-10 justify-center rounded-full border border-sidebar-border/50 hover:border-primary/40 hover:bg-primary/10 ${popoverOpen ? 'bg-primary/15 border-primary/40 ring-2 ring-primary/20' : ''}`
+                          : `w-full gap-3 p-2.5 rounded-xl border border-sidebar-border/50 hover:border-primary/30 hover:bg-sidebar-accent/50 ${popoverOpen ? 'bg-sidebar-accent/50 border-primary/30' : ''}`
+                        }
                       `}
                     >
-                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center ring-1 ring-primary/20">
-                        <Users className="h-4 w-4 text-primary" />
+                      <div className={`
+                        flex items-center justify-center bg-gradient-to-br from-primary/25 to-primary/10 
+                        ${isCollapsed && !isMobile 
+                          ? 'h-7 w-7 rounded-full' 
+                          : 'h-8 w-8 rounded-full ring-1 ring-primary/20'
+                        }
+                      `}>
+                        <Users className={`text-primary ${isCollapsed && !isMobile ? 'h-3.5 w-3.5' : 'h-4 w-4'}`} />
                       </div>
                       {(!isCollapsed || isMobile) && (
                         <>
@@ -208,11 +214,11 @@ export function AppSidebar() {
                       )}
                     </button>
                   </DropdownMenuTrigger>
-<DropdownMenuContent 
+                  <DropdownMenuContent 
                     side="top" 
-                    align="start" 
+                    align={isCollapsed && !isMobile ? "center" : "start"}
                     sideOffset={8} 
-                    className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl shadow-xl border border-border bg-white dark:bg-zinc-900 backdrop-blur-md animate-slide-up-fade p-2"
+                    className="min-w-56 rounded-xl shadow-xl border border-border bg-white dark:bg-zinc-900 backdrop-blur-md animate-slide-up-fade p-2"
                   >
                     {/* Header with icon and info */}
                     <div className="flex items-center gap-3 p-3 mb-1 rounded-lg bg-gray-100 dark:bg-zinc-800">
