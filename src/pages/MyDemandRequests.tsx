@@ -12,7 +12,7 @@ import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor, RichTextDisplay } from "@/components/ui/rich-text-editor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { RequestAttachmentUploader } from "@/components/RequestAttachmentUploader";
@@ -23,7 +23,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { LinkifiedText } from "@/components/LinkifiedText";
+
 
 const statusConfig = {
   pending: { label: "Pendente", icon: Clock, color: "bg-yellow-500/20 text-yellow-700 border-yellow-500/30" },
@@ -264,7 +264,7 @@ export default function MyDemandRequests() {
                 </CardHeader>
                 <CardContent>
                   {request.description && (
-                    <LinkifiedText text={request.description} className="text-sm text-muted-foreground mb-3 block" />
+                    <RichTextDisplay content={request.description} className="text-sm text-muted-foreground mb-3" />
                   )}
 
                   <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -284,7 +284,7 @@ export default function MyDemandRequests() {
                       <p className="text-sm font-medium mb-1">
                         {request.status === "returned" ? "Motivo da devolução:" : "Motivo da rejeição:"}
                       </p>
-                      <LinkifiedText text={request.rejection_reason || ""} className="text-sm text-muted-foreground block" />
+                      <RichTextDisplay content={request.rejection_reason || ""} className="text-sm text-muted-foreground" />
                       {request.responder && (
                         <p className="text-xs text-muted-foreground mt-2">
                           Por{" "}
@@ -382,10 +382,11 @@ export default function MyDemandRequests() {
             </div>
             <div className="space-y-2">
               <Label>Descrição</Label>
-              <Textarea
+              <RichTextEditor
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
+                onChange={setDescription}
+                minHeight="100px"
+                placeholder="Descreva sua solicitação..."
               />
             </div>
             <div className="grid gap-4 md:grid-cols-2">

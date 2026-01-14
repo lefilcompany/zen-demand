@@ -2,10 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor, RichTextDisplay } from "@/components/ui/rich-text-editor";
 import { MentionInput } from "@/components/MentionInput";
 import { MentionText } from "@/components/MentionText";
-import { RichTextDisplay } from "@/components/ui/rich-text-editor";
 import { LinkifiedText } from "@/components/LinkifiedText";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -698,13 +697,15 @@ export default function DemandDetail() {
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
-                        <label htmlFor="adjustment-reason" className="text-sm font-medium">
+                        <label className="text-sm font-medium">
                           Motivo do ajuste <span className="text-destructive">*</span>
                         </label>
-                        <Textarea id="adjustment-reason" placeholder="Descreva o que precisa ser corrigido ou alterado..." value={adjustmentReason} onChange={e => setAdjustmentReason(e.target.value)} rows={4} maxLength={1000} className="resize-none" />
-                        <p className="text-xs text-muted-foreground text-right">
-                          {adjustmentReason.length}/1000
-                        </p>
+                        <RichTextEditor 
+                          value={adjustmentReason} 
+                          onChange={setAdjustmentReason} 
+                          minHeight="120px"
+                          placeholder="Descreva o que precisa ser corrigido ou alterado..."
+                        />
                       </div>
                     </div>
                     <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
@@ -961,7 +962,12 @@ export default function DemandDetail() {
                           </DropdownMenu>}
                       </div>
                       {isEditing ? <div className="space-y-2">
-                          <Textarea value={editingInteractionContent} onChange={e => setEditingInteractionContent(e.target.value)} rows={2} className="text-xs md:text-sm" />
+                          <RichTextEditor 
+                            value={editingInteractionContent} 
+                            onChange={setEditingInteractionContent} 
+                            minHeight="80px" 
+                            placeholder="Edite seu comentário..."
+                          />
                           <div className="flex gap-2">
                             <Button size="sm" onClick={handleSaveInteraction} disabled={updateInteraction.isPending || !editingInteractionContent.trim()}>
                               {updateInteraction.isPending ? "Salvando..." : "Salvar"}

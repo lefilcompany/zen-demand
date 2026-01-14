@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
   Dialog,
   DialogContent,
@@ -250,22 +250,15 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <label htmlFor="kanban-adjustment-reason" className="text-sm font-medium">
+            <label className="text-sm font-medium">
               Motivo do ajuste <span className="text-destructive">*</span>
             </label>
-            <Textarea
-              id="kanban-adjustment-reason"
-              placeholder="Descreva o que precisa ser corrigido ou alterado..."
+            <RichTextEditor
               value={reason}
-              onChange={handleReasonChange}
-              rows={4}
-              maxLength={1000}
-              className="resize-none"
-              autoFocus
+              onChange={setReason}
+              minHeight="120px"
+              placeholder="Descreva o que precisa ser corrigido ou alterado..."
             />
-            <p className="text-xs text-muted-foreground text-right">
-              {reason.length}/1000
-            </p>
           </div>
           
           <div className="space-y-2">

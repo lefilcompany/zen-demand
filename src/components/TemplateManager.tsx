@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
   Dialog,
   DialogContent,
@@ -143,11 +143,11 @@ export function TemplateManager({ teamId }: TemplateManagerProps) {
                 value={titleTemplate}
                 onChange={(e) => setTitleTemplate(e.target.value)}
               />
-              <Textarea
-                placeholder="Descrição padrão (opcional)"
+              <RichTextEditor
                 value={descriptionTemplate}
-                onChange={(e) => setDescriptionTemplate(e.target.value)}
-                rows={3}
+                onChange={setDescriptionTemplate}
+                minHeight="100px"
+                placeholder="Descrição padrão (opcional)"
               />
               <div className="grid grid-cols-2 gap-2">
                 <Select value={priority} onValueChange={setPriority}>
