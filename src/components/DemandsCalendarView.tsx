@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { CalendarDemandCard } from "@/components/CalendarDemandCard";
-import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   format,
   startOfMonth,
@@ -53,8 +54,10 @@ interface DemandsCalendarViewProps {
   isRequester?: boolean;
 }
 
-const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const WEEKDAYS = ["D", "S", "T", "Q", "Q", "S", "S"];
+const WEEKDAYS_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const WEEKDAYS_FULL = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+const MAX_VISIBLE_DEMANDS_MONTH_MOBILE = 1;
 const MAX_VISIBLE_DEMANDS_MONTH = 3;
 const MAX_VISIBLE_DEMANDS_WEEK = 5;
 
@@ -71,6 +74,7 @@ export function DemandsCalendarView({
   onDayClick,
   isRequester = false,
 }: DemandsCalendarViewProps) {
+  const isMobile = useIsMobile();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<CalendarViewMode>("month");
   const [selectedDaySheet, setSelectedDaySheet] = useState<SelectedDaySheet | null>(null);
@@ -131,15 +135,24 @@ export function DemandsCalendarView({
   // Get header title based on view mode
   const getHeaderTitle = () => {
     if (viewMode === "day") {
+      if (isMobile) {
+        return format(currentDate, "d MMM yyyy", { locale: ptBR });
+      }
       return format(currentDate, "EEEE, d 'de' MMMM yyyy", { locale: ptBR });
     } else if (viewMode === "week") {
       const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
       const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
+      if (isMobile) {
+        return `${format(weekStart, "d", { locale: ptBR })} - ${format(weekEnd, "d MMM", { locale: ptBR })}`;
+      }
       if (weekStart.getMonth() === weekEnd.getMonth()) {
         return `${format(weekStart, "d", { locale: ptBR })} - ${format(weekEnd, "d 'de' MMMM yyyy", { locale: ptBR })}`;
       }
       return `${format(weekStart, "d MMM", { locale: ptBR })} - ${format(weekEnd, "d MMM yyyy", { locale: ptBR })}`;
     } else {
+      if (isMobile) {
+        return format(currentDate, "MMM yyyy", { locale: ptBR });
+      }
       return format(currentDate, "MMMM yyyy", { locale: ptBR });
     }
   };
@@ -206,232 +219,264 @@ export function DemandsCalendarView({
     const today = startOfDay(new Date());
 
     return (
-      <div className="grid grid-cols-7">
-        {/* Weekday Headers */}
-        {WEEKDAYS_FULL.map((day, index) => (
-          <div
-            key={day}
-            className="py-2 px-1 text-center text-xs font-medium text-muted-foreground border-b border-border"
-          >
-            <span className="hidden sm:inline">{day}</span>
-            <span className="sm:hidden">{WEEKDAYS[index]}</span>
-          </div>
-        ))}
+      <div className="overflow-x-auto">
+        <div className="min-w-[500px] sm:min-w-0">
+          <div className="grid grid-cols-7">
+            {/* Weekday Headers */}
+            {WEEKDAYS_FULL.map((day, index) => (
+              <div
+                key={day}
+                className="py-1.5 sm:py-2 px-0.5 sm:px-1 text-center text-[10px] sm:text-xs font-medium text-muted-foreground border-b border-border"
+              >
+                <span className="hidden md:inline">{day}</span>
+                <span className="hidden sm:inline md:hidden">{WEEKDAYS_SHORT[index]}</span>
+                <span className="sm:hidden">{WEEKDAYS[index]}</span>
+              </div>
+            ))}
 
-        {/* Week Days */}
-        {calendarDays.map((day) => {
-          const dateKey = format(day, "yyyy-MM-dd");
-          const dayDemands = demandsByDate[dateKey] || [];
-          const isTodayDate = isToday(day);
-          const isPastDay = isBefore(day, today);
-          const hasMoreDemands = dayDemands.length > MAX_VISIBLE_DEMANDS_WEEK;
-          const visibleDemands = dayDemands.slice(0, MAX_VISIBLE_DEMANDS_WEEK);
-          const hiddenCount = dayDemands.length - MAX_VISIBLE_DEMANDS_WEEK;
+            {/* Week Days */}
+            {calendarDays.map((day) => {
+              const dateKey = format(day, "yyyy-MM-dd");
+              const dayDemands = demandsByDate[dateKey] || [];
+              const isTodayDate = isToday(day);
+              const isPastDay = isBefore(day, today);
+              const maxVisible = isMobile ? 2 : MAX_VISIBLE_DEMANDS_WEEK;
+              const hasMoreDemands = dayDemands.length > maxVisible;
+              const visibleDemands = dayDemands.slice(0, maxVisible);
+              const hiddenCount = dayDemands.length - maxVisible;
 
-          return (
-            <div
-              key={dateKey}
-              className={cn(
-                "min-h-[200px] border-b border-r border-border p-1 sm:p-2 transition-colors",
-                !isPastDay && "hover:bg-muted/30 cursor-pointer",
-                isPastDay && "bg-muted/10 opacity-70"
-              )}
-              onClick={() => !isPastDay && onDayClick(day)}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span
+              return (
+                <div
+                  key={dateKey}
                   className={cn(
-                    "text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full",
-                    isTodayDate && "bg-primary text-primary-foreground font-bold",
-                    isPastDay && "text-muted-foreground"
+                    "min-h-[120px] sm:min-h-[200px] border-b border-r border-border p-0.5 sm:p-2 transition-colors",
+                    !isPastDay && "hover:bg-muted/30 cursor-pointer",
+                    isPastDay && "bg-muted/10 opacity-70"
                   )}
+                  onClick={() => !isPastDay && onDayClick(day)}
                 >
-                  {format(day, "d")}
-                </span>
-                {dayDemands.length > 0 && (
-                  <span className="text-xs text-muted-foreground hidden sm:block">
-                    {dayDemands.length}
-                  </span>
-                )}
-              </div>
+                  <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+                    <span
+                      className={cn(
+                        "text-xs sm:text-sm font-medium w-5 h-5 sm:w-7 sm:h-7 flex items-center justify-center rounded-full",
+                        isTodayDate && "bg-primary text-primary-foreground font-bold",
+                        isPastDay && "text-muted-foreground"
+                      )}
+                    >
+                      {format(day, "d")}
+                    </span>
+                    {dayDemands.length > 0 && (
+                      <span className="text-[10px] sm:text-xs text-muted-foreground">
+                        {dayDemands.length}
+                      </span>
+                    )}
+                  </div>
 
-              <div className="space-y-1">
-                {visibleDemands.map((demand) => (
-                  <CalendarDemandCard
-                    key={demand.id}
-                    demand={demand}
-                    onClick={() => onDemandClick(demand.id)}
-                  />
-                ))}
+                  <div className="space-y-0.5 sm:space-y-1">
+                    {visibleDemands.map((demand) => (
+                      <CalendarDemandCard
+                        key={demand.id}
+                        demand={demand}
+                        onClick={() => onDemandClick(demand.id)}
+                        compact={isMobile}
+                      />
+                    ))}
 
-                {hasMoreDemands && (
-                  <button
-                    className="w-full text-xs text-primary hover:text-primary/80 font-medium py-1 hover:bg-primary/5 rounded transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedDaySheet({ date: day, demands: dayDemands });
-                    }}
-                  >
-                    +{hiddenCount} mais
-                  </button>
-                )}
-              </div>
-
-              {dayDemands.length === 0 && !isPastDay && (
-                <div className="flex items-center justify-center h-full opacity-0 hover:opacity-100 transition-opacity -mt-6">
-                  <Plus className="h-5 w-5 text-muted-foreground" />
+                    {hasMoreDemands && (
+                      <button
+                        className="w-full text-[10px] sm:text-xs text-primary hover:text-primary/80 font-medium py-0.5 sm:py-1 hover:bg-primary/5 rounded transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedDaySheet({ date: day, demands: dayDemands });
+                        }}
+                      >
+                        +{hiddenCount}
+                      </button>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
-          );
-        })}
+              );
+            })}
+          </div>
+        </div>
       </div>
     );
   };
 
   const renderMonthView = () => {
     const today = startOfDay(new Date());
+    const maxVisibleMobile = MAX_VISIBLE_DEMANDS_MONTH_MOBILE;
+    const maxVisibleDesktop = MAX_VISIBLE_DEMANDS_MONTH;
 
     return (
-      <>
-        {/* Weekday Headers */}
-        <div className="grid grid-cols-7 border-b border-border bg-muted/20">
-          {WEEKDAYS.map((day) => (
-            <div
-              key={day}
-              className="py-2 text-center text-xs font-medium text-muted-foreground"
-            >
-              {day}
-            </div>
-          ))}
-        </div>
-
-        {/* Calendar Grid */}
-        <div className="grid grid-cols-7">
-          {calendarDays.map((day, index) => {
-            const dateKey = format(day, "yyyy-MM-dd");
-            const dayDemands = demandsByDate[dateKey] || [];
-            const isCurrentMonth = isSameMonth(day, currentDate);
-            const isTodayDate = isToday(day);
-            const isPastDay = isBefore(day, today);
-            const hasMoreDemands = dayDemands.length > MAX_VISIBLE_DEMANDS_MONTH;
-            const visibleDemands = dayDemands.slice(0, MAX_VISIBLE_DEMANDS_MONTH);
-            const hiddenCount = dayDemands.length - MAX_VISIBLE_DEMANDS_MONTH;
-
-            return (
+      <div className="overflow-x-auto">
+        <div className="min-w-[320px] sm:min-w-0">
+          {/* Weekday Headers */}
+          <div className="grid grid-cols-7 border-b border-border bg-muted/20">
+            {WEEKDAYS.map((day, index) => (
               <div
-                key={dateKey}
-                className={cn(
-                  "min-h-[120px] sm:min-h-[140px] border-b border-r border-border p-1 sm:p-2 transition-colors",
-                  !isPastDay && "hover:bg-muted/30 cursor-pointer",
-                  !isCurrentMonth && "bg-muted/10 text-muted-foreground",
-                  isPastDay && "bg-muted/10 opacity-70",
-                  index % 7 === 0 && "border-l-0",
-                  index < 7 && "border-t-0"
-                )}
-                onClick={() => !isPastDay && onDayClick(day)}
+                key={index}
+                className="py-1.5 sm:py-2 text-center text-[10px] sm:text-xs font-medium text-muted-foreground"
               >
-                {/* Day Number */}
-                <div className="flex items-center justify-between mb-1">
-                  <span
-                    className={cn(
-                      "text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full",
-                      isTodayDate &&
-                        "bg-primary text-primary-foreground font-bold",
-                      !isCurrentMonth && "text-muted-foreground/50",
-                      isPastDay && "text-muted-foreground"
-                    )}
-                  >
-                    {format(day, "d")}
-                  </span>
-                  {dayDemands.length > 0 && (
-                    <span className="text-xs text-muted-foreground hidden sm:block">
-                      {dayDemands.length} {dayDemands.length === 1 ? "demanda" : "demandas"}
-                    </span>
-                  )}
-                </div>
-
-                {/* Demands List */}
-                <div className="space-y-1">
-                  {visibleDemands.map((demand) => (
-                    <CalendarDemandCard
-                      key={demand.id}
-                      demand={demand}
-                      onClick={() => onDemandClick(demand.id)}
-                    />
-                  ))}
-
-                  {/* More demands indicator */}
-                  {hasMoreDemands && (
-                    <button
-                      className="w-full text-xs text-primary hover:text-primary/80 font-medium py-1 hover:bg-primary/5 rounded transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedDaySheet({ date: day, demands: dayDemands });
-                      }}
-                    >
-                      +{hiddenCount} mais
-                    </button>
-                  )}
-                </div>
-
-                {/* Add demand button (visible on hover) */}
-                {dayDemands.length === 0 && !isPastDay && (
-                  <div className="flex items-center justify-center h-full opacity-0 hover:opacity-100 transition-opacity -mt-6">
-                    <Plus className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                )}
+                <span className="sm:hidden">{day}</span>
+                <span className="hidden sm:inline">{WEEKDAYS_SHORT[index]}</span>
               </div>
-            );
-          })}
+            ))}
+          </div>
+
+          {/* Calendar Grid */}
+          <div className="grid grid-cols-7">
+            {calendarDays.map((day, index) => {
+              const dateKey = format(day, "yyyy-MM-dd");
+              const dayDemands = demandsByDate[dateKey] || [];
+              const isCurrentMonth = isSameMonth(day, currentDate);
+              const isTodayDate = isToday(day);
+              const isPastDay = isBefore(day, today);
+              const maxVisible = isMobile ? maxVisibleMobile : maxVisibleDesktop;
+              const hasMoreDemands = dayDemands.length > maxVisible;
+              const visibleDemands = dayDemands.slice(0, maxVisible);
+              const hiddenCount = dayDemands.length - maxVisible;
+
+              return (
+                <div
+                  key={dateKey}
+                  className={cn(
+                    "min-h-[70px] sm:min-h-[120px] md:min-h-[140px] border-b border-r border-border p-0.5 sm:p-1 md:p-2 transition-colors",
+                    !isPastDay && "hover:bg-muted/30 cursor-pointer",
+                    !isCurrentMonth && "bg-muted/10 text-muted-foreground",
+                    isPastDay && "bg-muted/10 opacity-70",
+                    index % 7 === 0 && "border-l-0",
+                    index < 7 && "border-t-0"
+                  )}
+                  onClick={() => {
+                    if (isMobile && dayDemands.length > 0) {
+                      setSelectedDaySheet({ date: day, demands: dayDemands });
+                    } else if (!isPastDay) {
+                      onDayClick(day);
+                    }
+                  }}
+                >
+                  {/* Day Number */}
+                  <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+                    <span
+                      className={cn(
+                        "text-[10px] sm:text-sm font-medium w-4 h-4 sm:w-7 sm:h-7 flex items-center justify-center rounded-full",
+                        isTodayDate &&
+                          "bg-primary text-primary-foreground font-bold",
+                        !isCurrentMonth && "text-muted-foreground/50",
+                        isPastDay && "text-muted-foreground"
+                      )}
+                    >
+                      {format(day, "d")}
+                    </span>
+                    {dayDemands.length > 0 && (
+                      <>
+                        <span className="text-[9px] text-muted-foreground sm:hidden">
+                          {dayDemands.length}
+                        </span>
+                        <span className="text-xs text-muted-foreground hidden sm:block">
+                          {dayDemands.length}
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Demands List */}
+                  <div className="space-y-0.5 sm:space-y-1">
+                    {visibleDemands.map((demand) => (
+                      <CalendarDemandCard
+                        key={demand.id}
+                        demand={demand}
+                        onClick={() => onDemandClick(demand.id)}
+                        compact={isMobile}
+                      />
+                    ))}
+
+                    {/* More demands indicator */}
+                    {hasMoreDemands && (
+                      <button
+                        className="w-full text-[9px] sm:text-xs text-primary hover:text-primary/80 font-medium py-0.5 hover:bg-primary/5 rounded transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedDaySheet({ date: day, demands: dayDemands });
+                        }}
+                      >
+                        +{hiddenCount}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </>
+      </div>
     );
   };
 
   return (
     <div className="border border-border rounded-lg bg-card overflow-hidden">
       {/* Calendar Header */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-b border-border bg-muted/30">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 p-2 sm:p-4 border-b border-border bg-muted/30">
+        {/* Navigation Controls */}
+        <div className="flex items-center gap-1 sm:gap-2 order-2 sm:order-1">
           <Button
             variant="outline"
             size="icon"
             onClick={goToPrevious}
-            className="h-8 w-8"
+            className="h-7 w-7 sm:h-8 sm:w-8"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
           </Button>
           <Button
             variant="outline"
             size="icon"
             onClick={goToNext}
-            className="h-8 w-8"
+            className="h-7 w-7 sm:h-8 sm:w-8"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
           </Button>
-          <Button variant="outline" size="sm" onClick={goToToday}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={goToToday}
+            className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm"
+          >
             Hoje
           </Button>
         </div>
 
-        <h2 className="text-lg font-semibold text-foreground capitalize order-first sm:order-none">
+        {/* Title */}
+        <h2 className="text-sm sm:text-lg font-semibold text-foreground capitalize order-1 sm:order-2 w-full sm:w-auto text-center">
           {getHeaderTitle()}
         </h2>
 
+        {/* View Toggle */}
         <ToggleGroup
           type="single"
           value={viewMode}
           onValueChange={(value) => value && setViewMode(value as CalendarViewMode)}
-          className="bg-muted/50 rounded-md p-1"
+          className="bg-muted/50 rounded-md p-0.5 sm:p-1 order-3"
         >
-          <ToggleGroupItem value="day" aria-label="Visão diária" className="text-xs px-3">
+          <ToggleGroupItem 
+            value="day" 
+            aria-label="Visão diária" 
+            className="text-[10px] sm:text-xs px-2 sm:px-3 h-6 sm:h-8"
+          >
             Dia
           </ToggleGroupItem>
-          <ToggleGroupItem value="week" aria-label="Visão semanal" className="text-xs px-3">
-            Semana
+          <ToggleGroupItem 
+            value="week" 
+            aria-label="Visão semanal" 
+            className="text-[10px] sm:text-xs px-2 sm:px-3 h-6 sm:h-8"
+          >
+            Sem
           </ToggleGroupItem>
-          <ToggleGroupItem value="month" aria-label="Visão mensal" className="text-xs px-3">
+          <ToggleGroupItem 
+            value="month" 
+            aria-label="Visão mensal" 
+            className="text-[10px] sm:text-xs px-2 sm:px-3 h-6 sm:h-8"
+          >
             Mês
           </ToggleGroupItem>
         </ToggleGroup>
@@ -444,10 +489,10 @@ export function DemandsCalendarView({
 
       {/* Side Sheet for more demands */}
       <Sheet open={!!selectedDaySheet} onOpenChange={(open) => !open && setSelectedDaySheet(null)}>
-        <SheetContent side="right" className="w-[400px] sm:w-[540px]">
-          <SheetHeader>
-            <SheetTitle className="capitalize">
-              {selectedDaySheet && format(selectedDaySheet.date, "EEEE, d 'de' MMMM", { locale: ptBR })}
+        <SheetContent side="right" className="w-full sm:w-[400px] md:w-[540px] p-4 sm:p-6">
+          <SheetHeader className="pb-2">
+            <SheetTitle className="capitalize text-base sm:text-lg">
+              {selectedDaySheet && format(selectedDaySheet.date, isMobile ? "d MMM" : "EEEE, d 'de' MMMM", { locale: ptBR })}
             </SheetTitle>
           </SheetHeader>
           <div className="mt-4">
