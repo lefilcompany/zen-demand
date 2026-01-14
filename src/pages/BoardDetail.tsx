@@ -517,10 +517,8 @@ export default function BoardDetail() {
         )}
       </div>
 
-      {/* Description and Services side by side */}
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-        <BoardScopeConfig boardId={board.id} canEdit={canManage} />
-      </div>
+      {/* Services - Full width */}
+      <BoardScopeConfig boardId={board.id} canEdit={canManage} />
 
       {/* Members - Full width below */}
       <Card>
