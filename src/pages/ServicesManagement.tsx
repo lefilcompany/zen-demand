@@ -183,30 +183,25 @@ export default function ServicesManagement() {
   };
 
   const renderServiceCard = (service: ServiceWithHierarchy, isChild: boolean = false) => (
-    <Card key={service.id} className={isChild ? "border-l-4 border-l-primary/30" : ""}>
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="space-y-1 flex-1">
-            <div className="flex items-center gap-2">
+    <Card key={service.id} className={`${isChild ? "border-l-4 border-l-primary/30" : ""} h-full`}>
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
               {service.isCategory && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs shrink-0">
                   <Folder className="h-3 w-3 mr-1" />
                   Categoria
                 </Badge>
               )}
-              <CardTitle className="text-lg">{service.name}</CardTitle>
+              <CardTitle className="text-base truncate">{service.name}</CardTitle>
             </div>
-            {service.description && (
-              <CardDescription className="line-clamp-2">
-                {service.description}
-              </CardDescription>
-            )}
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-0.5 shrink-0">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-7 w-7"
               onClick={() =>
                 handleOpenDialog({
                   id: service.id,
@@ -218,7 +213,7 @@ export default function ServicesManagement() {
                 })
               }
             >
-              <Pencil className="h-4 w-4" />
+              <Pencil className="h-3.5 w-3.5" />
             </Button>
             {isAdmin && (
               <AlertDialog>
@@ -226,9 +221,9 @@ export default function ServicesManagement() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    className="h-7 w-7 text-destructive hover:text-destructive"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -260,14 +255,14 @@ export default function ServicesManagement() {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            <span>Prazo estimado: {service.estimated_hours} horas</span>
+      <CardContent className="pt-0 pb-3">
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <Clock className="h-3.5 w-3.5" />
+            <span>{service.estimated_hours}h</span>
           </div>
-          <div className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4" />
+          <div className="flex items-center gap-1">
+            <DollarSign className="h-3.5 w-3.5" />
             <span className="font-medium text-foreground">
               {formatPrice(service.price_cents || 0)}
             </span>
@@ -436,42 +431,49 @@ export default function ServicesManagement() {
       {/* Services List */}
       {hierarchicalServices && hierarchicalServices.length > 0 ? (
         <div className="space-y-6">
-          {hierarchicalServices.map((service) => (
-            <div key={service.id}>
-              {service.isCategory ? (
-                <Collapsible
-                  open={expandedCategories.has(service.id)}
-                  onOpenChange={() => toggleCategory(service.id)}
-                >
-                  <div className="space-y-4">
-                    <CollapsibleTrigger asChild>
-                      <div className="flex items-center gap-2 cursor-pointer hover:opacity-80">
-                        {expandedCategories.has(service.id) ? (
-                          <ChevronDown className="h-5 w-5" />
-                        ) : (
-                          <ChevronRight className="h-5 w-5" />
-                        )}
-                        <Folder className="h-5 w-5 text-primary" />
-                        <h3 className="text-lg font-semibold">{service.name}</h3>
-                        <Badge variant="outline" className="ml-2">
-                          {service.children.length} subserviço(s)
-                        </Badge>
-                      </div>
-                    </CollapsibleTrigger>
-                    
-                    {/* Category card */}
-                    {renderServiceCard(service)}
-                    
-                    <CollapsibleContent className="pl-8 space-y-4">
-                      {service.children.map((child) => renderServiceCard(child, true))}
-                    </CollapsibleContent>
+          {/* Categories */}
+          {hierarchicalServices.filter(s => s.isCategory).map((category) => (
+            <Collapsible
+              key={category.id}
+              open={expandedCategories.has(category.id)}
+              onOpenChange={() => toggleCategory(category.id)}
+            >
+              <div className="space-y-3">
+                <CollapsibleTrigger asChild>
+                  <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 py-1">
+                    {expandedCategories.has(category.id) ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                    <Folder className="h-4 w-4 text-primary" />
+                    <h3 className="text-base font-semibold">{category.name}</h3>
+                    <Badge variant="outline" className="text-xs">
+                      {category.children.length}
+                    </Badge>
                   </div>
-                </Collapsible>
-              ) : (
-                renderServiceCard(service)
-              )}
-            </div>
+                </CollapsibleTrigger>
+                
+                <CollapsibleContent>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pl-6">
+                    {category.children.map((child) => renderServiceCard(child, true))}
+                  </div>
+                </CollapsibleContent>
+              </div>
+            </Collapsible>
           ))}
+
+          {/* Standalone services (without category) */}
+          {hierarchicalServices.filter(s => !s.isCategory).length > 0 && (
+            <div className="space-y-3">
+              {hierarchicalServices.filter(s => s.isCategory).length > 0 && (
+                <h3 className="text-base font-semibold text-muted-foreground">Serviços</h3>
+              )}
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {hierarchicalServices.filter(s => !s.isCategory).map((service) => renderServiceCard(service))}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <Card>
