@@ -295,11 +295,14 @@ export default function Profile() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Clock className="h-5 w-5 text-muted-foreground" />
-                <span className="text-muted-foreground">Tempo médio de entrega</span>
+                <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
+                <span className="text-muted-foreground">Taxa de conclusão</span>
               </div>
               <span className="text-xl font-bold">
-                {formatDeliveryTime(stats?.avgDeliveryTime || 0)}
+                {stats && stats.totalDemands > 0 
+                  ? `${Math.round((stats.deliveredDemands / stats.totalDemands) * 100)}%`
+                  : "-"
+                }
               </span>
             </div>
           </CardContent>
