@@ -326,7 +326,7 @@ export default function ServicesManagement() {
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="parent_id">Categoria Pai (opcional)</Label>
+                <Label htmlFor="parent_id">Categoria Pai</Label>
                 <Select
                   value={formData.parent_id || "none"}
                   onValueChange={(value) =>
