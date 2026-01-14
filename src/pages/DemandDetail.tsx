@@ -644,8 +644,8 @@ export default function DemandDetail() {
             <AlertTitle className={`${isInternalAlert ? "text-blue-600" : "text-purple-600"} font-semibold`}>
               {isInternalAlert ? "Ajuste Interno Solicitado" : "Ajuste Externo Solicitado"}
             </AlertTitle>
-            <AlertDescription className="mt-2 space-y-2">
-              <p className="text-sm text-foreground whitespace-pre-wrap">
+            <AlertDescription className="mt-2 space-y-2 overflow-hidden">
+              <p className="text-xs sm:text-sm text-foreground whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                 {latestAdjustmentRequest.content}
               </p>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -666,18 +666,18 @@ export default function DemandDetail() {
         );
       })()}
 
-      <Card>
-        <CardHeader className="p-4 md:p-6">
-          <div className="flex flex-col gap-4">
-            <div className="space-y-2 min-w-0">
+      <Card className="overflow-hidden">
+        <CardHeader className="p-3 sm:p-4 md:p-6">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            <div className="space-y-2 min-w-0 w-full overflow-hidden">
               <div className="flex items-center gap-2 flex-wrap">
                 {demand.board_sequence_number && (
-                  <Badge variant="outline" className="text-sm bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono">
+                  <Badge variant="outline" className="text-xs sm:text-sm bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono shrink-0">
                     {formatDemandCode(demand.board_sequence_number)}
                   </Badge>
                 )}
               </div>
-              <CardTitle className="text-lg md:text-2xl break-words">{demand.title}</CardTitle>
+              <CardTitle className="text-base sm:text-lg md:text-2xl break-words [overflow-wrap:anywhere]">{demand.title}</CardTitle>
               <div className="flex flex-wrap items-center gap-2">
                 {demand.priority && (
                   <Badge variant="outline">{demand.priority}</Badge>
@@ -867,13 +867,15 @@ export default function DemandDetail() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6 pt-0 md:pt-0">
+        <CardContent className="space-y-4 md:space-y-6 p-3 sm:p-4 md:p-6 pt-0 md:pt-0">
           {demand.description && (
-            <div>
+            <div className="w-full overflow-hidden">
               <h3 className="font-semibold mb-2 text-sm md:text-base">Descrição</h3>
-              <p className="text-sm md:text-base text-muted-foreground whitespace-pre-wrap">
-                {demand.description}
-              </p>
+              <div className="w-full overflow-x-auto">
+                <p className="text-xs sm:text-sm md:text-base text-muted-foreground whitespace-pre-wrap break-words max-w-full [overflow-wrap:anywhere]">
+                  {demand.description}
+                </p>
+              </div>
             </div>
           )}
 
