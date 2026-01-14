@@ -1377,6 +1377,7 @@ export type Database = {
         Args: { _board_id: string; _user_id: string }
         Returns: boolean
       }
+      is_demand_shared: { Args: { demand_id_param: string }; Returns: boolean }
       is_team_admin: {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
