@@ -181,7 +181,7 @@ export default function Profile() {
               <img 
                 src={(profile as any).banner_url} 
                 alt="Banner" 
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                className="absolute inset-0 w-full h-full object-cover"
               />
               {/* Gradient overlay for better text readability */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
