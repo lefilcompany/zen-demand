@@ -103,6 +103,7 @@ export default function CreateDemand() {
   // Navigation blocking
   const {
     isBlocked,
+    attemptNavigation,
     confirmNavigation,
     cancelNavigation,
     setDontShowAgain,
@@ -243,7 +244,7 @@ export default function CreateDemand() {
       <div>
         <Button
           variant="ghost"
-          onClick={() => navigate("/demands")}
+          onClick={() => attemptNavigation("/demands")}
           className="mb-2 md:mb-4"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -426,7 +427,7 @@ export default function CreateDemand() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate("/demands")}
+                onClick={() => attemptNavigation("/demands")}
                 className="flex-1"
               >
                 Cancelar

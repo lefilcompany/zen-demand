@@ -1,5 +1,5 @@
-import { useEffect, useCallback, useState } from "react";
-import { useBlocker } from "react-router-dom";
+import { useEffect, useCallback, useState, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const WARNING_DISABLED_KEY = "draft-exit-warning-disabled";
 
@@ -8,6 +8,10 @@ interface UseNavigationBlockOptions {
 }
 
 export function useNavigationBlock({ shouldBlock }: UseNavigationBlockOptions) {
+  const [showDialog, setShowDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const navigate = useNavigate();
+  
   const [isWarningDisabled, setIsWarningDisabled] = useState(() => {
     try {
       return localStorage.getItem(WARNING_DISABLED_KEY) === "true";
@@ -15,14 +19,6 @@ export function useNavigationBlock({ shouldBlock }: UseNavigationBlockOptions) {
       return false;
     }
   });
-
-  // Use react-router's useBlocker for internal navigation
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      shouldBlock &&
-      !isWarningDisabled &&
-      currentLocation.pathname !== nextLocation.pathname
-  );
 
   // Handle browser's beforeunload for external navigation/tab close
   useEffect(() => {
@@ -38,17 +34,36 @@ export function useNavigationBlock({ shouldBlock }: UseNavigationBlockOptions) {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [shouldBlock]);
 
-  const confirmNavigation = useCallback(() => {
-    if (blocker.state === "blocked") {
-      blocker.proceed();
+  // Function to attempt navigation - shows dialog if blocking
+  const attemptNavigation = useCallback((to: string | number) => {
+    if (shouldBlock && !isWarningDisabled) {
+      setPendingNavigation(typeof to === "number" ? "__back__" : to);
+      setShowDialog(true);
+      return false;
     }
-  }, [blocker]);
+    // Navigate immediately if not blocking or warning disabled
+    if (typeof to === "number") {
+      navigate(to);
+    } else {
+      navigate(to);
+    }
+    return true;
+  }, [shouldBlock, isWarningDisabled, navigate]);
+
+  const confirmNavigation = useCallback(() => {
+    setShowDialog(false);
+    if (pendingNavigation === "__back__") {
+      navigate(-1);
+    } else if (pendingNavigation) {
+      navigate(pendingNavigation);
+    }
+    setPendingNavigation(null);
+  }, [pendingNavigation, navigate]);
 
   const cancelNavigation = useCallback(() => {
-    if (blocker.state === "blocked") {
-      blocker.reset();
-    }
-  }, [blocker]);
+    setShowDialog(false);
+    setPendingNavigation(null);
+  }, []);
 
   const setDontShowAgain = useCallback((value: boolean) => {
     try {
@@ -64,8 +79,9 @@ export function useNavigationBlock({ shouldBlock }: UseNavigationBlockOptions) {
   }, []);
 
   return {
-    isBlocked: blocker.state === "blocked",
+    isBlocked: showDialog,
     isWarningDisabled,
+    attemptNavigation,
     confirmNavigation,
     cancelNavigation,
     setDontShowAgain,

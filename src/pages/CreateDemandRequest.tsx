@@ -75,6 +75,7 @@ export default function CreateDemandRequest() {
   // Navigation blocking (only when not in attachment step)
   const {
     isBlocked,
+    attemptNavigation,
     confirmNavigation,
     cancelNavigation,
     setDontShowAgain,
@@ -207,7 +208,7 @@ export default function CreateDemandRequest() {
       <div>
         <Button
           variant="ghost"
-          onClick={() => navigate(-1)}
+          onClick={() => attemptNavigation(-1)}
           className="mb-2 md:mb-4"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -316,7 +317,7 @@ export default function CreateDemandRequest() {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  navigate(-1);
+                  attemptNavigation(-1);
                 }}
                 className="flex-1"
               >
