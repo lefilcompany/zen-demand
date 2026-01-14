@@ -4,18 +4,27 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious,
+  PaginationEllipsis
+} from "@/components/ui/pagination";
+import { 
   usePendingDemandRequests, 
   useApprovedDemandRequests,
   useReturnedDemandRequests,
   useApproveDemandRequest, 
   useReturnDemandRequest 
 } from "@/hooks/useDemandRequests";
-import { ArrowLeft, Clock, CheckCircle, RotateCcw, Users, Layout, Paperclip, MessageSquare, Send, Trash2, XCircle } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle, RotateCcw, Users, Layout, Paperclip, MessageSquare, Send, Trash2, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor, RichTextDisplay } from "@/components/ui/rich-text-editor";
@@ -69,6 +78,28 @@ export default function DemandRequests() {
   const [returnReason, setReturnReason] = useState("");
   const [commentText, setCommentText] = useState("");
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+
+  // Pagination states
+  const [approvedPage, setApprovedPage] = useState(1);
+  const [returnedPage, setReturnedPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
+  // Paginated data
+  const paginatedApproved = useMemo(() => {
+    if (!approvedRequests) return { items: [], totalPages: 0 };
+    const totalPages = Math.ceil(approvedRequests.length / ITEMS_PER_PAGE);
+    const startIndex = (approvedPage - 1) * ITEMS_PER_PAGE;
+    const items = approvedRequests.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    return { items, totalPages };
+  }, [approvedRequests, approvedPage]);
+
+  const paginatedReturned = useMemo(() => {
+    if (!returnedRequests) return { items: [], totalPages: 0 };
+    const totalPages = Math.ceil(returnedRequests.length / ITEMS_PER_PAGE);
+    const startIndex = (returnedPage - 1) * ITEMS_PER_PAGE;
+    const items = returnedRequests.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    return { items, totalPages };
+  }, [returnedRequests, returnedPage]);
 
   // Comments hooks
   const { data: comments, isLoading: commentsLoading } = useRequestComments(viewing?.id || null);
@@ -360,8 +391,53 @@ export default function DemandRequests() {
           {approvedLoading ? (
             <div className="text-center py-12 text-muted-foreground">Carregando...</div>
           ) : approvedRequests && approvedRequests.length > 0 ? (
-            <div className="grid gap-4">
-              {approvedRequests.map(request => renderRequestCard(request))}
+            <div className="space-y-4">
+              <div className="grid gap-4">
+                {paginatedApproved.items.map(request => renderRequestCard(request))}
+              </div>
+              {paginatedApproved.totalPages > 1 && (
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => setApprovedPage(p => Math.max(1, p - 1))}
+                        className={approvedPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: paginatedApproved.totalPages }, (_, i) => i + 1)
+                      .filter(page => {
+                        if (paginatedApproved.totalPages <= 5) return true;
+                        if (page === 1 || page === paginatedApproved.totalPages) return true;
+                        if (Math.abs(page - approvedPage) <= 1) return true;
+                        return false;
+                      })
+                      .map((page, idx, arr) => (
+                        <>
+                          {idx > 0 && arr[idx - 1] !== page - 1 && (
+                            <PaginationItem key={`ellipsis-${page}`}>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          )}
+                          <PaginationItem key={page}>
+                            <PaginationLink 
+                              onClick={() => setApprovedPage(page)}
+                              isActive={approvedPage === page}
+                              className="cursor-pointer"
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        </>
+                      ))}
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => setApprovedPage(p => Math.min(paginatedApproved.totalPages, p + 1))}
+                        className={approvedPage === paginatedApproved.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
             </div>
           ) : (
             renderEmptyState("Não há solicitações aprovadas para este quadro")
@@ -372,8 +448,53 @@ export default function DemandRequests() {
           {returnedLoading ? (
             <div className="text-center py-12 text-muted-foreground">Carregando...</div>
           ) : returnedRequests && returnedRequests.length > 0 ? (
-            <div className="grid gap-4">
-              {returnedRequests.map(request => renderRequestCard(request, true))}
+            <div className="space-y-4">
+              <div className="grid gap-4">
+                {paginatedReturned.items.map(request => renderRequestCard(request, true))}
+              </div>
+              {paginatedReturned.totalPages > 1 && (
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => setReturnedPage(p => Math.max(1, p - 1))}
+                        className={returnedPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: paginatedReturned.totalPages }, (_, i) => i + 1)
+                      .filter(page => {
+                        if (paginatedReturned.totalPages <= 5) return true;
+                        if (page === 1 || page === paginatedReturned.totalPages) return true;
+                        if (Math.abs(page - returnedPage) <= 1) return true;
+                        return false;
+                      })
+                      .map((page, idx, arr) => (
+                        <>
+                          {idx > 0 && arr[idx - 1] !== page - 1 && (
+                            <PaginationItem key={`ellipsis-${page}`}>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          )}
+                          <PaginationItem key={page}>
+                            <PaginationLink 
+                              onClick={() => setReturnedPage(page)}
+                              isActive={returnedPage === page}
+                              className="cursor-pointer"
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        </>
+                      ))}
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => setReturnedPage(p => Math.min(paginatedReturned.totalPages, p + 1))}
+                        className={returnedPage === paginatedReturned.totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
             </div>
           ) : (
             renderEmptyState("Não há solicitações devolvidas para este quadro")
