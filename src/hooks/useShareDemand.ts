@@ -48,7 +48,7 @@ export function useCreateShareToken() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ demandId, userId }: { demandId: string; userId: string }) => {
+    mutationFn: async ({ demandId, userId, expiresAt }: { demandId: string; userId: string; expiresAt?: string | null }) => {
       const token = generateToken();
       
       const result = await supabase
@@ -57,6 +57,7 @@ export function useCreateShareToken() {
           demand_id: demandId,
           token,
           created_by: userId,
+          expires_at: expiresAt || null,
         })
         .select()
         .single();

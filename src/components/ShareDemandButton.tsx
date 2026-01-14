@@ -2,18 +2,26 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useShareToken, useCreateShareToken, useRevokeShareToken } from "@/hooks/useShareDemand";
 import { useAuth } from "@/lib/auth";
-import { Share2, Copy, Check, Link, Trash2, Loader2 } from "lucide-react";
+import { Share2, Copy, Check, Link, Trash2, Loader2, Calendar, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { format, addDays, addHours, addWeeks, addMonths } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface ShareDemandButtonProps {
   demandId: string;
 }
 
+type ExpirationOption = "never" | "1h" | "24h" | "7d" | "30d" | "custom";
+
 export function ShareDemandButton({ demandId }: ShareDemandButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [expiration, setExpiration] = useState<ExpirationOption>("never");
+  const [customDate, setCustomDate] = useState("");
   const { user } = useAuth();
   
   const { data: existingToken, isLoading: isLoadingToken } = useShareToken(demandId);
@@ -24,12 +32,35 @@ export function ShareDemandButton({ demandId }: ShareDemandButtonProps) {
     ? `${window.location.origin}/shared/${existingToken.token}` 
     : null;
 
+  const getExpirationDate = (): string | null => {
+    const now = new Date();
+    switch (expiration) {
+      case "1h":
+        return addHours(now, 1).toISOString();
+      case "24h":
+        return addDays(now, 1).toISOString();
+      case "7d":
+        return addWeeks(now, 1).toISOString();
+      case "30d":
+        return addMonths(now, 1).toISOString();
+      case "custom":
+        return customDate ? new Date(customDate).toISOString() : null;
+      case "never":
+      default:
+        return null;
+    }
+  };
+
   const handleCreateLink = async () => {
     if (!user) return;
     
     try {
-      await createToken.mutateAsync({ demandId, userId: user.id });
+      const expiresAt = getExpirationDate();
+      await createToken.mutateAsync({ demandId, userId: user.id, expiresAt });
       toast.success("Link de compartilhamento criado!");
+      // Reset form
+      setExpiration("never");
+      setCustomDate("");
     } catch (error) {
       toast.error("Erro ao criar link de compartilhamento");
     }
@@ -58,6 +89,18 @@ export function ShareDemandButton({ demandId }: ShareDemandButtonProps) {
       toast.error("Erro ao revogar link");
     }
   };
+
+  const formatExpirationDate = (date: string | null) => {
+    if (!date) return "Nunca expira";
+    const expirationDate = new Date(date);
+    const now = new Date();
+    if (expirationDate < now) {
+      return "Expirado";
+    }
+    return format(expirationDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+  };
+
+  const isExpired = existingToken?.expires_at && new Date(existingToken.expires_at) < new Date();
 
   return (
     <>
@@ -91,9 +134,17 @@ export function ShareDemandButton({ demandId }: ShareDemandButtonProps) {
               </div>
             ) : existingToken ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Link className="h-4 w-4 text-green-600 flex-shrink-0" />
-                  <span className="text-sm text-green-600 font-medium">Link ativo</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Link className={`h-4 w-4 flex-shrink-0 ${isExpired ? 'text-destructive' : 'text-green-600'}`} />
+                    <span className={`text-sm font-medium ${isExpired ? 'text-destructive' : 'text-green-600'}`}>
+                      {isExpired ? 'Link expirado' : 'Link ativo'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3" />
+                    {formatExpirationDate(existingToken.expires_at)}
+                  </div>
                 </div>
                 
                 <div className="flex gap-2">
@@ -106,6 +157,7 @@ export function ShareDemandButton({ demandId }: ShareDemandButtonProps) {
                     variant="outline" 
                     size="icon"
                     onClick={handleCopyLink}
+                    disabled={isExpired}
                   >
                     {copied ? (
                       <Check className="h-4 w-4 text-green-600" />
@@ -120,6 +172,7 @@ export function ShareDemandButton({ demandId }: ShareDemandButtonProps) {
                     variant="default" 
                     className="flex-1"
                     onClick={handleCopyLink}
+                    disabled={isExpired}
                   >
                     {copied ? (
                       <>
@@ -148,7 +201,9 @@ export function ShareDemandButton({ demandId }: ShareDemandButtonProps) {
                 </div>
 
                 <p className="text-xs text-muted-foreground">
-                  Ao revogar o link, ele deixará de funcionar e quem tentar acessá-lo verá uma mensagem de erro.
+                  {isExpired 
+                    ? "Este link expirou. Revogue-o e crie um novo link para compartilhar." 
+                    : "Ao revogar o link, ele deixará de funcionar e quem tentar acessá-lo verá uma mensagem de erro."}
                 </p>
               </div>
             ) : (
@@ -174,9 +229,40 @@ export function ShareDemandButton({ demandId }: ShareDemandButtonProps) {
                   </ul>
                 </div>
 
+                {/* Expiration Options */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Expiração do link
+                  </Label>
+                  <Select value={expiration} onValueChange={(value) => setExpiration(value as ExpirationOption)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a expiração" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="never">Nunca expira</SelectItem>
+                      <SelectItem value="1h">1 hora</SelectItem>
+                      <SelectItem value="24h">24 horas</SelectItem>
+                      <SelectItem value="7d">7 dias</SelectItem>
+                      <SelectItem value="30d">30 dias</SelectItem>
+                      <SelectItem value="custom">Data personalizada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  {expiration === "custom" && (
+                    <Input 
+                      type="datetime-local" 
+                      value={customDate}
+                      onChange={(e) => setCustomDate(e.target.value)}
+                      min={new Date().toISOString().slice(0, 16)}
+                      className="mt-2"
+                    />
+                  )}
+                </div>
+
                 <Button 
                   onClick={handleCreateLink}
-                  disabled={createToken.isPending}
+                  disabled={createToken.isPending || (expiration === "custom" && !customDate)}
                   className="w-full"
                 >
                   {createToken.isPending ? (
