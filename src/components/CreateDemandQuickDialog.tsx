@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
@@ -25,6 +25,7 @@ import {
 import { useCreateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardServices } from "@/hooks/useBoardServices";
+import { useFormDraft } from "@/hooks/useFormDraft";
 import { toast } from "sonner";
 import { Calendar, Loader2 } from "lucide-react";
 
@@ -51,6 +52,35 @@ export function CreateDemandQuickDialog({
   const [priority, setPriority] = useState<string>("média");
   const [serviceId, setServiceId] = useState<string>("");
   const [statusId, setStatusId] = useState<string>("");
+
+  // Draft persistence
+  const draftFields = useMemo(
+    () => ({
+      title,
+      description,
+      priority,
+      serviceId,
+      statusId,
+    }),
+    [title, description, priority, serviceId, statusId]
+  );
+
+  const draftSetters = useMemo(
+    () => ({
+      title: setTitle,
+      description: setDescription,
+      priority: setPriority,
+      serviceId: setServiceId,
+      statusId: setStatusId,
+    }),
+    []
+  );
+
+  const { clearDraft } = useFormDraft({
+    formId: `quick-demand-${selectedBoardId || "default"}`,
+    fields: draftFields,
+    setters: draftSetters,
+  });
 
   // Find default status (first non-delivered status or first status)
   const defaultStatusId =
@@ -83,6 +113,9 @@ export function CreateDemandQuickDialog({
         service_id: serviceId || null,
       });
 
+      // Clear draft on success
+      clearDraft();
+
       toast.success("Demanda criada com sucesso!");
       onOpenChange(false);
       resetForm();
@@ -108,6 +141,7 @@ export function CreateDemandQuickDialog({
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
       resetForm();
+      clearDraft();
     }
     onOpenChange(isOpen);
   };

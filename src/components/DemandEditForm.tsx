@@ -8,8 +8,11 @@ import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
 import { useTeamRole } from "@/hooks/useTeamRole";
+import { UnsavedChangesDialog } from "@/components/UnsavedChangesDialog";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { useNavigationBlock } from "@/hooks/useNavigationBlock";
 import { calculateBusinessDueDate, formatDueDateForInput, toDateOnly } from "@/lib/dateUtils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 
@@ -54,6 +57,49 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
     }
   }, [currentAssignees]);
 
+  // Draft persistence
+  const draftFields = useMemo(
+    () => ({
+      title,
+      description,
+      statusId,
+      priority,
+      dueDate,
+      serviceId,
+      selectedAssignees,
+    }),
+    [title, description, statusId, priority, dueDate, serviceId, selectedAssignees]
+  );
+
+  const draftSetters = useMemo(
+    () => ({
+      title: setTitle,
+      description: setDescription,
+      statusId: setStatusId,
+      priority: setPriority,
+      dueDate: setDueDate,
+      serviceId: setServiceId,
+      selectedAssignees: setSelectedAssignees,
+    }),
+    []
+  );
+
+  const { hasContent, clearDraft } = useFormDraft({
+    formId: `edit-demand-${demand.id}`,
+    fields: draftFields,
+    setters: draftSetters,
+  });
+
+  // Navigation blocking
+  const {
+    isBlocked,
+    confirmNavigation,
+    cancelNavigation,
+    setDontShowAgain,
+  } = useNavigationBlock({
+    shouldBlock: hasContent(),
+  });
+
   const handleServiceChange = (newServiceId: string, estimatedHours?: number) => {
     setServiceId(newServiceId);
     if (newServiceId !== "none" && estimatedHours) {
@@ -82,6 +128,9 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
         userIds: selectedAssignees,
       });
 
+      // Clear draft on success
+      clearDraft();
+
       toast.success("Demanda atualizada com sucesso!");
       onSuccess();
     } catch (error: any) {
@@ -92,109 +141,119 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto max-h-[70vh] pr-1">
-      <div className="space-y-2">
-        <Label htmlFor="edit-title">Título *</Label>
-        <Input
-          id="edit-title"
-          placeholder="Ex: Implementar nova funcionalidade"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
-      </div>
+    <>
+      {/* Unsaved Changes Dialog */}
+      <UnsavedChangesDialog
+        open={isBlocked}
+        onConfirm={confirmNavigation}
+        onCancel={cancelNavigation}
+        onDontShowAgain={setDontShowAgain}
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="edit-description">Descrição</Label>
-        <RichTextEditor
-          value={description}
-          onChange={setDescription}
-          placeholder="Descreva os detalhes da demanda... (cole imagens diretamente no editor)"
-          minHeight="120px"
-        />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
+      <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto max-h-[70vh] pr-1">
         <div className="space-y-2">
-          <Label htmlFor="edit-status">Status *</Label>
-          <Select value={statusId} onValueChange={setStatusId} required>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione um status" />
-            </SelectTrigger>
-            <SelectContent>
-              {statuses?.map((status) => (
-                <SelectItem key={status.id} value={status.id}>
-                  {status.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="edit-priority">Prioridade</Label>
-          <Select value={priority} onValueChange={setPriority}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="baixa">Baixa</SelectItem>
-              <SelectItem value="média">Média</SelectItem>
-              <SelectItem value="alta">Alta</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Serviço</Label>
-        <ServiceSelector
-          teamId={demand.team_id}
-          boardId={demand.board_id}
-          value={serviceId}
-          onChange={handleServiceChange}
-        />
-      </div>
-
-      {canAssignResponsibles && (
-        <div className="space-y-2">
-          <Label>Responsáveis</Label>
-          <AssigneeSelector
-            teamId={demand.team_id}
-            boardId={demand.board_id}
-            selectedUserIds={selectedAssignees}
-            onChange={setSelectedAssignees}
+          <Label htmlFor="edit-title">Título *</Label>
+          <Input
+            id="edit-title"
+            placeholder="Ex: Implementar nova funcionalidade"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
           />
         </div>
-      )}
 
-      <div className="space-y-2">
-        <Label htmlFor="edit-dueDate">Data de Vencimento</Label>
-        <Input
-          id="edit-dueDate"
-          type="date"
-          value={dueDate}
-          onChange={(e) => setDueDate(e.target.value)}
-        />
-      </div>
+        <div className="space-y-2">
+          <Label htmlFor="edit-description">Descrição</Label>
+          <RichTextEditor
+            value={description}
+            onChange={setDescription}
+            placeholder="Descreva os detalhes da demanda... (cole imagens diretamente no editor)"
+            minHeight="120px"
+          />
+        </div>
 
-      <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4 sticky bottom-0 bg-background pb-1">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onClose}
-          className="flex-1"
-        >
-          Cancelar
-        </Button>
-        <Button
-          type="submit"
-          disabled={updateDemand.isPending || setAssignees.isPending || !title.trim() || !statusId}
-          className="flex-1"
-        >
-          {updateDemand.isPending || setAssignees.isPending ? "Salvando..." : "Salvar Alterações"}
-        </Button>
-      </div>
-    </form>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="edit-status">Status *</Label>
+            <Select value={statusId} onValueChange={setStatusId} required>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um status" />
+              </SelectTrigger>
+              <SelectContent>
+                {statuses?.map((status) => (
+                  <SelectItem key={status.id} value={status.id}>
+                    {status.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="edit-priority">Prioridade</Label>
+            <Select value={priority} onValueChange={setPriority}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="baixa">Baixa</SelectItem>
+                <SelectItem value="média">Média</SelectItem>
+                <SelectItem value="alta">Alta</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Serviço</Label>
+          <ServiceSelector
+            teamId={demand.team_id}
+            boardId={demand.board_id}
+            value={serviceId}
+            onChange={handleServiceChange}
+          />
+        </div>
+
+        {canAssignResponsibles && (
+          <div className="space-y-2">
+            <Label>Responsáveis</Label>
+            <AssigneeSelector
+              teamId={demand.team_id}
+              boardId={demand.board_id}
+              selectedUserIds={selectedAssignees}
+              onChange={setSelectedAssignees}
+            />
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <Label htmlFor="edit-dueDate">Data de Vencimento</Label>
+          <Input
+            id="edit-dueDate"
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+          />
+        </div>
+
+        <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4 sticky bottom-0 bg-background pb-1">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            className="flex-1"
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            disabled={updateDemand.isPending || setAssignees.isPending || !title.trim() || !statusId}
+            className="flex-1"
+          >
+            {updateDemand.isPending || setAssignees.isPending ? "Salvando..." : "Salvar Alterações"}
+          </Button>
+        </div>
+      </form>
+    </>
   );
 }

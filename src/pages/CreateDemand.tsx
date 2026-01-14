@@ -16,9 +16,12 @@ import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { ScopeProgressBar } from "@/components/ScopeProgressBar";
 import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/components/InlineFileUploader";
 import { useUploadAttachment } from "@/hooks/useAttachments";
+import { UnsavedChangesDialog } from "@/components/UnsavedChangesDialog";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { useNavigationBlock } from "@/hooks/useNavigationBlock";
 import { ArrowLeft, AlertTriangle, Ban, CloudOff, WifiOff, Package } from "lucide-react";
 import { useNavigate, Navigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { calculateBusinessDueDate, formatDueDateForInput } from "@/lib/dateUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -65,6 +68,47 @@ export default function CreateDemand() {
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   
   const uploadAttachment = useUploadAttachment();
+
+  // Draft persistence
+  const draftFields = useMemo(
+    () => ({
+      title,
+      description,
+      priority,
+      dueDate,
+      serviceId,
+      assigneeIds,
+    }),
+    [title, description, priority, dueDate, serviceId, assigneeIds]
+  );
+
+  const draftSetters = useMemo(
+    () => ({
+      title: setTitle,
+      description: setDescription,
+      priority: setPriority,
+      dueDate: setDueDate,
+      serviceId: setServiceId,
+      assigneeIds: setAssigneeIds,
+    }),
+    []
+  );
+
+  const { hasContent, clearDraft } = useFormDraft({
+    formId: `create-demand-${selectedBoardId || "default"}`,
+    fields: draftFields,
+    setters: draftSetters,
+  });
+
+  // Navigation blocking
+  const {
+    isBlocked,
+    confirmNavigation,
+    cancelNavigation,
+    setDontShowAgain,
+  } = useNavigationBlock({
+    shouldBlock: hasContent(),
+  });
 
   // Check if can create with selected service
   const { canCreate: canCreateWithService, serviceInfo } = useCanCreateWithService(
@@ -124,6 +168,9 @@ export default function CreateDemand() {
       },
       {
         onSuccess: async (demand) => {
+          // Clear draft on success
+          clearDraft();
+          
           // Check if this was created offline
           const wasCreatedOffline = (demand as any)?._isOffline;
           
@@ -185,6 +232,14 @@ export default function CreateDemand() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fade-in px-1">
+      {/* Unsaved Changes Dialog */}
+      <UnsavedChangesDialog
+        open={isBlocked}
+        onConfirm={confirmNavigation}
+        onCancel={cancelNavigation}
+        onDontShowAgain={setDontShowAgain}
+      />
+
       <div>
         <Button
           variant="ghost"
