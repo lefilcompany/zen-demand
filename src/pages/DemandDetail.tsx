@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { MentionInput } from "@/components/MentionInput";
 import { MentionText } from "@/components/MentionText";
+import { RichTextDisplay } from "@/components/ui/rich-text-editor";
 import { LinkifiedText } from "@/components/LinkifiedText";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -788,9 +789,9 @@ export default function DemandDetail() {
           {demand.description && <div className="w-full overflow-hidden">
               <h3 className="font-semibold mb-2 text-sm md:text-base">Descrição</h3>
               <div className="w-full overflow-x-auto">
-                <LinkifiedText 
-                  text={demand.description} 
-                  className="text-xs sm:text-sm md:text-base text-muted-foreground whitespace-pre-wrap break-words max-w-full [overflow-wrap:anywhere] block" 
+                <RichTextDisplay 
+                  content={demand.description} 
+                  className="text-xs sm:text-sm md:text-base text-muted-foreground" 
                 />
               </div>
             </div>}
