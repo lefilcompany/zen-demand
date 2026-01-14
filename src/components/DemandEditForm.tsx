@@ -111,7 +111,6 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
           onChange={setDescription}
           placeholder="Descreva os detalhes da demanda... (cole imagens diretamente no editor)"
           minHeight="120px"
-          demandId={demand.id}
         />
       </div>
 
