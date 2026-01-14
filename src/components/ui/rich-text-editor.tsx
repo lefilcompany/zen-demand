@@ -53,10 +53,10 @@ export function sanitizeHtml(html: string): string {
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: [
       "p", "br", "strong", "em", "u", "s", "span", "img", 
-      "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li"
+      "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "mark"
     ],
-    ALLOWED_ATTR: ["style", "src", "alt", "class"],
-    ADD_ATTR: ["style"],
+    ALLOWED_ATTR: ["style", "src", "alt", "class", "data-color"],
+    ADD_ATTR: ["style", "data-color"],
   });
 }
 
@@ -292,6 +292,9 @@ export function RichTextEditor({
       }),
       Highlight.configure({
         multicolor: true,
+        HTMLAttributes: {
+          class: 'highlight-mark',
+        },
       }),
       Underline,
       Image.configure({
