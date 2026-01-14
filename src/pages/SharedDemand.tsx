@@ -16,6 +16,7 @@ import logoSoma from "@/assets/logo-soma.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 export default function SharedDemand() {
   const { token } = useParams<{ token: string }>();
@@ -28,6 +29,9 @@ export default function SharedDemand() {
   // Redirect logged-in users to the full demand page
   useEffect(() => {
     if (!authLoading && user && demand?.id) {
+      toast.success("Você foi redirecionado para a visualização completa", {
+        description: "Como você está logado e tem acesso ao quadro, pode interagir com esta demanda.",
+      });
       navigate(`/demands/${demand.id}`, { replace: true });
     }
   }, [authLoading, user, demand?.id, navigate]);
