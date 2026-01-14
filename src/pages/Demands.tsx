@@ -302,19 +302,19 @@ export default function Demands() {
 
           {/* Bottom row: Toggle filters */}
           {((!isReadOnly && myDemandsCount > 0) || deliveredCount > 0) && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {/* Toggle show only my demands - only for non-requesters */}
               {!isReadOnly && myDemandsCount > 0 && (
                 <Button 
                   variant={showOnlyMine ? "default" : "outline"} 
                   size="sm" 
                   onClick={() => setShowOnlyMine(!showOnlyMine)} 
-                  className="h-8 px-3 gap-2"
+                  className="h-8 px-2.5 gap-1.5 text-xs"
                   title={showOnlyMine ? "Ver todas as demandas" : "Ver apenas minhas demandas"}
                 >
-                  <User className="h-3.5 w-3.5" />
-                  <span className="text-xs font-medium">Minhas Demandas</span>
-                  <span className="bg-primary-foreground/20 text-current text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
+                  <User className="h-3.5 w-3.5 shrink-0" />
+                  <span className="font-medium truncate">Minhas</span>
+                  <span className="bg-primary-foreground/20 text-current text-[10px] px-1.5 py-0.5 rounded-full font-semibold shrink-0">
                     {myDemandsCount}
                   </span>
                 </Button>
@@ -326,12 +326,12 @@ export default function Demands() {
                   variant={hideDelivered ? "default" : "outline"} 
                   size="sm" 
                   onClick={() => setHideDelivered(!hideDelivered)} 
-                  className="h-8 px-3 gap-2"
+                  className="h-8 px-2.5 gap-1.5 text-xs"
                   title={hideDelivered ? "Mostrar demandas entregues" : "Ocultar demandas entregues"}
                 >
-                  {hideDelivered ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                  <span className="text-xs font-medium">{hideDelivered ? "Exibir Entregues" : "Ocultar Entregues"}</span>
-                  <span className="bg-primary-foreground/20 text-current text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
+                  {hideDelivered ? <EyeOff className="h-3.5 w-3.5 shrink-0" /> : <Eye className="h-3.5 w-3.5 shrink-0" />}
+                  <span className="font-medium truncate">{hideDelivered ? "Ocultas" : "Entregues"}</span>
+                  <span className="bg-primary-foreground/20 text-current text-[10px] px-1.5 py-0.5 rounded-full font-semibold shrink-0">
                     {deliveredCount}
                   </span>
                 </Button>
