@@ -232,7 +232,7 @@ export default function CreateDemand() {
     !isServiceValid();
 
   return (
-    <div className="w-full animate-fade-in">
+    <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fade-in px-1">
       {/* Unsaved Changes Dialog */}
       <UnsavedChangesDialog
         open={isBlocked}
@@ -241,103 +241,175 @@ export default function CreateDemand() {
         onDontShowAgain={setDontShowAgain}
       />
 
-      {/* Header */}
-      <div className="mb-6">
+      <div>
         <Button
           variant="ghost"
           onClick={() => attemptNavigation("/demands")}
-          className="mb-2 -ml-2"
+          className="mb-2 md:mb-4"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar
         </Button>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Nova Demanda</h1>
-            <p className="text-sm md:text-base text-muted-foreground">
-              Quadro: <span className="font-medium text-primary">{currentBoard?.name}</span>
-            </p>
-          </div>
-          {/* Board Limit Progress - Compact on header */}
-          {hasBoardLimit && isTeamActive && (
-            <div className="w-full md:w-64">
-              <ScopeProgressBar used={monthlyCount} limit={limit} />
-            </div>
-          )}
-        </div>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Nova Demanda</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
+          Criar demanda para o quadro <span className="font-medium text-primary">{currentBoard?.name}</span>
+        </p>
       </div>
 
-      {/* Alerts Section */}
-      <div className="space-y-3 mb-6">
-        {isOffline && (
-          <Alert className="border-amber-500/50 bg-amber-500/10">
-            <WifiOff className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-700 dark:text-amber-400">
-              Você está offline. A demanda será salva localmente e sincronizada quando a conexão for restaurada.
-            </AlertDescription>
-          </Alert>
-        )}
+      {/* Offline Mode Alert */}
+      {isOffline && (
+        <Alert className="border-amber-500/50 bg-amber-500/10">
+          <WifiOff className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-700 dark:text-amber-400">
+            Você está offline. A demanda será salva localmente e sincronizada quando a conexão for restaurada.
+          </AlertDescription>
+        </Alert>
+      )}
 
-        {!isTeamActive && (
-          <Alert variant="destructive">
-            <Ban className="h-4 w-4" />
-            <AlertDescription>
-              O contrato desta equipe está inativo. Não é possível criar novas demandas.
-            </AlertDescription>
-          </Alert>
-        )}
+      {/* Team Inactive Alert */}
+      {!isTeamActive && (
+        <Alert variant="destructive">
+          <Ban className="h-4 w-4" />
+          <AlertDescription>
+            O contrato desta equipe está inativo. Não é possível criar novas demandas.
+          </AlertDescription>
+        </Alert>
+      )}
 
-        {!isWithinLimit && isTeamActive && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              O limite mensal de demandas deste quadro foi atingido. Entre em contato com o administrador para mais informações.
-            </AlertDescription>
-          </Alert>
-        )}
+      {/* Board Limit Progress */}
+      {hasBoardLimit && isTeamActive && (
+        <Card>
+          <CardContent className="pt-6">
+            <ScopeProgressBar used={monthlyCount} limit={limit} />
+          </CardContent>
+        </Card>
+      )}
 
-        {canCreateWithService === false && serviceInfo && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              O limite mensal para o serviço selecionado foi atingido ({serviceInfo.currentCount}/{serviceInfo.monthly_limit}).
-            </AlertDescription>
-          </Alert>
-        )}
-      </div>
+      {/* Board Limit Reached Alert */}
+      {!isWithinLimit && isTeamActive && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            O limite mensal de demandas deste quadro foi atingido. Entre em contato com o administrador para mais informações.
+          </AlertDescription>
+        </Alert>
+      )}
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="grid gap-8 lg:grid-cols-2">
-          {/* Main Content - Left Column */}
-          <div className="space-y-6">
-            {/* Title */}
+      {/* Service Limit Reached Alert */}
+      {canCreateWithService === false && serviceInfo && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            O limite mensal para o serviço selecionado foi atingido ({serviceInfo.currentCount}/{serviceInfo.monthly_limit}).
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Informações da Demanda</CardTitle>
+          <CardDescription>
+            Preencha os dados para criar uma nova demanda
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title" className="text-base font-semibold">Título *</Label>
+              <Label htmlFor="title">Título *</Label>
               <Input
                 id="title"
                 placeholder="Ex: Implementar nova funcionalidade"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-                className="h-12 text-base"
               />
             </div>
 
-            {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="description" className="text-base font-semibold">Descrição</Label>
+              <Label htmlFor="description">Descrição</Label>
               <RichTextEditor
                 value={description}
                 onChange={setDescription}
                 placeholder="Descreva os detalhes da demanda... (cole imagens diretamente no editor)"
-                minHeight="250px"
+                minHeight="150px"
               />
             </div>
 
-            {/* Attachments */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="status">Status *</Label>
+                <Select value={statusId} onValueChange={setStatusId} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statuses?.map((status) => (
+                      <SelectItem key={status.id} value={status.id}>
+                        {status.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="priority">Prioridade</Label>
+                <Select value={priority} onValueChange={setPriority}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="baixa">Baixa</SelectItem>
+                    <SelectItem value="média">Média</SelectItem>
+                    <SelectItem value="alta">Alta</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label className="text-base font-semibold">Anexos</Label>
+              <Label className="flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                Serviço {hasBoardServices ? "*" : ""}
+              </Label>
+              <ServiceSelector
+                teamId={selectedTeamId}
+                boardId={selectedBoardId}
+                value={serviceId}
+                onChange={handleServiceChange}
+              />
+              <p className="text-xs text-muted-foreground">
+                {hasBoardServices 
+                  ? "Selecione um serviço obrigatório para esta demanda"
+                  : "Selecione um serviço para calcular automaticamente a data de entrega"
+                }
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dueDate">Data de Entrega</Label>
+              <Input
+                id="dueDate"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
+            </div>
+
+            {canAssignResponsibles && (
+              <div className="space-y-2">
+                <Label>Responsáveis</Label>
+                <AssigneeSelector
+                  teamId={selectedTeamId}
+                  boardId={selectedBoardId}
+                  selectedUserIds={assigneeIds}
+                  onChange={setAssigneeIds}
+                />
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label>Anexos</Label>
               <InlineFileUploader
                 pendingFiles={pendingFiles}
                 onFilesChange={setPendingFiles}
@@ -350,117 +422,27 @@ export default function CreateDemand() {
                 </p>
               )}
             </div>
-          </div>
 
-          {/* Sidebar - Right Column */}
-          <div>
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg">Configurações</CardTitle>
-                <CardDescription>Configure os detalhes da demanda</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-5">
-                {/* Status & Priority - 2 columns */}
-                <div className="grid gap-4 grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Status *</Label>
-                    <Select value={statusId} onValueChange={setStatusId} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statuses?.map((status) => (
-                          <SelectItem key={status.id} value={status.id}>
-                            {status.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="priority">Prioridade</Label>
-                    <Select value={priority} onValueChange={setPriority}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="baixa">Baixa</SelectItem>
-                        <SelectItem value="média">Média</SelectItem>
-                        <SelectItem value="alta">Alta</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Service */}
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-1.5">
-                    <Package className="h-4 w-4" />
-                    Serviço {hasBoardServices ? "*" : ""}
-                  </Label>
-                  <ServiceSelector
-                    teamId={selectedTeamId}
-                    boardId={selectedBoardId}
-                    value={serviceId}
-                    onChange={handleServiceChange}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {hasBoardServices 
-                      ? "Obrigatório para este quadro"
-                      : "Calcula automaticamente a data de entrega"
-                    }
-                  </p>
-                </div>
-
-                {/* Due Date */}
-                <div className="space-y-2">
-                  <Label htmlFor="dueDate">Data de Entrega</Label>
-                  <Input
-                    id="dueDate"
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                  />
-                </div>
-
-                {/* Assignees */}
-                {canAssignResponsibles && (
-                  <div className="space-y-2">
-                    <Label>Responsáveis</Label>
-                    <AssigneeSelector
-                      teamId={selectedTeamId}
-                      boardId={selectedBoardId}
-                      selectedUserIds={assigneeIds}
-                      onChange={setAssigneeIds}
-                    />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Action Buttons - Full Width */}
-        <div className="flex gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => attemptNavigation("/demands")}
-            className="flex-1 h-12"
-          >
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitDisabled}
-            className="flex-1 h-12 text-base"
-            size="lg"
-          >
-            {createDemand.isPending ? "Criando..." : "Criar Demanda"}
-          </Button>
-        </div>
-      </form>
+            <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => attemptNavigation("/demands")}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitDisabled}
+                className="flex-1"
+              >
+                {createDemand.isPending ? "Criando..." : "Criar Demanda"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
