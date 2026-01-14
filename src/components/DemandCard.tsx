@@ -6,6 +6,7 @@ import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
 import { cn, truncateText } from "@/lib/utils";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { formatDateOnlyBR, isDateOverdue } from "@/lib/dateUtils";
+import { extractPlainText } from "@/components/ui/rich-text-editor";
 
 interface Assignee {
   user_id: string;
@@ -100,7 +101,7 @@ export function DemandCard({ demand, onClick, showFullDetails = false }: DemandC
             <CardTitle className="text-base sm:text-lg line-clamp-2" title={demand.title}>{truncateText(demand.title)}</CardTitle>
             {demand.description && (
               <CardDescription className="line-clamp-2 text-sm">
-                {demand.description}
+                {extractPlainText(demand.description)}
               </CardDescription>
             )}
           </div>

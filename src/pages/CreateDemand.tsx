@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCreateDemand, useDemandStatuses } from "@/hooks/useDemands";
@@ -271,12 +271,11 @@ export default function CreateDemand() {
 
             <div className="space-y-2">
               <Label htmlFor="description">Descrição</Label>
-              <Textarea
-                id="description"
-                placeholder="Descreva os detalhes da demanda..."
+              <RichTextEditor
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
+                onChange={setDescription}
+                placeholder="Descreva os detalhes da demanda... (cole imagens diretamente no editor)"
+                minHeight="150px"
               />
             </div>
 

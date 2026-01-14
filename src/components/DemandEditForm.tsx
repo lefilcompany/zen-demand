@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDemandStatuses, useUpdateDemand } from "@/hooks/useDemands";
 import { ServiceSelector } from "@/components/ServiceSelector";
@@ -106,12 +106,12 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
 
       <div className="space-y-2">
         <Label htmlFor="edit-description">Descrição</Label>
-        <Textarea
-          id="edit-description"
-          placeholder="Descreva os detalhes da demanda..."
+        <RichTextEditor
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={3}
+          onChange={setDescription}
+          placeholder="Descreva os detalhes da demanda... (cole imagens diretamente no editor)"
+          minHeight="120px"
+          demandId={demand.id}
         />
       </div>
 
