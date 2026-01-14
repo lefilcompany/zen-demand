@@ -307,7 +307,7 @@ export default function CreateDemand() {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="space-y-8">
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Main Content - Left Column */}
           <div className="space-y-6">
@@ -353,7 +353,7 @@ export default function CreateDemand() {
           </div>
 
           {/* Sidebar - Right Column */}
-          <div className="space-y-6">
+          <div>
             <Card>
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg">Configurações</CardTitle>
@@ -438,27 +438,27 @@ export default function CreateDemand() {
                 )}
               </CardContent>
             </Card>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => attemptNavigation("/demands")}
-                className="flex-1 h-12"
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitDisabled}
-                className="flex-1 h-12 text-base"
-                size="lg"
-              >
-                {createDemand.isPending ? "Criando..." : "Criar Demanda"}
-              </Button>
-            </div>
           </div>
+        </div>
+
+        {/* Action Buttons - Full Width */}
+        <div className="flex gap-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => attemptNavigation("/demands")}
+            className="flex-1 h-12"
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitDisabled}
+            className="flex-1 h-12 text-base"
+            size="lg"
+          >
+            {createDemand.isPending ? "Criando..." : "Criar Demanda"}
+          </Button>
         </div>
       </form>
     </div>
