@@ -6,6 +6,9 @@ const USER_MENTION_REGEX = /\[\[([^:]+):([^\]]+)\]\]/g;
 // Formato de armazenamento para demandas: {{demand_id:#0001}}
 const DEMAND_MENTION_REGEX = /\{\{([^:]+):(#[^\}]+)\}\}/g;
 
+// Regex para detectar URLs
+const URL_REGEX = /(https?:\/\/[^\s<>\[\]\{\}]+)/g;
+
 // Converte texto com marcadores para array de strings e objetos de menção
 export interface ParsedUserMention {
   type: "user_mention";
@@ -19,13 +22,19 @@ export interface ParsedDemandMention {
   code: string;
 }
 
-export type ParsedContent = string | ParsedUserMention | ParsedDemandMention;
+export interface ParsedLink {
+  type: "link";
+  url: string;
+  displayText: string;
+}
+
+export type ParsedContent = string | ParsedUserMention | ParsedDemandMention | ParsedLink;
 
 export function parseMentionsToArray(text: string): ParsedContent[] {
   const parts: ParsedContent[] = [];
   
-  // Combined regex to match both types
-  const COMBINED_REGEX = /(\[\[([^:]+):([^\]]+)\]\])|(\{\{([^:]+):(#[^\}]+)\}\})/g;
+  // Combined regex to match mentions, demands, and URLs
+  const COMBINED_REGEX = /(\[\[([^:]+):([^\]]+)\]\])|(\{\{([^:]+):(#[^\}]+)\}\})|(https?:\/\/[^\s<>\[\]\{\}]+)/g;
   
   let lastIndex = 0;
   COMBINED_REGEX.lastIndex = 0;
@@ -47,12 +56,42 @@ export function parseMentionsToArray(text: string): ParsedContent[] {
       const demandId = match[5];
       const code = match[6];
       parts.push({ type: "demand_mention", demandId, code });
+    } else if (match[7]) {
+      // URL link
+      const url = match[7];
+      parts.push({ type: "link", url, displayText: url });
     }
     
     lastIndex = match.index + match[0].length;
   }
 
   // Adiciona texto restante
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts;
+}
+
+// Função para parsear apenas links (sem menções)
+export function parseLinks(text: string): (string | ParsedLink)[] {
+  const parts: (string | ParsedLink)[] = [];
+  
+  let lastIndex = 0;
+  URL_REGEX.lastIndex = 0;
+  
+  let match;
+  while ((match = URL_REGEX.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    
+    const url = match[1];
+    parts.push({ type: "link", url, displayText: url });
+    
+    lastIndex = match.index + match[0].length;
+  }
+
   if (lastIndex < text.length) {
     parts.push(text.slice(lastIndex));
   }
@@ -104,4 +143,10 @@ export function hasMentions(text: string): boolean {
 export function hasDemandMentions(text: string): boolean {
   DEMAND_MENTION_REGEX.lastIndex = 0;
   return DEMAND_MENTION_REGEX.test(text);
+}
+
+// Verifica se texto contém links
+export function hasLinks(text: string): boolean {
+  URL_REGEX.lastIndex = 0;
+  return URL_REGEX.test(text);
 }
