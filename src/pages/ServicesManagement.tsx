@@ -326,7 +326,7 @@ export default function ServicesManagement() {
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="parent_id">Categoria Pai</Label>
+                <Label htmlFor="parent_id">Agrupar em</Label>
                 <Select
                   value={formData.parent_id || "none"}
                   onValueChange={(value) =>
@@ -334,10 +334,10 @@ export default function ServicesManagement() {
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Nenhuma (serviço raiz)" />
+                    <SelectValue placeholder="Serviço independente" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Nenhuma (serviço raiz)</SelectItem>
+                    <SelectItem value="none">Serviço independente</SelectItem>
                     {potentialParents?.map((parent) => (
                       <SelectItem key={parent.id} value={parent.id}>
                         <div className="flex items-center gap-2">
@@ -349,7 +349,7 @@ export default function ServicesManagement() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Se selecionar uma categoria, este serviço será um subserviço. Categorias não podem ser selecionadas diretamente.
+                  Agrupe serviços relacionados para melhor organização. Serviços agrupados aparecem dentro da categoria selecionada.
                 </p>
               </div>
               <div className="space-y-2">
