@@ -22,7 +22,7 @@ export function ImageCropDialog({
   open,
   onOpenChange,
   imageSrc,
-  aspectRatio = 16 / 5,
+  aspectRatio = 4 / 1,
   onCropComplete,
   userAvatarUrl,
   userName = "Usuário",
