@@ -270,14 +270,14 @@ export default function Demands() {
             </Button>}
 
           {/* View toggle */}
-          <div className="border border-border rounded-md h-9 shrink-0 flex items-center justify-center">
-            <Button variant={viewMode === "table" ? "secondary" : "ghost"} size="icon" className={`hidden lg:flex h-8 w-8 ${viewMode === "table" ? "rounded-r-none bg-primary text-primary-foreground" : "rounded-r-none"}`} onClick={() => setViewMode("table")} title={t("demands.tableView")}>
+          <div className="border border-border rounded-md overflow-hidden shrink-0 flex">
+            <Button variant={viewMode === "table" ? "secondary" : "ghost"} size="icon" className={`hidden lg:flex h-8 w-8 rounded-none ${viewMode === "table" ? "bg-primary text-primary-foreground" : ""}`} onClick={() => setViewMode("table")} title={t("demands.tableView")}>
               <List className="h-4 w-4" />
             </Button>
             <Button variant={viewMode === "grid" ? "secondary" : "ghost"} size="icon" className={`hidden lg:flex h-8 w-8 rounded-none ${viewMode === "grid" ? "bg-primary text-primary-foreground" : ""}`} onClick={() => setViewMode("grid")} title={t("demands.gridView")}>
               <LayoutGrid className="h-4 w-4" />
             </Button>
-            <Button variant={viewMode === "calendar" ? "secondary" : "ghost"} size="icon" className={`h-8 w-8 ${viewMode === "calendar" ? "lg:rounded-l-none bg-primary text-primary-foreground" : "lg:rounded-l-none"}`} onClick={() => setViewMode("calendar")} title="Visualização em calendário">
+            <Button variant={viewMode === "calendar" ? "secondary" : "ghost"} size="icon" className={`h-8 w-8 rounded-none ${viewMode === "calendar" ? "bg-primary text-primary-foreground" : ""}`} onClick={() => setViewMode("calendar")} title="Visualização em calendário">
               <CalendarDays className="h-4 w-4" />
             </Button>
           </div>
