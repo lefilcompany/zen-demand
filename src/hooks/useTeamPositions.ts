@@ -7,6 +7,7 @@ export interface TeamPosition {
   name: string;
   description: string | null;
   color: string;
+  text_color: string;
   created_by: string;
   created_at: string;
 }
@@ -39,11 +40,13 @@ export function useCreatePosition() {
       name,
       description,
       color,
+      textColor,
     }: {
       teamId: string;
       name: string;
       description?: string;
       color: string;
+      textColor?: string;
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
@@ -55,6 +58,7 @@ export function useCreatePosition() {
           name: name.trim(),
           description: description?.trim() || null,
           color,
+          text_color: textColor || "auto",
           created_by: user.id,
         })
         .select()
@@ -84,12 +88,14 @@ export function useUpdatePosition() {
       name,
       description,
       color,
+      textColor,
     }: {
       positionId: string;
       teamId: string;
       name: string;
       description?: string;
       color: string;
+      textColor?: string;
     }) => {
       const { data, error } = await supabase
         .from("team_positions")
@@ -97,6 +103,7 @@ export function useUpdatePosition() {
           name: name.trim(),
           description: description?.trim() || null,
           color,
+          text_color: textColor || "auto",
         })
         .eq("id", positionId)
         .select()

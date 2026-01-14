@@ -6,6 +6,7 @@ export interface TeamMemberPosition {
   id: string;
   name: string;
   color: string;
+  text_color: string;
 }
 
 export interface TeamMember {
@@ -36,7 +37,7 @@ export function useTeamMembers(teamId: string | null) {
           joined_at,
           position_id,
           profiles!team_members_user_id_fkey(full_name, avatar_url),
-          team_positions(id, name, color)
+          team_positions(id, name, color, text_color)
         `)
         .eq("team_id", teamId)
         .order("joined_at", { ascending: true });
@@ -53,6 +54,7 @@ export function useTeamMembers(teamId: string | null) {
           id: (member.team_positions as any).id,
           name: (member.team_positions as any).name,
           color: (member.team_positions as any).color,
+          text_color: (member.team_positions as any).text_color || "auto",
         } : null,
         profile: {
           full_name: (member.profiles as any)?.full_name || "Usuário",

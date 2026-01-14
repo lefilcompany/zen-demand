@@ -41,7 +41,7 @@ export function TeamPositionsManager({ teamId, canManage, isAdmin }: TeamPositio
   const [editingPosition, setEditingPosition] = useState<TeamPosition | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const handleCreateOrUpdate = async (data: { name: string; description?: string; color: string }) => {
+  const handleCreateOrUpdate = async (data: { name: string; description?: string; color: string; textColor: string }) => {
     try {
       if (editingPosition) {
         await updatePosition.mutateAsync({
@@ -145,7 +145,7 @@ export function TeamPositionsManager({ teamId, canManage, isAdmin }: TeamPositio
                   className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <PositionBadge name={position.name} color={position.color} />
+                    <PositionBadge name={position.name} color={position.color} textColor={position.text_color} />
                     {position.description && (
                       <span className="text-sm text-muted-foreground truncate">
                         {position.description}

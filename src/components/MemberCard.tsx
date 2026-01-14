@@ -192,6 +192,7 @@ export function MemberCard({
               <PositionBadge
                 name={member.position.name}
                 color={member.position.color}
+                textColor={member.position.text_color}
               />
             ) : null}
           </div>
