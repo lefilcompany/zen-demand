@@ -1,78 +1,29 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { getErrorMessage } from "@/lib/errorUtils";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Camera, Loader2, Save, User, Mail, Calendar, Shield, Lock, Eye, EyeOff, CheckCircle2, XCircle, AlertCircle, MapPin, Link as LinkIcon, Github, Linkedin, Briefcase } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ProfileEditDrawer } from "@/components/ProfileEditDrawer";
+import { useUserStats, badges, calculateLevel } from "@/hooks/useUserStats";
+import { 
+  ArrowLeft, Settings, User, Calendar, MapPin, Briefcase, 
+  Link as LinkIcon, Github, Linkedin, Target, CheckCircle2, 
+  Clock, MessageSquare, Users, Loader2, Award, TrendingUp,
+  Zap, Trophy
+} from "lucide-react";
 
 export default function Profile() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
-  
-  const [fullName, setFullName] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
-  const [bio, setBio] = useState("");
-  const [jobTitle, setJobTitle] = useState("");
-  const [location, setLocation] = useState("");
-  const [website, setWebsite] = useState("");
-  const [linkedinUrl, setLinkedinUrl] = useState("");
-  const [githubUrl, setGithubUrl] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
-  
-  // Password change state
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
-  const [currentPasswordVerified, setCurrentPasswordVerified] = useState(false);
+  const [editDrawerOpen, setEditDrawerOpen] = useState(false);
 
-  // Password strength calculation
-  const getPasswordStrength = (password: string) => {
-    if (!password) return { score: 0, label: "", color: "" };
-    
-    let score = 0;
-    const checks = {
-      length: password.length >= 6,
-      lengthBonus: password.length >= 10,
-      hasUppercase: /[A-Z]/.test(password),
-      hasLowercase: /[a-z]/.test(password),
-      hasNumber: /[0-9]/.test(password),
-      hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(password),
-    };
-    
-    if (checks.length) score += 1;
-    if (checks.lengthBonus) score += 1;
-    if (checks.hasUppercase) score += 1;
-    if (checks.hasLowercase) score += 1;
-    if (checks.hasNumber) score += 1;
-    if (checks.hasSpecial) score += 1;
-    
-    if (score <= 2) return { score, label: "Fraca", color: "bg-destructive" };
-    if (score <= 4) return { score, label: "Média", color: "bg-amber-500" };
-    return { score, label: "Forte", color: "bg-emerald-500" };
-  };
-
-  // Password validation
-  const passwordStrength = getPasswordStrength(newPassword);
-  const passwordsMatch = newPassword === confirmPassword && newPassword.length > 0;
-  const newPasswordValid = newPassword.length >= 6;
-  const canSubmitPassword = currentPasswordVerified && newPasswordValid && passwordsMatch;
-
-  const { data: profile, isLoading } = useQuery({
+  const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: async () => {
       if (!user) return null;
@@ -87,235 +38,10 @@ export default function Profile() {
     enabled: !!user,
   });
 
-  useEffect(() => {
-    if (profile) {
-      setFullName(profile.full_name || "");
-      setAvatarUrl(profile.avatar_url || "");
-      setBio((profile as any).bio || "");
-      setJobTitle((profile as any).job_title || "");
-      setLocation((profile as any).location || "");
-      setWebsite((profile as any).website || "");
-      setLinkedinUrl((profile as any).linkedin_url || "");
-      setGithubUrl((profile as any).github_url || "");
-    }
-  }, [profile]);
-
-  const updateProfileMutation = useMutation({
-    mutationFn: async (data: { 
-      full_name: string; 
-      avatar_url: string | null;
-      bio: string | null;
-      job_title: string | null;
-      location: string | null;
-      website: string | null;
-      linkedin_url: string | null;
-      github_url: string | null;
-    }) => {
-      if (!user) throw new Error("Usuário não autenticado");
-      
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          full_name: data.full_name,
-          avatar_url: data.avatar_url,
-          bio: data.bio,
-          job_title: data.job_title,
-          location: data.location,
-          website: data.website,
-          linkedin_url: data.linkedin_url,
-          github_url: data.github_url,
-        } as any)
-        .eq("id", user.id);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
-      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
-      toast.success("Perfil atualizado com sucesso!");
-    },
-    onError: (error) => {
-      toast.error("Erro ao atualizar perfil", {
-        description: getErrorMessage(error),
-      });
-    },
-  });
-
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("Por favor, selecione uma imagem válida");
-      return;
-    }
-
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("A imagem deve ter no máximo 2MB");
-      return;
-    }
-
-    setIsUploading(true);
-    
-    try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(filePath);
-
-      setAvatarUrl(publicUrl);
-      toast.success("Imagem carregada com sucesso!");
-    } catch (error: any) {
-      toast.error("Erro ao fazer upload", {
-        description: getErrorMessage(error),
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!fullName.trim()) {
-      toast.error("O nome é obrigatório");
-      return;
-    }
-
-    updateProfileMutation.mutate({
-      full_name: fullName.trim(),
-      avatar_url: avatarUrl || null,
-      bio: bio.trim() || null,
-      job_title: jobTitle.trim() || null,
-      location: location.trim() || null,
-      website: website.trim() || null,
-      linkedin_url: linkedinUrl.trim() || null,
-      github_url: githubUrl.trim() || null,
-    });
-  };
-
-  const handleVerifyCurrentPassword = async () => {
-    if (!currentPassword.trim()) {
-      toast.error("Informe a senha atual");
-      return;
-    }
-    
-    if (!user?.email) {
-      toast.error("Erro ao identificar usuário");
-      return;
-    }
-    
-    setIsVerifyingPassword(true);
-    
-    try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: currentPassword,
-      });
-      
-      if (signInError) {
-        toast.error("Senha atual incorreta");
-        setCurrentPasswordVerified(false);
-        return;
-      }
-      
-      setCurrentPasswordVerified(true);
-      toast.success("Senha verificada! Agora você pode definir a nova senha.");
-    } catch (error) {
-      toast.error("Erro ao verificar senha", {
-        description: getErrorMessage(error),
-      });
-      setCurrentPasswordVerified(false);
-    } finally {
-      setIsVerifyingPassword(false);
-    }
-  };
-
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!currentPasswordVerified) {
-      toast.error("Verifique a senha atual primeiro");
-      return;
-    }
-    
-    if (!newPassword.trim()) {
-      toast.error("Informe a nova senha");
-      return;
-    }
-    
-    if (newPassword.length < 6) {
-      toast.error("A nova senha deve ter no mínimo 6 caracteres");
-      return;
-    }
-    
-    if (newPassword !== confirmPassword) {
-      toast.error("As senhas não coincidem");
-      return;
-    }
-    
-    setIsChangingPassword(true);
-    
-    try {
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
-      
-      if (updateError) {
-        // Handle specific error codes
-        if (updateError.code === 'same_password' || updateError.message?.includes('different from the old password')) {
-          toast.error("A nova senha deve ser diferente da senha atual", {
-            description: "Por favor, escolha uma senha diferente da sua senha atual.",
-          });
-          return;
-        }
-        throw updateError;
-      }
-      
-      toast.success("Senha alterada com sucesso!");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setCurrentPasswordVerified(false);
-    } catch (error: any) {
-      // Double-check for same_password error
-      if (error?.code === 'same_password' || error?.message?.includes('different from the old password')) {
-        toast.error("A nova senha deve ser diferente da senha atual", {
-          description: "Por favor, escolha uma senha diferente da sua senha atual.",
-        });
-      } else {
-        toast.error("Erro ao alterar senha", {
-          description: getErrorMessage(error),
-        });
-      }
-    } finally {
-      setIsChangingPassword(false);
-    }
-  };
-
-  const handleCurrentPasswordChange = (value: string) => {
-    setCurrentPassword(value);
-    if (currentPasswordVerified) {
-      setCurrentPasswordVerified(false);
-    }
-  };
+  const { data: stats, isLoading: statsLoading } = useUserStats(user?.id);
 
   const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+    return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
   const formatDate = (dateString: string) => {
@@ -326,7 +52,18 @@ export default function Profile() {
     });
   };
 
-  if (isLoading) {
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins}m`;
+  };
+
+  const levelInfo = stats ? calculateLevel(stats) : { level: 1, xp: 0, xpForNext: 100, progress: 0 };
+  const earnedBadges = stats ? badges.filter((b) => b.requirement(stats)) : [];
+  const lockedBadges = stats ? badges.filter((b) => !b.requirement(stats)) : badges;
+
+  if (profileLoading || statsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -335,453 +72,284 @@ export default function Profile() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in pb-8">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="shrink-0"
-        >
+      <div className="flex items-center justify-between gap-4">
+        <Button variant="ghost" onClick={() => navigate(-1)} className="shrink-0">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar
         </Button>
+        <Button onClick={() => setEditDrawerOpen(true)}>
+          <Settings className="mr-2 h-4 w-4" />
+          Editar Perfil
+        </Button>
       </div>
 
-      {/* Profile Hero Section */}
+      {/* Profile Hero with Level */}
       <Card className="overflow-hidden">
-        <div className="h-32 bg-gradient-to-r from-primary/80 via-primary to-primary/60" />
+        <div className="h-32 bg-gradient-to-r from-primary/80 via-primary to-primary/60 relative">
+          {/* Level Badge */}
+          <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/30 backdrop-blur-sm rounded-full px-4 py-2">
+            <Trophy className="h-5 w-5 text-yellow-400" />
+            <span className="text-white font-bold">Nível {levelInfo.level}</span>
+          </div>
+        </div>
         <CardContent className="relative pb-6">
           {/* Avatar */}
           <div className="absolute -top-16 left-6 md:left-8">
-            <div className="relative group">
+            <div className="relative">
               <Avatar className="h-28 w-28 md:h-32 md:w-32 border-4 border-background shadow-xl">
-                <AvatarImage src={avatarUrl} alt={fullName} className="object-cover" />
+                <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name} className="object-cover" />
                 <AvatarFallback className="text-3xl bg-primary/10 text-primary font-semibold">
-                  {fullName ? getInitials(fullName) : <User className="h-12 w-12" />}
+                  {profile?.full_name ? getInitials(profile.full_name) : <User className="h-12 w-12" />}
                 </AvatarFallback>
               </Avatar>
-              <label
-                htmlFor="avatar-upload"
-                className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer"
-              >
-                {isUploading ? (
-                  <Loader2 className="h-8 w-8 text-white animate-spin" />
-                ) : (
-                  <div className="flex flex-col items-center gap-1">
-                    <Camera className="h-6 w-6 text-white" />
-                    <span className="text-xs text-white font-medium">Alterar</span>
-                  </div>
-                )}
-              </label>
-              <input
-                id="avatar-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarChange}
-                disabled={isUploading}
-              />
+              {/* Level ring */}
+              <div className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full h-10 w-10 flex items-center justify-center font-bold border-4 border-background shadow-lg">
+                {levelInfo.level}
+              </div>
             </div>
           </div>
 
-          {/* Profile Info Header */}
+          {/* Profile Info */}
           <div className="pt-16 md:pt-20 md:pl-40">
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-              {fullName || "Seu Nome"}
-            </h1>
-            <p className="text-muted-foreground mt-1 flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              {user?.email}
-            </p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                  {profile?.full_name || "Seu Nome"}
+                </h1>
+                {(profile as any)?.job_title && (
+                  <p className="text-muted-foreground flex items-center gap-2 mt-1">
+                    <Briefcase className="h-4 w-4" />
+                    {(profile as any).job_title}
+                  </p>
+                )}
+                {(profile as any)?.location && (
+                  <p className="text-muted-foreground flex items-center gap-2 mt-1">
+                    <MapPin className="h-4 w-4" />
+                    {(profile as any).location}
+                  </p>
+                )}
+              </div>
+
+              {/* XP Progress */}
+              <div className="bg-muted/50 rounded-lg p-4 min-w-[200px]">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium flex items-center gap-1">
+                    <Zap className="h-4 w-4 text-yellow-500" />
+                    {levelInfo.xp} XP
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {levelInfo.xpForNext} XP
+                  </span>
+                </div>
+                <Progress value={levelInfo.progress} className="h-2" />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {Math.round(levelInfo.progress)}% para o nível {levelInfo.level + 1}
+                </p>
+              </div>
+            </div>
+
+            {/* Bio */}
+            {(profile as any)?.bio && (
+              <p className="text-muted-foreground mt-4 max-w-2xl">
+                {(profile as any).bio}
+              </p>
+            )}
+
+            {/* Social Links */}
+            <div className="flex flex-wrap gap-2 mt-4">
+              {(profile as any)?.website && (
+                <a href={(profile as any).website} target="_blank" rel="noopener noreferrer">
+                  <Badge variant="secondary" className="gap-1 cursor-pointer hover:bg-secondary/80">
+                    <LinkIcon className="h-3 w-3" />
+                    Website
+                  </Badge>
+                </a>
+              )}
+              {(profile as any)?.linkedin_url && (
+                <a href={(profile as any).linkedin_url} target="_blank" rel="noopener noreferrer">
+                  <Badge variant="secondary" className="gap-1 cursor-pointer hover:bg-secondary/80">
+                    <Linkedin className="h-3 w-3" />
+                    LinkedIn
+                  </Badge>
+                </a>
+              )}
+              {(profile as any)?.github_url && (
+                <a href={(profile as any).github_url} target="_blank" rel="noopener noreferrer">
+                  <Badge variant="secondary" className="gap-1 cursor-pointer hover:bg-secondary/80">
+                    <Github className="h-3 w-3" />
+                    GitHub
+                  </Badge>
+                </a>
+              )}
+              {user?.created_at && (
+                <Badge variant="outline" className="gap-1">
+                  <Calendar className="h-3 w-3" />
+                  Membro desde {formatDate(user.created_at)}
+                </Badge>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Edit Profile Card */}
-        <Card>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="h-5 w-5 text-primary" />
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <Target className="h-6 w-6 text-blue-500" />
               </div>
               <div>
-                <h2 className="font-semibold text-lg">Informações Pessoais</h2>
-                <p className="text-sm text-muted-foreground">Atualize seus dados</p>
+                <p className="text-2xl font-bold">{stats?.totalDemands || 0}</p>
+                <p className="text-sm text-muted-foreground">Demandas</p>
               </div>
             </div>
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Nome Completo</Label>
-                <Input
-                  id="fullName"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Seu nome completo"
-                  className="h-11"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="jobTitle" className="flex items-center gap-2">
-                  <Briefcase className="h-4 w-4 text-muted-foreground" />
-                  Cargo / Função
-                </Label>
-                <Input
-                  id="jobTitle"
-                  value={jobTitle}
-                  onChange={(e) => setJobTitle(e.target.value)}
-                  placeholder="Ex: Desenvolvedor Full Stack"
-                  className="h-11"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
-                <Textarea
-                  id="bio"
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  placeholder="Conte um pouco sobre você..."
-                  className="min-h-[80px] resize-none"
-                  maxLength={200}
-                />
-                <p className="text-xs text-muted-foreground text-right">
-                  {bio.length}/200 caracteres
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="location" className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  Localização
-                </Label>
-                <Input
-                  id="location"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Ex: São Paulo, Brasil"
-                  className="h-11"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
-                <Input
-                  id="email"
-                  value={user?.email || ""}
-                  disabled
-                  className="h-11 bg-muted/50"
-                />
-                <p className="text-xs text-muted-foreground">
-                  O e-mail não pode ser alterado
-                </p>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <p className="text-sm font-medium text-muted-foreground">Links e Redes Sociais</p>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="website" className="flex items-center gap-2">
-                    <LinkIcon className="h-4 w-4 text-muted-foreground" />
-                    Website
-                  </Label>
-                  <Input
-                    id="website"
-                    value={website}
-                    onChange={(e) => setWebsite(e.target.value)}
-                    placeholder="https://seusite.com"
-                    className="h-11"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="linkedinUrl" className="flex items-center gap-2">
-                    <Linkedin className="h-4 w-4 text-muted-foreground" />
-                    LinkedIn
-                  </Label>
-                  <Input
-                    id="linkedinUrl"
-                    value={linkedinUrl}
-                    onChange={(e) => setLinkedinUrl(e.target.value)}
-                    placeholder="https://linkedin.com/in/seuperfil"
-                    className="h-11"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="githubUrl" className="flex items-center gap-2">
-                    <Github className="h-4 w-4 text-muted-foreground" />
-                    GitHub
-                  </Label>
-                  <Input
-                    id="githubUrl"
-                    value={githubUrl}
-                    onChange={(e) => setGithubUrl(e.target.value)}
-                    placeholder="https://github.com/seuperfil"
-                    className="h-11"
-                  />
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                disabled={updateProfileMutation.isPending}
-                className="w-full h-11 gap-2"
-              >
-                {updateProfileMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-                Salvar Alterações
-              </Button>
-            </form>
           </CardContent>
         </Card>
 
-        {/* Account Info Card */}
-        <Card>
+        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <Shield className="h-5 w-5 text-primary" />
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                <CheckCircle2 className="h-6 w-6 text-green-500" />
               </div>
               <div>
-                <h2 className="font-semibold text-lg">Informações da Conta</h2>
-                <p className="text-sm text-muted-foreground">Detalhes do seu perfil</p>
+                <p className="text-2xl font-bold">{stats?.deliveredDemands || 0}</p>
+                <p className="text-sm text-muted-foreground">Entregues</p>
               </div>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/30">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <Calendar className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Membro desde</p>
-                  <p className="font-medium">
-                    {profile?.created_at ? formatDate(profile.created_at) : "-"}
-                  </p>
-                </div>
+        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-full bg-purple-500/20 flex items-center justify-center">
+                <Clock className="h-6 w-6 text-purple-500" />
               </div>
-
-              <Separator />
-
-              <div className="p-4 rounded-lg bg-muted/30">
-                <p className="text-sm text-muted-foreground mb-2">Foto de perfil</p>
-                <p className="text-sm">
-                  Formatos aceitos: <span className="font-medium">JPG, PNG ou GIF</span>
-                </p>
-                <p className="text-sm">
-                  Tamanho máximo: <span className="font-medium">2MB</span>
-                </p>
+              <div>
+                <p className="text-2xl font-bold">{stats ? formatTime(stats.totalTimeSpent) : "0m"}</p>
+                <p className="text-sm text-muted-foreground">Trabalhado</p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
 
-              <Separator />
-
-              <div className="p-4 rounded-lg border border-dashed border-primary/30 bg-primary/5">
-                <p className="text-sm text-center text-muted-foreground">
-                  Precisa de ajuda? Entre em contato com o suporte.
-                </p>
+        <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-full bg-orange-500/20 flex items-center justify-center">
+                <MessageSquare className="h-6 w-6 text-orange-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats?.totalComments || 0}</p>
+                <p className="text-sm text-muted-foreground">Comentários</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Password Change Card - Full Width */}
+      {/* Additional Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Users className="h-5 w-5 text-muted-foreground" />
+                <span className="text-muted-foreground">Equipes</span>
+              </div>
+              <span className="text-xl font-bold">{stats?.teamsCount || 0}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <TrendingUp className="h-5 w-5 text-muted-foreground" />
+                <span className="text-muted-foreground">Quadros</span>
+              </div>
+              <span className="text-xl font-bold">{stats?.boardsCount || 0}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Clock className="h-5 w-5 text-muted-foreground" />
+                <span className="text-muted-foreground">Tempo médio de entrega</span>
+              </div>
+              <span className="text-xl font-bold">
+                {stats?.avgDeliveryTime ? `${stats.avgDeliveryTime}h` : "-"}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Badges Section */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Lock className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-lg">Alterar Senha</h2>
-              <p className="text-sm text-muted-foreground">Atualize sua senha de acesso</p>
-            </div>
-          </div>
-
-          <form onSubmit={handlePasswordChange} className="space-y-6">
-            {/* Step 1: Verify Current Password */}
-            <div className="p-3 sm:p-4 rounded-lg border bg-muted/20">
-              <div className="flex flex-wrap items-center gap-2 mb-3">
-                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${currentPasswordVerified ? 'bg-emerald-500 text-white' : 'bg-primary text-primary-foreground'}`}>
-                  {currentPasswordVerified ? <CheckCircle2 className="h-4 w-4" /> : '1'}
-                </div>
-                <Label className="font-medium">Verificar Senha Atual</Label>
-                {currentPasswordVerified && (
-                  <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3" />
-                    Verificada
-                  </span>
-                )}
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-2">
-                <div className="relative flex-1">
-                  <Input
-                    id="currentPassword"
-                    type={showCurrentPassword ? "text" : "password"}
-                    value={currentPassword}
-                    onChange={(e) => handleCurrentPasswordChange(e.target.value)}
-                    placeholder="Digite sua senha atual"
-                    className="h-11 pr-10"
-                    disabled={currentPasswordVerified}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Award className="h-5 w-5 text-yellow-500" />
+            Conquistas
+            <Badge variant="secondary" className="ml-2">
+              {earnedBadges.length}/{badges.length}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {/* Earned Badges */}
+            {earnedBadges.map((badge) => (
+              <Tooltip key={badge.id}>
+                <TooltipTrigger asChild>
+                  <div 
+                    className="flex flex-col items-center p-4 rounded-xl border-2 transition-all hover:scale-105 cursor-pointer"
+                    style={{ 
+                      borderColor: badge.color,
+                      backgroundColor: `${badge.color}15`
+                    }}
                   >
-                    {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                <Button
-                  type="button"
-                  variant={currentPasswordVerified ? "outline" : "default"}
-                  onClick={handleVerifyCurrentPassword}
-                  disabled={isVerifyingPassword || !currentPassword.trim() || currentPasswordVerified}
-                  className="shrink-0"
-                >
-                  {isVerifyingPassword ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : currentPasswordVerified ? (
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                  ) : (
-                    "Verificar"
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            {/* Step 2: New Password Fields */}
-            <div className={`p-4 rounded-lg border transition-all ${currentPasswordVerified ? 'bg-background' : 'bg-muted/30 opacity-60'}`}>
-              <div className="flex items-center gap-2 mb-4">
-                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${currentPasswordVerified ? 'bg-primary text-primary-foreground' : 'bg-muted-foreground/30 text-muted-foreground'}`}>
-                  2
-                </div>
-                <Label className="font-medium">Definir Nova Senha</Label>
-              </div>
-              
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword" className="text-sm">Nova Senha</Label>
-                  <div className="relative">
-                    <Input
-                      id="newPassword"
-                      type={showNewPassword ? "text" : "password"}
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Digite sua nova senha"
-                      className={`h-11 pr-10 ${newPassword && !newPasswordValid ? 'border-destructive focus-visible:ring-destructive' : ''}`}
-                      disabled={!currentPasswordVerified}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      disabled={!currentPasswordVerified}
-                    >
-                      {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
+                    <span className="text-4xl mb-2">{badge.icon}</span>
+                    <span className="text-sm font-medium text-center">{badge.name}</span>
                   </div>
-                  {newPassword ? (
-                    <div className="space-y-2">
-                      {/* Strength Bar */}
-                      <div className="flex gap-1">
-                        {[1, 2, 3, 4, 5, 6].map((level) => (
-                          <div
-                            key={level}
-                            className={`h-1.5 flex-1 rounded-full transition-all ${
-                              level <= passwordStrength.score
-                                ? passwordStrength.color
-                                : 'bg-muted'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      {/* Strength Label */}
-                      <div className="flex items-center justify-between">
-                        <p className={`text-xs flex items-center gap-1 ${newPasswordValid ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'}`}>
-                          {newPasswordValid ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-                          {newPasswordValid ? 'Mínimo atingido' : 'Mínimo de 6 caracteres'}
-                        </p>
-                        <span className={`text-xs font-medium ${
-                          passwordStrength.score <= 2 ? 'text-destructive' : 
-                          passwordStrength.score <= 4 ? 'text-amber-600 dark:text-amber-400' : 
-                          'text-emerald-600 dark:text-emerald-400'
-                        }`}>
-                          {passwordStrength.label}
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">Mínimo de 6 caracteres</p>
-                  )}
-                </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="font-medium">{badge.name}</p>
+                  <p className="text-xs text-muted-foreground">{badge.description}</p>
+                </TooltipContent>
+              </Tooltip>
+            ))}
 
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-sm">Confirmar Nova Senha</Label>
-                  <div className="relative">
-                    <Input
-                      id="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirme sua nova senha"
-                      className={`h-11 pr-10 ${confirmPassword && !passwordsMatch ? 'border-destructive focus-visible:ring-destructive' : ''}`}
-                      disabled={!currentPasswordVerified}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      disabled={!currentPasswordVerified}
-                    >
-                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
+            {/* Locked Badges */}
+            {lockedBadges.map((badge) => (
+              <Tooltip key={badge.id}>
+                <TooltipTrigger asChild>
+                  <div className="flex flex-col items-center p-4 rounded-xl border-2 border-muted bg-muted/30 opacity-50 cursor-pointer">
+                    <span className="text-4xl mb-2 grayscale">{badge.icon}</span>
+                    <span className="text-sm font-medium text-center text-muted-foreground">???</span>
                   </div>
-                  {confirmPassword && (
-                    <p className={`text-xs flex items-center gap-1 ${passwordsMatch ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'}`}>
-                      {passwordsMatch ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-                      {passwordsMatch ? 'Senhas coincidem' : 'Senhas não coincidem'}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <div className="flex items-center gap-4">
-              <Button
-                type="submit"
-                disabled={isChangingPassword || !canSubmitPassword}
-                className="gap-2"
-              >
-                {isChangingPassword ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Lock className="h-4 w-4" />
-                )}
-                Alterar Senha
-              </Button>
-              
-              {!currentPasswordVerified && (
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  Verifique a senha atual primeiro
-                </p>
-              )}
-            </div>
-          </form>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="font-medium">🔒 Bloqueado</p>
+                  <p className="text-xs text-muted-foreground">{badge.description}</p>
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
         </CardContent>
       </Card>
+
+      {/* Edit Drawer */}
+      <ProfileEditDrawer open={editDrawerOpen} onOpenChange={setEditDrawerOpen} />
     </div>
   );
 }
