@@ -13,6 +13,7 @@ export interface BoardStatus {
     id: string;
     name: string;
     color: string;
+    is_system?: boolean;
   };
 }
 
@@ -90,7 +91,7 @@ export function useBoardStatuses(boardId: string | null) {
           position,
           is_active,
           created_at,
-          status:demand_statuses(id, name, color)
+          status:demand_statuses(id, name, color, is_system)
         `)
         .eq("board_id", boardId)
         .eq("is_active", true)
@@ -148,7 +149,7 @@ export function useAllBoardStatuses(boardId: string | null) {
           position,
           is_active,
           created_at,
-          status:demand_statuses(id, name, color)
+          status:demand_statuses(id, name, color, is_system)
         `)
         .eq("board_id", boardId)
         .order("position");

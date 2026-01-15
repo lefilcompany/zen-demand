@@ -334,8 +334,8 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                     {localStatuses.map((bs, index) => {
                       const demandCount = demandCounts?.[bs.status_id] || 0;
                       const canDelete = demandCount === 0;
-                      // Type assertion for status since the query returns is_system
-                      const isSystemStatus = (bs.status as any)?.is_system !== false;
+                      // Check if it's a system status - only allow delete for custom (non-system) statuses
+                      const isSystemStatus = bs.status.is_system === true;
                       
                       return (
                         <div
