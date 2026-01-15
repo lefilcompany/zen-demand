@@ -56,6 +56,9 @@ import {
   useDeleteBoardStatus,
   useCreateCustomStatus,
   BoardStatus,
+  isFixedBoundaryStatus,
+  FIXED_START_STATUS,
+  FIXED_END_STATUS,
 } from "@/hooks/useBoardStatuses";
 import { ColorPicker } from "@/components/ColorPicker";
 import { supabase } from "@/integrations/supabase/client";
@@ -109,10 +112,23 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const deleteStatus = useDeleteBoardStatus();
   const createCustomStatus = useCreateCustomStatus();
 
-  // Keep local state in sync with server data
+  // Keep local state in sync with server data, ensuring fixed statuses are at boundaries
   useEffect(() => {
     if (boardStatuses) {
-      setLocalStatuses(boardStatuses);
+      // Sort statuses: "A Iniciar" first, "Entregue" last, others in between by position
+      const sorted = [...boardStatuses].sort((a, b) => {
+        const aIsStart = a.status.name === FIXED_START_STATUS;
+        const bIsStart = b.status.name === FIXED_START_STATUS;
+        const aIsEnd = a.status.name === FIXED_END_STATUS;
+        const bIsEnd = b.status.name === FIXED_END_STATUS;
+        
+        if (aIsStart) return -1;
+        if (bIsStart) return 1;
+        if (aIsEnd) return 1;
+        if (bIsEnd) return -1;
+        return a.position - b.position;
+      });
+      setLocalStatuses(sorted);
     }
   }, [boardStatuses]);
 
@@ -126,7 +142,17 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   };
 
   const handleMoveUp = async (index: number) => {
+    // Cannot move first item or fixed boundary statuses
     if (index === 0) return;
+    
+    const currentStatus = localStatuses[index];
+    const targetStatus = localStatuses[index - 1];
+    
+    // Prevent moving into or out of fixed positions
+    if (isFixedBoundaryStatus(currentStatus.status.name) || isFixedBoundaryStatus(targetStatus.status.name)) {
+      toast.error("Esta etapa não pode ser movida");
+      return;
+    }
     
     const newStatuses = [...localStatuses];
     [newStatuses[index - 1], newStatuses[index]] = [newStatuses[index], newStatuses[index - 1]];
@@ -144,7 +170,17 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   };
 
   const handleMoveDown = async (index: number) => {
+    // Cannot move last item or fixed boundary statuses
     if (index === localStatuses.length - 1) return;
+    
+    const currentStatus = localStatuses[index];
+    const targetStatus = localStatuses[index + 1];
+    
+    // Prevent moving into or out of fixed positions
+    if (isFixedBoundaryStatus(currentStatus.status.name) || isFixedBoundaryStatus(targetStatus.status.name)) {
+      toast.error("Esta etapa não pode ser movida");
+      return;
+    }
     
     const newStatuses = [...localStatuses];
     [newStatuses[index], newStatuses[index + 1]] = [newStatuses[index + 1], newStatuses[index]];
@@ -179,19 +215,19 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const handleDeleteClick = (status: BoardStatus) => {
     const demandCount = demandCounts?.[status.status_id] || 0;
     
-    // Check if has demands FIRST - this is more actionable for the user
+    // Check if it's a fixed boundary status (A Iniciar or Entregue)
+    if (isFixedBoundaryStatus(status.status.name)) {
+      toast.error(`A etapa "${status.status.name}" é essencial para o fluxo e não pode ser removida`);
+      return;
+    }
+    
+    // Check if has demands - this is more actionable for the user
     if (demandCount > 0) {
       toast.error(`Esta etapa possui ${demandCount} demanda${demandCount === 1 ? '' : 's'}. Mova para outra etapa antes de excluir.`);
       return;
     }
     
-    // Check if it's a system status
-    if (status.status.is_system === true) {
-      toast.error("Etapas padrão do sistema não podem ser excluídas");
-      return;
-    }
-    
-    // No demands and not system, show confirmation
+    // No demands and not fixed, show confirmation
     setStatusToDelete(status);
     setDeleteDialogOpen(true);
   };
@@ -347,6 +383,14 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                 <div className="space-y-2">
                   <TooltipProvider>
                     {localStatuses.map((bs, index) => {
+                      const isFixedStatus = isFixedBoundaryStatus(bs.status.name);
+                      const isFirstItem = index === 0;
+                      const isLastItem = index === localStatuses.length - 1;
+                      
+                      // Determine if move buttons should be disabled
+                      const canMoveUp = !isFirstItem && !isFixedStatus && !isFixedBoundaryStatus(localStatuses[index - 1]?.status.name);
+                      const canMoveDown = !isLastItem && !isFixedStatus && !isFixedBoundaryStatus(localStatuses[index + 1]?.status.name);
+                      
                       return (
                         <div
                           key={bs.id}
@@ -354,29 +398,44 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                             "flex items-center gap-2 p-3 rounded-lg border transition-all",
                             bs.is_active 
                               ? "bg-background" 
-                              : "bg-muted/50 opacity-60"
+                              : "bg-muted/50 opacity-60",
+                            isFixedStatus && "border-primary/30 bg-primary/5"
                           )}
                         >
                           {/* Move buttons */}
                           <div className="flex flex-col gap-0.5">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-5 w-5"
-                              disabled={index === 0}
-                              onClick={() => handleMoveUp(index)}
-                            >
-                              <ChevronUp className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-5 w-5"
-                              disabled={index === localStatuses.length - 1}
-                              onClick={() => handleMoveDown(index)}
-                            >
-                              <ChevronDown className="h-3 w-3" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5"
+                                  disabled={!canMoveUp}
+                                  onClick={() => handleMoveUp(index)}
+                                >
+                                  <ChevronUp className="h-3 w-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              {isFixedStatus && (
+                                <TooltipContent>Etapa fixa</TooltipContent>
+                              )}
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5"
+                                  disabled={!canMoveDown}
+                                  onClick={() => handleMoveDown(index)}
+                                >
+                                  <ChevronDown className="h-3 w-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              {isFixedStatus && (
+                                <TooltipContent>Etapa fixa</TooltipContent>
+                              )}
+                            </Tooltip>
                           </div>
 
                           {/* Color indicator */}
@@ -385,9 +444,14 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                             style={{ backgroundColor: bs.status.color }}
                           />
 
-                          {/* Name */}
-                          <span className="flex-1 font-medium text-sm truncate">
+                          {/* Name with fixed indicator */}
+                          <span className="flex-1 font-medium text-sm truncate flex items-center gap-2">
                             {bs.status.name}
+                            {isFixedStatus && (
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                Fixa
+                              </Badge>
+                            )}
                           </span>
 
                           {/* Demand count badge */}
@@ -395,12 +459,21 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                             {demandCounts?.[bs.status_id] || 0} {(demandCounts?.[bs.status_id] || 0) === 1 ? "demanda" : "demandas"}
                           </Badge>
 
-                          {/* Active toggle */}
-                          <Switch
-                            checked={bs.is_active}
-                            onCheckedChange={(checked) => handleToggleStatus(bs.id, checked)}
-                            disabled={toggleStatus.isPending}
-                          />
+                          {/* Active toggle - fixed statuses cannot be deactivated */}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span>
+                                <Switch
+                                  checked={bs.is_active}
+                                  onCheckedChange={(checked) => handleToggleStatus(bs.id, checked)}
+                                  disabled={toggleStatus.isPending || isFixedStatus}
+                                />
+                              </span>
+                            </TooltipTrigger>
+                            {isFixedStatus && (
+                              <TooltipContent>Etapas fixas não podem ser desativadas</TooltipContent>
+                            )}
+                          </Tooltip>
 
                           {/* Delete button */}
                           <Tooltip>
@@ -408,14 +481,23 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => handleDeleteClick(bs)}
+                                className={cn(
+                                  "h-8 w-8 shrink-0",
+                                  isFixedStatus 
+                                    ? "text-muted-foreground/30 cursor-not-allowed" 
+                                    : "text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                )}
+                                onClick={() => !isFixedStatus && handleDeleteClick(bs)}
+                                disabled={isFixedStatus}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              Remover etapa do quadro
+                              {isFixedStatus 
+                                ? "Etapas fixas não podem ser removidas" 
+                                : "Remover etapa do quadro"
+                              }
                             </TooltipContent>
                           </Tooltip>
                         </div>
@@ -427,8 +509,8 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
             </div>
 
             <p className="text-xs text-muted-foreground mt-4">
-              Desativar uma etapa apenas a oculta no Kanban. As demandas existentes não são afetadas.
-              Para remover uma etapa personalizada, ela deve estar vazia (sem demandas).
+              As etapas "A Iniciar" e "Entregue" são fixas e essenciais para o fluxo de demandas. 
+              Novas etapas são criadas entre elas. Desativar uma etapa apenas a oculta no Kanban.
             </p>
           </div>
         </SheetContent>
