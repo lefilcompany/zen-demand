@@ -177,6 +177,21 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   };
 
   const handleDeleteClick = (status: BoardStatus) => {
+    const demandCount = demandCounts?.[status.status_id] || 0;
+    
+    // Check if it's a system status
+    if (status.status.is_system === true) {
+      toast.error("Etapas do sistema não podem ser removidas");
+      return;
+    }
+    
+    // Check if has demands
+    if (demandCount > 0) {
+      toast.error(`Não é possível remover: ${demandCount} demanda(s) nesta etapa. Mova as demandas para outra etapa primeiro.`);
+      return;
+    }
+    
+    // No demands, show confirmation
     setStatusToDelete(status);
     setDeleteDialogOpen(true);
   };
@@ -332,11 +347,6 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                 <div className="space-y-2">
                   <TooltipProvider>
                     {localStatuses.map((bs, index) => {
-                      const demandCount = demandCounts?.[bs.status_id] || 0;
-                      const canDelete = demandCount === 0;
-                      // Check if it's a system status - only allow delete for custom (non-system) statuses
-                      const isSystemStatus = bs.status.is_system === true;
-                      
                       return (
                         <div
                           key={bs.id}
@@ -382,7 +392,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
 
                           {/* Demand count badge */}
                           <Badge variant="outline" className="text-xs shrink-0">
-                            {demandCount} {demandCount === 1 ? "demanda" : "demandas"}
+                            {demandCounts?.[bs.status_id] || 0} {(demandCounts?.[bs.status_id] || 0) === 1 ? "demanda" : "demandas"}
                           </Badge>
 
                           {/* Active toggle */}
@@ -398,24 +408,14 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className={cn(
-                                  "h-8 w-8 shrink-0",
-                                  canDelete && !isSystemStatus
-                                    ? "text-destructive hover:bg-destructive/10"
-                                    : "text-muted-foreground cursor-not-allowed opacity-50"
-                                )}
-                                disabled={!canDelete || isSystemStatus}
-                                onClick={() => canDelete && !isSystemStatus && handleDeleteClick(bs)}
+                                className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => handleDeleteClick(bs)}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              {isSystemStatus
-                                ? "Etapas do sistema não podem ser removidas"
-                                : !canDelete
-                                ? `Não é possível remover: ${demandCount} demanda(s) nesta etapa`
-                                : "Remover etapa do quadro"}
+                              Remover etapa do quadro
                             </TooltipContent>
                           </Tooltip>
                         </div>
