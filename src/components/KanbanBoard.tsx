@@ -58,10 +58,12 @@ interface Demand {
   last_started_at?: string | null;
   team_id?: string; // Added for adjustment type determination
   board_sequence_number?: number | null; // Sequential ID per board
+  service_id?: string | null;
   demand_statuses?: { name: string; color: string } | null;
   profiles?: { full_name: string; avatar_url?: string | null } | null;
   assigned_profile?: { full_name: string; avatar_url?: string | null } | null;
   teams?: { name: string } | null;
+  services?: { id: string; name: string } | null;
   demand_assignees?: Assignee[];
   _isOffline?: boolean; // Flag for offline-created demands
 }
@@ -632,12 +634,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 {truncateText(demand.title)}
               </h4>
 
-              {demand.description && (
-                <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
-                  {demand.description}
-                </p>
-              )}
-
               <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
                 {showOfflineIndicator && (
                   <Badge
@@ -660,6 +656,17 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                     )}
                   >
                     {demand.priority}
+                  </Badge>
+                )}
+
+                {/* Service badge */}
+                {demand.services?.name && (
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-primary/5 text-primary border-primary/20 flex items-center gap-1"
+                  >
+                    <Wrench className="h-3 w-3" />
+                    {demand.services.name}
                   </Badge>
                 )}
 
@@ -739,16 +746,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 );
               })()}
 
-              {/* Creator info */}
-              {demand.profiles?.full_name && (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
-                  <User className="h-3 w-3" />
-                  <span className="truncate" title={demand.profiles.full_name}>
-                    {demand.profiles.full_name.split(" ")[0]}
-                  </span>
-                </div>
-              )}
-
               <div className="flex items-center justify-between mt-2">
                 {demand.due_date && (
                   <div
@@ -764,7 +761,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                     ) : (
                       <Calendar className="h-3 w-3" />
                     )}
-                    {formatDateOnlyBR(demand.due_date)?.slice(0, 6) || ""}
+                    {formatDateOnlyBR(demand.due_date) || ""}
                   </div>
                 )}
 
