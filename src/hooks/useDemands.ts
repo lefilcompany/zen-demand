@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Json } from "@/integrations/supabase/types";
+import { useEffect } from "react";
 import { 
   DemandCreateSchema, 
   DemandUpdateSchema, 
@@ -144,7 +145,9 @@ export function useDemandById(demandId: string | undefined) {
 }
 
 export function useDemandStatuses() {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: ["demand-statuses"],
     queryFn: async () => {
       // If offline, return cached statuses
@@ -182,6 +185,30 @@ export function useDemandStatuses() {
       return failureCount < 3;
     },
   });
+
+  // Subscribe to realtime updates for demand_statuses
+  useEffect(() => {
+    const channel = supabase
+      .channel("demand-statuses-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "demand_statuses",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["demand-statuses"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  return query;
 }
 
 export function useCreateDemand() {
