@@ -295,10 +295,24 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     setDraggedId(null);
     setDragOverColumn(null);
     
-    if (!currentDraggedId || !statuses) return;
+    if (!currentDraggedId) return;
 
-    const targetStatus = statuses.find((s) => s.name === columnKey);
-    if (!targetStatus) return;
+    // Get target column from props (includes custom statuses)
+    const targetColumn = columns.find((c) => c.key === columnKey);
+    if (!targetColumn || !targetColumn.statusId) {
+      // Fallback to statuses lookup for backwards compatibility
+      const targetStatus = statuses?.find((s) => s.name === columnKey);
+      if (!targetStatus) return;
+      
+      const demand = demands.find((d) => d.id === currentDraggedId);
+      const previousStatusName = demand?.demand_statuses?.name;
+      
+      if (previousStatusName === columnKey) return;
+
+      // Handle drop with legacy status lookup
+      handleDropWithStatusId(currentDraggedId, targetStatus.id, columnKey, demand);
+      return;
+    }
 
     const demand = demands.find((d) => d.id === currentDraggedId);
     const previousStatusName = demand?.demand_statuses?.name;
@@ -312,6 +326,13 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       return;
     }
 
+    handleDropWithStatusId(currentDraggedId, targetColumn.statusId, columnKey, demand);
+  };
+
+  // Helper function to handle drop with a specific status ID
+  const handleDropWithStatusId = async (demandId: string, statusId: string, columnKey: string, demand: Demand | undefined) => {
+    const previousStatusName = demand?.demand_statuses?.name;
+
     // Adicionar a aba de destino às abertas no modo desktop grande para acompanhar o card
     if (isLargeDesktop && !activeColumns.includes(columnKey)) {
       toggleColumn(columnKey);
@@ -320,26 +341,26 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     }
 
     // Apply optimistic update immediately for smooth UX (especially offline)
-    setOptimisticUpdates(prev => ({ ...prev, [currentDraggedId]: columnKey }));
+    setOptimisticUpdates(prev => ({ ...prev, [demandId]: columnKey }));
 
     const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && columnKey === "Aprovação do Cliente";
 
     // Stop timer if moving to "Aprovação do Cliente" or "Entregue"
     if (columnKey === "Aprovação do Cliente" || columnKey === "Entregue") {
-      stopAllTimersForDemand(currentDraggedId);
+      stopAllTimersForDemand(demandId);
     }
 
     updateDemand.mutate(
       {
-        id: currentDraggedId,
-        status_id: targetStatus.id,
+        id: demandId,
+        status_id: statusId,
       },
       {
         onSuccess: async () => {
           // Clear optimistic update after success
           setOptimisticUpdates(prev => {
             const newUpdates = { ...prev };
-            delete newUpdates[currentDraggedId];
+            delete newUpdates[demandId];
             return newUpdates;
           });
 
@@ -396,7 +417,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           // Revert optimistic update on error
           setOptimisticUpdates(prev => {
             const newUpdates = { ...prev };
-            delete newUpdates[currentDraggedId];
+            delete newUpdates[demandId];
             return newUpdates;
           });
           toast.error("Erro ao alterar status", {
@@ -409,8 +430,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
   // Handle mobile status change via dropdown
   const handleMobileStatusChange = async (demandId: string, newStatusKey: string) => {
-    if (!statuses) return;
-
     // Interceptar tentativa de mover para "Em Ajuste" - abrir diálogo ao invés de mover direto
     if (newStatusKey === "Em Ajuste") {
       setAdjustmentDemandId(demandId);
@@ -418,8 +437,18 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       return;
     }
     
-    const targetStatus = statuses.find((s) => s.name === newStatusKey);
-    if (!targetStatus) return;
+    // Get target column from props (includes custom statuses)
+    const targetColumn = columns.find((c) => c.key === newStatusKey);
+    let targetStatusId: string | undefined;
+    
+    if (targetColumn?.statusId) {
+      targetStatusId = targetColumn.statusId;
+    } else {
+      // Fallback to statuses lookup for backwards compatibility
+      const targetStatus = statuses?.find((s) => s.name === newStatusKey);
+      if (!targetStatus) return;
+      targetStatusId = targetStatus.id;
+    }
 
     const demand = demands.find((d) => d.id === demandId);
     const previousStatusName = demand?.demand_statuses?.name;
@@ -439,7 +468,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     updateDemand.mutate(
       {
         id: demandId,
-        status_id: targetStatus.id,
+        status_id: targetStatusId,
       },
       {
         onSuccess: async () => {
