@@ -61,9 +61,19 @@ const statusShortLabelMap: Record<string, string> = {
   "Entregue": "Entregue",
 };
 
-// Get color class based on status name
+// Get color class based on status name (fallback for system statuses)
 export function getStatusColor(statusName: string): string {
   return statusColorMap[statusName] || "bg-muted";
+}
+
+// Convert hex color to Tailwind-compatible background style
+function getColorStyle(hexColor: string | undefined, statusName: string): string {
+  // For system statuses, use predefined Tailwind classes
+  if (statusColorMap[statusName]) {
+    return statusColorMap[statusName];
+  }
+  // For custom statuses, we'll use inline styles (handled in component)
+  return "bg-muted";
 }
 
 // Get short label based on status name
@@ -73,10 +83,13 @@ export function getShortLabel(statusName: string): string {
 
 // Convert BoardStatus to KanbanColumn
 export function boardStatusToColumn(boardStatus: BoardStatus): KanbanColumn {
+  const isSystemStatus = !!statusColorMap[boardStatus.status.name];
+  
   return {
     key: boardStatus.status.name,
     label: boardStatus.status.name,
-    color: getStatusColor(boardStatus.status.name),
+    // Use the actual color from database, fallback to mapped color for system statuses
+    color: isSystemStatus ? getStatusColor(boardStatus.status.name) : boardStatus.status.color,
     shortLabel: getShortLabel(boardStatus.status.name),
     statusId: boardStatus.status.id,
   };

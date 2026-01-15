@@ -89,6 +89,24 @@ const priorityColors: Record<string, string> = {
   alta: "bg-rose-500/10 text-rose-600 border-rose-500/20",
 };
 
+// Check if a color is a hex color (custom) vs a Tailwind class (system)
+function isHexColor(color: string): boolean {
+  return color.startsWith("#") || color.startsWith("rgb");
+}
+
+// Get background style for column (supports both Tailwind classes and hex colors)
+function getColumnBackgroundStyle(color: string): { className: string; style?: React.CSSProperties } {
+  if (isHexColor(color)) {
+    // For hex colors, use inline style with opacity
+    return {
+      className: "",
+      style: { backgroundColor: `${color}20` } // Add 20 (12.5% opacity) for subtle background
+    };
+  }
+  // For Tailwind classes, use className
+  return { className: color };
+}
+
 // Default columns (fallback)
 const DEFAULT_COLUMNS: KanbanColumn[] = [
   { key: "A Iniciar", label: "A Iniciar", color: "bg-muted", shortLabel: "Iniciar" },
@@ -876,6 +894,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
             const isActive = activeColumns.includes(column.key);
             const columnDemands = getDemandsForColumn(column.key);
             const isDragTarget = dragOverColumn === column.key && draggedId;
+            const colorStyle = getColumnBackgroundStyle(column.color);
             
             return (
               <div
@@ -884,11 +903,12 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   width: isActive ? `${openColumnWidth}px` : `${closedColumnWidth}px`,
                   minWidth: isActive ? `${openColumnWidth}px` : `${closedColumnWidth}px`,
                   flexShrink: 0,
+                  ...colorStyle.style,
                 }}
                 className={cn(
                   "rounded-lg flex flex-col min-h-0 overflow-hidden",
                   "transition-all duration-300 ease-out",
-                  column.color,
+                  colorStyle.className,
                   isActive ? "p-4" : "p-2 cursor-pointer hover:opacity-80",
                   isDragTarget && "ring-2 ring-primary ring-offset-2 ring-offset-background"
                 )}
@@ -977,6 +997,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
             const isActive = activeColumns.includes(column.key);
             const columnDemands = getDemandsForColumn(column.key);
             const isDragTarget = dragOverColumn === column.key && draggedId;
+            const colorStyle = getColumnBackgroundStyle(column.color);
             
             return (
               <div
@@ -985,11 +1006,12 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   width: isActive ? `${openColumnWidth}px` : `${closedColumnWidth}px`,
                   minWidth: isActive ? `${openColumnWidth}px` : `${closedColumnWidth}px`,
                   flexShrink: 0,
+                  ...colorStyle.style,
                 }}
                 className={cn(
                   "rounded-lg flex flex-col min-h-0 overflow-hidden",
                   "transition-all duration-300 ease-out",
-                  column.color,
+                  colorStyle.className,
                   isActive ? "p-4" : "p-2 cursor-pointer hover:opacity-80",
                   isDragTarget && "ring-2 ring-primary ring-offset-2 ring-offset-background"
                 )}
