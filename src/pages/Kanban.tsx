@@ -118,7 +118,7 @@ export default function Kanban() {
         <div className="flex items-center gap-2">
           {/* Kanban Stage Manager - only for admins/moderators */}
           {canManage && selectedBoardId && (
-            <KanbanStagesManager boardId={selectedBoardId} teamId={currentTeamId} />
+            <KanbanStagesManager boardId={selectedBoardId} />
           )}
 
           {/* Kanban Filters */}
