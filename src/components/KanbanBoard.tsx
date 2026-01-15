@@ -894,21 +894,16 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   if (isTabletOrSmallDesktop) {
     const closedColumnMinWidth = 48; // px - minimum width for closed columns
     const openColumnWidth = 360; // px - fixed width for open columns (increased for full timer display)
-    const openColumnsCount = activeColumns.length;
-    const closedColumnsCount = columns.length - openColumnsCount;
     
     return (
       <div className="flex flex-col h-full gap-2">
-        {/* Horizontal scroll container - columns distribute space when all closed */}
+        {/* Horizontal scroll container - closed columns always flex to fill remaining space */}
         <div className="flex gap-2 h-full min-h-0 overflow-x-auto pb-2 kanban-scroll">
           {columns.map((column) => {
             const isActive = activeColumns.includes(column.key);
             const columnDemands = getDemandsForColumn(column.key);
             const isDragTarget = dragOverColumn === column.key && draggedId;
             const colorStyle = getColumnBackgroundStyle(column.color);
-            
-            // When there are no open columns, closed columns should flex to fill space
-            const shouldFlex = !isActive && openColumnsCount === 0;
             
             return (
               <div
@@ -918,14 +913,9 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                     width: `${openColumnWidth}px`,
                     minWidth: `${openColumnWidth}px`,
                     flexShrink: 0,
-                  } : shouldFlex ? {
+                  } : {
                     minWidth: `${closedColumnMinWidth}px`,
                     flex: 1,
-                    maxWidth: '200px',
-                  } : {
-                    width: `${closedColumnMinWidth}px`,
-                    minWidth: `${closedColumnMinWidth}px`,
-                    flexShrink: 0,
                   }),
                   ...colorStyle.style,
                 }}
@@ -1012,20 +1002,16 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   if (isLargeDesktop) {
     const closedColumnMinWidth = 56; // px - minimum width for closed columns
     const openColumnWidth = 380; // px - fixed width for open columns (increased for full timer display)
-    const openColumnsCount = activeColumns.length;
 
     return (
       <div className="flex flex-col h-full gap-2">
-        {/* Horizontal scroll container - carousel style, columns distribute space when all closed */}
+        {/* Horizontal scroll container - carousel style, closed columns always flex to fill remaining space */}
         <div className="flex gap-2 h-full min-h-0 overflow-x-auto pb-2 kanban-scroll">
           {columns.map((column) => {
             const isActive = activeColumns.includes(column.key);
             const columnDemands = getDemandsForColumn(column.key);
             const isDragTarget = dragOverColumn === column.key && draggedId;
             const colorStyle = getColumnBackgroundStyle(column.color);
-            
-            // When there are no open columns, closed columns should flex to fill space
-            const shouldFlex = !isActive && openColumnsCount === 0;
             
             return (
               <div
@@ -1035,14 +1021,9 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                     width: `${openColumnWidth}px`,
                     minWidth: `${openColumnWidth}px`,
                     flexShrink: 0,
-                  } : shouldFlex ? {
+                  } : {
                     minWidth: `${closedColumnMinWidth}px`,
                     flex: 1,
-                    maxWidth: '250px',
-                  } : {
-                    width: `${closedColumnMinWidth}px`,
-                    minWidth: `${closedColumnMinWidth}px`,
-                    flexShrink: 0,
                   }),
                   ...colorStyle.style,
                 }}
