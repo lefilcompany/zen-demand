@@ -405,11 +405,13 @@ export function useCreateCustomStatus() {
     mutationFn: async ({ 
       name, 
       color, 
-      boardId 
+      boardId,
+      adjustmentType = 'none'
     }: { 
       name: string; 
       color: string;
       boardId: string;
+      adjustmentType?: AdjustmentType;
     }) => {
       // 1. Create the status in demand_statuses (linked to the board)
       const { data: newStatus, error: statusError } = await supabase
@@ -430,7 +432,7 @@ export function useCreateCustomStatus() {
 
       const maxPos = existing?.[0]?.position ?? -1;
 
-      // 3. Add to board_statuses
+      // 3. Add to board_statuses with adjustment_type
       const { error: boardError } = await supabase
         .from("board_statuses")
         .insert({
@@ -438,6 +440,7 @@ export function useCreateCustomStatus() {
           status_id: newStatus.id,
           position: maxPos + 1,
           is_active: true,
+          adjustment_type: adjustmentType,
         });
 
       if (boardError) throw boardError;

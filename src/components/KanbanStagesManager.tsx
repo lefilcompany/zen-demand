@@ -59,6 +59,7 @@ import {
   isFixedBoundaryStatus,
   FIXED_START_STATUS,
   FIXED_END_STATUS,
+  AdjustmentType,
 } from "@/hooks/useBoardStatuses";
 import { ColorPicker } from "@/components/ColorPicker";
 import { supabase } from "@/integrations/supabase/client";
@@ -101,6 +102,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const [statusToDelete, setStatusToDelete] = useState<BoardStatus | null>(null);
   const [newStatusName, setNewStatusName] = useState("");
   const [newStatusColor, setNewStatusColor] = useState("#3B82F6");
+  const [newStatusAdjustmentType, setNewStatusAdjustmentType] = useState<AdjustmentType>("none");
   const [localStatuses, setLocalStatuses] = useState<BoardStatus[]>([]);
   const [isMoving, setIsMoving] = useState(false);
   const [movingIndex, setMovingIndex] = useState<number | null>(null);
@@ -322,11 +324,13 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
         name: newStatusName.trim(),
         color: newStatusColor,
         boardId,
+        adjustmentType: newStatusAdjustmentType,
       });
       toast.success("Etapa personalizada criada");
       setCreateDialogOpen(false);
       setNewStatusName("");
       setNewStatusColor("#3B82F6");
+      setNewStatusAdjustmentType("none");
     } catch (error: any) {
       if (error.message?.includes("duplicate") || error.code === "23505") {
         toast.error("Já existe uma etapa com esse nome");
@@ -390,6 +394,40 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                     value={newStatusColor}
                     onChange={setNewStatusColor}
                   />
+                  <div className="space-y-2">
+                    <Label htmlFor="adjustment-type">Tipo de Aprovação</Label>
+                    <Select 
+                      value={newStatusAdjustmentType} 
+                      onValueChange={(value: AdjustmentType) => setNewStatusAdjustmentType(value)}
+                    >
+                      <SelectTrigger id="adjustment-type">
+                        <SelectValue placeholder="Selecione o tipo..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background">
+                        <SelectItem value="none">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-muted-foreground" />
+                            Nenhum (etapa normal)
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="internal">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-blue-500" />
+                            Aprovação Interna (Admins/Moderadores)
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="external">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-amber-500" />
+                            Aprovação Externa (Solicitantes)
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Define quem pode solicitar ajustes nesta etapa.
+                    </p>
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
