@@ -87,6 +87,7 @@ interface KanbanBoardProps {
   readOnly?: boolean;
   userRole?: string;
   boardName?: string;
+  boardId?: string | null;
 }
 
 const priorityColors: Record<string, string> = {
@@ -164,7 +165,7 @@ function useIsLargeDesktop() {
 // No limit on open columns - users can open all if they want
 // Horizontal scroll handles overflow
 
-export function KanbanBoard({ demands, columns: propColumns, onDemandClick, readOnly = false, userRole, boardName }: KanbanBoardProps) {
+export function KanbanBoard({ demands, columns: propColumns, onDemandClick, readOnly = false, userRole, boardName, boardId }: KanbanBoardProps) {
   // Use provided columns or fallback to default
   const columns = propColumns && propColumns.length > 0 ? propColumns : DEFAULT_COLUMNS;
   const { t } = useTranslation();
@@ -1004,6 +1005,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           demandTitle={adjustmentDemand?.title}
           demandCreatedBy={adjustmentDemand?.created_by}
           teamId={adjustmentDemand?.team_id}
+          boardId={boardId || null}
           boardName={boardName}
         />
       </div>
@@ -1112,6 +1114,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           demandTitle={adjustmentDemand?.title}
           demandCreatedBy={adjustmentDemand?.created_by}
           teamId={adjustmentDemand?.team_id}
+          boardId={boardId || null}
           boardName={boardName}
         />
       </div>
@@ -1227,6 +1230,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           demandTitle={adjustmentDemand?.title}
           demandCreatedBy={adjustmentDemand?.created_by}
           teamId={adjustmentDemand?.team_id}
+          boardId={boardId || null}
           boardName={boardName}
         />
       </div>

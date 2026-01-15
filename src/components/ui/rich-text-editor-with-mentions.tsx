@@ -1,11 +1,12 @@
-import { useEditor, EditorContent, Editor } from "@tiptap/react";
+import { useEditor, EditorContent, Editor, ReactRenderer } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import TextAlign from "@tiptap/extension-text-align";
 import Highlight from "@tiptap/extension-highlight";
 import Underline from "@tiptap/extension-underline";
 import Image from "@tiptap/extension-image";
-import { useCallback, useEffect, useRef } from "react";
+import Mention from "@tiptap/extension-mention";
+import { useCallback, useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -30,14 +31,19 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { useBoardMembers, BoardMember } from "@/hooks/useBoardMembers";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import tippy, { Instance as TippyInstance } from "tippy.js";
+import "tippy.js/dist/tippy.css";
 
-interface RichTextEditorProps {
+interface RichTextEditorWithMentionsProps {
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
   minHeight?: string;
+  boardId: string | null;
 }
 
 const HIGHLIGHT_COLORS = [
@@ -49,7 +55,7 @@ const HIGHLIGHT_COLORS = [
 ];
 
 // Sanitize HTML to prevent XSS - extended to allow mention spans
-export function sanitizeHtml(html: string): string {
+function sanitizeHtml(html: string): string {
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: [
       "p", "br", "strong", "em", "u", "s", "span", "img", 
@@ -58,12 +64,6 @@ export function sanitizeHtml(html: string): string {
     ALLOWED_ATTR: ["style", "src", "alt", "class", "data-color", "href", "target", "rel", "data-type", "data-id", "data-label"],
     ADD_ATTR: ["style", "data-color", "data-type", "data-id", "data-label"],
   });
-}
-
-// Extract plain text from HTML for preview purposes
-export function extractPlainText(html: string): string {
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  return doc.body.textContent || "";
 }
 
 interface EditorToolbarProps {
@@ -75,33 +75,26 @@ interface EditorToolbarProps {
 function EditorToolbar({ editor, onImageUpload, isUploading }: EditorToolbarProps) {
   if (!editor) return null;
 
-  // Function to handle text alignment
-  // TextAlign in TipTap works at block (paragraph) level
-  // - With selection: aligns paragraphs containing the selection
-  // - Without selection (cursor only): if we want to align all, we select all first
   const handleAlignment = (alignment: "left" | "center" | "right" | "justify") => {
     const { from, to } = editor.state.selection;
     const hasSelection = from !== to;
 
     if (hasSelection) {
-      // User has selected text - align only the paragraphs containing the selection
       editor.chain().focus().setTextAlign(alignment).run();
     } else {
-      // No selection (just cursor) - select all content and align everything
       const currentPos = from;
       editor
         .chain()
         .focus()
         .selectAll()
         .setTextAlign(alignment)
-        .setTextSelection(currentPos) // Return cursor to original position
+        .setTextSelection(currentPos)
         .run();
     }
   };
 
   return (
     <div className="flex flex-wrap items-center gap-0.5 p-1 border-b border-border bg-muted/30">
-      {/* Text formatting */}
       <Toggle
         size="sm"
         pressed={editor.isActive("bold")}
@@ -141,7 +134,6 @@ function EditorToolbar({ editor, onImageUpload, isUploading }: EditorToolbarProp
 
       <div className="w-px h-6 bg-border mx-1" />
 
-      {/* Text alignment */}
       <Toggle
         size="sm"
         pressed={editor.isActive({ textAlign: "left" })}
@@ -181,7 +173,6 @@ function EditorToolbar({ editor, onImageUpload, isUploading }: EditorToolbarProp
 
       <div className="w-px h-6 bg-border mx-1" />
 
-      {/* Highlight colors */}
       <Popover>
         <PopoverTrigger asChild>
           <Button
@@ -229,7 +220,6 @@ function EditorToolbar({ editor, onImageUpload, isUploading }: EditorToolbarProp
 
       <div className="w-px h-6 bg-border mx-1" />
 
-      {/* Image upload */}
       <Button
         type="button"
         variant="ghost"
@@ -249,16 +239,97 @@ function EditorToolbar({ editor, onImageUpload, isUploading }: EditorToolbarProp
   );
 }
 
-export function RichTextEditor({
+// Mention suggestion list component
+interface MentionSuggestionListProps {
+  items: BoardMember[];
+  command: (item: { id: string; label: string }) => void;
+}
+
+interface MentionSuggestionListRef {
+  onKeyDown: (props: { event: KeyboardEvent }) => boolean;
+}
+
+const MentionSuggestionList = forwardRef<MentionSuggestionListRef, MentionSuggestionListProps>(
+  ({ items, command }, ref) => {
+    const [selectedIndex, setSelectedIndex] = useState(0);
+
+    const selectItem = (index: number) => {
+      const item = items[index];
+      if (item) {
+        command({ id: item.user_id, label: item.profile?.full_name || "Usuário" });
+      }
+    };
+
+    useImperativeHandle(ref, () => ({
+      onKeyDown: ({ event }: { event: KeyboardEvent }) => {
+        if (event.key === "ArrowUp") {
+          setSelectedIndex((prev) => (prev + items.length - 1) % items.length);
+          return true;
+        }
+        if (event.key === "ArrowDown") {
+          setSelectedIndex((prev) => (prev + 1) % items.length);
+          return true;
+        }
+        if (event.key === "Enter") {
+          selectItem(selectedIndex);
+          return true;
+        }
+        return false;
+      },
+    }));
+
+    useEffect(() => {
+      setSelectedIndex(0);
+    }, [items]);
+
+    if (items.length === 0) {
+      return (
+        <div className="bg-popover border border-border rounded-md shadow-lg p-2 text-sm text-muted-foreground">
+          Nenhum membro encontrado
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-popover border border-border rounded-md shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+        {items.map((item, index) => (
+          <button
+            key={item.user_id}
+            type="button"
+            className={cn(
+              "flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-accent",
+              index === selectedIndex && "bg-accent"
+            )}
+            onClick={() => selectItem(index)}
+          >
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={item.profile?.avatar_url || undefined} />
+              <AvatarFallback className="text-xs">
+                {(item.profile?.full_name || "U").charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span>{item.profile?.full_name || "Usuário"}</span>
+          </button>
+        ))}
+      </div>
+    );
+  }
+);
+
+MentionSuggestionList.displayName = "MentionSuggestionList";
+
+export function RichTextEditorWithMentions({
   value,
   onChange,
-  placeholder = "Digite aqui...",
+  placeholder = "Digite aqui... Use @ para mencionar",
   disabled = false,
   className,
   minHeight = "120px",
-}: RichTextEditorProps) {
+  boardId,
+}: RichTextEditorWithMentionsProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isUploadingRef = useRef(false);
+  const { data: boardMembers = [] } = useBoardMembers(boardId);
 
   const uploadImage = useCallback(async (file: File): Promise<string | null> => {
     if (!file.type.startsWith("image/")) {
@@ -274,7 +345,6 @@ export function RichTextEditor({
     isUploadingRef.current = true;
 
     try {
-      // Get current user for folder organization
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id || "anonymous";
       
@@ -303,6 +373,12 @@ export function RichTextEditor({
     }
   }, []);
 
+  // Store members in ref for use in suggestion plugin
+  const membersRef = useRef<BoardMember[]>([]);
+  useEffect(() => {
+    membersRef.current = boardMembers;
+  }, [boardMembers]);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -326,6 +402,78 @@ export function RichTextEditor({
         allowBase64: false,
         HTMLAttributes: {
           class: "max-w-full h-auto rounded-md my-2",
+        },
+      }),
+      Mention.configure({
+        HTMLAttributes: {
+          class: 'mention-tag',
+        },
+        renderHTML({ node }) {
+          return [
+            'span',
+            {
+              'data-type': 'mention',
+              'data-id': node.attrs.id,
+              'data-label': node.attrs.label,
+              class: 'mention-tag bg-primary/10 text-primary font-medium px-1.5 py-0.5 rounded-md',
+            },
+            `@${node.attrs.label}`,
+          ];
+        },
+        suggestion: {
+          char: '@',
+          items: ({ query }) => {
+            const members = membersRef.current;
+            if (!query) return members.slice(0, 10);
+            const lowerQuery = query.toLowerCase();
+            return members
+              .filter((m) => m.profile?.full_name?.toLowerCase().includes(lowerQuery))
+              .slice(0, 10);
+          },
+          render: () => {
+            let component: ReactRenderer<MentionSuggestionListRef> | null = null;
+            let popup: TippyInstance[] | null = null;
+
+            return {
+              onStart: (props) => {
+                component = new ReactRenderer(MentionSuggestionList, {
+                  props,
+                  editor: props.editor,
+                });
+
+                if (!props.clientRect) return;
+
+                popup = tippy('body', {
+                  getReferenceClientRect: props.clientRect as () => DOMRect,
+                  appendTo: () => document.body,
+                  content: component.element,
+                  showOnCreate: true,
+                  interactive: true,
+                  trigger: 'manual',
+                  placement: 'bottom-start',
+                });
+              },
+              onUpdate: (props) => {
+                component?.updateProps(props);
+                if (props.clientRect && popup?.[0]) {
+                  popup[0].setProps({
+                    getReferenceClientRect: props.clientRect as () => DOMRect,
+                  });
+                }
+              },
+              onKeyDown: (props) => {
+                if (props.event.key === 'Escape') {
+                  popup?.[0]?.hide();
+                  return true;
+                }
+                return component?.ref?.onKeyDown(props) ?? false;
+              },
+              onExit: () => {
+                popup?.[0]?.destroy();
+                component?.destroy();
+              },
+            };
+          },
         },
       }),
     ],
@@ -399,7 +547,6 @@ export function RichTextEditor({
       editor.chain().focus().setImage({ src: url }).run();
     }
 
-    // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -429,79 +576,26 @@ export function RichTextEditor({
         onChange={handleFileSelect}
         className="hidden"
       />
+      <style>{`
+        .mention-tag {
+          background-color: hsl(var(--primary) / 0.1);
+          color: hsl(var(--primary));
+          font-weight: 500;
+          padding: 0.125rem 0.375rem;
+          border-radius: 0.375rem;
+        }
+      `}</style>
     </div>
   );
 }
 
-// Convert plain URLs in text to clickable links
-function linkifyText(text: string): string {
-  const urlRegex = /(https?:\/\/[^\s<>\[\]\{\}]+)/g;
-  return text.replace(urlRegex, (url) => {
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline break-all">${url}</a>`;
-  });
-}
-
-// Process HTML content to make URLs clickable
-function processContentWithLinks(html: string): string {
-  // If it's plain text, linkify it directly
-  if (!/<[a-z][\s\S]*>/i.test(html)) {
-    return `<p class="whitespace-pre-wrap">${linkifyText(html)}</p>`;
+// Helper to extract mentioned user IDs from HTML content
+export function extractMentionedUserIds(html: string): string[] {
+  const regex = /data-id="([^"]+)"/g;
+  const ids: string[] = [];
+  let match;
+  while ((match = regex.exec(html)) !== null) {
+    ids.push(match[1]);
   }
-  
-  // For HTML content, we need to process text nodes only
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  
-  const processTextNodes = (node: Node) => {
-    if (node.nodeType === Node.TEXT_NODE && node.textContent) {
-      const text = node.textContent;
-      if (/(https?:\/\/[^\s<>\[\]\{\}]+)/.test(text)) {
-        const span = document.createElement("span");
-        span.innerHTML = linkifyText(text);
-        node.parentNode?.replaceChild(span, node);
-      }
-    } else if (node.nodeType === Node.ELEMENT_NODE) {
-      // Don't process links that are already anchors
-      if ((node as Element).tagName !== "A") {
-        Array.from(node.childNodes).forEach(processTextNodes);
-      }
-    }
-  };
-  
-  processTextNodes(doc.body);
-  return doc.body.innerHTML;
-}
-
-// Component for displaying rich text content (read-only)
-interface RichTextDisplayProps {
-  content: string | null | undefined;
-  className?: string;
-}
-
-export function RichTextDisplay({ content, className }: RichTextDisplayProps) {
-  if (!content) return null;
-
-  const processedContent = processContentWithLinks(content);
-
-  return (
-    <div 
-      className={cn(
-        "prose prose-sm dark:prose-invert max-w-none [&_a]:text-primary [&_a]:hover:underline [&_a]:break-all [&_a]:cursor-pointer",
-        "[&_[data-type=mention]]:bg-primary/10 [&_[data-type=mention]]:text-primary [&_[data-type=mention]]:font-medium [&_[data-type=mention]]:px-1.5 [&_[data-type=mention]]:py-0.5 [&_[data-type=mention]]:rounded-md",
-        className
-      )}
-      dangerouslySetInnerHTML={{ __html: sanitizeHtml(processedContent) }}
-      onClick={(e) => {
-        // Handle clicks on links
-        const target = e.target as HTMLElement;
-        if (target.tagName === 'A') {
-          e.preventDefault();
-          e.stopPropagation();
-          const href = target.getAttribute('href');
-          if (href) {
-            window.open(href, '_blank', 'noopener,noreferrer');
-          }
-        }
-      }}
-    />
-  );
+  return [...new Set(ids)];
 }

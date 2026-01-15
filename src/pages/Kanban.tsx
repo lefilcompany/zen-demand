@@ -160,6 +160,7 @@ export default function Kanban() {
             readOnly={isReadOnly}
             userRole={role || undefined}
             boardName={currentBoard?.name}
+            boardId={selectedBoardId}
           />
         ) : (
           <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
