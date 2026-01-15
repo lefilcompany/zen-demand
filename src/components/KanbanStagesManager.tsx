@@ -62,7 +62,7 @@ import {
 } from "@/hooks/useBoardStatuses";
 import { ColorPicker } from "@/components/ColorPicker";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface KanbanStagesManagerProps {
   boardId: string;
@@ -94,6 +94,7 @@ function useBoardDemandCounts(boardId: string | null) {
 }
 
 export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -114,6 +115,15 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const addStatus = useAddBoardStatus();
   const deleteStatus = useDeleteBoardStatus();
   const createCustomStatus = useCreateCustomStatus();
+
+  // Handle sheet open/close and force refetch on close
+  const handleOpenChange = useCallback((isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      // Force refetch when sheet closes to ensure Kanban is in sync
+      queryClient.refetchQueries({ queryKey: ["board-statuses", boardId] });
+    }
+  }, [boardId, queryClient]);
 
   // Keep local state in sync with server data, ensuring fixed statuses are at boundaries
   useEffect(() => {
@@ -314,7 +324,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
 
   return (
     <>
-      <Sheet open={open} onOpenChange={setOpen}>
+      <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetTrigger asChild>
           <Button variant="outline" size="sm" className="gap-2">
             <Settings className="h-4 w-4" />
