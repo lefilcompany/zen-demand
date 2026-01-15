@@ -857,8 +857,8 @@ export default function DemandDetail() {
             </div>
           </div>
 
-          {/* Time tracking display - per user */}
-          {(isInProgress || isInAdjustment || isDelivered) && <div>
+          {/* Time tracking display - per user (hidden for requesters) */}
+          {(isInProgress || isInAdjustment || isDelivered) && role !== "requester" && <div>
               <h3 className="font-semibold mb-2 text-sm md:text-base">Tempo de Execução</h3>
               <UserTimeTrackingDisplay demandId={demand.id} variant="detail" showControls={canControlTimer} canControl={canControlTimer} canEdit={role === "admin" || role === "moderator" || role === "executor"} />
             </div>}
