@@ -122,6 +122,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
     if (!isOpen) {
       // Force refetch when sheet closes to ensure Kanban is in sync
       queryClient.refetchQueries({ queryKey: ["board-statuses", boardId] });
+      queryClient.refetchQueries({ queryKey: ["board-statuses-all", boardId] });
     }
   }, [boardId, queryClient]);
 
@@ -176,16 +177,25 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
       await updatePositions.mutateAsync({
         swapPair: {
           fromId: currentStatus.id,
-          fromPosition: targetStatus.position,
+          fromPosition: currentStatus.position,
           toId: targetStatus.id,
-          toPosition: currentStatus.position,
+          toPosition: targetStatus.position,
         },
         boardId,
       });
+
+      // Force immediate refetch so the Kanban columns update even while this sheet is open
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["board-statuses", boardId] }),
+        queryClient.refetchQueries({ queryKey: ["board-statuses-all", boardId] }),
+      ]);
       
-      // Only update UI after backend confirms
+      // Only update UI after backend confirms (and keep local position fields in sync)
       const newStatuses = [...localStatuses];
-      [newStatuses[index - 1], newStatuses[index]] = [newStatuses[index], newStatuses[index - 1]];
+      const current = newStatuses[index];
+      const target = newStatuses[index - 1];
+      newStatuses[index - 1] = { ...current, position: target.position };
+      newStatuses[index] = { ...target, position: current.position };
       setLocalStatuses(newStatuses);
     } catch (error) {
       toast.error("Erro ao reordenar etapas");
@@ -219,16 +229,25 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
       await updatePositions.mutateAsync({
         swapPair: {
           fromId: currentStatus.id,
-          fromPosition: targetStatus.position,
+          fromPosition: currentStatus.position,
           toId: targetStatus.id,
-          toPosition: currentStatus.position,
+          toPosition: targetStatus.position,
         },
         boardId,
       });
+
+      // Force immediate refetch so the Kanban columns update even while this sheet is open
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["board-statuses", boardId] }),
+        queryClient.refetchQueries({ queryKey: ["board-statuses-all", boardId] }),
+      ]);
       
-      // Only update UI after backend confirms
+      // Only update UI after backend confirms (and keep local position fields in sync)
       const newStatuses = [...localStatuses];
-      [newStatuses[index], newStatuses[index + 1]] = [newStatuses[index + 1], newStatuses[index]];
+      const current = newStatuses[index];
+      const target = newStatuses[index + 1];
+      newStatuses[index] = { ...target, position: current.position };
+      newStatuses[index + 1] = { ...current, position: target.position };
       setLocalStatuses(newStatuses);
     } catch (error) {
       toast.error("Erro ao reordenar etapas");
