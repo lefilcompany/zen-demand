@@ -25,6 +25,15 @@ export interface KanbanColumn {
   statusId: string;
 }
 
+// Fixed stages that cannot be deleted or reordered (start and end of workflow)
+export const FIXED_START_STATUS = "A Iniciar";
+export const FIXED_END_STATUS = "Entregue";
+
+// Check if a status is a fixed boundary stage
+export function isFixedBoundaryStatus(statusName: string): boolean {
+  return statusName === FIXED_START_STATUS || statusName === FIXED_END_STATUS;
+}
+
 // Default columns fallback (matches current static columns)
 export const DEFAULT_COLUMNS: KanbanColumn[] = [
   { key: "A Iniciar", label: "A Iniciar", color: "bg-muted", shortLabel: "Iniciar", statusId: "" },
@@ -380,12 +389,30 @@ export function useCreateCustomStatus() {
   });
 }
 
+// Sort board statuses ensuring fixed boundaries are at start/end
+function sortWithFixedBoundaries(statuses: BoardStatus[]): BoardStatus[] {
+  return [...statuses].sort((a, b) => {
+    const aIsStart = a.status.name === FIXED_START_STATUS;
+    const bIsStart = b.status.name === FIXED_START_STATUS;
+    const aIsEnd = a.status.name === FIXED_END_STATUS;
+    const bIsEnd = b.status.name === FIXED_END_STATUS;
+    
+    if (aIsStart) return -1;
+    if (bIsStart) return 1;
+    if (aIsEnd) return 1;
+    if (bIsEnd) return -1;
+    return a.position - b.position;
+  });
+}
+
 // Convert board statuses to kanban columns
 export function useKanbanColumns(boardId: string | null) {
   const { data: boardStatuses, isLoading, error } = useBoardStatuses(boardId);
 
-  const columns = boardStatuses && boardStatuses.length > 0
-    ? boardStatuses.map(boardStatusToColumn)
+  const sortedStatuses = boardStatuses ? sortWithFixedBoundaries(boardStatuses) : [];
+  
+  const columns = sortedStatuses.length > 0
+    ? sortedStatuses.map(boardStatusToColumn)
     : DEFAULT_COLUMNS;
 
   return {
