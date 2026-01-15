@@ -239,6 +239,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
       await deleteStatus.mutateAsync({
         boardStatusId: statusToDelete.id,
         boardId,
+        statusId: statusToDelete.status_id,
       });
       toast.success("Etapa removida do quadro");
       setDeleteDialogOpen(false);
