@@ -870,39 +870,28 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     );
   }
 
-  // Tablet/Small desktop view - single tab collapsible layout with drag-drop
+  // Tablet/Small desktop view - fixed width columns with horizontal scroll
   if (isTabletOrSmallDesktop) {
-    const tabletActiveColumn = activeColumns[0];
-    const totalColumns = columns.length;
-    
-    // Calculate column style based on state
-    const getColumnStyle = (isActive: boolean): React.CSSProperties => {
-      if (!tabletActiveColumn) {
-        // All closed: equal distribution
-        return { flex: '1 1 0%', minWidth: '56px' };
-      }
-      if (isActive) {
-        // Active: take remaining space
-        return { flex: '1 1 auto', minWidth: '280px' };
-      }
-      // Closed: fixed width
-      return { width: '56px', minWidth: '56px', flex: '0 0 56px' };
-    };
+    const closedColumnWidth = 48; // px
+    const openColumnWidth = 300; // px - fixed width for open columns
     
     return (
       <div className="flex flex-col h-full gap-2">
-        {/* Container for columns - proper distribution */}
-        <div className="flex gap-2 h-full min-h-0">
+        {/* Horizontal scroll container */}
+        <div className="flex gap-2 h-full min-h-0 overflow-x-auto pb-2 kanban-scroll">
           {columns.map((column) => {
-            const isActive = tabletActiveColumn === column.key;
+            const isActive = activeColumns.includes(column.key);
             const columnDemands = getDemandsForColumn(column.key);
             const isDragTarget = dragOverColumn === column.key && draggedId;
-            const columnStyle = getColumnStyle(isActive);
             
             return (
               <div
                 key={column.key}
-                style={columnStyle}
+                style={{
+                  width: isActive ? `${openColumnWidth}px` : `${closedColumnWidth}px`,
+                  minWidth: isActive ? `${openColumnWidth}px` : `${closedColumnWidth}px`,
+                  flexShrink: 0,
+                }}
                 className={cn(
                   "rounded-lg flex flex-col min-h-0 overflow-hidden",
                   "transition-all duration-300 ease-out",
@@ -918,10 +907,10 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 {isActive ? (
                   <div className="flex flex-col h-full">
                     <div className="flex items-center justify-between mb-3 shrink-0">
-                      <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+                      <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground truncate">
                         {column.label}
                       </h3>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         <Badge variant="secondary" className="text-xs">
                           {columnDemands.length}
                         </Badge>
@@ -982,40 +971,28 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     );
   }
 
-  // Large Desktop view - multiple tabs (up to 3) with drag-drop
+  // Large Desktop view - fixed width columns with horizontal scroll (carousel style)
   if (isLargeDesktop) {
-    const openCount = activeColumns.length;
-    const totalColumns = columns.length;
     const closedColumnWidth = 56; // px
-    
-    // Calculate column style based on state
-    const getColumnStyle = (isActive: boolean): React.CSSProperties => {
-      if (openCount === 0) {
-        // All closed: equal distribution
-        return { flex: '1 1 0%', minWidth: `${closedColumnWidth}px` };
-      }
-      if (!isActive) {
-        // Closed: fixed width
-        return { width: `${closedColumnWidth}px`, minWidth: `${closedColumnWidth}px`, flex: `0 0 ${closedColumnWidth}px` };
-      }
-      // Active: share remaining space equally
-      return { flex: '1 1 auto', minWidth: '200px' };
-    };
+    const openColumnWidth = 320; // px - fixed width for open columns
 
     return (
       <div className="flex flex-col h-full gap-2">
-        {/* Container for columns - proper distribution */}
-        <div className="flex gap-2 h-full min-h-0">
+        {/* Horizontal scroll container - carousel style */}
+        <div className="flex gap-2 h-full min-h-0 overflow-x-auto pb-2 kanban-scroll">
           {columns.map((column) => {
             const isActive = activeColumns.includes(column.key);
             const columnDemands = getDemandsForColumn(column.key);
             const isDragTarget = dragOverColumn === column.key && draggedId;
-            const columnStyle = getColumnStyle(isActive);
             
             return (
               <div
                 key={column.key}
-                style={columnStyle}
+                style={{
+                  width: isActive ? `${openColumnWidth}px` : `${closedColumnWidth}px`,
+                  minWidth: isActive ? `${openColumnWidth}px` : `${closedColumnWidth}px`,
+                  flexShrink: 0,
+                }}
                 className={cn(
                   "rounded-lg flex flex-col min-h-0 overflow-hidden",
                   "transition-all duration-300 ease-out",
@@ -1031,10 +1008,10 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 {isActive ? (
                   <div className="flex flex-col h-full">
                     <div className="flex items-center justify-between mb-3 shrink-0">
-                      <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+                      <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground truncate">
                         {column.label}
                       </h3>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         <Badge variant="secondary" className="text-xs">
                           {columnDemands.length}
                         </Badge>
