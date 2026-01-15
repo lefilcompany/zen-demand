@@ -305,7 +305,7 @@ export default function Demands() {
                     transition-all duration-200 whitespace-nowrap
                     ${showOnlyMine 
                       ? "bg-primary text-primary-foreground shadow-sm" 
-                      : "bg-background hover:bg-accent border border-border/60"
+                      : "bg-background border border-border/60 hover:border-primary/40 hover:text-primary"
                     }
                   `}
                   title={showOnlyMine ? "Ver todas as demandas" : "Ver apenas minhas demandas"}
@@ -333,7 +333,7 @@ export default function Demands() {
                     transition-all duration-200 whitespace-nowrap
                     ${hideDelivered 
                       ? "bg-muted-foreground text-background shadow-sm" 
-                      : "bg-background hover:bg-accent border border-border/60"
+                      : "bg-background border border-border/60 hover:border-emerald-500/40 hover:text-emerald-600 dark:hover:text-emerald-400"
                     }
                   `}
                   title={hideDelivered ? "Mostrar demandas entregues" : "Ocultar demandas entregues"}
