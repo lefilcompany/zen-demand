@@ -17,6 +17,7 @@ import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/component
 import { InteractionAttachments } from "@/components/InteractionAttachments";
 import { supabase } from "@/integrations/supabase/client";
 import { useTeamRole } from "@/hooks/useTeamRole";
+import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useAuth } from "@/lib/auth";
 import { useUserTimerControl } from "@/hooks/useUserTimeTracking";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
@@ -209,6 +210,7 @@ export default function DemandDetail() {
   const {
     data: role
   } = useTeamRole(demand?.team_id || null);
+  const { data: boardRole } = useBoardRole(demand?.board_id || null);
   const isAssignee = assignees?.some(a => a.user_id === user?.id) || false;
   
   // Map board statuses to a flat format for the dropdown
@@ -857,8 +859,8 @@ export default function DemandDetail() {
             </div>
           </div>
 
-          {/* Time tracking display - per user (hidden for requesters) */}
-          {(isInProgress || isInAdjustment || isDelivered) && role !== "requester" && <div>
+          {/* Time tracking display - per user (hidden for board requesters) */}
+          {(isInProgress || isInAdjustment || isDelivered) && boardRole !== "requester" && <div>
               <h3 className="font-semibold mb-2 text-sm md:text-base">Tempo de Execução</h3>
               <UserTimeTrackingDisplay demandId={demand.id} variant="detail" showControls={canControlTimer} canControl={canControlTimer} canEdit={role === "admin" || role === "moderator" || role === "executor"} />
             </div>}
