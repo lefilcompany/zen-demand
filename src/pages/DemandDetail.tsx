@@ -8,7 +8,8 @@ import { MentionText } from "@/components/MentionText";
 import { LinkifiedText } from "@/components/LinkifiedText";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useDemandById, useDemandInteractions, useCreateInteraction, useUpdateInteraction, useDeleteInteraction, useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
+import { useDemandById, useDemandInteractions, useCreateInteraction, useUpdateInteraction, useDeleteInteraction, useUpdateDemand } from "@/hooks/useDemands";
+import { useBoardStatuses } from "@/hooks/useBoardStatuses";
 import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
 import { useBoard } from "@/hooks/useBoards";
 import { useUploadAttachment } from "@/hooks/useAttachments";
@@ -122,8 +123,8 @@ export default function DemandDetail() {
     data: assignees
   } = useDemandAssignees(id || null);
   const {
-    data: statuses
-  } = useDemandStatuses();
+    data: boardStatuses
+  } = useBoardStatuses(demand?.board_id || null);
   const {
     data: currentBoard
   } = useBoard(demand?.board_id || null);
@@ -209,6 +210,17 @@ export default function DemandDetail() {
     data: role
   } = useTeamRole(demand?.team_id || null);
   const isAssignee = assignees?.some(a => a.user_id === user?.id) || false;
+  
+  // Map board statuses to a flat format for the dropdown
+  const statuses = useMemo(() => {
+    if (!boardStatuses) return [];
+    return boardStatuses.map(bs => ({
+      id: bs.status.id,
+      name: bs.status.name,
+      color: bs.status.color
+    }));
+  }, [boardStatuses]);
+  
   // Check if demand is delivered or in progress
   const deliveredStatusId = statuses?.find(s => s.name === "Entregue")?.id;
   const approvalStatusId = statuses?.find(s => s.name === "Aprovação do Cliente")?.id;
