@@ -15,7 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight, X, WifiOff, CloudOff, User } from "lucide-react";
+import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight, X, WifiOff, CloudOff } from "lucide-react";
 import { format } from "date-fns";
 import { formatDateOnlyBR, isDateOverdue } from "@/lib/dateUtils";
 import { cn, truncateText } from "@/lib/utils";
@@ -23,6 +23,7 @@ import { getErrorMessage } from "@/lib/errorUtils";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
+import { extractPlainText } from "@/components/ui/rich-text-editor";
 import { KanbanTimeDisplay } from "@/components/KanbanTimeDisplay";
 import { KanbanAdjustmentDialog } from "@/components/KanbanAdjustmentDialog";
 import { toast } from "sonner";
@@ -630,9 +631,20 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   {formatDemandCode(demand.board_sequence_number)}
                 </Badge>
               )}
-              <h4 className="font-medium text-sm line-clamp-2 mb-2" title={demand.title}>
+              <h4 className="font-medium text-sm line-clamp-2 mb-1" title={demand.title}>
                 {truncateText(demand.title)}
               </h4>
+
+              {demand.description && (() => {
+                const plainText = extractPlainText(demand.description);
+                if (!plainText) return null;
+                const truncated = plainText.length > 50 ? plainText.slice(0, 50) + "..." : plainText;
+                return (
+                  <p className="text-xs text-muted-foreground mb-2 line-clamp-1" title={plainText}>
+                    {truncated}
+                  </p>
+                );
+              })()}
 
               <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
                 {showOfflineIndicator && (
