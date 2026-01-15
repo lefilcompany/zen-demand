@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
+export type AdjustmentType = 'none' | 'internal' | 'external';
 
 export interface BoardStatus {
   id: string;
@@ -9,6 +10,7 @@ export interface BoardStatus {
   position: number;
   is_active: boolean;
   created_at: string;
+  adjustment_type: AdjustmentType;
   status: {
     id: string;
     name: string;
@@ -23,6 +25,7 @@ export interface KanbanColumn {
   color: string;
   shortLabel: string;
   statusId: string;
+  adjustmentType: AdjustmentType;
 }
 
 // Fixed stages that cannot be deleted or reordered (start and end of workflow)
@@ -36,11 +39,12 @@ export function isFixedBoundaryStatus(statusName: string): boolean {
 
 // Default columns fallback (matches current static columns)
 export const DEFAULT_COLUMNS: KanbanColumn[] = [
-  { key: "A Iniciar", label: "A Iniciar", color: "bg-muted", shortLabel: "Iniciar", statusId: "" },
-  { key: "Fazendo", label: "Fazendo", color: "bg-blue-500/10", shortLabel: "Fazendo", statusId: "" },
-  { key: "Em Ajuste", label: "Em Ajuste", color: "bg-purple-500/10", shortLabel: "Ajuste", statusId: "" },
-  { key: "Aprovação do Cliente", label: "Aprovação do Cliente", color: "bg-amber-500/10", shortLabel: "Aprovação", statusId: "" },
-  { key: "Entregue", label: "Entregue", color: "bg-emerald-500/10", shortLabel: "Entregue", statusId: "" },
+  { key: "A Iniciar", label: "A Iniciar", color: "bg-muted", shortLabel: "Iniciar", statusId: "", adjustmentType: "none" },
+  { key: "Fazendo", label: "Fazendo", color: "bg-blue-500/10", shortLabel: "Fazendo", statusId: "", adjustmentType: "none" },
+  { key: "Em Ajuste", label: "Em Ajuste", color: "bg-purple-500/10", shortLabel: "Ajuste", statusId: "", adjustmentType: "none" },
+  { key: "Aprovação Interna", label: "Aprovação Interna", color: "bg-blue-500/10", shortLabel: "Apr. Int.", statusId: "", adjustmentType: "internal" },
+  { key: "Aprovação do Cliente", label: "Aprovação do Cliente", color: "bg-amber-500/10", shortLabel: "Aprovação", statusId: "", adjustmentType: "external" },
+  { key: "Entregue", label: "Entregue", color: "bg-emerald-500/10", shortLabel: "Entregue", statusId: "", adjustmentType: "none" },
 ];
 
 // Map status names to colors
@@ -48,6 +52,7 @@ const statusColorMap: Record<string, string> = {
   "A Iniciar": "bg-muted",
   "Fazendo": "bg-blue-500/10",
   "Em Ajuste": "bg-purple-500/10",
+  "Aprovação Interna": "bg-blue-500/10",
   "Aprovação do Cliente": "bg-amber-500/10",
   "Entregue": "bg-emerald-500/10",
 };
@@ -57,6 +62,7 @@ const statusShortLabelMap: Record<string, string> = {
   "A Iniciar": "Iniciar",
   "Fazendo": "Fazendo",
   "Em Ajuste": "Ajuste",
+  "Aprovação Interna": "Apr. Int.",
   "Aprovação do Cliente": "Aprovação",
   "Entregue": "Entregue",
 };
@@ -92,6 +98,7 @@ export function boardStatusToColumn(boardStatus: BoardStatus): KanbanColumn {
     color: isSystemStatus ? getStatusColor(boardStatus.status.name) : boardStatus.status.color,
     shortLabel: getShortLabel(boardStatus.status.name),
     statusId: boardStatus.status.id,
+    adjustmentType: boardStatus.adjustment_type || 'none',
   };
 }
 
@@ -113,6 +120,7 @@ export function useBoardStatuses(boardId: string | null) {
           position,
           is_active,
           created_at,
+          adjustment_type,
           status:demand_statuses(id, name, color, is_system)
         `)
         .eq("board_id", boardId)
@@ -122,7 +130,10 @@ export function useBoardStatuses(boardId: string | null) {
       if (error) throw error;
       
       // Filter out any null statuses and type cast
-      return (data || []).filter(d => d.status !== null) as BoardStatus[];
+      return (data || []).filter(d => d.status !== null).map(d => ({
+        ...d,
+        adjustment_type: (d.adjustment_type as AdjustmentType) || 'none'
+      })) as BoardStatus[];
     },
     enabled: !!boardId,
   });
@@ -171,6 +182,7 @@ export function useAllBoardStatuses(boardId: string | null) {
           position,
           is_active,
           created_at,
+          adjustment_type,
           status:demand_statuses(id, name, color, is_system)
         `)
         .eq("board_id", boardId)
@@ -178,7 +190,10 @@ export function useAllBoardStatuses(boardId: string | null) {
 
       if (error) throw error;
       
-      return (data || []).filter(d => d.status !== null) as BoardStatus[];
+      return (data || []).filter(d => d.status !== null).map(d => ({
+        ...d,
+        adjustment_type: (d.adjustment_type as AdjustmentType) || 'none'
+      })) as BoardStatus[];
     },
     enabled: !!boardId,
   });
