@@ -233,27 +233,38 @@ export function useToggleBoardStatus() {
   });
 }
 
-// Update board status positions
+// Update board status positions - optimized for swapping 2 items
 export function useUpdateBoardStatusPositions() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ 
-      updates,
+      swapPair,
       boardId 
     }: { 
-      updates: { id: string; position: number }[];
+      swapPair: { 
+        fromId: string; 
+        fromPosition: number; 
+        toId: string; 
+        toPosition: number 
+      };
       boardId: string;
     }) => {
-      // Update each position
-      for (const update of updates) {
-        const { error } = await supabase
+      // Use Promise.all to update both items simultaneously
+      const [result1, result2] = await Promise.all([
+        supabase
           .from("board_statuses")
-          .update({ position: update.position })
-          .eq("id", update.id);
+          .update({ position: swapPair.toPosition })
+          .eq("id", swapPair.fromId),
+        supabase
+          .from("board_statuses")
+          .update({ position: swapPair.fromPosition })
+          .eq("id", swapPair.toId),
+      ]);
 
-        if (error) throw error;
-      }
+      if (result1.error) throw result1.error;
+      if (result2.error) throw result2.error;
+      
       return true;
     },
     onSuccess: (_, variables) => {
