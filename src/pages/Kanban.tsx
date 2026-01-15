@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { KanbanNotifications } from "@/components/KanbanNotifications";
 import { KanbanFilters, KanbanFiltersState } from "@/components/KanbanFilters";
+import { KanbanStagesManager } from "@/components/KanbanStagesManager";
 
 import { useDemands } from "@/hooks/useDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
@@ -11,6 +12,8 @@ import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useBoard } from "@/hooks/useBoards";
 import { useAuth } from "@/lib/auth";
 import { useMembersByPosition } from "@/hooks/useMembersByPosition";
+import { useIsTeamAdminOrModerator } from "@/hooks/useTeamRole";
+import { useKanbanColumns } from "@/hooks/useBoardStatuses";
 import { Plus, LayoutGrid } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRealtimeDemands, useKanbanRealtimeNotifications } from "@/hooks/useRealtimeDemands";
@@ -24,6 +27,8 @@ export default function Kanban() {
   const { data: demands, isLoading } = useDemands(selectedBoardId || undefined);
   const { data: role } = useBoardRole(selectedBoardId);
   const { data: currentBoard } = useBoard(selectedBoardId);
+  const { canManage } = useIsTeamAdminOrModerator(currentTeamId);
+  const { columns: kanbanColumns } = useKanbanColumns(selectedBoardId);
   
   const [filters, setFilters] = useState<KanbanFiltersState>({
     myTasks: false,
@@ -111,6 +116,11 @@ export default function Kanban() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Kanban Stage Manager - only for admins/moderators */}
+          {canManage && selectedBoardId && (
+            <KanbanStagesManager boardId={selectedBoardId} teamId={currentTeamId} />
+          )}
+
           {/* Kanban Filters */}
           <KanbanFilters 
             teamId={currentTeamId} 
@@ -145,6 +155,7 @@ export default function Kanban() {
         ) : filteredDemands && filteredDemands.length > 0 ? (
           <KanbanBoard 
             demands={filteredDemands} 
+            columns={kanbanColumns}
             onDemandClick={id => navigate(`/demands/${id}`, { state: { from: "kanban" } })} 
             readOnly={isReadOnly}
             userRole={role || undefined}

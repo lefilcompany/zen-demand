@@ -66,8 +66,17 @@ interface Demand {
   _isOffline?: boolean; // Flag for offline-created demands
 }
 
+interface KanbanColumn {
+  key: string;
+  label: string;
+  color: string;
+  shortLabel: string;
+  statusId?: string;
+}
+
 interface KanbanBoardProps {
   demands: Demand[];
+  columns?: KanbanColumn[];
   onDemandClick: (id: string) => void;
   readOnly?: boolean;
   userRole?: string;
@@ -80,7 +89,8 @@ const priorityColors: Record<string, string> = {
   alta: "bg-rose-500/10 text-rose-600 border-rose-500/20",
 };
 
-const columns = [
+// Default columns (fallback)
+const DEFAULT_COLUMNS: KanbanColumn[] = [
   { key: "A Iniciar", label: "A Iniciar", color: "bg-muted", shortLabel: "Iniciar" },
   { key: "Fazendo", label: "Fazendo", color: "bg-blue-500/10", shortLabel: "Fazendo" },
   { key: "Em Ajuste", label: "Em Ajuste", color: "bg-purple-500/10", shortLabel: "Ajuste" },
@@ -128,7 +138,9 @@ function useIsLargeDesktop() {
 
 const MAX_OPEN_COLUMNS = 3;
 
-export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole, boardName }: KanbanBoardProps) {
+export function KanbanBoard({ demands, columns: propColumns, onDemandClick, readOnly = false, userRole, boardName }: KanbanBoardProps) {
+  // Use provided columns or fallback to default
+  const columns = propColumns && propColumns.length > 0 ? propColumns : DEFAULT_COLUMNS;
   const { t } = useTranslation();
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -864,7 +876,9 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
     
     return (
       <div className="flex flex-col h-full gap-2">
-        <div className="flex gap-2 h-full min-h-0">
+        {/* Scrollable container for columns */}
+        <div className="flex gap-2 h-full min-h-0 overflow-x-auto kanban-scroll">
+          <div className="flex gap-2 h-full min-w-max">
           {columns.map((column) => {
             const isActive = tabletActiveColumn === column.key;
             const columnDemands = getDemandsForColumn(column.key);
@@ -939,6 +953,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
               </div>
             );
           })}
+          </div>
         </div>
 
         <KanbanAdjustmentDialog
@@ -967,7 +982,9 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
 
     return (
       <div className="flex flex-col h-full gap-2">
-        <div className="flex gap-2 h-full min-h-0">
+        {/* Scrollable container for columns */}
+        <div className="flex gap-2 h-full min-h-0 overflow-x-auto kanban-scroll">
+          <div className="flex gap-2 h-full min-w-max">
           {columns.map((column) => {
             const isActive = activeColumns.includes(column.key);
             const columnDemands = getDemandsForColumn(column.key);
@@ -1048,6 +1065,7 @@ export function KanbanBoard({ demands, onDemandClick, readOnly = false, userRole
               </div>
             );
           })}
+          </div>
         </div>
 
         <KanbanAdjustmentDialog

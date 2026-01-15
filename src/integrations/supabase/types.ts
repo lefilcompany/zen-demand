@@ -102,6 +102,48 @@ export type Database = {
           },
         ]
       }
+      board_statuses: {
+        Row: {
+          board_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          position: number
+          status_id: string
+        }
+        Insert: {
+          board_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          position?: number
+          status_id: string
+        }
+        Update: {
+          board_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          position?: number
+          status_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_statuses_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "board_statuses_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "demand_statuses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       boards: {
         Row: {
           created_at: string
