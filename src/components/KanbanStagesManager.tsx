@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Settings, ChevronUp, ChevronDown, Trash2, Plus } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Settings, ChevronUp, ChevronDown, Trash2, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -101,6 +101,9 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const [newStatusName, setNewStatusName] = useState("");
   const [newStatusColor, setNewStatusColor] = useState("#3B82F6");
   const [localStatuses, setLocalStatuses] = useState<BoardStatus[]>([]);
+  const [isMoving, setIsMoving] = useState(false);
+  const [movingIndex, setMovingIndex] = useState<number | null>(null);
+  const [movingDirection, setMovingDirection] = useState<"up" | "down" | null>(null);
 
   const { data: boardStatuses, isLoading } = useAllBoardStatuses(boardId);
   const { data: availableStatuses } = useAvailableStatuses();
@@ -141,9 +144,9 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
     }
   };
 
-  const handleMoveUp = async (index: number) => {
-    // Cannot move first item or fixed boundary statuses
-    if (index === 0) return;
+  const handleMoveUp = useCallback(async (index: number) => {
+    // Cannot move first item, fixed boundary statuses, or if already moving
+    if (index === 0 || isMoving) return;
     
     const currentStatus = localStatuses[index];
     const targetStatus = localStatuses[index - 1];
@@ -154,24 +157,39 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
       return;
     }
     
-    const newStatuses = [...localStatuses];
-    [newStatuses[index - 1], newStatuses[index]] = [newStatuses[index], newStatuses[index - 1]];
-    setLocalStatuses(newStatuses);
+    setIsMoving(true);
+    setMovingIndex(index);
+    setMovingDirection("up");
     
     try {
+      // Call backend FIRST (pessimistic update)
       await updatePositions.mutateAsync({
-        updates: newStatuses.map((s, i) => ({ id: s.id, position: i })),
+        swapPair: {
+          fromId: currentStatus.id,
+          fromPosition: targetStatus.position,
+          toId: targetStatus.id,
+          toPosition: currentStatus.position,
+        },
         boardId,
       });
+      
+      // Only update UI after backend confirms
+      const newStatuses = [...localStatuses];
+      [newStatuses[index - 1], newStatuses[index]] = [newStatuses[index], newStatuses[index - 1]];
+      setLocalStatuses(newStatuses);
     } catch (error) {
       toast.error("Erro ao reordenar etapas");
-      setLocalStatuses(boardStatuses || []);
+      // UI was never changed, no rollback needed
+    } finally {
+      setIsMoving(false);
+      setMovingIndex(null);
+      setMovingDirection(null);
     }
-  };
+  }, [localStatuses, isMoving, boardId, updatePositions]);
 
-  const handleMoveDown = async (index: number) => {
-    // Cannot move last item or fixed boundary statuses
-    if (index === localStatuses.length - 1) return;
+  const handleMoveDown = useCallback(async (index: number) => {
+    // Cannot move last item, fixed boundary statuses, or if already moving
+    if (index === localStatuses.length - 1 || isMoving) return;
     
     const currentStatus = localStatuses[index];
     const targetStatus = localStatuses[index + 1];
@@ -182,20 +200,35 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
       return;
     }
     
-    const newStatuses = [...localStatuses];
-    [newStatuses[index], newStatuses[index + 1]] = [newStatuses[index + 1], newStatuses[index]];
-    setLocalStatuses(newStatuses);
+    setIsMoving(true);
+    setMovingIndex(index);
+    setMovingDirection("down");
     
     try {
+      // Call backend FIRST (pessimistic update)
       await updatePositions.mutateAsync({
-        updates: newStatuses.map((s, i) => ({ id: s.id, position: i })),
+        swapPair: {
+          fromId: currentStatus.id,
+          fromPosition: targetStatus.position,
+          toId: targetStatus.id,
+          toPosition: currentStatus.position,
+        },
         boardId,
       });
+      
+      // Only update UI after backend confirms
+      const newStatuses = [...localStatuses];
+      [newStatuses[index], newStatuses[index + 1]] = [newStatuses[index + 1], newStatuses[index]];
+      setLocalStatuses(newStatuses);
     } catch (error) {
       toast.error("Erro ao reordenar etapas");
-      setLocalStatuses(boardStatuses || []);
+      // UI was never changed, no rollback needed
+    } finally {
+      setIsMoving(false);
+      setMovingIndex(null);
+      setMovingDirection(null);
     }
-  };
+  }, [localStatuses, isMoving, boardId, updatePositions]);
 
   const handleAddStatus = async (statusId: string) => {
     const maxPosition = localStatuses.reduce((max, s) => Math.max(max, s.position), -1);
@@ -389,18 +422,26 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                       const isLastItem = index === localStatuses.length - 1;
                       
                       // Determine if move buttons should be disabled
-                      const canMoveUp = !isFirstItem && !isFixedStatus && !isFixedBoundaryStatus(localStatuses[index - 1]?.status.name);
-                      const canMoveDown = !isLastItem && !isFixedStatus && !isFixedBoundaryStatus(localStatuses[index + 1]?.status.name);
+                      const canMoveUp = !isFirstItem && !isFixedStatus && !isFixedBoundaryStatus(localStatuses[index - 1]?.status.name) && !isMoving;
+                      const canMoveDown = !isLastItem && !isFixedStatus && !isFixedBoundaryStatus(localStatuses[index + 1]?.status.name) && !isMoving;
+                      
+                      // Is this item currently being moved?
+                      const isCurrentlyMoving = movingIndex === index;
+                      // Is this item the target of the move?
+                      const isTargetOfMove = (movingDirection === "up" && movingIndex === index + 1) ||
+                                             (movingDirection === "down" && movingIndex === index - 1);
                       
                       return (
                         <div
                           key={bs.id}
                           className={cn(
-                            "flex items-center gap-2 p-3 rounded-lg border transition-all",
+                            "flex items-center gap-2 p-3 rounded-lg border transition-all duration-200",
                             bs.is_active 
                               ? "bg-background" 
                               : "bg-muted/50 opacity-60",
-                            isFixedStatus && "border-primary/30 bg-primary/5"
+                            isFixedStatus && "border-primary/30 bg-primary/5",
+                            isCurrentlyMoving && "scale-95 opacity-70 border-primary shadow-md",
+                            isTargetOfMove && "scale-105 opacity-90"
                           )}
                         >
                           {/* Move buttons */}
@@ -414,7 +455,11 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                                   disabled={!canMoveUp}
                                   onClick={() => handleMoveUp(index)}
                                 >
-                                  <ChevronUp className="h-3 w-3" />
+                                  {isCurrentlyMoving && movingDirection === "up" ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <ChevronUp className="h-3 w-3" />
+                                  )}
                                 </Button>
                               </TooltipTrigger>
                               {isFixedStatus && (
@@ -430,7 +475,11 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                                   disabled={!canMoveDown}
                                   onClick={() => handleMoveDown(index)}
                                 >
-                                  <ChevronDown className="h-3 w-3" />
+                                  {isCurrentlyMoving && movingDirection === "down" ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <ChevronDown className="h-3 w-3" />
+                                  )}
                                 </Button>
                               </TooltipTrigger>
                               {isFixedStatus && (
