@@ -179,19 +179,19 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const handleDeleteClick = (status: BoardStatus) => {
     const demandCount = demandCounts?.[status.status_id] || 0;
     
+    // Check if has demands FIRST - this is more actionable for the user
+    if (demandCount > 0) {
+      toast.error(`Esta etapa possui ${demandCount} demanda${demandCount === 1 ? '' : 's'}. Mova para outra etapa antes de excluir.`);
+      return;
+    }
+    
     // Check if it's a system status
     if (status.status.is_system === true) {
-      toast.error("Etapas do sistema não podem ser removidas");
+      toast.error("Etapas padrão do sistema não podem ser excluídas");
       return;
     }
     
-    // Check if has demands
-    if (demandCount > 0) {
-      toast.error(`Não é possível remover: ${demandCount} demanda(s) nesta etapa. Mova as demandas para outra etapa primeiro.`);
-      return;
-    }
-    
-    // No demands, show confirmation
+    // No demands and not system, show confirmation
     setStatusToDelete(status);
     setDeleteDialogOpen(true);
   };
