@@ -893,7 +893,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   // Tablet/Small desktop view - fixed width columns with horizontal scroll
   if (isTabletOrSmallDesktop) {
     const closedColumnWidth = 48; // px
-    const openColumnWidth = 320; // px - fixed width for open columns (increased for timer button)
+    const openColumnWidth = 360; // px - fixed width for open columns (increased for full timer display)
     
     return (
       <div className="flex flex-col h-full gap-2">
@@ -996,7 +996,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   // Large Desktop view - fixed width columns with horizontal scroll (carousel style)
   if (isLargeDesktop) {
     const closedColumnWidth = 56; // px
-    const openColumnWidth = 340; // px - fixed width for open columns (increased for timer button)
+    const openColumnWidth = 380; // px - fixed width for open columns (increased for full timer display)
 
     return (
       <div className="flex flex-col h-full gap-2">
