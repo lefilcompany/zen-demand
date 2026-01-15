@@ -277,6 +277,108 @@ export function useAddBoardStatus() {
   });
 }
 
+// Delete a status from the board
+export function useDeleteBoardStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      boardStatusId, 
+      boardId 
+    }: { 
+      boardStatusId: string; 
+      boardId: string;
+    }) => {
+      const { error } = await supabase
+        .from("board_statuses")
+        .delete()
+        .eq("id", boardStatusId);
+
+      if (error) throw error;
+      return true;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["board-statuses", variables.boardId] });
+      queryClient.invalidateQueries({ queryKey: ["board-statuses-all", variables.boardId] });
+    },
+  });
+}
+
+// Check demand count for a status in a board
+export function useDemandCountByStatus(boardId: string | null, statusId: string | null) {
+  return useQuery({
+    queryKey: ["demand-count-status", boardId, statusId],
+    queryFn: async () => {
+      if (!boardId || !statusId) return 0;
+      
+      const { count, error } = await supabase
+        .from("demands")
+        .select("id", { count: "exact", head: true })
+        .eq("board_id", boardId)
+        .eq("status_id", statusId);
+
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!boardId && !!statusId,
+  });
+}
+
+// Create a custom status and add it to the board
+export function useCreateCustomStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      name, 
+      color, 
+      boardId 
+    }: { 
+      name: string; 
+      color: string;
+      boardId: string;
+    }) => {
+      // 1. Create the status in demand_statuses
+      const { data: newStatus, error: statusError } = await supabase
+        .from("demand_statuses")
+        .insert({ name, color, is_system: false })
+        .select()
+        .single();
+
+      if (statusError) throw statusError;
+
+      // 2. Get current max position
+      const { data: existing } = await supabase
+        .from("board_statuses")
+        .select("position")
+        .eq("board_id", boardId)
+        .order("position", { ascending: false })
+        .limit(1);
+
+      const maxPos = existing?.[0]?.position ?? -1;
+
+      // 3. Add to board_statuses
+      const { error: boardError } = await supabase
+        .from("board_statuses")
+        .insert({
+          board_id: boardId,
+          status_id: newStatus.id,
+          position: maxPos + 1,
+          is_active: true,
+        });
+
+      if (boardError) throw boardError;
+
+      return newStatus;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["board-statuses", variables.boardId] });
+      queryClient.invalidateQueries({ queryKey: ["board-statuses-all", variables.boardId] });
+      queryClient.invalidateQueries({ queryKey: ["available-statuses"] });
+    },
+  });
+}
+
 // Convert board statuses to kanban columns
 export function useKanbanColumns(boardId: string | null) {
   const { data: boardStatuses, isLoading, error } = useBoardStatuses(boardId);

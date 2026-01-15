@@ -873,28 +873,42 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   // Tablet/Small desktop view - single tab collapsible layout with drag-drop
   if (isTabletOrSmallDesktop) {
     const tabletActiveColumn = activeColumns[0];
+    const totalColumns = columns.length;
+    
+    // Calculate column style based on state
+    const getColumnStyle = (isActive: boolean): React.CSSProperties => {
+      if (!tabletActiveColumn) {
+        // All closed: equal distribution
+        return { flex: '1 1 0%', minWidth: '56px' };
+      }
+      if (isActive) {
+        // Active: take remaining space
+        return { flex: '1 1 auto', minWidth: '280px' };
+      }
+      // Closed: fixed width
+      return { width: '56px', minWidth: '56px', flex: '0 0 56px' };
+    };
     
     return (
       <div className="flex flex-col h-full gap-2">
-        {/* Scrollable container for columns */}
-        <div className="flex gap-2 h-full min-h-0 overflow-x-auto kanban-scroll">
-          <div className="flex gap-2 h-full min-w-max">
+        {/* Container for columns - proper distribution */}
+        <div className="flex gap-2 h-full min-h-0">
           {columns.map((column) => {
             const isActive = tabletActiveColumn === column.key;
             const columnDemands = getDemandsForColumn(column.key);
             const isDragTarget = dragOverColumn === column.key && draggedId;
+            const columnStyle = getColumnStyle(isActive);
             
             return (
               <div
                 key={column.key}
+                style={columnStyle}
                 className={cn(
                   "rounded-lg flex flex-col min-h-0 overflow-hidden",
-                  "transition-all duration-300 ease-out will-change-[flex,transform]",
+                  "transition-all duration-300 ease-out",
                   column.color,
-                  isActive 
-                    ? "flex-[4] p-4" 
-                    : "flex-[0.6] p-2 cursor-pointer hover:flex-[0.8] hover:bg-opacity-80",
-                  isDragTarget && "ring-2 ring-primary ring-offset-2 ring-offset-background scale-[1.02]"
+                  isActive ? "p-4" : "p-2 cursor-pointer hover:opacity-80",
+                  isDragTarget && "ring-2 ring-primary ring-offset-2 ring-offset-background"
                 )}
                 onClick={() => !isActive && setActiveColumns([column.key])}
                 onDragOver={(e) => handleDragOver(e, column.key)}
@@ -953,7 +967,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               </div>
             );
           })}
-          </div>
         </div>
 
         <KanbanAdjustmentDialog
@@ -972,34 +985,43 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   // Large Desktop view - multiple tabs (up to 3) with drag-drop
   if (isLargeDesktop) {
     const openCount = activeColumns.length;
-    const getFlexValue = (isActive: boolean) => {
-      if (openCount === 0) return "flex-1"; // All columns equal when none open
-      if (!isActive) return "flex-[0.5]";
-      if (openCount === 1) return "flex-[5]";
-      if (openCount === 2) return "flex-[2.5]";
-      return "flex-[1.7]";
+    const totalColumns = columns.length;
+    const closedColumnWidth = 56; // px
+    
+    // Calculate column style based on state
+    const getColumnStyle = (isActive: boolean): React.CSSProperties => {
+      if (openCount === 0) {
+        // All closed: equal distribution
+        return { flex: '1 1 0%', minWidth: `${closedColumnWidth}px` };
+      }
+      if (!isActive) {
+        // Closed: fixed width
+        return { width: `${closedColumnWidth}px`, minWidth: `${closedColumnWidth}px`, flex: `0 0 ${closedColumnWidth}px` };
+      }
+      // Active: share remaining space equally
+      return { flex: '1 1 auto', minWidth: '200px' };
     };
 
     return (
       <div className="flex flex-col h-full gap-2">
-        {/* Scrollable container for columns */}
-        <div className="flex gap-2 h-full min-h-0 overflow-x-auto kanban-scroll">
-          <div className="flex gap-2 h-full min-w-max">
+        {/* Container for columns - proper distribution */}
+        <div className="flex gap-2 h-full min-h-0">
           {columns.map((column) => {
             const isActive = activeColumns.includes(column.key);
             const columnDemands = getDemandsForColumn(column.key);
             const isDragTarget = dragOverColumn === column.key && draggedId;
+            const columnStyle = getColumnStyle(isActive);
             
             return (
               <div
                 key={column.key}
+                style={columnStyle}
                 className={cn(
                   "rounded-lg flex flex-col min-h-0 overflow-hidden",
-                  "transition-all duration-300 ease-out will-change-[flex,transform]",
+                  "transition-all duration-300 ease-out",
                   column.color,
-                  getFlexValue(isActive),
-                  isActive ? "p-4" : "p-2 cursor-pointer hover:bg-opacity-80",
-                  isDragTarget && "ring-2 ring-primary ring-offset-2 ring-offset-background scale-[1.02]"
+                  isActive ? "p-4" : "p-2 cursor-pointer hover:opacity-80",
+                  isDragTarget && "ring-2 ring-primary ring-offset-2 ring-offset-background"
                 )}
                 onClick={() => toggleColumn(column.key)}
                 onDragOver={(e) => handleDragOver(e, column.key)}
@@ -1065,7 +1087,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               </div>
             );
           })}
-          </div>
         </div>
 
         <KanbanAdjustmentDialog
