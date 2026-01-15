@@ -1005,6 +1005,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           demandCreatedBy={adjustmentDemand?.created_by}
           teamId={adjustmentDemand?.team_id}
           boardName={boardName}
+          userRole={userRole}
         />
       </div>
     );
@@ -1113,6 +1114,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           demandCreatedBy={adjustmentDemand?.created_by}
           teamId={adjustmentDemand?.team_id}
           boardName={boardName}
+          userRole={userRole}
         />
       </div>
     );
@@ -1228,6 +1230,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           demandCreatedBy={adjustmentDemand?.created_by}
           teamId={adjustmentDemand?.team_id}
           boardName={boardName}
+          userRole={userRole}
         />
       </div>
     );

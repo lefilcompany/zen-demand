@@ -17,7 +17,6 @@ import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/component
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { sendAdjustmentPushNotification } from "@/hooks/useSendPushNotification";
-import { useTeamRole } from "@/hooks/useTeamRole";
 
 export type AdjustmentType = "internal" | "external";
 
@@ -27,8 +26,9 @@ interface KanbanAdjustmentDialogProps {
   demandId: string | null;
   demandTitle: string | undefined;
   demandCreatedBy: string | undefined;
-  teamId: string | undefined; // Passed directly from KanbanBoard for immediate role lookup
+  teamId: string | undefined;
   boardName?: string;
+  userRole?: string; // Role in the BOARD (not team) - passed from KanbanBoard
 }
 
 export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog({
@@ -39,17 +39,14 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
   demandCreatedBy,
   teamId,
   boardName,
+  userRole,
 }: KanbanAdjustmentDialogProps) {
   // Estado LOCAL do textarea - não propaga re-render ao pai
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>();
   
-  // Get user role in the team to auto-determine adjustment type
-  // Using teamId passed directly for immediate role lookup (no extra query needed)
-  const { data: userRole, isLoading: isLoadingRole } = useTeamRole(open && teamId ? teamId : null);
-  
-  // Auto-determine adjustment type based on user role
+  // Auto-determine adjustment type based on user role in the BOARD
   // Requesters = external, everyone else (admin, moderator, executor) = internal
   const adjustmentType = useMemo<AdjustmentType>(() => {
     if (userRole === 'requester') return 'external';
