@@ -15,7 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight, X, WifiOff, CloudOff } from "lucide-react";
+import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight, X, WifiOff, CloudOff, Check } from "lucide-react";
 import { format } from "date-fns";
 import { formatDateOnlyBR, isDateOverdue } from "@/lib/dateUtils";
 import { cn, truncateText } from "@/lib/utils";
@@ -69,12 +69,15 @@ interface Demand {
   _isOffline?: boolean; // Flag for offline-created demands
 }
 
+type AdjustmentTypeColumn = 'none' | 'internal' | 'external';
+
 interface KanbanColumn {
   key: string;
   label: string;
   color: string;
   shortLabel: string;
   statusId?: string;
+  adjustmentType?: AdjustmentTypeColumn;
 }
 
 interface KanbanBoardProps {
@@ -112,11 +115,12 @@ function getColumnBackgroundStyle(color: string): { className: string; style?: R
 
 // Default columns (fallback)
 const DEFAULT_COLUMNS: KanbanColumn[] = [
-  { key: "A Iniciar", label: "A Iniciar", color: "bg-muted", shortLabel: "Iniciar" },
-  { key: "Fazendo", label: "Fazendo", color: "bg-blue-500/10", shortLabel: "Fazendo" },
-  { key: "Em Ajuste", label: "Em Ajuste", color: "bg-purple-500/10", shortLabel: "Ajuste" },
-  { key: "Aprovação do Cliente", label: "Aprovação do Cliente", color: "bg-amber-500/10", shortLabel: "Aprovação" },
-  { key: "Entregue", label: "Entregue", color: "bg-emerald-500/10", shortLabel: "Entregue" },
+  { key: "A Iniciar", label: "A Iniciar", color: "bg-muted", shortLabel: "Iniciar", adjustmentType: "none" },
+  { key: "Fazendo", label: "Fazendo", color: "bg-blue-500/10", shortLabel: "Fazendo", adjustmentType: "none" },
+  { key: "Em Ajuste", label: "Em Ajuste", color: "bg-purple-500/10", shortLabel: "Ajuste", adjustmentType: "none" },
+  { key: "Aprovação Interna", label: "Aprovação Interna", color: "bg-blue-500/10", shortLabel: "Apr. Int.", adjustmentType: "internal" },
+  { key: "Aprovação do Cliente", label: "Aprovação do Cliente", color: "bg-amber-500/10", shortLabel: "Aprovação", adjustmentType: "external" },
+  { key: "Entregue", label: "Entregue", color: "bg-emerald-500/10", shortLabel: "Entregue", adjustmentType: "none" },
 ];
 
 // Custom hook to detect tablet and small desktop (768px - 1279px) - single tab mode
@@ -531,13 +535,77 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     setAdjustmentDialogOpen(true);
   }, []);
 
+  // Handle marking demand as complete (move to "Entregue")
+  const handleMarkAsComplete = useCallback(async (demandId: string) => {
+    if (!statuses) return;
+    
+    const entregueStatus = statuses.find(s => s.name === "Entregue");
+    if (!entregueStatus) {
+      toast.error("Status 'Entregue' não encontrado");
+      return;
+    }
+    
+    const demand = demands.find(d => d.id === demandId);
+    if (!demand) return;
+    
+    // Stop any active timers
+    await stopAllTimersForDemand(demandId);
+    
+    // Apply optimistic update
+    setOptimisticUpdates(prev => ({ ...prev, [demandId]: "Entregue" }));
+    
+    updateDemand.mutate(
+      { id: demandId, status_id: entregueStatus.id },
+      {
+        onSuccess: async () => {
+          setOptimisticUpdates(prev => {
+            const newUpdates = { ...prev };
+            delete newUpdates[demandId];
+            return newUpdates;
+          });
+          
+          queryClient.invalidateQueries({ queryKey: ['demands'] });
+          toast.success("Demanda marcada como concluída!");
+          
+          // Notify assignees about completion
+          if (!isOffline && demand) {
+            const assigneeIds = demand.demand_assignees?.map(a => a.user_id) || [];
+            if (assigneeIds.length > 0) {
+              const notifications = assigneeIds.filter(id => id !== user?.id).map((userId) => ({
+                user_id: userId,
+                title: `Demanda concluída: ${demand.title}`,
+                message: `O cliente marcou a demanda "${demand.title}" como concluída.`,
+                type: "success",
+                link: `/demands/${demandId}`,
+              }));
+              
+              if (notifications.length > 0) {
+                await supabase.from("notifications").insert(notifications);
+              }
+            }
+          }
+        },
+        onError: (error: any) => {
+          setOptimisticUpdates(prev => {
+            const newUpdates = { ...prev };
+            delete newUpdates[demandId];
+            return newUpdates;
+          });
+          toast.error("Erro ao marcar como concluída", {
+            description: getErrorMessage(error),
+          });
+        },
+      }
+    );
+  }, [statuses, demands, stopAllTimersForDemand, updateDemand, queryClient, isOffline, user]);
+
   // Handle drag start only from the drag handle
   const handleDragHandleMouseDown = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
   }, []);
 
   // Render demand card
-  const renderDemandCard = (demand: Demand, columnKey: string, showMoveMenu: boolean = false) => {
+  const renderDemandCard = (demand: Demand, columnKey: string, showMoveMenu: boolean = false, columnAdjustmentType?: AdjustmentTypeColumn) => {
     const assignees = demand.demand_assignees || [];
     const adjustmentInfo = adjustmentCounts?.[demand.id];
     const adjustmentCount = adjustmentInfo?.count || 0;
@@ -553,6 +621,9 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     // Check if this demand was created offline
     const isOfflineDemand = (demand as Demand)._isOffline === true;
     const showOfflineIndicator = hasPendingSync || isOfflineDemand;
+    
+    // Get the column's adjustment type
+    const colAdjType = columnAdjustmentType || columns.find(c => c.key === columnKey)?.adjustmentType || 'none';
     
     return (
       <Card
@@ -723,10 +794,13 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 );
               })()}
 
-              {columnKey === "Aprovação do Cliente" && (() => {
-                // Determinar quais botões mostrar baseado no role
-                const canRequestInternal = userRole === "admin" || userRole === "moderator";
-                const canRequestExternal = userRole === "requester";
+              {/* Dynamic adjustment buttons based on column's adjustmentType */}
+              {colAdjType !== 'none' && (() => {
+                // For internal adjustment columns: only admin/moderator can request
+                // For external adjustment columns: only requester can request (and can also mark as complete)
+                const canRequestInternal = colAdjType === 'internal' && (userRole === "admin" || userRole === "moderator");
+                const canRequestExternal = colAdjType === 'external' && userRole === "requester";
+                const canMarkComplete = colAdjType === 'external' && userRole === "requester";
                 
                 if (!canRequestInternal && !canRequestExternal) return null;
                 
@@ -744,15 +818,31 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                       </Button>
                     )}
                     {canRequestExternal && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => handleOpenAdjustmentDialog(e, demand.id)}
-                        className="w-full border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 text-xs"
-                      >
-                        <Wrench className="h-3 w-3 mr-1" />
-                        Ajuste Externo
-                      </Button>
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => handleOpenAdjustmentDialog(e, demand.id)}
+                          className="w-full border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 text-xs"
+                        >
+                          <Wrench className="h-3 w-3 mr-1" />
+                          Solicitar Ajuste
+                        </Button>
+                        {canMarkComplete && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMarkAsComplete(demand.id);
+                            }}
+                            className="w-full border-emerald-500/30 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950 text-xs"
+                          >
+                            <Check className="h-3 w-3 mr-1" />
+                            Marcar como Concluída
+                          </Button>
+                        )}
+                      </>
                     )}
                   </div>
                 );
@@ -800,12 +890,13 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   };
 
   // Render column content
-  const renderColumnContent = (columnKey: string, showMoveMenu: boolean = false) => {
+  const renderColumnContent = (columnKey: string, showMoveMenu: boolean = false, columnAdjustmentType?: AdjustmentTypeColumn) => {
     const columnDemands = getDemandsForColumn(columnKey);
+    const adjType = columnAdjustmentType || columns.find(c => c.key === columnKey)?.adjustmentType || 'none';
     
     return (
       <div className="space-y-3 flex-1 overflow-y-auto min-h-0">
-        {columnDemands.map((demand) => renderDemandCard(demand, columnKey, showMoveMenu))}
+        {columnDemands.map((demand) => renderDemandCard(demand, columnKey, showMoveMenu, adjType))}
         {columnDemands.length === 0 && (
           <div className="text-center py-8 text-muted-foreground text-sm border-2 border-dashed rounded-lg">
             {readOnly ? "Nenhuma demanda" : (isMobile ? "Nenhuma demanda" : "Arraste demandas aqui")}

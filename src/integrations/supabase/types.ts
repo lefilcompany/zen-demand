@@ -104,6 +104,7 @@ export type Database = {
       }
       board_statuses: {
         Row: {
+          adjustment_type: Database["public"]["Enums"]["adjustment_type"] | null
           board_id: string
           created_at: string
           id: string
@@ -112,6 +113,9 @@ export type Database = {
           status_id: string
         }
         Insert: {
+          adjustment_type?:
+            | Database["public"]["Enums"]["adjustment_type"]
+            | null
           board_id: string
           created_at?: string
           id?: string
@@ -120,6 +124,9 @@ export type Database = {
           status_id: string
         }
         Update: {
+          adjustment_type?:
+            | Database["public"]["Enums"]["adjustment_type"]
+            | null
           board_id?: string
           created_at?: string
           id?: string
@@ -1459,6 +1466,7 @@ export type Database = {
       }
     }
     Enums: {
+      adjustment_type: "none" | "internal" | "external"
       app_role: "admin" | "member"
       team_role: "admin" | "moderator" | "requester" | "executor"
     }
@@ -1588,6 +1596,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      adjustment_type: ["none", "internal", "external"],
       app_role: ["admin", "member"],
       team_role: ["admin", "moderator", "requester", "executor"],
     },
