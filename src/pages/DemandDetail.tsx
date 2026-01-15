@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { RichTextEditor, RichTextDisplay } from "@/components/ui/rich-text-editor";
+import { RichTextEditor, RichTextDisplay, extractPlainText } from "@/components/ui/rich-text-editor";
 import { MentionInput } from "@/components/MentionInput";
 import { MentionText } from "@/components/MentionText";
 import { LinkifiedText } from "@/components/LinkifiedText";
@@ -984,7 +984,7 @@ export default function DemandDetail() {
                             </Button>
                           </div>
                         </div> : <>
-                          {interaction.content && <MentionText text={interaction.content} className="text-xs md:text-sm whitespace-pre-wrap break-words block" />}
+                          {interaction.content && <MentionText text={extractPlainText(interaction.content)} className="text-xs md:text-sm whitespace-pre-wrap break-words block" />}
                           <InteractionAttachments interactionId={interaction.id} />
                         </>}
                     </div>
