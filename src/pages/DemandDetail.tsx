@@ -996,7 +996,7 @@ export default function DemandDetail() {
                             </Button>
                           </div>
                         </div> : <>
-                          {interaction.content && <MentionText text={extractPlainText(interaction.content)} className="text-xs md:text-sm whitespace-pre-wrap break-words block" />}
+                          {interaction.content && <RichTextDisplay content={interaction.content} className="text-xs md:text-sm" />}
                           <InteractionAttachments interactionId={interaction.id} />
                         </>}
                     </div>

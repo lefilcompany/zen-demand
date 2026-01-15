@@ -262,7 +262,7 @@ export default function SharedDemand() {
                       </span>
                     </div>
                     <div className="mt-1 text-sm text-muted-foreground">
-                      <MentionText text={comment.content || ""} />
+                      <RichTextDisplay content={comment.content || ""} />
                     </div>
                   </div>
                 </div>
