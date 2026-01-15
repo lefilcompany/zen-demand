@@ -136,7 +136,8 @@ function useIsLargeDesktop() {
   return isLargeDesktop;
 }
 
-const MAX_OPEN_COLUMNS = 3;
+// No limit on open columns - users can open all if they want
+// Horizontal scroll handles overflow
 
 export function KanbanBoard({ demands, columns: propColumns, onDemandClick, readOnly = false, userRole, boardName }: KanbanBoardProps) {
   // Use provided columns or fallback to default
@@ -212,23 +213,15 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   
   const adjustmentDemand = demands.find(d => d.id === adjustmentDemandId);
 
-  // Handle column toggle with FIFO logic (max 3 columns)
+  // Handle column toggle - no limit, users can open all columns
   const toggleColumn = useCallback((columnKey: string) => {
     setActiveColumns(prev => {
-      // If already active, close it (allow closing all)
+      // If already active, close it
       if (prev.includes(columnKey)) {
         return prev.filter(c => c !== columnKey);
       }
-      
-      // Opening a new column
-      const newColumns = [...prev, columnKey];
-      
-      // If exceeds max, remove the first one (FIFO)
-      if (newColumns.length > MAX_OPEN_COLUMNS) {
-        return newColumns.slice(1);
-      }
-      
-      return newColumns;
+      // Opening a new column - no limit
+      return [...prev, columnKey];
     });
   }, []);
 
@@ -899,7 +892,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   isActive ? "p-4" : "p-2 cursor-pointer hover:opacity-80",
                   isDragTarget && "ring-2 ring-primary ring-offset-2 ring-offset-background"
                 )}
-                onClick={() => !isActive && setActiveColumns([column.key])}
+                onClick={() => toggleColumn(column.key)}
                 onDragOver={(e) => handleDragOver(e, column.key)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, column.key)}
@@ -920,7 +913,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                           className="h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive"
                           onClick={(e) => {
                             e.stopPropagation();
-                            closeColumn(column.key);
+                            toggleColumn(column.key);
                           }}
                         >
                           <X className="h-3.5 w-3.5" />
