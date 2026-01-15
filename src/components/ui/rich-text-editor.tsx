@@ -20,6 +20,7 @@ import {
   AlignRight,
   AlignJustify,
   Highlighter,
+  AtSign,
   ImageIcon,
   Loader2,
 } from "lucide-react";
@@ -226,6 +227,17 @@ function EditorToolbar({ editor, onImageUpload, isUploading }: EditorToolbarProp
           </div>
         </PopoverContent>
       </Popover>
+
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0"
+        onClick={() => editor.chain().focus().insertContent("@").run()}
+        title="Mencionar (@)"
+      >
+        <AtSign className="h-4 w-4" />
+      </Button>
 
       <div className="w-px h-6 bg-border mx-1" />
 
