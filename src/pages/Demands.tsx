@@ -356,14 +356,14 @@ export default function Demands() {
 
             {/* Right side: View toggle */}
             <div className="flex items-center gap-1.5 ml-auto shrink-0">
-              <div className="flex items-center bg-background rounded-lg border border-border/60 p-0.5">
+              <div className="flex items-center bg-background rounded-lg border border-border/60 overflow-hidden">
                 <button
                   onClick={() => setViewMode("table")}
                   className={`
-                    hidden lg:flex items-center justify-center h-7 w-7 rounded-md transition-all
+                    hidden lg:flex items-center justify-center h-8 w-8 transition-all
                     ${viewMode === "table" 
-                      ? "bg-primary text-primary-foreground shadow-sm" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                      ? "bg-primary text-primary-foreground" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     }
                   `}
                   title={t("demands.tableView")}
@@ -373,10 +373,10 @@ export default function Demands() {
                 <button
                   onClick={() => setViewMode("grid")}
                   className={`
-                    hidden lg:flex items-center justify-center h-7 w-7 rounded-md transition-all
+                    hidden lg:flex items-center justify-center h-8 w-8 transition-all
                     ${viewMode === "grid" 
-                      ? "bg-primary text-primary-foreground shadow-sm" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                      ? "bg-primary text-primary-foreground" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     }
                   `}
                   title={t("demands.gridView")}
@@ -386,10 +386,10 @@ export default function Demands() {
                 <button
                   onClick={() => setViewMode("calendar")}
                   className={`
-                    flex items-center justify-center h-7 w-7 rounded-md transition-all
+                    flex items-center justify-center h-8 w-8 transition-all
                     ${viewMode === "calendar" 
-                      ? "bg-primary text-primary-foreground shadow-sm" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                      ? "bg-primary text-primary-foreground" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     }
                   `}
                   title="Visualização em calendário"
