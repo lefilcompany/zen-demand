@@ -42,7 +42,7 @@ export const DEFAULT_COLUMNS: KanbanColumn[] = [
   { key: "A Iniciar", label: "A Iniciar", color: "bg-muted", shortLabel: "Iniciar", statusId: "", adjustmentType: "none" },
   { key: "Fazendo", label: "Fazendo", color: "bg-blue-500/10", shortLabel: "Fazendo", statusId: "", adjustmentType: "none" },
   { key: "Em Ajuste", label: "Em Ajuste", color: "bg-purple-500/10", shortLabel: "Ajuste", statusId: "", adjustmentType: "none" },
-  { key: "Aprovação Interna", label: "Aprovação Interna", color: "bg-blue-500/10", shortLabel: "Apr. Int.", statusId: "", adjustmentType: "internal" },
+  { key: "Aprovação Interna", label: "Aprovação Interna", color: "bg-blue-500/10", shortLabel: "APROVAÇÃO INTERNA", statusId: "", adjustmentType: "internal" },
   { key: "Aprovação do Cliente", label: "Aprovação do Cliente", color: "bg-amber-500/10", shortLabel: "Aprovação", statusId: "", adjustmentType: "external" },
   { key: "Entregue", label: "Entregue", color: "bg-emerald-500/10", shortLabel: "Entregue", statusId: "", adjustmentType: "none" },
 ];
@@ -62,7 +62,7 @@ const statusShortLabelMap: Record<string, string> = {
   "A Iniciar": "Iniciar",
   "Fazendo": "Fazendo",
   "Em Ajuste": "Ajuste",
-  "Aprovação Interna": "Apr. Int.",
+  "Aprovação Interna": "APROVAÇÃO INTERNA",
   "Aprovação do Cliente": "Aprovação",
   "Entregue": "Entregue",
 };
