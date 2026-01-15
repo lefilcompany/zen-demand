@@ -11,6 +11,7 @@ import { useTeamScope } from "@/hooks/useTeamScope";
 import { useCreateDemandRequest } from "@/hooks/useDemandRequests";
 import { useUploadRequestAttachment } from "@/hooks/useRequestAttachments";
 import { ServiceSelector } from "@/components/ServiceSelector";
+import { useBoardRole } from "@/hooks/useBoardMembers";
 import { RequestAttachmentUploader } from "@/components/RequestAttachmentUploader";
 import { PendingFileUploader, PendingFile } from "@/components/PendingFileUploader";
 import { UnsavedChangesDialog } from "@/components/UnsavedChangesDialog";
@@ -29,6 +30,7 @@ export default function CreateDemandRequest() {
   const { selectedTeamId } = useSelectedTeam();
   const { selectedBoardId, currentBoard } = useSelectedBoard();
   const { data: scope } = useTeamScope();
+  const { data: boardRole } = useBoardRole(selectedBoardId);
 
   const isTeamActive = scope?.active ?? true;
   
@@ -293,6 +295,7 @@ export default function CreateDemandRequest() {
                   boardId={selectedBoardId}
                   value={serviceId}
                   onChange={handleServiceChange}
+                  userRole={boardRole}
                 />
               </div>
             </div>

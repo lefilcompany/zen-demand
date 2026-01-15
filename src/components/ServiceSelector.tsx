@@ -18,6 +18,8 @@ interface ServiceSelectorProps {
   value: string;
   onChange: (serviceId: string, estimatedHours?: number) => void;
   disabled?: boolean;
+  /** User's role in the board - used to show/hide requester-specific info */
+  userRole?: "admin" | "moderator" | "executor" | "requester" | null;
 }
 
 interface DisplayService {
@@ -40,6 +42,7 @@ export function ServiceSelector({
   value,
   onChange,
   disabled = false,
+  userRole,
 }: ServiceSelectorProps) {
   const { data: hierarchicalServices, isLoading: servicesLoading, rawServices } = useHierarchicalServices(teamId, boardId);
   const { hasBoardServices, isLoading: boardServicesLoading } = useHasBoardServices(boardId);
@@ -260,22 +263,24 @@ export function ServiceSelector({
         </SelectContent>
       </Select>
       
-      {/* Info about when time starts counting */}
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-help">
-              <Info className="h-3.5 w-3.5 shrink-0" />
-              <span className="leading-tight">O prazo inicia após aprovação da solicitação</span>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="max-w-[250px]">
-            <p className="text-xs">
-              O tempo estimado para conclusão só começa a contar a partir do momento em que sua solicitação for aprovada pela equipe.
-            </p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      {/* Info about when time starts counting - only shown for requesters */}
+      {userRole === "requester" && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-help">
+                <Info className="h-3.5 w-3.5 shrink-0" />
+                <span className="leading-tight">O prazo inicia após aprovação da solicitação</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-[250px]">
+              <p className="text-xs">
+                O tempo estimado para conclusão só começa a contar a partir do momento em que sua solicitação for aprovada pela equipe.
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
     </div>
   );
 }
