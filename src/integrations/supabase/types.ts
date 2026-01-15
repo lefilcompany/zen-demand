@@ -600,6 +600,7 @@ export type Database = {
       }
       demand_statuses: {
         Row: {
+          board_id: string | null
           color: string
           created_at: string
           id: string
@@ -607,6 +608,7 @@ export type Database = {
           name: string
         }
         Insert: {
+          board_id?: string | null
           color?: string
           created_at?: string
           id?: string
@@ -614,13 +616,22 @@ export type Database = {
           name: string
         }
         Update: {
+          board_id?: string | null
           color?: string
           created_at?: string
           id?: string
           is_system?: boolean | null
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "demand_statuses_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       demand_subtasks: {
         Row: {

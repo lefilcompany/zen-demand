@@ -300,29 +300,52 @@ export function useAddBoardStatus() {
   });
 }
 
-// Delete a status from the board
+// Delete a status from the board (and the custom status itself if it belongs to this board)
 export function useDeleteBoardStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ 
       boardStatusId, 
-      boardId 
+      boardId,
+      statusId,
     }: { 
       boardStatusId: string; 
       boardId: string;
+      statusId: string;
     }) => {
-      const { error } = await supabase
+      // 1. First, remove from board_statuses
+      const { error: boardError } = await supabase
         .from("board_statuses")
         .delete()
         .eq("id", boardStatusId);
 
-      if (error) throw error;
+      if (boardError) throw boardError;
+
+      // 2. Check if this is a custom status that belongs to this board
+      const { data: statusData } = await supabase
+        .from("demand_statuses")
+        .select("is_system, board_id")
+        .eq("id", statusId)
+        .single();
+
+      // 3. If it's a custom status and belongs to this board, delete it from demand_statuses too
+      if (statusData && !statusData.is_system && statusData.board_id === boardId) {
+        const { error: statusError } = await supabase
+          .from("demand_statuses")
+          .delete()
+          .eq("id", statusId);
+
+        if (statusError) throw statusError;
+      }
+
       return true;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["board-statuses", variables.boardId] });
       queryClient.invalidateQueries({ queryKey: ["board-statuses-all", variables.boardId] });
+      queryClient.invalidateQueries({ queryKey: ["available-statuses"] });
+      queryClient.invalidateQueries({ queryKey: ["demand-statuses"] });
     },
   });
 }
@@ -361,10 +384,10 @@ export function useCreateCustomStatus() {
       color: string;
       boardId: string;
     }) => {
-      // 1. Create the status in demand_statuses
+      // 1. Create the status in demand_statuses (linked to the board)
       const { data: newStatus, error: statusError } = await supabase
         .from("demand_statuses")
-        .insert({ name, color, is_system: false })
+        .insert({ name, color, is_system: false, board_id: boardId })
         .select()
         .single();
 
