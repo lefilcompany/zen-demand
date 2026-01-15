@@ -267,6 +267,7 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
               minHeight="120px"
               placeholder="Descreva o que precisa ser corrigido ou alterado... Use @ para mencionar"
               boardId={boardId}
+              teamId={teamId || null}
             />
           </div>
           

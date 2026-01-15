@@ -6,7 +6,7 @@ import Highlight from "@tiptap/extension-highlight";
 import Underline from "@tiptap/extension-underline";
 import Image from "@tiptap/extension-image";
 import Mention from "@tiptap/extension-mention";
-import { useCallback, useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
+import { useCallback, useEffect, useRef, useState, forwardRef, useImperativeHandle, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ import {
   AlignRight,
   AlignJustify,
   Highlighter,
+  AtSign,
   ImageIcon,
   Loader2,
 } from "lucide-react";
@@ -31,7 +32,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { useBoardMembers, BoardMember } from "@/hooks/useBoardMembers";
+import { useBoardMembers } from "@/hooks/useBoardMembers";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import tippy, { Instance as TippyInstance } from "tippy.js";
 import "tippy.js/dist/tippy.css";
@@ -43,7 +45,8 @@ interface RichTextEditorWithMentionsProps {
   disabled?: boolean;
   className?: string;
   minHeight?: string;
-  boardId: string | null;
+  boardId?: string | null;
+  teamId?: string | null;
 }
 
 const HIGHLIGHT_COLORS = [
@@ -218,6 +221,17 @@ function EditorToolbar({ editor, onImageUpload, isUploading }: EditorToolbarProp
         </PopoverContent>
       </Popover>
 
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-8 w-8 p-0"
+        onClick={() => editor.chain().focus().insertContent("@").run()}
+        title="Mencionar (@)"
+      >
+        <AtSign className="h-4 w-4" />
+      </Button>
+
       <div className="w-px h-6 bg-border mx-1" />
 
       <Button
@@ -239,9 +253,17 @@ function EditorToolbar({ editor, onImageUpload, isUploading }: EditorToolbarProp
   );
 }
 
+type MentionMember = {
+  user_id: string;
+  profile: {
+    full_name: string;
+    avatar_url: string | null;
+  };
+};
+
 // Mention suggestion list component
 interface MentionSuggestionListProps {
-  items: BoardMember[];
+  items: MentionMember[];
   command: (item: { id: string; label: string }) => void;
 }
 
@@ -256,7 +278,7 @@ const MentionSuggestionList = forwardRef<MentionSuggestionListRef, MentionSugges
     const selectItem = (index: number) => {
       const item = items[index];
       if (item) {
-        command({ id: item.user_id, label: item.profile?.full_name || "Usuário" });
+        command({ id: item.user_id, label: item.profile.full_name || "Usuário" });
       }
     };
 
@@ -303,12 +325,12 @@ const MentionSuggestionList = forwardRef<MentionSuggestionListRef, MentionSugges
             onClick={() => selectItem(index)}
           >
             <Avatar className="h-6 w-6">
-              <AvatarImage src={item.profile?.avatar_url || undefined} />
+              <AvatarImage src={item.profile.avatar_url || undefined} />
               <AvatarFallback className="text-xs">
-                {(item.profile?.full_name || "U").charAt(0).toUpperCase()}
+                {(item.profile.full_name || "U").charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <span>{item.profile?.full_name || "Usuário"}</span>
+            <span>{item.profile.full_name || "Usuário"}</span>
           </button>
         ))}
       </div>
@@ -326,10 +348,26 @@ export function RichTextEditorWithMentions({
   className,
   minHeight = "120px",
   boardId,
+  teamId,
 }: RichTextEditorWithMentionsProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isUploadingRef = useRef(false);
-  const { data: boardMembers = [] } = useBoardMembers(boardId);
+  const { data: boardMembers = [] } = useBoardMembers(boardId ?? null);
+  const { data: teamMembers = [] } = useTeamMembers(teamId ?? null);
+
+  const mentionMembers = useMemo<MentionMember[]>(() => {
+    if (teamId) {
+      return teamMembers.map((m) => ({ user_id: m.user_id, profile: m.profile }));
+    }
+
+    return boardMembers.map((m) => ({
+      user_id: m.user_id,
+      profile: {
+        full_name: m.profile?.full_name || "Usuário",
+        avatar_url: m.profile?.avatar_url || null,
+      },
+    }));
+  }, [teamId, teamMembers, boardMembers]);
 
   const uploadImage = useCallback(async (file: File): Promise<string | null> => {
     if (!file.type.startsWith("image/")) {
@@ -374,10 +412,10 @@ export function RichTextEditorWithMentions({
   }, []);
 
   // Store members in ref for use in suggestion plugin
-  const membersRef = useRef<BoardMember[]>([]);
+  const membersRef = useRef<MentionMember[]>([]);
   useEffect(() => {
-    membersRef.current = boardMembers;
-  }, [boardMembers]);
+    membersRef.current = mentionMembers;
+  }, [mentionMembers]);
 
   const editor = useEditor({
     extensions: [
@@ -427,7 +465,7 @@ export function RichTextEditorWithMentions({
             if (!query) return members.slice(0, 10);
             const lowerQuery = query.toLowerCase();
             return members
-              .filter((m) => m.profile?.full_name?.toLowerCase().includes(lowerQuery))
+              .filter((m) => m.profile.full_name.toLowerCase().includes(lowerQuery))
               .slice(0, 10);
           },
           render: () => {
@@ -451,6 +489,7 @@ export function RichTextEditorWithMentions({
                   interactive: true,
                   trigger: 'manual',
                   placement: 'bottom-start',
+                  zIndex: 100000,
                 });
               },
               onUpdate: (props) => {
