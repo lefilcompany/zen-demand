@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { RichTextEditor, extractPlainText } from "@/components/ui/rich-text-editor";
 import {
   Dialog,
   DialogContent,
@@ -155,9 +155,10 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
       if (notifyUserIds.length > 0) {
         const boardPrefix = boardName ? `[${boardName}] ` : "";
         const notificationTitle = isInternal ? `${boardPrefix}Ajuste interno solicitado` : `${boardPrefix}Ajuste externo solicitado`;
+        const plainReason = extractPlainText(reason.trim());
         const notificationMessage = isInternal 
-          ? `Foi solicitado um ajuste interno na demanda "${demandTitle}": ${reason.trim().substring(0, 100)}${reason.length > 100 ? '...' : ''}`
-          : `O cliente solicitou um ajuste na demanda "${demandTitle}": ${reason.trim().substring(0, 100)}${reason.length > 100 ? '...' : ''}`;
+          ? `Foi solicitado um ajuste interno na demanda "${demandTitle}": ${plainReason.substring(0, 100)}${plainReason.length > 100 ? '...' : ''}`
+          : `O cliente solicitou um ajuste na demanda "${demandTitle}": ${plainReason.substring(0, 100)}${plainReason.length > 100 ? '...' : ''}`;
         
         const notifications = notifyUserIds.map((userId) => ({
           user_id: userId,
@@ -196,7 +197,7 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
                 template: "notification",
                 templateData: {
                   title: notificationTitle,
-                  message: `${isInternal ? 'Foi solicitado um ajuste interno' : 'O cliente solicitou um ajuste'} na demanda "${demandTitle}".\n\nMotivo: ${reason.trim()}`,
+                  message: `${isInternal ? 'Foi solicitado um ajuste interno' : 'O cliente solicitou um ajuste'} na demanda "${demandTitle}".\n\nMotivo: ${plainReason}`,
                   actionUrl: `${window.location.origin}/demands/${demandId}`,
                   actionText: "Ver Demanda",
                   userName: userProfile?.full_name || "Usuário",
