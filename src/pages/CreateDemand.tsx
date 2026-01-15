@@ -10,6 +10,7 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useCanCreateDemandOnBoard } from "@/hooks/useBoardScope";
 import { useTeamRole } from "@/hooks/useTeamRole";
+import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useHasBoardServices, useCanCreateWithService } from "@/hooks/useBoardServices";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
@@ -46,7 +47,7 @@ export default function CreateDemand() {
     limit 
   } = useCanCreateDemandOnBoard(selectedBoardId, selectedTeamId);
   const { data: role } = useTeamRole(selectedTeamId);
-  
+  const { data: boardRole } = useBoardRole(selectedBoardId);
   // Board services hooks
   const { hasBoardServices, isLoading: boardServicesLoading } = useHasBoardServices(selectedBoardId);
 
@@ -377,6 +378,7 @@ export default function CreateDemand() {
                 boardId={selectedBoardId}
                 value={serviceId}
                 onChange={handleServiceChange}
+                userRole={boardRole}
               />
               <p className="text-xs text-muted-foreground">
                 {hasBoardServices 
