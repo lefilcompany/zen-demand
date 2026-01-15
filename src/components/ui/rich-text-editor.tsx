@@ -20,7 +20,6 @@ import {
   AlignRight,
   AlignJustify,
   Highlighter,
-  AtSign,
   ImageIcon,
   Loader2,
 } from "lucide-react";
@@ -49,15 +48,15 @@ const HIGHLIGHT_COLORS = [
   { name: "Laranja", color: "#fed7aa" },
 ];
 
-// Sanitize HTML to prevent XSS - extended to allow mention spans
+// Sanitize HTML to prevent XSS
 export function sanitizeHtml(html: string): string {
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: [
       "p", "br", "strong", "em", "u", "s", "span", "img", 
       "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "mark", "a"
     ],
-    ALLOWED_ATTR: ["style", "src", "alt", "class", "data-color", "href", "target", "rel", "data-type", "data-id", "data-label"],
-    ADD_ATTR: ["style", "data-color", "data-type", "data-id", "data-label"],
+    ALLOWED_ATTR: ["style", "src", "alt", "class", "data-color", "href", "target", "rel"],
+    ADD_ATTR: ["style", "data-color"],
   });
 }
 
@@ -227,17 +226,6 @@ function EditorToolbar({ editor, onImageUpload, isUploading }: EditorToolbarProp
           </div>
         </PopoverContent>
       </Popover>
-
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="h-8 w-8 p-0"
-        onClick={() => editor.chain().focus().insertContent("@").run()}
-        title="Mencionar (@)"
-      >
-        <AtSign className="h-4 w-4" />
-      </Button>
 
       <div className="w-px h-6 bg-border mx-1" />
 
@@ -496,11 +484,7 @@ export function RichTextDisplay({ content, className }: RichTextDisplayProps) {
 
   return (
     <div 
-      className={cn(
-        "prose prose-sm dark:prose-invert max-w-none [&_a]:text-primary [&_a]:hover:underline [&_a]:break-all [&_a]:cursor-pointer",
-        "[&_[data-type=mention]]:bg-primary/10 [&_[data-type=mention]]:text-primary [&_[data-type=mention]]:font-medium [&_[data-type=mention]]:px-1.5 [&_[data-type=mention]]:py-0.5 [&_[data-type=mention]]:rounded-md",
-        className
-      )}
+      className={cn("prose prose-sm dark:prose-invert max-w-none [&_a]:text-primary [&_a]:hover:underline [&_a]:break-all [&_a]:cursor-pointer", className)}
       dangerouslySetInnerHTML={{ __html: sanitizeHtml(processedContent) }}
       onClick={(e) => {
         // Handle clicks on links

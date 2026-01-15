@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { extractPlainText } from "@/components/ui/rich-text-editor";
-import { RichTextEditorWithMentions, extractMentionedUserIds } from "@/components/ui/rich-text-editor-with-mentions";
+import { RichTextEditor, extractPlainText } from "@/components/ui/rich-text-editor";
 import {
   Dialog,
   DialogContent,
@@ -28,8 +27,7 @@ interface KanbanAdjustmentDialogProps {
   demandId: string | null;
   demandTitle: string | undefined;
   demandCreatedBy: string | undefined;
-  teamId: string | undefined;
-  boardId: string | null;
+  teamId: string | undefined; // Passed directly from KanbanBoard for immediate role lookup
   boardName?: string;
 }
 
@@ -40,7 +38,6 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
   demandTitle,
   demandCreatedBy,
   teamId,
-  boardId,
   boardName,
 }: KanbanAdjustmentDialogProps) {
   // Estado LOCAL do textarea - não propaga re-render ao pai
@@ -137,7 +134,7 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
         setPendingFiles([]);
       }
       
-      // Notify all assignees, the creator, AND mentioned users about the adjustment request
+      // Notify all assignees AND the creator about the adjustment request
       const usersToNotify = new Set<string>();
       
       // Add all assignees
@@ -147,10 +144,6 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
       if (demandCreatedBy) {
         usersToNotify.add(demandCreatedBy);
       }
-      
-      // Add mentioned users from the reason content
-      const mentionedUserIds = extractMentionedUserIds(reason.trim());
-      mentionedUserIds.forEach(id => usersToNotify.add(id));
       
       // Remove current user from notification list
       if (user?.id) {
@@ -261,13 +254,11 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
             <label className="text-sm font-medium">
               Motivo do ajuste <span className="text-destructive">*</span>
             </label>
-            <RichTextEditorWithMentions
+            <RichTextEditor
               value={reason}
               onChange={setReason}
               minHeight="120px"
-              placeholder="Descreva o que precisa ser corrigido ou alterado... Use @ para mencionar"
-              boardId={boardId}
-              teamId={teamId || null}
+              placeholder="Descreva o que precisa ser corrigido ou alterado..."
             />
           </div>
           
