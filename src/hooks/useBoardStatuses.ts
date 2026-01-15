@@ -268,8 +268,9 @@ export function useUpdateBoardStatusPositions() {
       return true;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["board-statuses", variables.boardId] });
-      queryClient.invalidateQueries({ queryKey: ["board-statuses-all", variables.boardId] });
+      // Use refetchQueries to immediately refetch, not just invalidate
+      queryClient.refetchQueries({ queryKey: ["board-statuses", variables.boardId] });
+      queryClient.refetchQueries({ queryKey: ["board-statuses-all", variables.boardId] });
     },
   });
 }
