@@ -55,8 +55,8 @@ export function sanitizeHtml(html: string): string {
       "p", "br", "strong", "em", "u", "s", "span", "img", 
       "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "mark", "a"
     ],
-    ALLOWED_ATTR: ["style", "src", "alt", "class", "data-color", "href", "target", "rel"],
-    ADD_ATTR: ["style", "data-color"],
+    ALLOWED_ATTR: ["style", "src", "alt", "class", "data-color", "href", "target", "rel", "data-mention"],
+    ADD_ATTR: ["style", "data-color", "data-mention"],
   });
 }
 
@@ -433,6 +433,23 @@ export function RichTextEditor({
   );
 }
 
+// Convert user mentions [[userId:Name]] to styled links
+function processMentions(text: string): string {
+  // User mentions: [[userId:Name]]
+  const userMentionRegex = /\[\[([^:]+):([^\]]+)\]\]/g;
+  text = text.replace(userMentionRegex, (_, userId, name) => {
+    return `<a href="/user/${userId}" data-mention="user" class="inline-flex items-center gap-0.5 bg-primary/10 text-primary border border-primary/20 rounded-md px-1.5 py-0.5 text-xs font-medium mx-0.5 no-underline hover:bg-primary/20 transition-colors">@${name}</a>`;
+  });
+  
+  // Demand mentions: {{demandId:#code}}
+  const demandMentionRegex = /\{\{([^:]+):(#[^\}]+)\}\}/g;
+  text = text.replace(demandMentionRegex, (_, demandId, code) => {
+    return `<a href="/demands/${demandId}" data-mention="demand" class="inline-flex items-center gap-0.5 bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-500/20 rounded-md px-1.5 py-0.5 text-xs font-medium mx-0.5 no-underline hover:bg-cyan-500/20 transition-colors">${code}</a>`;
+  });
+  
+  return text;
+}
+
 // Convert plain URLs in text to clickable links
 function linkifyText(text: string): string {
   const urlRegex = /(https?:\/\/[^\s<>\[\]\{\}]+)/g;
@@ -441,11 +458,18 @@ function linkifyText(text: string): string {
   });
 }
 
-// Process HTML content to make URLs clickable
+// Process text with mentions and links
+function processTextContent(text: string): string {
+  let result = processMentions(text);
+  result = linkifyText(result);
+  return result;
+}
+
+// Process HTML content to make URLs and mentions clickable
 function processContentWithLinks(html: string): string {
-  // If it's plain text, linkify it directly
+  // If it's plain text, process it directly
   if (!/<[a-z][\s\S]*>/i.test(html)) {
-    return `<p class="whitespace-pre-wrap">${linkifyText(html)}</p>`;
+    return `<p class="whitespace-pre-wrap">${processTextContent(html)}</p>`;
   }
   
   // For HTML content, we need to process text nodes only
@@ -454,14 +478,15 @@ function processContentWithLinks(html: string): string {
   const processTextNodes = (node: Node) => {
     if (node.nodeType === Node.TEXT_NODE && node.textContent) {
       const text = node.textContent;
-      if (/(https?:\/\/[^\s<>\[\]\{\}]+)/.test(text)) {
+      // Check if text contains mentions or URLs
+      if (/\[\[([^:]+):([^\]]+)\]\]|\{\{([^:]+):(#[^\}]+)\}\}|(https?:\/\/[^\s<>\[\]\{\}]+)/.test(text)) {
         const span = document.createElement("span");
-        span.innerHTML = linkifyText(text);
+        span.innerHTML = processTextContent(text);
         node.parentNode?.replaceChild(span, node);
       }
     } else if (node.nodeType === Node.ELEMENT_NODE) {
-      // Don't process links that are already anchors
-      if ((node as Element).tagName !== "A") {
+      // Don't process content that's already processed (links or mention spans)
+      if ((node as Element).tagName !== "A" && !(node as Element).hasAttribute("data-mention")) {
         Array.from(node.childNodes).forEach(processTextNodes);
       }
     }
@@ -482,22 +507,31 @@ export function RichTextDisplay({ content, className }: RichTextDisplayProps) {
 
   const processedContent = processContentWithLinks(content);
 
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'A') {
+      e.preventDefault();
+      e.stopPropagation();
+      const href = target.getAttribute('href');
+      const isMention = target.hasAttribute('data-mention');
+      
+      if (href) {
+        if (isMention) {
+          // Internal navigation for mentions
+          window.location.href = href;
+        } else {
+          // External links open in new tab
+          window.open(href, '_blank', 'noopener,noreferrer');
+        }
+      }
+    }
+  };
+
   return (
     <div 
-      className={cn("prose prose-sm dark:prose-invert max-w-none [&_a]:text-primary [&_a]:hover:underline [&_a]:break-all [&_a]:cursor-pointer", className)}
+      className={cn("prose prose-sm dark:prose-invert max-w-none [&_a]:text-primary [&_a]:hover:underline [&_a]:break-all [&_a]:cursor-pointer [&_a[data-mention]]:no-underline [&_a[data-mention]]:text-inherit", className)}
       dangerouslySetInnerHTML={{ __html: sanitizeHtml(processedContent) }}
-      onClick={(e) => {
-        // Handle clicks on links
-        const target = e.target as HTMLElement;
-        if (target.tagName === 'A') {
-          e.preventDefault();
-          e.stopPropagation();
-          const href = target.getAttribute('href');
-          if (href) {
-            window.open(href, '_blank', 'noopener,noreferrer');
-          }
-        }
-      }}
+      onClick={handleClick}
     />
   );
 }
