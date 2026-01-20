@@ -18,6 +18,7 @@ import { OnboardingTour } from "@/components/OnboardingTour";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useDataPrecache } from "@/hooks/useDataPrecache";
+import { FirstBoardModal } from "@/components/FirstBoardModal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -182,6 +183,9 @@ export function ProtectedLayout() {
       
       {/* Onboarding Tour */}
       <OnboardingTour steps={steps} isOpen={isOpen} onClose={closeTour} onComplete={completeOnboarding} />
+      
+      {/* First Board Modal - shown when user has no boards */}
+      <FirstBoardModal />
 
       {/* Logout confirmation dialog */}
       <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
