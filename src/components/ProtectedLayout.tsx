@@ -101,9 +101,7 @@ export function ProtectedLayout() {
                 </div>
               )}
               <div className="h-5 w-px bg-border hidden lg:block" />
-              <div className="hidden md:block">
-                <BoardSelector />
-              </div>
+              <BoardSelector />
             </div>
             
             <div className="flex items-center gap-2 sm:gap-1.5 md:gap-2 flex-1 justify-end">
