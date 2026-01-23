@@ -49,7 +49,7 @@ export default function NoteDetail() {
     if (note) {
       setTitle(note.title);
       setContent(note.content || "");
-      setIcon(note.icon);
+      setIcon(note.icon || "📝");
       setTags(note.tags || []);
     }
   }, [note]);
