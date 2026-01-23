@@ -30,13 +30,18 @@ import {
   Minus,
   Video,
   FileText,
-  Link as LinkIcon,
+  AtSign,
+  Hash,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { useDemandsList } from "@/hooks/useDemandsList";
+import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useSelectedBoard } from "@/contexts/BoardContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface NotionEditorProps {
   content: string;
@@ -54,14 +59,32 @@ const HIGHLIGHT_COLORS = [
   { name: "Laranja", color: "#fed7aa" },
 ];
 
+type CommandType = "block" | "mention-user" | "mention-demand";
+
+interface SlashCommand {
+  icon: React.ElementType;
+  label: string;
+  description?: string;
+  action: () => void;
+  type: CommandType;
+}
+
 export function NotionEditor({ content, onChange, placeholder = "Pressione '/' para comandos...", editable = true }: NotionEditorProps) {
+  const { currentTeam } = useSelectedTeam();
+  const { currentBoard } = useSelectedBoard();
+  const { data: teamMembers = [] } = useTeamMembers(currentTeam?.id || null);
+  const { data: demandsList = [] } = useDemandsList(currentBoard?.id || null);
+  
   const [isUploading, setIsUploading] = useState(false);
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashMenuPosition, setSlashMenuPosition] = useState({ top: 0, left: 0 });
   const [slashFilter, setSlashFilter] = useState("");
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [menuMode, setMenuMode] = useState<"commands" | "users" | "demands">("commands");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const editor = useEditor({
     extensions: [
@@ -97,6 +120,37 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
         class: "prose prose-sm sm:prose dark:prose-invert max-w-none focus:outline-none min-h-[200px] px-4 py-2",
       },
       handleKeyDown: (view, event) => {
+        // Handle @ for user mentions
+        if (event.key === "@" && !showSlashMenu) {
+          const { from } = view.state.selection;
+          const coords = view.coordsAtPos(from);
+          setSlashMenuPosition({
+            top: coords.bottom + 8,
+            left: coords.left,
+          });
+          setShowSlashMenu(true);
+          setMenuMode("users");
+          setSlashFilter("");
+          setSelectedIndex(0);
+          return false;
+        }
+        
+        // Handle # for demand mentions
+        if (event.key === "#" && !showSlashMenu) {
+          const { from } = view.state.selection;
+          const coords = view.coordsAtPos(from);
+          setSlashMenuPosition({
+            top: coords.bottom + 8,
+            left: coords.left,
+          });
+          setShowSlashMenu(true);
+          setMenuMode("demands");
+          setSlashFilter("");
+          setSelectedIndex(0);
+          return false;
+        }
+        
+        // Handle / for commands
         if (event.key === "/" && !showSlashMenu) {
           const { from } = view.state.selection;
           const coords = view.coordsAtPos(from);
@@ -105,12 +159,39 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
             left: coords.left,
           });
           setShowSlashMenu(true);
+          setMenuMode("commands");
           setSlashFilter("");
+          setSelectedIndex(0);
           return false;
         }
+        
         if (showSlashMenu) {
           if (event.key === "Escape") {
             setShowSlashMenu(false);
+            return true;
+          }
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            setSelectedIndex(prev => {
+              const maxIndex = getFilteredItems().length - 1;
+              return prev < maxIndex ? prev + 1 : 0;
+            });
+            return true;
+          }
+          if (event.key === "ArrowUp") {
+            event.preventDefault();
+            setSelectedIndex(prev => {
+              const maxIndex = getFilteredItems().length - 1;
+              return prev > 0 ? prev - 1 : maxIndex;
+            });
+            return true;
+          }
+          if (event.key === "Enter" || event.key === "Tab") {
+            event.preventDefault();
+            const items = getFilteredItems();
+            if (items.length > 0 && selectedIndex < items.length) {
+              selectItem(selectedIndex);
+            }
             return true;
           }
           if (event.key === "Backspace" && slashFilter === "") {
@@ -122,6 +203,43 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
       },
     },
   });
+
+  // Handle text input for filtering
+  useEffect(() => {
+    if (!showSlashMenu || !editor) return;
+
+    const handleInput = () => {
+      const { from } = editor.state.selection;
+      const text = editor.state.doc.textBetween(Math.max(0, from - 50), from, "");
+      
+      let trigger = "";
+      if (menuMode === "commands") trigger = "/";
+      else if (menuMode === "users") trigger = "@";
+      else if (menuMode === "demands") trigger = "#";
+      
+      const lastTriggerIndex = text.lastIndexOf(trigger);
+      if (lastTriggerIndex !== -1) {
+        const filter = text.slice(lastTriggerIndex + 1);
+        setSlashFilter(filter);
+        setSelectedIndex(0);
+      }
+    };
+
+    editor.on("update", handleInput);
+    return () => {
+      editor.off("update", handleInput);
+    };
+  }, [showSlashMenu, editor, menuMode]);
+
+  // Scroll selected item into view
+  useEffect(() => {
+    if (showSlashMenu && menuRef.current) {
+      const selectedElement = menuRef.current.querySelector(`[data-index="${selectedIndex}"]`);
+      if (selectedElement) {
+        selectedElement.scrollIntoView({ block: "nearest" });
+      }
+    }
+  }, [selectedIndex, showSlashMenu]);
 
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
@@ -251,27 +369,113 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
     }
   }, [editor]);
 
-  const slashCommands = [
-    { icon: Type, label: "Texto", action: () => editor?.chain().focus().setParagraph().run() },
-    { icon: Heading1, label: "Título 1", action: () => editor?.chain().focus().toggleHeading({ level: 1 }).run() },
-    { icon: Heading2, label: "Título 2", action: () => editor?.chain().focus().toggleHeading({ level: 2 }).run() },
-    { icon: Heading3, label: "Título 3", action: () => editor?.chain().focus().toggleHeading({ level: 3 }).run() },
-    { icon: List, label: "Lista", action: () => editor?.chain().focus().toggleBulletList().run() },
-    { icon: ListOrdered, label: "Lista Numerada", action: () => editor?.chain().focus().toggleOrderedList().run() },
-    { icon: CheckSquare, label: "Checklist", action: () => editor?.chain().focus().insertContent("☐ ").run() },
-    { icon: Quote, label: "Citação", action: () => editor?.chain().focus().toggleBlockquote().run() },
-    { icon: Code, label: "Código", action: () => editor?.chain().focus().toggleCodeBlock().run() },
-    { icon: Minus, label: "Divisor", action: () => editor?.chain().focus().setHorizontalRule().run() },
-    { icon: ImageIcon, label: "Imagem", action: () => { setShowSlashMenu(false); handleImageUpload(); } },
-    { icon: Video, label: "Vídeo", action: () => { setShowSlashMenu(false); videoInputRef.current?.click(); } },
-    { icon: FileText, label: "Documento", action: () => { setShowSlashMenu(false); docInputRef.current?.click(); } },
+  const insertUserMention = useCallback((userId: string, userName: string) => {
+    if (!editor) return;
+    
+    // Remove the @ and filter text
+    const { from } = editor.state.selection;
+    const text = editor.state.doc.textBetween(Math.max(0, from - 50), from, "");
+    const lastAtIndex = text.lastIndexOf("@");
+    if (lastAtIndex !== -1) {
+      const deleteFrom = from - (text.length - lastAtIndex);
+      editor.chain()
+        .focus()
+        .deleteRange({ from: deleteFrom, to: from })
+        .insertContent(`<a href="/user/${userId}" data-mention="user" class="inline-flex items-center gap-0.5 bg-primary/10 text-primary border border-primary/20 rounded-md px-1.5 py-0.5 text-xs font-medium mx-0.5 no-underline hover:bg-primary/20 transition-colors">@${userName}</a> `)
+        .run();
+    }
+    setShowSlashMenu(false);
+  }, [editor]);
+
+  const insertDemandMention = useCallback((demandId: string, demandCode: string) => {
+    if (!editor) return;
+    
+    // Remove the # and filter text
+    const { from } = editor.state.selection;
+    const text = editor.state.doc.textBetween(Math.max(0, from - 50), from, "");
+    const lastHashIndex = text.lastIndexOf("#");
+    if (lastHashIndex !== -1) {
+      const deleteFrom = from - (text.length - lastHashIndex);
+      editor.chain()
+        .focus()
+        .deleteRange({ from: deleteFrom, to: from })
+        .insertContent(`<a href="/demands/${demandId}" data-mention="demand" class="inline-flex items-center gap-0.5 bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-500/20 rounded-md px-1.5 py-0.5 text-xs font-medium mx-0.5 no-underline hover:bg-cyan-500/20 transition-colors">#${demandCode}</a> `)
+        .run();
+    }
+    setShowSlashMenu(false);
+  }, [editor]);
+
+  const slashCommands: SlashCommand[] = [
+    { icon: Type, label: "Texto", description: "Texto simples", action: () => editor?.chain().focus().setParagraph().run(), type: "block" },
+    { icon: Heading1, label: "Título 1", description: "Título grande", action: () => editor?.chain().focus().toggleHeading({ level: 1 }).run(), type: "block" },
+    { icon: Heading2, label: "Título 2", description: "Título médio", action: () => editor?.chain().focus().toggleHeading({ level: 2 }).run(), type: "block" },
+    { icon: Heading3, label: "Título 3", description: "Título pequeno", action: () => editor?.chain().focus().toggleHeading({ level: 3 }).run(), type: "block" },
+    { icon: List, label: "Lista", description: "Lista com marcadores", action: () => editor?.chain().focus().toggleBulletList().run(), type: "block" },
+    { icon: ListOrdered, label: "Lista Numerada", description: "Lista numerada", action: () => editor?.chain().focus().toggleOrderedList().run(), type: "block" },
+    { icon: CheckSquare, label: "Checklist", description: "Lista de tarefas", action: () => editor?.chain().focus().insertContent("☐ ").run(), type: "block" },
+    { icon: Quote, label: "Citação", description: "Bloco de citação", action: () => editor?.chain().focus().toggleBlockquote().run(), type: "block" },
+    { icon: Code, label: "Código", description: "Bloco de código", action: () => editor?.chain().focus().toggleCodeBlock().run(), type: "block" },
+    { icon: Minus, label: "Divisor", description: "Linha divisória", action: () => editor?.chain().focus().setHorizontalRule().run(), type: "block" },
+    { icon: ImageIcon, label: "Imagem", description: "Inserir imagem", action: () => { setShowSlashMenu(false); handleImageUpload(); }, type: "block" },
+    { icon: Video, label: "Vídeo", description: "Inserir vídeo", action: () => { setShowSlashMenu(false); videoInputRef.current?.click(); }, type: "block" },
+    { icon: FileText, label: "Documento", description: "Anexar arquivo", action: () => { setShowSlashMenu(false); docInputRef.current?.click(); }, type: "block" },
+    { icon: AtSign, label: "Mencionar pessoa", description: "Mencionar usuário", action: () => { setMenuMode("users"); setSlashFilter(""); setSelectedIndex(0); }, type: "mention-user" },
+    { icon: Hash, label: "Mencionar demanda", description: "Mencionar demanda", action: () => { setMenuMode("demands"); setSlashFilter(""); setSelectedIndex(0); }, type: "mention-demand" },
   ];
 
-  const filteredCommands = slashCommands.filter(cmd => 
-    cmd.label.toLowerCase().includes(slashFilter.toLowerCase())
-  );
+  const getFilteredItems = useCallback(() => {
+    if (menuMode === "commands") {
+      return slashCommands.filter(cmd => 
+        cmd.label.toLowerCase().includes(slashFilter.toLowerCase()) ||
+        cmd.description?.toLowerCase().includes(slashFilter.toLowerCase())
+      );
+    }
+    if (menuMode === "users") {
+      return teamMembers.filter(member =>
+        member.profile.full_name.toLowerCase().includes(slashFilter.toLowerCase())
+      );
+    }
+    if (menuMode === "demands") {
+      return demandsList.filter(demand =>
+        demand.title.toLowerCase().includes(slashFilter.toLowerCase()) ||
+        demand.board_sequence_number.toString().includes(slashFilter)
+      );
+    }
+    return [];
+  }, [menuMode, slashFilter, slashCommands, teamMembers, demandsList]);
+
+  const selectItem = useCallback((index: number) => {
+    const items = getFilteredItems();
+    if (index >= items.length) return;
+
+    if (menuMode === "commands") {
+      const cmd = items[index] as SlashCommand;
+      cmd.action();
+      if (cmd.type === "block") {
+        // Remove the / and filter text
+        if (editor) {
+          const { from } = editor.state.selection;
+          const text = editor.state.doc.textBetween(Math.max(0, from - 50), from, "");
+          const lastSlashIndex = text.lastIndexOf("/");
+          if (lastSlashIndex !== -1) {
+            const deleteFrom = from - (text.length - lastSlashIndex);
+            editor.commands.deleteRange({ from: deleteFrom, to: from });
+          }
+        }
+        setShowSlashMenu(false);
+      }
+    } else if (menuMode === "users") {
+      const member = items[index] as typeof teamMembers[0];
+      insertUserMention(member.user_id, member.profile.full_name);
+    } else if (menuMode === "demands") {
+      const demand = items[index] as typeof demandsList[0];
+      insertDemandMention(demand.id, demand.board_sequence_number.toString());
+    }
+  }, [menuMode, getFilteredItems, editor, insertUserMention, insertDemandMention]);
 
   if (!editor) return null;
+
+  const filteredItems = getFilteredItems();
 
   return (
     <div className="relative">
@@ -403,39 +607,125 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
         </BubbleMenu>
       )}
 
-      {/* Slash Command Menu */}
+      {/* Slash Command / Mention Menu */}
       {showSlashMenu && (
         <div 
-          className="fixed z-50 bg-background border rounded-lg shadow-lg p-2 min-w-[200px] max-h-[300px] overflow-y-auto"
+          ref={menuRef}
+          className="fixed z-50 bg-background border rounded-lg shadow-lg p-2 min-w-[280px] max-h-[320px] overflow-y-auto"
           style={{ top: slashMenuPosition.top, left: slashMenuPosition.left }}
         >
-          <div className="text-xs text-muted-foreground px-2 pb-2 border-b mb-2">
-            Blocos básicos
+          <div className="text-xs text-muted-foreground px-2 pb-2 border-b mb-2 flex items-center justify-between">
+            <span>
+              {menuMode === "commands" && "Blocos e ações"}
+              {menuMode === "users" && "Mencionar pessoa"}
+              {menuMode === "demands" && "Mencionar demanda"}
+            </span>
+            <span className="text-[10px] opacity-60">↑↓ navegar · Enter selecionar</span>
           </div>
-          {filteredCommands.map((cmd) => (
-            <button
-              key={cmd.label}
-              onClick={() => {
-                cmd.action();
-                setShowSlashMenu(false);
-                // Remove the slash character
-                editor?.commands.deleteRange({ 
-                  from: editor.state.selection.from - 1 - slashFilter.length, 
-                  to: editor.state.selection.from 
-                });
-              }}
-              className="flex items-center gap-3 w-full px-2 py-1.5 rounded hover:bg-muted text-left text-sm transition-colors"
-            >
-              <div className="w-8 h-8 rounded bg-muted flex items-center justify-center">
-                <cmd.icon className="h-4 w-4" />
-              </div>
-              <span>{cmd.label}</span>
-            </button>
-          ))}
+          
+          {menuMode === "commands" && (
+            <>
+              {filteredItems.length > 0 ? (
+                (filteredItems as SlashCommand[]).map((cmd, index) => (
+                  <button
+                    key={cmd.label}
+                    data-index={index}
+                    onClick={() => selectItem(index)}
+                    className={cn(
+                      "flex items-center gap-3 w-full px-2 py-2 rounded text-left text-sm transition-colors",
+                      selectedIndex === index ? "bg-primary/10 text-primary" : "hover:bg-muted"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-9 h-9 rounded-lg flex items-center justify-center",
+                      selectedIndex === index ? "bg-primary/20" : "bg-muted"
+                    )}>
+                      <cmd.icon className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium">{cmd.label}</div>
+                      {cmd.description && (
+                        <div className="text-xs text-muted-foreground truncate">{cmd.description}</div>
+                      )}
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="text-sm text-muted-foreground text-center py-4">
+                  Nenhum comando encontrado
+                </div>
+              )}
+            </>
+          )}
+          
+          {menuMode === "users" && (
+            <>
+              {(filteredItems as typeof teamMembers).length > 0 ? (
+                (filteredItems as typeof teamMembers).map((member, index) => (
+                  <button
+                    key={member.user_id}
+                    data-index={index}
+                    onClick={() => selectItem(index)}
+                    className={cn(
+                      "flex items-center gap-3 w-full px-2 py-2 rounded text-left text-sm transition-colors",
+                      selectedIndex === index ? "bg-primary/10 text-primary" : "hover:bg-muted"
+                    )}
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={member.profile.avatar_url || undefined} />
+                      <AvatarFallback className="text-xs">
+                        {member.profile.full_name.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{member.profile.full_name}</div>
+                      <div className="text-xs text-muted-foreground">{member.role}</div>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="text-sm text-muted-foreground text-center py-4">
+                  {teamMembers.length === 0 ? "Nenhum membro no time" : "Nenhum usuário encontrado"}
+                </div>
+              )}
+            </>
+          )}
+          
+          {menuMode === "demands" && (
+            <>
+              {(filteredItems as typeof demandsList).length > 0 ? (
+                (filteredItems as typeof demandsList).map((demand, index) => (
+                  <button
+                    key={demand.id}
+                    data-index={index}
+                    onClick={() => selectItem(index)}
+                    className={cn(
+                      "flex items-center gap-3 w-full px-2 py-2 rounded text-left text-sm transition-colors",
+                      selectedIndex === index ? "bg-accent text-accent-foreground" : "hover:bg-muted"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-9 h-9 rounded-lg flex items-center justify-center font-mono text-sm font-bold",
+                      selectedIndex === index ? "bg-accent" : "bg-muted"
+                    )}>
+                      #{demand.board_sequence_number}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{demand.title}</div>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="text-sm text-muted-foreground text-center py-4">
+                  {demandsList.length === 0 ? "Nenhuma demanda no quadro" : "Nenhuma demanda encontrada"}
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 
-      {/* Click outside to close slash menu */}
+      {/* Click outside to close menu */}
       {showSlashMenu && (
         <div 
           className="fixed inset-0 z-40" 
@@ -458,7 +748,7 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
               <div className="text-xs text-muted-foreground px-2 pb-2 border-b mb-2">
                 Inserir bloco
               </div>
-              {slashCommands.slice(0, 10).map((cmd) => (
+              {slashCommands.filter(cmd => cmd.type === "block").slice(0, 10).map((cmd) => (
                 <button
                   key={cmd.label}
                   onClick={() => cmd.action()}
@@ -540,6 +830,11 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
         
         .ProseMirror li {
           margin: 0.25em 0;
+        }
+        
+        .ProseMirror a[data-mention] {
+          text-decoration: none;
+          cursor: pointer;
         }
       `}</style>
     </div>

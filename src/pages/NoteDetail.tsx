@@ -3,7 +3,6 @@ import { useNote, useUpdateNote, useDeleteNote } from "@/hooks/useNotes";
 import { NotionEditor } from "@/components/notes/NotionEditor";
 import { NoteIconPicker } from "@/components/notes/NoteIconPicker";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { 
   ArrowLeft, 
   MoreHorizontal, 
@@ -41,6 +40,7 @@ export default function NoteDetail() {
   const [isSaving, setIsSaving] = useState(false);
   const [copied, setCopied] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const titleInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (note) {
@@ -49,6 +49,14 @@ export default function NoteDetail() {
       setIcon(note.icon);
     }
   }, [note]);
+
+  // Auto-resize title textarea
+  useEffect(() => {
+    if (titleInputRef.current) {
+      titleInputRef.current.style.height = "auto";
+      titleInputRef.current.style.height = titleInputRef.current.scrollHeight + "px";
+    }
+  }, [title]);
 
   // Debounced save
   const debouncedSave = useCallback(
@@ -136,6 +144,17 @@ export default function NoteDetail() {
       toast.error("Erro ao fazer upload da capa");
     }
     e.target.value = "";
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      // Focus the editor
+      const editorElement = document.querySelector(".ProseMirror");
+      if (editorElement instanceof HTMLElement) {
+        editorElement.focus();
+      }
+    }
   };
 
   if (isLoading) {
@@ -252,20 +271,36 @@ export default function NoteDetail() {
 
       {/* Content */}
       <div className="container max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-start gap-2 mb-4">
-          <NoteIconPicker value={icon} onChange={handleIconChange} />
-          <Input
-            value={title}
-            onChange={(e) => handleTitleChange(e.target.value)}
-            placeholder="Sem título"
-            className="text-3xl font-bold border-none shadow-none px-0 h-auto focus-visible:ring-0 bg-transparent"
-          />
+        {/* Title Section - Highlighted and Separated */}
+        <div className="mb-8 pb-6 border-b border-border/50">
+          <div className="flex items-start gap-3">
+            <NoteIconPicker value={icon} onChange={handleIconChange} />
+            <div className="flex-1 min-w-0">
+              <textarea
+                ref={titleInputRef}
+                value={title}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                onKeyDown={handleTitleKeyDown}
+                placeholder="Sem título"
+                rows={1}
+                className="w-full text-4xl sm:text-5xl font-bold bg-transparent border-none outline-none resize-none overflow-hidden placeholder:text-muted-foreground/50 leading-tight"
+                style={{ minHeight: "1.2em" }}
+              />
+              <p className="text-sm text-muted-foreground mt-2">
+                Pressione <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">Enter</kbd> para começar a escrever, 
+                <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono mx-1">/</kbd> para comandos,
+                <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono mx-1">@</kbd> mencionar pessoa,
+                <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono mx-1">#</kbd> mencionar demanda
+              </p>
+            </div>
+          </div>
         </div>
 
+        {/* Editor */}
         <NotionEditor 
           content={content}
           onChange={handleContentChange}
-          placeholder="Comece a escrever ou pressione '/' para comandos..."
+          placeholder="Comece a escrever aqui..."
         />
       </div>
     </div>
