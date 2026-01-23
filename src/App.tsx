@@ -48,6 +48,8 @@ import BoardSummary from "./pages/BoardSummary";
 import Store from "./pages/Store";
 import Contract from "./pages/Contract";
 import TeamDemands from "./pages/TeamDemands";
+import Notes from "./pages/Notes";
+import NoteDetail from "./pages/NoteDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -104,6 +106,8 @@ const App = () => (
                           <Route path="/board-summary" element={<BoardSummary />} />
                           <Route path="/user/:userId" element={<UserProfile />} />
                           <Route path="/team-demands" element={<TeamDemands />} />
+                          <Route path="/notes" element={<Notes />} />
+                          <Route path="/notes/:noteId" element={<NoteDetail />} />
                           
                           <Route path="/reports" element={<Reports />} />
                           <Route path="/profile" element={<Profile />} />
