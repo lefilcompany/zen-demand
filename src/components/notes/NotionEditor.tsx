@@ -85,6 +85,17 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
   const videoInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  
+  // Use refs to avoid stale closures in handleKeyDown
+  const showSlashMenuRef = useRef(showSlashMenu);
+  const slashFilterRef = useRef(slashFilter);
+  const selectedIndexRef = useRef(selectedIndex);
+  const menuModeRef = useRef(menuMode);
+  
+  useEffect(() => { showSlashMenuRef.current = showSlashMenu; }, [showSlashMenu]);
+  useEffect(() => { slashFilterRef.current = slashFilter; }, [slashFilter]);
+  useEffect(() => { selectedIndexRef.current = selectedIndex; }, [selectedIndex]);
+  useEffect(() => { menuModeRef.current = menuMode; }, [menuMode]);
 
   const editor = useEditor({
     extensions: [
@@ -120,8 +131,10 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
         class: "prose prose-sm sm:prose dark:prose-invert max-w-none focus:outline-none min-h-[200px] px-4 py-2",
       },
       handleKeyDown: (view, event) => {
+        const isMenuOpen = showSlashMenuRef.current;
+        
         // Handle @ for user mentions
-        if (event.key === "@" && !showSlashMenu) {
+        if (event.key === "@" && !isMenuOpen) {
           const { from } = view.state.selection;
           const coords = view.coordsAtPos(from);
           setSlashMenuPosition({
@@ -136,7 +149,7 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
         }
         
         // Handle # for demand mentions
-        if (event.key === "#" && !showSlashMenu) {
+        if (event.key === "#" && !isMenuOpen) {
           const { from } = view.state.selection;
           const coords = view.coordsAtPos(from);
           setSlashMenuPosition({
@@ -151,7 +164,7 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
         }
         
         // Handle / for commands
-        if (event.key === "/" && !showSlashMenu) {
+        if (event.key === "/" && !isMenuOpen) {
           const { from } = view.state.selection;
           const coords = view.coordsAtPos(from);
           setSlashMenuPosition({
@@ -165,36 +178,28 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
           return false;
         }
         
-        if (showSlashMenu) {
+        if (isMenuOpen) {
           if (event.key === "Escape") {
             setShowSlashMenu(false);
             return true;
           }
           if (event.key === "ArrowDown") {
             event.preventDefault();
-            setSelectedIndex(prev => {
-              const maxIndex = getFilteredItems().length - 1;
-              return prev < maxIndex ? prev + 1 : 0;
-            });
+            setSelectedIndex(prev => prev + 1);
             return true;
           }
           if (event.key === "ArrowUp") {
             event.preventDefault();
-            setSelectedIndex(prev => {
-              const maxIndex = getFilteredItems().length - 1;
-              return prev > 0 ? prev - 1 : maxIndex;
-            });
+            setSelectedIndex(prev => Math.max(0, prev - 1));
             return true;
           }
           if (event.key === "Enter" || event.key === "Tab") {
             event.preventDefault();
-            const items = getFilteredItems();
-            if (items.length > 0 && selectedIndex < items.length) {
-              selectItem(selectedIndex);
-            }
+            // Trigger selection via a custom event
+            window.dispatchEvent(new CustomEvent('notion-editor-select'));
             return true;
           }
-          if (event.key === "Backspace" && slashFilter === "") {
+          if (event.key === "Backspace" && slashFilterRef.current === "") {
             setShowSlashMenu(false);
             return false;
           }
@@ -230,16 +235,6 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
       editor.off("update", handleInput);
     };
   }, [showSlashMenu, editor, menuMode]);
-
-  // Scroll selected item into view
-  useEffect(() => {
-    if (showSlashMenu && menuRef.current) {
-      const selectedElement = menuRef.current.querySelector(`[data-index="${selectedIndex}"]`);
-      if (selectedElement) {
-        selectedElement.scrollIntoView({ block: "nearest" });
-      }
-    }
-  }, [selectedIndex, showSlashMenu]);
 
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
@@ -472,6 +467,41 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
       insertDemandMention(demand.id, demand.board_sequence_number.toString());
     }
   }, [menuMode, getFilteredItems, editor, insertUserMention, insertDemandMention]);
+
+  // Scroll selected item into view and wrap around
+  useEffect(() => {
+    if (showSlashMenu && menuRef.current) {
+      const items = getFilteredItems();
+      const maxIndex = items.length - 1;
+      
+      // Wrap around the index
+      if (selectedIndex > maxIndex && maxIndex >= 0) {
+        setSelectedIndex(0);
+        return;
+      }
+      if (selectedIndex < 0 && maxIndex >= 0) {
+        setSelectedIndex(maxIndex);
+        return;
+      }
+      
+      const selectedElement = menuRef.current.querySelector(`[data-index="${selectedIndex}"]`);
+      if (selectedElement) {
+        selectedElement.scrollIntoView({ block: "nearest" });
+      }
+    }
+  }, [selectedIndex, showSlashMenu, getFilteredItems]);
+
+  // Listen for selection event from keyboard
+  useEffect(() => {
+    const handleSelectEvent = () => {
+      if (showSlashMenuRef.current) {
+        selectItem(selectedIndexRef.current);
+      }
+    };
+    
+    window.addEventListener('notion-editor-select', handleSelectEvent);
+    return () => window.removeEventListener('notion-editor-select', handleSelectEvent);
+  }, [selectItem]);
 
   if (!editor) return null;
 
