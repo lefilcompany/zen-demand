@@ -2,7 +2,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useNote, useUpdateNote, useDeleteNote } from "@/hooks/useNotes";
 import { NotionEditor } from "@/components/notes/NotionEditor";
 import { NoteIconPicker } from "@/components/notes/NoteIconPicker";
+import { NoteTagManager } from "@/components/notes/NoteTagManager";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
   ArrowLeft, 
   MoreHorizontal, 
@@ -37,6 +39,7 @@ export default function NoteDetail() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [icon, setIcon] = useState("📝");
+  const [tags, setTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [copied, setCopied] = useState(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -47,6 +50,7 @@ export default function NoteDetail() {
       setTitle(note.title);
       setContent(note.content || "");
       setIcon(note.icon);
+      setTags(note.tags || []);
     }
   }, [note]);
 
@@ -239,6 +243,16 @@ export default function NoteDetail() {
               )}
             </Button>
 
+            <NoteTagManager 
+              tags={tags} 
+              onTagsChange={(newTags) => {
+                setTags(newTags);
+                if (noteId) {
+                  updateNote.mutate({ noteId, tags: newTags });
+                }
+              }} 
+            />
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm">
@@ -286,7 +300,19 @@ export default function NoteDetail() {
                 className="w-full text-4xl sm:text-5xl font-bold bg-transparent border-none outline-none resize-none overflow-hidden placeholder:text-muted-foreground/50 leading-tight"
                 style={{ minHeight: "1.2em" }}
               />
-              <p className="text-sm text-muted-foreground mt-2">
+              
+              {/* Tags display */}
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {tags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="text-xs font-normal">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              
+              <p className="text-sm text-muted-foreground mt-3">
                 Pressione <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">Enter</kbd> para começar a escrever, 
                 <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono mx-1">/</kbd> para comandos,
                 <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono mx-1">@</kbd> mencionar pessoa,

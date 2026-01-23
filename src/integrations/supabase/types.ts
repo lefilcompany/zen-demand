@@ -907,6 +907,7 @@ export type Database = {
           id: string
           is_public: boolean
           parent_id: string | null
+          tags: string[] | null
           team_id: string
           title: string
           updated_at: string
@@ -921,6 +922,7 @@ export type Database = {
           id?: string
           is_public?: boolean
           parent_id?: string | null
+          tags?: string[] | null
           team_id: string
           title?: string
           updated_at?: string
@@ -935,6 +937,7 @@ export type Database = {
           id?: string
           is_public?: boolean
           parent_id?: string | null
+          tags?: string[] | null
           team_id?: string
           title?: string
           updated_at?: string
