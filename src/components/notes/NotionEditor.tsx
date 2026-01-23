@@ -633,35 +633,42 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
 
   const selectItem = useCallback((index: number) => {
     const items = getFilteredItems();
-    if (index >= items.length) return;
+    if (index >= items.length || !editor) return;
 
-    if (menuMode === "commands") {
+    const currentMenuMode = menuModeRef.current;
+
+    if (currentMenuMode === "commands") {
       const cmd = items[index] as SlashCommand;
-      cmd.action();
-      if (!["mention-user", "mention-demand", "notes"].includes(cmd.category)) {
-        // Remove the / and filter text
-        if (editor) {
-          const { from } = editor.state.selection;
-          const text = editor.state.doc.textBetween(Math.max(0, from - 50), from, "");
-          const lastSlashIndex = text.lastIndexOf("/");
-          if (lastSlashIndex !== -1) {
-            const deleteFrom = from - (text.length - lastSlashIndex);
-            editor.commands.deleteRange({ from: deleteFrom, to: from });
-          }
-        }
-        setShowSlashMenu(false);
+      
+      // First, remove the / and filter text BEFORE executing the action
+      const { from } = editor.state.selection;
+      const text = editor.state.doc.textBetween(Math.max(0, from - 50), from, "");
+      const lastSlashIndex = text.lastIndexOf("/");
+      
+      if (lastSlashIndex !== -1) {
+        const deleteFrom = from - (text.length - lastSlashIndex);
+        editor.chain().focus().deleteRange({ from: deleteFrom, to: from }).run();
       }
-    } else if (menuMode === "users") {
+      
+      // Close the menu
+      setShowSlashMenu(false);
+      
+      // Then execute the action
+      setTimeout(() => {
+        cmd.action();
+      }, 10);
+      
+    } else if (currentMenuMode === "users") {
       const member = items[index] as typeof teamMembers[0];
       insertUserMention(member.user_id, member.profile.full_name);
-    } else if (menuMode === "demands") {
+    } else if (currentMenuMode === "demands") {
       const demand = items[index] as typeof demandsList[0];
       insertDemandMention(demand.id, demand.board_sequence_number.toString());
-    } else if (menuMode === "notes") {
+    } else if (currentMenuMode === "notes") {
       const note = items[index] as typeof notesList[0];
       insertNoteMention(note.id, note.title, note.icon || "📝");
     }
-  }, [menuMode, getFilteredItems, editor, insertUserMention, insertDemandMention, insertNoteMention]);
+  }, [getFilteredItems, editor, insertUserMention, insertDemandMention, insertNoteMention, teamMembers, demandsList, notesList]);
 
   // Scroll selected item into view and wrap around
   useEffect(() => {
