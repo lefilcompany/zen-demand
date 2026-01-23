@@ -896,6 +896,73 @@ export type Database = {
           },
         ]
       }
+      notes: {
+        Row: {
+          archived: boolean
+          content: string | null
+          cover_url: string | null
+          created_at: string
+          created_by: string
+          icon: string | null
+          id: string
+          is_public: boolean
+          parent_id: string | null
+          team_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          content?: string | null
+          cover_url?: string | null
+          created_at?: string
+          created_by: string
+          icon?: string | null
+          id?: string
+          is_public?: boolean
+          parent_id?: string | null
+          team_id: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          content?: string | null
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string
+          icon?: string | null
+          id?: string
+          is_public?: boolean
+          parent_id?: string | null
+          team_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string | null
