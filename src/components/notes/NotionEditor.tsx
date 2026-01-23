@@ -575,7 +575,7 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
     // Listas
     { icon: List, label: "Lista", description: "Lista com marcadores", action: () => editor?.chain().focus().toggleBulletList().run(), category: "Listas" },
     { icon: ListOrdered, label: "Lista Numerada", description: "Lista numerada", action: () => editor?.chain().focus().toggleOrderedList().run(), category: "Listas" },
-    { icon: CheckSquare, label: "Lista de Tarefas", description: "Checklist interativa", action: () => editor?.chain().focus().toggleBulletList().run(), category: "Listas" },
+    { icon: CheckSquare, label: "Lista de Tarefas", description: "Checklist interativa", action: () => editor?.chain().focus().toggleTaskList().run(), category: "Listas" },
     
     // Blocos
     { icon: Quote, label: "Citação", description: "Bloco de citação", action: () => editor?.chain().focus().toggleBlockquote().run(), category: "Blocos" },
@@ -639,25 +639,27 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
 
     if (currentMenuMode === "commands") {
       const cmd = items[index] as SlashCommand;
-      
-      // First, remove the / and filter text BEFORE executing the action
+
+      // Remove the "/" + filter text while keeping the editor selection.
+      // (Important: menu clicks can steal focus; we also preventDefault on mousedown in the menu items.)
       const { from } = editor.state.selection;
       const text = editor.state.doc.textBetween(Math.max(0, from - 50), from, "");
       const lastSlashIndex = text.lastIndexOf("/");
-      
+
       if (lastSlashIndex !== -1) {
         const deleteFrom = from - (text.length - lastSlashIndex);
         editor.chain().focus().deleteRange({ from: deleteFrom, to: from }).run();
+      } else {
+        editor.chain().focus().run();
       }
-      
-      // Close the menu
-      setShowSlashMenu(false);
-      
-      // Then execute the action
-      setTimeout(() => {
-        cmd.action();
-      }, 10);
-      
+
+      // Execute the command
+      cmd.action();
+
+      // Keep menu open only when the command switches mode (Menções)
+      if (cmd.category !== "Menções") {
+        setShowSlashMenu(false);
+      }
     } else if (currentMenuMode === "users") {
       const member = items[index] as typeof teamMembers[0];
       insertUserMention(member.user_id, member.profile.full_name);
@@ -961,7 +963,10 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
                         <button
                           key={cmd.label}
                           data-index={globalIndex}
-                          onClick={() => selectItem(globalIndex)}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            selectItem(globalIndex);
+                          }}
                           className={cn(
                             "flex items-center gap-3 w-full px-2 py-2 rounded text-left text-sm transition-colors",
                             selectedIndex === globalIndex ? "bg-primary/10 text-primary" : "hover:bg-muted"
@@ -999,7 +1004,10 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
                   <button
                     key={member.user_id}
                     data-index={index}
-                    onClick={() => selectItem(index)}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      selectItem(index);
+                    }}
                     className={cn(
                       "flex items-center gap-3 w-full px-2 py-2 rounded text-left text-sm transition-colors",
                       selectedIndex === index ? "bg-primary/10 text-primary" : "hover:bg-muted"
@@ -1032,7 +1040,10 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
                   <button
                     key={demand.id}
                     data-index={index}
-                    onClick={() => selectItem(index)}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      selectItem(index);
+                    }}
                     className={cn(
                       "flex items-center gap-3 w-full px-2 py-2 rounded text-left text-sm transition-colors",
                       selectedIndex === index ? "bg-accent text-accent-foreground" : "hover:bg-muted"
@@ -1064,7 +1075,10 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
                   <button
                     key={note.id}
                     data-index={index}
-                    onClick={() => selectItem(index)}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      selectItem(index);
+                    }}
                     className={cn(
                       "flex items-center gap-3 w-full px-2 py-2 rounded text-left text-sm transition-colors",
                       selectedIndex === index ? "bg-amber-500/10 text-amber-700 dark:text-amber-400" : "hover:bg-muted"
@@ -1208,6 +1222,14 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
         
         .ProseMirror ul, .ProseMirror ol {
           padding-left: 1.5em;
+        }
+
+        .ProseMirror ul {
+          list-style: disc;
+        }
+
+        .ProseMirror ol {
+          list-style: decimal;
         }
         
         .ProseMirror li {
