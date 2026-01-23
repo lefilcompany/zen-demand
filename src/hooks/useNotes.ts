@@ -15,6 +15,7 @@ export interface Note {
   is_public: boolean;
   archived: boolean;
   parent_id: string | null;
+  tags: string[];
   created_at: string;
   updated_at: string;
   profiles?: {
@@ -116,6 +117,7 @@ export function useUpdateNote() {
       icon?: string;
       cover_url?: string | null;
       archived?: boolean;
+      tags?: string[];
     }) => {
       const { data: note, error } = await supabase
         .from("notes")
