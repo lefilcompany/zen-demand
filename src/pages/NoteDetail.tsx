@@ -4,6 +4,7 @@ import { NotionEditor } from "@/components/notes/NotionEditor";
 import { NoteIconPicker } from "@/components/notes/NoteIconPicker";
 import { NoteTagManager } from "@/components/notes/NoteTagManager";
 import { ShareNoteButton } from "@/components/notes/ShareNoteButton";
+import { NoteShareManager } from "@/components/notes/NoteShareManager";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -26,10 +27,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { debounce } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 
 export default function NoteDetail() {
   const { noteId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: note, isLoading } = useNote(noteId || null);
   const updateNote = useUpdateNote();
   const deleteNote = useDeleteNote();
@@ -39,6 +42,8 @@ export default function NoteDetail() {
   const [icon, setIcon] = useState("📝");
   const [tags, setTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  
+  const isOwner = note?.created_by === user?.id;
   
   const coverInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLTextAreaElement>(null);
@@ -222,7 +227,12 @@ export default function NoteDetail() {
               </span>
             )}
 
-            <ShareNoteButton noteId={noteId!} />
+            {isOwner && (
+              <>
+                <NoteShareManager noteId={noteId!} teamId={note.team_id} />
+                <ShareNoteButton noteId={noteId!} />
+              </>
+            )}
 
             <NoteTagManager 
               tags={tags} 
