@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MoreHorizontal, Trash2, Archive } from "lucide-react";
+import { MoreHorizontal, Trash2, Archive, LogOut } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { 
   DropdownMenu, 
@@ -13,15 +13,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useDeleteNote, useUpdateNote } from "@/hooks/useNotes";
+import { useLeaveSharedNote } from "@/hooks/useNoteShares";
+import { useAuth } from "@/lib/auth";
 
 interface NoteCardProps {
   note: Note;
   onClick: () => void;
+  isShared?: boolean;
 }
 
-export function NoteCard({ note, onClick }: NoteCardProps) {
+export function NoteCard({ note, onClick, isShared = false }: NoteCardProps) {
   const deleteNote = useDeleteNote();
   const updateNote = useUpdateNote();
+  const leaveNote = useLeaveSharedNote();
+  const { user } = useAuth();
+
+  const isOwner = note.created_by === user?.id;
 
   // Extract plain text preview from HTML content
   const getPreview = (html: string | null) => {
@@ -41,6 +48,13 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
     e.stopPropagation();
     if (confirm("Tem certeza que deseja excluir esta nota?")) {
       deleteNote.mutate(note.id);
+    }
+  };
+
+  const handleLeave = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm("Tem certeza que deseja sair desta nota compartilhada?")) {
+      leaveNote.mutate(note.id);
     }
   };
 
@@ -79,14 +93,23 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleArchive}>
-                <Archive className="h-4 w-4 mr-2" />
-                Arquivar
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleDelete} className="text-destructive">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Excluir
-              </DropdownMenuItem>
+              {isOwner ? (
+                <>
+                  <DropdownMenuItem onClick={handleArchive}>
+                    <Archive className="h-4 w-4 mr-2" />
+                    Arquivar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <DropdownMenuItem onClick={handleLeave} className="text-destructive">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sair da nota
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
