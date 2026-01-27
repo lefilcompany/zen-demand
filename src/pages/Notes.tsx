@@ -5,12 +5,22 @@ import { NoteCard } from "@/components/notes/NoteCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, FileText, Loader2, LayoutGrid, List, X, Tag, Users } from "lucide-react";
+import { Plus, Search, FileText, Loader2, LayoutGrid, List, X, Tag, Users, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Notes() {
   const { data: notes, isLoading } = useNotes();
@@ -22,18 +32,30 @@ export default function Notes() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [leavingNoteId, setLeavingNoteId] = useState<string | null>(null);
+  const [noteToLeave, setNoteToLeave] = useState<{ id: string; title: string } | null>(null);
+  const [isLeaving, setIsLeaving] = useState(false);
 
-  const handleLeaveNote = useCallback((noteId: string) => {
-    if (confirm("Tem certeza que deseja sair desta nota compartilhada?")) {
-      setLeavingNoteId(noteId);
-      // Wait for animation to complete before actually leaving
-      setTimeout(() => {
-        leaveNote.mutate(noteId, {
-          onSettled: () => setLeavingNoteId(null),
-        });
-      }, 300);
-    }
-  }, [leaveNote]);
+  const openLeaveDialog = useCallback((noteId: string, noteTitle: string) => {
+    setNoteToLeave({ id: noteId, title: noteTitle });
+  }, []);
+
+  const handleConfirmLeave = useCallback(() => {
+    if (!noteToLeave) return;
+    
+    setIsLeaving(true);
+    setLeavingNoteId(noteToLeave.id);
+    
+    // Wait for animation to complete before actually leaving
+    setTimeout(() => {
+      leaveNote.mutate(noteToLeave.id, {
+        onSettled: () => {
+          setLeavingNoteId(null);
+          setNoteToLeave(null);
+          setIsLeaving(false);
+        },
+      });
+    }, 300);
+  }, [noteToLeave, leaveNote]);
 
   // Extract all unique tags from my notes
   const allTags = useMemo(() => {
@@ -109,7 +131,7 @@ export default function Notes() {
               note={note} 
               onClick={() => navigate(`/notes/${note.id}`)}
               isShared={showOwner}
-              onLeave={showOwner ? () => handleLeaveNote(note.id) : undefined}
+              onLeave={showOwner ? () => openLeaveDialog(note.id, note.title) : undefined}
             />
             {showOwner && 'profiles' in note && note.profiles && (
               <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-background/80 backdrop-blur rounded-full px-2 py-1">
@@ -346,6 +368,42 @@ export default function Notes() {
           renderNoteGrid(filteredSharedNotes, true)
         )}
       </div>
+
+      {/* Leave Shared Note Dialog */}
+      <AlertDialog open={!!noteToLeave} onOpenChange={(open) => !open && setNoteToLeave(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <LogOut className="h-5 w-5 text-destructive" />
+              Sair da nota compartilhada
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está prestes a sair da nota <span className="font-medium text-foreground">"{noteToLeave?.title}"</span>. 
+              Você perderá o acesso a esta nota e ela será removida da sua lista.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLeaving}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmLeave}
+              disabled={isLeaving}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isLeaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saindo...
+                </>
+              ) : (
+                <>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sair da nota
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
