@@ -1,11 +1,11 @@
 import { useState, useMemo, useCallback } from "react";
 import { useNotes, useCreateNote } from "@/hooks/useNotes";
-import { useSharedWithMeNotes, useLeaveSharedNote } from "@/hooks/useNoteShares";
+import { useSharedWithMeNotes, useLeaveSharedNote, SharedNote } from "@/hooks/useNoteShares";
 import { NoteCard } from "@/components/notes/NoteCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, FileText, Loader2, LayoutGrid, List, X, Tag, Users, LogOut } from "lucide-react";
+import { Plus, Search, FileText, Loader2, LayoutGrid, List, X, Tag, Users, LogOut, Eye, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -134,16 +134,38 @@ export default function Notes() {
               onLeave={showOwner ? () => openLeaveDialog(note.id, note.title) : undefined}
             />
             {showOwner && 'profiles' in note && note.profiles && (
-              <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-background/80 backdrop-blur rounded-full px-2 py-1">
-                <Avatar className="h-4 w-4">
-                  <AvatarImage src={note.profiles.avatar_url || undefined} />
-                  <AvatarFallback className="text-[8px]">
-                    {note.profiles.full_name?.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-[10px] text-muted-foreground">
-                  {note.profiles.full_name?.split(" ")[0]}
-                </span>
+              <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+                {/* Permission Badge */}
+                {'permission' in note && (
+                  <Badge 
+                    variant={(note as SharedNote).permission === 'editor' ? 'default' : 'secondary'}
+                    className="text-[10px] px-1.5 py-0 font-normal flex items-center gap-1"
+                  >
+                    {(note as SharedNote).permission === 'editor' ? (
+                      <>
+                        <Pencil className="h-2.5 w-2.5" />
+                        Editor
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="h-2.5 w-2.5" />
+                        Visualizador
+                      </>
+                    )}
+                  </Badge>
+                )}
+                {/* Owner Info */}
+                <div className="flex items-center gap-1.5 bg-background/80 backdrop-blur rounded-full px-2 py-1">
+                  <Avatar className="h-4 w-4">
+                    <AvatarImage src={note.profiles.avatar_url || undefined} />
+                    <AvatarFallback className="text-[8px]">
+                      {note.profiles.full_name?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-[10px] text-muted-foreground">
+                    {note.profiles.full_name?.split(" ")[0]}
+                  </span>
+                </div>
               </div>
             )}
           </div>
@@ -181,17 +203,41 @@ export default function Notes() {
                 )}
               </div>
             </div>
-            {showOwner && 'profiles' in note && note.profiles && (
+            {showOwner && 'profiles' in note && (
               <div className="flex items-center gap-2">
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={note.profiles.avatar_url || undefined} />
-                  <AvatarFallback className="text-xs">
-                    {note.profiles.full_name?.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-xs text-muted-foreground hidden sm:inline">
-                  {note.profiles.full_name?.split(" ")[0]}
-                </span>
+                {/* Permission Badge */}
+                {'permission' in note && (
+                  <Badge 
+                    variant={(note as SharedNote).permission === 'editor' ? 'default' : 'secondary'}
+                    className="text-[10px] px-1.5 py-0 font-normal flex items-center gap-1"
+                  >
+                    {(note as SharedNote).permission === 'editor' ? (
+                      <>
+                        <Pencil className="h-2.5 w-2.5" />
+                        Editor
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="h-2.5 w-2.5" />
+                        Visualizador
+                      </>
+                    )}
+                  </Badge>
+                )}
+                {/* Owner Info */}
+                {note.profiles && (
+                  <>
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={note.profiles.avatar_url || undefined} />
+                      <AvatarFallback className="text-xs">
+                        {note.profiles.full_name?.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs text-muted-foreground hidden sm:inline">
+                      {note.profiles.full_name?.split(" ")[0]}
+                    </span>
+                  </>
+                )}
               </div>
             )}
           </div>

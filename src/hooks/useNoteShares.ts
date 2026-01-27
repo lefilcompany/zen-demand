@@ -19,7 +19,7 @@ interface NoteShare {
   };
 }
 
-interface SharedNote {
+export interface SharedNote {
   id: string;
   title: string;
   content: string | null;
@@ -33,6 +33,7 @@ interface SharedNote {
   is_public: boolean;
   archived: boolean;
   parent_id: string | null;
+  permission: NoteSharePermission;
   profiles?: {
     id: string;
     full_name: string;
@@ -88,15 +89,18 @@ export function useSharedWithMeNotes() {
     queryFn: async () => {
       if (!user?.id) return [];
 
-      // Get share records
+      // Get share records with permission
       const { data: shares, error: sharesError } = await supabase
         .from("note_shares")
-        .select("note_id, created_at")
+        .select("note_id, permission, created_at")
         .eq("shared_with_user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (sharesError) throw sharesError;
       if (!shares || shares.length === 0) return [];
+
+      // Create permission map
+      const permissionMap = new Map(shares.map((s) => [s.note_id, s.permission]));
 
       // Get notes
       const noteIds = shares.map((s) => s.note_id);
@@ -120,6 +124,7 @@ export function useSharedWithMeNotes() {
 
       return notes.map((note) => ({
         ...note,
+        permission: permissionMap.get(note.id) as NoteSharePermission,
         profiles: profileMap.get(note.created_by),
       })) as SharedNote[];
     },
