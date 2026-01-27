@@ -133,13 +133,13 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" data-tour="sidebar">
       <SidebarContent className="overflow-y-auto flex flex-col">
-        <div className="p-4 items-center justify-center px-0 py-0 mx-0 my-4 md:my-6 flex flex-col">
+        <NavLink to="/" onClick={closeMobileSidebar} className="p-4 items-center justify-center px-0 py-0 mx-0 my-4 md:my-6 flex flex-col hover:opacity-80 transition-opacity cursor-pointer">
           {isCollapsed && !isMobile ? (
             <img alt="SoMA" src="/lovable-uploads/8967ad53-156a-4e31-a5bd-b472b7cde839.png" className="h-5 w-5 object-scale-down" />
           ) : (
             <img src={logoSoma} alt="SoMA" className="h-8 md:h-10 w-auto" />
           )}
-        </div>
+        </NavLink>
 
         <SidebarGroup>
           <SidebarGroupLabel>{t("common.actions")}</SidebarGroupLabel>
