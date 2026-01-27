@@ -14,7 +14,7 @@ import TableHeader from "@tiptap/extension-table-header";
 import Link from "@tiptap/extension-link";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import { common, createLowlight } from "lowlight";
-import { useEffect, useCallback, useState, useRef } from "react";
+import { useEffect, useCallback, useState, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Bold, 
@@ -689,7 +689,7 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
       
       const selectedElement = menuRef.current.querySelector(`[data-index="${selectedIndex}"]`);
       if (selectedElement) {
-        selectedElement.scrollIntoView({ block: "nearest" });
+        selectedElement.scrollIntoView({ block: "nearest", behavior: "smooth" });
       }
     }
   }, [selectedIndex, showSlashMenu, getFilteredItems]);
@@ -705,6 +705,53 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
     window.addEventListener('notion-editor-select', handleSelectEvent);
     return () => window.removeEventListener('notion-editor-select', handleSelectEvent);
   }, [selectItem]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!showSlashMenu) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowSlashMenu(false);
+      }
+    };
+
+    // Use a small delay to avoid closing immediately on the triggering click
+    const timeout = setTimeout(() => {
+      document.addEventListener("mousedown", handleClickOutside);
+    }, 10);
+
+    return () => {
+      clearTimeout(timeout);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showSlashMenu]);
+
+  // Adjust menu position to stay within viewport
+  const adjustedPosition = useMemo(() => {
+    if (!showSlashMenu) return slashMenuPosition;
+    
+    const menuWidth = 320;
+    const menuHeight = 400;
+    const padding = 16;
+    
+    let { top, left } = slashMenuPosition;
+    
+    // Adjust horizontal position
+    if (typeof window !== "undefined") {
+      if (left + menuWidth > window.innerWidth - padding) {
+        left = Math.max(padding, window.innerWidth - menuWidth - padding);
+      }
+      
+      // Adjust vertical position - show above cursor if not enough space below
+      if (top + menuHeight > window.innerHeight - padding) {
+        // Position above the cursor
+        top = Math.max(padding, slashMenuPosition.top - menuHeight - 40);
+      }
+    }
+    
+    return { top, left };
+  }, [showSlashMenu, slashMenuPosition]);
 
   if (!editor) return null;
 
@@ -936,8 +983,9 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
       {showSlashMenu && (
         <div 
           ref={menuRef}
-          className="fixed z-50 bg-background border rounded-lg shadow-lg p-2 min-w-[320px] max-h-[400px] overflow-y-auto"
-          style={{ top: slashMenuPosition.top, left: slashMenuPosition.left }}
+          className="fixed z-[100] bg-popover border border-border rounded-xl shadow-xl p-2 min-w-[320px] max-w-[360px] max-h-[min(400px,60vh)] overflow-y-auto overscroll-contain animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-150"
+          style={{ top: adjustedPosition.top, left: adjustedPosition.left }}
+          onMouseDown={(e) => e.stopPropagation()}
         >
           <div className="text-xs text-muted-foreground px-2 pb-2 border-b mb-2 flex items-center justify-between">
             <span>
