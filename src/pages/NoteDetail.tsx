@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useNote, useUpdateNote, useDeleteNote } from "@/hooks/useNotes";
-import { useNotePermission } from "@/hooks/useNoteShares";
+import { useNotePermission, useLeaveSharedNote } from "@/hooks/useNoteShares";
 import { NotionEditor } from "@/components/notes/NotionEditor";
 import { NoteIconPicker } from "@/components/notes/NoteIconPicker";
 import { NoteTagManager } from "@/components/notes/NoteTagManager";
@@ -15,7 +15,8 @@ import {
   Archive,
   Image,
   Loader2,
-  Eye
+  Eye,
+  LogOut
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -39,6 +40,7 @@ export default function NoteDetail() {
   const { data: permission } = useNotePermission(noteId || null);
   const updateNote = useUpdateNote();
   const deleteNote = useDeleteNote();
+  const leaveNote = useLeaveSharedNote();
   
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -124,7 +126,13 @@ export default function NoteDetail() {
       );
     }
   };
-
+  const handleLeaveNote = () => {
+    if (confirm("Tem certeza que deseja sair desta nota compartilhada?")) {
+      leaveNote.mutate(noteId!, {
+        onSuccess: () => navigate("/notes"),
+      });
+    }
+  };
 
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -281,6 +289,19 @@ export default function NoteDetail() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>}
+
+            {/* Leave button for non-owners */}
+            {!isOwner && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleLeaveNote}
+                className="text-destructive hover:text-destructive"
+              >
+                <LogOut className="h-4 w-4 mr-1" />
+                Sair
+              </Button>
+            )}
           </div>
         </div>
       </div>

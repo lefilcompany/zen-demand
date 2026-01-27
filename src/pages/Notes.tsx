@@ -88,6 +88,7 @@ export default function Notes() {
             <NoteCard 
               note={note} 
               onClick={() => navigate(`/notes/${note.id}`)}
+              isShared={showOwner}
             />
             {showOwner && 'profiles' in note && note.profiles && (
               <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-background/80 backdrop-blur rounded-full px-2 py-1">

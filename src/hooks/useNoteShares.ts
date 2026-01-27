@@ -268,3 +268,30 @@ export function useRemoveNoteShare() {
     },
   });
 }
+
+// Leave a shared note (user removes their own access)
+export function useLeaveSharedNote() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (noteId: string) => {
+      if (!user?.id) throw new Error("Não autenticado");
+
+      const { error } = await supabase
+        .from("note_shares")
+        .delete()
+        .eq("note_id", noteId)
+        .eq("shared_with_user_id", user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shared-with-me-notes"] });
+      toast.success("Você saiu da nota compartilhada");
+    },
+    onError: () => {
+      toast.error("Erro ao sair da nota");
+    },
+  });
+}
