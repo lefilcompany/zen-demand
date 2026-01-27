@@ -11,8 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Users, X, UserPlus, Check } from "lucide-react";
+import { Users, UserPlus, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 interface NoteShareManagerProps {
   noteId: string;
@@ -21,17 +22,21 @@ interface NoteShareManagerProps {
 
 export function NoteShareManager({ noteId, teamId }: NoteShareManagerProps) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const { user } = useAuth();
-  const { data: teamMembers = [] } = useTeamMembers(teamId);
+  const { data: teamMembers = [], isLoading: isLoadingMembers } = useTeamMembers(teamId);
   const { data: shares = [] } = useNoteShares(noteId);
   const shareWithUser = useShareNoteWithUser();
   const removeShare = useRemoveNoteShare();
 
   // Filter out the current user and get shared user IDs
   const sharedUserIds = shares.map((s) => s.shared_with_user_id);
-  const availableMembers = teamMembers.filter(
-    (m) => m.user_id !== user?.id
-  );
+  const availableMembers = teamMembers
+    .filter((m) => m.user_id !== user?.id)
+    .filter((m) => 
+      search === "" || 
+      m.profile.full_name.toLowerCase().includes(search.toLowerCase())
+    );
 
   const handleToggleShare = (userId: string) => {
     if (sharedUserIds.includes(userId)) {
@@ -40,6 +45,8 @@ export function NoteShareManager({ noteId, teamId }: NoteShareManagerProps) {
       shareWithUser.mutate({ noteId, userId });
     }
   };
+
+  const isPending = shareWithUser.isPending || removeShare.isPending;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -53,19 +60,26 @@ export function NoteShareManager({ noteId, teamId }: NoteShareManagerProps) {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-0" align="end">
-        <div className="p-3 border-b">
+      <PopoverContent className="w-80 p-0" align="end">
+        <div className="p-3 border-b space-y-2">
           <h4 className="font-medium text-sm">Compartilhar com membros</h4>
-          <p className="text-xs text-muted-foreground mt-1">
-            Selecione quem pode ver esta nota
-          </p>
+          <Input
+            placeholder="Buscar membro..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-8 text-sm"
+          />
         </div>
 
         <ScrollArea className="max-h-64">
           <div className="p-2">
-            {availableMembers.length === 0 ? (
+            {isLoadingMembers ? (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : availableMembers.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
-                Nenhum membro disponível
+                {search ? "Nenhum membro encontrado" : "Nenhum membro disponível"}
               </p>
             ) : (
               <div className="space-y-1">
@@ -76,24 +90,32 @@ export function NoteShareManager({ noteId, teamId }: NoteShareManagerProps) {
                     <button
                       key={member.user_id}
                       onClick={() => handleToggleShare(member.user_id)}
-                      disabled={shareWithUser.isPending || removeShare.isPending}
+                      disabled={isPending}
                       className={cn(
-                        "w-full flex items-center gap-3 p-2 rounded-md text-left transition-colors",
+                        "w-full flex items-center gap-3 p-2 rounded-md text-left transition-colors disabled:opacity-50",
                         isShared
                           ? "bg-primary/10 hover:bg-primary/15"
                           : "hover:bg-muted"
                       )}
                     >
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={member.profile?.avatar_url || undefined} />
-                        <AvatarFallback className="text-xs">
-                          {member.profile?.full_name?.charAt(0) || "?"}
+                        <AvatarImage src={member.profile.avatar_url || undefined} />
+                        <AvatarFallback className="text-xs bg-muted">
+                          {member.profile.full_name?.charAt(0).toUpperCase() || "?"}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">
-                          {member.profile?.full_name || "Usuário"}
+                          {member.profile.full_name || "Usuário"}
                         </p>
+                        {member.position && (
+                          <p 
+                            className="text-xs truncate"
+                            style={{ color: member.position.color }}
+                          >
+                            {member.position.name}
+                          </p>
+                        )}
                       </div>
                       {isShared ? (
                         <Check className="h-4 w-4 text-primary shrink-0" />
@@ -119,8 +141,8 @@ export function NoteShareManager({ noteId, teamId }: NoteShareManagerProps) {
                 {shares.slice(0, 5).map((share) => (
                   <Avatar key={share.id} className="h-6 w-6 border-2 border-background">
                     <AvatarImage src={share.profiles?.avatar_url || undefined} />
-                    <AvatarFallback className="text-[10px]">
-                      {share.profiles?.full_name?.charAt(0) || "?"}
+                    <AvatarFallback className="text-[10px] bg-muted">
+                      {share.profiles?.full_name?.charAt(0).toUpperCase() || "?"}
                     </AvatarFallback>
                   </Avatar>
                 ))}
