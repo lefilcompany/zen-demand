@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 export interface Note {
   id: string;
@@ -27,6 +28,32 @@ export interface Note {
 
 export function useNotes() {
   const { selectedTeamId } = useSelectedTeam();
+  const queryClient = useQueryClient();
+
+  // Realtime subscription for notes
+  useEffect(() => {
+    if (!selectedTeamId) return;
+
+    const channel = supabase
+      .channel(`notes-${selectedTeamId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notes',
+          filter: `team_id=eq.${selectedTeamId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["notes", selectedTeamId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedTeamId, queryClient]);
 
   return useQuery({
     queryKey: ["notes", selectedTeamId],
