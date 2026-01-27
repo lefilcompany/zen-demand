@@ -30,6 +30,7 @@ import MyDemandRequests from "./pages/MyDemandRequests";
 import DemandRequests from "./pages/DemandRequests";
 import DemandDetail from "./pages/DemandDetail";
 import SharedDemand from "./pages/SharedDemand";
+import SharedNote from "./pages/SharedNote";
 import Kanban from "./pages/Kanban";
 import ArchivedDemands from "./pages/ArchivedDemands";
 
@@ -72,6 +73,7 @@ const App = () => (
                         {/* Public routes */}
                         <Route path="/auth" element={<Auth />} />
                         <Route path="/shared/:token" element={<SharedDemand />} />
+                        <Route path="/shared/note/:token" element={<SharedNote />} />
                         <Route path="/reset-password" element={<ResetPassword />} />
 
                         {/* Auth-only routes (no team required) */}

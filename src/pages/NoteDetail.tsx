@@ -3,17 +3,15 @@ import { useNote, useUpdateNote, useDeleteNote } from "@/hooks/useNotes";
 import { NotionEditor } from "@/components/notes/NotionEditor";
 import { NoteIconPicker } from "@/components/notes/NoteIconPicker";
 import { NoteTagManager } from "@/components/notes/NoteTagManager";
+import { ShareNoteButton } from "@/components/notes/ShareNoteButton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   ArrowLeft, 
   MoreHorizontal, 
   Trash2, 
-  Share2, 
   Archive,
   Image,
-  Copy,
-  Check,
   Loader2
 } from "lucide-react";
 import { 
@@ -41,7 +39,7 @@ export default function NoteDetail() {
   const [icon, setIcon] = useState("📝");
   const [tags, setTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
-  const [copied, setCopied] = useState(false);
+  
   const coverInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -114,13 +112,6 @@ export default function NoteDetail() {
     }
   };
 
-  const handleCopyLink = () => {
-    const url = `${window.location.origin}/notes/${noteId}`;
-    navigator.clipboard.writeText(url);
-    setCopied(true);
-    toast.success("Link copiado!");
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -230,18 +221,8 @@ export default function NoteDetail() {
                 Salvando...
               </span>
             )}
-            
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={handleCopyLink}
-            >
-              {copied ? (
-                <Check className="h-4 w-4" />
-              ) : (
-                <Copy className="h-4 w-4" />
-              )}
-            </Button>
+
+            <ShareNoteButton noteId={noteId!} />
 
             <NoteTagManager 
               tags={tags} 
@@ -263,10 +244,6 @@ export default function NoteDetail() {
                 <DropdownMenuItem onClick={() => coverInputRef.current?.click()}>
                   <Image className="h-4 w-4 mr-2" />
                   {note.cover_url ? "Alterar capa" : "Adicionar capa"}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleCopyLink}>
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Copiar link
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleArchive}>
