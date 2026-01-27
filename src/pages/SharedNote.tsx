@@ -43,17 +43,17 @@ export default function SharedNote() {
   return (
     <div className="min-h-screen bg-background">
       {/* Cover Image */}
-      {note.cover_url ? (
-        <div className="h-48 w-full">
+      <div className="h-40 w-full">
+        {note.cover_url ? (
           <img 
             src={note.cover_url} 
             alt="" 
             className="w-full h-full object-cover"
           />
-        </div>
-      ) : (
-        <div className="h-32 w-full bg-gradient-to-br from-primary/20 via-primary/10 to-accent/20" />
-      )}
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/20 via-primary/10 to-accent/20" />
+        )}
+      </div>
 
       {/* Header Bar */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
