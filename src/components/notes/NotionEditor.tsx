@@ -1009,7 +1009,7 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
           ref={menuRef}
           role="listbox"
           aria-label="Menu de comandos"
-          className="fixed z-[100] bg-popover/98 backdrop-blur-sm border border-border/80 rounded-xl shadow-2xl shadow-black/20 dark:shadow-black/40 p-1.5 min-w-[320px] max-w-[360px] max-h-[min(400px,60vh)] overflow-y-auto overscroll-contain scroll-smooth"
+          className="fixed z-[100] bg-popover border border-border rounded-xl shadow-2xl shadow-black/20 dark:shadow-black/40 p-1.5 min-w-[320px] max-w-[360px] max-h-[min(400px,60vh)] overflow-y-auto overscroll-contain scroll-smooth"
           style={{ 
             top: adjustedPosition.top, 
             left: adjustedPosition.left,
@@ -1030,7 +1030,7 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
               }
             }
           `}</style>
-          <div className="text-[11px] text-muted-foreground px-2.5 py-2 border-b border-border/50 mb-1.5 flex items-center justify-between sticky top-0 bg-popover/98 backdrop-blur-sm -mt-1.5 -mx-1.5 px-3 rounded-t-xl">
+          <div className="text-[11px] text-muted-foreground px-2.5 py-2 border-b border-border/50 mb-1.5 flex items-center justify-between sticky top-0 bg-popover -mt-1.5 -mx-1.5 px-3 rounded-t-xl">
             <span className="font-medium">
               {menuMode === "commands" && "Blocos e ações"}
               {menuMode === "users" && "Mencionar pessoa"}
