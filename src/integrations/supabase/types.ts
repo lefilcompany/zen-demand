@@ -1647,7 +1647,15 @@ export type Database = {
         Returns: boolean
       }
       is_demand_shared: { Args: { demand_id_param: string }; Returns: boolean }
+      is_note_owner: {
+        Args: { _note_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_note_shared: { Args: { note_id_param: string }; Returns: boolean }
+      is_note_shared_with_user: {
+        Args: { _note_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_team_admin: {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
