@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useNotes, useCreateNote } from "@/hooks/useNotes";
-import { useSharedWithMeNotes } from "@/hooks/useNoteShares";
+import { useSharedWithMeNotes, useLeaveSharedNote } from "@/hooks/useNoteShares";
 import { NoteCard } from "@/components/notes/NoteCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,10 +16,24 @@ export default function Notes() {
   const { data: notes, isLoading } = useNotes();
   const { data: sharedNotes, isLoading: isLoadingShared } = useSharedWithMeNotes();
   const createNote = useCreateNote();
+  const leaveNote = useLeaveSharedNote();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [leavingNoteId, setLeavingNoteId] = useState<string | null>(null);
+
+  const handleLeaveNote = useCallback((noteId: string) => {
+    if (confirm("Tem certeza que deseja sair desta nota compartilhada?")) {
+      setLeavingNoteId(noteId);
+      // Wait for animation to complete before actually leaving
+      setTimeout(() => {
+        leaveNote.mutate(noteId, {
+          onSettled: () => setLeavingNoteId(null),
+        });
+      }, 300);
+    }
+  }, [leaveNote]);
 
   // Extract all unique tags from my notes
   const allTags = useMemo(() => {
@@ -84,11 +98,18 @@ export default function Notes() {
     )}>
       {viewMode === "grid" ? (
         notesList.map((note) => (
-          <div key={note.id} className="relative">
+          <div 
+            key={note.id} 
+            className={cn(
+              "relative transition-all duration-300",
+              leavingNoteId === note.id && "opacity-0 scale-95 pointer-events-none"
+            )}
+          >
             <NoteCard 
               note={note} 
               onClick={() => navigate(`/notes/${note.id}`)}
               isShared={showOwner}
+              onLeave={showOwner ? () => handleLeaveNote(note.id) : undefined}
             />
             {showOwner && 'profiles' in note && note.profiles && (
               <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-background/80 backdrop-blur rounded-full px-2 py-1">
@@ -110,7 +131,10 @@ export default function Notes() {
           <div
             key={note.id}
             onClick={() => navigate(`/notes/${note.id}`)}
-            className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
+            className={cn(
+              "flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-muted/50 cursor-pointer transition-all duration-300",
+              leavingNoteId === note.id && "opacity-0 scale-95 pointer-events-none"
+            )}
           >
             <span className="text-2xl">{note.icon || "📝"}</span>
             <div className="flex-1 min-w-0">
