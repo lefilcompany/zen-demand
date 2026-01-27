@@ -20,9 +20,10 @@ interface NoteCardProps {
   note: Note;
   onClick: () => void;
   isShared?: boolean;
+  onLeave?: () => void;
 }
 
-export function NoteCard({ note, onClick, isShared = false }: NoteCardProps) {
+export function NoteCard({ note, onClick, isShared = false, onLeave }: NoteCardProps) {
   const deleteNote = useDeleteNote();
   const updateNote = useUpdateNote();
   const leaveNote = useLeaveSharedNote();
@@ -53,7 +54,9 @@ export function NoteCard({ note, onClick, isShared = false }: NoteCardProps) {
 
   const handleLeave = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm("Tem certeza que deseja sair desta nota compartilhada?")) {
+    if (onLeave) {
+      onLeave();
+    } else if (confirm("Tem certeza que deseja sair desta nota compartilhada?")) {
       leaveNote.mutate(note.id);
     }
   };
