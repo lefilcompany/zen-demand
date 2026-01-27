@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { Separator } from "@/components/ui/separator";
 import { Users, UserPlus, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -60,8 +60,8 @@ export function NoteShareManager({ noteId, teamId }: NoteShareManagerProps) {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="p-3 border-b space-y-2">
+      <PopoverContent className="w-80 p-0 z-50" align="end">
+        <div className="p-3 border-b space-y-2 bg-popover">
           <h4 className="font-medium text-sm">Compartilhar com membros</h4>
           <Input
             placeholder="Buscar membro..."
@@ -71,7 +71,7 @@ export function NoteShareManager({ noteId, teamId }: NoteShareManagerProps) {
           />
         </div>
 
-        <ScrollArea className="max-h-64">
+        <div className="max-h-56 overflow-y-auto bg-popover">
           <div className="p-2">
             {isLoadingMembers ? (
               <div className="flex items-center justify-center py-6">
@@ -128,7 +128,7 @@ export function NoteShareManager({ noteId, teamId }: NoteShareManagerProps) {
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
         {shares.length > 0 && (
           <>
