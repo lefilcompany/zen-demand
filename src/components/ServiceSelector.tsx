@@ -57,7 +57,7 @@ export function ServiceSelector({
   const { categories, standaloneServices, allDisplayServices } = useMemo(() => {
     if (!rawServices) return { categories: [], standaloneServices: [], allDisplayServices: [] };
 
-    // Create a map for board service usage
+    // Create a map for board service usage (only for services with configured limits)
     const boardUsageMap = new Map(
       boardServicesUsage?.map(bs => [bs.service_id, bs]) || []
     );
@@ -65,7 +65,8 @@ export function ServiceSelector({
     const buildDisplayService = (service: any): DisplayService => {
       const boardUsage = boardUsageMap.get(service.id);
       
-      if (hasBoardServices && boardUsage) {
+      // If board has services configured AND this service has usage info, use it
+      if (boardUsage) {
         return {
           id: service.id,
           name: service.name,
@@ -81,6 +82,7 @@ export function ServiceSelector({
         };
       }
       
+      // For services without board-specific limits, show them as unlimited
       return {
         id: service.id,
         name: service.name,
@@ -115,7 +117,7 @@ export function ServiceSelector({
     });
 
     return { categories: cats, standaloneServices: standalone, allDisplayServices: allDisplay };
-  }, [hierarchicalServices, rawServices, boardServicesUsage, hasBoardServices]);
+  }, [hierarchicalServices, rawServices, boardServicesUsage]);
 
   // Auto-expand category if a child is selected
   useEffect(() => {
