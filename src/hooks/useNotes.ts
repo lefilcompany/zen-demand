@@ -81,12 +81,39 @@ export function useCreateNote() {
     mutationFn: async (data: { title?: string; content?: string; icon?: string; parent_id?: string }) => {
       if (!user || !selectedTeamId) throw new Error("Usuário ou equipe não encontrado");
 
+      let finalTitle = data.title || "Sem título";
+
+      // If no custom title provided, generate unique "Sem título" with number
+      if (!data.title) {
+        // Get existing notes with "Sem título" pattern
+        const { data: existingNotes } = await supabase
+          .from("notes")
+          .select("title")
+          .eq("team_id", selectedTeamId)
+          .ilike("title", "Sem título%");
+
+        if (existingNotes && existingNotes.length > 0) {
+          // Extract numbers from existing titles
+          const numbers = existingNotes.map(note => {
+            const match = note.title.match(/^Sem título\s*(\d*)$/i);
+            if (match) {
+              return match[1] ? parseInt(match[1], 10) : 1;
+            }
+            return 0;
+          }).filter(n => n > 0);
+
+          // Find next available number
+          const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
+          finalTitle = maxNumber === 0 ? "Sem título" : `Sem título ${maxNumber + 1}`;
+        }
+      }
+
       const { data: note, error } = await supabase
         .from("notes")
         .insert({
           team_id: selectedTeamId,
           created_by: user.id,
-          title: data.title || "Sem título",
+          title: finalTitle,
           content: data.content || "",
           icon: data.icon || "📝",
           parent_id: data.parent_id || null,
