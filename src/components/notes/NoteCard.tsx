@@ -46,18 +46,20 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
 
   return (
     <Card 
-      className="group cursor-pointer hover:shadow-md transition-all duration-200 hover:border-primary/30 bg-card"
+      className="group cursor-pointer hover:shadow-md transition-all duration-200 hover:border-primary/30 bg-card overflow-hidden"
       onClick={onClick}
     >
-      {note.cover_url && (
-        <div className="h-24 overflow-hidden rounded-t-lg">
+      <div className="h-16 overflow-hidden">
+        {note.cover_url ? (
           <img 
             src={note.cover_url} 
             alt="" 
             className="w-full h-full object-cover"
           />
-        </div>
-      )}
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/20 via-primary/10 to-accent/20" />
+        )}
+      </div>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
