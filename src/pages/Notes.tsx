@@ -11,6 +11,7 @@ import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/lib/auth";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,12 +29,19 @@ export default function Notes() {
   const createNote = useCreateNote();
   const leaveNote = useLeaveSharedNote();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [leavingNoteId, setLeavingNoteId] = useState<string | null>(null);
   const [noteToLeave, setNoteToLeave] = useState<{ id: string; title: string } | null>(null);
   const [isLeaving, setIsLeaving] = useState(false);
+
+  // Minhas notas = apenas as que eu criei
+  const myNotes = useMemo(() => {
+    if (!notes || !user?.id) return [];
+    return notes.filter((note) => note.created_by === user.id);
+  }, [notes, user?.id]);
 
   const openLeaveDialog = useCallback((noteId: string, noteTitle: string) => {
     setNoteToLeave({ id: noteId, title: noteTitle });
@@ -59,17 +67,17 @@ export default function Notes() {
 
   // Extract all unique tags from my notes
   const allTags = useMemo(() => {
-    if (!notes) return [];
+    if (!myNotes) return [];
     const tagSet = new Set<string>();
-    notes.forEach(note => {
+    myNotes.forEach(note => {
       note.tags?.forEach(tag => tagSet.add(tag));
     });
     return Array.from(tagSet).sort();
-  }, [notes]);
+  }, [myNotes]);
 
   const filteredNotes = useMemo(() => {
-    if (!notes) return [];
-    return notes.filter(note => {
+    if (!myNotes) return [];
+    return myNotes.filter(note => {
       const matchesSearch = 
         note.title.toLowerCase().includes(search.toLowerCase()) ||
         note.content?.toLowerCase().includes(search.toLowerCase());
@@ -80,7 +88,7 @@ export default function Notes() {
       
       return matchesSearch && matchesTags;
     });
-  }, [notes, search, selectedTags]);
+  }, [myNotes, search, selectedTags]);
 
   const filteredSharedNotes = useMemo(() => {
     if (!sharedNotes) return [];

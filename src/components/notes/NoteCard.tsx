@@ -30,6 +30,7 @@ export function NoteCard({ note, onClick, isShared = false, onLeave }: NoteCardP
   const { user } = useAuth();
 
   const isOwner = note.created_by === user?.id;
+  const showMenu = isOwner || isShared;
 
   // Extract plain text preview from HTML content
   const getPreview = (html: string | null) => {
@@ -85,36 +86,38 @@ export function NoteCard({ note, onClick, isShared = false, onLeave }: NoteCardP
               {note.title || "Sem título"}
             </h3>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {isOwner ? (
-                <>
-                  <DropdownMenuItem onClick={handleArchive}>
-                    <Archive className="h-4 w-4 mr-2" />
-                    Arquivar
+          {showMenu ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {isOwner ? (
+                  <>
+                    <DropdownMenuItem onClick={handleArchive}>
+                      <Archive className="h-4 w-4 mr-2" />
+                      Arquivar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </>
+                ) : isShared ? (
+                  <DropdownMenuItem onClick={handleLeave} className="text-destructive">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sair da nota
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleDelete} className="text-destructive">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Excluir
-                  </DropdownMenuItem>
-                </>
-              ) : (
-                <DropdownMenuItem onClick={handleLeave} className="text-destructive">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sair da nota
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
         </div>
         
         <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
