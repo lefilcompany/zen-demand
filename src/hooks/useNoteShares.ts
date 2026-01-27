@@ -285,13 +285,37 @@ export function useLeaveSharedNote() {
         .eq("shared_with_user_id", user.id);
 
       if (error) throw error;
+      return noteId;
+    },
+    onMutate: async (noteId: string) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["shared-with-me-notes", user?.id] });
+
+      // Snapshot previous value
+      const previousNotes = queryClient.getQueryData<SharedNote[]>(["shared-with-me-notes", user?.id]);
+
+      // Optimistically remove the note from the list
+      if (previousNotes) {
+        queryClient.setQueryData<SharedNote[]>(
+          ["shared-with-me-notes", user?.id],
+          previousNotes.filter((note) => note.id !== noteId)
+        );
+      }
+
+      return { previousNotes };
+    },
+    onError: (err, noteId, context) => {
+      // Rollback on error
+      if (context?.previousNotes) {
+        queryClient.setQueryData(["shared-with-me-notes", user?.id], context.previousNotes);
+      }
+      toast.error("Erro ao sair da nota");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["shared-with-me-notes", user?.id] });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["shared-with-me-notes"] });
       toast.success("Você saiu da nota compartilhada");
-    },
-    onError: () => {
-      toast.error("Erro ao sair da nota");
     },
   });
 }
