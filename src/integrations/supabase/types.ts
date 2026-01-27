@@ -946,6 +946,7 @@ export type Database = {
           created_at: string
           id: string
           note_id: string
+          permission: Database["public"]["Enums"]["note_share_permission"]
           shared_by_user_id: string
           shared_with_user_id: string
         }
@@ -953,6 +954,7 @@ export type Database = {
           created_at?: string
           id?: string
           note_id: string
+          permission?: Database["public"]["Enums"]["note_share_permission"]
           shared_by_user_id: string
           shared_with_user_id: string
         }
@@ -960,6 +962,7 @@ export type Database = {
           created_at?: string
           id?: string
           note_id?: string
+          permission?: Database["public"]["Enums"]["note_share_permission"]
           shared_by_user_id?: string
           shared_with_user_id?: string
         }
@@ -1562,6 +1565,10 @@ export type Database = {
         Args: { _board_id: string; _service_id: string }
         Returns: boolean
       }
+      can_edit_note: {
+        Args: { _note_id: string; _user_id: string }
+        Returns: boolean
+      }
       check_access_code_exists: { Args: { code: string }; Returns: boolean }
       create_board_with_services: {
         Args: {
@@ -1680,6 +1687,7 @@ export type Database = {
     Enums: {
       adjustment_type: "none" | "internal" | "external"
       app_role: "admin" | "member"
+      note_share_permission: "viewer" | "editor"
       team_role: "admin" | "moderator" | "requester" | "executor"
     }
     CompositeTypes: {
@@ -1810,6 +1818,7 @@ export const Constants = {
     Enums: {
       adjustment_type: ["none", "internal", "external"],
       app_role: ["admin", "member"],
+      note_share_permission: ["viewer", "editor"],
       team_role: ["admin", "moderator", "requester", "executor"],
     },
   },

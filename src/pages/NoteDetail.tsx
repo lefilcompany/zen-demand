@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useNote, useUpdateNote, useDeleteNote } from "@/hooks/useNotes";
+import { useNotePermission } from "@/hooks/useNoteShares";
 import { NotionEditor } from "@/components/notes/NotionEditor";
 import { NoteIconPicker } from "@/components/notes/NoteIconPicker";
 import { NoteTagManager } from "@/components/notes/NoteTagManager";
@@ -13,7 +14,8 @@ import {
   Trash2, 
   Archive,
   Image,
-  Loader2
+  Loader2,
+  Eye
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -34,6 +36,7 @@ export default function NoteDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: note, isLoading } = useNote(noteId || null);
+  const { data: permission } = useNotePermission(noteId || null);
   const updateNote = useUpdateNote();
   const deleteNote = useDeleteNote();
   
@@ -43,7 +46,9 @@ export default function NoteDetail() {
   const [tags, setTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   
-  const isOwner = note?.created_by === user?.id;
+  const isOwner = permission === 'owner';
+  const canEdit = permission === 'owner' || permission === 'editor';
+  const isViewer = permission === 'viewer';
   
   const coverInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLTextAreaElement>(null);
@@ -80,6 +85,7 @@ export default function NoteDetail() {
   );
 
   const handleTitleChange = (newTitle: string) => {
+    if (!canEdit) return;
     setTitle(newTitle);
     if (noteId) {
       debouncedSave(noteId, { title: newTitle });
@@ -87,6 +93,7 @@ export default function NoteDetail() {
   };
 
   const handleContentChange = (newContent: string) => {
+    if (!canEdit) return;
     setContent(newContent);
     if (noteId) {
       debouncedSave(noteId, { content: newContent });
@@ -94,6 +101,7 @@ export default function NoteDetail() {
   };
 
   const handleIconChange = (newIcon: string) => {
+    if (!canEdit) return;
     setIcon(newIcon);
     if (noteId) {
       updateNote.mutate({ noteId, icon: newIcon });
@@ -220,7 +228,14 @@ export default function NoteDetail() {
           </Button>
           
           <div className="flex items-center gap-2">
-            {isSaving && (
+            {isViewer && (
+              <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                <Eye className="h-3 w-3" />
+                Somente leitura
+              </Badge>
+            )}
+            
+            {isSaving && canEdit && (
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <Loader2 className="h-3 w-3 animate-spin" />
                 Salvando...
@@ -234,7 +249,7 @@ export default function NoteDetail() {
               </>
             )}
 
-            <NoteTagManager 
+            {canEdit && <NoteTagManager
               tags={tags} 
               onTagsChange={(newTags) => {
                 setTags(newTags);
@@ -242,9 +257,9 @@ export default function NoteDetail() {
                   updateNote.mutate({ noteId, tags: newTags });
                 }
               }} 
-            />
+            />}
 
-            <DropdownMenu>
+            {canEdit && <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm">
                   <MoreHorizontal className="h-4 w-4" />
@@ -265,7 +280,7 @@ export default function NoteDetail() {
                   Excluir
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu>}
           </div>
         </div>
       </div>
@@ -275,18 +290,28 @@ export default function NoteDetail() {
         {/* Title Section - Highlighted and Separated */}
         <div className="mb-8 pb-6 border-b border-border/50">
           <div className="flex items-start gap-3">
-            <NoteIconPicker value={icon} onChange={handleIconChange} />
+            {canEdit ? (
+              <NoteIconPicker value={icon} onChange={handleIconChange} />
+            ) : (
+              <span className="text-4xl">{icon}</span>
+            )}
             <div className="flex-1 min-w-0">
-              <textarea
-                ref={titleInputRef}
-                value={title}
-                onChange={(e) => handleTitleChange(e.target.value)}
-                onKeyDown={handleTitleKeyDown}
-                placeholder="Sem título"
-                rows={1}
-                className="w-full text-4xl sm:text-5xl font-bold bg-transparent border-none outline-none resize-none overflow-hidden placeholder:text-muted-foreground/50 leading-tight"
-                style={{ minHeight: "1.2em" }}
-              />
+              {canEdit ? (
+                <textarea
+                  ref={titleInputRef}
+                  value={title}
+                  onChange={(e) => handleTitleChange(e.target.value)}
+                  onKeyDown={handleTitleKeyDown}
+                  placeholder="Sem título"
+                  rows={1}
+                  className="w-full text-4xl sm:text-5xl font-bold bg-transparent border-none outline-none resize-none overflow-hidden placeholder:text-muted-foreground/50 leading-tight"
+                  style={{ minHeight: "1.2em" }}
+                />
+              ) : (
+                <h1 className="text-4xl sm:text-5xl font-bold leading-tight">
+                  {title || "Sem título"}
+                </h1>
+              )}
               
               {/* Tags display */}
               {tags.length > 0 && (
@@ -299,12 +324,14 @@ export default function NoteDetail() {
                 </div>
               )}
               
-              <p className="text-sm text-muted-foreground mt-3">
-                Pressione <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">Enter</kbd> para começar a escrever, 
-                <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono mx-1">/</kbd> para comandos,
-                <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono mx-1">@</kbd> mencionar pessoa,
-                <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono mx-1">#</kbd> mencionar demanda
-              </p>
+              {canEdit && (
+                <p className="text-sm text-muted-foreground mt-3">
+                  Pressione <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">Enter</kbd> para começar a escrever, 
+                  <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono mx-1">/</kbd> para comandos,
+                  <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono mx-1">@</kbd> mencionar pessoa,
+                  <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono mx-1">#</kbd> mencionar demanda
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -313,7 +340,8 @@ export default function NoteDetail() {
         <NotionEditor 
           content={content}
           onChange={handleContentChange}
-          placeholder="Comece a escrever aqui..."
+          placeholder={canEdit ? "Comece a escrever aqui..." : ""}
+          editable={canEdit}
         />
       </div>
     </div>
