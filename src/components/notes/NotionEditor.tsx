@@ -706,47 +706,71 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
     return () => window.removeEventListener('notion-editor-select', handleSelectEvent);
   }, [selectItem]);
 
-  // Close menu when clicking outside
+  // Close menu when clicking outside or on scroll
   useEffect(() => {
     if (!showSlashMenu) return;
 
     const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (menuRef.current && !menuRef.current.contains(target)) {
+        // Don't close if clicking on the editor
+        const editorElement = document.querySelector('.ProseMirror');
+        if (editorElement?.contains(target)) return;
+        setShowSlashMenu(false);
+      }
+    };
+
+    const handleScroll = (e: Event) => {
+      // Close menu on scroll outside of the menu itself
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setShowSlashMenu(false);
       }
     };
 
-    // Use a small delay to avoid closing immediately on the triggering click
+    const handleResize = () => {
+      setShowSlashMenu(false);
+    };
+
+    // Add listeners with a small delay to avoid closing immediately
     const timeout = setTimeout(() => {
-      document.addEventListener("mousedown", handleClickOutside);
-    }, 10);
+      document.addEventListener("mousedown", handleClickOutside, true);
+      window.addEventListener("scroll", handleScroll, true);
+      window.addEventListener("resize", handleResize);
+    }, 50);
 
     return () => {
       clearTimeout(timeout);
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside, true);
+      window.removeEventListener("scroll", handleScroll, true);
+      window.removeEventListener("resize", handleResize);
     };
   }, [showSlashMenu]);
 
-  // Adjust menu position to stay within viewport
+  // Adjust menu position to stay within viewport with smooth recalculation
   const adjustedPosition = useMemo(() => {
     if (!showSlashMenu) return slashMenuPosition;
     
-    const menuWidth = 320;
-    const menuHeight = 400;
-    const padding = 16;
+    const menuWidth = 340;
+    const menuHeight = Math.min(400, window.innerHeight * 0.6);
+    const padding = 12;
     
     let { top, left } = slashMenuPosition;
     
-    // Adjust horizontal position
     if (typeof window !== "undefined") {
-      if (left + menuWidth > window.innerWidth - padding) {
-        left = Math.max(padding, window.innerWidth - menuWidth - padding);
-      }
+      // Clamp horizontal position
+      const maxLeft = window.innerWidth - menuWidth - padding;
+      left = Math.max(padding, Math.min(left, maxLeft));
       
-      // Adjust vertical position - show above cursor if not enough space below
-      if (top + menuHeight > window.innerHeight - padding) {
-        // Position above the cursor
+      // Clamp vertical position - prefer showing below, flip above if needed
+      const spaceBelow = window.innerHeight - top - padding;
+      const spaceAbove = slashMenuPosition.top - 40 - padding;
+      
+      if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
+        // Show above cursor
         top = Math.max(padding, slashMenuPosition.top - menuHeight - 40);
+      } else {
+        // Ensure menu doesn't go below viewport
+        top = Math.min(top, window.innerHeight - menuHeight - padding);
       }
     }
     
@@ -983,18 +1007,37 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
       {showSlashMenu && (
         <div 
           ref={menuRef}
-          className="fixed z-[100] bg-popover border border-border rounded-xl shadow-xl p-2 min-w-[320px] max-w-[360px] max-h-[min(400px,60vh)] overflow-y-auto overscroll-contain animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-150"
-          style={{ top: adjustedPosition.top, left: adjustedPosition.left }}
+          role="listbox"
+          aria-label="Menu de comandos"
+          className="fixed z-[100] bg-popover/98 backdrop-blur-sm border border-border/80 rounded-xl shadow-2xl shadow-black/20 dark:shadow-black/40 p-1.5 min-w-[320px] max-w-[360px] max-h-[min(400px,60vh)] overflow-y-auto overscroll-contain scroll-smooth"
+          style={{ 
+            top: adjustedPosition.top, 
+            left: adjustedPosition.left,
+            animation: 'fadeInScale 150ms ease-out forwards',
+          }}
           onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
         >
-          <div className="text-xs text-muted-foreground px-2 pb-2 border-b mb-2 flex items-center justify-between">
-            <span>
+          <style>{`
+            @keyframes fadeInScale {
+              from {
+                opacity: 0;
+                transform: scale(0.96) translateY(-4px);
+              }
+              to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+              }
+            }
+          `}</style>
+          <div className="text-[11px] text-muted-foreground px-2.5 py-2 border-b border-border/50 mb-1.5 flex items-center justify-between sticky top-0 bg-popover/98 backdrop-blur-sm -mt-1.5 -mx-1.5 px-3 rounded-t-xl">
+            <span className="font-medium">
               {menuMode === "commands" && "Blocos e ações"}
               {menuMode === "users" && "Mencionar pessoa"}
               {menuMode === "demands" && "Mencionar demanda"}
               {menuMode === "notes" && "Link para nota"}
             </span>
-            <span className="text-[10px] opacity-60">↑↓ navegar · Enter selecionar · Esc fechar</span>
+            <span className="text-[10px] opacity-50 font-mono">↑↓ · Enter · Esc</span>
           </div>
           
           {menuMode === "commands" && (
@@ -1011,23 +1054,33 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
                         <button
                           key={cmd.label}
                           data-index={globalIndex}
+                          role="option"
+                          aria-selected={selectedIndex === globalIndex}
                           onMouseDown={(e) => {
                             e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             selectItem(globalIndex);
                           }}
+                          onMouseEnter={() => setSelectedIndex(globalIndex)}
                           className={cn(
-                            "flex items-center gap-3 w-full px-2 py-2 rounded text-left text-sm transition-colors",
-                            selectedIndex === globalIndex ? "bg-primary/10 text-primary" : "hover:bg-muted"
+                            "flex items-center gap-3 w-full px-2.5 py-2 rounded-lg text-left text-sm transition-all duration-150 outline-none",
+                            selectedIndex === globalIndex 
+                              ? "bg-primary/10 text-primary shadow-sm" 
+                              : "hover:bg-muted/80"
                           )}
                         >
                           <div className={cn(
-                            "w-9 h-9 rounded-lg flex items-center justify-center",
-                            selectedIndex === globalIndex ? "bg-primary/20" : "bg-muted"
+                            "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-150",
+                            selectedIndex === globalIndex ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
                           )}>
                             <cmd.icon className="h-4 w-4" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium">{cmd.label}</div>
+                            <div className="font-medium text-sm">{cmd.label}</div>
                             {cmd.description && (
                               <div className="text-xs text-muted-foreground truncate">{cmd.description}</div>
                             )}
@@ -1052,13 +1105,23 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
                   <button
                     key={member.user_id}
                     data-index={index}
+                    role="option"
+                    aria-selected={selectedIndex === index}
                     onMouseDown={(e) => {
                       e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       selectItem(index);
                     }}
+                    onMouseEnter={() => setSelectedIndex(index)}
                     className={cn(
-                      "flex items-center gap-3 w-full px-2 py-2 rounded text-left text-sm transition-colors",
-                      selectedIndex === index ? "bg-primary/10 text-primary" : "hover:bg-muted"
+                      "flex items-center gap-3 w-full px-2.5 py-2 rounded-lg text-left text-sm transition-all duration-150 outline-none",
+                      selectedIndex === index 
+                        ? "bg-primary/10 text-primary shadow-sm" 
+                        : "hover:bg-muted/80"
                     )}
                   >
                     <Avatar className="h-8 w-8">
@@ -1088,13 +1151,23 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
                   <button
                     key={demand.id}
                     data-index={index}
+                    role="option"
+                    aria-selected={selectedIndex === index}
                     onMouseDown={(e) => {
                       e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       selectItem(index);
                     }}
+                    onMouseEnter={() => setSelectedIndex(index)}
                     className={cn(
-                      "flex items-center gap-3 w-full px-2 py-2 rounded text-left text-sm transition-colors",
-                      selectedIndex === index ? "bg-accent text-accent-foreground" : "hover:bg-muted"
+                      "flex items-center gap-3 w-full px-2.5 py-2 rounded-lg text-left text-sm transition-all duration-150 outline-none",
+                      selectedIndex === index 
+                        ? "bg-accent text-accent-foreground shadow-sm" 
+                        : "hover:bg-muted/80"
                     )}
                   >
                     <div className={cn(
@@ -1123,16 +1196,26 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
                   <button
                     key={note.id}
                     data-index={index}
+                    role="option"
+                    aria-selected={selectedIndex === index}
                     onMouseDown={(e) => {
                       e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       selectItem(index);
                     }}
+                    onMouseEnter={() => setSelectedIndex(index)}
                     className={cn(
-                      "flex items-center gap-3 w-full px-2 py-2 rounded text-left text-sm transition-colors",
-                      selectedIndex === index ? "bg-amber-500/10 text-amber-700 dark:text-amber-400" : "hover:bg-muted"
+                      "flex items-center gap-3 w-full px-2.5 py-2 rounded-lg text-left text-sm transition-all duration-150 outline-none",
+                      selectedIndex === index 
+                        ? "bg-accent text-accent-foreground shadow-sm" 
+                        : "hover:bg-muted/80"
                     )}
                   >
-                    <span className="text-xl">{note.icon || "📝"}</span>
+                    <span className="text-xl shrink-0">{note.icon || "📝"}</span>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">{note.title}</div>
                     </div>
@@ -1148,13 +1231,6 @@ export function NotionEditor({ content, onChange, placeholder = "Pressione '/' p
         </div>
       )}
 
-      {/* Click outside to close menu */}
-      {showSlashMenu && (
-        <div 
-          className="fixed inset-0 z-40" 
-          onClick={() => setShowSlashMenu(false)}
-        />
-      )}
 
       <EditorContent editor={editor} className={cn(isUploading && "opacity-50 pointer-events-none")} />
 
