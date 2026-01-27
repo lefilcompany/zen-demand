@@ -3,11 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
+type NoteSharePermission = 'viewer' | 'editor';
+
 interface NoteShare {
   id: string;
   note_id: string;
   shared_with_user_id: string;
   shared_by_user_id: string;
+  permission: NoteSharePermission;
   created_at: string;
   profiles?: {
     id: string;
@@ -51,6 +54,7 @@ export function useNoteShares(noteId: string | null) {
           note_id,
           shared_with_user_id,
           shared_by_user_id,
+          permission,
           created_at
         `)
         .eq("note_id", noteId);
@@ -132,9 +136,11 @@ export function useShareNoteWithUser() {
     mutationFn: async ({
       noteId,
       userId,
+      permission = 'viewer',
     }: {
       noteId: string;
       userId: string;
+      permission?: NoteSharePermission;
     }) => {
       if (!user?.id) throw new Error("Não autenticado");
 
@@ -144,6 +150,7 @@ export function useShareNoteWithUser() {
           note_id: noteId,
           shared_with_user_id: userId,
           shared_by_user_id: user.id,
+          permission,
         })
         .select()
         .single();
@@ -164,6 +171,71 @@ export function useShareNoteWithUser() {
     onError: (error: Error) => {
       toast.error(error.message);
     },
+  });
+}
+
+// Update share permission
+export function useUpdateNoteSharePermission() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      noteId,
+      userId,
+      permission,
+    }: {
+      noteId: string;
+      userId: string;
+      permission: NoteSharePermission;
+    }) => {
+      const { error } = await supabase
+        .from("note_shares")
+        .update({ permission })
+        .eq("note_id", noteId)
+        .eq("shared_with_user_id", userId);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["note-shares", variables.noteId] });
+    },
+    onError: () => {
+      toast.error("Erro ao atualizar permissão");
+    },
+  });
+}
+
+// Get user's permission for a specific note
+export function useNotePermission(noteId: string | null) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["note-permission", noteId, user?.id],
+    queryFn: async () => {
+      if (!noteId || !user?.id) return null;
+
+      // Check if user is owner
+      const { data: note } = await supabase
+        .from("notes")
+        .select("created_by")
+        .eq("id", noteId)
+        .single();
+
+      if (note?.created_by === user.id) {
+        return 'owner' as const;
+      }
+
+      // Check share permission
+      const { data: share } = await supabase
+        .from("note_shares")
+        .select("permission")
+        .eq("note_id", noteId)
+        .eq("shared_with_user_id", user.id)
+        .single();
+
+      return share?.permission as NoteSharePermission | null;
+    },
+    enabled: !!noteId && !!user?.id,
   });
 }
 
