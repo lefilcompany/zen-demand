@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useDemandById, useDemandInteractions, useCreateInteraction, useUpdateInteraction, useDeleteInteraction, useUpdateDemand } from "@/hooks/useDemands";
 import { useBoardStatuses } from "@/hooks/useBoardStatuses";
 import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
-import { useBoard } from "@/hooks/useBoards";
+import { useBoard, useBoards } from "@/hooks/useBoards";
+import { ChangeBoardDialog } from "@/components/ChangeBoardDialog";
 import { useUploadAttachment } from "@/hooks/useAttachments";
 import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/components/InlineFileUploader";
 import { InteractionAttachments } from "@/components/InteractionAttachments";
@@ -167,6 +168,7 @@ export default function DemandDetail() {
   const [interactionFilter, setInteractionFilter] = useState<string>("all");
   const [editingInteractionId, setEditingInteractionId] = useState<string | null>(null);
   const [editingInteractionContent, setEditingInteractionContent] = useState("");
+  const [isChangeBoardDialogOpen, setIsChangeBoardDialogOpen] = useState(false);
 
   // Track toast state
   const toastShownRef = useRef<{
@@ -234,6 +236,7 @@ export default function DemandDetail() {
   const canManageAssignees = !isDeliveredStatus && (role === "admin" || role === "moderator");
   const canEdit = !isDeliveredStatus && (role === "admin" || role === "moderator" || role === "executor" || demand?.created_by === user?.id);
   const canArchive = !isDeliveredStatus; // Qualquer usuário pode arquivar demandas, exceto as entregues
+  const canChangeBoard = !isDeliveredStatus && (role === "admin" || role === "moderator");
   const isCreator = demand?.created_by === user?.id;
 
   // Permissões de ajuste baseadas no role
@@ -258,6 +261,38 @@ export default function DemandDetail() {
     const adjustmentRequests = interactions.filter(i => i.interaction_type === "adjustment_request");
     return adjustmentRequests.length > 0 ? adjustmentRequests[0] : null; // Already sorted by created_at desc
   }, [interactions]);
+
+  // Handle board change
+  const handleChangeBoard = async (newBoardId: string) => {
+    if (!id || !demand) return;
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        updateDemand.mutate(
+          { id, board_id: newBoardId },
+          {
+            onSuccess: () => resolve(),
+            onError: (error) => reject(error),
+          }
+        );
+      });
+
+      // Create interaction to log the change
+      createInteraction.mutate({
+        demand_id: id,
+        interaction_type: "status_change",
+        content: `Demanda movida para outro quadro`,
+      });
+
+      toast.success("Demanda movida para outro quadro com sucesso!");
+      setIsChangeBoardDialogOpen(false);
+    } catch (error) {
+      toast.error("Erro ao mover demanda", {
+        description: getErrorMessage(error),
+      });
+    }
+  };
+
   const handleRequestAdjustment = async () => {
     if (!id || !adjustmentStatusId || !adjustmentReason.trim()) return;
 
@@ -683,11 +718,24 @@ export default function DemandDetail() {
                 {demand.priority && <Badge variant="outline">{demand.priority}</Badge>}
                 {demand.teams && <Badge variant="secondary">{demand.teams.name}</Badge>}
                 
-                {/* Board Badge (read-only) */}
-                {currentBoard && <Badge variant="outline" className="gap-1">
-                    <Kanban className="h-3 w-3" />
-                    {currentBoard.name}
-                  </Badge>}
+                {/* Board Badge - clickable if can change */}
+                {currentBoard && (
+                  canChangeBoard ? (
+                    <Badge 
+                      variant="outline" 
+                      className="gap-1 cursor-pointer hover:bg-accent transition-colors"
+                      onClick={() => setIsChangeBoardDialogOpen(true)}
+                    >
+                      <Kanban className="h-3 w-3" />
+                      {currentBoard.name}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="gap-1">
+                      <Kanban className="h-3 w-3" />
+                      {currentBoard.name}
+                    </Badge>
+                  )
+                )}
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -1032,6 +1080,19 @@ export default function DemandDetail() {
           }} onClose={() => setIsEditDialogOpen(false)} onSuccess={() => setIsEditDialogOpen(false)} />
         </DialogContent>
       </Dialog>
+
+      {/* Change Board Dialog */}
+      {demand && currentBoard && (
+        <ChangeBoardDialog
+          open={isChangeBoardDialogOpen}
+          onOpenChange={setIsChangeBoardDialogOpen}
+          currentBoardId={demand.board_id}
+          currentBoardName={currentBoard.name}
+          teamId={demand.team_id}
+          onConfirm={handleChangeBoard}
+          isPending={updateDemand.isPending}
+        />
+      )}
     </div>
     </>;
 }
