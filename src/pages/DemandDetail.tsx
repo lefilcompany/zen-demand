@@ -739,8 +739,8 @@ export default function DemandDetail() {
                     </div>
                   </DialogContent>
                 </Dialog>}
-              {/* Status Dropdown */}
-              {canEdit && demand.demand_statuses && <DropdownMenu>
+              {/* Status Dropdown - available for all users */}
+              {demand.demand_statuses && <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" className="flex-1 sm:flex-none gap-2" style={{
                     backgroundColor: `${demand.demand_statuses.color}20`,
