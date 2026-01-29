@@ -209,18 +209,48 @@ export function useStartUserTimer() {
       if (error) throw error;
       return { entry: data, stoppedCount: activeTimers?.length || 0 };
     },
-    onSuccess: (data, demandId) => {
-      queryClient.invalidateQueries({ queryKey: ["demand-time-entries"] });
-      queryClient.invalidateQueries({ queryKey: ["user-active-timer"] });
-      queryClient.invalidateQueries({ queryKey: ["user-demand-time"] });
+    onMutate: async (demandId) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["user-demand-time", demandId, user?.id] });
       
+      // Snapshot current value
+      const previousTime = queryClient.getQueryData(["user-demand-time", demandId, user?.id]);
+      
+      // Optimistically update to running state
+      queryClient.setQueryData(["user-demand-time", demandId, user?.id], (old: any) => {
+        return {
+          totalSeconds: old?.totalSeconds || 0,
+          activeEntry: {
+            id: "temp-" + Date.now(),
+            demand_id: demandId,
+            user_id: user?.id,
+            started_at: new Date().toISOString(),
+            ended_at: null,
+            duration_seconds: 0,
+          },
+        };
+      });
+      
+      return { previousTime };
+    },
+    onError: (error, demandId, context) => {
+      // Rollback on error
+      if (context?.previousTime) {
+        queryClient.setQueryData(["user-demand-time", demandId, user?.id], context.previousTime);
+      }
+      console.error("Error starting timer:", error);
+      toast.error("Erro ao iniciar o timer");
+    },
+    onSuccess: (data) => {
       if (data.stoppedCount > 0) {
         toast.info("Timer anterior pausado automaticamente");
       }
     },
-    onError: (error) => {
-      console.error("Error starting timer:", error);
-      toast.error("Erro ao iniciar o timer");
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["demand-time-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["user-active-timer"] });
+      queryClient.invalidateQueries({ queryKey: ["user-demand-time"] });
+      queryClient.invalidateQueries({ queryKey: ["active-timer-demands"] });
     },
   });
 }
@@ -258,15 +288,43 @@ export function useStopUserTimer() {
         .eq("id", activeTimer.id);
 
       if (error) throw error;
+      return { elapsedSeconds };
     },
-    onSuccess: () => {
+    onMutate: async (demandId) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["user-demand-time", demandId, user?.id] });
+      await queryClient.cancelQueries({ queryKey: ["user-active-timer", demandId, user?.id] });
+      
+      // Snapshot current value
+      const previousTime = queryClient.getQueryData(["user-demand-time", demandId, user?.id]);
+      
+      // Optimistically update to stopped state
+      queryClient.setQueryData(["user-demand-time", demandId, user?.id], (old: any) => {
+        if (!old) return old;
+        const elapsed = old.activeEntry 
+          ? Math.floor((Date.now() - new Date(old.activeEntry.started_at).getTime()) / 1000)
+          : 0;
+        return {
+          totalSeconds: old.totalSeconds + elapsed,
+          activeEntry: null,
+        };
+      });
+      
+      return { previousTime };
+    },
+    onError: (error, demandId, context) => {
+      // Rollback on error
+      if (context?.previousTime) {
+        queryClient.setQueryData(["user-demand-time", demandId, user?.id], context.previousTime);
+      }
+      console.error("Error stopping timer:", error);
+      toast.error("Erro ao pausar o timer");
+    },
+    onSettled: (_, __, demandId) => {
       queryClient.invalidateQueries({ queryKey: ["demand-time-entries"] });
       queryClient.invalidateQueries({ queryKey: ["user-active-timer"] });
       queryClient.invalidateQueries({ queryKey: ["user-demand-time"] });
-    },
-    onError: (error) => {
-      console.error("Error stopping timer:", error);
-      toast.error("Erro ao pausar o timer");
+      queryClient.invalidateQueries({ queryKey: ["active-timer-demands"] });
     },
   });
 }
