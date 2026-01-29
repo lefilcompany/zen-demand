@@ -1,10 +1,12 @@
-import { Play, Timer } from "lucide-react";
+import { Pause, Play, Timer } from "lucide-react";
 import { useActiveTimerDemands } from "@/hooks/useActiveTimerDemands";
 import { NavLink } from "@/components/NavLink";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useLiveTimer } from "@/hooks/useLiveTimer";
+import { useStopUserTimer } from "@/hooks/useUserTimeTracking";
+import { Button } from "@/components/ui/button";
 
 interface ActiveTimerItemProps {
   demand: {
@@ -25,6 +27,13 @@ function ActiveTimerItem({ demand, isCollapsed, isMobile, onClose }: ActiveTimer
     baseSeconds: demand.total_seconds,
     lastStartedAt: demand.started_at,
   });
+  const stopTimer = useStopUserTimer();
+
+  const handlePause = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    stopTimer.mutate(demand.id);
+  };
 
   const showText = isMobile || !isCollapsed;
 
@@ -32,41 +41,64 @@ function ActiveTimerItem({ demand, isCollapsed, isMobile, onClose }: ActiveTimer
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <NavLink
-            to={`/demands/${demand.id}`}
-            onClick={onClose}
-            className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors border border-primary/20"
-          >
-            <Play className="h-4 w-4 text-primary fill-primary" />
-          </NavLink>
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors border border-primary/20 relative group">
+            <NavLink
+              to={`/demands/${demand.id}`}
+              onClick={onClose}
+              className="absolute inset-0 flex items-center justify-center"
+            >
+              <Play className="h-4 w-4 text-primary fill-primary group-hover:opacity-0 transition-opacity" />
+            </NavLink>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handlePause}
+              disabled={stopTimer.isPending}
+              className="h-full w-full opacity-0 group-hover:opacity-100 transition-opacity absolute inset-0 hover:bg-destructive/20"
+            >
+              <Pause className="h-4 w-4 text-destructive" />
+            </Button>
+          </div>
         </TooltipTrigger>
         <TooltipContent side="right" className="max-w-48">
           <p className="font-medium truncate">{demand.title}</p>
           <p className="text-xs text-primary font-mono">{formattedTime}</p>
+          <p className="text-xs text-muted-foreground mt-1">Passe o mouse para pausar</p>
         </TooltipContent>
       </Tooltip>
     );
   }
 
   return (
-    <NavLink
-      to={`/demands/${demand.id}`}
-      onClick={onClose}
-      className="flex items-center gap-2 p-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors border border-primary/20 group"
-    >
-      <div className="flex items-center justify-center h-7 w-7 rounded-full bg-primary/20 shrink-0">
-        <Play className="h-3 w-3 text-primary fill-primary" />
-      </div>
-      {showText && (
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-sidebar-foreground truncate">{demand.title}</p>
-          <div className="flex items-center gap-1">
-            <Timer className="h-3 w-3 text-primary" />
-            <span className="text-xs font-mono text-primary">{formattedTime}</span>
-          </div>
+    <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors border border-primary/20 group">
+      <NavLink
+        to={`/demands/${demand.id}`}
+        onClick={onClose}
+        className="flex items-center gap-2 flex-1 min-w-0"
+      >
+        <div className="flex items-center justify-center h-7 w-7 rounded-full bg-primary/20 shrink-0">
+          <Play className="h-3 w-3 text-primary fill-primary" />
         </div>
-      )}
-    </NavLink>
+        {showText && (
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-sidebar-foreground truncate">{demand.title}</p>
+            <div className="flex items-center gap-1">
+              <Timer className="h-3 w-3 text-primary" />
+              <span className="text-xs font-mono text-primary">{formattedTime}</span>
+            </div>
+          </div>
+        )}
+      </NavLink>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={handlePause}
+        disabled={stopTimer.isPending}
+        className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
+      >
+        <Pause className="h-3.5 w-3.5 text-destructive" />
+      </Button>
+    </div>
   );
 }
 
