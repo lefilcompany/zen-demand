@@ -2,6 +2,15 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
+interface ActiveTimerDemand {
+  id: string;
+  title: string;
+  board_id: string;
+  boards: { name: string } | null;
+  started_at: string;
+  total_seconds: number;
+}
+
 export function useActiveTimerDemands() {
   const { user } = useAuth();
 
@@ -10,34 +19,62 @@ export function useActiveTimerDemands() {
     queryFn: async () => {
       if (!user?.id) return [];
 
-      // Get demands where timer is active (last_started_at is not null)
-      // and user is either assigned or is an assignee
-      const { data, error } = await supabase
+      // Get active time entries for the current user (ended_at is null)
+      const { data: activeEntries, error: entriesError } = await supabase
+        .from("demand_time_entries")
+        .select("demand_id, started_at")
+        .eq("user_id", user.id)
+        .is("ended_at", null);
+
+      if (entriesError) throw entriesError;
+      if (!activeEntries || activeEntries.length === 0) return [];
+
+      // Get demand details for the active entries
+      const demandIds = activeEntries.map(e => e.demand_id);
+      const { data: demands, error: demandsError } = await supabase
         .from("demands")
         .select(`
           id,
           title,
           board_id,
-          last_started_at,
-          time_in_progress_seconds,
-          boards(name),
-          demand_assignees(user_id)
+          boards(name)
         `)
-        .not("last_started_at", "is", null)
-        .eq("archived", false)
-        .order("last_started_at", { ascending: false });
+        .in("id", demandIds)
+        .eq("archived", false);
 
-      if (error) throw error;
+      if (demandsError) throw demandsError;
 
-      // Filter to only include demands where user is assigned
-      const userDemands = (data || []).filter(demand => {
-        const isAssignee = demand.demand_assignees?.some(
-          (a: { user_id: string }) => a.user_id === user.id
-        );
-        return isAssignee;
-      });
+      // Get all time entries for these demands to calculate total time
+      const { data: allEntries } = await supabase
+        .from("demand_time_entries")
+        .select("demand_id, duration_seconds")
+        .in("demand_id", demandIds)
+        .eq("user_id", user.id);
 
-      return userDemands;
+      // Calculate total time per demand
+      const totalTimeMap = new Map<string, number>();
+      for (const entry of allEntries || []) {
+        const current = totalTimeMap.get(entry.demand_id) || 0;
+        totalTimeMap.set(entry.demand_id, current + (entry.duration_seconds || 0));
+      }
+
+      // Map active entries to started_at
+      const startedAtMap = new Map(activeEntries.map(e => [e.demand_id, e.started_at]));
+
+      // Combine data
+      const result: ActiveTimerDemand[] = (demands || []).map(demand => ({
+        id: demand.id,
+        title: demand.title,
+        board_id: demand.board_id,
+        boards: demand.boards,
+        started_at: startedAtMap.get(demand.id) || new Date().toISOString(),
+        total_seconds: totalTimeMap.get(demand.id) || 0,
+      }));
+
+      // Sort by started_at descending
+      result.sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime());
+
+      return result;
     },
     enabled: !!user?.id,
     refetchInterval: 30000, // Refresh every 30 seconds

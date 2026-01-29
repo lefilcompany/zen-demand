@@ -10,8 +10,8 @@ interface ActiveTimerItemProps {
   demand: {
     id: string;
     title: string;
-    last_started_at: string | null;
-    time_in_progress_seconds: number | null;
+    started_at: string;
+    total_seconds: number;
     boards: { name: string } | null;
   };
   isCollapsed: boolean;
@@ -21,9 +21,9 @@ interface ActiveTimerItemProps {
 
 function ActiveTimerItem({ demand, isCollapsed, isMobile, onClose }: ActiveTimerItemProps) {
   const formattedTime = useLiveTimer({
-    isActive: !!demand.last_started_at,
-    baseSeconds: demand.time_in_progress_seconds || 0,
-    lastStartedAt: demand.last_started_at,
+    isActive: true,
+    baseSeconds: demand.total_seconds,
+    lastStartedAt: demand.started_at,
   });
 
   const showText = isMobile || !isCollapsed;
