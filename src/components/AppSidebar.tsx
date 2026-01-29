@@ -12,6 +12,7 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { SidebarSyncIndicator } from "@/components/SidebarSyncIndicator";
+import { SidebarActiveTimers } from "@/components/SidebarActiveTimers";
 
 import { useState } from "react";
 import {
@@ -187,8 +188,15 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Team section - Moved to the end with enhanced styling */}
+        {/* Active Timers Section - Above Team section */}
         <SidebarGroup className="mt-auto">
+          <SidebarGroupContent>
+            <SidebarActiveTimers />
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Team section */}
+        <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
 {/* Equipe - Dropdown style like reference image */}
