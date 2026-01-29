@@ -316,7 +316,7 @@ export default function Auth() {
   // Password match validation
   const passwordsMatch = signupData.password && signupData.confirmPassword && signupData.password === signupData.confirmPassword;
   const passwordsDontMatch = signupData.confirmPassword && signupData.password !== signupData.confirmPassword;
-  return <div className="flex flex-col lg:flex-row h-screen overflow-hidden">
+  return <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen lg:overflow-hidden">
       {/* Mobile/Tablet Header with Image - Fixed height */}
       <div className="lg:hidden relative h-40 sm:h-48 md:h-56 flex-shrink-0 overflow-hidden" style={{
       backgroundImage: `url(${authBackground})`,
@@ -359,10 +359,10 @@ export default function Auth() {
         </div>
       </div>
 
-      {/* Form Section */}
-      <div className="flex-1 lg:w-1/2 xl:w-2/5 flex flex-col bg-background">
+      {/* Form Section - Scrollable on mobile */}
+      <div className="flex-1 lg:w-1/2 xl:w-2/5 flex flex-col bg-background overflow-y-auto lg:overflow-y-auto">
         <div className="flex-1 flex items-start lg:items-center justify-center p-4 sm:p-6 md:p-8 lg:p-12">
-          <div className="w-full max-w-md py-4">
+          <div className="w-full max-w-md py-4 pb-8">
             <div className="mb-5 sm:mb-6 text-center">
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 flex items-center justify-center gap-2">
                 {t("auth.welcomeBack")} <img alt="SoMA+" src="/lovable-uploads/9889f524-0819-424e-9185-2cc441526116.png" className="h-10 w-20 inline-block items-center justify-center" />
