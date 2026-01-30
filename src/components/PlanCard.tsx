@@ -41,6 +41,9 @@ export function PlanCard({
     }
   };
 
+  // Business and Enterprise have all premium features
+  const isPremiumPlan = plan.slug === "business" || plan.slug === "enterprise";
+
   const features = [
     {
       label: plan.max_boards === -1 ? t("pricing.features.unlimited") : `${plan.max_boards} ${t("pricing.features.boards")}`,
@@ -57,33 +60,33 @@ export function PlanCard({
     {
       label: t("pricing.features.timeTracking"),
       included: true,
-      detail: plan.features.time_tracking === "full" ? t("pricing.features.full") : t("pricing.features.basic"),
+      detail: plan.features.time_tracking === "full" || isPremiumPlan ? t("pricing.features.full") : t("pricing.features.basic"),
     },
     {
       label: t("pricing.features.notifications"),
-      included: plan.features.notifications !== "in_app",
-      detail: plan.features.notifications === "push_email" || plan.features.notifications === "all" ? "Push + Email" : "In-app",
+      included: isPremiumPlan || plan.features.notifications !== "in_app",
+      detail: isPremiumPlan || plan.features.notifications === "push_email" || plan.features.notifications === "all" ? "Push + Email" : "In-app",
     },
     {
       label: t("pricing.features.reports"),
-      included: !!plan.features.reports,
-      detail: plan.features.reports,
+      included: isPremiumPlan || !!plan.features.reports,
+      detail: isPremiumPlan ? "advanced" : plan.features.reports,
     },
     {
       label: t("pricing.features.aiSummary"),
-      included: !!plan.features.ai_summary,
+      included: isPremiumPlan || !!plan.features.ai_summary,
     },
     {
       label: t("pricing.features.externalShare"),
-      included: !!plan.features.share_external,
+      included: isPremiumPlan || !!plan.features.share_external,
     },
     {
       label: t("pricing.features.api"),
-      included: !!plan.features.api,
+      included: isPremiumPlan || !!plan.features.api,
     },
     {
       label: t("pricing.features.sla"),
-      included: !!plan.features.sla,
+      included: isPremiumPlan || !!plan.features.sla,
     },
   ];
 
