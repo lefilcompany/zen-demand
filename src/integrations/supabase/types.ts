@@ -1192,6 +1192,63 @@ export type Database = {
           },
         ]
       }
+      plans: {
+        Row: {
+          billing_period: string
+          created_at: string | null
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          max_boards: number | null
+          max_demands_per_month: number | null
+          max_members: number | null
+          max_notes: number | null
+          max_services: number | null
+          max_teams: number | null
+          name: string
+          price_cents: number
+          slug: string
+          sort_order: number | null
+        }
+        Insert: {
+          billing_period?: string
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_boards?: number | null
+          max_demands_per_month?: number | null
+          max_members?: number | null
+          max_notes?: number | null
+          max_services?: number | null
+          max_teams?: number | null
+          name: string
+          price_cents?: number
+          slug: string
+          sort_order?: number | null
+        }
+        Update: {
+          billing_period?: string
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_boards?: number | null
+          max_demands_per_month?: number | null
+          max_members?: number | null
+          max_notes?: number | null
+          max_services?: number | null
+          max_teams?: number | null
+          name?: string
+          price_cents?: number
+          slug?: string
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1296,6 +1353,66 @@ export type Database = {
             foreignKeyName: "services_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string
+          id: string
+          plan_id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          team_id: string
+          trial_ends_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string
+          id?: string
+          plan_id: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          team_id: string
+          trial_ends_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string
+          id?: string
+          plan_id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          team_id?: string
+          trial_ends_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
             referencedRelation: "teams"
             referencedColumns: ["id"]
           },
@@ -1499,6 +1616,56 @@ export type Database = {
           },
         ]
       }
+      usage_records: {
+        Row: {
+          boards_count: number | null
+          created_at: string | null
+          demands_created: number | null
+          id: string
+          members_count: number | null
+          notes_count: number | null
+          period_end: string
+          period_start: string
+          storage_bytes: number | null
+          team_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          boards_count?: number | null
+          created_at?: string | null
+          demands_created?: number | null
+          id?: string
+          members_count?: number | null
+          notes_count?: number | null
+          period_end: string
+          period_start: string
+          storage_bytes?: number | null
+          team_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          boards_count?: number | null
+          created_at?: string | null
+          demands_created?: number | null
+          id?: string
+          members_count?: number | null
+          notes_count?: number | null
+          period_end?: string
+          period_start?: string
+          storage_bytes?: number | null
+          team_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_records_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_preferences: {
         Row: {
           created_at: string
@@ -1570,6 +1737,10 @@ export type Database = {
         Returns: boolean
       }
       check_access_code_exists: { Args: { code: string }; Returns: boolean }
+      check_subscription_limit: {
+        Args: { _resource_type: string; _team_id: string }
+        Returns: boolean
+      }
       create_board_with_services: {
         Args: {
           p_description?: string
@@ -1615,6 +1786,33 @@ export type Database = {
           id: string
           name: string
         }[]
+      }
+      get_team_plan: {
+        Args: { _team_id: string }
+        Returns: {
+          billing_period: string
+          created_at: string | null
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          max_boards: number | null
+          max_demands_per_month: number | null
+          max_members: number | null
+          max_notes: number | null
+          max_services: number | null
+          max_teams: number | null
+          name: string
+          price_cents: number
+          slug: string
+          sort_order: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "plans"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       get_user_board_ids: { Args: { _user_id: string }; Returns: string[] }
       get_user_team_ids: { Args: { _user_id: string }; Returns: string[] }
