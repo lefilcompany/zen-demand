@@ -276,5 +276,93 @@
   "offline": {
     "viewingCache": "Modo offline - Visualizando dados em cache",
     "connectionRestored": "Conexão restaurada"
+  },
+  "pricing": {
+    "title": "Planos e Preços",
+    "subtitle": "Escolha o plano ideal para sua equipe e comece a organizar suas demandas",
+    "monthly": "Mensal",
+    "yearly": "Anual",
+    "month": "mês",
+    "yearlyDiscount": "Economize 20%",
+    "billedYearly": "Cobrado anualmente {{total}}",
+    "popular": "Mais Popular",
+    "currentPlan": "Plano Atual",
+    "selectPlan": "Selecionar Plano",
+    "upgrade": "Fazer Upgrade",
+    "downgrade": "Fazer Downgrade",
+    "contactSales": "Falar com Vendas",
+    "selectTeamFirst": "Selecione uma equipe primeiro",
+    "comingSoon": "Integração com pagamentos em breve!",
+    "faqTitle": "Perguntas Frequentes",
+    "features": {
+      "boards": "quadros",
+      "members": "membros",
+      "demands": "demandas/mês",
+      "unlimited": "Ilimitado",
+      "timeTracking": "Time Tracking",
+      "notifications": "Notificações",
+      "reports": "Relatórios",
+      "aiSummary": "Resumo IA",
+      "externalShare": "Compartilhamento Externo",
+      "api": "Acesso à API",
+      "sla": "SLA Garantido",
+      "full": "Completo",
+      "basic": "Básico"
+    },
+    "resources": {
+      "demands": "demandas",
+      "boards": "quadros",
+      "members": "membros",
+      "notes": "notas"
+    },
+    "faq": {
+      "changePlan": {
+        "question": "Posso mudar de plano a qualquer momento?",
+        "answer": "Sim! Você pode fazer upgrade ou downgrade do seu plano a qualquer momento. As mudanças entram em vigor imediatamente e o valor é calculado proporcionalmente."
+      },
+      "trial": {
+        "question": "Existe período de teste?",
+        "answer": "Oferecemos 14 dias de teste gratuito do plano Profissional para novas equipes. Você pode experimentar todos os recursos antes de decidir."
+      },
+      "payment": {
+        "question": "Quais formas de pagamento são aceitas?",
+        "answer": "Aceitamos cartão de crédito (recorrente), PIX (com 5% de desconto) e boleto (apenas para planos anuais)."
+      },
+      "cancel": {
+        "question": "Posso cancelar minha assinatura?",
+        "answer": "Sim, você pode cancelar a qualquer momento. Sua assinatura permanecerá ativa até o final do período já pago, e seus dados serão mantidos por 30 dias após o cancelamento."
+      },
+      "limits": {
+        "question": "O que acontece se eu atingir o limite do plano?",
+        "answer": "Quando você atinge o limite de demandas, quadros ou membros, novas criações são bloqueadas até o próximo ciclo de cobrança ou até você fazer upgrade para um plano superior."
+      }
+    }
+  },
+  "subscription": {
+    "active": "Ativa",
+    "trial": "Teste ({{days}} dias)",
+    "canceled": "Cancelada",
+    "pastDue": "Pagamento Pendente",
+    "inactive": "Inativa",
+    "cancelingIn": "Cancela em {{days}} dias",
+    "limitReached": "Limite atingido",
+    "nearLimit": "Próximo do limite",
+    "upgradeRequired": "Upgrade necessário",
+    "currentUsage": "Uso atual",
+    "upgradeToUnlock": "Faça upgrade para desbloquear mais recursos e continuar crescendo.",
+    "limitReachedDescription": "Você atingiu o limite de {{resource}} do seu plano {{plan}} ({{limit}}).",
+    "limitReachedBanner": "Você atingiu o limite de {{resource}}. Faça upgrade para continuar.",
+    "nearLimitBanner": "Você está quase no limite de {{resource}}. Restam {{remaining}}.",
+    "success": {
+      "title": "Assinatura Ativada!",
+      "subtitle": "Obrigado por escolher o SoMA para gerenciar suas demandas.",
+      "planActivated": "Plano {{plan}} ativado",
+      "whatsNext": "Próximos passos:",
+      "step1": "Seus novos limites já estão ativos",
+      "step2": "Convide mais membros para sua equipe",
+      "step3": "Explore os novos recursos disponíveis",
+      "goToDashboard": "Ir ao Dashboard",
+      "createBoard": "Criar Novo Quadro"
+    }
   }
 }

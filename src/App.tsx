@@ -52,6 +52,8 @@ import TeamDemands from "./pages/TeamDemands";
 import Notes from "./pages/Notes";
 import NoteDetail from "./pages/NoteDetail";
 import NotFound from "./pages/NotFound";
+import Pricing from "./pages/Pricing";
+import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 
 const queryClient = new QueryClient();
 
@@ -114,6 +116,8 @@ const App = () => (
                           <Route path="/reports" element={<Reports />} />
                           <Route path="/profile" element={<Profile />} />
                           <Route path="/settings" element={<Settings />} />
+                          <Route path="/pricing" element={<Pricing />} />
+                          <Route path="/subscription/success" element={<SubscriptionSuccess />} />
                         </Route>
                         
                         {/* Catch-all */}

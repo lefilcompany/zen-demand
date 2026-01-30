@@ -276,5 +276,93 @@
   "offline": {
     "viewingCache": "Offline mode - Viewing cached data",
     "connectionRestored": "Connection restored"
+  },
+  "pricing": {
+    "title": "Plans & Pricing",
+    "subtitle": "Choose the perfect plan for your team and start organizing your demands",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "month": "month",
+    "yearlyDiscount": "Save 20%",
+    "billedYearly": "Billed annually {{total}}",
+    "popular": "Most Popular",
+    "currentPlan": "Current Plan",
+    "selectPlan": "Select Plan",
+    "upgrade": "Upgrade",
+    "downgrade": "Downgrade",
+    "contactSales": "Contact Sales",
+    "selectTeamFirst": "Please select a team first",
+    "comingSoon": "Payment integration coming soon!",
+    "faqTitle": "Frequently Asked Questions",
+    "features": {
+      "boards": "boards",
+      "members": "members",
+      "demands": "demands/month",
+      "unlimited": "Unlimited",
+      "timeTracking": "Time Tracking",
+      "notifications": "Notifications",
+      "reports": "Reports",
+      "aiSummary": "AI Summary",
+      "externalShare": "External Sharing",
+      "api": "API Access",
+      "sla": "Guaranteed SLA",
+      "full": "Full",
+      "basic": "Basic"
+    },
+    "resources": {
+      "demands": "demands",
+      "boards": "boards",
+      "members": "members",
+      "notes": "notes"
+    },
+    "faq": {
+      "changePlan": {
+        "question": "Can I change plans anytime?",
+        "answer": "Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately and billing is prorated."
+      },
+      "trial": {
+        "question": "Is there a trial period?",
+        "answer": "We offer a 14-day free trial of the Professional plan for new teams. You can try all features before deciding."
+      },
+      "payment": {
+        "question": "What payment methods are accepted?",
+        "answer": "We accept credit cards (recurring), PIX (5% discount), and bank slips (annual plans only)."
+      },
+      "cancel": {
+        "question": "Can I cancel my subscription?",
+        "answer": "Yes, you can cancel anytime. Your subscription will remain active until the end of the paid period, and your data will be kept for 30 days after cancellation."
+      },
+      "limits": {
+        "question": "What happens when I reach plan limits?",
+        "answer": "When you reach the limit of demands, boards, or members, new creations are blocked until the next billing cycle or until you upgrade to a higher plan."
+      }
+    }
+  },
+  "subscription": {
+    "active": "Active",
+    "trial": "Trial ({{days}} days)",
+    "canceled": "Canceled",
+    "pastDue": "Past Due",
+    "inactive": "Inactive",
+    "cancelingIn": "Cancels in {{days}} days",
+    "limitReached": "Limit reached",
+    "nearLimit": "Near limit",
+    "upgradeRequired": "Upgrade required",
+    "currentUsage": "Current usage",
+    "upgradeToUnlock": "Upgrade to unlock more features and keep growing.",
+    "limitReachedDescription": "You've reached the {{resource}} limit of your {{plan}} plan ({{limit}}).",
+    "limitReachedBanner": "You've reached the {{resource}} limit. Upgrade to continue.",
+    "nearLimitBanner": "You're almost at the {{resource}} limit. {{remaining}} remaining.",
+    "success": {
+      "title": "Subscription Activated!",
+      "subtitle": "Thank you for choosing SoMA to manage your demands.",
+      "planActivated": "{{plan}} plan activated",
+      "whatsNext": "What's next:",
+      "step1": "Your new limits are now active",
+      "step2": "Invite more members to your team",
+      "step3": "Explore the new features available",
+      "goToDashboard": "Go to Dashboard",
+      "createBoard": "Create New Board"
+    }
   }
 }

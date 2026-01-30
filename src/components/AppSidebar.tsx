@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronUp, Settings, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock, Sparkles, ShoppingCart, Layers, StickyNote } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronUp, Settings, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock, Sparkles, ShoppingCart, Layers, StickyNote, Crown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import logoSoma from "@/assets/logo-soma-dark.png";
 import { NavLink } from "@/components/NavLink";
@@ -109,13 +109,21 @@ export function AppSidebar() {
     }
   ];
 
+  const pricingMenuItems = [
+    {
+      title: "Planos",
+      url: "/pricing",
+      icon: Crown
+    }
+  ];
+
   const endMenuItems = [{
     title: t("demands.archived"),
     url: "/archived",
     icon: Archive
   }];
 
-  const menuItems = [...baseMenuItems, ...adminMenuItems, ...requesterMenuItems, ...aiMenuItems, ...notesMenuItems, ...endMenuItems];
+  const menuItems = [...baseMenuItems, ...adminMenuItems, ...requesterMenuItems, ...aiMenuItems, ...notesMenuItems, ...pricingMenuItems, ...endMenuItems];
 
   // Keep team section expanded if on team/board routes
   const isOnTeamRoute = location.pathname.startsWith("/boards") || location.pathname.startsWith("/team-config") || location.pathname.includes("/services") || location.pathname.includes("/requests") || location.pathname === "/team-demands";
