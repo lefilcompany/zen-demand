@@ -293,6 +293,7 @@
     "contactSales": "Contact Sales",
     "selectTeamFirst": "Please select a team first",
     "comingSoon": "Payment integration coming soon!",
+    "checkoutError": "Error starting checkout. Please try again.",
     "faqTitle": "Frequently Asked Questions",
     "features": {
       "boards": "boards",

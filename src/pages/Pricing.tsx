@@ -10,6 +10,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { usePlans, Plan } from "@/hooks/usePlans";
 import { useTeamSubscription } from "@/hooks/useSubscription";
 import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useCreateCheckout } from "@/hooks/useCheckout";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -20,8 +21,9 @@ export default function Pricing() {
   const { data: plans, isLoading: plansLoading } = usePlans();
   const { selectedTeamId } = useSelectedTeam();
   const { data: subscription } = useTeamSubscription(selectedTeamId);
+  const createCheckout = useCreateCheckout();
 
-  const handleSelectPlan = (plan: Plan) => {
+  const handleSelectPlan = async (plan: Plan) => {
     if (plan.slug === "enterprise") {
       // For enterprise, redirect to contact
       window.open("mailto:contato@soma.com?subject=Interesse no Plano Enterprise", "_blank");
@@ -34,8 +36,18 @@ export default function Pricing() {
       return;
     }
 
-    // TODO: Integrate with Stripe checkout
-    toast.info(t("pricing.comingSoon"));
+    try {
+      const checkoutUrl = await createCheckout.mutateAsync({
+        planSlug: plan.slug,
+        teamId: selectedTeamId,
+      });
+      
+      // Redirect to Stripe Checkout
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      console.error("Checkout error:", error);
+      toast.error(t("pricing.checkoutError"));
+    }
   };
 
   const currentPlanSlug = subscription?.plan?.slug;
@@ -119,6 +131,7 @@ export default function Pricing() {
             isPopular={plan.slug === "profissional"}
             onSelect={handleSelectPlan}
             billingPeriod={billingPeriod}
+            isLoading={createCheckout.isPending}
           />
         ))}
       </div>
