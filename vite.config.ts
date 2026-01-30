@@ -155,6 +155,8 @@ export default defineConfig(({ mode }) => ({
     }),
   ].filter(Boolean),
   resolve: {
+    // Prevent duplicate React instances in the bundle (can cause Hooks dispatcher to be null)
+    dedupe: ["react", "react-dom"],
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
