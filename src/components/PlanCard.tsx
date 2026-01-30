@@ -41,8 +41,9 @@ export function PlanCard({
     }
   };
 
-  // Business and Enterprise have all premium features
+  // Business and Enterprise have most premium features
   const isPremiumPlan = plan.slug === "business" || plan.slug === "enterprise";
+  const isEnterprise = plan.slug === "enterprise";
 
   const features = [
     {
@@ -86,7 +87,7 @@ export function PlanCard({
     },
     {
       label: t("pricing.features.sla"),
-      included: isPremiumPlan || !!plan.features.sla,
+      included: isEnterprise || !!plan.features.sla,
     },
   ];
 
