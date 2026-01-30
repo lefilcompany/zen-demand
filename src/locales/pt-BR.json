@@ -293,6 +293,7 @@
     "contactSales": "Falar com Vendas",
     "selectTeamFirst": "Selecione uma equipe primeiro",
     "comingSoon": "Integração com pagamentos em breve!",
+    "checkoutError": "Erro ao iniciar checkout. Tente novamente.",
     "faqTitle": "Perguntas Frequentes",
     "features": {
       "boards": "quadros",

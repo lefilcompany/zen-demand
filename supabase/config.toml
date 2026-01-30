@@ -14,3 +14,9 @@ verify_jwt = true
 
 [functions.process-contract]
 verify_jwt = true
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
