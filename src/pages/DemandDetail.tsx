@@ -46,6 +46,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { sendAdjustmentPushNotification, sendCommentPushNotification, sendMentionPushNotification } from "@/hooks/useSendPushNotification";
 import { extractMentionedUserIds } from "@/lib/mentionUtils";
 import { useSendEmail } from "@/hooks/useSendEmail";
+import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 import { useRealtimeDemandDetail } from "@/hooks/useRealtimeDemandDetail";
 import { DemandPresenceIndicator } from "@/components/DemandPresenceIndicator";
 import { RealtimeUpdateIndicator } from "@/components/RealtimeUpdateIndicator";
@@ -368,7 +369,8 @@ export default function DemandDetail() {
           boardName: currentBoard?.name
         }).catch(err => console.error("Error sending push notification:", err));
 
-        // Send email notifications to each user
+        // Send email notifications to each user with public link
+        const publicUrl = await buildPublicDemandUrl(id, user?.id || "");
         for (const userId of notifyUserIds) {
           try {
             // Get user profile for name
@@ -383,7 +385,7 @@ export default function DemandDetail() {
                 templateData: {
                   title: notificationTitle,
                   message: `${isInternal ? 'Foi solicitado um ajuste interno' : 'O cliente solicitou um ajuste'} na demanda "${demand?.title}".\n\nMotivo: ${adjustmentReason.trim()}`,
-                  actionUrl: `${window.location.origin}/demands/${id}`,
+                  actionUrl: publicUrl,
                   actionText: "Ver Demanda",
                   userName: userProfile?.full_name || "Usuário",
                   type: "warning" as const
@@ -496,7 +498,8 @@ export default function DemandDetail() {
             commentPreview: commentContent
           }).catch(err => console.error("Error sending comment push notification:", err));
 
-          // Send email notifications to each user
+          // Send email notifications to each user with public link
+          const publicUrl = await buildPublicDemandUrl(id, user?.id || "");
           for (const userId of notifyUserIds) {
             sendEmail.mutate({
               to: userId,
@@ -506,7 +509,7 @@ export default function DemandDetail() {
               templateData: {
                 title: "Novo comentário na demanda",
                 message: `${commenterName} comentou na demanda "${demand?.title}":\n\n"${commentContent.substring(0, 200)}${commentContent.length > 200 ? "..." : ""}"`,
-                actionUrl: `${window.location.origin}/demands/${id}`,
+                actionUrl: publicUrl,
                 actionText: "Ver demanda",
                 type: 'info'
               }
@@ -544,7 +547,8 @@ export default function DemandDetail() {
             }).catch(err => console.error("Error sending mention push notification:", err));
           }
 
-          // Send email notifications for mentions
+          // Send email notifications for mentions with public link
+          const mentionPublicUrl = await buildPublicDemandUrl(id, user?.id || "");
           for (const mentionedUserId of mentionedToNotify) {
             sendEmail.mutate({
               to: mentionedUserId,
@@ -553,7 +557,7 @@ export default function DemandDetail() {
               templateData: {
                 title: "Você foi mencionado em um comentário",
                 message: `${mentionerName} mencionou você na demanda "${demand?.title}":\n\n"${commentContent.substring(0, 200)}${commentContent.length > 200 ? "..." : ""}"`,
-                actionUrl: `${window.location.origin}/demands/${id}`,
+                actionUrl: mentionPublicUrl,
                 actionText: "Ver demanda",
                 type: 'info'
               }
