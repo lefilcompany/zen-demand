@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 
 interface AttachmentUploaderProps {
   demandId: string;
@@ -144,7 +145,8 @@ export function AttachmentUploader({ demandId, readOnly = false, demandTitle, de
         link: `/demands/${demandId}`,
       });
 
-      // Send email notification
+      // Send email notification with public link
+      const publicUrl = await buildPublicDemandUrl(demandId, user?.id || "");
       await supabase.functions.invoke("send-email", {
         body: {
           to: demandCreatedBy,
@@ -153,7 +155,7 @@ export function AttachmentUploader({ demandId, readOnly = false, demandTitle, de
           templateData: {
             title: "Novo arquivo anexado à demanda",
             message: `${uploaderName} anexou o arquivo "${fileName}" na demanda "${demandTitle}".`,
-            actionUrl: `${window.location.origin}/demands/${demandId}`,
+            actionUrl: publicUrl,
             actionText: "Ver Demanda",
             type: "info" as const,
           },

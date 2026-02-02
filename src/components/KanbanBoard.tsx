@@ -36,6 +36,7 @@ import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth";
+import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 
 interface Assignee {
   user_id: string;
@@ -383,6 +384,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
             if (importantStatuses.includes(columnKey) && demand.created_by && demand.created_by !== user?.id) {
               try {
                 const statusEmoji = columnKey === "Entregue" ? "✅" : columnKey === "Em Ajuste" ? "🔧" : "📋";
+                const publicUrl = await buildPublicDemandUrl(demand.id, user?.id || "");
                 await supabase.functions.invoke("send-email", {
                   body: {
                     to: demand.created_by,
@@ -391,7 +393,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                     templateData: {
                       title: "Status da Demanda Atualizado",
                       message: `A demanda "${demand.title}" mudou de "${previousStatusName}" para "${columnKey}".`,
-                      actionUrl: `${window.location.origin}/demands/${demand.id}`,
+                      actionUrl: publicUrl,
                       actionText: "Ver Demanda",
                       type: columnKey === "Entregue" ? "success" : columnKey === "Em Ajuste" ? "warning" : "info",
                     },
@@ -497,6 +499,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
             if (importantStatuses.includes(newStatusKey) && demand.created_by && demand.created_by !== user?.id) {
               try {
                 const statusEmoji = newStatusKey === "Entregue" ? "✅" : newStatusKey === "Em Ajuste" ? "🔧" : "📋";
+                const publicUrl = await buildPublicDemandUrl(demand.id, user?.id || "");
                 await supabase.functions.invoke("send-email", {
                   body: {
                     to: demand.created_by,
@@ -505,7 +508,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                     templateData: {
                       title: "Status da Demanda Atualizado",
                       message: `A demanda "${demand.title}" mudou de "${previousStatusName}" para "${newStatusKey}".`,
-                      actionUrl: `${window.location.origin}/demands/${demand.id}`,
+                      actionUrl: publicUrl,
                       actionText: "Ver Demanda",
                       type: newStatusKey === "Entregue" ? "success" : newStatusKey === "Em Ajuste" ? "warning" : "info",
                     },

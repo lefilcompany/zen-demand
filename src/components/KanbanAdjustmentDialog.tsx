@@ -17,6 +17,7 @@ import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/component
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { sendAdjustmentPushNotification } from "@/hooks/useSendPushNotification";
+import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 
 export type AdjustmentType = "internal" | "external";
 
@@ -177,7 +178,8 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
           boardName,
         }).catch(err => console.error("Error sending push notification:", err));
         
-        // Send email notifications to each user
+        // Send email notifications to each user with public link
+        const publicUrl = await buildPublicDemandUrl(demandId, user?.id || "");
         for (const userId of notifyUserIds) {
           try {
             // Get user profile for name
@@ -195,7 +197,7 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
                 templateData: {
                   title: notificationTitle,
                   message: `${isInternal ? 'Foi solicitado um ajuste interno' : 'O cliente solicitou um ajuste'} na demanda "${demandTitle}".\n\nMotivo: ${plainReason}`,
-                  actionUrl: `${window.location.origin}/demands/${demandId}`,
+                  actionUrl: publicUrl,
                   actionText: "Ver Demanda",
                   userName: userProfile?.full_name || "Usuário",
                   type: "warning" as const,
