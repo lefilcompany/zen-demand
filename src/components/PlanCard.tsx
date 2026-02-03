@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check, Star, Zap, Building2 } from "lucide-react";
+import { Check, Star, Zap, Building2, Crown, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/priceUtils";
 import { Plan } from "@/hooks/usePlans";
@@ -35,13 +35,42 @@ export function PlanCard({
       case "business":
         return <Building2 className="h-5 w-5" />;
       case "enterprise":
-        return <Building2 className="h-6 w-6" />;
+        return <Crown className="h-6 w-6" />;
       default:
         return <Zap className="h-5 w-5" />;
     }
   };
 
-  // Business and Enterprise have most premium features
+  const getGradient = () => {
+    switch (plan.slug) {
+      case "starter":
+        return "from-blue-500/10 to-cyan-500/10";
+      case "profissional":
+        return "from-primary/20 to-orange-500/10";
+      case "business":
+        return "from-purple-500/10 to-pink-500/10";
+      case "enterprise":
+        return "from-amber-500/10 to-yellow-500/10";
+      default:
+        return "from-primary/10 to-accent/10";
+    }
+  };
+
+  const getIconBg = () => {
+    switch (plan.slug) {
+      case "starter":
+        return "from-blue-500 to-cyan-500";
+      case "profissional":
+        return "from-primary to-orange-500";
+      case "business":
+        return "from-purple-500 to-pink-500";
+      case "enterprise":
+        return "from-amber-500 to-yellow-500";
+      default:
+        return "from-primary to-accent";
+    }
+  };
+
   const isPremiumPlan = plan.slug === "business" || plan.slug === "enterprise";
   const isEnterprise = plan.slug === "enterprise";
 
@@ -91,84 +120,140 @@ export function PlanCard({
     },
   ];
 
-  const yearlyPrice = Math.round(plan.price_cents * 12 * 0.8); // 20% discount
+  const yearlyPrice = Math.round(plan.price_cents * 12 * 0.8);
   const displayPrice = billingPeriod === "yearly" ? yearlyPrice / 12 : plan.price_cents;
+  const monthlyEquivalent = billingPeriod === "yearly" ? plan.price_cents : null;
 
   return (
     <Card
       className={cn(
-        "relative flex flex-col transition-all duration-200 hover:shadow-lg",
-        isPopular && "border-primary shadow-md ring-2 ring-primary/20",
-        isCurrentPlan && "border-success ring-2 ring-success/20"
+        "group relative flex flex-col transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 overflow-hidden",
+        isPopular && "ring-2 ring-primary shadow-xl shadow-primary/10 scale-[1.02] z-10",
+        isCurrentPlan && "ring-2 ring-success shadow-xl shadow-success/10",
+        !isPopular && !isCurrentPlan && "hover:shadow-xl hover:border-primary/30"
       )}
     >
-      {isPopular && (
-        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">
-          {t("pricing.popular")}
-        </Badge>
-      )}
-      {isCurrentPlan && (
-        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-success">
-          {t("pricing.currentPlan")}
-        </Badge>
+      {/* Background Gradient */}
+      <div className={cn(
+        "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500",
+        getGradient()
+      )} />
+
+      {/* Popular/Current Badge */}
+      {(isPopular || isCurrentPlan) && (
+        <div className={cn(
+          "absolute -top-px left-0 right-0 h-1 bg-gradient-to-r",
+          isCurrentPlan ? "from-success via-emerald-400 to-success" : "from-primary via-orange-400 to-primary"
+        )} />
       )}
 
-      <CardHeader className="text-center pb-2">
-        <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+      {isPopular && !isCurrentPlan && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+          <Badge className="bg-gradient-to-r from-primary to-orange-500 text-white border-0 shadow-lg shadow-primary/30 px-4 py-1">
+            <Sparkles className="h-3 w-3 mr-1" />
+            {t("pricing.popular")}
+          </Badge>
+        </div>
+      )}
+      
+      {isCurrentPlan && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+          <Badge className="bg-gradient-to-r from-success to-emerald-500 text-white border-0 shadow-lg shadow-success/30 px-4 py-1">
+            <Check className="h-3 w-3 mr-1" />
+            {t("pricing.currentPlan")}
+          </Badge>
+        </div>
+      )}
+
+      <CardHeader className="relative text-center pb-2 pt-8">
+        <div className={cn(
+          "mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg transition-transform duration-300 group-hover:scale-110",
+          getIconBg()
+        )}>
           {getIcon()}
         </div>
-        <CardTitle className="text-xl">{plan.name}</CardTitle>
-        <CardDescription className="min-h-[40px]">{plan.description}</CardDescription>
+        <CardTitle className="text-xl font-bold">{plan.name}</CardTitle>
+        <CardDescription className="min-h-[44px] text-sm">{plan.description}</CardDescription>
       </CardHeader>
 
-      <CardContent className="flex flex-1 flex-col">
-        <div className="mb-6 text-center">
+      <CardContent className="relative flex flex-1 flex-col pt-2">
+        {/* Price Section */}
+        <div className="mb-6 text-center py-4 rounded-2xl bg-muted/30">
           <div className="flex items-baseline justify-center gap-1">
-            <span className="text-4xl font-bold">{formatPrice(displayPrice)}</span>
-            <span className="text-muted-foreground">/{t("pricing.month")}</span>
+            <span className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+              {formatPrice(displayPrice)}
+            </span>
+            <span className="text-muted-foreground font-medium">/{t("pricing.month")}</span>
           </div>
+          {billingPeriod === "yearly" && monthlyEquivalent && (
+            <div className="mt-2 space-y-1">
+              <p className="text-sm text-muted-foreground line-through">
+                {formatPrice(monthlyEquivalent)}/mês
+              </p>
+              <p className="text-xs text-success font-medium">
+                Economia de {formatPrice(monthlyEquivalent * 12 - yearlyPrice)}/ano
+              </p>
+            </div>
+          )}
           {billingPeriod === "yearly" && (
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-2 text-xs text-muted-foreground">
               {t("pricing.billedYearly", { total: formatPrice(yearlyPrice) })}
             </p>
           )}
         </div>
 
+        {/* Features List */}
         <ul className="mb-6 flex-1 space-y-3">
           {features.map((feature, index) => (
-            <li key={index} className="flex items-start gap-2">
-              <Check
-                className={cn(
-                  "mt-0.5 h-4 w-4 shrink-0",
-                  feature.included ? "text-success" : "text-muted-foreground/30"
+            <li key={index} className="flex items-start gap-3">
+              <div className={cn(
+                "mt-0.5 flex-shrink-0 h-5 w-5 rounded-full flex items-center justify-center",
+                feature.included 
+                  ? "bg-success/10 text-success" 
+                  : "bg-muted text-muted-foreground/40"
+              )}>
+                {feature.included ? (
+                  <Check className="h-3 w-3" />
+                ) : (
+                  <X className="h-3 w-3" />
                 )}
-              />
+              </div>
               <span
                 className={cn(
-                  "text-sm",
-                  !feature.included && "text-muted-foreground/50 line-through"
+                  "text-sm leading-tight",
+                  !feature.included && "text-muted-foreground/50"
                 )}
               >
                 {feature.label}
                 {feature.detail && feature.included && (
-                  <span className="text-muted-foreground"> ({feature.detail})</span>
+                  <span className="ml-1 text-xs text-muted-foreground">({feature.detail})</span>
                 )}
               </span>
             </li>
           ))}
         </ul>
 
+        {/* CTA Button */}
         <Button
-          className="w-full"
-          variant={isPopular ? "default" : "outline"}
+          className={cn(
+            "w-full h-12 text-base font-semibold transition-all duration-300",
+            isPopular && !isCurrentPlan && "bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 shadow-lg shadow-primary/25",
+            isCurrentPlan && "bg-success hover:bg-success/90"
+          )}
+          variant={isPopular || isCurrentPlan ? "default" : "outline"}
           onClick={() => onSelect?.(plan)}
           disabled={isCurrentPlan || isLoading}
         >
-          {isCurrentPlan
-            ? t("pricing.currentPlan")
-            : plan.slug === "enterprise"
-            ? t("pricing.contactSales")
-            : t("pricing.selectPlan")}
+          {isCurrentPlan ? (
+            <>
+              <Check className="h-4 w-4 mr-2" />
+              {t("pricing.currentPlan")}
+            </>
+          ) : plan.slug === "enterprise" ? (
+            t("pricing.contactSales")
+          ) : (
+            t("pricing.selectPlan")
+          )}
         </Button>
       </CardContent>
     </Card>
