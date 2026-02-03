@@ -1,120 +1,193 @@
 
 
-# Plano: Implementar Seleção de Planos no Fluxo de Criação de Equipe
+# Plano: Página Externa de Checkout Público
 
 ## Objetivo
-Integrar a seleção de planos de assinatura no fluxo de criação de equipe, permitindo que o usuário escolha seu plano antes/durante a criação da equipe e seja redirecionado para o Stripe Checkout.
+Criar uma página pública (`/get-started`) onde visitantes podem escolher um plano, fazer login/cadastro, e serem redirecionados ao Stripe Checkout. Após o pagamento, retornam ao sistema já logados com a equipe e plano ativos.
 
 ## Visão Geral do Fluxo
 
 ```text
-Criar Equipe → Selecionar Plano → Stripe Checkout → Sucesso → Dashboard
-     │                                     │
-     └── (dados da equipe guardados) ──────┘
+URL Externa → /get-started?plan=profissional (opcional)
+       │
+       ▼
+┌─────────────────────────────────────────────┐
+│  PÁGINA GET STARTED (pública)               │
+│  ┌───────────────────────────────────────┐  │
+│  │ Etapa 1: Selecionar Plano             │  │
+│  │ (cards de planos reutilizados)        │  │
+│  └───────────────────────────────────────┘  │
+│                    ▼                        │
+│  ┌───────────────────────────────────────┐  │
+│  │ Etapa 2: Login ou Cadastro            │  │
+│  │ (formulário inline + opção cadastro)  │  │
+│  └───────────────────────────────────────┘  │
+│                    ▼                        │
+│  ┌───────────────────────────────────────┐  │
+│  │ Etapa 3: Dados da Equipe              │  │
+│  │ (nome da equipe, descrição)           │  │
+│  └───────────────────────────────────────┘  │
+└─────────────────────────────────────────────┘
+                     │
+                     ▼
+            Cria equipe + Checkout
+                     │
+                     ▼
+              Stripe Checkout
+                     │
+                     ▼
+        /subscription/success (logado)
+                     │
+                     ▼
+               Dashboard (/)
 ```
 
 ---
 
-## Abordagem
+## Arquivos a Criar/Modificar
 
-Vamos implementar um **fluxo em etapas** na página de criação de equipe:
+### 1. CRIAR: `src/pages/GetStarted.tsx`
+Nova página pública com fluxo multi-etapas:
 
-1. **Etapa 1**: Preencher dados da equipe (nome, descrição, código de acesso)
-2. **Etapa 2**: Selecionar plano de assinatura
-3. **Etapa 3**: Checkout no Stripe (externo)
-4. **Retorno**: Página de sucesso com equipe criada e plano ativo
+**Etapa 1 - Seleção de Plano:**
+- Exibir todos os planos usando `PlanCard`
+- Permitir selecionar um plano
+- Suporte a query param `?plan=slug` para pré-selecionar
 
----
+**Etapa 2 - Autenticação:**
+- Tabs para Login/Cadastro (similar ao Auth.tsx)
+- Se já logado, pular esta etapa
+- Após login/cadastro bem-sucedido, avançar automaticamente
 
-## Arquivos a Modificar/Criar
+**Etapa 3 - Dados da Equipe:**
+- Nome da equipe (obrigatório)
+- Descrição (opcional)
+- Código de acesso auto-gerado
+- Botão "Finalizar e Pagar"
 
-### 1. `src/pages/CreateTeam.tsx`
-**Modificações:**
-- Adicionar estado para controlar etapas (`step: 1 | 2`)
-- Na etapa 1: formulário atual de criação de equipe
-- Na etapa 2: exibir cards de planos usando `PlanCard` reutilizado
-- Ao selecionar um plano, criar a equipe E iniciar checkout
-- Guardar dados do formulário entre etapas
-- Adicionar navegação entre etapas (voltar/avançar)
+**Fluxo de Conclusão:**
+1. Criar equipe com `useCreateTeam`
+2. Chamar `create-checkout` com teamId e planSlug
+3. Redirecionar para Stripe
+4. Após pagamento → `/subscription/success`
 
-### 2. `src/hooks/useCheckout.ts`
-**Modificações:**
-- Criar uma nova mutation `useCreateTeamWithCheckout` que:
-  1. Cria a equipe
-  2. Inicia o checkout do Stripe com o `teamId` recém-criado
-  3. Retorna a URL do checkout
+### 2. MODIFICAR: `src/App.tsx`
+- Adicionar rota pública `/get-started` (sem RequireAuth)
 
-### 3. `supabase/functions/create-checkout/index.ts`
-**Modificações:**
-- Ajustar para aceitar times recém-criados (o criador ainda não é "admin" formalmente no momento da verificação RPC - verificar se funciona)
-- Adicionar fallback para verificar se o usuário é o criador da equipe
+### 3. MODIFICAR: `supabase/functions/create-checkout/index.ts`
+- Ajustar success_url para incluir parâmetros de retorno
+- Garantir que funciona para usuários recém-criados
 
-### 4. `src/locales/pt-BR.json` (e outros idiomas)
-**Novas traduções:**
-- `createTeam.step1`: "Dados da Equipe"
-- `createTeam.step2`: "Escolha seu Plano"
-- `createTeam.selectPlanSubtitle`: "Selecione o plano ideal para sua equipe"
-- `createTeam.continueToPlans`: "Continuar para Planos"
-- `createTeam.creatingTeam`: "Criando equipe..."
+### 4. MODIFICAR: `src/pages/SubscriptionSuccess.tsx`
+- Detectar se usuário não tem equipe selecionada
+- Buscar equipe do metadata do checkout
+- Selecionar equipe automaticamente
+- Redirecionar para dashboard
+
+### 5. ADICIONAR TRADUÇÕES: Locales (pt-BR, en-US, es)
+```json
+{
+  "getStarted": {
+    "title": "Comece Agora",
+    "subtitle": "Escolha seu plano e crie sua equipe",
+    "step1": "Escolha seu Plano",
+    "step2": "Faça Login ou Cadastre-se",
+    "step3": "Configure sua Equipe",
+    "alreadyHaveAccount": "Já tem uma conta?",
+    "createAccount": "Criar conta",
+    "loginToContinue": "Faça login para continuar",
+    "teamInfo": "Informações da Equipe",
+    "finishAndPay": "Finalizar e Pagar",
+    "processingCheckout": "Processando pagamento..."
+  }
+}
+```
 
 ---
 
 ## Detalhes Técnicos
 
-### Componente de Steps (Etapas)
-Criar um indicador visual de progresso com 2 etapas:
-- Círculo 1: "Dados" (ativo/completo)
-- Círculo 2: "Plano" (ativo/pendente)
-
-### Estado do Formulário
+### Componente GetStarted - Estrutura de Estado
 ```typescript
-const [step, setStep] = useState<1 | 2>(1);
-const [formData, setFormData] = useState({
+// Estados principais
+const [step, setStep] = useState<1 | 2 | 3>(1);
+const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+const [teamData, setTeamData] = useState({
   name: "",
   description: "",
   accessCode: generateAccessCode(),
 });
+
+// Detecta usuário logado
+const { user, loading: authLoading } = useAuth();
+
+// Se usuário já está logado, pula etapa 2
+useEffect(() => {
+  if (user && step === 2) {
+    setStep(3);
+  }
+}, [user, step]);
 ```
 
-### Fluxo de Criação
-1. Usuário preenche dados → Clica "Continuar"
-2. Exibe seleção de planos (reutiliza `PlanCard`)
-3. Ao clicar em um plano:
-   - Cria a equipe com `useCreateTeam`
-   - Chama `create-checkout` com o novo `teamId`
-   - Redireciona para Stripe
-4. Após pagamento (Stripe webhook atualiza subscription)
-5. Usuário retorna para `/subscription/success`
-
-### Plano Gratuito/Starter
-- O plano Starter (R$ 59/mês) é o mais básico
-- Opção: Permitir "Começar Grátis" com trial de 14 dias
-- Ou simplesmente todos os planos são pagos
-
----
-
-## Ajustes na Edge Function
-
-A função `create-checkout` verifica se o usuário é admin da equipe:
+### Pré-seleção via Query Param
 ```typescript
-const { data: isAdmin } = await supabase.rpc("is_team_admin", {
-  _user_id: userId,
-  _team_id: teamId,
-});
+const [searchParams] = useSearchParams();
+const preSelectedPlanSlug = searchParams.get("plan");
+
+useEffect(() => {
+  if (preSelectedPlanSlug && plans) {
+    const plan = plans.find(p => p.slug === preSelectedPlanSlug);
+    if (plan) {
+      setSelectedPlan(plan);
+      setStep(user ? 3 : 2); // Pula para login ou dados da equipe
+    }
+  }
+}, [preSelectedPlanSlug, plans, user]);
 ```
 
-Como a equipe acabou de ser criada no mesmo fluxo, isso deve funcionar. Porém, para garantir:
-- Adicionar verificação alternativa se o `created_by` da equipe é o usuário atual
+### Fluxo de Checkout
+```typescript
+const handleFinish = async () => {
+  if (!selectedPlan || !teamData.name) return;
+  
+  setIsProcessing(true);
+  try {
+    // 1. Criar equipe
+    const team = await createTeam.mutateAsync({
+      name: teamData.name,
+      description: teamData.description,
+      accessCode: teamData.accessCode,
+    });
+    
+    // 2. Iniciar checkout
+    const checkoutUrl = await createCheckout.mutateAsync({
+      planSlug: selectedPlan.slug,
+      teamId: team.id,
+    });
+    
+    // 3. Redirecionar para Stripe
+    window.location.href = checkoutUrl;
+  } catch (error) {
+    // Handle error
+  }
+};
+```
+
+### Layout Responsivo
+- Desktop: Layout split-screen como Auth.tsx
+- Mobile: Etapas em cards empilhados
+- Indicador de progresso visual (1 → 2 → 3)
 
 ---
 
 ## Considerações de UX
 
-1. **Indicador de Progresso**: Mostrar em qual etapa o usuário está
-2. **Voltar**: Permitir voltar da etapa 2 para etapa 1
-3. **Loading States**: Mostrar loading durante criação + checkout
-4. **Erro Handling**: Se o checkout falhar, a equipe já foi criada - informar usuário
-5. **Responsividade**: Layout adaptável para mobile (cards em coluna)
+1. **Link Externo**: Pode ser usado em landing pages, emails marketing
+2. **Deep Link com Plano**: `/get-started?plan=profissional` pré-seleciona
+3. **Usuário Já Logado**: Pula etapa de autenticação
+4. **Validação em Tempo Real**: Código de acesso único verificado
+5. **Loading States**: Feedback durante criação + checkout
+6. **Erro Handling**: Mensagens claras se algo falhar
 
 ---
 
@@ -122,9 +195,10 @@ Como a equipe acabou de ser criada no mesmo fluxo, isso deve funcionar. Porém, 
 
 | Arquivo | Ação |
 |---------|------|
-| `src/pages/CreateTeam.tsx` | Adicionar fluxo multi-step com seleção de planos |
-| `src/hooks/useCheckout.ts` | Adicionar hook para criar equipe + checkout |
-| `src/locales/pt-BR.json` | Adicionar novas traduções |
-| `src/locales/en-US.json` | Adicionar novas traduções |
-| `supabase/functions/create-checkout/index.ts` | Verificação alternativa de criador |
+| `src/pages/GetStarted.tsx` | **CRIAR** - Página pública de checkout |
+| `src/App.tsx` | Adicionar rota `/get-started` como pública |
+| `src/pages/SubscriptionSuccess.tsx` | Melhorar detecção de equipe após checkout |
+| `src/locales/pt-BR.json` | Adicionar traduções getStarted |
+| `src/locales/en-US.json` | Adicionar traduções getStarted |
+| `src/locales/es.json` | Adicionar traduções getStarted |
 
