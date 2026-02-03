@@ -127,7 +127,7 @@ export function PlanCard({
   return (
     <Card
       className={cn(
-        "group relative flex flex-col transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 overflow-hidden",
+        "group relative flex flex-col transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 overflow-visible",
         isPopular && "ring-2 ring-primary shadow-xl shadow-primary/10 scale-[1.02] z-10",
         isCurrentPlan && "ring-2 ring-success shadow-xl shadow-success/10",
         !isPopular && !isCurrentPlan && "hover:shadow-xl hover:border-primary/30"
