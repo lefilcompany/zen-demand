@@ -190,7 +190,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* Active Timers Section - Above Team section */}
-        <SidebarGroup className="mt-auto">
+        <SidebarGroup className="mt-4">
           <SidebarGroupContent>
             <SidebarActiveTimers />
           </SidebarGroupContent>
@@ -332,14 +332,14 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* Subscription Card - Below Teams section */}
-        <SidebarGroup>
+        <SidebarGroup className="mt-auto pt-2">
           <SidebarGroupContent>
             <SidebarSubscriptionCard />
           </SidebarGroupContent>
         </SidebarGroup>
 
         {/* Footer section with sync indicator only */}
-        <SidebarGroup className="pb-4 md:pb-2">
+        <SidebarGroup className="pb-3 md:pb-2 pt-2">
           <SidebarGroupContent>
             <SidebarSyncIndicator isCollapsed={isCollapsed && !isMobile} />
           </SidebarGroupContent>
