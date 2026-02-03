@@ -27,7 +27,7 @@ function StepIndicator({ currentStep, totalSteps }: { currentStep: number; total
   ];
 
   return (
-    <div className="flex items-center justify-center gap-2 mb-8">
+    <div className="flex items-center justify-center mb-8">
       {steps.slice(0, totalSteps).map((step, index) => {
         const stepNumber = index + 1;
         const isActive = stepNumber === currentStep;
@@ -35,7 +35,7 @@ function StepIndicator({ currentStep, totalSteps }: { currentStep: number; total
 
         return (
           <div key={index} className="flex items-center">
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center min-w-[60px]">
               <div
                 className={`flex h-10 w-10 items-center justify-center rounded-full border-2 font-semibold transition-all ${
                   isCompleted
@@ -47,13 +47,13 @@ function StepIndicator({ currentStep, totalSteps }: { currentStep: number; total
               >
                 {isCompleted ? <Check className="h-5 w-5" /> : stepNumber}
               </div>
-              <span className={`mt-2 text-xs font-medium ${isActive ? "text-primary" : "text-muted-foreground"}`}>
+              <span className={`mt-2 text-xs font-medium text-center ${isActive ? "text-primary" : "text-muted-foreground"}`}>
                 {step}
               </span>
             </div>
             {index < totalSteps - 1 && (
               <div
-                className={`mx-2 h-0.5 w-8 sm:w-12 ${
+                className={`h-0.5 w-12 sm:w-16 lg:w-20 -mt-6 ${
                   isCompleted ? "bg-success" : "bg-muted-foreground/30"
                 }`}
               />
@@ -253,19 +253,19 @@ export default function GetStarted() {
 
       {/* Right side - Content */}
       <div className="flex-1 lg:w-3/5 flex flex-col bg-background overflow-y-auto">
-        <div className="flex-1 flex flex-col items-center justify-start p-4 sm:p-6 lg:p-12">
-          <div className="w-full max-w-4xl">
+        <div className="flex-1 flex flex-col items-center justify-start p-4 sm:p-6 lg:p-8 xl:p-12">
+          <div className="w-full max-w-5xl">
             <StepIndicator currentStep={step} totalSteps={3} />
 
             {/* Step 1: Plan Selection */}
             {step === 1 && (
               <div className="space-y-6">
-                <div className="text-center mb-8">
-                  <h2 className="text-2xl font-bold mb-2">{t("getStarted.step1")}</h2>
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl sm:text-3xl font-bold mb-2">{t("getStarted.step1Title")}</h2>
                   <p className="text-muted-foreground">{t("getStarted.selectPlanSubtitle")}</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 pt-6">
                   {plans?.map((plan) => (
                     <PlanCard
                       key={plan.id}
