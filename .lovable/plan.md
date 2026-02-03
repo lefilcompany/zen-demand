@@ -1,142 +1,108 @@
 
-# Plano: Permitir Reentrada em Equipes Após Remoção
+# Plano: Período de Teste de 3 Meses e Bloqueio Após Expiração
 
-## Problema Identificado
-Quando um usuário é removido de uma equipe, ele não consegue solicitar entrada novamente porque:
-- O registro em `team_join_requests` permanece com `status = 'approved'`
-- A página de entrada (`JoinTeam`) verifica apenas o status do request, não se o usuário ainda está em `team_members`
-- A interface mostra "você já é membro!" mesmo quando o usuário foi removido
+## Visão Geral
 
-## Solução Proposta
-
-### Abordagem
-Adicionar uma verificação dupla: verificar se existe um request aprovado **E** se o usuário realmente está na tabela `team_members`. Se o request está aprovado mas o usuário não está mais em `team_members`, ele foi removido e deve poder solicitar entrada novamente.
+Implementar um sistema onde todo novo usuário recebe automaticamente 3 meses de uso gratuito do SoMA. Após esse período, o acesso ao sistema será bloqueado e o usuário verá uma tela com os planos disponíveis para assinatura.
 
 ---
 
-## Alterações
-
-### 1. Hook `useTeamJoinRequests.ts`
-
-**Criar novo hook para verificar membership:**
-```typescript
-// Verificar se o usuário é membro ativo da equipe
-export function useIsTeamMember(teamId: string | null) {
-  const { user } = useAuth();
-
-  return useQuery({
-    queryKey: ["is-team-member", teamId, user?.id],
-    queryFn: async () => {
-      if (!user || !teamId) return false;
-
-      const { data, error } = await supabase
-        .from("team_members")
-        .select("id")
-        .eq("team_id", teamId)
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error) throw error;
-      return !!data;
-    },
-    enabled: !!user && !!teamId,
-  });
-}
-```
-
-**Atualizar mutação `useCreateJoinRequest`:**
-- Além de deletar requests `rejected`, também deletar requests `approved` quando o usuário não está mais em `team_members`
-
-```typescript
-mutationFn: async ({ teamId, message }) => {
-  // Deletar requests anteriores (rejected OU approved se foi removido)
-  await supabase
-    .from("team_join_requests")
-    .delete()
-    .eq("team_id", teamId)
-    .eq("user_id", user.id)
-    .in("status", ["rejected", "approved"]);
-  
-  // Criar novo request...
-}
-```
-
-### 2. Página `JoinTeam.tsx`
-
-**Importar e usar novo hook:**
-```typescript
-import { 
-  useTeamByAccessCode, 
-  useCreateJoinRequest, 
-  useExistingRequest,
-  useIsTeamMember  // Novo
-} from "@/hooks/useTeamJoinRequests";
-```
-
-**Verificar membership ativo:**
-```typescript
-const { data: isActiveMember, isLoading: isLoadingMember } = useIsTeamMember(teamPreview?.id || null);
-```
-
-**Atualizar lógica de bloqueio:**
-```typescript
-// Só bloqueia se:
-// 1. Request está pendente, OU
-// 2. Request está aprovado E usuário ainda é membro ativo
-const hasBlockingRequest = existingRequest && (
-  existingRequest.status === "pending" ||
-  (existingRequest.status === "approved" && isActiveMember)
-);
-
-// Pode submeter se:
-// 1. Não tem request, OU
-// 2. Request foi rejeitado, OU
-// 3. Request foi aprovado MAS usuário foi removido (não é mais membro)
-const canSubmitRequest = !existingRequest || 
-  existingRequest.status === "rejected" ||
-  (existingRequest.status === "approved" && !isActiveMember);
-```
-
-**Atualizar mensagem de status para usuário removido:**
-```typescript
-const getStatusBadge = () => {
-  if (!existingRequest) return null;
-  
-  // Se foi aprovado mas não é mais membro, mostrar mensagem diferente
-  if (existingRequest.status === "approved" && !isActiveMember) {
-    return (
-      <div className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-amber-500/10 text-amber-600 border-amber-500/20">
-        <UserMinus className="h-5 w-5 flex-shrink-0" />
-        <span className="font-medium text-sm">
-          Você foi removido desta equipe. Solicite entrada novamente.
-        </span>
-      </div>
-    );
-  }
-  
-  // ... resto da lógica existente
-};
-```
-
----
-
-## Fluxo Final
+## Como Vai Funcionar
 
 ```text
-Usuário digita código → Equipe encontrada
+Usuário cria conta → Inicia trial de 3 meses
                               ↓
-          ┌─────────────────────────────────────┐
-          │     Verifica request existente      │
-          │     E se é membro ativo             │
-          └─────────────────────────────────────┘
+              ┌───────────────────────────────┐
+              │  Período de Trial Ativo       │
+              │  (Acesso completo ao sistema) │
+              └───────────────────────────────┘
                               ↓
-    ┌──────────────────┬──────────────────┬──────────────────┐
-    │   Sem request    │  Request pending │ Approved + Ativo │
-    │   OU rejeitado   │                  │                  │
-    │   OU removido    │                  │                  │
-    └────────┬─────────┴────────┬─────────┴────────┬─────────┘
-             ↓                  ↓                  ↓
-     [Formulário OK]    [Aguarde aprovação]  [Já é membro!]
+                    Trial expira (3 meses)
+                              ↓
+              ┌───────────────────────────────┐
+              │   Acesso Bloqueado            │
+              │   Tela de Planos exibida      │
+              │   (Precisa assinar para usar) │
+              └───────────────────────────────┘
+```
+
+---
+
+## Alterações Necessárias
+
+### 1. Banco de Dados
+
+**Adicionar coluna `trial_ends_at` na tabela `profiles`:**
+
+A coluna armazenará quando o trial de 3 meses expira para cada usuário. Será preenchida automaticamente quando o profile é criado.
+
+```sql
+-- Adicionar coluna de data de expiração do trial
+ALTER TABLE profiles 
+ADD COLUMN trial_ends_at timestamptz DEFAULT (now() + interval '3 months');
+
+-- Atualizar profiles existentes para ter trial ativo
+UPDATE profiles 
+SET trial_ends_at = created_at + interval '3 months'
+WHERE trial_ends_at IS NULL;
+```
+
+### 2. Hook para Verificar Status do Trial
+
+**Criar `src/hooks/useTrialStatus.ts`:**
+
+Hook que verifica se o usuário ainda está no período de trial ou se expirou.
+
+```typescript
+// Retorna:
+// - isLoading: se está carregando
+// - isTrialActive: se o trial ainda está ativo
+// - trialEndsAt: data de expiração
+// - daysRemaining: dias restantes
+// - isTrialExpired: se o trial expirou
+```
+
+### 3. Componente de Bloqueio
+
+**Criar `src/components/TrialExpiredBlock.tsx`:**
+
+Tela que aparece quando o trial expira, mostrando:
+- Mensagem de que o período de teste acabou
+- Cards dos planos disponíveis
+- Botão para assinar
+- Opção de sair da conta
+
+### 4. Atualizar Layout Protegido
+
+**Modificar `src/components/ProtectedLayout.tsx`:**
+
+Adicionar verificação do trial antes de renderizar o conteúdo:
+- Se trial expirou E equipe não tem assinatura ativa → mostrar `TrialExpiredBlock`
+- Se trial ativo OU equipe tem assinatura → mostrar conteúdo normal
+
+### 5. Banner de Aviso no Dashboard
+
+**Criar `src/components/TrialBanner.tsx`:**
+
+Banner que aparece no topo do dashboard mostrando:
+- Quantos dias restam do trial
+- Botão para conhecer os planos
+- Cores que mudam conforme se aproxima do fim (verde → amarelo → vermelho)
+
+### 6. Atualizar Traduções
+
+**Adicionar em `src/locales/pt-BR.json`:**
+
+```json
+"trial": {
+  "title": "Período de Teste",
+  "daysRemaining": "{{days}} dias restantes no seu período de teste",
+  "lastDay": "Último dia do seu período de teste!",
+  "expired": "Período de Teste Encerrado",
+  "expiredDescription": "Seu período de teste gratuito de 3 meses chegou ao fim.",
+  "choosePlan": "Escolha um plano para continuar usando o SoMA",
+  "viewPlans": "Ver Planos"
+}
 ```
 
 ---
@@ -145,5 +111,37 @@ Usuário digita código → Equipe encontrada
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `src/hooks/useTeamJoinRequests.ts` | Novo hook `useIsTeamMember` + atualizar `useCreateJoinRequest` para limpar requests antigos |
-| `src/pages/JoinTeam.tsx` | Usar novo hook + atualizar lógica de `hasBlockingRequest` e `canSubmitRequest` + nova mensagem para usuários removidos |
+| Migration SQL | Adicionar coluna `trial_ends_at` em `profiles` |
+| `src/hooks/useTrialStatus.ts` | Novo hook para verificar status do trial |
+| `src/components/TrialExpiredBlock.tsx` | Nova tela de bloqueio com planos |
+| `src/components/TrialBanner.tsx` | Banner de aviso de dias restantes |
+| `src/components/ProtectedLayout.tsx` | Verificação de trial e bloqueio |
+| `src/locales/pt-BR.json` | Traduções do trial |
+| `src/locales/en-US.json` | Traduções do trial (inglês) |
+| `src/locales/es.json` | Traduções do trial (espanhol) |
+
+---
+
+## Detalhes Técnicos
+
+### Lógica de Verificação do Trial
+
+```typescript
+// Usuário pode usar o sistema se:
+// 1. Trial ainda não expirou (trial_ends_at > now), OU
+// 2. A equipe selecionada tem uma assinatura ativa
+
+const canUseSystem = isTrialActive || hasActiveSubscription;
+```
+
+### Fluxo de Bloqueio
+
+1. Usuário faz login
+2. Sistema verifica `trial_ends_at` do profile
+3. Se expirou, verifica se a equipe tem assinatura
+4. Se não tem assinatura, exibe tela de bloqueio
+5. Se assinar, libera acesso imediatamente
+
+### Trigger para Novos Usuários
+
+A coluna `trial_ends_at` tem um default de `now() + 3 months`, então todo novo usuário automaticamente recebe o trial de 3 meses ao criar a conta.
