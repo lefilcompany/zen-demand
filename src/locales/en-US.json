@@ -365,5 +365,17 @@
       "goToDashboard": "Go to Dashboard",
       "createBoard": "Create New Board"
     }
+  },
+  "trial": {
+    "title": "Trial Period",
+    "daysRemaining": "{{days}} days remaining in your trial",
+    "oneDayRemaining": "1 day remaining in your trial",
+    "lastDay": "Last day of your trial!",
+    "expired": "Trial Period Ended",
+    "expiredDescription": "Your 3-month free trial period has ended.",
+    "choosePlan": "Choose a plan to continue using SoMA",
+    "viewPlans": "View Plans",
+    "freeTrialEnded": "Free trial period ended",
+    "allRightsReserved": "All rights reserved."
   }
 }
