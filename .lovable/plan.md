@@ -1,147 +1,130 @@
 
-# Plano: Período de Teste de 3 Meses e Bloqueio Após Expiração
 
-## Visão Geral
+# Plano: Implementar Seleção de Planos no Fluxo de Criação de Equipe
 
-Implementar um sistema onde todo novo usuário recebe automaticamente 3 meses de uso gratuito do SoMA. Após esse período, o acesso ao sistema será bloqueado e o usuário verá uma tela com os planos disponíveis para assinatura.
+## Objetivo
+Integrar a seleção de planos de assinatura no fluxo de criação de equipe, permitindo que o usuário escolha seu plano antes/durante a criação da equipe e seja redirecionado para o Stripe Checkout.
 
----
-
-## Como Vai Funcionar
+## Visão Geral do Fluxo
 
 ```text
-Usuário cria conta → Inicia trial de 3 meses
-                              ↓
-              ┌───────────────────────────────┐
-              │  Período de Trial Ativo       │
-              │  (Acesso completo ao sistema) │
-              └───────────────────────────────┘
-                              ↓
-                    Trial expira (3 meses)
-                              ↓
-              ┌───────────────────────────────┐
-              │   Acesso Bloqueado            │
-              │   Tela de Planos exibida      │
-              │   (Precisa assinar para usar) │
-              └───────────────────────────────┘
+Criar Equipe → Selecionar Plano → Stripe Checkout → Sucesso → Dashboard
+     │                                     │
+     └── (dados da equipe guardados) ──────┘
 ```
 
 ---
 
-## Alterações Necessárias
+## Abordagem
 
-### 1. Banco de Dados
+Vamos implementar um **fluxo em etapas** na página de criação de equipe:
 
-**Adicionar coluna `trial_ends_at` na tabela `profiles`:**
-
-A coluna armazenará quando o trial de 3 meses expira para cada usuário. Será preenchida automaticamente quando o profile é criado.
-
-```sql
--- Adicionar coluna de data de expiração do trial
-ALTER TABLE profiles 
-ADD COLUMN trial_ends_at timestamptz DEFAULT (now() + interval '3 months');
-
--- Atualizar profiles existentes para ter trial ativo
-UPDATE profiles 
-SET trial_ends_at = created_at + interval '3 months'
-WHERE trial_ends_at IS NULL;
-```
-
-### 2. Hook para Verificar Status do Trial
-
-**Criar `src/hooks/useTrialStatus.ts`:**
-
-Hook que verifica se o usuário ainda está no período de trial ou se expirou.
-
-```typescript
-// Retorna:
-// - isLoading: se está carregando
-// - isTrialActive: se o trial ainda está ativo
-// - trialEndsAt: data de expiração
-// - daysRemaining: dias restantes
-// - isTrialExpired: se o trial expirou
-```
-
-### 3. Componente de Bloqueio
-
-**Criar `src/components/TrialExpiredBlock.tsx`:**
-
-Tela que aparece quando o trial expira, mostrando:
-- Mensagem de que o período de teste acabou
-- Cards dos planos disponíveis
-- Botão para assinar
-- Opção de sair da conta
-
-### 4. Atualizar Layout Protegido
-
-**Modificar `src/components/ProtectedLayout.tsx`:**
-
-Adicionar verificação do trial antes de renderizar o conteúdo:
-- Se trial expirou E equipe não tem assinatura ativa → mostrar `TrialExpiredBlock`
-- Se trial ativo OU equipe tem assinatura → mostrar conteúdo normal
-
-### 5. Banner de Aviso no Dashboard
-
-**Criar `src/components/TrialBanner.tsx`:**
-
-Banner que aparece no topo do dashboard mostrando:
-- Quantos dias restam do trial
-- Botão para conhecer os planos
-- Cores que mudam conforme se aproxima do fim (verde → amarelo → vermelho)
-
-### 6. Atualizar Traduções
-
-**Adicionar em `src/locales/pt-BR.json`:**
-
-```json
-"trial": {
-  "title": "Período de Teste",
-  "daysRemaining": "{{days}} dias restantes no seu período de teste",
-  "lastDay": "Último dia do seu período de teste!",
-  "expired": "Período de Teste Encerrado",
-  "expiredDescription": "Seu período de teste gratuito de 3 meses chegou ao fim.",
-  "choosePlan": "Escolha um plano para continuar usando o SoMA",
-  "viewPlans": "Ver Planos"
-}
-```
+1. **Etapa 1**: Preencher dados da equipe (nome, descrição, código de acesso)
+2. **Etapa 2**: Selecionar plano de assinatura
+3. **Etapa 3**: Checkout no Stripe (externo)
+4. **Retorno**: Página de sucesso com equipe criada e plano ativo
 
 ---
 
-## Resumo das Mudanças
+## Arquivos a Modificar/Criar
 
-| Arquivo | Alteração |
-|---------|-----------|
-| Migration SQL | Adicionar coluna `trial_ends_at` em `profiles` |
-| `src/hooks/useTrialStatus.ts` | Novo hook para verificar status do trial |
-| `src/components/TrialExpiredBlock.tsx` | Nova tela de bloqueio com planos |
-| `src/components/TrialBanner.tsx` | Banner de aviso de dias restantes |
-| `src/components/ProtectedLayout.tsx` | Verificação de trial e bloqueio |
-| `src/locales/pt-BR.json` | Traduções do trial |
-| `src/locales/en-US.json` | Traduções do trial (inglês) |
-| `src/locales/es.json` | Traduções do trial (espanhol) |
+### 1. `src/pages/CreateTeam.tsx`
+**Modificações:**
+- Adicionar estado para controlar etapas (`step: 1 | 2`)
+- Na etapa 1: formulário atual de criação de equipe
+- Na etapa 2: exibir cards de planos usando `PlanCard` reutilizado
+- Ao selecionar um plano, criar a equipe E iniciar checkout
+- Guardar dados do formulário entre etapas
+- Adicionar navegação entre etapas (voltar/avançar)
+
+### 2. `src/hooks/useCheckout.ts`
+**Modificações:**
+- Criar uma nova mutation `useCreateTeamWithCheckout` que:
+  1. Cria a equipe
+  2. Inicia o checkout do Stripe com o `teamId` recém-criado
+  3. Retorna a URL do checkout
+
+### 3. `supabase/functions/create-checkout/index.ts`
+**Modificações:**
+- Ajustar para aceitar times recém-criados (o criador ainda não é "admin" formalmente no momento da verificação RPC - verificar se funciona)
+- Adicionar fallback para verificar se o usuário é o criador da equipe
+
+### 4. `src/locales/pt-BR.json` (e outros idiomas)
+**Novas traduções:**
+- `createTeam.step1`: "Dados da Equipe"
+- `createTeam.step2`: "Escolha seu Plano"
+- `createTeam.selectPlanSubtitle`: "Selecione o plano ideal para sua equipe"
+- `createTeam.continueToPlans`: "Continuar para Planos"
+- `createTeam.creatingTeam`: "Criando equipe..."
 
 ---
 
 ## Detalhes Técnicos
 
-### Lógica de Verificação do Trial
+### Componente de Steps (Etapas)
+Criar um indicador visual de progresso com 2 etapas:
+- Círculo 1: "Dados" (ativo/completo)
+- Círculo 2: "Plano" (ativo/pendente)
 
+### Estado do Formulário
 ```typescript
-// Usuário pode usar o sistema se:
-// 1. Trial ainda não expirou (trial_ends_at > now), OU
-// 2. A equipe selecionada tem uma assinatura ativa
-
-const canUseSystem = isTrialActive || hasActiveSubscription;
+const [step, setStep] = useState<1 | 2>(1);
+const [formData, setFormData] = useState({
+  name: "",
+  description: "",
+  accessCode: generateAccessCode(),
+});
 ```
 
-### Fluxo de Bloqueio
+### Fluxo de Criação
+1. Usuário preenche dados → Clica "Continuar"
+2. Exibe seleção de planos (reutiliza `PlanCard`)
+3. Ao clicar em um plano:
+   - Cria a equipe com `useCreateTeam`
+   - Chama `create-checkout` com o novo `teamId`
+   - Redireciona para Stripe
+4. Após pagamento (Stripe webhook atualiza subscription)
+5. Usuário retorna para `/subscription/success`
 
-1. Usuário faz login
-2. Sistema verifica `trial_ends_at` do profile
-3. Se expirou, verifica se a equipe tem assinatura
-4. Se não tem assinatura, exibe tela de bloqueio
-5. Se assinar, libera acesso imediatamente
+### Plano Gratuito/Starter
+- O plano Starter (R$ 59/mês) é o mais básico
+- Opção: Permitir "Começar Grátis" com trial de 14 dias
+- Ou simplesmente todos os planos são pagos
 
-### Trigger para Novos Usuários
+---
 
-A coluna `trial_ends_at` tem um default de `now() + 3 months`, então todo novo usuário automaticamente recebe o trial de 3 meses ao criar a conta.
+## Ajustes na Edge Function
+
+A função `create-checkout` verifica se o usuário é admin da equipe:
+```typescript
+const { data: isAdmin } = await supabase.rpc("is_team_admin", {
+  _user_id: userId,
+  _team_id: teamId,
+});
+```
+
+Como a equipe acabou de ser criada no mesmo fluxo, isso deve funcionar. Porém, para garantir:
+- Adicionar verificação alternativa se o `created_by` da equipe é o usuário atual
+
+---
+
+## Considerações de UX
+
+1. **Indicador de Progresso**: Mostrar em qual etapa o usuário está
+2. **Voltar**: Permitir voltar da etapa 2 para etapa 1
+3. **Loading States**: Mostrar loading durante criação + checkout
+4. **Erro Handling**: Se o checkout falhar, a equipe já foi criada - informar usuário
+5. **Responsividade**: Layout adaptável para mobile (cards em coluna)
+
+---
+
+## Resumo das Alterações
+
+| Arquivo | Ação |
+|---------|------|
+| `src/pages/CreateTeam.tsx` | Adicionar fluxo multi-step com seleção de planos |
+| `src/hooks/useCheckout.ts` | Adicionar hook para criar equipe + checkout |
+| `src/locales/pt-BR.json` | Adicionar novas traduções |
+| `src/locales/en-US.json` | Adicionar novas traduções |
+| `supabase/functions/create-checkout/index.ts` | Verificação alternativa de criador |
+
