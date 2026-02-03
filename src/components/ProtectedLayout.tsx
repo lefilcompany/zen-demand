@@ -19,6 +19,9 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useDataPrecache } from "@/hooks/useDataPrecache";
 import { FirstBoardModal } from "@/components/FirstBoardModal";
+import { TrialExpiredBlock } from "@/components/TrialExpiredBlock";
+import { useTrialStatus } from "@/hooks/useTrialStatus";
+import { useTeamSubscription } from "@/hooks/useSubscription";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +48,10 @@ export function ProtectedLayout() {
     hasCompleted
   } = useOnboarding();
   const { currentTeam } = useSelectedTeam();
+  
+  // Trial and subscription status
+  const { isTrialExpired, isLoading: trialLoading } = useTrialStatus();
+  const { data: subscription, isLoading: subLoading } = useTeamSubscription(currentTeam?.id);
   
   // Initialize data precaching for offline support
   useDataPrecache();
@@ -85,6 +92,25 @@ export function ProtectedLayout() {
 
   // Sidebar starts collapsed on tablet, open on desktop
   const defaultSidebarOpen = !isTablet;
+
+  // Check if user can use the system
+  // User can use if: trial is active OR team has active subscription
+  const hasActiveSubscription = subscription?.status === "active";
+  const canUseSystem = !isTrialExpired || hasActiveSubscription;
+
+  // Show loading while checking trial/subscription status
+  if (trialLoading || subLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Show trial expired block if user cannot use the system
+  if (!canUseSystem) {
+    return <TrialExpiredBlock />;
+  }
 
   return (
     <SidebarProvider defaultOpen={defaultSidebarOpen} key={isTablet ? 'tablet' : 'desktop'}>
