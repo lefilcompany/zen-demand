@@ -1,21 +1,36 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, ArrowRight, Sparkles } from "lucide-react";
+import { CheckCircle2, ArrowRight, Sparkles, Loader2 } from "lucide-react";
 import { useTeamSubscription } from "@/hooks/useSubscription";
 import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useTeams } from "@/hooks/useTeams";
 import { formatPrice } from "@/lib/priceUtils";
 
 export default function SubscriptionSuccess() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { selectedTeamId } = useSelectedTeam();
+  const { selectedTeamId, setSelectedTeamId } = useSelectedTeam();
   const { data: subscription } = useTeamSubscription(selectedTeamId);
+  const { data: teams, isLoading: teamsLoading } = useTeams();
+  const [autoSelectAttempted, setAutoSelectAttempted] = useState(false);
 
   const sessionId = searchParams.get("session_id");
+
+  // Auto-select team if user doesn't have one selected (coming from external checkout)
+  useEffect(() => {
+    if (!selectedTeamId && teams && teams.length > 0 && !autoSelectAttempted) {
+      // Select the most recently created team (likely the one just created in checkout)
+      const sortedTeams = [...teams].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      setSelectedTeamId(sortedTeams[0].id);
+      setAutoSelectAttempted(true);
+    }
+  }, [selectedTeamId, teams, setSelectedTeamId, autoSelectAttempted]);
 
   useEffect(() => {
     // Simple celebration effect using CSS animation
@@ -30,11 +45,23 @@ export default function SubscriptionSuccess() {
 
   const plan = subscription?.plan;
 
+  // Show loading while teams are being fetched
+  if (teamsLoading) {
+    return (
+      <div className="container max-w-2xl py-12 flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="text-muted-foreground">{t("common.loading")}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container max-w-2xl py-12">
       <Card className="text-center">
         <CardHeader className="pb-4">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/10 success-animation">
             <CheckCircle2 className="h-10 w-10 text-success" />
           </div>
           <CardTitle className="text-2xl">{t("subscription.success.title")}</CardTitle>
