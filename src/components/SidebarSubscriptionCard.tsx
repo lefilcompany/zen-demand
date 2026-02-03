@@ -6,47 +6,47 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Crown, Sparkles, ArrowRight, Clock, Zap, Gift, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
-
 export function SidebarSubscriptionCard() {
-  const { t } = useTranslation();
+  const {
+    t
+  } = useTranslation();
   const navigate = useNavigate();
-  const { state, isMobile, setOpenMobile } = useSidebar();
+  const {
+    state,
+    isMobile,
+    setOpenMobile
+  } = useSidebar();
   const isCollapsed = state === "collapsed";
-  const { currentTeam } = useSelectedTeam();
-  const { isTrialActive, daysRemaining, isLoading: trialLoading } = useTrialStatus();
-  const { data: subscription, isLoading: subLoading } = useTeamSubscription(currentTeam?.id);
-
+  const {
+    currentTeam
+  } = useSelectedTeam();
+  const {
+    isTrialActive,
+    daysRemaining,
+    isLoading: trialLoading
+  } = useTrialStatus();
+  const {
+    data: subscription,
+    isLoading: subLoading
+  } = useTeamSubscription(currentTeam?.id);
   const showText = isMobile || !isCollapsed;
-
   const handleClick = () => {
     navigate("/pricing");
     if (isMobile) {
       setOpenMobile(false);
     }
   };
-
   if (trialLoading || subLoading) return null;
 
   // Has active subscription - show current plan
   if (subscription?.status === "active" && subscription.plan) {
     if (!showText) {
-      return (
-        <button
-          onClick={handleClick}
-          className="group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/70 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300"
-          title={subscription.plan.name}
-        >
+      return <button onClick={handleClick} className="group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/70 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300" title={subscription.plan.name}>
           <Crown className="h-5 w-5 text-primary-foreground" />
           <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-white/0 via-white/10 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-        </button>
-      );
+        </button>;
     }
-
-    return (
-      <button
-        onClick={handleClick}
-        className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary/95 to-primary/80 p-[1px] shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300"
-      >
+    return <button onClick={handleClick} className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary/95 to-primary/80 p-[1px] shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
         <div className="relative rounded-[11px] bg-gradient-to-br from-primary via-primary/95 to-primary/85 p-3">
           <div className="flex items-center gap-2.5">
@@ -67,8 +67,7 @@ export function SidebarSubscriptionCard() {
             <ArrowRight className="h-4 w-4 text-primary-foreground/60 group-hover:text-primary-foreground group-hover:translate-x-1 transition-all" />
           </div>
         </div>
-      </button>
-    );
+      </button>;
   }
 
   // Trial active - show trial status with urgency
@@ -79,9 +78,7 @@ export function SidebarSubscriptionCard() {
       if (daysRemaining <= 14) return "attention";
       return "normal";
     };
-
     const urgency = getUrgencyLevel();
-
     const urgencyConfig = {
       critical: {
         gradient: "from-red-500 via-red-600 to-rose-600",
@@ -90,7 +87,7 @@ export function SidebarSubscriptionCard() {
         iconBg: "from-red-500 to-rose-600",
         text: "text-red-500",
         pulse: true,
-        ctaText: "Assinar agora!",
+        ctaText: "Assinar agora!"
       },
       warning: {
         gradient: "from-amber-500 via-orange-500 to-amber-600",
@@ -99,7 +96,7 @@ export function SidebarSubscriptionCard() {
         iconBg: "from-amber-500 to-orange-600",
         text: "text-amber-500",
         pulse: false,
-        ctaText: "Garanta seu plano",
+        ctaText: "Garanta seu plano"
       },
       attention: {
         gradient: "from-primary via-primary/90 to-accent",
@@ -108,7 +105,7 @@ export function SidebarSubscriptionCard() {
         iconBg: "from-primary to-accent",
         text: "text-primary",
         pulse: false,
-        ctaText: "Conhecer planos",
+        ctaText: "Conhecer planos"
       },
       normal: {
         gradient: "from-emerald-500 via-teal-500 to-emerald-600",
@@ -117,127 +114,71 @@ export function SidebarSubscriptionCard() {
         iconBg: "from-emerald-500 to-teal-600",
         text: "text-emerald-500",
         pulse: false,
-        ctaText: "Ver planos",
-      },
+        ctaText: "Ver planos"
+      }
     };
-
     const config = urgencyConfig[urgency];
-
     if (!showText) {
-      return (
-        <button
-          onClick={handleClick}
-          className={cn(
-            "group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br shadow-lg transition-all duration-300 hover:scale-105",
-            config.iconBg,
-            urgency === "critical" ? "shadow-red-500/30 hover:shadow-red-500/50" : "shadow-primary/20"
-          )}
-          title={`${daysRemaining} dias restantes`}
-        >
+      return <button onClick={handleClick} className={cn("group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br shadow-lg transition-all duration-300 hover:scale-105", config.iconBg, urgency === "critical" ? "shadow-red-500/30 hover:shadow-red-500/50" : "shadow-primary/20")} title={`${daysRemaining} dias restantes`}>
           <Gift className="h-5 w-5 text-white" />
-          {config.pulse && (
-            <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white animate-ping" />
-          )}
-          {config.pulse && (
-            <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white" />
-          )}
-        </button>
-      );
+          {config.pulse && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white animate-ping" />}
+          {config.pulse && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white" />}
+        </button>;
     }
-
-    return (
-      <button
-        onClick={handleClick}
-        className={cn(
-          "group relative w-full overflow-hidden rounded-xl p-[1px] transition-all duration-300",
-          urgency === "critical" && "animate-pulse"
-        )}
-      >
+    return <button onClick={handleClick} className={cn("group relative w-full overflow-hidden rounded-xl p-[1px] transition-all duration-300", urgency === "critical" && "animate-pulse")}>
         {/* Border gradient */}
         <div className={cn("absolute inset-0 rounded-xl bg-gradient-to-br opacity-60", config.gradient)} />
         
         {/* Inner content */}
-        <div className={cn(
-          "relative rounded-[11px] bg-gradient-to-br backdrop-blur-sm p-3",
-          config.bgGradient,
-          "bg-background/95"
-        )}>
+        <div className={cn("relative rounded-[11px] bg-gradient-to-br backdrop-blur-sm p-3", config.bgGradient, "bg-background/95")}>
           {/* Shimmer effect */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
           
           <div className="relative">
             {/* Header */}
             <div className="flex items-center gap-2.5 mb-2">
-              <div className={cn(
-                "relative h-9 w-9 rounded-lg bg-gradient-to-br flex items-center justify-center shadow-md",
-                config.iconBg
-              )}>
+              <div className={cn("relative h-9 w-9 rounded-lg bg-gradient-to-br flex items-center justify-center shadow-md", config.iconBg)}>
                 <Gift className="h-4.5 w-4.5 text-white" />
-                {config.pulse && (
-                  <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-red-500 animate-bounce flex items-center justify-center">
+                {config.pulse && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-red-500 animate-bounce flex items-center justify-center">
                     <span className="text-[7px] font-bold text-white">!</span>
-                  </span>
-                )}
+                  </span>}
               </div>
               <div className="flex-1 min-w-0 text-left">
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-bold text-foreground">Período de Teste</span>
-                  <Sparkles className={cn("h-3 w-3", config.text)} />
+                  
                 </div>
                 <div className={cn("text-[11px] font-semibold", config.text)}>
-                  {daysRemaining === 0 
-                    ? "🔥 Último dia!" 
-                    : daysRemaining === 1 
-                      ? "⚡ 1 dia restante" 
-                      : `${daysRemaining} dias restantes`
-                  }
+                  {daysRemaining === 0 ? "🔥 Último dia!" : daysRemaining === 1 ? "⚡ 1 dia restante" : `${daysRemaining} dias restantes`}
                 </div>
               </div>
             </div>
 
             {/* Progress bar */}
             <div className="relative h-1.5 rounded-full bg-muted/50 overflow-hidden mb-2">
-              <div 
-                className={cn("absolute inset-y-0 left-0 rounded-full bg-gradient-to-r transition-all duration-500", config.gradient)}
-                style={{ width: `${Math.max(5, (daysRemaining / 90) * 100)}%` }}
-              />
+              <div className={cn("absolute inset-y-0 left-0 rounded-full bg-gradient-to-r transition-all duration-500", config.gradient)} style={{
+              width: `${Math.max(5, daysRemaining / 90 * 100)}%`
+            }} />
             </div>
 
             {/* CTA Button */}
-            <div className={cn(
-              "flex items-center justify-center gap-1.5 py-2 rounded-lg font-semibold text-xs transition-all",
-              "bg-gradient-to-r",
-              config.gradient,
-              "text-white shadow-md group-hover:shadow-lg group-hover:scale-[1.02]"
-            )}>
+            <div className={cn("flex items-center justify-center gap-1.5 py-2 rounded-lg font-semibold text-xs transition-all", "bg-gradient-to-r", config.gradient, "text-white shadow-md group-hover:shadow-lg group-hover:scale-[1.02]")}>
               <Zap className="h-3.5 w-3.5" />
               <span>{config.ctaText}</span>
               <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
         </div>
-      </button>
-    );
+      </button>;
   }
 
   // No subscription and no trial - show upgrade prompt
   if (!showText) {
-    return (
-      <button
-        onClick={handleClick}
-        className="group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-accent shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300 animate-pulse"
-        title="Escolher um plano"
-      >
+    return <button onClick={handleClick} className="group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-accent shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300 animate-pulse" title="Escolher um plano">
         <Crown className="h-5 w-5 text-primary-foreground" />
-      </button>
-    );
+      </button>;
   }
-
-  return (
-    <button
-      onClick={handleClick}
-      className="group relative w-full overflow-hidden rounded-xl p-[1px] transition-all duration-300"
-    >
+  return <button onClick={handleClick} className="group relative w-full overflow-hidden rounded-xl p-[1px] transition-all duration-300">
       {/* Animated gradient border */}
       <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary via-accent to-primary opacity-70 animate-gradient-shift" />
       
@@ -263,6 +204,5 @@ export function SidebarSubscriptionCard() {
           </div>
         </div>
       </div>
-    </button>
-  );
+    </button>;
 }
