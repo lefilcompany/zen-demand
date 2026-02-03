@@ -59,14 +59,14 @@ export function useCreateJoinRequest() {
     mutationFn: async ({ teamId, message }: { teamId: string; message?: string }) => {
       if (!user) throw new Error("Not authenticated");
 
-      // First, delete any existing rejected request for this team/user
-      // This allows users to retry after being rejected
+      // Delete any existing rejected OR approved requests for this team/user
+      // This allows users to retry after being rejected or removed from team
       await supabase
         .from("team_join_requests")
         .delete()
         .eq("team_id", teamId)
         .eq("user_id", user.id)
-        .eq("status", "rejected");
+        .in("status", ["rejected", "approved"]);
 
       const { data, error } = await supabase
         .from("team_join_requests")
@@ -246,6 +246,29 @@ export function useExistingRequest(teamId: string | null) {
 
       if (error) throw error;
       return data as TeamJoinRequest | null;
+    },
+    enabled: !!user && !!teamId,
+  });
+}
+
+// Check if user is an active member of a team (in team_members table)
+export function useIsTeamMember(teamId: string | null) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["is-team-member", teamId, user?.id],
+    queryFn: async () => {
+      if (!user || !teamId) return false;
+
+      const { data, error } = await supabase
+        .from("team_members")
+        .select("id")
+        .eq("team_id", teamId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return !!data;
     },
     enabled: !!user && !!teamId,
   });

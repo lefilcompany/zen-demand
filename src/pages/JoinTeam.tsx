@@ -2,8 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useTeamByAccessCode, useCreateJoinRequest, useExistingRequest } from "@/hooks/useTeamJoinRequests";
-import { ArrowLeft, Users, Clock, CheckCircle, XCircle, Loader2, KeyRound, Send, Sparkles } from "lucide-react";
+import { useTeamByAccessCode, useCreateJoinRequest, useExistingRequest, useIsTeamMember } from "@/hooks/useTeamJoinRequests";
+import { ArrowLeft, Users, Clock, CheckCircle, XCircle, Loader2, KeyRound, Send, Sparkles, UserMinus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ export default function JoinTeam() {
 
   const { data: teamPreview, isLoading: isLoadingTeam } = useTeamByAccessCode(accessCode);
   const { data: existingRequest, isLoading: isLoadingRequest } = useExistingRequest(teamPreview?.id || null);
+  const { data: isActiveMember, isLoading: isLoadingMember } = useIsTeamMember(teamPreview?.id || null);
   const createRequest = useCreateJoinRequest();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -49,15 +50,34 @@ export default function JoinTeam() {
     );
   };
 
-  // Only consider pending or approved requests as blocking
-  const hasBlockingRequest = existingRequest && 
-    (existingRequest.status === "pending" || existingRequest.status === "approved");
+  // Only block if request is pending, OR if approved AND user is still an active member
+  const hasBlockingRequest = existingRequest && (
+    existingRequest.status === "pending" ||
+    (existingRequest.status === "approved" && isActiveMember)
+  );
   
-  // User can submit new request if no existing request OR if previous was rejected
-  const canSubmitRequest = !existingRequest || existingRequest.status === "rejected";
+  // User can submit new request if:
+  // 1. No existing request, OR
+  // 2. Previous was rejected, OR
+  // 3. Was approved but user was removed (not active member anymore)
+  const canSubmitRequest = !existingRequest || 
+    existingRequest.status === "rejected" ||
+    (existingRequest.status === "approved" && !isActiveMember);
 
   const getStatusBadge = () => {
     if (!existingRequest) return null;
+
+    // If approved but no longer an active member, user was removed
+    if (existingRequest.status === "approved" && !isActiveMember) {
+      return (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-amber-500/10 text-amber-600 border-amber-500/20">
+          <UserMinus className="h-5 w-5 flex-shrink-0" />
+          <span className="font-medium text-sm">
+            Você foi removido desta equipe. Solicite entrada novamente.
+          </span>
+        </div>
+      );
+    }
 
     const statusConfig = {
       pending: {
