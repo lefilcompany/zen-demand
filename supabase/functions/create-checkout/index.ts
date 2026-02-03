@@ -60,13 +60,25 @@ serve(async (req) => {
       );
     }
 
-    // Check if user is team admin
+    // Check if user is team admin or team creator
     const { data: isAdmin, error: adminError } = await supabase.rpc("is_team_admin", {
       _user_id: userId,
       _team_id: teamId,
     });
 
-    if (adminError || !isAdmin) {
+    // Also check if user is the team creator (for newly created teams)
+    let isCreator = false;
+    if (!isAdmin) {
+      const { data: team } = await supabase
+        .from("teams")
+        .select("created_by")
+        .eq("id", teamId)
+        .single();
+      
+      isCreator = team?.created_by === userId;
+    }
+
+    if (adminError || (!isAdmin && !isCreator)) {
       return new Response(
         JSON.stringify({ error: "Only team admins can manage subscriptions" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
