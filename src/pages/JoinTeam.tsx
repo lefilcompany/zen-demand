@@ -49,6 +49,13 @@ export default function JoinTeam() {
     );
   };
 
+  // Only consider pending or approved requests as blocking
+  const hasBlockingRequest = existingRequest && 
+    (existingRequest.status === "pending" || existingRequest.status === "approved");
+  
+  // User can submit new request if no existing request OR if previous was rejected
+  const canSubmitRequest = !existingRequest || existingRequest.status === "rejected";
+
   const getStatusBadge = () => {
     if (!existingRequest) return null;
 
@@ -65,7 +72,7 @@ export default function JoinTeam() {
       },
       rejected: {
         icon: XCircle,
-        text: "Solicitação rejeitada",
+        text: "Sua solicitação anterior foi rejeitada. Você pode tentar novamente ou buscar outra equipe.",
         className: "bg-destructive/10 text-destructive border-destructive/20",
       },
     };
@@ -222,8 +229,8 @@ export default function JoinTeam() {
                   )}
                 </div>
 
-                {/* Request Form */}
-                {!existingRequest && (
+                {/* Request Form - show if no blocking request */}
+                {canSubmitRequest && (
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="message" className="text-base font-medium">
@@ -262,7 +269,7 @@ export default function JoinTeam() {
                         ) : (
                           <>
                             <Send className="h-4 w-4" />
-                            Solicitar Entrada
+                            {existingRequest?.status === "rejected" ? "Tentar Novamente" : "Solicitar Entrada"}
                           </>
                         )}
                       </Button>
@@ -270,8 +277,8 @@ export default function JoinTeam() {
                   </form>
                 )}
 
-                {/* Back Button for existing request */}
-                {existingRequest && (
+                {/* Back Button for blocking requests only */}
+                {hasBlockingRequest && (
                   <Button
                     variant="outline"
                     onClick={() => navigate("/")}
