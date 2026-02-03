@@ -4,7 +4,7 @@ import { useTrialStatus } from "@/hooks/useTrialStatus";
 import { useTeamSubscription } from "@/hooks/useSubscription";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSidebar } from "@/components/ui/sidebar";
-import { Crown, Sparkles, ArrowRight, Clock, Zap, Gift, Star, ShoppingCart } from "lucide-react";
+import { Crown, Sparkles, ArrowRight, Clock, Zap, Star, ShoppingCart, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 export function SidebarSubscriptionCard() {
   const {
@@ -120,7 +120,7 @@ export function SidebarSubscriptionCard() {
     const config = urgencyConfig[urgency];
     if (!showText) {
       return <button onClick={handleClick} className={cn("group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br shadow-lg transition-all duration-300 hover:scale-105", config.iconBg, urgency === "critical" ? "shadow-red-500/30 hover:shadow-red-500/50" : "shadow-primary/20")} title={`${daysRemaining} dias restantes`}>
-          <Gift className="h-5 w-5 text-white" />
+          <ShoppingBag className="h-5 w-5 text-white" />
           {config.pulse && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white animate-ping" />}
           {config.pulse && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white" />}
         </button>;
