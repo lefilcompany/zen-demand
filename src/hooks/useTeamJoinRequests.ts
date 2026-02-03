@@ -59,6 +59,15 @@ export function useCreateJoinRequest() {
     mutationFn: async ({ teamId, message }: { teamId: string; message?: string }) => {
       if (!user) throw new Error("Not authenticated");
 
+      // First, delete any existing rejected request for this team/user
+      // This allows users to retry after being rejected
+      await supabase
+        .from("team_join_requests")
+        .delete()
+        .eq("team_id", teamId)
+        .eq("user_id", user.id)
+        .eq("status", "rejected");
+
       const { data, error } = await supabase
         .from("team_join_requests")
         .insert({
@@ -74,6 +83,7 @@ export function useCreateJoinRequest() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-join-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["existing-request"] });
     },
   });
 }
