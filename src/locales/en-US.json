@@ -422,5 +422,25 @@
     "viewPlans": "View Plans",
     "freeTrialEnded": "Free trial period ended",
     "allRightsReserved": "All rights reserved."
+  },
+  "getStarted": {
+    "title": "Get Started",
+    "subtitle": "Choose your plan and create your team",
+    "step1": "Plan",
+    "step2": "Account",
+    "step3": "Team",
+    "selectPlanSubtitle": "Select the ideal plan for your team",
+    "authSubtitle": "Sign in or create your account to continue",
+    "teamSubtitle": "Set up your team details",
+    "heroTitle": "Start managing your demands today",
+    "heroSubtitle": "Organize, track and deliver projects efficiently using SoMA+",
+    "securePayment": "Secure payment via Stripe",
+    "backToPlans": "Back to plans",
+    "finishAndPay": "Finish and Pay",
+    "processingCheckout": "Processing payment...",
+    "teamInfo": "Team Information",
+    "accountCreated": "Account created successfully!",
+    "authError": "Authentication error",
+    "checkoutError": "Error processing payment"
   }
 }

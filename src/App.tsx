@@ -54,6 +54,7 @@ import NoteDetail from "./pages/NoteDetail";
 import NotFound from "./pages/NotFound";
 import Pricing from "./pages/Pricing";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
+import GetStarted from "./pages/GetStarted";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,7 @@ const App = () => (
                       <Routes>
                         {/* Public routes */}
                         <Route path="/auth" element={<Auth />} />
+                        <Route path="/get-started" element={<GetStarted />} />
                         <Route path="/shared/:token" element={<SharedDemand />} />
                         <Route path="/shared/note/:token" element={<SharedNote />} />
                         <Route path="/reset-password" element={<ResetPassword />} />

@@ -333,5 +333,25 @@
     "viewPlans": "Ver Planes",
     "freeTrialEnded": "Período de prueba gratuito finalizado",
     "allRightsReserved": "Todos los derechos reservados."
+  },
+  "getStarted": {
+    "title": "Comenzar",
+    "subtitle": "Elige tu plan y crea tu equipo",
+    "step1": "Plan",
+    "step2": "Cuenta",
+    "step3": "Equipo",
+    "selectPlanSubtitle": "Selecciona el plan ideal para tu equipo",
+    "authSubtitle": "Inicia sesión o crea tu cuenta para continuar",
+    "teamSubtitle": "Configura los datos de tu equipo",
+    "heroTitle": "Comienza a gestionar tus demandas hoy",
+    "heroSubtitle": "Organiza, rastrea y entrega proyectos de manera eficiente usando SoMA+",
+    "securePayment": "Pago seguro vía Stripe",
+    "backToPlans": "Volver a planes",
+    "finishAndPay": "Finalizar y Pagar",
+    "processingCheckout": "Procesando pago...",
+    "teamInfo": "Información del Equipo",
+    "accountCreated": "¡Cuenta creada exitosamente!",
+    "authError": "Error de autenticación",
+    "checkoutError": "Error al procesar el pago"
   }
 }
