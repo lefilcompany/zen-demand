@@ -4,7 +4,7 @@ import { useTrialStatus } from "@/hooks/useTrialStatus";
 import { useTeamSubscription } from "@/hooks/useSubscription";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSidebar } from "@/components/ui/sidebar";
-import { Crown, Sparkles, ArrowRight, Clock, Zap } from "lucide-react";
+import { Crown, Sparkles, ArrowRight, Clock, Zap, Gift, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function SidebarSubscriptionCard() {
@@ -25,20 +25,19 @@ export function SidebarSubscriptionCard() {
     }
   };
 
-  // Don't show if still loading
   if (trialLoading || subLoading) return null;
 
   // Has active subscription - show current plan
   if (subscription?.status === "active" && subscription.plan) {
-    // Collapsed state - show icon only
     if (!showText) {
       return (
         <button
           onClick={handleClick}
-          className="w-10 h-10 mx-auto flex items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/30 hover:border-primary/50 hover:from-primary/30 hover:to-primary/20 transition-all duration-200 group"
+          className="group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/70 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300"
           title={subscription.plan.name}
         >
-          <Crown className="h-4 w-4 text-primary group-hover:scale-110 transition-transform" />
+          <Crown className="h-5 w-5 text-primary-foreground" />
+          <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-white/0 via-white/10 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
         </button>
       );
     }
@@ -46,20 +45,29 @@ export function SidebarSubscriptionCard() {
     return (
       <button
         onClick={handleClick}
-        className="w-full p-3 rounded-xl bg-gradient-to-br from-primary/15 via-primary/10 to-accent/10 border border-primary/20 hover:border-primary/40 hover:from-primary/20 hover:to-accent/15 transition-all duration-300 group text-left"
+        className="group relative w-full overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary/95 to-primary/80 p-[1px] shadow-xl shadow-primary/20 hover:shadow-primary/30 transition-all duration-300"
       >
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-primary/30 transition-shadow">
-            <Crown className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-foreground truncate">{subscription.plan.name}</span>
-              <Sparkles className="h-3 w-3 text-primary animate-pulse" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+        <div className="relative rounded-[15px] bg-gradient-to-br from-primary via-primary/95 to-primary/85 p-4">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-inner">
+                <Crown className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 flex items-center justify-center shadow-lg">
+                <Star className="h-2.5 w-2.5 text-emerald-900 fill-current" />
+              </div>
             </div>
-            <span className="text-xs text-muted-foreground">Plano ativo</span>
+            <div className="flex-1 min-w-0 text-left">
+              <div className="flex items-center gap-2">
+                <span className="text-base font-bold text-primary-foreground truncate">
+                  {subscription.plan.name}
+                </span>
+              </div>
+              <span className="text-xs text-primary-foreground/70 font-medium">Plano ativo</span>
+            </div>
+            <ArrowRight className="h-5 w-5 text-primary-foreground/60 group-hover:text-primary-foreground group-hover:translate-x-1 transition-all" />
           </div>
-          <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
         </div>
       </button>
     );
@@ -76,54 +84,64 @@ export function SidebarSubscriptionCard() {
 
     const urgency = getUrgencyLevel();
 
-    const urgencyStyles = {
+    const urgencyConfig = {
       critical: {
-        bg: "from-destructive/20 via-destructive/15 to-destructive/10",
-        border: "border-destructive/40 hover:border-destructive/60",
-        icon: "from-destructive to-destructive/80",
-        iconShadow: "shadow-destructive/30",
-        text: "text-destructive",
+        gradient: "from-red-500 via-red-600 to-rose-600",
+        bgGradient: "from-red-500/20 via-red-500/10 to-rose-500/5",
+        border: "border-red-400/50",
+        iconBg: "from-red-500 to-rose-600",
+        text: "text-red-500",
+        pulse: true,
+        ctaText: "Assinar agora!",
       },
       warning: {
-        bg: "from-amber-500/20 via-amber-500/15 to-amber-500/10",
-        border: "border-amber-500/40 hover:border-amber-500/60",
-        icon: "from-amber-500 to-amber-600",
-        iconShadow: "shadow-amber-500/30",
-        text: "text-amber-600 dark:text-amber-400",
+        gradient: "from-amber-500 via-orange-500 to-amber-600",
+        bgGradient: "from-amber-500/20 via-amber-500/10 to-orange-500/5",
+        border: "border-amber-400/50",
+        iconBg: "from-amber-500 to-orange-600",
+        text: "text-amber-500",
+        pulse: false,
+        ctaText: "Garanta seu plano",
       },
       attention: {
-        bg: "from-primary/20 via-primary/15 to-primary/10",
-        border: "border-primary/40 hover:border-primary/60",
-        icon: "from-primary to-primary/80",
-        iconShadow: "shadow-primary/30",
+        gradient: "from-primary via-primary/90 to-accent",
+        bgGradient: "from-primary/20 via-primary/10 to-accent/10",
+        border: "border-primary/40",
+        iconBg: "from-primary to-accent",
         text: "text-primary",
+        pulse: false,
+        ctaText: "Conhecer planos",
       },
       normal: {
-        bg: "from-emerald-500/15 via-emerald-500/10 to-emerald-500/5",
-        border: "border-emerald-500/30 hover:border-emerald-500/50",
-        icon: "from-emerald-500 to-emerald-600",
-        iconShadow: "shadow-emerald-500/20",
-        text: "text-emerald-600 dark:text-emerald-400",
+        gradient: "from-emerald-500 via-teal-500 to-emerald-600",
+        bgGradient: "from-emerald-500/15 via-teal-500/10 to-emerald-500/5",
+        border: "border-emerald-400/40",
+        iconBg: "from-emerald-500 to-teal-600",
+        text: "text-emerald-500",
+        pulse: false,
+        ctaText: "Ver planos",
       },
     };
 
-    const styles = urgencyStyles[urgency];
+    const config = urgencyConfig[urgency];
 
-    // Collapsed state
     if (!showText) {
       return (
         <button
           onClick={handleClick}
           className={cn(
-            "w-10 h-10 mx-auto flex items-center justify-center rounded-full bg-gradient-to-br border transition-all duration-200 group relative",
-            styles.bg,
-            styles.border
+            "group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br shadow-lg transition-all duration-300 hover:scale-105",
+            config.iconBg,
+            urgency === "critical" ? "shadow-red-500/30 hover:shadow-red-500/50" : "shadow-primary/20"
           )}
           title={`${daysRemaining} dias restantes`}
         >
-          <Clock className={cn("h-4 w-4 group-hover:scale-110 transition-transform", styles.text)} />
-          {urgency === "critical" && (
-            <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-destructive animate-pulse" />
+          <Gift className="h-5 w-5 text-white" />
+          {config.pulse && (
+            <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white animate-ping" />
+          )}
+          {config.pulse && (
+            <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white" />
           )}
         </button>
       );
@@ -133,55 +151,72 @@ export function SidebarSubscriptionCard() {
       <button
         onClick={handleClick}
         className={cn(
-          "w-full p-3 rounded-xl bg-gradient-to-br border transition-all duration-300 group text-left relative overflow-hidden",
-          styles.bg,
-          styles.border
+          "group relative w-full overflow-hidden rounded-2xl p-[1px] transition-all duration-300",
+          urgency === "critical" && "animate-pulse"
         )}
       >
-        {/* Animated background for critical/warning */}
-        {(urgency === "critical" || urgency === "warning") && (
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-shimmer" />
-        )}
+        {/* Border gradient */}
+        <div className={cn("absolute inset-0 rounded-2xl bg-gradient-to-br opacity-60", config.gradient)} />
         
-        <div className="relative flex items-center gap-3">
-          <div className={cn(
-            "h-10 w-10 rounded-full bg-gradient-to-br flex items-center justify-center shadow-lg transition-shadow",
-            styles.icon,
-            styles.iconShadow
-          )}>
-            <Clock className="h-5 w-5 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-foreground">Período de Teste</span>
-              {urgency === "critical" && (
-                <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
-              )}
-            </div>
-            <div className="flex items-center gap-1">
-              <span className={cn("text-xs font-medium", styles.text)}>
-                {daysRemaining === 0 
-                  ? "Último dia!" 
-                  : daysRemaining === 1 
-                    ? "1 dia restante" 
-                    : `${daysRemaining} dias restantes`
-                }
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* CTA */}
+        {/* Inner content */}
         <div className={cn(
-          "mt-3 flex items-center justify-center gap-2 py-2 rounded-lg bg-background/60 backdrop-blur-sm border border-border/50 group-hover:bg-background/80 transition-colors",
-          urgency === "critical" && "bg-destructive/10 border-destructive/20",
-          urgency === "warning" && "bg-amber-500/10 border-amber-500/20"
+          "relative rounded-[15px] bg-gradient-to-br backdrop-blur-sm p-4",
+          config.bgGradient,
+          "bg-background/95"
         )}>
-          <Zap className={cn("h-4 w-4", styles.text)} />
-          <span className={cn("text-xs font-medium", styles.text)}>
-            {urgency === "critical" || urgency === "warning" ? "Assinar agora" : "Ver planos"}
-          </span>
-          <ArrowRight className={cn("h-3 w-3 group-hover:translate-x-0.5 transition-transform", styles.text)} />
+          {/* Shimmer effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+          
+          <div className="relative">
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-3">
+              <div className={cn(
+                "relative h-12 w-12 rounded-xl bg-gradient-to-br flex items-center justify-center shadow-lg",
+                config.iconBg
+              )}>
+                <Gift className="h-6 w-6 text-white" />
+                {config.pulse && (
+                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 animate-bounce flex items-center justify-center">
+                    <span className="text-[8px] font-bold text-white">!</span>
+                  </span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-foreground">Período de Teste</span>
+                  <Sparkles className={cn("h-3.5 w-3.5", config.text)} />
+                </div>
+                <div className={cn("text-xs font-semibold", config.text)}>
+                  {daysRemaining === 0 
+                    ? "🔥 Último dia!" 
+                    : daysRemaining === 1 
+                      ? "⚡ 1 dia restante" 
+                      : `${daysRemaining} dias restantes`
+                  }
+                </div>
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div className="relative h-2 rounded-full bg-muted/50 overflow-hidden mb-3">
+              <div 
+                className={cn("absolute inset-y-0 left-0 rounded-full bg-gradient-to-r transition-all duration-500", config.gradient)}
+                style={{ width: `${Math.max(5, (daysRemaining / 90) * 100)}%` }}
+              />
+            </div>
+
+            {/* CTA Button */}
+            <div className={cn(
+              "flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all",
+              "bg-gradient-to-r",
+              config.gradient,
+              "text-white shadow-lg group-hover:shadow-xl group-hover:scale-[1.02]"
+            )}>
+              <Zap className="h-4 w-4" />
+              <span>{config.ctaText}</span>
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
         </div>
       </button>
     );
@@ -192,10 +227,10 @@ export function SidebarSubscriptionCard() {
     return (
       <button
         onClick={handleClick}
-        className="w-10 h-10 mx-auto flex items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/30 hover:border-primary/50 hover:from-primary/30 hover:to-primary/20 transition-all duration-200 group animate-pulse"
+        className="group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-accent shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300 animate-pulse"
         title="Escolher um plano"
       >
-        <Crown className="h-4 w-4 text-primary group-hover:scale-110 transition-transform" />
+        <Crown className="h-5 w-5 text-primary-foreground" />
       </button>
     );
   }
@@ -203,21 +238,32 @@ export function SidebarSubscriptionCard() {
   return (
     <button
       onClick={handleClick}
-      className="w-full p-3 rounded-xl bg-gradient-to-br from-primary/20 via-primary/15 to-accent/15 border border-primary/30 hover:border-primary/50 transition-all duration-300 group text-left"
+      className="group relative w-full overflow-hidden rounded-2xl p-[1px] transition-all duration-300"
     >
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-primary/30 transition-shadow">
-          <Crown className="h-5 w-5 text-primary-foreground" />
+      {/* Animated gradient border */}
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary via-accent to-primary opacity-70 animate-gradient-shift" />
+      
+      {/* Inner content */}
+      <div className="relative rounded-[15px] bg-gradient-to-br from-primary/10 via-accent/5 to-primary/10 bg-background/95 backdrop-blur-sm p-4">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+        
+        <div className="relative">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30">
+              <Crown className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <span className="text-sm font-bold text-foreground block">Escolha um plano</span>
+              <p className="text-xs text-muted-foreground">Desbloqueie todo o potencial</p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg group-hover:shadow-xl group-hover:scale-[1.02] transition-all">
+            <Sparkles className="h-4 w-4" />
+            <span>Ver planos</span>
+            <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <span className="text-sm font-semibold text-foreground">Escolha um plano</span>
-          <p className="text-xs text-muted-foreground">Desbloqueie todos os recursos</p>
-        </div>
-      </div>
-      <div className="mt-3 flex items-center justify-center gap-2 py-2 rounded-lg bg-primary/10 group-hover:bg-primary/15 transition-colors">
-        <Sparkles className="h-4 w-4 text-primary" />
-        <span className="text-xs font-medium text-primary">Ver planos</span>
-        <ArrowRight className="h-3 w-3 text-primary group-hover:translate-x-0.5 transition-transform" />
       </div>
     </button>
   );
