@@ -4,7 +4,7 @@ import { useTrialStatus } from "@/hooks/useTrialStatus";
 import { useTeamSubscription } from "@/hooks/useSubscription";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSidebar } from "@/components/ui/sidebar";
-import { Crown, Sparkles, ArrowRight, Clock, Zap, Star, ShoppingCart, ShoppingBag } from "lucide-react";
+import { Crown, Sparkles, ArrowRight, Clock, Zap, Star, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 export function SidebarSubscriptionCard() {
   const {
@@ -138,7 +138,7 @@ export function SidebarSubscriptionCard() {
             {/* Header */}
             <div className="flex items-center gap-2.5 mb-2">
               <div className={cn("relative h-9 w-9 rounded-lg bg-gradient-to-br flex items-center justify-center shadow-md", config.iconBg)}>
-                <ShoppingCart className="h-4.5 w-4.5 text-white" />
+                <ShoppingBag className="h-4.5 w-4.5 text-white" />
                 {config.pulse && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-red-500 animate-bounce flex items-center justify-center">
                     <span className="text-[7px] font-bold text-white">!</span>
                   </span>}
