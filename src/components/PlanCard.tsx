@@ -148,7 +148,7 @@ export function PlanCard({
       )}
 
       {isPopular && !isCurrentPlan && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
           <Badge className="bg-gradient-to-r from-primary to-orange-500 text-white border-0 shadow-lg shadow-primary/30 px-4 py-1">
             <Sparkles className="h-3 w-3 mr-1" />
             {t("pricing.popular")}
@@ -157,7 +157,7 @@ export function PlanCard({
       )}
       
       {isCurrentPlan && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
           <Badge className="bg-gradient-to-r from-success to-emerald-500 text-white border-0 shadow-lg shadow-success/30 px-4 py-1">
             <Check className="h-3 w-3 mr-1" />
             {t("pricing.currentPlan")}
