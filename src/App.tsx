@@ -33,12 +33,10 @@ import SharedDemand from "./pages/SharedDemand";
 import SharedNote from "./pages/SharedNote";
 import Kanban from "./pages/Kanban";
 import ArchivedDemands from "./pages/ArchivedDemands";
-
 import BoardMembers from "./pages/BoardMembers";
 import Boards from "./pages/Boards";
 import BoardDetail from "./pages/BoardDetail";
 import TeamConfig from "./pages/TeamConfig";
-
 import Reports from "./pages/Reports";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
@@ -55,11 +53,8 @@ import NotFound from "./pages/NotFound";
 import Pricing from "./pages/Pricing";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import GetStarted from "./pages/GetStarted";
-
 const queryClient = new QueryClient();
-
-const App = () => (
-  <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
@@ -108,7 +103,7 @@ const App = () => (
                           <Route path="/kanban" element={<Kanban />} />
                           <Route path="/archived" element={<ArchivedDemands />} />
                           
-                          <Route path="/time-management" element={<TimeManagement />} />
+                          <Route path="/time-management" element={<TimeManagement />} className="" />
                           <Route path="/board-summary" element={<BoardSummary />} />
                           <Route path="/user/:userId" element={<UserProfile />} />
                           <Route path="/team-demands" element={<TeamDemands />} />
@@ -134,7 +129,5 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
-  </ThemeProvider>
-);
-
+  </ThemeProvider>;
 export default App;
