@@ -1,16 +1,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useSelectedBoard } from "@/contexts/BoardContext";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
   Activity, 
   FileText, 
-  CheckCircle2, 
   PlayCircle, 
   AlertCircle,
-  FileCheck,
   FilePlus,
   UserCheck,
   Package
@@ -20,26 +18,26 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { truncateText } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
-interface SystemActivity {
+interface BoardActivity {
   id: string;
   type: 'demand_created' | 'demand_delivered' | 'demand_started' | 'request_created' | 'request_approved' | 'request_rejected';
   title: string;
   demandId?: string;
   requestId?: string;
   timestamp: string;
-  actionBy?: string; // Quem realizou a ação
-  createdBy?: string; // Quem criou originalmente
+  actionBy?: string;
+  createdBy?: string;
 }
 
 export function RecentActivities() {
-  const { selectedTeamId } = useSelectedTeam();
+  const { selectedBoardId, currentBoard } = useSelectedBoard();
   const navigate = useNavigate();
 
-  // Buscar demandas recentes criadas
+  // Buscar demandas recentes criadas no quadro
   const { data: recentDemands } = useQuery({
-    queryKey: ["recent-demands-created", selectedTeamId],
+    queryKey: ["recent-demands-created", selectedBoardId],
     queryFn: async () => {
-      if (!selectedTeamId) return [];
+      if (!selectedBoardId) return [];
       
       const { data, error } = await supabase
         .from("demands")
@@ -49,21 +47,21 @@ export function RecentActivities() {
           created_at,
           creator:profiles!demands_created_by_fkey(full_name)
         `)
-        .eq("team_id", selectedTeamId)
+        .eq("board_id", selectedBoardId)
         .order("created_at", { ascending: false })
         .limit(10);
       
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedTeamId,
+    enabled: !!selectedBoardId,
   });
 
-  // Buscar demandas entregues recentemente (com responsáveis que entregaram)
+  // Buscar demandas entregues recentemente no quadro
   const { data: deliveredDemands } = useQuery({
-    queryKey: ["recent-demands-delivered", selectedTeamId],
+    queryKey: ["recent-demands-delivered", selectedBoardId],
     queryFn: async () => {
-      if (!selectedTeamId) return [];
+      if (!selectedBoardId) return [];
       
       const { data: deliveredStatus } = await supabase
         .from("demand_statuses")
@@ -84,7 +82,7 @@ export function RecentActivities() {
             profile:profiles(full_name)
           )
         `)
-        .eq("team_id", selectedTeamId)
+        .eq("board_id", selectedBoardId)
         .eq("status_id", deliveredStatus.id)
         .order("updated_at", { ascending: false })
         .limit(5);
@@ -92,14 +90,14 @@ export function RecentActivities() {
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedTeamId,
+    enabled: !!selectedBoardId,
   });
 
-  // Buscar solicitações de demanda recentes
+  // Buscar solicitações de demanda recentes do quadro
   const { data: recentRequests } = useQuery({
-    queryKey: ["recent-requests", selectedTeamId],
+    queryKey: ["recent-requests", selectedBoardId],
     queryFn: async () => {
-      if (!selectedTeamId) return [];
+      if (!selectedBoardId) return [];
       
       const { data, error } = await supabase
         .from("demand_requests")
@@ -112,18 +110,18 @@ export function RecentActivities() {
           creator:profiles!demand_requests_created_by_fkey(full_name),
           responder:profiles!demand_requests_responded_by_fkey(full_name)
         `)
-        .eq("team_id", selectedTeamId)
+        .eq("board_id", selectedBoardId)
         .order("updated_at", { ascending: false })
         .limit(10);
       
       if (error) throw error;
       return data;
     },
-    enabled: !!selectedTeamId,
+    enabled: !!selectedBoardId,
   });
 
   // Combinar e ordenar todas as atividades
-  const activities: SystemActivity[] = [];
+  const activities: BoardActivity[] = [];
 
   // Adicionar demandas criadas
   recentDemands?.forEach((demand: any) => {
@@ -139,7 +137,6 @@ export function RecentActivities() {
 
   // Adicionar demandas entregues
   deliveredDemands?.forEach((demand: any) => {
-    // Pegar os nomes dos responsáveis da demanda
     const assigneeNames = demand.demand_assignees
       ?.map((a: any) => a.profile?.full_name)
       .filter(Boolean)
@@ -151,22 +148,22 @@ export function RecentActivities() {
       title: demand.title,
       demandId: demand.id,
       timestamp: demand.updated_at,
-      actionBy: assigneeNames || demand.creator?.full_name, // Responsáveis pela entrega
+      actionBy: assigneeNames || demand.creator?.full_name,
       createdBy: demand.creator?.full_name,
     });
   });
 
   // Adicionar solicitações
   recentRequests?.forEach((request: any) => {
-    let type: SystemActivity['type'] = 'request_created';
+    let type: BoardActivity['type'] = 'request_created';
     let actionBy = request.creator?.full_name;
     
     if (request.status === 'approved') {
       type = 'request_approved';
-      actionBy = request.responder?.full_name; // Quem aprovou
+      actionBy = request.responder?.full_name;
     } else if (request.status === 'rejected') {
       type = 'request_rejected';
-      actionBy = request.responder?.full_name; // Quem rejeitou
+      actionBy = request.responder?.full_name;
     }
     
     activities.push({
@@ -185,7 +182,7 @@ export function RecentActivities() {
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, 15);
 
-  const getActivityConfig = (type: SystemActivity['type']) => {
+  const getActivityConfig = (type: BoardActivity['type']) => {
     switch (type) {
       case 'demand_created':
         return {
@@ -239,7 +236,7 @@ export function RecentActivities() {
     }
   };
 
-  const handleClick = (activity: SystemActivity) => {
+  const handleClick = (activity: BoardActivity) => {
     if (activity.demandId) {
       navigate(`/demands/${activity.demandId}`);
     } else if (activity.requestId) {
@@ -249,7 +246,7 @@ export function RecentActivities() {
 
   const isLoading = !recentDemands && !deliveredDemands && !recentRequests;
 
-  if (!selectedTeamId) {
+  if (!selectedBoardId) {
     return null;
   }
 
@@ -258,9 +255,11 @@ export function RecentActivities() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <Activity className="h-5 w-5 text-primary" />
-          Atividades do Sistema
+          Atividades do Quadro
         </CardTitle>
-        <CardDescription>Atualizações gerais sobre demandas e solicitações</CardDescription>
+        <CardDescription>
+          Atualizações de {currentBoard?.name || "quadro selecionado"}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
