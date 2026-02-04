@@ -25,6 +25,24 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+interface LateDemandDetail {
+  title: string;
+  daysLate: number;
+  dueDate: string;
+  deliveredAt: string;
+  assignees: string[];
+  priority: string;
+}
+
+interface OverdueDemandDetail {
+  title: string;
+  daysOverdue: number;
+  dueDate: string;
+  assignees: string[];
+  priority: string;
+  status: string;
+}
+
 interface BoardAnalytics {
   board: { name: string; description: string | null; monthlyLimit: number | null };
   period: { start: string; end: string; days: number };
@@ -35,6 +53,13 @@ interface BoardAnalytics {
     late: number;
     overdue: number;
     avgDeliveryDays: number;
+    avgDaysLate?: number;
+    avgDaysOverdue?: number;
+    withDueDate?: number;
+    withoutDueDate?: number;
+    onTimeRate?: number;
+    lateDetails?: LateDemandDetail[];
+    overdueDetails?: OverdueDemandDetail[];
     byStatus: { status: string; count: number }[];
     byPriority: { priority: string; count: number }[];
   };
@@ -43,7 +68,10 @@ interface BoardAnalytics {
     role: string;
     demandCount: number;
     completedCount: number;
+    onTimeCount?: number;
+    lateCount?: number;
     completionRate: number;
+    onTimeRate?: number;
     avgTimeHours: number;
   }[];
   requesters: {
@@ -123,6 +151,10 @@ function MemberPerformanceCard({ member }: { member: BoardAnalytics["members"][0
     requester: "bg-muted text-muted-foreground",
   };
 
+  // Use new onTimeRate if available
+  const memberOnTimeRate = member.onTimeRate ?? 0;
+  const hasOnTimeData = member.onTimeCount !== undefined || member.lateCount !== undefined;
+
   return (
     <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
       <div className="flex items-center gap-3 min-w-0">
@@ -138,9 +170,19 @@ function MemberPerformanceCard({ member }: { member: BoardAnalytics["members"][0
           </span>
         </div>
       </div>
-      <div className="text-right shrink-0">
+      <div className="text-right shrink-0 space-y-0.5">
         <p className="text-sm font-medium">{member.completedCount}/{member.demandCount}</p>
         <p className="text-xs text-muted-foreground">{member.completionRate}% concluído</p>
+        {hasOnTimeData && (
+          <p className={cn(
+            "text-xs font-medium",
+            memberOnTimeRate >= 80 ? "text-emerald-600 dark:text-emerald-400" :
+            memberOnTimeRate >= 60 ? "text-amber-600 dark:text-amber-400" :
+            "text-red-600 dark:text-red-400"
+          )}>
+            {memberOnTimeRate}% no prazo
+          </p>
+        )}
       </div>
     </div>
   );
@@ -349,11 +391,14 @@ export default function BoardSummary() {
     }
   };
 
-  const onTimeRate = analytics?.demands 
-    ? analytics.demands.onTime + analytics.demands.late > 0
-      ? Math.round((analytics.demands.onTime / (analytics.demands.onTime + analytics.demands.late)) * 100)
-      : 0
-    : 0;
+  // Use the new onTimeRate from analytics if available, otherwise calculate legacy way
+  const onTimeRate = analytics?.demands?.onTimeRate !== undefined
+    ? analytics.demands.onTimeRate
+    : analytics?.demands 
+      ? analytics.demands.onTime + analytics.demands.late > 0
+        ? Math.round((analytics.demands.onTime / (analytics.demands.onTime + analytics.demands.late)) * 100)
+        : 0
+      : 0;
 
   if (!currentBoard) {
     return (
@@ -462,7 +507,7 @@ export default function BoardSummary() {
 
         {/* Analytics Cards */}
         {analytics && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             <QuickStatsCard
               icon={BarChart3}
               label="Total de Demandas"
@@ -474,15 +519,22 @@ export default function BoardSummary() {
               icon={CheckCircle2}
               label="Entregas no Prazo"
               value={`${onTimeRate}%`}
-              subValue={`${analytics.demands.onTime} de ${analytics.demands.onTime + analytics.demands.late}`}
+              subValue={`${analytics.demands.onTime} de ${analytics.demands.withDueDate || (analytics.demands.onTime + analytics.demands.late)}`}
               variant={onTimeRate >= 80 ? "success" : onTimeRate >= 60 ? "warning" : "danger"}
             />
             <QuickStatsCard
               icon={AlertTriangle}
-              label="Demandas Atrasadas"
+              label="Entregues com Atraso"
+              value={analytics.demands.late}
+              subValue={analytics.demands.avgDaysLate ? `média ${analytics.demands.avgDaysLate} dias` : "após o prazo"}
+              variant={analytics.demands.late === 0 ? "success" : analytics.demands.late <= 3 ? "warning" : "danger"}
+            />
+            <QuickStatsCard
+              icon={AlertCircle}
+              label="Vencidas (Pendentes)"
               value={analytics.demands.overdue}
-              subValue="prazo vencido"
-              variant={analytics.demands.overdue === 0 ? "success" : analytics.demands.overdue <= 3 ? "warning" : "danger"}
+              subValue={analytics.demands.avgDaysOverdue ? `média ${analytics.demands.avgDaysOverdue} dias` : "aguardando entrega"}
+              variant={analytics.demands.overdue === 0 ? "success" : analytics.demands.overdue <= 2 ? "warning" : "danger"}
             />
             <QuickStatsCard
               icon={Timer}
