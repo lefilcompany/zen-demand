@@ -30,7 +30,12 @@ export function SummaryHistoryDrawer({ boardId, onSelectSummary }: SummaryHistor
   const { history, isLoading, deleteSummary, createShareToken } = useBoardSummaryHistory(boardId);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [summaryToDelete, setSummaryToDelete] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
+  const handleSelectSummary = (summary: BoardSummaryHistoryItem) => {
+    onSelectSummary(summary);
+    setSheetOpen(false);
+  };
   const handleCopy = async (summary: BoardSummaryHistoryItem) => {
     try {
       await navigator.clipboard.writeText(summary.summary_text);
@@ -86,7 +91,7 @@ export function SummaryHistoryDrawer({ boardId, onSelectSummary }: SummaryHistor
 
   return (
     <>
-      <Sheet>
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetTrigger asChild>
           <Button variant="outline" size="sm" className="gap-2">
             <History className="h-4 w-4" />
@@ -137,7 +142,7 @@ export function SummaryHistoryDrawer({ boardId, onSelectSummary }: SummaryHistor
                     <div className="flex items-start justify-between gap-3">
                       <div 
                         className="flex-1 min-w-0 cursor-pointer" 
-                        onClick={() => onSelectSummary(item)}
+                        onClick={() => handleSelectSummary(item)}
                       >
                         <p className="font-medium text-sm truncate">
                           {format(new Date(item.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
@@ -160,7 +165,7 @@ export function SummaryHistoryDrawer({ boardId, onSelectSummary }: SummaryHistor
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => onSelectSummary(item)}>
+                          <DropdownMenuItem onClick={() => handleSelectSummary(item)}>
                             <Eye className="h-4 w-4 mr-2" />
                             Visualizar
                           </DropdownMenuItem>
