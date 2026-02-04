@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { useMyDemandRequests, useUpdateDemandRequest, useDeleteDemandRequest } from "@/hooks/useDemandRequests";
 import { useRequestAttachments } from "@/hooks/useRequestAttachments";
-import { ArrowLeft, Clock, CheckCircle, XCircle, RotateCcw, Edit, Trash2, Plus, Layout, CalendarIcon, X } from "lucide-react";
+import { Clock, CheckCircle, XCircle, RotateCcw, Edit, Trash2, Plus, Layout, CalendarIcon, X, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
