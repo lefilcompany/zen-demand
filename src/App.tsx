@@ -103,7 +103,7 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
                           <Route path="/kanban" element={<Kanban />} />
                           <Route path="/archived" element={<ArchivedDemands />} />
                           
-                          <Route path="/time-management" element={<TimeManagement />} className="" />
+                          <Route path="/time-management" element={<TimeManagement />} />
                           <Route path="/board-summary" element={<BoardSummary />} />
                           <Route path="/user/:userId" element={<UserProfile />} />
                           <Route path="/team-demands" element={<TeamDemands />} />

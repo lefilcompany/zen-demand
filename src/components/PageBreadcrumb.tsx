@@ -25,7 +25,7 @@ interface PageBreadcrumbProps {
 
 export function PageBreadcrumb({ items, showHome = true }: PageBreadcrumbProps) {
   return (
-    <Breadcrumb className="animate-fade-in">
+    <Breadcrumb className="animate-fade-in mb-4">
       <BreadcrumbList>
         {showHome && (
           <>
