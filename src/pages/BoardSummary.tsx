@@ -15,9 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import ReactMarkdown from "react-markdown";
 import { useBoardSummaryHistory, BoardSummaryHistoryItem } from "@/hooks/useBoardSummaryHistory";
 import { SummaryHistoryDrawer } from "@/components/SummaryHistoryDrawer";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import jsPDF from "jspdf";
+import { generateBoardSummaryPDF } from "@/lib/pdfExport";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -355,28 +353,21 @@ export default function BoardSummary() {
     }
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!summary || !analytics) return;
 
-    const doc = new jsPDF();
-    const boardName = analytics.board.name || "Quadro";
-    const createdAt = format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-    
-    doc.setFontSize(18);
-    doc.text(`Análise Inteligente - ${boardName}`, 20, 20);
-    
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Gerado em: ${createdAt}`, 20, 30);
-    
-    doc.setTextColor(0);
-    doc.setFontSize(12);
-    
-    const splitText = doc.splitTextToSize(summary, 170);
-    doc.text(splitText, 20, 45);
-    
-    doc.save(`analise-${boardName.toLowerCase().replace(/\s+/g, "-")}-${format(new Date(), "yyyy-MM-dd")}.pdf`);
-    toast.success("PDF exportado com sucesso");
+    try {
+      await generateBoardSummaryPDF({
+        boardName: analytics.board.name || "Quadro",
+        createdAt: new Date(),
+        summaryText: summary,
+        analytics,
+      });
+      toast.success("PDF exportado com sucesso");
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      toast.error("Erro ao exportar PDF");
+    }
   };
 
   const handleShare = async () => {

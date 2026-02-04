@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { getSharedSummary, BoardSummaryHistoryItem } from "@/hooks/useBoardSummaryHistory";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import jsPDF from "jspdf";
+import { generateBoardSummaryPDF, BoardAnalytics } from "@/lib/pdfExport";
 
 type SummaryData = {
   id: string;
@@ -145,28 +145,24 @@ export default function SharedBoardSummary() {
     }
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!summary) return;
 
-    const doc = new jsPDF();
-    const boardName = summary.board?.name || "Quadro";
-    const createdAt = format(new Date(summary.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-    
-    doc.setFontSize(18);
-    doc.text(`Análise Inteligente - ${boardName}`, 20, 20);
-    
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Gerado em: ${createdAt}`, 20, 30);
-    
-    doc.setTextColor(0);
-    doc.setFontSize(12);
-    
-    const splitText = doc.splitTextToSize(summary.summary_text, 170);
-    doc.text(splitText, 20, 45);
-    
-    doc.save(`analise-${boardName.toLowerCase().replace(/\s+/g, "-")}-${format(new Date(), "yyyy-MM-dd")}.pdf`);
-    toast.success("PDF exportado com sucesso");
+    try {
+      // Convert the analytics data to the expected format
+      const analyticsData = summary.analytics_data as BoardAnalytics;
+      
+      await generateBoardSummaryPDF({
+        boardName: summary.board?.name || "Quadro",
+        createdAt: new Date(summary.created_at),
+        summaryText: summary.summary_text,
+        analytics: analyticsData,
+      });
+      toast.success("PDF exportado com sucesso");
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      toast.error("Erro ao exportar PDF");
+    }
   };
 
   if (isLoading) {
