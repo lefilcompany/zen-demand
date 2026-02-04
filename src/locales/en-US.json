@@ -106,7 +106,9 @@
     "doing": "In Progress",
     "delivered": "Delivered",
     "inAdjustment": "In Adjustment",
-    "dragHint": "Drag cards to change status"
+    "dragHint": "Drag cards to change status",
+    "columnsOpenByDefault": "Columns open on enter",
+    "columnsClosedByDefault": "Columns closed on enter"
   },
   "teams": {
     "title": "Teams",

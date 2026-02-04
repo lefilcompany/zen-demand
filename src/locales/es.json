@@ -106,7 +106,9 @@
     "doing": "En Progreso",
     "delivered": "Entregado",
     "inAdjustment": "En Ajuste",
-    "dragHint": "Arrastra las tarjetas para cambiar el estado"
+    "dragHint": "Arrastra las tarjetas para cambiar el estado",
+    "columnsOpenByDefault": "Columnas abiertas al entrar",
+    "columnsClosedByDefault": "Columnas cerradas al entrar"
   },
   "teams": {
     "title": "Equipos",
