@@ -102,13 +102,15 @@ export function AppSidebar() {
     }
   ];
 
-  const notesMenuItems = [
-    {
-      title: "Soma Notes",
-      url: "/notes",
-      icon: StickyNote
-    }
-  ];
+  // Soma Notes - temporarily hidden (keep code for future re-activation)
+  const notesMenuItems: typeof baseMenuItems = [];
+  // const notesMenuItems = [
+  //   {
+  //     title: "Soma Notes",
+  //     url: "/notes",
+  //     icon: StickyNote
+  //   }
+  // ];
 
   const endMenuItems = [{
     title: t("demands.archived"),
