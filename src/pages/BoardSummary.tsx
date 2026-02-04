@@ -118,16 +118,18 @@ function QuickStatsCard({
 
   return (
     <Card className="overflow-hidden">
-      <CardContent className="p-4">
-        <div className="flex items-center gap-3">
-          <div className={cn("p-2.5 rounded-lg", variantStyles[variant])}>
-            <Icon className={cn("h-5 w-5", iconStyles[variant])} />
+      <CardContent className="p-3">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <div className={cn("p-1.5 rounded-md", variantStyles[variant])}>
+              <Icon className={cn("h-3.5 w-3.5", iconStyles[variant])} />
+            </div>
+            <p className="text-xs font-medium text-muted-foreground leading-tight">{label}</p>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-2xl font-bold text-foreground truncate">{value}</p>
-            <p className="text-xs text-muted-foreground truncate">{label}</p>
+          <div className="space-y-0.5">
+            <p className="text-xl font-bold text-foreground">{value}</p>
             {subValue && (
-              <p className="text-xs text-muted-foreground/70 truncate">{subValue}</p>
+              <p className="text-[11px] text-muted-foreground/80">{subValue}</p>
             )}
           </div>
         </div>
