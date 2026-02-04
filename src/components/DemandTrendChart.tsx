@@ -8,6 +8,7 @@ import { ChartPeriodSelector, type ChartPeriodType, getChartPeriodRange } from "
 interface Demand {
   id: string;
   created_at: string;
+  updated_at: string;
   demand_statuses?: { name: string } | null;
 }
 
@@ -22,11 +23,22 @@ export function DemandTrendChart({ demands }: DemandTrendChartProps) {
     const { start, end } = getChartPeriodRange(period);
     const today = startOfDay(end);
     
-    // Find the earliest demand date if no start is specified
+    // Filter demands by period first
+    const filteredDemands = demands.filter((d) => {
+      const demandDate = new Date(d.created_at);
+      if (start && demandDate < start) return false;
+      if (demandDate > end) return false;
+      return true;
+    });
+
+    // If no demands in period, return empty
+    if (filteredDemands.length === 0) {
+      return [];
+    }
+    
+    // Find the earliest demand date within the filtered period
     const effectiveStart = start || 
-      (demands.length > 0 
-        ? startOfDay(new Date(Math.min(...demands.map(d => new Date(d.created_at).getTime()))))
-        : subDays(today, 29));
+      startOfDay(new Date(Math.min(...filteredDemands.map(d => new Date(d.created_at).getTime()))));
 
     // Determine granularity based on period
     const daysDiff = Math.ceil((today.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60 * 24));
@@ -37,21 +49,25 @@ export function DemandTrendChart({ demands }: DemandTrendChartProps) {
       
       return days.map((day) => {
         const dayStr = format(day, "yyyy-MM-dd");
-        const dayDemands = demands.filter((d) => {
+        
+        // Demands CREATED on this day
+        const createdOnDay = filteredDemands.filter((d) => {
           const demandDate = format(new Date(d.created_at), "yyyy-MM-dd");
           return demandDate === dayStr;
-        });
+        }).length;
         
-        const completed = demands.filter((d) => {
-          const demandDate = format(new Date(d.created_at), "yyyy-MM-dd");
-          return demandDate <= dayStr && d.demand_statuses?.name === "Entregue";
+        // Demands DELIVERED on this day (using updated_at as delivery date)
+        const deliveredOnDay = filteredDemands.filter((d) => {
+          if (d.demand_statuses?.name !== "Entregue") return false;
+          const deliveryDate = format(new Date(d.updated_at), "yyyy-MM-dd");
+          return deliveryDate === dayStr;
         }).length;
         
         return {
           date: format(day, "dd/MM", { locale: ptBR }),
           fullDate: format(day, "dd 'de' MMMM", { locale: ptBR }),
-          criadas: dayDemands.length,
-          entregues: completed,
+          criadas: createdOnDay,
+          entregues: deliveredOnDay,
         };
       });
     } else if (daysDiff <= 120) {
@@ -61,21 +77,24 @@ export function DemandTrendChart({ demands }: DemandTrendChartProps) {
       return weeks.map((weekStart, idx) => {
         const weekEnd = idx < weeks.length - 1 ? subDays(weeks[idx + 1], 1) : today;
         
-        const weekDemands = demands.filter((d) => {
+        // Demands CREATED in this week
+        const createdInWeek = filteredDemands.filter((d) => {
           const demandDate = new Date(d.created_at);
           return demandDate >= weekStart && demandDate <= weekEnd;
-        });
+        }).length;
         
-        const completed = demands.filter((d) => {
-          const demandDate = new Date(d.created_at);
-          return demandDate <= weekEnd && d.demand_statuses?.name === "Entregue";
+        // Demands DELIVERED in this week
+        const deliveredInWeek = filteredDemands.filter((d) => {
+          if (d.demand_statuses?.name !== "Entregue") return false;
+          const deliveryDate = new Date(d.updated_at);
+          return deliveryDate >= weekStart && deliveryDate <= weekEnd;
         }).length;
         
         return {
           date: format(weekStart, "dd/MM", { locale: ptBR }),
           fullDate: `Semana de ${format(weekStart, "dd/MM", { locale: ptBR })}`,
-          criadas: weekDemands.length,
-          entregues: completed,
+          criadas: createdInWeek,
+          entregues: deliveredInWeek,
         };
       });
     } else {
@@ -84,22 +103,26 @@ export function DemandTrendChart({ demands }: DemandTrendChartProps) {
       
       return months.map((monthStart) => {
         const monthEnd = endOfMonth(monthStart);
+        const effectiveMonthEnd = monthEnd > today ? today : monthEnd;
         
-        const monthDemands = demands.filter((d) => {
+        // Demands CREATED in this month
+        const createdInMonth = filteredDemands.filter((d) => {
           const demandDate = new Date(d.created_at);
-          return demandDate >= monthStart && demandDate <= monthEnd;
-        });
+          return demandDate >= monthStart && demandDate <= effectiveMonthEnd;
+        }).length;
         
-        const completed = demands.filter((d) => {
-          const demandDate = new Date(d.created_at);
-          return demandDate <= monthEnd && d.demand_statuses?.name === "Entregue";
+        // Demands DELIVERED in this month
+        const deliveredInMonth = filteredDemands.filter((d) => {
+          if (d.demand_statuses?.name !== "Entregue") return false;
+          const deliveryDate = new Date(d.updated_at);
+          return deliveryDate >= monthStart && deliveryDate <= effectiveMonthEnd;
         }).length;
         
         return {
           date: format(monthStart, "MMM/yy", { locale: ptBR }),
           fullDate: format(monthStart, "MMMM 'de' yyyy", { locale: ptBR }),
-          criadas: monthDemands.length,
-          entregues: completed,
+          criadas: createdInMonth,
+          entregues: deliveredInMonth,
         };
       });
     }
