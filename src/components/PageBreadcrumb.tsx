@@ -25,36 +25,29 @@ interface PageBreadcrumbProps {
 
 export function PageBreadcrumb({ items, showHome = true }: PageBreadcrumbProps) {
   return (
-    <Breadcrumb className="animate-fade-in mb-4">
+    <Breadcrumb className="mb-4">
       <BreadcrumbList>
         {showHome && (
           <>
-            <BreadcrumbItem className="animate-fade-in" style={{ animationDelay: '0ms' }}>
+            <BreadcrumbItem>
               <BreadcrumbLink asChild>
                 <Link to="/" className="flex items-center gap-1 transition-colors duration-200 hover:text-primary">
-                  <Home className="h-3.5 w-3.5 transition-transform duration-200 hover:scale-110" />
+                  <Home className="h-3.5 w-3.5" />
                   <span className="sr-only sm:not-sr-only">Dashboard</span>
                 </Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
-            {items.length > 0 && (
-              <BreadcrumbSeparator className="animate-fade-in" style={{ animationDelay: '50ms' }} />
-            )}
+            {items.length > 0 && <BreadcrumbSeparator />}
           </>
         )}
         
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
           const Icon = item.icon;
-          const baseDelay = showHome ? 100 : 0;
-          const delay = baseDelay + (index * 75);
           
           return (
             <Fragment key={index}>
-              <BreadcrumbItem 
-                className="animate-fade-in"
-                style={{ animationDelay: `${delay}ms` }}
-              >
+              <BreadcrumbItem>
                 {isLast || item.isCurrent ? (
                   <BreadcrumbPage className="flex items-center gap-1 max-w-[200px] truncate">
                     {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
@@ -67,18 +60,13 @@ export function PageBreadcrumb({ items, showHome = true }: PageBreadcrumbProps) 
                       state={item.state}
                       className="flex items-center gap-1 transition-colors duration-200 hover:text-primary"
                     >
-                      {Icon && <Icon className="h-3.5 w-3.5 shrink-0 transition-transform duration-200 hover:scale-110" />}
+                      {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
                       <span>{item.label}</span>
                     </Link>
                   </BreadcrumbLink>
                 )}
               </BreadcrumbItem>
-              {!isLast && !item.isCurrent && (
-                <BreadcrumbSeparator 
-                  className="animate-fade-in" 
-                  style={{ animationDelay: `${delay + 25}ms` }} 
-                />
-              )}
+              {!isLast && !item.isCurrent && <BreadcrumbSeparator />}
             </Fragment>
           );
         })}
