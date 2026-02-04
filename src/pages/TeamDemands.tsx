@@ -10,6 +10,7 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useMembersByPosition } from "@/hooks/useMembersByPosition";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useBoards } from "@/hooks/useBoards";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { 
   Layers, 
   LayoutGrid, 
@@ -323,6 +324,11 @@ export default function TeamDemands() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <PageBreadcrumb
+        items={[
+          { label: "Visão Geral da Equipe", icon: Layers, isCurrent: true },
+        ]}
+      />
       {/* Header */}
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">

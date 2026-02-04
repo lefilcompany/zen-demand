@@ -20,7 +20,8 @@ import { useUploadAttachment } from "@/hooks/useAttachments";
 import { UnsavedChangesDialog } from "@/components/UnsavedChangesDialog";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { useNavigationBlock } from "@/hooks/useNavigationBlock";
-import { ArrowLeft, AlertTriangle, Ban, CloudOff, WifiOff, Package } from "lucide-react";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import { AlertTriangle, Ban, CloudOff, WifiOff, Package, Briefcase, Plus } from "lucide-react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { calculateBusinessDueDate, formatDueDateForInput } from "@/lib/dateUtils";
@@ -242,15 +243,14 @@ export default function CreateDemand() {
         onDontShowAgain={setDontShowAgain}
       />
 
+      <PageBreadcrumb
+        items={[
+          { label: t("demands.title"), href: "/demands", icon: Briefcase },
+          { label: "Nova Demanda", icon: Plus, isCurrent: true },
+        ]}
+      />
+      
       <div>
-        <Button
-          variant="ghost"
-          onClick={() => attemptNavigation("/demands")}
-          className="mb-2 md:mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar
-        </Button>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Nova Demanda</h1>
         <p className="text-sm md:text-base text-muted-foreground">
           Criar demanda para o quadro <span className="font-medium text-primary">{currentBoard?.name}</span>

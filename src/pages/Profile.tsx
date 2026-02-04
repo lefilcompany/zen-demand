@@ -22,9 +22,10 @@ import { Progress } from "@/components/ui/progress";
 import { ProfileEditDrawer } from "@/components/ProfileEditDrawer";
 import { AnimatedBadge } from "@/components/AnimatedBadge";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { useUserStats, badges, calculateLevel } from "@/hooks/useUserStats";
 import { 
-  ArrowLeft, Settings, User, Calendar, MapPin, Briefcase, 
+  Settings, User, Calendar, MapPin, Briefcase, 
   Link as LinkIcon, Github, Linkedin, Target, CheckCircle2, 
   Clock, MessageSquare, Users, Loader2, Award, TrendingUp,
   Zap, Trophy, ChevronDown, ChevronUp, Camera, Trash2
@@ -194,12 +195,13 @@ export default function Profile() {
 
   return (
     <div className="space-y-6 animate-fade-in pb-8">
+      <PageBreadcrumb
+        items={[
+          { label: "Meu Perfil", icon: User, isCurrent: true },
+        ]}
+      />
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="shrink-0">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar
-        </Button>
+      <div className="flex items-center justify-end">
         <Button onClick={() => setEditDrawerOpen(true)}>
           <Settings className="mr-2 h-4 w-4" />
           Editar Perfil

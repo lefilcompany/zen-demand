@@ -139,12 +139,13 @@ export default function MyDemandRequests() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <PageBreadcrumb
+        items={[
+          { label: "Minhas Solicitações", icon: ClipboardList, isCurrent: true },
+        ]}
+      />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <Button variant="ghost" onClick={() => navigate("/")} className="mb-2">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Button>
           <h1 className="text-3xl font-bold tracking-tight">Minhas Solicitações</h1>
           <p className="text-muted-foreground flex items-center gap-2">
             <Layout className="h-4 w-4" />

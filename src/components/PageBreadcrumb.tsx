@@ -32,7 +32,7 @@ export function PageBreadcrumb({ items, showHome = true }: PageBreadcrumbProps) 
               <BreadcrumbLink asChild>
                 <Link to="/" className="flex items-center gap-1 transition-colors duration-200 hover:text-primary">
                   <Home className="h-3.5 w-3.5 transition-transform duration-200 hover:scale-110" />
-                  <span className="sr-only sm:not-sr-only">Início</span>
+                  <span className="sr-only sm:not-sr-only">Dashboard</span>
                 </Link>
               </BreadcrumbLink>
             </BreadcrumbItem>

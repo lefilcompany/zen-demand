@@ -8,6 +8,7 @@ import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useAuth } from "@/lib/auth";
 import { useMembersByPosition } from "@/hooks/useMembersByPosition";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Plus, Briefcase, LayoutGrid, List, Search, Eye, EyeOff, CalendarDays, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table";
@@ -253,6 +254,11 @@ export default function Demands() {
       </div>;
   };
   return <div className="space-y-4 md:space-y-6 animate-fade-in">
+      <PageBreadcrumb
+        items={[
+          { label: t("demands.title"), icon: Briefcase, isCurrent: true },
+        ]}
+      />
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex items-start justify-between gap-4">

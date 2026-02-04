@@ -10,9 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AnimatedBadge } from "@/components/AnimatedBadge";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { badges as gamificationBadges } from "@/hooks/useUserStats";
 import { 
-  ArrowLeft, Loader2, User, Calendar, Briefcase, CheckCircle2, Clock, Edit, 
+  Loader2, User, Calendar, Briefcase, CheckCircle2, Clock, Edit, 
   Trophy, Target, Flame, Zap, MapPin, Link as LinkIcon,
   Github, Linkedin, TrendingUp, Award, Circle, ChevronDown, ChevronUp
 } from "lucide-react";
@@ -260,12 +261,11 @@ export default function UserProfile() {
   if (!profile) {
     return (
       <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate(-1)} className="shrink-0">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Button>
-        </div>
+        <PageBreadcrumb
+          items={[
+            { label: "Perfil do Usuário", icon: User, isCurrent: true },
+          ]}
+        />
         <Card>
           <CardContent className="py-12 text-center">
             <User className="h-16 w-16 mx-auto text-muted-foreground/50 mb-4" />
@@ -278,13 +278,13 @@ export default function UserProfile() {
 
   return (
     <div className="space-y-6 animate-fade-in pb-8">
+      <PageBreadcrumb
+        items={[
+          { label: profile?.full_name || "Perfil do Usuário", icon: User, isCurrent: true },
+        ]}
+      />
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="shrink-0">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar
-        </Button>
-        
+      <div className="flex items-center justify-end">
         {isOwnProfile && (
           <Button onClick={() => navigate("/profile")} variant="outline" size="sm">
             <Edit className="mr-2 h-4 w-4" />
