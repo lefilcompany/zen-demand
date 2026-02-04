@@ -1,19 +1,17 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
   Sparkles, AlertCircle, BarChart3, CheckCircle2, 
-  AlertTriangle, Timer, Clock, Users, Target, Copy, Download
+  AlertTriangle, Timer, Clock, Users, Target, Eye
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Progress } from "@/components/ui/progress";
 import ReactMarkdown from "react-markdown";
-import { toast } from "sonner";
 import { getSharedSummary, BoardSummaryHistoryItem } from "@/hooks/useBoardSummaryHistory";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { generateBoardSummaryPDF, BoardAnalytics } from "@/lib/pdfExport";
+import logoSoma from "@/assets/logo-soma.png";
 
 type SummaryData = {
   id: string;
@@ -135,36 +133,6 @@ export default function SharedBoardSummary() {
     loadSummary();
   }, [token]);
 
-  const handleCopy = async () => {
-    if (!summary) return;
-    try {
-      await navigator.clipboard.writeText(summary.summary_text);
-      toast.success("Análise copiada para a área de transferência");
-    } catch {
-      toast.error("Erro ao copiar análise");
-    }
-  };
-
-  const handleExportPDF = async () => {
-    if (!summary) return;
-
-    try {
-      // Convert the analytics data to the expected format
-      const analyticsData = summary.analytics_data as BoardAnalytics;
-      
-      await generateBoardSummaryPDF({
-        boardName: summary.board?.name || "Quadro",
-        createdAt: new Date(summary.created_at),
-        summaryText: summary.summary_text,
-        analytics: analyticsData,
-      });
-      toast.success("PDF exportado com sucesso");
-    } catch (error) {
-      console.error("Error exporting PDF:", error);
-      toast.error("Erro ao exportar PDF");
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -202,33 +170,32 @@ export default function SharedBoardSummary() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-6 px-4 max-w-5xl">
-        {/* Header */}
+        {/* Header with Logo */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <img src={logoSoma} alt="Soma+" className="h-8" />
+          </div>
+          <Badge variant="secondary" className="gap-1.5">
+            <Eye className="h-3.5 w-3.5" />
+            Visualização Pública
+          </Badge>
+        </div>
+
+        {/* Summary Header */}
         <Card className="overflow-hidden border-0 shadow-lg mb-6">
           <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/25">
-                  <Sparkles className="h-6 w-6 text-primary-foreground" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-foreground">Análise Inteligente</h1>
-                  <p className="text-sm text-muted-foreground">
-                    Quadro: <span className="font-medium text-foreground">{summary.board?.name || "—"}</span>
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Gerado em {format(new Date(summary.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                  </p>
-                </div>
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/25">
+                <Sparkles className="h-6 w-6 text-primary-foreground" />
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={handleCopy}>
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copiar
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleExportPDF}>
-                  <Download className="h-4 w-4 mr-2" />
-                  PDF
-                </Button>
+              <div>
+                <h1 className="text-xl font-bold text-foreground">Análise Inteligente</h1>
+                <p className="text-sm text-muted-foreground">
+                  Quadro: <span className="font-medium text-foreground">{summary.board?.name || "—"}</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Gerado em {format(new Date(summary.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                </p>
               </div>
             </div>
           </div>
@@ -386,8 +353,13 @@ export default function SharedBoardSummary() {
         </Card>
 
         {/* Footer */}
-        <div className="text-center mt-8 text-sm text-muted-foreground">
-          <p>Análise gerada pelo Soma · Gestão de Demandas</p>
+        <div className="text-center mt-8 space-y-2">
+          <p className="text-sm text-muted-foreground">
+            Análise gerada pelo <span className="font-medium text-foreground">Soma+</span> · Gestão Inteligente de Demandas
+          </p>
+          <p className="text-xs text-muted-foreground/70">
+            Este é um link de visualização pública. Apenas leitura.
+          </p>
         </div>
       </div>
     </div>
