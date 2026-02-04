@@ -118,18 +118,18 @@ function QuickStatsCard({
 
   return (
     <Card className="overflow-hidden">
-      <CardContent className="p-3">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <div className={cn("p-1.5 rounded-md", variantStyles[variant])}>
-              <Icon className={cn("h-3.5 w-3.5", iconStyles[variant])} />
+      <CardContent className="p-2.5 sm:p-3">
+        <div className="flex items-center gap-2 sm:flex-col sm:items-start sm:gap-2">
+          <div className="flex items-center gap-2 sm:w-full">
+            <div className={cn("p-1.5 rounded-md shrink-0", variantStyles[variant])}>
+              <Icon className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5", iconStyles[variant])} />
             </div>
-            <p className="text-xs font-medium text-muted-foreground leading-tight">{label}</p>
+            <p className="text-[10px] sm:text-xs font-medium text-muted-foreground leading-tight">{label}</p>
           </div>
-          <div className="space-y-0.5">
-            <p className="text-xl font-bold text-foreground">{value}</p>
+          <div className="ml-auto sm:ml-0 text-right sm:text-left">
+            <p className="text-base sm:text-xl font-bold text-foreground">{value}</p>
             {subValue && (
-              <p className="text-[11px] text-muted-foreground/80">{subValue}</p>
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground/80 hidden sm:block">{subValue}</p>
             )}
           </div>
         </div>
@@ -158,31 +158,31 @@ function MemberPerformanceCard({ member }: { member: BoardAnalytics["members"][0
   const hasOnTimeData = member.onTimeCount !== undefined || member.lateCount !== undefined;
 
   return (
-    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-          <span className="text-sm font-medium text-primary">
+    <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-muted/30 border border-border/50 gap-2">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+        <div className="h-7 w-7 sm:h-9 sm:w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+          <span className="text-xs sm:text-sm font-medium text-primary">
             {member.name.charAt(0).toUpperCase()}
           </span>
         </div>
-        <div className="min-w-0">
-          <p className="font-medium text-sm truncate">{member.name}</p>
-          <span className={cn("text-xs px-2 py-0.5 rounded-full", roleBadgeColors[member.role] || roleBadgeColors.requester)}>
+        <div className="min-w-0 flex-1">
+          <p className="font-medium text-xs sm:text-sm truncate">{member.name}</p>
+          <span className={cn("text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full", roleBadgeColors[member.role] || roleBadgeColors.requester)}>
             {roleLabels[member.role] || member.role}
           </span>
         </div>
       </div>
       <div className="text-right shrink-0 space-y-0.5">
-        <p className="text-sm font-medium">{member.completedCount}/{member.demandCount}</p>
-        <p className="text-xs text-muted-foreground">{member.completionRate}% concluído</p>
+        <p className="text-xs sm:text-sm font-medium">{member.completedCount}/{member.demandCount}</p>
+        <p className="text-[10px] sm:text-xs text-muted-foreground">{member.completionRate}%</p>
         {hasOnTimeData && (
           <p className={cn(
-            "text-xs font-medium",
+            "text-[10px] sm:text-xs font-medium",
             memberOnTimeRate >= 80 ? "text-emerald-600 dark:text-emerald-400" :
             memberOnTimeRate >= 60 ? "text-amber-600 dark:text-amber-400" :
             "text-red-600 dark:text-red-400"
           )}>
-            {memberOnTimeRate}% no prazo
+            {memberOnTimeRate}%
           </p>
         )}
       </div>
@@ -419,26 +419,26 @@ export default function BoardSummary() {
   }
 
   return (
-    <div className="container mx-auto max-w-5xl">
+    <div className="container mx-auto max-w-5xl px-2 sm:px-4">
       <PageBreadcrumb items={[{ label: "Análise IA" }]} />
       
-      <div className="mt-6 space-y-6">
+      <div className="mt-4 sm:mt-6 space-y-4 sm:space-y-6">
         {/* Header Card */}
         <Card className="overflow-hidden border-0 shadow-lg">
-          <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/25">
-                  <Sparkles className="h-6 w-6 text-primary-foreground" />
+          <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-3 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/25">
+                  <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-foreground">Análise Inteligente</h1>
-                  <p className="text-sm text-muted-foreground">
+                  <h1 className="text-lg sm:text-xl font-bold text-foreground">Análise Inteligente</h1>
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-none">
                     Quadro: <span className="font-medium text-foreground">{currentBoard.name}</span>
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2 self-end sm:self-auto">
                 <SummaryHistoryDrawer 
                   boardId={currentBoard.id} 
                   onSelectSummary={handleSelectFromHistory} 
@@ -447,9 +447,9 @@ export default function BoardSummary() {
                 {summary && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="gap-2">
-                        <Share2 className="h-4 w-4" />
-                        <span className="hidden sm:inline">Ações</span>
+                      <Button variant="outline" size="sm" className="gap-1.5 h-8 sm:h-9">
+                        <Share2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        <span className="hidden sm:inline text-sm">Ações</span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -473,17 +473,17 @@ export default function BoardSummary() {
                   onClick={generateSummary}
                   disabled={isLoading}
                   size="sm"
-                  className="gap-2 shadow-md"
+                  className="gap-1.5 shadow-md h-8 sm:h-9 text-xs sm:text-sm"
                 >
                   {isLoading ? (
                     <>
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                      Analisando...
+                      <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
+                      <span className="hidden xs:inline">Analisando...</span>
                     </>
                   ) : (
                     <>
-                      <Sparkles className="h-4 w-4" />
-                      {analytics ? "Atualizar" : "Gerar Análise"}
+                      <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      {analytics ? "Atualizar" : "Gerar"}
                     </>
                   )}
                 </Button>
@@ -509,39 +509,39 @@ export default function BoardSummary() {
 
         {/* Analytics Cards */}
         {analytics && (
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
             <QuickStatsCard
               icon={BarChart3}
-              label="Total de Demandas"
+              label="Total"
               value={analytics.demands.total}
               subValue={`${analytics.demands.delivered} entregues`}
               variant="default"
             />
             <QuickStatsCard
               icon={CheckCircle2}
-              label="Entregas no Prazo"
+              label="No Prazo"
               value={`${onTimeRate}%`}
               subValue={`${analytics.demands.onTime} de ${analytics.demands.withDueDate || (analytics.demands.onTime + analytics.demands.late)}`}
               variant={onTimeRate >= 80 ? "success" : onTimeRate >= 60 ? "warning" : "danger"}
             />
             <QuickStatsCard
               icon={AlertTriangle}
-              label="Entregues com Atraso"
+              label="Atrasadas"
               value={analytics.demands.late}
-              subValue={analytics.demands.avgDaysLate ? `média ${analytics.demands.avgDaysLate} dias` : "após o prazo"}
+              subValue={analytics.demands.avgDaysLate ? `média ${analytics.demands.avgDaysLate}d` : "após prazo"}
               variant={analytics.demands.late === 0 ? "success" : analytics.demands.late <= 3 ? "warning" : "danger"}
             />
             <QuickStatsCard
               icon={AlertCircle}
-              label="Vencidas (Pendentes)"
+              label="Vencidas"
               value={analytics.demands.overdue}
-              subValue={analytics.demands.avgDaysOverdue ? `média ${analytics.demands.avgDaysOverdue} dias` : "aguardando entrega"}
+              subValue={analytics.demands.avgDaysOverdue ? `média ${analytics.demands.avgDaysOverdue}d` : "pendentes"}
               variant={analytics.demands.overdue === 0 ? "success" : analytics.demands.overdue <= 2 ? "warning" : "danger"}
             />
             <QuickStatsCard
               icon={Timer}
               label="Tempo Médio"
-              value={`${analytics.demands.avgDeliveryDays} dias`}
+              value={`${analytics.demands.avgDeliveryDays}d`}
               subValue="por demanda"
               variant="default"
             />
@@ -550,17 +550,17 @@ export default function BoardSummary() {
 
         {/* Additional Stats */}
         {analytics && (
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
             {/* Team Performance */}
             <Card>
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-primary" />
-                  <CardTitle className="text-base">Equipe</CardTitle>
+                  <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                  <CardTitle className="text-sm sm:text-base">Equipe</CardTitle>
                 </div>
-                <CardDescription>Performance dos membros</CardDescription>
+                <CardDescription className="text-xs sm:text-sm">Performance dos membros</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-2 max-h-64 overflow-y-auto">
+              <CardContent className="space-y-1.5 sm:space-y-2 max-h-52 sm:max-h-64 overflow-y-auto px-3 sm:px-6 pb-3 sm:pb-6">
                 {analytics.members.length > 0 ? (
                   analytics.members
                     .filter(m => m.demandCount > 0)
@@ -569,7 +569,7 @@ export default function BoardSummary() {
                       <MemberPerformanceCard key={i} member={member} />
                     ))
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">
+                  <p className="text-xs sm:text-sm text-muted-foreground text-center py-4">
                     Nenhum membro com demandas atribuídas
                   </p>
                 )}
@@ -578,35 +578,35 @@ export default function BoardSummary() {
 
             {/* Time Tracking */}
             <Card>
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
                 <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-primary" />
-                  <CardTitle className="text-base">Tempo Investido</CardTitle>
+                  <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                  <CardTitle className="text-sm sm:text-base">Tempo Investido</CardTitle>
                 </div>
-                <CardDescription>Horas registradas por executor</CardDescription>
+                <CardDescription className="text-xs sm:text-sm">Horas por executor</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20">
-                  <span className="text-sm font-medium">Total de Horas</span>
-                  <span className="text-lg font-bold text-primary">{analytics.timeTracking.totalHours}h</span>
+              <CardContent className="space-y-2 sm:space-y-3 px-3 sm:px-6 pb-3 sm:pb-6">
+                <div className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-primary/5 border border-primary/20">
+                  <span className="text-xs sm:text-sm font-medium">Total</span>
+                  <span className="text-base sm:text-lg font-bold text-primary">{analytics.timeTracking.totalHours}h</span>
                 </div>
                 {analytics.timeTracking.byExecutor.length > 0 ? (
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                  <div className="space-y-1.5 sm:space-y-2 max-h-32 sm:max-h-40 overflow-y-auto">
                     {analytics.timeTracking.byExecutor
                       .sort((a, b) => b.hours - a.hours)
                       .map((executor, i) => (
-                        <div key={i} className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">{executor.name}</span>
-                          <span className="font-medium">
+                        <div key={i} className="flex items-center justify-between text-xs sm:text-sm gap-2">
+                          <span className="text-muted-foreground truncate flex-1">{executor.name}</span>
+                          <span className="font-medium shrink-0">
                             {executor.hours > 0 
-                              ? `${executor.hours}h (${executor.demandCount} demandas)` 
-                              : "Sem tempo registrado"}
+                              ? `${executor.hours}h` 
+                              : "Sem registro"}
                           </span>
                         </div>
                       ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-2">
+                  <p className="text-xs sm:text-sm text-muted-foreground text-center py-2">
                     Nenhum tempo registrado
                   </p>
                 )}
@@ -618,45 +618,45 @@ export default function BoardSummary() {
         {/* AI Summary */}
         {(summary || (isLoading && analytics)) && (
           <Card className="overflow-hidden">
-            <CardHeader className="border-b bg-muted/30">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Target className="h-5 w-5 text-primary" />
+            <CardHeader className="border-b bg-muted/30 px-3 sm:px-6 py-3 sm:py-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10">
+                  <Target className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Relatório de Análise</CardTitle>
-                  <CardDescription>Gerado por IA com base nos dados do quadro</CardDescription>
+                  <CardTitle className="text-sm sm:text-lg">Relatório de Análise</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">Gerado por IA</CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-6">
               {summary ? (
                 <div className="prose prose-sm dark:prose-invert max-w-none">
                   <ReactMarkdown
                     components={{
                       h2: ({ children }) => (
-                        <h2 className="text-lg font-semibold mt-6 mb-3 flex items-center gap-2 text-foreground first:mt-0">
+                        <h2 className="text-base sm:text-lg font-semibold mt-4 sm:mt-6 mb-2 sm:mb-3 flex items-center gap-2 text-foreground first:mt-0">
                           {children}
                         </h2>
                       ),
                       h3: ({ children }) => (
-                        <h3 className="text-base font-medium mt-4 mb-2 text-foreground">
+                        <h3 className="text-sm sm:text-base font-medium mt-3 sm:mt-4 mb-1.5 sm:mb-2 text-foreground">
                           {children}
                         </h3>
                       ),
                       p: ({ children }) => (
-                        <p className="text-muted-foreground leading-relaxed mb-3">
+                        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-2 sm:mb-3">
                           {children}
                         </p>
                       ),
                       ul: ({ children }) => (
-                        <ul className="space-y-1.5 my-3 ml-1">
+                        <ul className="space-y-1 sm:space-y-1.5 my-2 sm:my-3 ml-1">
                           {children}
                         </ul>
                       ),
                       li: ({ children }) => (
-                        <li className="text-muted-foreground flex items-start gap-2">
-                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
+                        <li className="text-xs sm:text-sm text-muted-foreground flex items-start gap-1.5 sm:gap-2">
+                          <span className="inline-block w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-primary mt-1.5 sm:mt-2 shrink-0" />
                           <span>{children}</span>
                         </li>
                       ),
@@ -671,9 +671,9 @@ export default function BoardSummary() {
                   </ReactMarkdown>
                 </div>
               ) : (
-                <div className="flex items-center justify-center py-8 gap-3">
-                  <RefreshCw className="h-5 w-5 animate-spin text-primary" />
-                  <span className="text-muted-foreground">Gerando análise...</span>
+                <div className="flex items-center justify-center py-6 sm:py-8 gap-2 sm:gap-3">
+                  <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-primary" />
+                  <span className="text-xs sm:text-sm text-muted-foreground">Gerando análise...</span>
                 </div>
               )}
             </CardContent>
@@ -683,31 +683,30 @@ export default function BoardSummary() {
         {/* Empty State */}
         {!isLoading && !analytics && !error && (
           <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <div className="relative mb-6">
+            <CardContent className="flex flex-col items-center justify-center py-10 sm:py-16 px-4">
+              <div className="relative mb-4 sm:mb-6">
                 <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
-                <div className="relative p-6 rounded-2xl bg-gradient-to-br from-muted to-muted/50 border border-border/50">
-                  <Sparkles className="h-12 w-12 text-primary/60" />
+                <div className="relative p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-muted to-muted/50 border border-border/50">
+                  <Sparkles className="h-8 w-8 sm:h-12 sm:w-12 text-primary/60" />
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">
+              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1.5 sm:mb-2 text-center">
                 Pronto para analisar seu quadro
               </h3>
-              <p className="text-muted-foreground text-center max-w-md mb-6">
-                Clique em "Gerar Análise" para criar um relatório executivo completo com insights 
-                sobre demandas, performance da equipe e recomendações.
+              <p className="text-xs sm:text-sm text-muted-foreground text-center max-w-md mb-4 sm:mb-6">
+                Clique em "Gerar" para criar um relatório com insights sobre demandas e performance.
               </p>
-              <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
+              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm text-muted-foreground">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                   <span>Performance</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-primary/70" />
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary/70" />
                   <span>Equipe</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Lightbulb className="h-4 w-4 text-primary/50" />
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <Lightbulb className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary/50" />
                   <span>Recomendações</span>
                 </div>
               </div>
