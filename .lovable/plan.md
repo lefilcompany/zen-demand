@@ -1,202 +1,192 @@
 
-# Plano: Adicionar automaticamente admins da equipe a todos os quadros
+# Plano: Implementar Breadcrumb Navigation em Todas as Telas
 
-## Resumo
+## Objetivo
+Adicionar navegação por breadcrumb (path track) em todas as telas da aplicação, substituindo os botões de "Voltar", e alterando "Início" para "Dashboard".
 
-Quando um usuário for promovido a **Administrador** da equipe, ele será automaticamente adicionado a todos os quadros existentes dessa equipe com cargo de admin. Além disso, quando um novo quadro for criado, todos os administradores da equipe serão automaticamente incluídos nele.
-
----
-
-## Como Funciona Hoje
-
-| Situação | Comportamento Atual |
-|----------|---------------------|
-| Membro entra na equipe | Adicionado apenas ao quadro padrão como "Solicitante" |
-| Quadro novo é criado | Apenas o criador é adicionado como admin |
-| Membro promovido a Admin | Nenhuma ação automática - precisa ser adicionado manualmente a cada quadro |
+## Resumo das Alterações
+- Atualizar o componente `PageBreadcrumb` para exibir "Dashboard" ao invés de "Início"
+- Adicionar breadcrumbs em 17 páginas que ainda não possuem
+- Remover botões de "Voltar" que serão substituídos pela navegação via breadcrumb
+- Garantir que cada tela tenha o caminho correto desde o Dashboard
 
 ---
 
-## Novo Comportamento
+## Fase 1: Atualização do Componente Base
 
-| Situação | Comportamento Novo |
-|----------|-------------------|
-| Membro promovido a Admin | Adicionado automaticamente a **todos os quadros** da equipe como Admin |
-| Quadro novo é criado | **Todos os admins** da equipe são automaticamente adicionados ao quadro |
-| Membro entra já como Admin | Adicionado a todos os quadros da equipe como Admin |
+### 1.1 PageBreadcrumb.tsx
+Alterar o texto "Início" para "Dashboard":
+- Localização: `src/components/PageBreadcrumb.tsx`
+- Linha 35: Mudar `<span>Início</span>` para `<span>Dashboard</span>`
 
 ---
 
-## Mudanças no Banco de Dados
+## Fase 2: Páginas Principais (Sem Back Button para Remover)
 
-### 1. Trigger: Promoção a Admin
+### 2.1 Demands.tsx
+- **Arquivo**: `src/pages/Demands.tsx`
+- **Breadcrumb**: Dashboard > Demandas
+- **Ação**: Adicionar `PageBreadcrumb` no início do componente
 
-Quando `team_members.role` é atualizado para `'admin'`, adicionar o usuário a todos os boards da equipe:
+### 2.2 Kanban.tsx
+- **Arquivo**: `src/pages/Kanban.tsx`
+- **Breadcrumb**: Dashboard > Kanban
+- **Ação**: Adicionar `PageBreadcrumb` no início do componente
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  team_members UPDATE (role = 'admin')                       │
-│                     ↓                                       │
-│  Trigger: sync_admin_to_all_boards                          │
-│                     ↓                                       │
-│  INSERT INTO board_members (todos os boards da equipe)      │
-└─────────────────────────────────────────────────────────────┘
-```
+### 2.3 ArchivedDemands.tsx
+- **Arquivo**: `src/pages/ArchivedDemands.tsx`
+- **Breadcrumb**: Dashboard > Arquivadas
+- **Ação**: Adicionar `PageBreadcrumb` no início do componente
 
-### 2. Modificar: Função de criação de board
+### 2.4 Store.tsx
+- **Arquivo**: `src/pages/Store.tsx`
+- **Breadcrumb**: Dashboard > Loja de Serviços
+- **Ação**: Adicionar `PageBreadcrumb` no início do componente
 
-Quando um board é criado via RPC `create_board_with_services`, adicionar também todos os admins da equipe (não apenas o criador):
+### 2.5 TeamConfig.tsx
+- **Arquivo**: `src/pages/TeamConfig.tsx`
+- **Breadcrumb**: Dashboard > Configurações da Equipe
+- **Ação**: Adicionar `PageBreadcrumb` no início do componente
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  create_board_with_services() RPC                           │
-│                     ↓                                       │
-│  INSERT board                                               │
-│                     ↓                                       │
-│  INSERT criador como admin                                  │
-│                     ↓                                       │
-│  INSERT todos os admins da equipe como admins               │
-└─────────────────────────────────────────────────────────────┘
-```
+### 2.6 TeamDemands.tsx
+- **Arquivo**: `src/pages/TeamDemands.tsx`
+- **Breadcrumb**: Dashboard > Visão Geral da Equipe
+- **Ação**: Adicionar `PageBreadcrumb` no início do componente
 
-### 3. Modificar: Trigger de novo membro
+---
 
-Quando um membro entra na equipe, verificar se é admin. Se for, adicionar a todos os boards (não apenas o default):
+## Fase 3: Páginas com Back Button (Remover e Substituir)
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  team_members INSERT                                        │
-│                     ↓                                       │
-│  Se role = 'admin':                                         │
-│    → Adicionar a TODOS os boards como admin                 │
-│  Senão:                                                     │
-│    → Adicionar apenas ao board padrão como requester        │
-└─────────────────────────────────────────────────────────────┘
-```
+### 3.1 CreateDemand.tsx
+- **Arquivo**: `src/pages/CreateDemand.tsx`
+- **Breadcrumb**: Dashboard > Demandas > Nova Demanda
+- **Ação**: 
+  - Remover botão "Voltar" (linhas 246-252)
+  - Adicionar `PageBreadcrumb` com caminho correto
+  - Manter navegação ao cancelar via breadcrumb
+
+### 3.2 CreateDemandRequest.tsx
+- **Arquivo**: `src/pages/CreateDemandRequest.tsx`
+- **Breadcrumb**: Dashboard > Minhas Solicitações > Nova Solicitação
+- **Ação**: 
+  - Remover botão "Voltar" (linhas 211-218)
+  - Adicionar `PageBreadcrumb`
+
+### 3.3 DemandRequests.tsx
+- **Arquivo**: `src/pages/DemandRequests.tsx`
+- **Breadcrumb**: Dashboard > Solicitações de Demanda
+- **Ação**: 
+  - Remover botão "Voltar" (linhas 329-332)
+  - Adicionar `PageBreadcrumb`
+
+### 3.4 MyDemandRequests.tsx
+- **Arquivo**: `src/pages/MyDemandRequests.tsx`
+- **Breadcrumb**: Dashboard > Minhas Solicitações
+- **Ação**: 
+  - Remover botão "Voltar" (linhas 143-146)
+  - Adicionar `PageBreadcrumb`
+
+### 3.5 Profile.tsx
+- **Arquivo**: `src/pages/Profile.tsx`
+- **Breadcrumb**: Dashboard > Meu Perfil
+- **Ação**: 
+  - Remover botão "Voltar" (linhas 199-202)
+  - Adicionar `PageBreadcrumb`
+
+### 3.6 Settings.tsx
+- **Arquivo**: `src/pages/Settings.tsx`
+- **Breadcrumb**: Dashboard > Configurações
+- **Ação**: 
+  - Remover botão "Voltar" (linhas 259-265)
+  - Adicionar `PageBreadcrumb`
+
+### 3.7 TeamRequests.tsx
+- **Arquivo**: `src/pages/TeamRequests.tsx`
+- **Breadcrumb**: Dashboard > Equipes > {Team Name} > Solicitações de Entrada
+- **Ação**: 
+  - Remover botão "Voltar" (linhas 133-139)
+  - Adicionar `PageBreadcrumb`
+
+### 3.8 ServicesManagement.tsx
+- **Arquivo**: `src/pages/ServicesManagement.tsx`
+- **Breadcrumb**: Dashboard > Equipes > {Team Name} > Serviços
+- **Ação**: 
+  - Remover botão "Voltar" (linhas 300-302)
+  - Adicionar `PageBreadcrumb`
+
+### 3.9 BoardMembers.tsx
+- **Arquivo**: `src/pages/BoardMembers.tsx`
+- **Breadcrumb**: Dashboard > Quadros > {Board Name} > Membros
+- **Ação**: 
+  - Remover botão "Voltar" (linha 114)
+  - Adicionar `PageBreadcrumb`
+
+### 3.10 UserProfile.tsx
+- **Arquivo**: `src/pages/UserProfile.tsx`
+- **Breadcrumb**: Dashboard > Perfil do Usuário
+- **Ação**: 
+  - Remover botão "Voltar" (linhas 283-286)
+  - Adicionar `PageBreadcrumb`
+
+---
+
+## Fase 4: Ajustes em Páginas Existentes
+
+### 4.1 Atualizar breadcrumbs existentes
+Páginas que já têm breadcrumb serão atualizadas automaticamente quando alterarmos "Início" para "Dashboard" no componente base.
+
+### 4.2 Padronização de ícones
+Cada breadcrumb usará ícones apropriados do Lucide:
+- Dashboard: `LayoutDashboard`
+- Demandas: `Briefcase`
+- Kanban: `Kanban`
+- Equipes: `Users`
+- Quadros: `LayoutGrid`
+- Configurações: `Settings`
+- Perfil: `User`
+- Loja: `ShoppingCart`
+- Arquivadas: `Archive`
+- Solicitações: `ClipboardList`
 
 ---
 
 ## Detalhes Técnicos
 
-### Nova função: `sync_admin_to_all_boards()`
-
-```sql
-CREATE OR REPLACE FUNCTION public.sync_admin_to_all_boards()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  -- Só executar se o role foi alterado para 'admin'
-  IF NEW.role = 'admin' AND (OLD.role IS NULL OR OLD.role != 'admin') THEN
-    -- Adicionar usuário a todos os boards da equipe como admin
-    INSERT INTO public.board_members (board_id, user_id, role, added_by)
-    SELECT 
-      b.id,
-      NEW.user_id,
-      'admin'::team_role,
-      NEW.user_id
-    FROM public.boards b
-    WHERE b.team_id = NEW.team_id
-    ON CONFLICT (board_id, user_id) 
-    DO UPDATE SET role = 'admin'::team_role;
-  END IF;
-  
-  RETURN NEW;
-END;
-$$;
+### Estrutura de Breadcrumb Padrão
+```typescript
+<PageBreadcrumb
+  items={[
+    { label: "Seção", href: "/path", icon: IconComponent },
+    { label: "Subseção", href: "/path/sub" },
+    { label: "Página Atual", isCurrent: true },
+  ]}
+/>
 ```
 
-### Trigger de UPDATE em team_members
-
-```sql
-CREATE TRIGGER on_team_member_role_changed
-  AFTER UPDATE OF role ON public.team_members
-  FOR EACH ROW
-  EXECUTE FUNCTION public.sync_admin_to_all_boards();
-```
-
-### Modificar: `add_member_to_default_board()`
-
-```sql
-CREATE OR REPLACE FUNCTION public.add_member_to_default_board()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  IF NEW.role = 'admin' THEN
-    -- Admins: adicionar a TODOS os boards
-    INSERT INTO public.board_members (board_id, user_id, role, added_by)
-    SELECT b.id, NEW.user_id, 'admin'::team_role, NEW.user_id
-    FROM public.boards b
-    WHERE b.team_id = NEW.team_id
-    ON CONFLICT (board_id, user_id) DO NOTHING;
-  ELSE
-    -- Outros: adicionar apenas ao board padrão
-    INSERT INTO public.board_members (board_id, user_id, role, added_by)
-    SELECT b.id, NEW.user_id, 'requester'::team_role, NEW.user_id
-    FROM public.boards b
-    WHERE b.team_id = NEW.team_id AND b.is_default = true
-    ON CONFLICT (board_id, user_id) DO NOTHING;
-  END IF;
-  
-  RETURN NEW;
-END;
-$$;
-```
-
-### Modificar: `create_board_with_services()`
-
-Adicionar lógica para incluir todos os admins da equipe no novo board:
-
-```sql
--- Após criar o board e adicionar o criador...
-
--- Adicionar todos os admins da equipe ao novo board
-INSERT INTO public.board_members (board_id, user_id, role, added_by)
-SELECT 
-  v_new_board.id,
-  tm.user_id,
-  'admin'::team_role,
-  v_user_id
-FROM public.team_members tm
-WHERE tm.team_id = p_team_id 
-  AND tm.role = 'admin'
-  AND tm.user_id != v_user_id  -- Criador já foi adicionado
-ON CONFLICT (board_id, user_id) DO NOTHING;
-```
-
-### Migração de dados existentes
-
-Sincronizar admins atuais com boards existentes:
-
-```sql
-INSERT INTO public.board_members (board_id, user_id, role, added_by)
-SELECT b.id, tm.user_id, 'admin'::team_role, tm.user_id
-FROM public.team_members tm
-JOIN public.boards b ON b.team_id = tm.team_id
-WHERE tm.role = 'admin'
-  AND NOT EXISTS (
-    SELECT 1 FROM public.board_members bm 
-    WHERE bm.board_id = b.id AND bm.user_id = tm.user_id
-  )
-ON CONFLICT (board_id, user_id) DO UPDATE SET role = 'admin'::team_role;
-```
+### Arquivos a Serem Modificados (18 total)
+1. `src/components/PageBreadcrumb.tsx` - Alterar "Início" para "Dashboard"
+2. `src/pages/Demands.tsx` - Adicionar breadcrumb
+3. `src/pages/Kanban.tsx` - Adicionar breadcrumb
+4. `src/pages/ArchivedDemands.tsx` - Adicionar breadcrumb
+5. `src/pages/CreateDemand.tsx` - Substituir back button
+6. `src/pages/CreateDemandRequest.tsx` - Substituir back button
+7. `src/pages/DemandRequests.tsx` - Substituir back button
+8. `src/pages/MyDemandRequests.tsx` - Substituir back button
+9. `src/pages/Profile.tsx` - Substituir back button
+10. `src/pages/Settings.tsx` - Substituir back button
+11. `src/pages/Store.tsx` - Adicionar breadcrumb
+12. `src/pages/TeamConfig.tsx` - Adicionar breadcrumb
+13. `src/pages/TeamDemands.tsx` - Adicionar breadcrumb
+14. `src/pages/TeamRequests.tsx` - Substituir back button
+15. `src/pages/ServicesManagement.tsx` - Substituir back button
+16. `src/pages/BoardMembers.tsx` - Substituir back button
+17. `src/pages/UserProfile.tsx` - Substituir back button
+18. `src/pages/NoteDetail.tsx` - Verificar e adicionar se necessário
 
 ---
 
-## Arquivos Modificados
-
-| Arquivo | Ação |
-|---------|------|
-| Nova migration SQL | Criar funções, triggers e migrar dados existentes |
-
----
-
-## Verificação
-
-Após implementação:
-- Promover um membro a admin → ele aparece em todos os quadros
-- Criar novo quadro → todos os admins da equipe são membros automaticamente
-- Novo usuário entra como admin → adicionado a todos os quadros
+## Resultado Esperado
+- Navegação consistente em todas as páginas
+- Usuário pode entender onde está na hierarquia do app
+- Navegação facilitada sem depender do botão "Voltar" do navegador
+- Visual unificado com animações suaves de entrada dos breadcrumbs
