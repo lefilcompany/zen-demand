@@ -1,193 +1,264 @@
 
-# Plano: Corrigir Tela de Gerenciamento de Tempo
+# Plano: Refatoração Completa da Tela de Gerenciamento de Tempo
 
-## Problemas Identificados
+## Visão Geral
 
-### 1. Erro de DOM Nesting (button dentro de button)
-O console mostra o erro:
-```
-validateDOMNesting(...): <button> cannot appear as a descendant of <button>
-```
-Em `UserDetailTimeRow.tsx`, linha 127-134, há um `<button>` para navegação ao perfil do usuário dentro do `CollapsibleTrigger` (que já é um `<Button>`). Isso é inválido em HTML.
-
-### 2. Cálculo de Tempo Duplicado
-No `TimeManagement.tsx`, o `groupedByDemand` calcula a duração de duas formas:
-- Usa `entry.duration_seconds` para entradas concluídas
-- Recalcula `(ended_at - started_at)` para entradas ativas
-
-Isso pode causar inconsistência porque o campo `duration_seconds` já contém o valor correto.
-
-### 3. Tempo Total Não Atualizando em Tempo Real
-O tempo total no card "Tempo Total" usa `liveTotalTime`, mas o cálculo base (`totals.totalTime`) soma apenas `duration_seconds` das entradas concluídas, não considerando corretamente os timers ativos.
+Reconstruir completamente a página de Gerenciamento de Tempo (`/time-management`) com:
+- **Restrição de acesso**: Apenas administradores e coordenadores podem visualizar
+- **Escopo por quadro**: Dados mudam automaticamente ao trocar de quadro
+- **Tempo real**: Contadores atualizam ao vivo quando há timers ativos
+- **Demandas ativas visíveis**: Cards destacados mostrando quem está trabalhando agora
+- **Gráficos informativos**: Visualizações claras e coloridas do tempo por usuário
 
 ---
 
-## Correções Propostas
+## Arquitetura de Componentes
 
-### 1. Corrigir `UserDetailTimeRow.tsx`
-**Problema**: `<button>` dentro de `<Button>` (CollapsibleTrigger)
-
-**Solução**: Usar `<span>` com `role="link"` e `tabIndex={0}` para o nome do usuário, ou mover a ação de navegação para fora do trigger.
-
-```tsx
-// ANTES (errado):
-<button type="button" onClick={...}>
-  {userData.profile.full_name}
-</button>
-
-// DEPOIS (correto):
-<span
-  role="link"
-  tabIndex={0}
-  onClick={(e) => {
-    e.stopPropagation();
-    navigate(`/user/${userData.userId}`);
-  }}
-  onKeyDown={(e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.stopPropagation();
-      navigate(`/user/${userData.userId}`);
-    }
-  }}
-  className="font-medium truncate hover:text-primary hover:underline cursor-pointer transition-colors"
->
-  {userData.profile.full_name}
-</span>
+```text
+TimeManagement.tsx (página principal)
+├── Verificação de Permissão (admin/moderator)
+├── Header com Indicador do Quadro Atual
+├── Seção "Atividade ao Vivo" (demandas com timer ativo)
+│   └── ActiveDemandCard (novo componente)
+├── Cards de Estatísticas (tempo total, usuários, médias)
+├── Gráficos
+│   ├── PieChart - Distribuição por Usuário
+│   └── BarChart - Top Demandas
+├── Ranking de Usuários com Tempo Real
+│   └── LiveUserTimeRow (existente, aprimorado)
+└── Tabs de Detalhamento
+    ├── Por Usuário → UserDetailTimeRow
+    └── Por Demanda → DemandDetailTimeRow
 ```
-
-### 2. Corrigir `DemandDetailTimeRow.tsx`
-**Mesmo problema**: `<button>` dentro do CollapsibleTrigger
-
-**Solução**: Mesma abordagem - usar `<span>` com role="link"
-
-### 3. Corrigir Cálculo de Tempo em `TimeManagement.tsx`
-**Problema**: O `groupedByDemand` calcula duração de forma inconsistente
-
-**Solução**: Sempre usar `entry.duration_seconds` já que este é atualizado quando o timer para. Para timers ativos, o `useLiveTimer` já calcula o tempo decorrido desde `started_at`.
-
-```tsx
-// groupedByDemand - usar apenas duration_seconds
-filteredEntries.forEach((entry) => {
-  const demandId = entry.demand_id;
-  const duration = entry.duration_seconds || 0; // ← Simplificado
-  const isActive = !entry.ended_at;
-  // ...resto igual
-});
-```
-
-### 4. Ajustar `useBoardTimeEntries.ts` para Tempo Real
-O hook já tem realtime configurado, mas vamos garantir que as invalidações de queries estão corretas.
 
 ---
 
-## Arquivos a Modificar
+## Alterações por Arquivo
 
-| Arquivo | Alteração |
-|---------|-----------|
-| `src/components/UserDetailTimeRow.tsx` | Trocar `<button>` por `<span>` com role="link" |
-| `src/components/DemandDetailTimeRow.tsx` | Trocar `<button>` por `<span>` com role="link" |
-| `src/pages/TimeManagement.tsx` | Simplificar cálculo de duração no groupedByDemand |
+### 1. `src/pages/TimeManagement.tsx` (Refatoração Completa)
+
+**Mudanças Principais:**
+
+1. **Importar hook de verificação de role**
+```tsx
+import { useIsTeamAdminOrModerator } from "@/hooks/useTeamRole";
+```
+
+2. **Adicionar verificação de permissão no início**
+```tsx
+const { canManage, isLoading: roleLoading } = useIsTeamAdminOrModerator(currentTeamId);
+
+// Bloquear acesso se não for admin/moderator
+if (!roleLoading && !canManage && selectedBoardId) {
+  return (
+    <div className="container mx-auto py-6">
+      <Card className="border-destructive/50">
+        <CardContent className="py-12 text-center">
+          <Shield className="h-12 w-12 mx-auto text-destructive mb-4" />
+          <h3 className="text-lg font-medium mb-2">Acesso Restrito</h3>
+          <p className="text-muted-foreground">
+            Apenas administradores e coordenadores podem acessar o gerenciamento de tempo.
+          </p>
+          <Button onClick={() => navigate("/")} className="mt-4">
+            Voltar ao Dashboard
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+```
+
+3. **Nova Seção "Atividade ao Vivo"**
+   - Mostrar cards destacados para cada demanda com timer ativo
+   - Incluir avatar do usuário, nome da demanda, status, tempo corrente
+   - Animação pulsante para indicar atividade
+
+4. **Melhorar Cards de Estatísticas**
+   - Gradientes e cores mais vibrantes
+   - Ícones contextuais
+   - Indicadores animados quando há timers ativos
+
+5. **Gráficos Aprimorados**
+   - Cores mais vibrantes e temáticas
+   - Legendas mais claras
+   - Tooltips informativos
+
+6. **Ranking em Tempo Real**
+   - Medalhas animadas para top 3
+   - Barras de progresso relativas
+   - Indicador "Trabalhando agora" com destaque
+
+---
+
+### 2. Novo Componente: `src/components/ActiveDemandCard.tsx`
+
+Card visual para mostrar demandas com timer ativo em destaque:
+
+```tsx
+interface ActiveDemandCardProps {
+  entry: BoardTimeEntry;
+  demandTotalSeconds: number;
+}
+
+export function ActiveDemandCard({ entry, demandTotalSeconds }: ActiveDemandCardProps) {
+  // Timer ao vivo
+  const liveTime = useLiveTimer({
+    isActive: true,
+    baseSeconds: demandTotalSeconds,
+    lastStartedAt: entry.started_at,
+  });
+
+  return (
+    <Card className="border-emerald-500 bg-gradient-to-br from-emerald-50 to-transparent dark:from-emerald-950/30 shadow-lg shadow-emerald-100 dark:shadow-emerald-900/20">
+      <CardContent className="p-4">
+        {/* Avatar do usuário com indicador pulsante */}
+        {/* Nome da demanda */}
+        {/* Status badge */}
+        {/* Timer grande e animado */}
+        {/* Link para a demanda */}
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+---
+
+### 3. `src/components/LiveUserTimeRow.tsx` (Aprimoramentos)
+
+Melhorias visuais:
+- Medalhas mais elaboradas para top 3
+- Barra de progresso com gradientes
+- Micro-animações ao atualizar tempo
+- Hover states mais evidentes
+
+---
+
+### 4. `src/hooks/useBoardTimeEntries.ts` (Melhorias)
+
+Adicionar dados agregados úteis:
+- Demandas com timer ativo (para a seção "Atividade ao Vivo")
+- Contagem por status
+- Otimização de re-renders com memoização
+
+---
+
+## Estrutura Visual da Nova Tela
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  📊 Gerenciamento de Tempo                                   │
+│  Quadro: [Nome do Quadro] ● 3 timers ativos                  │
+│  [Exportar PDF]                                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ⚡ ATIVIDADE AO VIVO (seção destacada, verde)              │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐         │
+│  │ 👤 João      │ │ 👤 Maria     │ │ 👤 Pedro     │         │
+│  │ Demanda X    │ │ Demanda Y    │ │ Demanda Z    │         │
+│  │ 🟢 Fazendo   │ │ 🟠 Em Ajuste │ │ 🟢 Fazendo   │         │
+│  │ 02:34:12     │ │ 01:15:45     │ │ 00:45:33     │         │
+│  │ (pulsando)   │ │ (pulsando)   │ │ (pulsando)   │         │
+│  └──────────────┘ └──────────────┘ └──────────────┘         │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐           │
+│  │ ⏱️ Total │ │ 👥 Users│ │ 📊 Média │ │ 🎯 /Task │           │
+│  │ 45:23:10│ │    8    │ │ 05:40:23│ │ 02:15:30│           │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘           │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────────────┐  ┌─────────────────────┐          │
+│  │ 🥧 Tempo por Usuário │  │ 📊 Top Demandas     │          │
+│  │    [Pie Chart]      │  │    [Bar Chart]      │          │
+│  └─────────────────────┘  └─────────────────────┘          │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  🏆 RANKING EM TEMPO REAL                          [Ao Vivo]│
+│  ┌────────────────────────────────────────────────────────┐│
+│  │ 🥇 João Silva      ████████████████████  15:30:45 🟢  ││
+│  │ 🥈 Maria Santos    █████████████         12:45:20     ││
+│  │ 🥉 Pedro Costa     ██████████            10:15:10 🟢  ││
+│  │ 4. Ana Oliveira    ████████              08:30:00     ││
+│  └────────────────────────────────────────────────────────┘│
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│  [Filtros de Data/Usuário/Status]                          │
+├─────────────────────────────────────────────────────────────┤
+│  [Por Usuário] [Por Demanda]  ← Tabs de detalhamento       │
+│  ┌────────────────────────────────────────────────────────┐│
+│  │ Lista expansível com detalhes                          ││
+│  └────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## Detalhes Técnicos
 
-### Correção UserDetailTimeRow.tsx (linhas 127-136)
+### Verificação de Permissão
 ```tsx
-// Substituir button por span acessível
-<span
-  role="link"
-  tabIndex={0}
-  onClick={(e) => {
-    e.stopPropagation();
-    navigate(`/user/${userData.userId}`);
-  }}
-  onKeyDown={(e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.stopPropagation();
-      navigate(`/user/${userData.userId}`);
-    }
-  }}
-  className="font-medium truncate hover:text-primary hover:underline cursor-pointer transition-colors"
->
-  {userData.profile.full_name}
-</span>
+// Usa o hook existente de verificação de role
+const { canManage, isLoading: roleLoading } = useIsTeamAdminOrModerator(currentTeamId);
+
+// currentTeamId vem do BoardContext - é o team_id do board selecionado
+const { selectedBoardId, currentTeamId, currentBoard } = useSelectedBoard();
 ```
 
-### Correção DemandDetailTimeRow.tsx (linhas 92-102)
+### Dados em Tempo Real
 ```tsx
-// Mesmo padrão para o título da demanda
-<span
-  role="link"
-  tabIndex={0}
-  onClick={(e) => {
-    e.stopPropagation();
-    navigate(`/demands/${demandData.demand.id}`);
-  }}
-  onKeyDown={(e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.stopPropagation();
-      navigate(`/demands/${demandData.demand.id}`);
-    }
-  }}
-  className="font-medium truncate hover:text-primary hover:underline cursor-pointer transition-colors"
-  title={demandData.demand.title}
->
-  {truncateText(demandData.demand.title)}
-</span>
-```
+// Hook existente já tem realtime configurado
+const { data: timeEntries, isLoading: entriesLoading } = useBoardTimeEntries(selectedBoardId);
+const { data: userStats, isLoading: statsLoading, activeTimersCount } = useBoardUserTimeStats(selectedBoardId);
 
-### Correção TimeManagement.tsx (linhas 177-217)
-```tsx
-// Simplificar cálculo - usar apenas duration_seconds
-const groupedByDemand = useMemo(() => {
-  const grouped = new Map<string, GroupedByDemand>();
-
-  filteredEntries.forEach((entry) => {
-    const demandId = entry.demand_id;
-    const duration = entry.duration_seconds || 0; // ← Usar diretamente
-    const isActive = !entry.ended_at;
-
-    if (!grouped.has(demandId)) {
-      grouped.set(demandId, {
-        demand: entry.demand,
-        entries: [],
-        totalSeconds: 0,
-        users: new Map(),
-        hasActiveTimer: false,
+// Demandas com timer ativo (filtrar do timeEntries)
+const activeDemands = useMemo(() => {
+  if (!timeEntries) return [];
+  
+  const activeMap = new Map();
+  timeEntries.filter(e => !e.ended_at).forEach(entry => {
+    if (!activeMap.has(entry.demand_id)) {
+      activeMap.set(entry.demand_id, {
+        entry,
+        totalSeconds: timeEntries
+          .filter(e => e.demand_id === entry.demand_id)
+          .reduce((sum, e) => sum + (e.duration_seconds || 0), 0),
       });
     }
-
-    const group = grouped.get(demandId)!;
-    group.entries.push(entry);
-    group.totalSeconds += duration;
-    if (isActive) group.hasActiveTimer = true;
-
-    // Track per-user time
-    if (entry.profile) {
-      const userId = entry.user_id;
-      if (!group.users.has(userId)) {
-        group.users.set(userId, { profile: entry.profile, totalSeconds: 0 });
-      }
-      group.users.get(userId)!.totalSeconds += duration;
-    }
   });
-
-  return Array.from(grouped.values()).sort((a, b) => {
-    if (a.hasActiveTimer && !b.hasActiveTimer) return -1;
-    if (!a.hasActiveTimer && b.hasActiveTimer) return 1;
-    return b.totalSeconds - a.totalSeconds;
-  });
-}, [filteredEntries]);
+  
+  return Array.from(activeMap.values());
+}, [timeEntries]);
 ```
+
+### Mudança de Quadro
+O sistema já está configurado para:
+1. `useBoardTimeEntries(selectedBoardId)` - Query key inclui boardId
+2. Quando o boardId muda, o React Query automaticamente refaz a query
+3. O canal de realtime também é recriado para o novo board
 
 ---
 
-## Resultado Esperado
+## Arquivos a Criar/Modificar
 
-Após as correções:
-1. ✅ Erro de DOM nesting eliminado
-2. ✅ Tempos calculados corretamente
-3. ✅ Timers ativos mostrando tempo em tempo real
-4. ✅ Cards de estatísticas (Tempo Total, Média/Usuário, etc.) atualizando corretamente
-5. ✅ Ranking de usuários com tempos ao vivo funcionando
+| Arquivo | Ação | Descrição |
+|---------|------|-----------|
+| `src/pages/TimeManagement.tsx` | Modificar | Refatoração completa com restrição de acesso |
+| `src/components/ActiveDemandCard.tsx` | Criar | Card para demandas com timer ativo |
+| `src/components/LiveUserTimeRow.tsx` | Modificar | Aprimoramentos visuais |
+| `src/hooks/useBoardTimeEntries.ts` | Modificar | Adicionar dados de demandas ativas |
+
+---
+
+## Benefícios
+
+1. **Segurança**: Apenas admin/moderator acessam dados sensíveis de tempo
+2. **Contexto**: Dados sempre refletem o quadro selecionado
+3. **Visibilidade**: Seção "Atividade ao Vivo" mostra quem está trabalhando agora
+4. **Tempo Real**: Contadores atualizam automaticamente
+5. **Visual**: Design moderno com cores vibrantes e gráficos informativos
+6. **Experiência**: Feedback visual claro sobre a produtividade da equipe
