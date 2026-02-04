@@ -359,20 +359,37 @@ serve(async (req) => {
 
     const requesterStats = Object.values(requesterMap).sort((a, b) => b.requestCount - a.requestCount);
 
-    // Calculate time tracking stats
+    // Calculate time tracking stats - include ALL board members (except requesters)
     let totalTimeSeconds = 0;
     const executorTimeMap: Record<string, { name: string; seconds: number; demandCount: number }> = {};
 
+    // First, initialize all non-requester members with 0 hours
+    (members || []).forEach((m: any) => {
+      // Include admins, moderators, and executors in time tracking
+      if (m.role !== 'requester') {
+        const profile = m.profile as any;
+        executorTimeMap[m.user_id] = {
+          name: profile?.full_name || "Usuário",
+          seconds: 0,
+          demandCount: 0,
+        };
+      }
+    });
+
+    // Then add time entries
     (timeEntries || []).forEach((entry: any) => {
       if (entry.duration_seconds) {
         totalTimeSeconds += entry.duration_seconds;
         
-        if (!executorTimeMap[entry.user_id]) {
+        // If member exists in map, add to their time
+        if (executorTimeMap[entry.user_id]) {
+          executorTimeMap[entry.user_id].seconds += entry.duration_seconds;
+        } else {
+          // If not a board member anymore but has time entries, still include them
           const member = (members || []).find((m: any) => m.user_id === entry.user_id);
           const name = (member?.profile as any)?.full_name || "Usuário";
-          executorTimeMap[entry.user_id] = { name, seconds: 0, demandCount: 0 };
+          executorTimeMap[entry.user_id] = { name, seconds: entry.duration_seconds, demandCount: 0 };
         }
-        executorTimeMap[entry.user_id].seconds += entry.duration_seconds;
       }
     });
 
@@ -393,11 +410,13 @@ serve(async (req) => {
 
     const timeTrackingStats: TimeTrackingStats = {
       totalHours: Math.round((totalTimeSeconds / 3600) * 10) / 10,
-      byExecutor: Object.values(executorTimeMap).map((e) => ({
-        name: e.name,
-        hours: Math.round((e.seconds / 3600) * 10) / 10,
-        demandCount: e.demandCount,
-      })),
+      byExecutor: Object.values(executorTimeMap)
+        .sort((a, b) => b.seconds - a.seconds) // Sort by hours descending
+        .map((e) => ({
+          name: e.name,
+          hours: Math.round((e.seconds / 3600) * 10) / 10,
+          demandCount: e.demandCount,
+        })),
       avgHoursPerDemand: delivered > 0 
         ? Math.round(((totalTimeSeconds / 3600) / delivered) * 10) / 10 
         : 0,
