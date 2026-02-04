@@ -37,7 +37,7 @@ export function PriorityDistributionChart({ demands }: PriorityDistributionChart
   const { data, hasData, periodDescription } = useMemo(() => {
     const { start, end } = getChartPeriodRange(period);
 
-    // Filter demands by period
+    // Filter demands by period using Date object (respects local timezone)
     const filteredDemands = demands.filter((d) => {
       const demandDate = new Date(d.created_at);
       if (start && demandDate < start) return false;

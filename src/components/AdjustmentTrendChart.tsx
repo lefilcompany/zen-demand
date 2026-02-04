@@ -1,13 +1,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { useMemo, useState } from "react";
-import { format, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfDay, parseISO, subDays, endOfMonth } from "date-fns";
+import { format, eachDayOfInterval, eachMonthOfInterval, startOfDay, subDays, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChartPeriodSelector, type ChartPeriodType, getChartPeriodRange } from "./ChartPeriodSelector";
+import { toLocalDateString } from "@/lib/dateUtils";
 
 interface AdjustmentTrendChartProps {
   boardId: string;
@@ -61,9 +62,9 @@ export function AdjustmentTrendChart({ boardId }: AdjustmentTrendChartProps) {
     const { start, end } = getChartPeriodRange(period);
     const today = startOfDay(end);
 
-    // Filter adjustments by period
+    // Filter adjustments by period using Date object (respects local timezone)
     const filteredAdjustments = adjustments.filter((a) => {
-      const adjustmentDate = parseISO(a.created_at);
+      const adjustmentDate = new Date(a.created_at);
       if (start && adjustmentDate < start) return false;
       if (adjustmentDate > end) return false;
       return true;
@@ -72,7 +73,7 @@ export function AdjustmentTrendChart({ boardId }: AdjustmentTrendChartProps) {
     // Find effective start date
     const effectiveStart = start || 
       (filteredAdjustments.length > 0 
-        ? startOfDay(parseISO(filteredAdjustments[0].created_at))
+        ? startOfDay(new Date(filteredAdjustments[0].created_at))
         : subDays(today, 29));
 
     // Count by type for filtered adjustments
@@ -89,21 +90,21 @@ export function AdjustmentTrendChart({ boardId }: AdjustmentTrendChartProps) {
 
     let data: { date: string; fullDate: string; interno: number; externo: number; total: number }[] = [];
 
-    if (daysDiff <= 31) {
-      // Daily granularity
+    if (daysDiff <= 90) {
+      // Daily granularity for up to 3 months (user preference: always daily when possible)
       const days = eachDayOfInterval({ start: effectiveStart, end: today });
 
       data = days.map((day) => {
         const dayStr = format(day, "yyyy-MM-dd");
         const dayInternalAdjustments = filteredAdjustments.filter((a) => {
-          const adjustmentDate = format(parseISO(a.created_at), "yyyy-MM-dd");
+          const adjustmentLocalDate = toLocalDateString(a.created_at);
           const type = a.metadata?.adjustment_type;
-          return adjustmentDate === dayStr && type === "internal";
+          return adjustmentLocalDate === dayStr && type === "internal";
         }).length;
         const dayExternalAdjustments = filteredAdjustments.filter((a) => {
-          const adjustmentDate = format(parseISO(a.created_at), "yyyy-MM-dd");
+          const adjustmentLocalDate = toLocalDateString(a.created_at);
           const type = a.metadata?.adjustment_type;
-          return adjustmentDate === dayStr && type !== "internal";
+          return adjustmentLocalDate === dayStr && type !== "internal";
         }).length;
 
         return {
@@ -114,48 +115,23 @@ export function AdjustmentTrendChart({ boardId }: AdjustmentTrendChartProps) {
           total: dayInternalAdjustments + dayExternalAdjustments,
         };
       });
-    } else if (daysDiff <= 120) {
-      // Weekly granularity
-      const weeks = eachWeekOfInterval({ start: effectiveStart, end: today }, { weekStartsOn: 1 });
-
-      data = weeks.map((weekStart, idx) => {
-        const weekEnd = idx < weeks.length - 1 ? subDays(weeks[idx + 1], 1) : today;
-
-        const weekInternalAdjustments = filteredAdjustments.filter((a) => {
-          const adjustmentDate = parseISO(a.created_at);
-          const type = a.metadata?.adjustment_type;
-          return adjustmentDate >= weekStart && adjustmentDate <= weekEnd && type === "internal";
-        }).length;
-        const weekExternalAdjustments = filteredAdjustments.filter((a) => {
-          const adjustmentDate = parseISO(a.created_at);
-          const type = a.metadata?.adjustment_type;
-          return adjustmentDate >= weekStart && adjustmentDate <= weekEnd && type !== "internal";
-        }).length;
-
-        return {
-          date: format(weekStart, "dd/MM", { locale: ptBR }),
-          fullDate: `Semana de ${format(weekStart, "dd/MM", { locale: ptBR })}`,
-          interno: weekInternalAdjustments,
-          externo: weekExternalAdjustments,
-          total: weekInternalAdjustments + weekExternalAdjustments,
-        };
-      });
     } else {
-      // Monthly granularity
+      // Monthly granularity for periods > 90 days
       const months = eachMonthOfInterval({ start: effectiveStart, end: today });
 
       data = months.map((monthStart) => {
         const monthEnd = endOfMonth(monthStart);
+        const effectiveMonthEnd = monthEnd > today ? today : monthEnd;
 
         const monthInternalAdjustments = filteredAdjustments.filter((a) => {
-          const adjustmentDate = parseISO(a.created_at);
+          const adjustmentDate = new Date(a.created_at);
           const type = a.metadata?.adjustment_type;
-          return adjustmentDate >= monthStart && adjustmentDate <= monthEnd && type === "internal";
+          return adjustmentDate >= monthStart && adjustmentDate <= effectiveMonthEnd && type === "internal";
         }).length;
         const monthExternalAdjustments = filteredAdjustments.filter((a) => {
-          const adjustmentDate = parseISO(a.created_at);
+          const adjustmentDate = new Date(a.created_at);
           const type = a.metadata?.adjustment_type;
-          return adjustmentDate >= monthStart && adjustmentDate <= monthEnd && type !== "internal";
+          return adjustmentDate >= monthStart && adjustmentDate <= effectiveMonthEnd && type !== "internal";
         }).length;
 
         return {

@@ -109,11 +109,30 @@ export const formatDueDateForInput = (date: Date): string => {
 /**
  * Extract the date-only portion (YYYY-MM-DD) from an ISO timestamp string.
  * This avoids timezone conversion issues by working with the string directly.
+ * NOTE: Use toLocalDateString() for user-facing displays that need local timezone.
  */
 export const toDateOnly = (isoString: string | null | undefined): string | null => {
   if (!isoString) return null;
   // Handle both "2026-01-14T00:00:00Z" and "2026-01-14 00:00:00+00" formats
   return isoString.slice(0, 10);
+};
+
+/**
+ * Convert an ISO timestamp to local date string (YYYY-MM-DD)
+ * considering the user's device timezone.
+ * 
+ * Example: "2026-01-30T01:30:00Z" in Brazil (UTC-3) -> "2026-01-29"
+ * 
+ * This is the preferred function for user-facing date displays in charts
+ * and dashboards where the user expects dates relative to their timezone.
+ */
+export const toLocalDateString = (isoString: string | null | undefined): string | null => {
+  if (!isoString) return null;
+  const date = new Date(isoString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 };
 
 /**
