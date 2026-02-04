@@ -597,7 +597,11 @@ export default function BoardSummary() {
                       .map((executor, i) => (
                         <div key={i} className="flex items-center justify-between text-sm">
                           <span className="text-muted-foreground">{executor.name}</span>
-                          <span className="font-medium">{executor.hours}h ({executor.demandCount} demandas)</span>
+                          <span className="font-medium">
+                            {executor.hours > 0 
+                              ? `${executor.hours}h (${executor.demandCount} demandas)` 
+                              : "Sem tempo registrado"}
+                          </span>
                         </div>
                       ))}
                   </div>
