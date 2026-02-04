@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,7 +49,7 @@ import {
   ServiceWithHierarchy
 } from "@/hooks/useServices";
 import { useIsTeamAdmin } from "@/hooks/useTeamRole";
-import { ArrowLeft, Plus, Clock, Pencil, Trash2, DollarSign, Folder, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Clock, Pencil, Trash2, DollarSign, Folder, ChevronDown, ChevronRight, Users, ShoppingBag } from "lucide-react";
 
 export default function ServicesManagement() {
   const { id } = useParams<{ id: string }>();
