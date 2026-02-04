@@ -261,7 +261,7 @@ export default function DemandRequests() {
       </CardHeader>
       <CardContent>
         {request.description && (
-          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{request.description}</p>
+          <RichTextDisplay content={request.description} className="text-sm text-muted-foreground mb-3 line-clamp-2" />
         )}
 
         <div className="flex flex-wrap items-center gap-2">
