@@ -1,19 +1,29 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Sparkles, RefreshCw, AlertCircle, TrendingUp, AlertTriangle, 
   CheckCircle2, Clock, Target, Lightbulb, Users, BarChart3,
-  Calendar, Timer, ChevronDown, ChevronUp
+  Timer, Copy, Download, Share2
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import ReactMarkdown from "react-markdown";
+import { useBoardSummaryHistory, BoardSummaryHistoryItem } from "@/hooks/useBoardSummaryHistory";
+import { SummaryHistoryDrawer } from "@/components/SummaryHistoryDrawer";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import jsPDF from "jspdf";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface BoardAnalytics {
   board: { name: string; description: string | null; monthlyLimit: number | null };
@@ -98,24 +108,6 @@ function QuickStatsCard({
   );
 }
 
-function PerformanceGauge({ percentage, label }: { percentage: number; label: string }) {
-  const getColor = (p: number) => {
-    if (p >= 80) return "bg-emerald-500";
-    if (p >= 60) return "bg-amber-500";
-    return "bg-red-500";
-  };
-
-  return (
-    <div className="space-y-2">
-      <div className="flex justify-between items-center">
-        <span className="text-sm text-muted-foreground">{label}</span>
-        <span className="text-sm font-medium">{percentage}%</span>
-      </div>
-      <Progress value={percentage} className={cn("h-2", getColor(percentage))} />
-    </div>
-  );
-}
-
 function MemberPerformanceCard({ member }: { member: BoardAnalytics["members"][0] }) {
   const roleLabels: Record<string, string> = {
     admin: "Administrador",
@@ -151,52 +143,6 @@ function MemberPerformanceCard({ member }: { member: BoardAnalytics["members"][0
         <p className="text-xs text-muted-foreground">{member.completionRate}% concluído</p>
       </div>
     </div>
-  );
-}
-
-function CollapsibleSection({ 
-  title, 
-  icon: Icon, 
-  children, 
-  defaultOpen = false,
-  badge,
-}: { 
-  title: string;
-  icon: React.ElementType;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-  badge?: string;
-}) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
-  return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger className="w-full">
-        <div className="flex items-center justify-between p-4 hover:bg-muted/50 rounded-lg transition-colors">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Icon className="h-4 w-4 text-primary" />
-            </div>
-            <span className="font-medium text-sm">{title}</span>
-            {badge && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                {badge}
-              </span>
-            )}
-          </div>
-          {isOpen ? (
-            <ChevronUp className="h-4 w-4 text-muted-foreground" />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          )}
-        </div>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <div className="px-4 pb-4">
-          {children}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
   );
 }
 
@@ -238,6 +184,9 @@ export default function BoardSummary() {
   const [analytics, setAnalytics] = useState<BoardAnalytics | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentSummaryId, setCurrentSummaryId] = useState<string | null>(null);
+  
+  const { saveSummary, createShareToken } = useBoardSummaryHistory(currentBoard?.id);
 
   const generateSummary = useCallback(async () => {
     if (!currentBoard?.id) {
@@ -249,6 +198,7 @@ export default function BoardSummary() {
     setError(null);
     setSummary("");
     setAnalytics(null);
+    setCurrentSummaryId(null);
 
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -282,6 +232,7 @@ export default function BoardSummary() {
       const decoder = new TextDecoder();
       let textBuffer = "";
       let summaryText = "";
+      let analyticsData: BoardAnalytics | null = null;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -304,13 +255,12 @@ export default function BoardSummary() {
           try {
             const parsed = JSON.parse(jsonStr);
             
-            // Check if it's analytics data
             if (parsed.type === "analytics" && parsed.data) {
+              analyticsData = parsed.data;
               setAnalytics(parsed.data);
               continue;
             }
             
-            // Otherwise it's AI stream content
             const content = parsed.choices?.[0]?.delta?.content;
             if (content) {
               summaryText += content;
@@ -322,6 +272,18 @@ export default function BoardSummary() {
           }
         }
       }
+
+      // Save to history after generation is complete
+      if (summaryText && analyticsData) {
+        const saved = await saveSummary.mutateAsync({
+          boardId: currentBoard.id,
+          summaryText,
+          analyticsData,
+        });
+        if (saved) {
+          setCurrentSummaryId(saved.id);
+        }
+      }
     } catch (err) {
       console.error("Error generating summary:", err);
       const errorMessage = err instanceof Error ? err.message : "Erro desconhecido";
@@ -330,7 +292,62 @@ export default function BoardSummary() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentBoard?.id]);
+  }, [currentBoard?.id, saveSummary]);
+
+  const handleSelectFromHistory = (item: BoardSummaryHistoryItem) => {
+    setSummary(item.summary_text);
+    setAnalytics(item.analytics_data);
+    setCurrentSummaryId(item.id);
+    setError(null);
+  };
+
+  const handleCopy = async () => {
+    if (!summary) return;
+    try {
+      await navigator.clipboard.writeText(summary);
+      toast.success("Análise copiada para a área de transferência");
+    } catch {
+      toast.error("Erro ao copiar análise");
+    }
+  };
+
+  const handleExportPDF = () => {
+    if (!summary || !analytics) return;
+
+    const doc = new jsPDF();
+    const boardName = analytics.board.name || "Quadro";
+    const createdAt = format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+    
+    doc.setFontSize(18);
+    doc.text(`Análise Inteligente - ${boardName}`, 20, 20);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Gerado em: ${createdAt}`, 20, 30);
+    
+    doc.setTextColor(0);
+    doc.setFontSize(12);
+    
+    const splitText = doc.splitTextToSize(summary, 170);
+    doc.text(splitText, 20, 45);
+    
+    doc.save(`analise-${boardName.toLowerCase().replace(/\s+/g, "-")}-${format(new Date(), "yyyy-MM-dd")}.pdf`);
+    toast.success("PDF exportado com sucesso");
+  };
+
+  const handleShare = async () => {
+    if (!currentSummaryId) {
+      toast.error("Gere uma análise primeiro para compartilhar");
+      return;
+    }
+    
+    const result = await createShareToken.mutateAsync(currentSummaryId);
+    if (result) {
+      const shareUrl = `${window.location.origin}/shared/summary/${result.token}`;
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Link de compartilhamento copiado!");
+    }
+  };
 
   const onTimeRate = analytics?.demands 
     ? analytics.demands.onTime + analytics.demands.late > 0
@@ -374,24 +391,56 @@ export default function BoardSummary() {
                   </p>
                 </div>
               </div>
-              <Button
-                onClick={generateSummary}
-                disabled={isLoading}
-                size="lg"
-                className="gap-2 shadow-md"
-              >
-                {isLoading ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                    Analisando...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    {analytics ? "Atualizar Análise" : "Gerar Análise"}
-                  </>
+              <div className="flex items-center gap-2 flex-wrap">
+                <SummaryHistoryDrawer 
+                  boardId={currentBoard.id} 
+                  onSelectSummary={handleSelectFromHistory} 
+                />
+                
+                {summary && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <Share2 className="h-4 w-4" />
+                        <span className="hidden sm:inline">Ações</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleCopy}>
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copiar texto
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleExportPDF}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Exportar PDF
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleShare}>
+                        <Share2 className="h-4 w-4 mr-2" />
+                        Compartilhar link
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
-              </Button>
+                
+                <Button
+                  onClick={generateSummary}
+                  disabled={isLoading}
+                  size="sm"
+                  className="gap-2 shadow-md"
+                >
+                  {isLoading ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      Analisando...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      {analytics ? "Atualizar" : "Gerar Análise"}
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </Card>
