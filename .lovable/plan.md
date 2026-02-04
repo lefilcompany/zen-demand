@@ -1,192 +1,345 @@
 
-# Plano: Implementar Breadcrumb Navigation em Todas as Telas
+# Plano: Refatoração Completa da Tela de Resumo IA
 
 ## Objetivo
-Adicionar navegação por breadcrumb (path track) em todas as telas da aplicação, substituindo os botões de "Voltar", e alterando "Início" para "Dashboard".
+Refatorar completamente a tela de Resumo IA (BoardSummary) tanto no frontend quanto no backend para criar um agente de análise completo e inteligente que forneça insights precisos sobre:
+- Performance de entregas e cumprimento de prazos
+- Eficiência dos executores (admin, moderator, executor)
+- Padrões de solicitações dos requesters
+- Métricas de produtividade e tempo de trabalho
+- Recomendações acionáveis baseadas em dados
+
+---
 
 ## Resumo das Alterações
-- Atualizar o componente `PageBreadcrumb` para exibir "Dashboard" ao invés de "Início"
-- Adicionar breadcrumbs em 17 páginas que ainda não possuem
-- Remover botões de "Voltar" que serão substituídos pela navegação via breadcrumb
-- Garantir que cada tela tenha o caminho correto desde o Dashboard
+
+### Backend (Edge Function)
+- Coletar dados completos do quadro incluindo métricas de tempo, prazos e performance
+- Analisar padrões de solicitações por requester
+- Calcular métricas de eficiência por executor
+- Fornecer contexto rico para análise inteligente pela IA
+
+### Frontend
+- Novo design moderno e condizente com a identidade do sistema
+- Seções organizadas com cards visuais de métricas antes da análise
+- Renderização melhorada do resumo com seções expansíveis
+- Indicadores visuais de performance (gauges, badges de status)
 
 ---
 
-## Fase 1: Atualização do Componente Base
+## Fase 1: Refatoração do Backend
 
-### 1.1 PageBreadcrumb.tsx
-Alterar o texto "Início" para "Dashboard":
-- Localização: `src/components/PageBreadcrumb.tsx`
-- Linha 35: Mudar `<span>Início</span>` para `<span>Dashboard</span>`
+### 1.1 Coleta de Dados Expandida
 
----
+O edge function irá buscar:
 
-## Fase 2: Páginas Principais (Sem Back Button para Remover)
+```text
+1. DEMANDAS COMPLETAS
+   - Todas as demandas do quadro (últimos 90 dias)
+   - Status atual e histórico de mudanças
+   - Datas: created_at, due_date, delivered_at
+   - Prioridade e serviço associado
+   - Tempo em progresso (time_in_progress_seconds)
 
-### 2.1 Demands.tsx
-- **Arquivo**: `src/pages/Demands.tsx`
-- **Breadcrumb**: Dashboard > Demandas
-- **Ação**: Adicionar `PageBreadcrumb` no início do componente
+2. MÉTRICAS DE PRAZO
+   - Demandas entregues no prazo vs atrasadas
+   - Tempo médio de entrega
+   - Demandas com prazo vencido ainda abertas
 
-### 2.2 Kanban.tsx
-- **Arquivo**: `src/pages/Kanban.tsx`
-- **Breadcrumb**: Dashboard > Kanban
-- **Ação**: Adicionar `PageBreadcrumb` no início do componente
+3. MEMBROS E ROLES
+   - Lista de todos os membros com seus roles
+   - Agrupamento: Administradores, Moderadores, Agentes, Solicitantes
 
-### 2.3 ArchivedDemands.tsx
-- **Arquivo**: `src/pages/ArchivedDemands.tsx`
-- **Breadcrumb**: Dashboard > Arquivadas
-- **Ação**: Adicionar `PageBreadcrumb` no início do componente
+4. PERFORMANCE POR EXECUTOR
+   - Demandas atribuídas a cada executor
+   - Taxa de conclusão
+   - Tempo médio de execução
+   - Demandas em atraso por executor
 
-### 2.4 Store.tsx
-- **Arquivo**: `src/pages/Store.tsx`
-- **Breadcrumb**: Dashboard > Loja de Serviços
-- **Ação**: Adicionar `PageBreadcrumb` no início do componente
+5. PADRÕES DE SOLICITAÇÃO
+   - Frequência de solicitações por requester
+   - Tipos de demandas mais solicitadas
+   - Volume diário/semanal médio
 
-### 2.5 TeamConfig.tsx
-- **Arquivo**: `src/pages/TeamConfig.tsx`
-- **Breadcrumb**: Dashboard > Configurações da Equipe
-- **Ação**: Adicionar `PageBreadcrumb` no início do componente
-
-### 2.6 TeamDemands.tsx
-- **Arquivo**: `src/pages/TeamDemands.tsx`
-- **Breadcrumb**: Dashboard > Visão Geral da Equipe
-- **Ação**: Adicionar `PageBreadcrumb` no início do componente
-
----
-
-## Fase 3: Páginas com Back Button (Remover e Substituir)
-
-### 3.1 CreateDemand.tsx
-- **Arquivo**: `src/pages/CreateDemand.tsx`
-- **Breadcrumb**: Dashboard > Demandas > Nova Demanda
-- **Ação**: 
-  - Remover botão "Voltar" (linhas 246-252)
-  - Adicionar `PageBreadcrumb` com caminho correto
-  - Manter navegação ao cancelar via breadcrumb
-
-### 3.2 CreateDemandRequest.tsx
-- **Arquivo**: `src/pages/CreateDemandRequest.tsx`
-- **Breadcrumb**: Dashboard > Minhas Solicitações > Nova Solicitação
-- **Ação**: 
-  - Remover botão "Voltar" (linhas 211-218)
-  - Adicionar `PageBreadcrumb`
-
-### 3.3 DemandRequests.tsx
-- **Arquivo**: `src/pages/DemandRequests.tsx`
-- **Breadcrumb**: Dashboard > Solicitações de Demanda
-- **Ação**: 
-  - Remover botão "Voltar" (linhas 329-332)
-  - Adicionar `PageBreadcrumb`
-
-### 3.4 MyDemandRequests.tsx
-- **Arquivo**: `src/pages/MyDemandRequests.tsx`
-- **Breadcrumb**: Dashboard > Minhas Solicitações
-- **Ação**: 
-  - Remover botão "Voltar" (linhas 143-146)
-  - Adicionar `PageBreadcrumb`
-
-### 3.5 Profile.tsx
-- **Arquivo**: `src/pages/Profile.tsx`
-- **Breadcrumb**: Dashboard > Meu Perfil
-- **Ação**: 
-  - Remover botão "Voltar" (linhas 199-202)
-  - Adicionar `PageBreadcrumb`
-
-### 3.6 Settings.tsx
-- **Arquivo**: `src/pages/Settings.tsx`
-- **Breadcrumb**: Dashboard > Configurações
-- **Ação**: 
-  - Remover botão "Voltar" (linhas 259-265)
-  - Adicionar `PageBreadcrumb`
-
-### 3.7 TeamRequests.tsx
-- **Arquivo**: `src/pages/TeamRequests.tsx`
-- **Breadcrumb**: Dashboard > Equipes > {Team Name} > Solicitações de Entrada
-- **Ação**: 
-  - Remover botão "Voltar" (linhas 133-139)
-  - Adicionar `PageBreadcrumb`
-
-### 3.8 ServicesManagement.tsx
-- **Arquivo**: `src/pages/ServicesManagement.tsx`
-- **Breadcrumb**: Dashboard > Equipes > {Team Name} > Serviços
-- **Ação**: 
-  - Remover botão "Voltar" (linhas 300-302)
-  - Adicionar `PageBreadcrumb`
-
-### 3.9 BoardMembers.tsx
-- **Arquivo**: `src/pages/BoardMembers.tsx`
-- **Breadcrumb**: Dashboard > Quadros > {Board Name} > Membros
-- **Ação**: 
-  - Remover botão "Voltar" (linha 114)
-  - Adicionar `PageBreadcrumb`
-
-### 3.10 UserProfile.tsx
-- **Arquivo**: `src/pages/UserProfile.tsx`
-- **Breadcrumb**: Dashboard > Perfil do Usuário
-- **Ação**: 
-  - Remover botão "Voltar" (linhas 283-286)
-  - Adicionar `PageBreadcrumb`
-
----
-
-## Fase 4: Ajustes em Páginas Existentes
-
-### 4.1 Atualizar breadcrumbs existentes
-Páginas que já têm breadcrumb serão atualizadas automaticamente quando alterarmos "Início" para "Dashboard" no componente base.
-
-### 4.2 Padronização de ícones
-Cada breadcrumb usará ícones apropriados do Lucide:
-- Dashboard: `LayoutDashboard`
-- Demandas: `Briefcase`
-- Kanban: `Kanban`
-- Equipes: `Users`
-- Quadros: `LayoutGrid`
-- Configurações: `Settings`
-- Perfil: `User`
-- Loja: `ShoppingCart`
-- Arquivadas: `Archive`
-- Solicitações: `ClipboardList`
-
----
-
-## Detalhes Técnicos
-
-### Estrutura de Breadcrumb Padrão
-```typescript
-<PageBreadcrumb
-  items={[
-    { label: "Seção", href: "/path", icon: IconComponent },
-    { label: "Subseção", href: "/path/sub" },
-    { label: "Página Atual", isCurrent: true },
-  ]}
-/>
+6. TIME ENTRIES (Tempo de Trabalho)
+   - Horas trabalhadas por executor
+   - Produtividade (tempo/demanda)
 ```
 
-### Arquivos a Serem Modificados (18 total)
-1. `src/components/PageBreadcrumb.tsx` - Alterar "Início" para "Dashboard"
-2. `src/pages/Demands.tsx` - Adicionar breadcrumb
-3. `src/pages/Kanban.tsx` - Adicionar breadcrumb
-4. `src/pages/ArchivedDemands.tsx` - Adicionar breadcrumb
-5. `src/pages/CreateDemand.tsx` - Substituir back button
-6. `src/pages/CreateDemandRequest.tsx` - Substituir back button
-7. `src/pages/DemandRequests.tsx` - Substituir back button
-8. `src/pages/MyDemandRequests.tsx` - Substituir back button
-9. `src/pages/Profile.tsx` - Substituir back button
-10. `src/pages/Settings.tsx` - Substituir back button
-11. `src/pages/Store.tsx` - Adicionar breadcrumb
-12. `src/pages/TeamConfig.tsx` - Adicionar breadcrumb
-13. `src/pages/TeamDemands.tsx` - Adicionar breadcrumb
-14. `src/pages/TeamRequests.tsx` - Substituir back button
-15. `src/pages/ServicesManagement.tsx` - Substituir back button
-16. `src/pages/BoardMembers.tsx` - Substituir back button
-17. `src/pages/UserProfile.tsx` - Substituir back button
-18. `src/pages/NoteDetail.tsx` - Verificar e adicionar se necessário
+### 1.2 Novo System Prompt para IA
+
+O prompt será reformulado para incluir análise estruturada:
+
+```text
+SEÇÕES DO RESUMO:
+1. RESUMO EXECUTIVO (2-3 frases)
+2. MÉTRICAS DE PERFORMANCE
+   - Taxa de entregas no prazo
+   - Tempo médio de conclusão
+   - Volume de demandas por período
+3. ANÁLISE DA EQUIPE
+   - Performance por role (Admin/Mod/Executor)
+   - Destaques positivos
+   - Oportunidades de melhoria
+4. PADRÕES DE DEMANDA
+   - Recorrência de solicitações
+   - Tipos mais frequentes
+   - Picos de demanda
+5. ALERTAS E ATENÇÃO
+   - Demandas críticas/atrasadas
+   - Gargalos identificados
+6. RECOMENDAÇÕES
+   - Ações sugeridas
+   - Otimizações possíveis
+```
+
+### 1.3 Estrutura de Dados para IA
+
+```typescript
+interface BoardAnalyticsContext {
+  board: { name, description, monthly_limit };
+  period: { start: Date, end: Date };
+  
+  demands: {
+    total: number;
+    byStatus: { status: string, count: number }[];
+    byPriority: { priority: string, count: number }[];
+    delivered: number;
+    onTime: number;
+    late: number;
+    overdue: number; // com prazo vencido e não entregues
+    avgDeliveryDays: number;
+  };
+  
+  members: {
+    admins: { name, demandCount, completedCount, avgTime }[];
+    moderators: { name, demandCount, completedCount, avgTime }[];
+    executors: { name, demandCount, completedCount, avgTime, activeHours }[];
+    requesters: { name, requestCount, avgRequestsPerWeek }[];
+  };
+  
+  timeTracking: {
+    totalHours: number;
+    byExecutor: { name, hours, demandCount }[];
+    avgHoursPerDemand: number;
+  };
+  
+  requests: {
+    pending: number;
+    approved: number;
+    rejected: number;
+    byRequester: { name, count }[];
+  };
+  
+  trends: {
+    demandsByWeek: { week: string, count: number }[];
+    deliveriesByWeek: { week: string, count: number }[];
+  };
+}
+```
+
+---
+
+## Fase 2: Refatoração do Frontend
+
+### 2.1 Nova Estrutura da Página
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│  PageBreadcrumb: Dashboard > Resumo IA                       │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │ HEADER                                                   ││
+│  │ [AI Icon] Análise Inteligente - "{Board Name}"          ││
+│  │ Última análise: há 2 horas          [Gerar Nova Análise]││
+│  └─────────────────────────────────────────────────────────┘│
+│                                                              │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐       │
+│  │ Total    │ │ No Prazo │ │ Atrasadas│ │ Tempo    │       │
+│  │ 47       │ │ 89%      │ │ 5        │ │ 3.2 dias │       │
+│  │ demandas │ │ entregas │ │ pendente │ │ médio    │       │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘       │
+│                                                              │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │ RESUMO EXECUTIVO (Card Principal)                        ││
+│  │ ─────────────────────────────────────────────────────── ││
+│  │ [Conteúdo da IA formatado em seções]                    ││
+│  │                                                          ││
+│  │ ▼ Performance da Equipe                                  ││
+│  │   - Executores com melhor performance                    ││
+│  │   - Áreas de atenção                                     ││
+│  │                                                          ││
+│  │ ▼ Padrões de Demanda                                     ││
+│  │   - Frequência por solicitante                           ││
+│  │   - Tipos mais comuns                                    ││
+│  │                                                          ││
+│  │ ▼ Recomendações                                          ││
+│  │   - Ações sugeridas                                      ││
+│  └─────────────────────────────────────────────────────────┘│
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### 2.2 Novos Componentes
+
+```text
+1. QuickStatsCards
+   - 4 cards com métricas principais
+   - Cores indicativas (verde/amarelo/vermelho)
+   - Ícones contextuais
+
+2. SummarySection (Collapsible)
+   - Título com ícone
+   - Conteúdo expansível
+   - Badge de status quando relevante
+
+3. PerformanceGauge
+   - Indicador visual de % entregas no prazo
+   - Cores gradientes baseadas na performance
+
+4. TeamPerformanceList
+   - Lista de executores com suas métricas
+   - Avatar, nome, demandas, taxa de conclusão
+
+5. LoadingState
+   - Skeleton animado mais elaborado
+   - Mensagens de progresso em etapas
+```
+
+### 2.3 Design Visual
+
+```text
+Cores e Estilo:
+- Gradientes sutis nos headers
+- Cards com sombras suaves
+- Badges coloridos para status
+- Animações de entrada suaves (sem flickering)
+- Ícones Lucide consistentes
+
+Paleta:
+- Performance alta: emerald-500
+- Performance média: amber-500  
+- Performance baixa: red-500
+- Neutro: slate/muted
+- Destaque: primary (roxo/azul do sistema)
+```
+
+---
+
+## Fase 3: Implementação Técnica
+
+### 3.1 Arquivos a Modificar
+
+1. **`supabase/functions/board-summary/index.ts`**
+   - Expandir queries de dados
+   - Adicionar cálculos de métricas
+   - Novo system prompt estruturado
+   - Retornar métricas junto com o stream
+
+2. **`src/pages/BoardSummary.tsx`**
+   - Novo layout com cards de métricas
+   - Componente FormattedSummary refatorado
+   - Estados para métricas pré-análise
+   - Loading states melhorados
+
+### 3.2 Queries do Backend
+
+```sql
+-- Demandas com métricas de prazo
+SELECT 
+  d.id, d.title, d.priority, d.created_at, d.due_date, d.delivered_at,
+  d.time_in_progress_seconds,
+  ds.name as status_name,
+  s.name as service_name,
+  CASE 
+    WHEN d.delivered_at IS NOT NULL AND d.due_date IS NOT NULL 
+    THEN d.delivered_at <= d.due_date 
+    ELSE NULL 
+  END as delivered_on_time,
+  CASE
+    WHEN d.delivered_at IS NULL AND d.due_date < NOW()
+    THEN true
+    ELSE false
+  END as is_overdue
+FROM demands d
+LEFT JOIN demand_statuses ds ON d.status_id = ds.id
+LEFT JOIN services s ON d.service_id = s.id
+WHERE d.board_id = :boardId AND d.archived = false;
+
+-- Membros com roles e performance
+SELECT 
+  bm.user_id, bm.role,
+  p.full_name, p.avatar_url,
+  COUNT(DISTINCT da.demand_id) as assigned_count,
+  COUNT(DISTINCT CASE WHEN d.delivered_at IS NOT NULL THEN da.demand_id END) as completed_count
+FROM board_members bm
+JOIN profiles p ON bm.user_id = p.id
+LEFT JOIN demand_assignees da ON da.user_id = bm.user_id
+LEFT JOIN demands d ON d.id = da.demand_id AND d.board_id = :boardId
+WHERE bm.board_id = :boardId
+GROUP BY bm.user_id, bm.role, p.full_name, p.avatar_url;
+
+-- Time entries por executor
+SELECT 
+  dte.user_id,
+  p.full_name,
+  SUM(COALESCE(dte.duration_seconds, 0)) as total_seconds,
+  COUNT(DISTINCT dte.demand_id) as demand_count
+FROM demand_time_entries dte
+JOIN demands d ON d.id = dte.demand_id
+JOIN profiles p ON p.id = dte.user_id
+WHERE d.board_id = :boardId
+GROUP BY dte.user_id, p.full_name;
+
+-- Solicitações por requester
+SELECT 
+  dr.created_by,
+  p.full_name,
+  COUNT(*) as request_count,
+  COUNT(*) FILTER (WHERE dr.status = 'pending') as pending,
+  COUNT(*) FILTER (WHERE dr.status = 'approved') as approved,
+  COUNT(*) FILTER (WHERE dr.status = 'rejected') as rejected
+FROM demand_requests dr
+JOIN profiles p ON dr.created_by = p.id
+WHERE dr.board_id = :boardId
+GROUP BY dr.created_by, p.full_name;
+```
+
+---
+
+## Detalhes Técnicos Adicionais
+
+### Modelo de IA
+- Usar `google/gemini-3-flash-preview` (modelo padrão recomendado)
+- Contexto estruturado em JSON para análise precisa
+- Stream de resposta mantido para UX fluida
+
+### Tratamento de Erros
+- Mensagens de erro amigáveis em português
+- Fallback para dados insuficientes
+- Rate limiting handling (429/402)
+
+### Performance
+- Queries otimizadas com JOINs
+- Limite de período (últimos 90 dias por padrão)
+- Caching potencial do resumo gerado
+
+---
+
+## Arquivos a Serem Modificados (2 total)
+
+1. `supabase/functions/board-summary/index.ts` - Refatoração completa
+2. `src/pages/BoardSummary.tsx` - Novo design e componentes
 
 ---
 
 ## Resultado Esperado
-- Navegação consistente em todas as páginas
-- Usuário pode entender onde está na hierarquia do app
-- Navegação facilitada sem depender do botão "Voltar" do navegador
-- Visual unificado com animações suaves de entrada dos breadcrumbs
+
+- Análise completa e precisa da performance do quadro
+- Design moderno e consistente com a identidade visual do sistema
+- Métricas visuais antes do resumo da IA para contexto rápido
+- Insights acionáveis sobre eficiência da equipe
+- Identificação clara de gargalos e oportunidades de melhoria
+- Padrões de solicitação identificados por requester
+- Totalmente funcional e sem erros
