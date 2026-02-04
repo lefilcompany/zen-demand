@@ -141,7 +141,7 @@ export function DemandTrendChart({ demands }: DemandTrendChartProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="flex flex-col gap-2">
           <div>
             <CardTitle className="text-lg">Evolução de Demandas</CardTitle>
             <CardDescription>{periodDescription}</CardDescription>
