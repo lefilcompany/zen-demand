@@ -179,13 +179,13 @@ serve(async (req) => {
       console.error("Demands error:", demandsError);
     }
 
-    // Get board members with roles
+    // Get board members with roles - specify the foreign key relationship
     const { data: members, error: membersError } = await supabaseAdmin
       .from("board_members")
       .select(`
         user_id,
         role,
-        profile:profiles(full_name, avatar_url)
+        profile:profiles!board_members_user_id_fkey(full_name, avatar_url)
       `)
       .eq("board_id", boardId);
 
