@@ -1,137 +1,233 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, RefreshCw, AlertCircle, TrendingUp, AlertTriangle, CheckCircle2, Clock, Target, Lightbulb } from "lucide-react";
+import { 
+  Sparkles, RefreshCw, AlertCircle, TrendingUp, AlertTriangle, 
+  CheckCircle2, Clock, Target, Lightbulb, Users, BarChart3,
+  Calendar, Timer, ChevronDown, ChevronUp
+} from "lucide-react";
 import { toast } from "sonner";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Progress } from "@/components/ui/progress";
+import ReactMarkdown from "react-markdown";
 
-// Component to render formatted AI response with visual enhancements
-function FormattedSummary({ content }: { content: string }) {
-  const lines = content.split('\n');
-  
-  const getLineType = (line: string) => {
-    const trimmed = line.trim();
-    if (trimmed.startsWith('##') || trimmed.startsWith('**') && trimmed.endsWith('**')) return 'heading';
-    if (trimmed.startsWith('- ') || trimmed.startsWith('• ')) return 'bullet';
-    if (trimmed.match(/^\d+\./)) return 'numbered';
-    if (trimmed.startsWith('⚠') || trimmed.toLowerCase().includes('atenção') || trimmed.toLowerCase().includes('atrasad')) return 'warning';
-    if (trimmed.startsWith('✅') || trimmed.toLowerCase().includes('concluíd') || trimmed.toLowerCase().includes('entregue')) return 'success';
-    if (trimmed.toLowerCase().includes('recomend') || trimmed.toLowerCase().includes('sugest')) return 'recommendation';
-    if (trimmed === '') return 'empty';
-    return 'text';
+interface BoardAnalytics {
+  board: { name: string; description: string | null; monthlyLimit: number | null };
+  period: { start: string; end: string; days: number };
+  demands: {
+    total: number;
+    delivered: number;
+    onTime: number;
+    late: number;
+    overdue: number;
+    avgDeliveryDays: number;
+    byStatus: { status: string; count: number }[];
+    byPriority: { priority: string; count: number }[];
+  };
+  members: {
+    name: string;
+    role: string;
+    demandCount: number;
+    completedCount: number;
+    completionRate: number;
+    avgTimeHours: number;
+  }[];
+  requesters: {
+    name: string;
+    requestCount: number;
+    pending: number;
+    approved: number;
+    rejected: number;
+    avgPerWeek: number;
+  }[];
+  timeTracking: {
+    totalHours: number;
+    byExecutor: { name: string; hours: number; demandCount: number }[];
+    avgHoursPerDemand: number;
+  };
+}
+
+function QuickStatsCard({ 
+  icon: Icon, 
+  label, 
+  value, 
+  subValue,
+  variant = "default" 
+}: { 
+  icon: React.ElementType;
+  label: string;
+  value: string | number;
+  subValue?: string;
+  variant?: "default" | "success" | "warning" | "danger";
+}) {
+  const variantStyles = {
+    default: "bg-muted/50 text-foreground",
+    success: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    warning: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    danger: "bg-red-500/10 text-red-600 dark:text-red-400",
   };
 
-  const getIcon = (line: string) => {
-    const lower = line.toLowerCase();
-    if (lower.includes('visão geral') || lower.includes('resumo')) return <TrendingUp className="h-5 w-5" />;
-    if (lower.includes('atenção') || lower.includes('pendente') || lower.includes('atrasad')) return <AlertTriangle className="h-5 w-5" />;
-    if (lower.includes('progresso') || lower.includes('concluíd') || lower.includes('entregue')) return <CheckCircle2 className="h-5 w-5" />;
-    if (lower.includes('solicitaç')) return <Clock className="h-5 w-5" />;
-    if (lower.includes('recomend') || lower.includes('próximo') || lower.includes('sugest')) return <Lightbulb className="h-5 w-5" />;
-    if (lower.includes('priorid') || lower.includes('crític') || lower.includes('urgent')) return <Target className="h-5 w-5" />;
-    return null;
+  const iconStyles = {
+    default: "text-muted-foreground",
+    success: "text-emerald-500",
+    warning: "text-amber-500",
+    danger: "text-red-500",
   };
-
-  const formatText = (text: string) => {
-    // Bold text **text**
-    let formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-foreground">$1</strong>');
-    // Highlight numbers
-    formatted = formatted.replace(/(\d+)/g, '<span class="font-medium text-primary">$1</span>');
-    // Highlight status words
-    formatted = formatted.replace(/(pendente|em andamento|concluído|atrasado|alta|média|baixa)/gi, (match) => {
-      const lower = match.toLowerCase();
-      if (lower === 'pendente' || lower === 'atrasado') return `<span class="text-amber-600 dark:text-amber-400 font-medium">${match}</span>`;
-      if (lower === 'em andamento') return `<span class="text-blue-600 dark:text-blue-400 font-medium">${match}</span>`;
-      if (lower === 'concluído') return `<span class="text-emerald-600 dark:text-emerald-400 font-medium">${match}</span>`;
-      if (lower === 'alta') return `<span class="text-red-600 dark:text-red-400 font-medium">${match}</span>`;
-      if (lower === 'média') return `<span class="text-amber-600 dark:text-amber-400 font-medium">${match}</span>`;
-      if (lower === 'baixa') return `<span class="text-emerald-600 dark:text-emerald-400 font-medium">${match}</span>`;
-      return match;
-    });
-    return formatted;
-  };
-
-  let currentSection: string | null = null;
 
   return (
-    <div className="space-y-4">
-      {lines.map((line, index) => {
-        const type = getLineType(line);
-        const trimmed = line.trim();
-        
-        if (type === 'empty') return <div key={index} className="h-2" />;
-        
-        // Check if it's a section heading
-        const isHeading = type === 'heading' || (trimmed.match(/^\d+\./) && !trimmed.match(/^\d+\.\d/));
-        const headingText = trimmed.replace(/^##\s*/, '').replace(/^\*\*/, '').replace(/\*\*$/, '').replace(/^\d+\.\s*/, '');
-        
-        if (isHeading) {
-          currentSection = headingText.toLowerCase();
-          const icon = getIcon(headingText);
-          
-          return (
-            <div key={index} className="flex items-center gap-3 mt-6 mb-3 first:mt-0">
-              {icon && (
-                <div className={cn(
-                  "p-2 rounded-lg",
-                  headingText.toLowerCase().includes('atenção') || headingText.toLowerCase().includes('atrasad')
-                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                    : headingText.toLowerCase().includes('concluíd') || headingText.toLowerCase().includes('progresso')
-                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                    : headingText.toLowerCase().includes('recomend') || headingText.toLowerCase().includes('sugest')
-                    ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
-                    : "bg-primary/10 text-primary"
-                )}>
-                  {icon}
+    <Card className="overflow-hidden">
+      <CardContent className="p-4">
+        <div className="flex items-center gap-3">
+          <div className={cn("p-2.5 rounded-lg", variantStyles[variant])}>
+            <Icon className={cn("h-5 w-5", iconStyles[variant])} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-2xl font-bold text-foreground truncate">{value}</p>
+            <p className="text-xs text-muted-foreground truncate">{label}</p>
+            {subValue && (
+              <p className="text-xs text-muted-foreground/70 truncate">{subValue}</p>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PerformanceGauge({ percentage, label }: { percentage: number; label: string }) {
+  const getColor = (p: number) => {
+    if (p >= 80) return "bg-emerald-500";
+    if (p >= 60) return "bg-amber-500";
+    return "bg-red-500";
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between items-center">
+        <span className="text-sm text-muted-foreground">{label}</span>
+        <span className="text-sm font-medium">{percentage}%</span>
+      </div>
+      <Progress value={percentage} className={cn("h-2", getColor(percentage))} />
+    </div>
+  );
+}
+
+function MemberPerformanceCard({ member }: { member: BoardAnalytics["members"][0] }) {
+  const roleLabels: Record<string, string> = {
+    admin: "Administrador",
+    moderator: "Moderador",
+    executor: "Executor",
+    requester: "Solicitante",
+  };
+
+  const roleBadgeColors: Record<string, string> = {
+    admin: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+    moderator: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    executor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    requester: "bg-muted text-muted-foreground",
+  };
+
+  return (
+    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+          <span className="text-sm font-medium text-primary">
+            {member.name.charAt(0).toUpperCase()}
+          </span>
+        </div>
+        <div className="min-w-0">
+          <p className="font-medium text-sm truncate">{member.name}</p>
+          <span className={cn("text-xs px-2 py-0.5 rounded-full", roleBadgeColors[member.role] || roleBadgeColors.requester)}>
+            {roleLabels[member.role] || member.role}
+          </span>
+        </div>
+      </div>
+      <div className="text-right shrink-0">
+        <p className="text-sm font-medium">{member.completedCount}/{member.demandCount}</p>
+        <p className="text-xs text-muted-foreground">{member.completionRate}% concluído</p>
+      </div>
+    </div>
+  );
+}
+
+function CollapsibleSection({ 
+  title, 
+  icon: Icon, 
+  children, 
+  defaultOpen = false,
+  badge,
+}: { 
+  title: string;
+  icon: React.ElementType;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  badge?: string;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <CollapsibleTrigger className="w-full">
+        <div className="flex items-center justify-between p-4 hover:bg-muted/50 rounded-lg transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Icon className="h-4 w-4 text-primary" />
+            </div>
+            <span className="font-medium text-sm">{title}</span>
+            {badge && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                {badge}
+              </span>
+            )}
+          </div>
+          {isOpen ? (
+            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          )}
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="px-4 pb-4">
+          {children}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+function AnalyticsSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i} className="overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-muted animate-pulse" />
+                <div className="space-y-2 flex-1">
+                  <div className="h-6 w-16 bg-muted animate-pulse rounded" />
+                  <div className="h-3 w-24 bg-muted animate-pulse rounded" />
                 </div>
-              )}
-              <h3 className="text-lg font-semibold text-foreground">{headingText}</h3>
-            </div>
-          );
-        }
-
-        // Bullet points
-        if (type === 'bullet' || type === 'numbered') {
-          const bulletText = trimmed.replace(/^[-•]\s*/, '').replace(/^\d+\.\s*/, '');
-          const isWarning = currentSection?.includes('atenção') || bulletText.toLowerCase().includes('atrasad') || bulletText.toLowerCase().includes('urgent');
-          const isSuccess = currentSection?.includes('progresso') || bulletText.toLowerCase().includes('concluíd') || bulletText.toLowerCase().includes('entregue');
-          
-          return (
-            <div
-              key={index}
-              className={cn(
-                "flex items-start gap-3 p-3 rounded-lg ml-2 border-l-2 transition-colors",
-                isWarning 
-                  ? "bg-amber-500/5 border-amber-500 dark:bg-amber-500/10" 
-                  : isSuccess 
-                  ? "bg-emerald-500/5 border-emerald-500 dark:bg-emerald-500/10"
-                  : "bg-muted/50 border-muted-foreground/20"
-              )}
-            >
-              <div className={cn(
-                "w-2 h-2 rounded-full mt-2 shrink-0",
-                isWarning ? "bg-amber-500" : isSuccess ? "bg-emerald-500" : "bg-primary"
-              )} />
-              <span 
-                className="text-sm text-muted-foreground leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: formatText(bulletText) }}
-              />
-            </div>
-          );
-        }
-
-        // Regular text
-        return (
-          <p 
-            key={index} 
-            className="text-sm text-muted-foreground leading-relaxed pl-2"
-            dangerouslySetInnerHTML={{ __html: formatText(trimmed) }}
-          />
-        );
-      })}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <Card>
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <div className="h-5 w-48 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-full bg-muted animate-pulse rounded" />
+            <div className="h-4 w-3/4 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-5/6 bg-muted animate-pulse rounded" />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -139,10 +235,11 @@ function FormattedSummary({ content }: { content: string }) {
 export default function BoardSummary() {
   const { currentBoard } = useSelectedBoardSafe();
   const [summary, setSummary] = useState("");
+  const [analytics, setAnalytics] = useState<BoardAnalytics | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const generateSummary = async () => {
+  const generateSummary = useCallback(async () => {
     if (!currentBoard?.id) {
       toast.error("Selecione um quadro primeiro");
       return;
@@ -151,13 +248,13 @@ export default function BoardSummary() {
     setIsLoading(true);
     setError(null);
     setSummary("");
+    setAnalytics(null);
 
     try {
-      // Get user's session token for authentication
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !session?.access_token) {
-        throw new Error("Você precisa estar logado para gerar o resumo");
+        throw new Error("Você precisa estar logado para gerar a análise");
       }
 
       const response = await fetch(
@@ -174,7 +271,7 @@ export default function BoardSummary() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Erro ao gerar resumo");
+        throw new Error(errorData.error || "Erro ao gerar análise");
       }
 
       if (!response.body) {
@@ -206,6 +303,14 @@ export default function BoardSummary() {
 
           try {
             const parsed = JSON.parse(jsonStr);
+            
+            // Check if it's analytics data
+            if (parsed.type === "analytics" && parsed.data) {
+              setAnalytics(parsed.data);
+              continue;
+            }
+            
+            // Otherwise it's AI stream content
             const content = parsed.choices?.[0]?.delta?.content;
             if (content) {
               summaryText += content;
@@ -225,17 +330,23 @@ export default function BoardSummary() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentBoard?.id]);
+
+  const onTimeRate = analytics?.demands 
+    ? analytics.demands.onTime + analytics.demands.late > 0
+      ? Math.round((analytics.demands.onTime / (analytics.demands.onTime + analytics.demands.late)) * 100)
+      : 0
+    : 0;
 
   if (!currentBoard) {
     return (
       <div className="container mx-auto py-6 px-4">
-        <PageBreadcrumb items={[{ label: "Resumo IA" }]} />
+        <PageBreadcrumb items={[{ label: "Análise IA" }]} />
         <Card className="mt-6">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-center">
-              Selecione um quadro para gerar o resumo por IA
+              Selecione um quadro para gerar a análise por IA
             </p>
           </CardContent>
         </Card>
@@ -244,22 +355,23 @@ export default function BoardSummary() {
   }
 
   return (
-    <div className="container mx-auto py-6 px-4 max-w-4xl">
-      <PageBreadcrumb items={[{ label: "Resumo IA" }]} />
+    <div className="container mx-auto py-6 px-4 max-w-5xl">
+      <PageBreadcrumb items={[{ label: "Análise IA" }]} />
       
       <div className="mt-6 space-y-6">
-        <Card className="overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/10 to-transparent border-b">
+        {/* Header Card */}
+        <Card className="overflow-hidden border-0 shadow-lg">
+          <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/25">
                   <Sparkles className="h-6 w-6 text-primary-foreground" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl">Resumo Inteligente</CardTitle>
-                  <CardDescription className="mt-1">
-                    Análise do quadro <span className="font-medium text-foreground">"{currentBoard.name}"</span>
-                  </CardDescription>
+                  <h1 className="text-xl font-bold text-foreground">Análise Inteligente</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Quadro: <span className="font-medium text-foreground">{currentBoard.name}</span>
+                  </p>
                 </div>
               </div>
               <Button
@@ -276,73 +388,225 @@ export default function BoardSummary() {
                 ) : (
                   <>
                     <Sparkles className="h-4 w-4" />
-                    Gerar Análise
+                    {analytics ? "Atualizar Análise" : "Gerar Análise"}
                   </>
                 )}
               </Button>
             </div>
-          </CardHeader>
-          <CardContent className="p-6">
-            {error && (
-              <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive mb-6">
-                <p className="flex items-center gap-2 font-medium">
-                  <AlertCircle className="h-5 w-5" />
-                  {error}
-                </p>
-              </div>
-            )}
-            
-            {summary ? (
-              <div className="animate-in fade-in-0 duration-500">
-                <FormattedSummary content={summary} />
-              </div>
-            ) : !isLoading && !error ? (
-              <div className="text-center py-16">
-                <div className="relative inline-block mb-6">
-                  <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
-                  <div className="relative p-6 rounded-2xl bg-gradient-to-br from-muted to-muted/50 border border-border/50">
-                    <Sparkles className="h-12 w-12 text-primary/60" />
-                  </div>
-                </div>
-                <h3 className="text-lg font-medium text-foreground mb-2">
-                  Pronto para analisar seu quadro
-                </h3>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  Clique em "Gerar Análise" para criar um resumo executivo completo com insights sobre demandas, progresso e recomendações
-                </p>
-                <div className="flex items-center justify-center gap-6 mt-8 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-primary" />
-                    <span>Visão geral</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-500" />
-                    <span>Alertas</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Lightbulb className="h-4 w-4 text-purple-500" />
-                    <span>Sugestões</span>
-                  </div>
-                </div>
-              </div>
-            ) : null}
-            
-            {isLoading && !summary && (
-              <div className="flex flex-col items-center justify-center py-16 gap-4">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
-                  <div className="relative p-4 rounded-xl bg-primary/10">
-                    <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                </div>
-                <div className="text-center">
-                  <p className="font-medium text-foreground">Analisando demandas...</p>
-                  <p className="text-sm text-muted-foreground mt-1">Isso pode levar alguns segundos</p>
-                </div>
-              </div>
-            )}
-          </CardContent>
+          </div>
         </Card>
+
+        {/* Error State */}
+        {error && (
+          <Card className="border-destructive/50 bg-destructive/5">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3 text-destructive">
+                <AlertCircle className="h-5 w-5" />
+                <p className="font-medium">{error}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Loading State */}
+        {isLoading && !analytics && <AnalyticsSkeleton />}
+
+        {/* Analytics Cards */}
+        {analytics && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <QuickStatsCard
+              icon={BarChart3}
+              label="Total de Demandas"
+              value={analytics.demands.total}
+              subValue={`${analytics.demands.delivered} entregues`}
+              variant="default"
+            />
+            <QuickStatsCard
+              icon={CheckCircle2}
+              label="Entregas no Prazo"
+              value={`${onTimeRate}%`}
+              subValue={`${analytics.demands.onTime} de ${analytics.demands.onTime + analytics.demands.late}`}
+              variant={onTimeRate >= 80 ? "success" : onTimeRate >= 60 ? "warning" : "danger"}
+            />
+            <QuickStatsCard
+              icon={AlertTriangle}
+              label="Demandas Atrasadas"
+              value={analytics.demands.overdue}
+              subValue="prazo vencido"
+              variant={analytics.demands.overdue === 0 ? "success" : analytics.demands.overdue <= 3 ? "warning" : "danger"}
+            />
+            <QuickStatsCard
+              icon={Timer}
+              label="Tempo Médio"
+              value={`${analytics.demands.avgDeliveryDays} dias`}
+              subValue="por demanda"
+              variant="default"
+            />
+          </div>
+        )}
+
+        {/* Additional Stats */}
+        {analytics && (
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Team Performance */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-base">Equipe</CardTitle>
+                </div>
+                <CardDescription>Performance dos membros</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2 max-h-64 overflow-y-auto">
+                {analytics.members.length > 0 ? (
+                  analytics.members
+                    .filter(m => m.demandCount > 0)
+                    .sort((a, b) => b.completionRate - a.completionRate)
+                    .map((member, i) => (
+                      <MemberPerformanceCard key={i} member={member} />
+                    ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Nenhum membro com demandas atribuídas
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Time Tracking */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-base">Tempo Investido</CardTitle>
+                </div>
+                <CardDescription>Horas registradas por executor</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20">
+                  <span className="text-sm font-medium">Total de Horas</span>
+                  <span className="text-lg font-bold text-primary">{analytics.timeTracking.totalHours}h</span>
+                </div>
+                {analytics.timeTracking.byExecutor.length > 0 ? (
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {analytics.timeTracking.byExecutor
+                      .sort((a, b) => b.hours - a.hours)
+                      .map((executor, i) => (
+                        <div key={i} className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">{executor.name}</span>
+                          <span className="font-medium">{executor.hours}h ({executor.demandCount} demandas)</span>
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-2">
+                    Nenhum tempo registrado
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* AI Summary */}
+        {(summary || (isLoading && analytics)) && (
+          <Card className="overflow-hidden">
+            <CardHeader className="border-b bg-muted/30">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Target className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Relatório de Análise</CardTitle>
+                  <CardDescription>Gerado por IA com base nos dados do quadro</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              {summary ? (
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <ReactMarkdown
+                    components={{
+                      h2: ({ children }) => (
+                        <h2 className="text-lg font-semibold mt-6 mb-3 flex items-center gap-2 text-foreground first:mt-0">
+                          {children}
+                        </h2>
+                      ),
+                      h3: ({ children }) => (
+                        <h3 className="text-base font-medium mt-4 mb-2 text-foreground">
+                          {children}
+                        </h3>
+                      ),
+                      p: ({ children }) => (
+                        <p className="text-muted-foreground leading-relaxed mb-3">
+                          {children}
+                        </p>
+                      ),
+                      ul: ({ children }) => (
+                        <ul className="space-y-1.5 my-3 ml-1">
+                          {children}
+                        </ul>
+                      ),
+                      li: ({ children }) => (
+                        <li className="text-muted-foreground flex items-start gap-2">
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
+                          <span>{children}</span>
+                        </li>
+                      ),
+                      strong: ({ children }) => (
+                        <strong className="font-semibold text-foreground">
+                          {children}
+                        </strong>
+                      ),
+                    }}
+                  >
+                    {summary}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-8 gap-3">
+                  <RefreshCw className="h-5 w-5 animate-spin text-primary" />
+                  <span className="text-muted-foreground">Gerando análise...</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && !analytics && !error && (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <div className="relative mb-6">
+                <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
+                <div className="relative p-6 rounded-2xl bg-gradient-to-br from-muted to-muted/50 border border-border/50">
+                  <Sparkles className="h-12 w-12 text-primary/60" />
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                Pronto para analisar seu quadro
+              </h3>
+              <p className="text-muted-foreground text-center max-w-md mb-6">
+                Clique em "Gerar Análise" para criar um relatório executivo completo com insights 
+                sobre demandas, performance da equipe e recomendações.
+              </p>
+              <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <span>Performance</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-primary/70" />
+                  <span>Equipe</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Lightbulb className="h-4 w-4 text-primary/50" />
+                  <span>Recomendações</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
