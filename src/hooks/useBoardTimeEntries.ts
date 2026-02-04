@@ -42,6 +42,21 @@ export interface BoardUserTimeStats {
   entries: BoardTimeEntry[];
 }
 
+export interface BoardMemberWithTime {
+  userId: string;
+  profile: {
+    id: string;
+    full_name: string;
+    avatar_url: string | null;
+  };
+  role: string;
+  totalSeconds: number;
+  isActive: boolean;
+  activeStartedAt: string | null;
+  demandCount: number;
+  entries: BoardTimeEntry[];
+}
+
 export function useBoardTimeEntries(boardId: string | null) {
   const queryClient = useQueryClient();
 
@@ -117,7 +132,7 @@ export function useBoardTimeEntries(boardId: string | null) {
   return query;
 }
 
-// Get aggregated stats per user for a board
+// Get aggregated stats per user for a board (only users with time entries)
 export function useBoardUserTimeStats(boardId: string | null) {
   const { data: entries, isLoading } = useBoardTimeEntries(boardId);
 
@@ -179,4 +194,136 @@ export function useBoardUserTimeStats(boardId: string | null) {
   }, [stats]);
 
   return { data: stats, isLoading, activeTimersCount };
+}
+
+// NEW: Get ALL board members with their time stats (including those with 0 time)
+export function useBoardMembersWithTime(boardId: string | null) {
+  const queryClient = useQueryClient();
+  
+  const { data: entries, isLoading: entriesLoading } = useBoardTimeEntries(boardId);
+
+  const query = useQuery({
+    queryKey: ["board-members-with-time", boardId],
+    queryFn: async () => {
+      if (!boardId) return [];
+
+      // Fetch ALL board members
+      const { data: members, error } = await supabase
+        .from("board_members")
+        .select(`
+          id,
+          user_id,
+          role,
+          profiles:user_id (
+            id,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq("board_id", boardId)
+        .order("joined_at", { ascending: true });
+
+      if (error) throw error;
+
+      return members.map((member: any) => ({
+        id: member.id,
+        userId: member.user_id,
+        role: member.role,
+        profile: member.profiles || { id: member.user_id, full_name: "Usuário", avatar_url: null },
+      }));
+    },
+    enabled: !!boardId,
+  });
+
+  // Combine members with their time stats
+  const membersWithTime = useMemo((): BoardMemberWithTime[] => {
+    if (!query.data) return [];
+
+    const entriesByUser = new Map<string, BoardTimeEntry[]>();
+    const demandsByUser = new Map<string, Set<string>>();
+    
+    // Group entries by user
+    if (entries) {
+      for (const entry of entries) {
+        const userId = entry.user_id;
+        if (!entriesByUser.has(userId)) {
+          entriesByUser.set(userId, []);
+          demandsByUser.set(userId, new Set());
+        }
+        entriesByUser.get(userId)!.push(entry);
+        demandsByUser.get(userId)!.add(entry.demand_id);
+      }
+    }
+
+    // Map all members with their time data
+    return query.data.map(member => {
+      const userEntries = entriesByUser.get(member.userId) || [];
+      const userDemands = demandsByUser.get(member.userId) || new Set();
+      
+      let totalSeconds = 0;
+      let isActive = false;
+      let activeStartedAt: string | null = null;
+
+      for (const entry of userEntries) {
+        totalSeconds += entry.duration_seconds || 0;
+        if (!entry.ended_at) {
+          isActive = true;
+          if (!activeStartedAt || new Date(entry.started_at) > new Date(activeStartedAt)) {
+            activeStartedAt = entry.started_at;
+          }
+        }
+      }
+
+      return {
+        userId: member.userId,
+        profile: member.profile,
+        role: member.role,
+        totalSeconds,
+        isActive,
+        activeStartedAt,
+        demandCount: userDemands.size,
+        entries: userEntries,
+      };
+    }).sort((a, b) => {
+      // Active timers first, then by time descending
+      if (a.isActive && !b.isActive) return -1;
+      if (!a.isActive && b.isActive) return 1;
+      return b.totalSeconds - a.totalSeconds;
+    });
+  }, [query.data, entries]);
+
+  // Realtime subscription for board members
+  useEffect(() => {
+    if (!boardId) return;
+
+    const channel = supabase
+      .channel(`board-members-realtime-${boardId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'board_members',
+          filter: `board_id=eq.${boardId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["board-members-with-time", boardId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [boardId, queryClient]);
+
+  const activeTimersCount = useMemo(() => {
+    return membersWithTime.filter(m => m.isActive).length;
+  }, [membersWithTime]);
+
+  return {
+    data: membersWithTime,
+    isLoading: query.isLoading || entriesLoading,
+    activeTimersCount,
+  };
 }

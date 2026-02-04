@@ -1,16 +1,15 @@
 import { useState, useMemo } from "react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { 
-  Clock, User, Calendar, Filter, ChevronDown, ExternalLink, CalendarIcon, 
+  Clock, Filter, CalendarIcon, 
   Users, BarChart3, TrendingUp, Play, Download, LayoutGrid, CheckCircle2, 
   CircleDashed, Timer, Zap, Target, Activity, Flame, Trophy, Shield, 
   ArrowLeft, Radio
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useIsTeamAdminOrModerator } from "@/hooks/useTeamRole";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatTimeDisplay, useLiveTimer } from "@/hooks/useLiveTimer";
-import { useBoardTimeEntries, useBoardUserTimeStats, BoardTimeEntry } from "@/hooks/useBoardTimeEntries";
+import { useBoardTimeEntries, useBoardMembersWithTime, BoardTimeEntry, BoardMemberWithTime } from "@/hooks/useBoardTimeEntries";
 import { LiveUserTimeRow } from "@/components/LiveUserTimeRow";
 import { UserDetailTimeRow } from "@/components/UserDetailTimeRow";
 import { DemandDetailTimeRow } from "@/components/DemandDetailTimeRow";
@@ -41,11 +40,11 @@ interface GroupedByDemand {
 }
 
 // Custom tooltip component for charts
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-background/95 backdrop-blur border rounded-lg shadow-lg p-3">
-        <p className="font-medium text-sm">{payload[0].payload.fullName || label}</p>
+        <p className="font-medium text-sm">{payload[0].payload.fullName}</p>
         <p className="text-primary font-mono text-sm">
           {formatTimeDisplay(payload[0].value) || `${payload[0].value} min`}
         </p>
@@ -72,47 +71,16 @@ export default function TimeManagement() {
   // Fetch time entries for the board with realtime updates
   const { data: timeEntries, isLoading: entriesLoading } = useBoardTimeEntries(selectedBoardId);
   
-  // Get user stats with live timer support
-  const { data: userStats, isLoading: statsLoading, activeTimersCount } = useBoardUserTimeStats(selectedBoardId);
+  // Get ALL board members with their time stats (including those with 0 time)
+  const { data: allBoardMembers, isLoading: membersLoading, activeTimersCount } = useBoardMembersWithTime(selectedBoardId);
 
-  const isLoading = entriesLoading || statsLoading || roleLoading;
+  const isLoading = entriesLoading || membersLoading || roleLoading;
 
-  // ============ ACCESS CONTROL ============
-  // Block access if not admin/moderator
-  if (!roleLoading && !canManage && selectedBoardId) {
-    return (
-      <div className="container mx-auto py-6">
-        <PageBreadcrumb items={[{ label: "Gerenciamento de Tempo" }]} />
-        <Card className="mt-6 border-destructive/50 bg-gradient-to-br from-destructive/5 to-transparent">
-          <CardContent className="py-16 text-center">
-            <div className="mx-auto w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
-              <Shield className="h-8 w-8 text-destructive" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Acesso Restrito</h3>
-            <p className="text-muted-foreground max-w-md mx-auto mb-6">
-              Apenas administradores e coordenadores podem acessar o gerenciamento de tempo da equipe.
-            </p>
-            <Button onClick={() => navigate("/")} variant="outline" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Voltar ao Dashboard
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Get unique users for filter
+  // Get unique users for filter (from all board members)
   const uniqueUsers = useMemo(() => {
-    if (!timeEntries) return [];
-    const usersMap = new Map<string, BoardTimeEntry["profile"]>();
-    timeEntries.forEach((entry) => {
-      if (entry.profile && !usersMap.has(entry.profile.id)) {
-        usersMap.set(entry.profile.id, entry.profile);
-      }
-    });
-    return Array.from(usersMap.values());
-  }, [timeEntries]);
+    if (!allBoardMembers) return [];
+    return allBoardMembers.map(m => m.profile);
+  }, [allBoardMembers]);
 
   // Filter entries based on date and search
   const filteredEntries = useMemo(() => {
@@ -174,59 +142,96 @@ export default function TimeManagement() {
     return Array.from(activeMap.values());
   }, [timeEntries]);
 
-  // Filter user stats based on filters
-  const filteredUserStats = useMemo(() => {
-    if (!userStats) return [];
+  // Filter members based on filters - recalculate time from filtered entries
+  const filteredMemberStats = useMemo(() => {
+    if (!allBoardMembers) return [];
     
-    if (searchTerm || userFilter !== "all" || startDate || endDate || deliveryFilter !== "all") {
-      const userMap = new Map<string, typeof userStats[0]>();
-      const userDemands = new Map<string, Set<string>>();
+    // If no filters active, return all members with their full time stats
+    const hasFilters = searchTerm || userFilter !== "all" || startDate || endDate || deliveryFilter !== "all";
+    
+    if (!hasFilters) {
+      return allBoardMembers;
+    }
 
-      for (const entry of filteredEntries) {
-        const userId = entry.user_id;
-        const existing = userMap.get(userId);
+    // Recalculate stats from filtered entries for each member
+    const memberStatsMap = new Map<string, {
+      totalSeconds: number;
+      isActive: boolean;
+      activeStartedAt: string | null;
+      demandCount: number;
+      entries: BoardTimeEntry[];
+    }>();
+
+    // Initialize all members
+    allBoardMembers.forEach(member => {
+      memberStatsMap.set(member.userId, {
+        totalSeconds: 0,
+        isActive: false,
+        activeStartedAt: null,
+        demandCount: 0,
+        entries: [],
+      });
+    });
+
+    // Calculate from filtered entries
+    const userDemands = new Map<string, Set<string>>();
+    
+    for (const entry of filteredEntries) {
+      const userId = entry.user_id;
+      const stats = memberStatsMap.get(userId);
+      
+      if (stats) {
+        stats.totalSeconds += entry.duration_seconds || 0;
+        stats.entries.push(entry);
         
-        const entrySeconds = entry.duration_seconds || 0;
-        const isActive = !entry.ended_at;
+        if (!entry.ended_at) {
+          stats.isActive = true;
+          if (!stats.activeStartedAt || new Date(entry.started_at) > new Date(stats.activeStartedAt)) {
+            stats.activeStartedAt = entry.started_at;
+          }
+        }
 
         if (!userDemands.has(userId)) {
           userDemands.set(userId, new Set());
         }
         userDemands.get(userId)!.add(entry.demand_id);
-        
-        if (existing) {
-          existing.totalSeconds += entrySeconds;
-          existing.entries.push(entry);
-          if (isActive && !existing.isActive) {
-            existing.isActive = true;
-            existing.activeStartedAt = entry.started_at;
-          }
-        } else {
-          userMap.set(userId, {
-            userId,
-            profile: entry.profile,
-            totalSeconds: entrySeconds,
-            isActive,
-            activeStartedAt: isActive ? entry.started_at : null,
-            demandCount: 0,
-            entries: [entry],
-          });
-        }
       }
-
-      for (const [userId, stats] of userMap) {
-        stats.demandCount = userDemands.get(userId)?.size || 0;
-      }
-
-      return Array.from(userMap.values()).sort((a, b) => {
-        if (a.isActive && !b.isActive) return -1;
-        if (!a.isActive && b.isActive) return 1;
-        return b.totalSeconds - a.totalSeconds;
-      });
     }
 
-    return userStats;
-  }, [userStats, filteredEntries, searchTerm, userFilter, startDate, endDate, deliveryFilter]);
+    // Update demand counts
+    for (const [userId, demands] of userDemands) {
+      const stats = memberStatsMap.get(userId);
+      if (stats) {
+        stats.demandCount = demands.size;
+      }
+    }
+
+    // Merge with member data and filter by search if applicable
+    let result = allBoardMembers.map(member => {
+      const stats = memberStatsMap.get(member.userId)!;
+      return {
+        ...member,
+        ...stats,
+      };
+    });
+
+    // Filter by user if specific user selected
+    if (userFilter !== "all") {
+      result = result.filter(m => m.userId === userFilter);
+    }
+
+    // Filter by search term on name
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(m => m.profile.full_name.toLowerCase().includes(term));
+    }
+
+    return result.sort((a, b) => {
+      if (a.isActive && !b.isActive) return -1;
+      if (!a.isActive && b.isActive) return 1;
+      return b.totalSeconds - a.totalSeconds;
+    });
+  }, [allBoardMembers, filteredEntries, searchTerm, userFilter, startDate, endDate, deliveryFilter]);
 
   // Group by demand
   const groupedByDemand = useMemo(() => {
@@ -273,22 +278,22 @@ export default function TimeManagement() {
     let totalTime = 0;
     let earliestActiveStart: string | null = null;
     
-    filteredUserStats.forEach(user => {
-      totalTime += user.totalSeconds;
-      if (user.isActive && user.activeStartedAt) {
-        if (!earliestActiveStart || new Date(user.activeStartedAt) < new Date(earliestActiveStart)) {
-          earliestActiveStart = user.activeStartedAt;
+    filteredMemberStats.forEach(member => {
+      totalTime += member.totalSeconds;
+      if (member.isActive && member.activeStartedAt) {
+        if (!earliestActiveStart || new Date(member.activeStartedAt) < new Date(earliestActiveStart)) {
+          earliestActiveStart = member.activeStartedAt;
         }
       }
     });
     
     const totalDemands = groupedByDemand.length;
     const totalEntries = filteredEntries.length;
-    const activeUsers = filteredUserStats.length;
+    const activeUsers = filteredMemberStats.length;
     const avgTimePerUser = activeUsers > 0 ? Math.round(totalTime / activeUsers) : 0;
     const avgTimePerDemand = totalDemands > 0 ? Math.round(totalTime / totalDemands) : 0;
     
-    const activeTimers = filteredUserStats.filter(u => u.isActive).length;
+    const activeTimers = filteredMemberStats.filter(m => m.isActive).length;
 
     return { 
       totalTime, 
@@ -300,7 +305,7 @@ export default function TimeManagement() {
       activeTimers,
       earliestActiveStart 
     };
-  }, [filteredUserStats, groupedByDemand, filteredEntries]);
+  }, [filteredMemberStats, groupedByDemand, filteredEntries]);
 
   // Live timer for total time
   const liveTotalTime = useLiveTimer({
@@ -311,9 +316,9 @@ export default function TimeManagement() {
 
   // Max time for progress calculation
   const maxUserTime = useMemo(() => {
-    if (filteredUserStats.length === 0) return 0;
-    return filteredUserStats[0].totalSeconds;
-  }, [filteredUserStats]);
+    if (filteredMemberStats.length === 0) return 0;
+    return Math.max(...filteredMemberStats.map(m => m.totalSeconds));
+  }, [filteredMemberStats]);
 
   // Chart colors
   const CHART_COLORS = [
@@ -374,12 +379,12 @@ export default function TimeManagement() {
       const statsText = `Tempo Total: ${formatTimeDisplay(totals.totalTime)} | Usuários: ${totals.activeUsers} | Demandas: ${totals.totalDemands}`;
       doc.text(statsText, pageWidth / 2, 46, { align: "center" });
 
-      const tableData = filteredUserStats.map(user => [
-        user.profile.full_name,
-        user.demandCount.toString(),
-        user.entries.length.toString(),
-        formatTimeDisplay(user.totalSeconds) || "00:00:00:00",
-        user.isActive ? "Sim" : "Não"
+      const tableData = filteredMemberStats.map(member => [
+        member.profile.full_name,
+        member.demandCount.toString(),
+        member.entries.length.toString(),
+        formatTimeDisplay(member.totalSeconds) || "00:00:00:00",
+        member.isActive ? "Sim" : "Não"
       ]);
 
       autoTable(doc, {
@@ -417,6 +422,31 @@ export default function TimeManagement() {
       toast.error("Erro ao exportar PDF");
     }
   };
+
+  // ============ ACCESS CONTROL ============
+  // Block access if not admin/moderator
+  if (!roleLoading && !canManage && selectedBoardId) {
+    return (
+      <div className="container mx-auto py-6">
+        <PageBreadcrumb items={[{ label: "Gerenciamento de Tempo" }]} />
+        <Card className="mt-6 border-destructive/50 bg-gradient-to-br from-destructive/5 to-transparent">
+          <CardContent className="py-16 text-center">
+            <div className="mx-auto w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
+              <Shield className="h-8 w-8 text-destructive" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Acesso Restrito</h3>
+            <p className="text-muted-foreground max-w-md mx-auto mb-6">
+              Apenas administradores e coordenadores podem acessar o gerenciamento de tempo da equipe.
+            </p>
+            <Button onClick={() => navigate("/")} variant="outline" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Voltar ao Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -521,7 +551,7 @@ export default function TimeManagement() {
           </CardContent>
         </Card>
 
-        {/* Active Users Card */}
+        {/* Board Members Card */}
         <Card className="relative overflow-hidden border-l-4 border-l-blue-500 bg-gradient-to-br from-blue-500/5 to-transparent">
           <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl" />
           <CardHeader className="pb-2">
@@ -529,13 +559,13 @@ export default function TimeManagement() {
               <div className="p-1.5 rounded-md bg-blue-500/10">
                 <Users className="h-4 w-4 text-blue-500" />
               </div>
-              Usuários
+              Membros
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-2">
               <div className="text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400">
-                {isLoading ? <Skeleton className="h-8 w-16" /> : totals.activeUsers}
+                {isLoading ? <Skeleton className="h-8 w-16" /> : allBoardMembers?.length || 0}
               </div>
               {totals.activeTimers > 0 && (
                 <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 animate-pulse text-xs">
@@ -594,7 +624,7 @@ export default function TimeManagement() {
       </div>
 
       {/* ============ CHARTS SECTION ============ */}
-      {!isLoading && filteredUserStats.length > 0 && (
+      {!isLoading && filteredMemberStats.length > 0 && filteredMemberStats.some(m => m.totalSeconds > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Time Distribution Chart */}
           <Card className="border-2 border-primary/10">
@@ -614,11 +644,14 @@ export default function TimeManagement() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={filteredUserStats.slice(0, 6).map((user, index) => ({
-                        name: user.profile.full_name.split(' ')[0],
-                        value: user.totalSeconds,
-                        fullName: user.profile.full_name,
-                      }))}
+                      data={filteredMemberStats
+                        .filter(m => m.totalSeconds > 0)
+                        .slice(0, 6)
+                        .map((member) => ({
+                          name: member.profile.full_name.split(' ')[0],
+                          value: member.totalSeconds,
+                          fullName: member.profile.full_name,
+                        }))}
                       cx="50%"
                       cy="50%"
                       innerRadius={60}
@@ -628,7 +661,7 @@ export default function TimeManagement() {
                       label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       labelLine={false}
                     >
-                      {filteredUserStats.slice(0, 6).map((_, index) => (
+                      {filteredMemberStats.filter(m => m.totalSeconds > 0).slice(0, 6).map((_, index) => (
                         <Cell 
                           key={`cell-${index}`} 
                           fill={CHART_COLORS[index % CHART_COLORS.length]}
@@ -643,13 +676,13 @@ export default function TimeManagement() {
               </div>
               {/* Legend */}
               <div className="flex flex-wrap justify-center gap-3 mt-4">
-                {filteredUserStats.slice(0, 6).map((user, index) => (
-                  <div key={user.userId} className="flex items-center gap-1.5 text-sm">
+                {filteredMemberStats.filter(m => m.totalSeconds > 0).slice(0, 6).map((member, index) => (
+                  <div key={member.userId} className="flex items-center gap-1.5 text-sm">
                     <span 
                       className="w-3 h-3 rounded-full" 
                       style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
                     />
-                    <span className="text-muted-foreground">{user.profile.full_name.split(' ')[0]}</span>
+                    <span className="text-muted-foreground">{member.profile.full_name.split(' ')[0]}</span>
                   </div>
                 ))}
               </div>
@@ -716,7 +749,7 @@ export default function TimeManagement() {
       )}
 
       {/* ============ USER RANKING ============ */}
-      {!isLoading && filteredUserStats.length > 0 && (
+      {!isLoading && filteredMemberStats.length > 0 && (
         <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-transparent overflow-hidden">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between flex-wrap gap-4">
@@ -726,7 +759,7 @@ export default function TimeManagement() {
                 </div>
                 <div>
                   <CardTitle className="flex items-center gap-2 text-xl">
-                    Ranking em Tempo Real
+                    Ranking de Membros
                     {activeTimersCount > 0 && (
                       <Badge className="bg-emerald-500 text-white border-0 animate-pulse text-xs">
                         <span className="w-2 h-2 bg-white rounded-full mr-1.5" />
@@ -735,15 +768,15 @@ export default function TimeManagement() {
                     )}
                   </CardTitle>
                   <CardDescription>
-                    Os tempos atualizam automaticamente quando há timers ativos
+                    Todos os membros do quadro e seus tempos registrados
                   </CardDescription>
                 </div>
               </div>
-              {filteredUserStats.length > 0 && (
+              {filteredMemberStats.length > 0 && filteredMemberStats[0].totalSeconds > 0 && (
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">Líder atual</p>
                   <p className="font-semibold text-amber-600 dark:text-amber-400 text-lg">
-                    {filteredUserStats[0]?.profile.full_name.split(' ')[0]}
+                    {filteredMemberStats[0]?.profile.full_name.split(' ')[0]}
                   </p>
                 </div>
               )}
@@ -751,18 +784,26 @@ export default function TimeManagement() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {filteredUserStats.slice(0, 10).map((stats, index) => (
+              {filteredMemberStats.slice(0, 15).map((member, index) => (
                 <LiveUserTimeRow 
-                  key={stats.userId} 
-                  stats={stats} 
+                  key={member.userId} 
+                  stats={{
+                    userId: member.userId,
+                    profile: member.profile,
+                    totalSeconds: member.totalSeconds,
+                    isActive: member.isActive,
+                    activeStartedAt: member.activeStartedAt,
+                    demandCount: member.demandCount,
+                    entries: member.entries,
+                  }}
                   rank={index + 1}
                   maxTime={maxUserTime}
                 />
               ))}
-              {filteredUserStats.length > 10 && (
+              {filteredMemberStats.length > 15 && (
                 <div className="text-center pt-4 pb-2">
                   <Badge variant="outline" className="text-muted-foreground">
-                    E mais {filteredUserStats.length - 10} usuário(s)...
+                    E mais {filteredMemberStats.length - 15} membro(s)...
                   </Badge>
                 </div>
               )}
@@ -794,7 +835,7 @@ export default function TimeManagement() {
                   <SelectValue placeholder="Filtrar por usuário" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os usuários</SelectItem>
+                  <SelectItem value="all">Todos os membros</SelectItem>
                   {uniqueUsers.map((user) => (
                     <SelectItem key={user.id} value={user.id}>
                       {user.full_name}
@@ -949,21 +990,29 @@ export default function TimeManagement() {
                     <Skeleton key={i} className="h-16 w-full" />
                   ))}
                 </div>
-              ) : filteredUserStats.length === 0 ? (
+              ) : filteredMemberStats.length === 0 ? (
                 <div className="text-center py-12">
                   <Clock className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
                   <p className="text-muted-foreground">
-                    Nenhuma entrada de tempo encontrada para este quadro.
+                    Nenhum membro encontrado neste quadro.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {filteredUserStats.map((userData) => (
+                  {filteredMemberStats.map((member) => (
                     <UserDetailTimeRow
-                      key={userData.userId}
-                      userData={userData}
-                      isExpanded={expandedUsers.has(userData.userId)}
-                      onToggle={() => toggleUser(userData.userId)}
+                      key={member.userId}
+                      userData={{
+                        userId: member.userId,
+                        profile: member.profile,
+                        totalSeconds: member.totalSeconds,
+                        isActive: member.isActive,
+                        activeStartedAt: member.activeStartedAt,
+                        demandCount: member.demandCount,
+                        entries: member.entries,
+                      }}
+                      isExpanded={expandedUsers.has(member.userId)}
+                      onToggle={() => toggleUser(member.userId)}
                     />
                   ))}
                 </div>
