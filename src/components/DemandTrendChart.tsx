@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { format, subDays, startOfDay, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChartPeriodSelector, type ChartPeriodType, getChartPeriodRange } from "./ChartPeriodSelector";
+import { toDateOnly, parseDateOnly } from "@/lib/dateUtils";
 
 interface Demand {
   id: string;
@@ -23,9 +24,15 @@ export function DemandTrendChart({ demands }: DemandTrendChartProps) {
     const { start, end } = getChartPeriodRange(period);
     const today = startOfDay(end);
     
-    // Filter demands by period first
+    // Helper to get local date from ISO string without timezone conversion
+    const getLocalDate = (isoString: string): Date => {
+      const dateOnly = toDateOnly(isoString);
+      return dateOnly ? parseDateOnly(dateOnly) || new Date(isoString) : new Date(isoString);
+    };
+
+    // Filter demands by period first using local dates
     const filteredDemands = demands.filter((d) => {
-      const demandDate = new Date(d.created_at);
+      const demandDate = getLocalDate(d.created_at);
       if (start && demandDate < start) return false;
       if (demandDate > end) return false;
       return true;
@@ -38,7 +45,7 @@ export function DemandTrendChart({ demands }: DemandTrendChartProps) {
     
     // Find the earliest demand date within the filtered period
     const effectiveStart = start || 
-      startOfDay(new Date(Math.min(...filteredDemands.map(d => new Date(d.created_at).getTime()))));
+      startOfDay(new Date(Math.min(...filteredDemands.map(d => getLocalDate(d.created_at).getTime()))));
 
     // Determine granularity based on period
     const daysDiff = Math.ceil((today.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60 * 24));
@@ -50,17 +57,17 @@ export function DemandTrendChart({ demands }: DemandTrendChartProps) {
       return days.map((day) => {
         const dayStr = format(day, "yyyy-MM-dd");
         
-        // Demands CREATED on this day
+        // Demands CREATED on this day - using date-only extraction to avoid timezone issues
         const createdOnDay = filteredDemands.filter((d) => {
-          const demandDate = format(new Date(d.created_at), "yyyy-MM-dd");
-          return demandDate === dayStr;
+          const demandDateOnly = toDateOnly(d.created_at);
+          return demandDateOnly === dayStr;
         }).length;
         
         // Demands DELIVERED on this day (using updated_at as delivery date)
         const deliveredOnDay = filteredDemands.filter((d) => {
           if (d.demand_statuses?.name !== "Entregue") return false;
-          const deliveryDate = format(new Date(d.updated_at), "yyyy-MM-dd");
-          return deliveryDate === dayStr;
+          const deliveryDateOnly = toDateOnly(d.updated_at);
+          return deliveryDateOnly === dayStr;
         }).length;
         
         return {
@@ -77,16 +84,16 @@ export function DemandTrendChart({ demands }: DemandTrendChartProps) {
       return weeks.map((weekStart, idx) => {
         const weekEnd = idx < weeks.length - 1 ? subDays(weeks[idx + 1], 1) : today;
         
-        // Demands CREATED in this week
+        // Demands CREATED in this week - using local dates
         const createdInWeek = filteredDemands.filter((d) => {
-          const demandDate = new Date(d.created_at);
+          const demandDate = getLocalDate(d.created_at);
           return demandDate >= weekStart && demandDate <= weekEnd;
         }).length;
         
-        // Demands DELIVERED in this week
+        // Demands DELIVERED in this week - using local dates
         const deliveredInWeek = filteredDemands.filter((d) => {
           if (d.demand_statuses?.name !== "Entregue") return false;
-          const deliveryDate = new Date(d.updated_at);
+          const deliveryDate = getLocalDate(d.updated_at);
           return deliveryDate >= weekStart && deliveryDate <= weekEnd;
         }).length;
         
@@ -105,16 +112,16 @@ export function DemandTrendChart({ demands }: DemandTrendChartProps) {
         const monthEnd = endOfMonth(monthStart);
         const effectiveMonthEnd = monthEnd > today ? today : monthEnd;
         
-        // Demands CREATED in this month
+        // Demands CREATED in this month - using local dates
         const createdInMonth = filteredDemands.filter((d) => {
-          const demandDate = new Date(d.created_at);
+          const demandDate = getLocalDate(d.created_at);
           return demandDate >= monthStart && demandDate <= effectiveMonthEnd;
         }).length;
         
-        // Demands DELIVERED in this month
+        // Demands DELIVERED in this month - using local dates
         const deliveredInMonth = filteredDemands.filter((d) => {
           if (d.demand_statuses?.name !== "Entregue") return false;
-          const deliveryDate = new Date(d.updated_at);
+          const deliveryDate = getLocalDate(d.updated_at);
           return deliveryDate >= monthStart && deliveryDate <= effectiveMonthEnd;
         }).length;
         
