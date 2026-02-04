@@ -6,6 +6,26 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Detailed late demand info
+interface LateDemandDetail {
+  title: string;
+  daysLate: number;
+  dueDate: string;
+  deliveredAt: string;
+  assignees: string[];
+  priority: string;
+}
+
+// Detailed overdue demand info
+interface OverdueDemandDetail {
+  title: string;
+  daysOverdue: number;
+  dueDate: string;
+  assignees: string[];
+  priority: string;
+  status: string;
+}
+
 interface DemandMetrics {
   total: number;
   delivered: number;
@@ -13,6 +33,13 @@ interface DemandMetrics {
   late: number;
   overdue: number;
   avgDeliveryDays: number;
+  avgDaysLate: number; // Average days late for late deliveries
+  avgDaysOverdue: number; // Average days overdue for overdue demands
+  withDueDate: number; // Total demands that have a due date
+  withoutDueDate: number; // Total demands without due date
+  onTimeRate: number; // Percentage of on-time deliveries (with due date)
+  lateDetails: LateDemandDetail[]; // Detailed info about late demands
+  overdueDetails: OverdueDemandDetail[]; // Detailed info about overdue demands
   byStatus: { status: string; count: number }[];
   byPriority: { priority: string; count: number }[];
 }
@@ -22,7 +49,10 @@ interface MemberPerformance {
   role: string;
   demandCount: number;
   completedCount: number;
+  onTimeCount: number;
+  lateCount: number;
   completionRate: number;
+  onTimeRate: number;
   avgTimeHours: number;
 }
 
@@ -230,7 +260,7 @@ serve(async (req) => {
       console.error("Requests error:", requestsError);
     }
 
-    // Calculate demand metrics
+    // Calculate demand metrics with detailed late/overdue tracking
     const demandsList = demands || [];
     const now = new Date();
     
@@ -239,10 +269,25 @@ serve(async (req) => {
     let late = 0;
     let overdue = 0;
     let totalDeliveryDays = 0;
-    let deliveredWithDueDate = 0;
+    let totalDaysLate = 0;
+    let totalDaysOverdue = 0;
+    let withDueDate = 0;
+    let withoutDueDate = 0;
 
+    const lateDetails: LateDemandDetail[] = [];
+    const overdueDetails: OverdueDemandDetail[] = [];
     const statusCounts: Record<string, number> = {};
     const priorityCounts: Record<string, number> = {};
+
+    // Helper to normalize date comparison (ignore time, compare date only)
+    const normalizeDate = (date: Date): Date => {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    };
+
+    // Helper to get assignee names
+    const getAssigneeNames = (assignees: any[]): string[] => {
+      return (assignees || []).map((a: any) => a.profile?.full_name || "Usuário");
+    };
 
     demandsList.forEach((d: any) => {
       const statusName = d.status?.name || "Sem status";
@@ -250,6 +295,13 @@ serve(async (req) => {
 
       const priority = d.priority || "normal";
       priorityCounts[priority] = (priorityCounts[priority] || 0) + 1;
+
+      // Track due date presence
+      if (d.due_date) {
+        withDueDate++;
+      } else {
+        withoutDueDate++;
+      }
 
       if (d.delivered_at) {
         delivered++;
@@ -259,23 +311,74 @@ serve(async (req) => {
         totalDeliveryDays += days;
 
         if (d.due_date) {
-          deliveredWithDueDate++;
-          const dueDate = new Date(d.due_date);
-          if (deliveredDate <= dueDate) {
+          // Normalize dates for accurate comparison (compare date only, not time)
+          const dueDateNorm = normalizeDate(new Date(d.due_date));
+          const deliveredDateNorm = normalizeDate(deliveredDate);
+          
+          // Calculate difference in days
+          const diffMs = deliveredDateNorm.getTime() - dueDateNorm.getTime();
+          const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+          
+          if (diffDays <= 0) {
+            // Delivered on time or early
             onTime++;
           } else {
+            // Delivered late
             late++;
+            totalDaysLate += diffDays;
+            
+            // Add to late details (limit to 20 for performance)
+            if (lateDetails.length < 20) {
+              lateDetails.push({
+                title: d.title,
+                daysLate: diffDays,
+                dueDate: d.due_date,
+                deliveredAt: d.delivered_at,
+                assignees: getAssigneeNames(d.assignees),
+                priority: d.priority || "normal",
+              });
+            }
           }
         }
       } else if (d.due_date) {
-        const dueDate = new Date(d.due_date);
-        if (dueDate < now) {
+        // Not delivered yet - check if overdue
+        const dueDateNorm = normalizeDate(new Date(d.due_date));
+        const todayNorm = normalizeDate(now);
+        
+        const diffMs = todayNorm.getTime() - dueDateNorm.getTime();
+        const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+        
+        if (diffDays > 0) {
+          // Past due date
           overdue++;
+          totalDaysOverdue += diffDays;
+          
+          // Add to overdue details (limit to 20 for performance)
+          if (overdueDetails.length < 20) {
+            overdueDetails.push({
+              title: d.title,
+              daysOverdue: diffDays,
+              dueDate: d.due_date,
+              assignees: getAssigneeNames(d.assignees),
+              priority: d.priority || "normal",
+              status: d.status?.name || "Sem status",
+            });
+          }
         }
       }
     });
 
     const avgDeliveryDays = delivered > 0 ? totalDeliveryDays / delivered : 0;
+    const avgDaysLate = late > 0 ? totalDaysLate / late : 0;
+    const avgDaysOverdue = overdue > 0 ? totalDaysOverdue / overdue : 0;
+    
+    // Calculate on-time rate only for demands that had a due date and were delivered
+    const deliveredWithDueDate = onTime + late;
+    const onTimeRate = deliveredWithDueDate > 0 ? Math.round((onTime / deliveredWithDueDate) * 100) : 0;
+
+    // Sort late/overdue by severity (most days first)
+    lateDetails.sort((a, b) => b.daysLate - a.daysLate);
+    overdueDetails.sort((a, b) => b.daysOverdue - a.daysOverdue);
 
     const demandMetrics: DemandMetrics = {
       total: demandsList.length,
@@ -284,11 +387,18 @@ serve(async (req) => {
       late,
       overdue,
       avgDeliveryDays: Math.round(avgDeliveryDays * 10) / 10,
+      avgDaysLate: Math.round(avgDaysLate * 10) / 10,
+      avgDaysOverdue: Math.round(avgDaysOverdue * 10) / 10,
+      withDueDate,
+      withoutDueDate,
+      onTimeRate,
+      lateDetails,
+      overdueDetails,
       byStatus: Object.entries(statusCounts).map(([status, count]) => ({ status, count })),
       byPriority: Object.entries(priorityCounts).map(([priority, count]) => ({ priority, count })),
     };
 
-    // Calculate member performance
+    // Calculate member performance with on-time/late tracking
     const memberPerformance: MemberPerformance[] = [];
     const memberTimeMap: Record<string, number> = {};
 
@@ -299,34 +409,61 @@ serve(async (req) => {
       }
     });
 
-    // Build assignee demand map
-    const assigneeDemandMap: Record<string, { total: number; completed: number }> = {};
+    // Build assignee demand map with on-time/late tracking
+    const assigneeDemandMap: Record<string, { total: number; completed: number; onTime: number; late: number }> = {};
+    
     demandsList.forEach((d: any) => {
       const assignees = d.assignees || [];
       const isDelivered = !!d.delivered_at;
+      
+      // Calculate if this demand was on-time or late
+      let wasOnTime = false;
+      let wasLate = false;
+      
+      if (isDelivered && d.due_date) {
+        const dueDateNorm = normalizeDate(new Date(d.due_date));
+        const deliveredDateNorm = normalizeDate(new Date(d.delivered_at));
+        const diffMs = deliveredDateNorm.getTime() - dueDateNorm.getTime();
+        const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+        
+        wasOnTime = diffDays <= 0;
+        wasLate = diffDays > 0;
+      }
+      
       assignees.forEach((a: any) => {
         if (!assigneeDemandMap[a.user_id]) {
-          assigneeDemandMap[a.user_id] = { total: 0, completed: 0 };
+          assigneeDemandMap[a.user_id] = { total: 0, completed: 0, onTime: 0, late: 0 };
         }
         assigneeDemandMap[a.user_id].total++;
         if (isDelivered) {
           assigneeDemandMap[a.user_id].completed++;
+          if (wasOnTime) assigneeDemandMap[a.user_id].onTime++;
+          if (wasLate) assigneeDemandMap[a.user_id].late++;
         }
       });
     });
 
     (members || []).forEach((m: any) => {
       const profile = m.profile as any;
-      const stats = assigneeDemandMap[m.user_id] || { total: 0, completed: 0 };
+      const stats = assigneeDemandMap[m.user_id] || { total: 0, completed: 0, onTime: 0, late: 0 };
       const timeSeconds = memberTimeMap[m.user_id] || 0;
       const timeHours = timeSeconds / 3600;
+      
+      // Calculate on-time rate for this member (only for completed demands with due date)
+      const memberDeliveredWithDueDate = stats.onTime + stats.late;
+      const memberOnTimeRate = memberDeliveredWithDueDate > 0 
+        ? Math.round((stats.onTime / memberDeliveredWithDueDate) * 100) 
+        : 0;
 
       memberPerformance.push({
         name: profile?.full_name || "Usuário",
         role: m.role,
         demandCount: stats.total,
         completedCount: stats.completed,
+        onTimeCount: stats.onTime,
+        lateCount: stats.late,
         completionRate: stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0,
+        onTimeRate: memberOnTimeRate,
         avgTimeHours: stats.completed > 0 ? Math.round((timeHours / stats.completed) * 10) / 10 : 0,
       });
     });
@@ -464,56 +601,86 @@ serve(async (req) => {
     const systemPrompt = `Você é um especialista em análise de gestão de projetos e produtividade de equipes. 
 Sua tarefa é analisar os dados de um quadro Kanban e produzir um relatório executivo completo e preciso em português brasileiro.
 
-IMPORTANTE:
-- Analise os dados com precisão - não invente números, use apenas os dados fornecidos
-- Seja direto e objetivo, mas completo
-- Destaque tanto pontos positivos quanto áreas de melhoria
-- Use emojis de forma moderada para facilitar a leitura
-- Formate em markdown com seções claras
+IMPORTANTE - DEFINIÇÕES CRÍTICAS:
+- "late" (Atrasadas): Demandas que FORAM ENTREGUES, mas DEPOIS da data de entrega prevista (due_date). Ou seja, foram finalizadas com atraso.
+- "overdue" (Vencidas): Demandas que AINDA NÃO FORAM ENTREGUES e já passaram da data de entrega prevista. São pendências críticas.
+- "onTime" (No Prazo): Demandas entregues NA ou ANTES da data prevista.
+- "onTimeRate": Taxa percentual de entregas no prazo (apenas para demandas que tinham due_date definido).
+- "avgDaysLate": Média de dias de atraso nas entregas atrasadas.
+- "avgDaysOverdue": Média de dias que as demandas vencidas estão pendentes.
+- "lateDetails": Lista detalhada das demandas entregues com atraso (título, dias de atraso, responsáveis).
+- "overdueDetails": Lista detalhada das demandas vencidas pendentes (título, dias vencidos, responsáveis, status atual).
+
+ANÁLISE DE MEMBROS:
+- Cada membro tem "onTimeCount" (entregas no prazo) e "lateCount" (entregas atrasadas).
+- "onTimeRate" por membro mostra a taxa individual de pontualidade.
+- Use esses dados para identificar quem precisa de suporte ou está sobrecarregado.
+
+REGRAS DE PRECISÃO:
+- Use APENAS os números exatos fornecidos nos dados - NUNCA invente ou arredonde incorretamente
+- Cite nomes de membros, títulos de demandas e valores exatamente como aparecem nos dados
+- Diferencie claramente entre "atrasadas" (late - já entregues) e "vencidas" (overdue - ainda pendentes)
 
 ESTRUTURA OBRIGATÓRIA DO RELATÓRIO:
 
 ## 📊 Resumo Executivo
-[2-3 frases resumindo a situação geral do quadro]
+[2-3 frases resumindo a situação geral do quadro, incluindo taxa de pontualidade e alertas críticos]
 
 ## 🎯 Métricas de Performance
-- Taxa de entregas no prazo
-- Tempo médio de conclusão
-- Volume de demandas por status
-- Prioridades mais comuns
+- Taxa de entregas no prazo (onTimeRate): X% - baseado em Y demandas com data definida
+- Total de demandas: X | Entregues: Y | No prazo: Z | Atrasadas: W | Vencidas: V
+- Tempo médio de conclusão: X dias
+- Média de dias de atraso (quando atrasadas): X dias
+- Média de dias vencidas (demandas pendentes): X dias
+- Demandas sem data definida: X (impacto na previsibilidade)
+
+## 🚨 Demandas Críticas
+### Vencidas (Pendentes - Ação Imediata)
+[Liste cada demanda de overdueDetails com: título, dias vencidos, responsáveis, status atual, prioridade]
+
+### Entregues com Atraso (Histórico)
+[Liste as principais demandas de lateDetails com: título, dias de atraso, responsáveis]
 
 ## 👥 Análise da Equipe
-Para cada role (Administradores, Moderadores, Executores):
-- Quem está performando bem e por quê
-- Quem pode precisar de suporte
-- Taxa de conclusão por membro
+Para cada membro (nome e cargo):
+- Total de demandas: X | Concluídas: Y | No prazo: Z | Atrasadas: W
+- Taxa de pontualidade individual: X%
+- Horas investidas: X | Média por demanda: Y
+- Avaliação: [Alta performance / Necessita suporte / etc.]
 
 ## 📈 Padrões de Demanda
-- Recorrência de solicitações por requester
-- Tipos de demandas mais frequentes
-- Tendências semanais observadas
-- Picos de demanda identificados
+- Distribuição por status
+- Distribuição por prioridade
+- Tendências semanais
+- Padrões de solicitantes (requesters)
 
-## ⚠️ Alertas e Pontos de Atenção
-- Demandas atrasadas ou críticas
+## ⚠️ Alertas e Riscos
 - Gargalos identificados
-- Riscos potenciais
+- Membros sobrecarregados
+- Riscos de novos atrasos
 
-## 💡 Recomendações
-- Ações específicas para melhorar performance
-- Sugestões de redistribuição de carga
-- Otimizações de processo
+## 💡 Recomendações Acionáveis
+- Ações imediatas para demandas vencidas
+- Sugestões para melhorar pontualidade
+- Redistribuição de carga se necessário
 
-REGRAS:
-- Se não houver dados suficientes para uma seção, indique claramente
-- Mantenha um tom profissional mas acessível
-- Priorize insights acionáveis sobre descrições genéricas`;
+REGRAS FINAIS:
+- Se lateDetails ou overdueDetails estiverem vazios, celebre a boa performance
+- Sempre mencione nomes reais dos membros e demandas
+- Priorize insights acionáveis sobre descrições genéricas
+- Mantenha tom profissional mas acessível`;
 
-    const userPrompt = `Analise os seguintes dados do quadro "${board.name}" dos últimos 90 dias:
+    const userPrompt = `Analise os seguintes dados do quadro "${board.name}" dos últimos 90 dias.
 
+ATENÇÃO: Os dados incluem informações detalhadas sobre:
+- demands.lateDetails: Lista de demandas entregues COM ATRASO (após a data prevista)
+- demands.overdueDetails: Lista de demandas VENCIDAS que ainda não foram entregues
+- members[].onTimeCount e lateCount: Performance individual de pontualidade
+
+DADOS COMPLETOS:
 ${JSON.stringify(analytics, null, 2)}
 
-Por favor, gere o relatório de análise completo seguindo a estrutura definida.`;
+Por favor, gere o relatório de análise completo seguindo a estrutura definida, citando nomes e números exatos.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
