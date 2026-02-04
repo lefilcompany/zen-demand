@@ -88,6 +88,7 @@ interface KanbanBoardProps {
   readOnly?: boolean;
   userRole?: string;
   boardName?: string;
+  initialColumnsOpen?: boolean; // If true, all columns start open
 }
 
 const priorityColors: Record<string, string> = {
@@ -165,7 +166,7 @@ function useIsLargeDesktop() {
 // No limit on open columns - users can open all if they want
 // Horizontal scroll handles overflow
 
-export function KanbanBoard({ demands, columns: propColumns, onDemandClick, readOnly = false, userRole, boardName }: KanbanBoardProps) {
+export function KanbanBoard({ demands, columns: propColumns, onDemandClick, readOnly = false, userRole, boardName, initialColumnsOpen = false }: KanbanBoardProps) {
   // Use provided columns or fallback to default
   const columns = propColumns && propColumns.length > 0 ? propColumns : DEFAULT_COLUMNS;
   const { t } = useTranslation();
@@ -176,8 +177,24 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const { isOffline } = useOfflineStatus();
   const queryClient = useQueryClient();
   
-  // Track multiple active columns (max 3), using array to maintain order (FIFO)
-  const [activeColumns, setActiveColumns] = useState<string[]>([]);
+  // Track multiple active columns, using array to maintain order (FIFO)
+  // Initialize based on user preference
+  const [activeColumns, setActiveColumns] = useState<string[]>(() => {
+    if (initialColumnsOpen) {
+      return propColumns?.map(c => c.key) || DEFAULT_COLUMNS.map(c => c.key);
+    }
+    return [];
+  });
+  
+  // Update active columns when initialColumnsOpen changes or columns change
+  useEffect(() => {
+    if (initialColumnsOpen) {
+      const allColumnKeys = columns.map(c => c.key);
+      setActiveColumns(allColumnKeys);
+    } else {
+      setActiveColumns([]);
+    }
+  }, [initialColumnsOpen]);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);

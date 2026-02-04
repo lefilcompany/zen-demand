@@ -106,7 +106,9 @@
     "doing": "Fazendo",
     "delivered": "Entregue",
     "inAdjustment": "Em Ajuste",
-    "dragHint": "Arraste os cards para alterar o status"
+    "dragHint": "Arraste os cards para alterar o status",
+    "columnsOpenByDefault": "Colunas abertas ao entrar",
+    "columnsClosedByDefault": "Colunas fechadas ao entrar"
   },
   "teams": {
     "title": "Equipes",

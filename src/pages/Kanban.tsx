@@ -1,10 +1,18 @@
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useTranslation } from "react-i18next";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { KanbanNotifications } from "@/components/KanbanNotifications";
 import { KanbanFilters, KanbanFiltersState } from "@/components/KanbanFilters";
 import { KanbanStagesManager } from "@/components/KanbanStagesManager";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { useDemands } from "@/hooks/useDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
@@ -14,7 +22,8 @@ import { useAuth } from "@/lib/auth";
 import { useMembersByPosition } from "@/hooks/useMembersByPosition";
 import { useIsTeamAdminOrModerator } from "@/hooks/useTeamRole";
 import { useKanbanColumns } from "@/hooks/useBoardStatuses";
-import { Plus, LayoutGrid } from "lucide-react";
+import { useKanbanPreferences } from "@/hooks/useKanbanPreferences";
+import { Plus, LayoutGrid, Columns3, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRealtimeDemands, useKanbanRealtimeNotifications } from "@/hooks/useRealtimeDemands";
 import { isToday, isThisWeek, isPast } from "date-fns";
@@ -29,6 +38,7 @@ export default function Kanban() {
   const { data: currentBoard } = useBoard(selectedBoardId);
   const { canManage } = useIsTeamAdminOrModerator(currentTeamId);
   const { columns: kanbanColumns } = useKanbanColumns(selectedBoardId);
+  const { preferences, toggleDefaultColumnsOpen, isSaving, isLoading: isLoadingPrefs } = useKanbanPreferences();
   
   const [filters, setFilters] = useState<KanbanFiltersState>({
     myTasks: false,
@@ -115,7 +125,32 @@ export default function Kanban() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Kanban Column Preference Switch */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-md border bg-background/50">
+                  <Columns3 className="h-4 w-4 text-muted-foreground" />
+                  <Switch
+                    id="columns-open-preference"
+                    checked={preferences.defaultColumnsOpen}
+                    onCheckedChange={toggleDefaultColumnsOpen}
+                    disabled={isSaving || isLoadingPrefs}
+                  />
+                  {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p className="text-xs">
+                  {preferences.defaultColumnsOpen 
+                    ? t("kanban.columnsOpenByDefault") 
+                    : t("kanban.columnsClosedByDefault")}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
           {/* Kanban Stage Manager - only for admins/moderators */}
           {canManage && selectedBoardId && (
             <KanbanStagesManager boardId={selectedBoardId} />
@@ -160,6 +195,7 @@ export default function Kanban() {
             readOnly={isReadOnly}
             userRole={role || undefined}
             boardName={currentBoard?.name}
+            initialColumnsOpen={preferences.defaultColumnsOpen}
           />
         ) : (
           <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
