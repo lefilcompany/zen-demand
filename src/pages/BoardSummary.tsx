@@ -417,7 +417,7 @@ export default function BoardSummary() {
   }
 
   return (
-    <div className="container mx-auto py-6 px-4 max-w-5xl">
+    <div className="container mx-auto max-w-5xl">
       <PageBreadcrumb items={[{ label: "Análise IA" }]} />
       
       <div className="mt-6 space-y-6">
