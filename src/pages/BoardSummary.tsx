@@ -448,10 +448,6 @@ export default function BoardSummary() {
                         <Copy className="h-4 w-4 mr-2" />
                         Copiar texto
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleExportPDF}>
-                        <Download className="h-4 w-4 mr-2" />
-                        Exportar PDF
-                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={handleShare}>
                         <Share2 className="h-4 w-4 mr-2" />
                         Compartilhar link
