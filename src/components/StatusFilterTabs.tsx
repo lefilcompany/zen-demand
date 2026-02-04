@@ -1,12 +1,14 @@
 import { useMemo } from "react";
-import { useDemandStatuses } from "@/hooks/useDemands";
+import { useBoardStatuses } from "@/hooks/useBoardStatuses";
+import { useSelectedBoard } from "@/contexts/BoardContext";
 import { cn } from "@/lib/utils";
 
-// Ordem fixa dos status
+// Ordem fixa dos status do sistema
 const STATUS_ORDER = [
   "A Iniciar",
   "Fazendo",
   "Em Ajuste",
+  "Aprovação Interna",
   "Aprovação do Cliente",
   "Entregue",
   "Atrasado",
@@ -18,12 +20,21 @@ interface StatusFilterTabsProps {
 }
 
 export function StatusFilterTabs({ value, onChange }: StatusFilterTabsProps) {
-  const { data: statuses } = useDemandStatuses();
+  const { selectedBoardId } = useSelectedBoard();
+  const { data: boardStatuses } = useBoardStatuses(selectedBoardId);
 
-  // Ordenar status conforme ordem definida
+  // Ordenar status conforme ordem definida, usando os status do quadro atual
   const orderedStatuses = useMemo(() => {
-    if (!statuses) return [];
-    return [...statuses].sort((a, b) => {
+    if (!boardStatuses) return [];
+    
+    // Converter para formato esperado (id, name, color)
+    const statuses = boardStatuses.map(bs => ({
+      id: bs.status.id,
+      name: bs.status.name,
+      color: bs.status.color,
+    }));
+    
+    return statuses.sort((a, b) => {
       const indexA = STATUS_ORDER.indexOf(a.name);
       const indexB = STATUS_ORDER.indexOf(b.name);
       // Se não encontrar na lista, coloca no final
@@ -31,7 +42,7 @@ export function StatusFilterTabs({ value, onChange }: StatusFilterTabsProps) {
       const orderB = indexB === -1 ? 999 : indexB;
       return orderA - orderB;
     });
-  }, [statuses]);
+  }, [boardStatuses]);
 
   return (
     <div className="flex items-center gap-1 sm:gap-1.5">
