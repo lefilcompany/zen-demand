@@ -124,16 +124,23 @@ export function UserDetailTimeRow({ userData, isExpanded, onToggle }: UserDetail
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <button
-                    type="button"
+                  <span
+                    role="link"
+                    tabIndex={0}
                     onClick={(e) => {
                       e.stopPropagation();
                       navigate(`/user/${userData.userId}`);
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.stopPropagation();
+                        navigate(`/user/${userData.userId}`);
+                      }
+                    }}
                     className="font-medium truncate hover:text-primary hover:underline cursor-pointer transition-colors"
                   >
                     {userData.profile.full_name}
-                  </button>
+                  </span>
                   {userData.isActive && (
                     <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] h-5">
                       <Play className="h-2.5 w-2.5 mr-0.5 fill-current" />

@@ -89,17 +89,24 @@ export function DemandDetailTimeRow({ demandData, isExpanded, onToggle }: Demand
             <div className="flex items-center gap-3 text-left flex-1 min-w-0">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <button
-                    type="button"
+                  <span
+                    role="link"
+                    tabIndex={0}
                     onClick={(e) => {
                       e.stopPropagation();
                       navigate(`/demands/${demandData.demand.id}`);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.stopPropagation();
+                        navigate(`/demands/${demandData.demand.id}`);
+                      }
                     }}
                     className="font-medium truncate hover:text-primary hover:underline cursor-pointer transition-colors"
                     title={demandData.demand.title}
                   >
                     {truncateText(demandData.demand.title)}
-                  </button>
+                  </span>
                   {demandData.hasActiveTimer && (
                     <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] h-5">
                       <Play className="h-2.5 w-2.5 mr-0.5 fill-current" />

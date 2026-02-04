@@ -179,9 +179,7 @@ export default function TimeManagement() {
 
     filteredEntries.forEach((entry) => {
       const demandId = entry.demand_id;
-      const duration = entry.ended_at
-        ? Math.floor((new Date(entry.ended_at).getTime() - new Date(entry.started_at).getTime()) / 1000)
-        : 0;
+      const duration = entry.duration_seconds || 0;
       const isActive = !entry.ended_at;
 
       if (!grouped.has(demandId)) {
