@@ -327,7 +327,7 @@ export function useAddBoardStatus() {
   });
 }
 
-// Delete a status from the board (and the custom status itself if it belongs to this board)
+// Delete a status from the board (and the custom status itself if it's not a system status)
 export function useDeleteBoardStatus() {
   const queryClient = useQueryClient();
 
@@ -349,15 +349,17 @@ export function useDeleteBoardStatus() {
 
       if (boardError) throw boardError;
 
-      // 2. Check if this is a custom status that belongs to this board
+      // 2. Check if this is a custom status (not a system status)
       const { data: statusData } = await supabase
         .from("demand_statuses")
         .select("is_system, board_id")
         .eq("id", statusId)
-        .single();
+        .maybeSingle();
 
-      // 3. If it's a custom status and belongs to this board, delete it from demand_statuses too
-      if (statusData && !statusData.is_system && statusData.board_id === boardId) {
+      // 3. If it's a custom status, delete it from demand_statuses
+      // Custom statuses are those where is_system = false
+      // They should be deleted when removed from the board since they're board-specific
+      if (statusData && !statusData.is_system) {
         const { error: statusError } = await supabase
           .from("demand_statuses")
           .delete()
