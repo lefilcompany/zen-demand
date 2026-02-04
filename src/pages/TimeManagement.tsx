@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Clock, User, Calendar, Filter, ChevronDown, ChevronUp, ExternalLink, CalendarIcon, Users, BarChart3, TrendingUp, Play, Download, LayoutGrid, CheckCircle2, CircleDashed } from "lucide-react";
+import { Clock, User, Calendar, Filter, ChevronDown, ChevronUp, ExternalLink, CalendarIcon, Users, BarChart3, TrendingUp, Play, Download, LayoutGrid, CheckCircle2, CircleDashed, Timer, Zap, Target, Activity, Flame, Trophy } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSelectedBoard } from "@/contexts/BoardContext";
@@ -29,6 +29,7 @@ import { cn, truncateText } from "@/lib/utils";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 
 interface GroupedByDemand {
   demand: BoardTimeEntry["demand"];
@@ -400,12 +401,16 @@ export default function TimeManagement() {
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
+      {/* Stats Cards - Enhanced Visual Design */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Time Card */}
+        <Card className="relative overflow-hidden border-l-4 border-l-primary bg-gradient-to-br from-primary/5 to-transparent">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-primary/10 rounded-full -translate-y-1/2 translate-x-1/2" />
           <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
+            <CardDescription className="flex items-center gap-2 text-primary font-medium">
+              <div className="p-1.5 rounded-md bg-primary/10">
+                <Timer className="h-4 w-4 text-primary" />
+              </div>
               Tempo Total
               {totals.activeTimers > 0 && (
                 <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
@@ -414,64 +419,202 @@ export default function TimeManagement() {
           </CardHeader>
           <CardContent>
             <div className={cn(
-              "text-2xl font-bold font-mono",
+              "text-2xl md:text-3xl font-bold font-mono",
               totals.activeTimers > 0 && "text-emerald-600 dark:text-emerald-400"
             )}>
               {isLoading ? <Skeleton className="h-8 w-24" /> : liveTotalTime || formatTimeDisplay(totals.totalTime) || "00:00:00:00"}
             </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {totals.totalEntries} entrada{totals.totalEntries !== 1 ? 's' : ''} registrada{totals.totalEntries !== 1 ? 's' : ''}
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Active Users Card */}
+        <Card className="relative overflow-hidden border-l-4 border-l-blue-500 bg-gradient-to-br from-blue-500/5 to-transparent">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
           <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Usuários Ativos
+            <CardDescription className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium">
+              <div className="p-1.5 rounded-md bg-blue-500/10">
+                <Users className="h-4 w-4 text-blue-500" />
+              </div>
+              Usuários
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-2">
-              <div className="text-2xl font-bold">
+              <div className="text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400">
                 {isLoading ? <Skeleton className="h-8 w-16" /> : totals.activeUsers}
               </div>
               {totals.activeTimers > 0 && (
                 <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 animate-pulse">
-                  <Play className="h-3 w-3 mr-1 fill-current" />
+                  <Flame className="h-3 w-3 mr-1" />
                   {totals.activeTimers} ativo{totals.activeTimers > 1 ? 's' : ''}
                 </Badge>
               )}
             </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {totals.totalDemands} demanda{totals.totalDemands !== 1 ? 's' : ''} trabalhada{totals.totalDemands !== 1 ? 's' : ''}
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Average per User Card */}
+        <Card className="relative overflow-hidden border-l-4 border-l-violet-500 bg-gradient-to-br from-violet-500/5 to-transparent">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-violet-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
           <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
+            <CardDescription className="flex items-center gap-2 text-violet-600 dark:text-violet-400 font-medium">
+              <div className="p-1.5 rounded-md bg-violet-500/10">
+                <TrendingUp className="h-4 w-4 text-violet-500" />
+              </div>
               Média/Usuário
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-mono">
+            <div className="text-2xl md:text-3xl font-bold font-mono text-violet-600 dark:text-violet-400">
               {isLoading ? <Skeleton className="h-8 w-24" /> : formatTimeDisplay(totals.avgTimePerUser) || "00:00:00:00"}
             </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Tempo médio por colaborador
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Average per Demand Card */}
+        <Card className="relative overflow-hidden border-l-4 border-l-amber-500 bg-gradient-to-br from-amber-500/5 to-transparent">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-amber-500/10 rounded-full -translate-y-1/2 translate-x-1/2" />
           <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
+            <CardDescription className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-medium">
+              <div className="p-1.5 rounded-md bg-amber-500/10">
+                <Target className="h-4 w-4 text-amber-500" />
+              </div>
               Média/Demanda
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-mono">
+            <div className="text-2xl md:text-3xl font-bold font-mono text-amber-600 dark:text-amber-400">
               {isLoading ? <Skeleton className="h-8 w-24" /> : formatTimeDisplay(totals.avgTimePerDemand) || "00:00:00:00"}
             </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Tempo médio por tarefa
+            </p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Charts Section */}
+      {!isLoading && filteredUserStats.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Time Distribution Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Activity className="h-5 w-5 text-primary" />
+                Distribuição de Tempo por Usuário
+              </CardTitle>
+              <CardDescription>
+                Proporção do tempo dedicado por cada membro
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={filteredUserStats.slice(0, 6).map((user, index) => ({
+                        name: user.profile.full_name.split(' ')[0],
+                        value: user.totalSeconds,
+                        fullName: user.profile.full_name,
+                      }))}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={90}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      labelLine={false}
+                    >
+                      {filteredUserStats.slice(0, 6).map((_, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={[
+                            'hsl(var(--primary))',
+                            'hsl(221, 83%, 53%)',
+                            'hsl(263, 70%, 50%)',
+                            'hsl(38, 92%, 50%)',
+                            'hsl(160, 84%, 39%)',
+                            'hsl(340, 82%, 52%)',
+                          ][index % 6]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: number) => formatTimeDisplay(value) || '00:00:00:00'}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Bar Chart - Top Demands */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Top Demandas por Tempo
+              </CardTitle>
+              <CardDescription>
+                Demandas que mais consumiram tempo
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={groupedByDemand.slice(0, 5).map((d) => ({
+                      name: truncateText(d.demand.title, 15),
+                      tempo: Math.round(d.totalSeconds / 60),
+                      fullTitle: d.demand.title,
+                    }))}
+                    layout="vertical"
+                    margin={{ left: 0, right: 20 }}
+                  >
+                    <XAxis type="number" tickFormatter={(v) => `${v}min`} />
+                    <YAxis 
+                      type="category" 
+                      dataKey="name" 
+                      width={100}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <Tooltip 
+                      formatter={(value: number) => [`${value} minutos`, 'Tempo']}
+                      labelFormatter={(label, payload) => payload[0]?.payload?.fullTitle || label}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Bar 
+                      dataKey="tempo" 
+                      fill="hsl(var(--primary))" 
+                      radius={[0, 4, 4, 0]}
+                      background={{ fill: 'hsl(var(--muted))' }}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Filters */}
       <Card>
@@ -620,35 +763,52 @@ export default function TimeManagement() {
 
       {/* User Ranking Card - Real-time */}
       {!isLoading && filteredUserStats.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Ranking de Tempo em Tempo Real
-              {activeTimersCount > 0 && (
-                <Badge variant="outline" className="ml-2 text-emerald-600 border-emerald-300">
-                  <span className="w-2 h-2 bg-emerald-500 rounded-full mr-1.5 animate-pulse" />
-                  Ao vivo
-                </Badge>
+        <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-transparent">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Trophy className="h-5 w-5 text-primary" />
+                  </div>
+                  Ranking de Tempo em Tempo Real
+                  {activeTimersCount > 0 && (
+                    <Badge className="ml-2 bg-emerald-500 text-white border-0 animate-pulse">
+                      <span className="w-2 h-2 bg-white rounded-full mr-1.5" />
+                      Ao vivo
+                    </Badge>
+                  )}
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  Os tempos atualizam automaticamente quando há timers ativos
+                </CardDescription>
+              </div>
+              {filteredUserStats.length > 0 && (
+                <div className="text-right hidden sm:block">
+                  <p className="text-sm text-muted-foreground">Líder atual</p>
+                  <p className="font-semibold text-amber-600 dark:text-amber-400">
+                    {filteredUserStats[0]?.profile.full_name.split(' ')[0]}
+                  </p>
+                </div>
               )}
-            </CardTitle>
-            <CardDescription>
-              Os tempos atualizam automaticamente quando há timers ativos
-            </CardDescription>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {filteredUserStats.slice(0, 10).map((stats, index) => (
                 <LiveUserTimeRow 
                   key={stats.userId} 
                   stats={stats} 
                   rank={index + 1}
+                  maxTime={maxUserTime}
                 />
               ))}
               {filteredUserStats.length > 10 && (
-                <p className="text-sm text-muted-foreground text-center pt-4">
-                  E mais {filteredUserStats.length - 10} usuário(s)...
-                </p>
+                <div className="text-center pt-4 pb-2">
+                  <Badge variant="outline" className="text-muted-foreground">
+                    E mais {filteredUserStats.length - 10} usuário(s)...
+                  </Badge>
+                </div>
               )}
             </div>
           </CardContent>
