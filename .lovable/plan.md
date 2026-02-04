@@ -1,204 +1,193 @@
 
+# Plano: Corrigir Tela de Gerenciamento de Tempo
 
-# Plano: Página Externa de Checkout Público
+## Problemas Identificados
 
-## Objetivo
-Criar uma página pública (`/get-started`) onde visitantes podem escolher um plano, fazer login/cadastro, e serem redirecionados ao Stripe Checkout. Após o pagamento, retornam ao sistema já logados com a equipe e plano ativos.
-
-## Visão Geral do Fluxo
-
-```text
-URL Externa → /get-started?plan=profissional (opcional)
-       │
-       ▼
-┌─────────────────────────────────────────────┐
-│  PÁGINA GET STARTED (pública)               │
-│  ┌───────────────────────────────────────┐  │
-│  │ Etapa 1: Selecionar Plano             │  │
-│  │ (cards de planos reutilizados)        │  │
-│  └───────────────────────────────────────┘  │
-│                    ▼                        │
-│  ┌───────────────────────────────────────┐  │
-│  │ Etapa 2: Login ou Cadastro            │  │
-│  │ (formulário inline + opção cadastro)  │  │
-│  └───────────────────────────────────────┘  │
-│                    ▼                        │
-│  ┌───────────────────────────────────────┐  │
-│  │ Etapa 3: Dados da Equipe              │  │
-│  │ (nome da equipe, descrição)           │  │
-│  └───────────────────────────────────────┘  │
-└─────────────────────────────────────────────┘
-                     │
-                     ▼
-            Cria equipe + Checkout
-                     │
-                     ▼
-              Stripe Checkout
-                     │
-                     ▼
-        /subscription/success (logado)
-                     │
-                     ▼
-               Dashboard (/)
+### 1. Erro de DOM Nesting (button dentro de button)
+O console mostra o erro:
 ```
+validateDOMNesting(...): <button> cannot appear as a descendant of <button>
+```
+Em `UserDetailTimeRow.tsx`, linha 127-134, há um `<button>` para navegação ao perfil do usuário dentro do `CollapsibleTrigger` (que já é um `<Button>`). Isso é inválido em HTML.
+
+### 2. Cálculo de Tempo Duplicado
+No `TimeManagement.tsx`, o `groupedByDemand` calcula a duração de duas formas:
+- Usa `entry.duration_seconds` para entradas concluídas
+- Recalcula `(ended_at - started_at)` para entradas ativas
+
+Isso pode causar inconsistência porque o campo `duration_seconds` já contém o valor correto.
+
+### 3. Tempo Total Não Atualizando em Tempo Real
+O tempo total no card "Tempo Total" usa `liveTotalTime`, mas o cálculo base (`totals.totalTime`) soma apenas `duration_seconds` das entradas concluídas, não considerando corretamente os timers ativos.
 
 ---
 
-## Arquivos a Criar/Modificar
+## Correções Propostas
 
-### 1. CRIAR: `src/pages/GetStarted.tsx`
-Nova página pública com fluxo multi-etapas:
+### 1. Corrigir `UserDetailTimeRow.tsx`
+**Problema**: `<button>` dentro de `<Button>` (CollapsibleTrigger)
 
-**Etapa 1 - Seleção de Plano:**
-- Exibir todos os planos usando `PlanCard`
-- Permitir selecionar um plano
-- Suporte a query param `?plan=slug` para pré-selecionar
+**Solução**: Usar `<span>` com `role="link"` e `tabIndex={0}` para o nome do usuário, ou mover a ação de navegação para fora do trigger.
 
-**Etapa 2 - Autenticação:**
-- Tabs para Login/Cadastro (similar ao Auth.tsx)
-- Se já logado, pular esta etapa
-- Após login/cadastro bem-sucedido, avançar automaticamente
+```tsx
+// ANTES (errado):
+<button type="button" onClick={...}>
+  {userData.profile.full_name}
+</button>
 
-**Etapa 3 - Dados da Equipe:**
-- Nome da equipe (obrigatório)
-- Descrição (opcional)
-- Código de acesso auto-gerado
-- Botão "Finalizar e Pagar"
-
-**Fluxo de Conclusão:**
-1. Criar equipe com `useCreateTeam`
-2. Chamar `create-checkout` com teamId e planSlug
-3. Redirecionar para Stripe
-4. Após pagamento → `/subscription/success`
-
-### 2. MODIFICAR: `src/App.tsx`
-- Adicionar rota pública `/get-started` (sem RequireAuth)
-
-### 3. MODIFICAR: `supabase/functions/create-checkout/index.ts`
-- Ajustar success_url para incluir parâmetros de retorno
-- Garantir que funciona para usuários recém-criados
-
-### 4. MODIFICAR: `src/pages/SubscriptionSuccess.tsx`
-- Detectar se usuário não tem equipe selecionada
-- Buscar equipe do metadata do checkout
-- Selecionar equipe automaticamente
-- Redirecionar para dashboard
-
-### 5. ADICIONAR TRADUÇÕES: Locales (pt-BR, en-US, es)
-```json
-{
-  "getStarted": {
-    "title": "Comece Agora",
-    "subtitle": "Escolha seu plano e crie sua equipe",
-    "step1": "Escolha seu Plano",
-    "step2": "Faça Login ou Cadastre-se",
-    "step3": "Configure sua Equipe",
-    "alreadyHaveAccount": "Já tem uma conta?",
-    "createAccount": "Criar conta",
-    "loginToContinue": "Faça login para continuar",
-    "teamInfo": "Informações da Equipe",
-    "finishAndPay": "Finalizar e Pagar",
-    "processingCheckout": "Processando pagamento..."
-  }
-}
+// DEPOIS (correto):
+<span
+  role="link"
+  tabIndex={0}
+  onClick={(e) => {
+    e.stopPropagation();
+    navigate(`/user/${userData.userId}`);
+  }}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.stopPropagation();
+      navigate(`/user/${userData.userId}`);
+    }
+  }}
+  className="font-medium truncate hover:text-primary hover:underline cursor-pointer transition-colors"
+>
+  {userData.profile.full_name}
+</span>
 ```
+
+### 2. Corrigir `DemandDetailTimeRow.tsx`
+**Mesmo problema**: `<button>` dentro do CollapsibleTrigger
+
+**Solução**: Mesma abordagem - usar `<span>` com role="link"
+
+### 3. Corrigir Cálculo de Tempo em `TimeManagement.tsx`
+**Problema**: O `groupedByDemand` calcula duração de forma inconsistente
+
+**Solução**: Sempre usar `entry.duration_seconds` já que este é atualizado quando o timer para. Para timers ativos, o `useLiveTimer` já calcula o tempo decorrido desde `started_at`.
+
+```tsx
+// groupedByDemand - usar apenas duration_seconds
+filteredEntries.forEach((entry) => {
+  const demandId = entry.demand_id;
+  const duration = entry.duration_seconds || 0; // ← Simplificado
+  const isActive = !entry.ended_at;
+  // ...resto igual
+});
+```
+
+### 4. Ajustar `useBoardTimeEntries.ts` para Tempo Real
+O hook já tem realtime configurado, mas vamos garantir que as invalidações de queries estão corretas.
+
+---
+
+## Arquivos a Modificar
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/components/UserDetailTimeRow.tsx` | Trocar `<button>` por `<span>` com role="link" |
+| `src/components/DemandDetailTimeRow.tsx` | Trocar `<button>` por `<span>` com role="link" |
+| `src/pages/TimeManagement.tsx` | Simplificar cálculo de duração no groupedByDemand |
 
 ---
 
 ## Detalhes Técnicos
 
-### Componente GetStarted - Estrutura de Estado
-```typescript
-// Estados principais
-const [step, setStep] = useState<1 | 2 | 3>(1);
-const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
-const [teamData, setTeamData] = useState({
-  name: "",
-  description: "",
-  accessCode: generateAccessCode(),
-});
-
-// Detecta usuário logado
-const { user, loading: authLoading } = useAuth();
-
-// Se usuário já está logado, pula etapa 2
-useEffect(() => {
-  if (user && step === 2) {
-    setStep(3);
-  }
-}, [user, step]);
-```
-
-### Pré-seleção via Query Param
-```typescript
-const [searchParams] = useSearchParams();
-const preSelectedPlanSlug = searchParams.get("plan");
-
-useEffect(() => {
-  if (preSelectedPlanSlug && plans) {
-    const plan = plans.find(p => p.slug === preSelectedPlanSlug);
-    if (plan) {
-      setSelectedPlan(plan);
-      setStep(user ? 3 : 2); // Pula para login ou dados da equipe
+### Correção UserDetailTimeRow.tsx (linhas 127-136)
+```tsx
+// Substituir button por span acessível
+<span
+  role="link"
+  tabIndex={0}
+  onClick={(e) => {
+    e.stopPropagation();
+    navigate(`/user/${userData.userId}`);
+  }}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.stopPropagation();
+      navigate(`/user/${userData.userId}`);
     }
-  }
-}, [preSelectedPlanSlug, plans, user]);
+  }}
+  className="font-medium truncate hover:text-primary hover:underline cursor-pointer transition-colors"
+>
+  {userData.profile.full_name}
+</span>
 ```
 
-### Fluxo de Checkout
-```typescript
-const handleFinish = async () => {
-  if (!selectedPlan || !teamData.name) return;
-  
-  setIsProcessing(true);
-  try {
-    // 1. Criar equipe
-    const team = await createTeam.mutateAsync({
-      name: teamData.name,
-      description: teamData.description,
-      accessCode: teamData.accessCode,
-    });
-    
-    // 2. Iniciar checkout
-    const checkoutUrl = await createCheckout.mutateAsync({
-      planSlug: selectedPlan.slug,
-      teamId: team.id,
-    });
-    
-    // 3. Redirecionar para Stripe
-    window.location.href = checkoutUrl;
-  } catch (error) {
-    // Handle error
-  }
-};
+### Correção DemandDetailTimeRow.tsx (linhas 92-102)
+```tsx
+// Mesmo padrão para o título da demanda
+<span
+  role="link"
+  tabIndex={0}
+  onClick={(e) => {
+    e.stopPropagation();
+    navigate(`/demands/${demandData.demand.id}`);
+  }}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.stopPropagation();
+      navigate(`/demands/${demandData.demand.id}`);
+    }
+  }}
+  className="font-medium truncate hover:text-primary hover:underline cursor-pointer transition-colors"
+  title={demandData.demand.title}
+>
+  {truncateText(demandData.demand.title)}
+</span>
 ```
 
-### Layout Responsivo
-- Desktop: Layout split-screen como Auth.tsx
-- Mobile: Etapas em cards empilhados
-- Indicador de progresso visual (1 → 2 → 3)
+### Correção TimeManagement.tsx (linhas 177-217)
+```tsx
+// Simplificar cálculo - usar apenas duration_seconds
+const groupedByDemand = useMemo(() => {
+  const grouped = new Map<string, GroupedByDemand>();
+
+  filteredEntries.forEach((entry) => {
+    const demandId = entry.demand_id;
+    const duration = entry.duration_seconds || 0; // ← Usar diretamente
+    const isActive = !entry.ended_at;
+
+    if (!grouped.has(demandId)) {
+      grouped.set(demandId, {
+        demand: entry.demand,
+        entries: [],
+        totalSeconds: 0,
+        users: new Map(),
+        hasActiveTimer: false,
+      });
+    }
+
+    const group = grouped.get(demandId)!;
+    group.entries.push(entry);
+    group.totalSeconds += duration;
+    if (isActive) group.hasActiveTimer = true;
+
+    // Track per-user time
+    if (entry.profile) {
+      const userId = entry.user_id;
+      if (!group.users.has(userId)) {
+        group.users.set(userId, { profile: entry.profile, totalSeconds: 0 });
+      }
+      group.users.get(userId)!.totalSeconds += duration;
+    }
+  });
+
+  return Array.from(grouped.values()).sort((a, b) => {
+    if (a.hasActiveTimer && !b.hasActiveTimer) return -1;
+    if (!a.hasActiveTimer && b.hasActiveTimer) return 1;
+    return b.totalSeconds - a.totalSeconds;
+  });
+}, [filteredEntries]);
+```
 
 ---
 
-## Considerações de UX
+## Resultado Esperado
 
-1. **Link Externo**: Pode ser usado em landing pages, emails marketing
-2. **Deep Link com Plano**: `/get-started?plan=profissional` pré-seleciona
-3. **Usuário Já Logado**: Pula etapa de autenticação
-4. **Validação em Tempo Real**: Código de acesso único verificado
-5. **Loading States**: Feedback durante criação + checkout
-6. **Erro Handling**: Mensagens claras se algo falhar
-
----
-
-## Resumo das Alterações
-
-| Arquivo | Ação |
-|---------|------|
-| `src/pages/GetStarted.tsx` | **CRIAR** - Página pública de checkout |
-| `src/App.tsx` | Adicionar rota `/get-started` como pública |
-| `src/pages/SubscriptionSuccess.tsx` | Melhorar detecção de equipe após checkout |
-| `src/locales/pt-BR.json` | Adicionar traduções getStarted |
-| `src/locales/en-US.json` | Adicionar traduções getStarted |
-| `src/locales/es.json` | Adicionar traduções getStarted |
-
+Após as correções:
+1. ✅ Erro de DOM nesting eliminado
+2. ✅ Tempos calculados corretamente
+3. ✅ Timers ativos mostrando tempo em tempo real
+4. ✅ Cards de estatísticas (Tempo Total, Média/Usuário, etc.) atualizando corretamente
+5. ✅ Ranking de usuários com tempos ao vivo funcionando
