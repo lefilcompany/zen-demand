@@ -10,6 +10,7 @@ interface Demand {
     name: string;
   } | null;
   updated_at: string;
+  delivered_at?: string | null;
 }
 
 interface AverageCompletionTimeProps {
@@ -22,9 +23,10 @@ export function AverageCompletionTime({ demands }: AverageCompletionTimeProps) {
   const { avgHours, trend, hasData, completedCount, periodDescription } = useMemo(() => {
     const { start, end } = getChartPeriodRange(period);
 
-    // Filter demands by period (based on when they were completed/updated)
+    // Filter demands by period - prefer delivered_at for delivery date
     const filteredDemands = demands.filter((d) => {
-      const demandDate = new Date(d.updated_at);
+      const deliverySource = d.delivered_at || d.updated_at;
+      const demandDate = new Date(deliverySource);
       if (start && demandDate < start) return false;
       if (demandDate > end) return false;
       return true;
@@ -35,13 +37,13 @@ export function AverageCompletionTime({ demands }: AverageCompletionTimeProps) {
       (d) => d.demand_statuses?.name === "Entregue"
     );
 
-    // Calculate average completion time
+    // Calculate average completion time using delivered_at when available
     const calculateAverageTime = () => {
       if (completedDemands.length === 0) return null;
 
       const totalHours = completedDemands.reduce((acc, demand) => {
         const createdAt = new Date(demand.created_at);
-        const completedAt = new Date(demand.updated_at);
+        const completedAt = new Date(demand.delivered_at || demand.updated_at);
         return acc + differenceInHours(completedAt, createdAt);
       }, 0);
 
@@ -64,13 +66,13 @@ export function AverageCompletionTime({ demands }: AverageCompletionTimeProps) {
 
       const recentAvg =
         recent.reduce(
-          (acc, d) => acc + differenceInHours(new Date(d.updated_at), new Date(d.created_at)),
+          (acc, d) => acc + differenceInHours(new Date(d.delivered_at || d.updated_at), new Date(d.created_at)),
           0
         ) / recent.length;
 
       const olderAvg =
         older.reduce(
-          (acc, d) => acc + differenceInHours(new Date(d.updated_at), new Date(d.created_at)),
+          (acc, d) => acc + differenceInHours(new Date(d.delivered_at || d.updated_at), new Date(d.created_at)),
           0
         ) / older.length;
 
