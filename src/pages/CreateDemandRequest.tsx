@@ -17,7 +17,8 @@ import { PendingFileUploader, PendingFile } from "@/components/PendingFileUpload
 import { UnsavedChangesDialog } from "@/components/UnsavedChangesDialog";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { useNavigationBlock } from "@/hooks/useNavigationBlock";
-import { ArrowLeft, Ban, Send, Layout, Paperclip, Loader2 } from "lucide-react";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import { Ban, Send, Layout, Paperclip, Loader2, ClipboardList, Plus } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
@@ -207,15 +208,14 @@ export default function CreateDemandRequest() {
         onDontShowAgain={setDontShowAgain}
       />
 
+      <PageBreadcrumb
+        items={[
+          { label: "Minhas Solicitações", href: "/my-requests", icon: ClipboardList },
+          { label: "Nova Solicitação", icon: Plus, isCurrent: true },
+        ]}
+      />
+      
       <div>
-        <Button
-          variant="ghost"
-          onClick={() => attemptNavigation(-1)}
-          className="mb-2 md:mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar
-        </Button>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Solicitar Demanda</h1>
         <p className="text-sm md:text-base text-muted-foreground flex items-center gap-2">
           <Layout className="h-4 w-4 shrink-0" />

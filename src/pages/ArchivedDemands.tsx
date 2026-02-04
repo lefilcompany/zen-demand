@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useArchivedDemands } from "@/hooks/useArchivedDemands";
 import { useUpdateDemand } from "@/hooks/useDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Archive, RotateCcw, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,6 +43,11 @@ export default function ArchivedDemands() {
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
+      <PageBreadcrumb
+        items={[
+          { label: "Arquivadas", icon: Archive, isCurrent: true },
+        ]}
+      />
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
           <Archive className="h-7 w-7 md:h-8 md:w-8" />

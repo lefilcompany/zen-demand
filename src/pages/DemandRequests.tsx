@@ -10,7 +10,8 @@ import {
   useApproveDemandRequest, 
   useReturnDemandRequest 
 } from "@/hooks/useDemandRequests";
-import { ArrowLeft, Clock, CheckCircle, RotateCcw, Users, Layout, Paperclip, MessageSquare, Send, Trash2, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import { Clock, CheckCircle, RotateCcw, Users, Layout, Paperclip, MessageSquare, Send, Trash2, XCircle, ChevronLeft, ChevronRight, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -325,11 +326,12 @@ export default function DemandRequests() {
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
+      <PageBreadcrumb
+        items={[
+          { label: "Solicitações de Demanda", icon: ClipboardList, isCurrent: true },
+        ]}
+      />
       <div>
-        <Button variant="ghost" onClick={() => navigate("/")} className="mb-2">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar
-        </Button>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Solicitações de Demanda</h1>
         <p className="text-sm md:text-base text-muted-foreground flex items-center gap-2">
           <Layout className="h-4 w-4 shrink-0" />

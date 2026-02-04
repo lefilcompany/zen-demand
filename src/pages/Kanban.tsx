@@ -7,6 +7,7 @@ import { KanbanBoard } from "@/components/KanbanBoard";
 import { KanbanNotifications } from "@/components/KanbanNotifications";
 import { KanbanFilters, KanbanFiltersState } from "@/components/KanbanFilters";
 import { KanbanStagesManager } from "@/components/KanbanStagesManager";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import {
   Tooltip,
   TooltipContent,
@@ -23,7 +24,7 @@ import { useMembersByPosition } from "@/hooks/useMembersByPosition";
 import { useIsTeamAdminOrModerator } from "@/hooks/useTeamRole";
 import { useKanbanColumns } from "@/hooks/useBoardStatuses";
 import { useKanbanPreferences } from "@/hooks/useKanbanPreferences";
-import { Plus, LayoutGrid, Columns3, Loader2 } from "lucide-react";
+import { Plus, LayoutGrid, Columns3, Loader2, Kanban as KanbanIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useRealtimeDemands, useKanbanRealtimeNotifications } from "@/hooks/useRealtimeDemands";
 import { isToday, isThisWeek, isPast } from "date-fns";
@@ -115,6 +116,11 @@ export default function Kanban() {
 
   return (
     <div className="flex flex-col h-full animate-fade-in space-y-4">
+      <PageBreadcrumb
+        items={[
+          { label: "Kanban", icon: KanbanIcon, isCurrent: true },
+        ]}
+      />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between shrink-0 pb-4 md:pb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">

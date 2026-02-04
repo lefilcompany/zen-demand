@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { Users, Copy, Check, Calendar, Shield, Loader2, UserMinus, RefreshCw, Eye, EyeOff } from "lucide-react";
+import { Users, Copy, Check, Calendar, Shield, Loader2, UserMinus, RefreshCw, Eye, EyeOff, Settings } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { useTeamScope } from "@/hooks/useTeamScope";
 import { useTeamPositions, useAssignPosition } from "@/hooks/useTeamPositions";
 import { TeamScopeConfig } from "@/components/TeamScopeConfig";
 import { TeamPositionsManager } from "@/components/TeamPositionsManager";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { PositionBadge } from "@/components/PositionBadge";
 import { PositionSelector } from "@/components/PositionSelector";
 import { useAuth } from "@/lib/auth";
@@ -200,6 +201,13 @@ export default function TeamConfig() {
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
+      <PageBreadcrumb
+        items={[
+          { label: t("teams.title"), href: "/teams", icon: Users },
+          { label: team?.name || "", href: `/teams/${selectedTeamId}` },
+          { label: "Configurações", icon: Settings, isCurrent: true },
+        ]}
+      />
       {/* Header */}
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Configurações da Equipe</h1>

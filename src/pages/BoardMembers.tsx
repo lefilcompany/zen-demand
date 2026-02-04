@@ -31,7 +31,8 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Users, Trash2, Shield, UserCog, User, Briefcase, Loader2 } from "lucide-react";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import { Users, Trash2, Shield, UserCog, User, Briefcase, Loader2, LayoutGrid } from "lucide-react";
 import { AddBoardMemberDialog } from "@/components/AddBoardMemberDialog";
 
 const roleLabels: Record<string, string> = {
@@ -108,26 +109,28 @@ export default function BoardMembers() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <PageBreadcrumb
+        items={[
+          { label: "Quadros", href: "/boards", icon: LayoutGrid },
+          { label: board?.name || "", href: `/boards/${boardId}` },
+          { label: "Membros", icon: Users, isCurrent: true },
+        ]}
+      />
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
-              <Users className="h-7 w-7" />
-              Membros do Quadro
-            </h1>
-            <p className="text-muted-foreground">
-              {board.name}
-              {board.is_default && (
-                <Badge variant="outline" className="ml-2">
-                  Padrão
-                </Badge>
-              )}
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
+            <Users className="h-7 w-7" />
+            Membros do Quadro
+          </h1>
+          <p className="text-muted-foreground">
+            {board.name}
+            {board.is_default && (
+              <Badge variant="outline" className="ml-2">
+                Padrão
+              </Badge>
+            )}
+          </p>
         </div>
         {canManage && <AddBoardMemberDialog boardId={boardId} />}
       </div>

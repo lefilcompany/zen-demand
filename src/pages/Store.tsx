@@ -7,6 +7,7 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { useBoardServicesWithUsage, useHasBoardServices } from "@/hooks/useBoardServices";
 import { formatPrice } from "@/lib/priceUtils";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Clock, ShoppingCart, AlertTriangle, Infinity as InfinityIcon, Package, Folder } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useMemo } from "react";
@@ -184,6 +185,11 @@ export default function Store() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <PageBreadcrumb
+        items={[
+          { label: "Loja de Serviços", icon: ShoppingCart, isCurrent: true },
+        ]}
+      />
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="p-2 bg-primary/10 rounded-lg">

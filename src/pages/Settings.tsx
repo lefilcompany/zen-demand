@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Moon, Sun, Monitor, Bell, Mail, Smartphone, Loader2, Send, LogOut, Users, Trash2, Eye, EyeOff } from "lucide-react";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import { Moon, Sun, Monitor, Bell, Mail, Smartphone, Loader2, Send, LogOut, Users, Trash2, Eye, EyeOff, Settings as SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -254,22 +255,17 @@ export default function Settings() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <PageBreadcrumb
+        items={[
+          { label: t("settings.title"), icon: SettingsIcon, isCurrent: true },
+        ]}
+      />
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="shrink-0"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {t("common.back")}
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{t("settings.title")}</h1>
-          <p className="text-muted-foreground">
-            {t("settings.description")}
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">{t("settings.title")}</h1>
+        <p className="text-muted-foreground">
+          {t("settings.description")}
+        </p>
       </div>
 
       <div className="grid gap-6">

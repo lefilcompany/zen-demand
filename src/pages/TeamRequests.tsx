@@ -7,7 +7,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useTeamJoinRequests, useRespondToRequest, ExtendedTeamRole } from "@/hooks/useTeamJoinRequests";
 import { useIsTeamAdmin } from "@/hooks/useTeamRole";
 import { useSelectedTeam } from "@/contexts/TeamContext";
-import { ArrowLeft, Clock, CheckCircle, XCircle, UserPlus, Loader2 } from "lucide-react";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import { Clock, CheckCircle, XCircle, UserPlus, Loader2, Users } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -129,15 +130,13 @@ export default function TeamRequests() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <PageBreadcrumb
+        items={[
+          { label: "Equipes", href: "/teams", icon: Users },
+          { label: "Solicitações de Entrada", icon: UserPlus, isCurrent: true },
+        ]}
+      />
       <div>
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar
-        </Button>
         <h1 className="text-3xl font-bold tracking-tight">Solicitações de Entrada</h1>
         <p className="text-muted-foreground">
           Gerencie as solicitações de novos membros para sua equipe

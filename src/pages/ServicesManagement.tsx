@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -294,17 +294,18 @@ export default function ServicesManagement() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <PageBreadcrumb
+        items={[
+          { label: "Equipes", href: "/teams", icon: Users },
+          { label: team?.name || "", href: `/teams/${id}` },
+          { label: "Serviços", icon: ShoppingBag, isCurrent: true },
+        ]}
+      />
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate(`/teams/${id}`)}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Serviços</h1>
-            <p className="text-muted-foreground">{team.name}</p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold">Serviços</h1>
+          <p className="text-muted-foreground">{team.name}</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
