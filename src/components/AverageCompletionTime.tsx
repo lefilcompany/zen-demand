@@ -1,8 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Clock, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { differenceInHours } from "date-fns";
-import { useState, useMemo } from "react";
-import { ChartPeriodSelector, type ChartPeriodType, getChartPeriodRange } from "./ChartPeriodSelector";
+import { useMemo } from "react";
 
 interface Demand {
   created_at: string;
@@ -18,22 +17,9 @@ interface AverageCompletionTimeProps {
 }
 
 export function AverageCompletionTime({ demands }: AverageCompletionTimeProps) {
-  const [period, setPeriod] = useState<ChartPeriodType>("month");
-
-  const { avgHours, trend, hasData, completedCount, periodDescription } = useMemo(() => {
-    const { start, end } = getChartPeriodRange(period);
-
-    // Filter demands by period - prefer delivered_at for delivery date
-    const filteredDemands = demands.filter((d) => {
-      const deliverySource = d.delivered_at || d.updated_at;
-      const demandDate = new Date(deliverySource);
-      if (start && demandDate < start) return false;
-      if (demandDate > end) return false;
-      return true;
-    });
-
-    // Filter completed demands
-    const completedDemands = filteredDemands.filter(
+  const { avgHours, trend, hasData, completedCount } = useMemo(() => {
+    // Filter completed demands (all time)
+    const completedDemands = demands.filter(
       (d) => d.demand_statuses?.name === "Entregue"
     );
 
@@ -52,7 +38,7 @@ export function AverageCompletionTime({ demands }: AverageCompletionTimeProps) {
 
     const avgHours = calculateAverageTime();
 
-    // Calculate trend (compare last 10 vs previous 10)
+    // Calculate trend (compare last half vs previous half)
     const calculateTrend = () => {
       if (completedDemands.length < 4) return null;
 
@@ -86,22 +72,13 @@ export function AverageCompletionTime({ demands }: AverageCompletionTimeProps) {
 
     const trend = calculateTrend();
 
-    const descriptions: Record<ChartPeriodType, string> = {
-      month: "Tempo médio neste mês",
-      "3months": "Tempo médio nos últimos 3 meses",
-      "6months": "Tempo médio nos últimos 6 meses",
-      year: "Tempo médio no último ano",
-      all: "Tempo médio de todo o período",
-    };
-
     return {
       avgHours,
       trend,
       hasData: completedDemands.length > 0,
       completedCount: completedDemands.length,
-      periodDescription: descriptions[period],
     };
-  }, [demands, period]);
+  }, [demands]);
 
   const formatTime = (hours: number | null) => {
     if (hours === null) return { value: "-", unit: "" };
@@ -124,13 +101,10 @@ export function AverageCompletionTime({ demands }: AverageCompletionTimeProps) {
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-2">
-        <div className="flex flex-col gap-2">
-          <CardTitle className="text-base md:text-lg flex items-center gap-2">
-            <Clock className="h-5 w-5 text-primary" />
-            Tempo Médio de Conclusão
-          </CardTitle>
-          <ChartPeriodSelector value={period} onChange={setPeriod} />
-        </div>
+        <CardTitle className="text-base md:text-lg flex items-center gap-2">
+          <Clock className="h-5 w-5 text-primary" />
+          Tempo Médio de Conclusão
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex items-end gap-2">
