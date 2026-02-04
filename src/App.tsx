@@ -31,6 +31,7 @@ import DemandRequests from "./pages/DemandRequests";
 import DemandDetail from "./pages/DemandDetail";
 import SharedDemand from "./pages/SharedDemand";
 import SharedNote from "./pages/SharedNote";
+import SharedBoardSummary from "./pages/SharedBoardSummary";
 import Kanban from "./pages/Kanban";
 import ArchivedDemands from "./pages/ArchivedDemands";
 import BoardMembers from "./pages/BoardMembers";
@@ -73,6 +74,7 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
                         <Route path="/get-started" element={<GetStarted />} />
                         <Route path="/shared/:token" element={<SharedDemand />} />
                         <Route path="/shared/note/:token" element={<SharedNote />} />
+                        <Route path="/shared/summary/:token" element={<SharedBoardSummary />} />
                         <Route path="/reset-password" element={<ResetPassword />} />
 
                         {/* Auth-only routes (no team required) */}

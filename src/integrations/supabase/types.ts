@@ -151,6 +151,93 @@ export type Database = {
           },
         ]
       }
+      board_summary_history: {
+        Row: {
+          analytics_data: Json
+          board_id: string
+          created_at: string
+          created_by: string
+          id: string
+          summary_text: string
+        }
+        Insert: {
+          analytics_data: Json
+          board_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          summary_text: string
+        }
+        Update: {
+          analytics_data?: Json
+          board_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          summary_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_summary_history_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "board_summary_history_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      board_summary_share_tokens: {
+        Row: {
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          summary_id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          summary_id: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          summary_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_summary_share_tokens_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "board_summary_share_tokens_summary_id_fkey"
+            columns: ["summary_id"]
+            isOneToOne: false
+            referencedRelation: "board_summary_history"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       boards: {
         Row: {
           created_at: string
