@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { Link } from "react-router-dom";
 import { Home, LucideIcon } from "lucide-react";
 import {
@@ -49,18 +50,17 @@ export function PageBreadcrumb({ items, showHome = true }: PageBreadcrumbProps) 
           const delay = baseDelay + (index * 75);
           
           return (
-            <BreadcrumbItem 
-              key={index} 
-              className="animate-fade-in"
-              style={{ animationDelay: `${delay}ms` }}
-            >
-              {isLast || item.isCurrent ? (
-                <BreadcrumbPage className="flex items-center gap-1 max-w-[200px] truncate">
-                  {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
-                  <span className="truncate">{item.label}</span>
-                </BreadcrumbPage>
-              ) : (
-                <>
+            <Fragment key={index}>
+              <BreadcrumbItem 
+                className="animate-fade-in"
+                style={{ animationDelay: `${delay}ms` }}
+              >
+                {isLast || item.isCurrent ? (
+                  <BreadcrumbPage className="flex items-center gap-1 max-w-[200px] truncate">
+                    {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
+                    <span className="truncate">{item.label}</span>
+                  </BreadcrumbPage>
+                ) : (
                   <BreadcrumbLink asChild>
                     <Link 
                       to={item.href || "#"} 
@@ -71,13 +71,15 @@ export function PageBreadcrumb({ items, showHome = true }: PageBreadcrumbProps) 
                       <span>{item.label}</span>
                     </Link>
                   </BreadcrumbLink>
-                  <BreadcrumbSeparator 
-                    className="animate-fade-in" 
-                    style={{ animationDelay: `${delay + 25}ms` }} 
-                  />
-                </>
+                )}
+              </BreadcrumbItem>
+              {!isLast && !item.isCurrent && (
+                <BreadcrumbSeparator 
+                  className="animate-fade-in" 
+                  style={{ animationDelay: `${delay + 25}ms` }} 
+                />
               )}
-            </BreadcrumbItem>
+            </Fragment>
           );
         })}
       </BreadcrumbList>
