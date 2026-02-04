@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Users, TrendingUp, Target, Activity } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useState, useMemo } from "react";
+import { ChartPeriodSelector, type ChartPeriodType, getChartPeriodRange } from "./ChartPeriodSelector";
 import {
   BarChart,
   Bar,
@@ -13,6 +15,7 @@ import {
 
 interface Demand {
   id: string;
+  created_at: string;
   assigned_to: string | null;
   demand_statuses: {
     name: string;
@@ -112,64 +115,79 @@ const CustomLegend = () => (
 
 export function WorkloadDistributionChart({ demands }: WorkloadDistributionChartProps) {
   const isMobile = useIsMobile();
-  
-  // Calculate workload per member
-  const workloadMap = new Map<string, MemberWorkload>();
+  const [period, setPeriod] = useState<ChartPeriodType>("month");
 
-  demands.forEach((demand) => {
-    const assignees = demand.demand_assignees || [];
+  const { workloadData, hasData, totalDemands, avgDeliveryRate, avgInProgress } = useMemo(() => {
+    const { start, end } = getChartPeriodRange(period);
 
-    assignees.forEach((assignee) => {
-      if (!assignee.profile) return;
-
-      const id = assignee.user_id;
-      const { full_name, avatar_url } = assignee.profile;
-
-      if (!workloadMap.has(id)) {
-        workloadMap.set(id, {
-          id,
-          name: full_name,
-          avatar: avatar_url,
-          total: 0,
-          toStart: 0,
-          inProgress: 0,
-          delivered: 0,
-          deliveryRate: 0,
-        });
-      }
-
-      const member = workloadMap.get(id)!;
-      member.total += 1;
-
-      const statusName = demand.demand_statuses?.name?.toLowerCase() || "";
-      if (statusName === "entregue") {
-        member.delivered += 1;
-      } else if (statusName === "a iniciar") {
-        member.toStart += 1;
-      } else {
-        member.inProgress += 1;
-      }
+    // Filter demands by period
+    const filteredDemands = demands.filter((d) => {
+      const demandDate = new Date(d.created_at);
+      if (start && demandDate < start) return false;
+      if (demandDate > end) return false;
+      return true;
     });
-  });
 
-  // Calculate delivery rates
-  workloadMap.forEach((member) => {
-    member.deliveryRate = member.total > 0 ? Math.round((member.delivered / member.total) * 100) : 0;
-  });
+    // Calculate workload per member
+    const workloadMap = new Map<string, MemberWorkload>();
 
-  const workloadData = Array.from(workloadMap.values())
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 6);
+    filteredDemands.forEach((demand) => {
+      const assignees = demand.demand_assignees || [];
 
-  const hasData = workloadData.length > 0;
+      assignees.forEach((assignee) => {
+        if (!assignee.profile) return;
 
-  // Summary metrics
-  const totalDemands = workloadData.reduce((acc, m) => acc + m.total, 0);
-  const totalDelivered = workloadData.reduce((acc, m) => acc + m.delivered, 0);
-  const avgDeliveryRate = totalDemands > 0 ? Math.round((totalDelivered / totalDemands) * 100) : 0;
-  const avgInProgress = workloadData.length > 0
-    ? Math.round(workloadData.reduce((acc, m) => acc + m.inProgress, 0) / workloadData.length)
-    : 0;
+        const id = assignee.user_id;
+        const { full_name, avatar_url } = assignee.profile;
+
+        if (!workloadMap.has(id)) {
+          workloadMap.set(id, {
+            id,
+            name: full_name,
+            avatar: avatar_url,
+            total: 0,
+            toStart: 0,
+            inProgress: 0,
+            delivered: 0,
+            deliveryRate: 0,
+          });
+        }
+
+        const member = workloadMap.get(id)!;
+        member.total += 1;
+
+        const statusName = demand.demand_statuses?.name?.toLowerCase() || "";
+        if (statusName === "entregue") {
+          member.delivered += 1;
+        } else if (statusName === "a iniciar") {
+          member.toStart += 1;
+        } else {
+          member.inProgress += 1;
+        }
+      });
+    });
+
+    // Calculate delivery rates
+    workloadMap.forEach((member) => {
+      member.deliveryRate = member.total > 0 ? Math.round((member.delivered / member.total) * 100) : 0;
+    });
+
+    const workloadData = Array.from(workloadMap.values())
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 6);
+
+    const hasData = workloadData.length > 0;
+
+    // Summary metrics
+    const totalDemands = workloadData.reduce((acc, m) => acc + m.total, 0);
+    const totalDelivered = workloadData.reduce((acc, m) => acc + m.delivered, 0);
+    const avgDeliveryRate = totalDemands > 0 ? Math.round((totalDelivered / totalDemands) * 100) : 0;
+    const avgInProgress = workloadData.length > 0
+      ? Math.round(workloadData.reduce((acc, m) => acc + m.inProgress, 0) / workloadData.length)
+      : 0;
+
+    return { workloadData, hasData, totalDemands, avgDeliveryRate, avgInProgress };
+  }, [demands, period]);
 
   // Responsive chart dimensions
   const yAxisWidth = isMobile ? 100 : 170;
@@ -219,10 +237,13 @@ export function WorkloadDistributionChart({ demands }: WorkloadDistributionChart
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium flex items-center gap-2">
-          <Users className="h-4 w-4 text-muted-foreground" />
-          Carga de Trabalho por Membro
-        </CardTitle>
+        <div className="flex flex-col gap-2">
+          <CardTitle className="text-base font-medium flex items-center gap-2">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            Carga de Trabalho por Membro
+          </CardTitle>
+          <ChartPeriodSelector value={period} onChange={setPeriod} />
+        </div>
       </CardHeader>
       <CardContent>
         {hasData ? (
@@ -363,7 +384,7 @@ export function WorkloadDistributionChart({ demands }: WorkloadDistributionChart
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <Users className="h-12 w-12 text-muted-foreground/30 mb-3" />
             <p className="text-sm text-muted-foreground">
-              Nenhum membro com demandas atribuídas
+              Nenhum membro com demandas atribuídas no período
             </p>
           </div>
         )}
