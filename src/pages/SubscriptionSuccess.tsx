@@ -4,33 +4,17 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, ArrowRight, Sparkles, Loader2 } from "lucide-react";
-import { useTeamSubscription } from "@/hooks/useSubscription";
-import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeams } from "@/hooks/useTeams";
-import { formatPrice } from "@/lib/priceUtils";
+import { useUserSubscription } from "@/hooks/useUserSubscription";
 
 export default function SubscriptionSuccess() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { selectedTeamId, setSelectedTeamId } = useSelectedTeam();
-  const { data: subscription } = useTeamSubscription(selectedTeamId);
+  const { data: userSub, isLoading: subLoading } = useUserSubscription();
   const { data: teams, isLoading: teamsLoading } = useTeams();
-  const [autoSelectAttempted, setAutoSelectAttempted] = useState(false);
 
   const sessionId = searchParams.get("session_id");
-
-  // Auto-select team if user doesn't have one selected (coming from external checkout)
-  useEffect(() => {
-    if (!selectedTeamId && teams && teams.length > 0 && !autoSelectAttempted) {
-      // Select the most recently created team (likely the one just created in checkout)
-      const sortedTeams = [...teams].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-      setSelectedTeamId(sortedTeams[0].id);
-      setAutoSelectAttempted(true);
-    }
-  }, [selectedTeamId, teams, setSelectedTeamId, autoSelectAttempted]);
 
   // Auto-redirect to dashboard after 5 seconds
   useEffect(() => {
@@ -41,7 +25,6 @@ export default function SubscriptionSuccess() {
   }, [navigate]);
 
   useEffect(() => {
-    // Simple celebration effect using CSS animation
     const successElement = document.querySelector('.success-animation');
     if (successElement) {
       successElement.classList.add('animate-bounce');
@@ -51,10 +34,9 @@ export default function SubscriptionSuccess() {
     }
   }, []);
 
-  const plan = subscription?.plan;
+  const plan = userSub?.subscription?.plan;
 
-  // Show loading while teams are being fetched
-  if (teamsLoading) {
+  if (teamsLoading || subLoading) {
     return (
       <div className="container max-w-2xl py-12 flex items-center justify-center min-h-[60vh]">
         <div className="text-center space-y-4">
@@ -88,7 +70,8 @@ export default function SubscriptionSuccess() {
                     {t("subscription.success.planActivated", { plan: plan.name })}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {formatPrice(plan.price_cents)}/{t("pricing.month")}
+                    {plan.price_cents ? `R$ ${(plan.price_cents / 100).toFixed(2).replace(".", ",")}` : ""}
+                    {plan.price_cents ? `/${t("pricing.month")}` : ""}
                   </p>
                 </div>
               </div>
