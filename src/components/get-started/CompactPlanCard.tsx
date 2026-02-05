@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Zap, Star, Building2, Crown, Sparkles, Check } from "lucide-react";
+import { Zap, Star, Building2, Crown, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/priceUtils";
 import { Plan } from "@/hooks/usePlans";
@@ -14,17 +14,72 @@ interface CompactPlanCardProps {
   billingPeriod: "monthly" | "yearly";
 }
 
-const planConfig: Record<string, { icon: React.ElementType; iconSize: string; gradient: string; iconBg: string }> = {
-  starter: { icon: Zap, iconSize: "h-5 w-5", gradient: "from-blue-500/10 to-cyan-500/10", iconBg: "from-blue-500 to-cyan-500" },
-  profissional: { icon: Star, iconSize: "h-5 w-5", gradient: "from-primary/20 to-orange-500/10", iconBg: "from-primary to-orange-500" },
-  business: { icon: Building2, iconSize: "h-5 w-5", gradient: "from-purple-500/10 to-pink-500/10", iconBg: "from-purple-500 to-pink-500" },
-  enterprise: { icon: Crown, iconSize: "h-6 w-6", gradient: "from-amber-500/10 to-yellow-500/10", iconBg: "from-amber-500 to-yellow-500" },
+export const planThemes: Record<string, {
+  icon: React.ElementType;
+  iconSize: string;
+  gradient: string;
+  iconBg: string;
+  border: string;
+  accentLine: string;
+  btnClass: string;
+  headerColor: string;
+  checkBg: string;
+  checkText: string;
+}> = {
+  starter: {
+    icon: Zap,
+    iconSize: "h-5 w-5",
+    gradient: "from-blue-500/15 to-cyan-500/10",
+    iconBg: "from-blue-500 to-cyan-500",
+    border: "border-blue-500/30 hover:border-blue-500/60",
+    accentLine: "from-blue-500 via-cyan-400 to-blue-500",
+    btnClass: "bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-md shadow-blue-500/20",
+    headerColor: "text-blue-500",
+    checkBg: "bg-blue-500/10",
+    checkText: "text-blue-500",
+  },
+  profissional: {
+    icon: Star,
+    iconSize: "h-5 w-5",
+    gradient: "from-primary/20 to-orange-500/15",
+    iconBg: "from-primary to-orange-500",
+    border: "border-primary/30 hover:border-primary/60",
+    accentLine: "from-primary via-orange-400 to-primary",
+    btnClass: "bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 text-white shadow-md shadow-primary/25",
+    headerColor: "text-primary",
+    checkBg: "bg-primary/10",
+    checkText: "text-primary",
+  },
+  business: {
+    icon: Building2,
+    iconSize: "h-5 w-5",
+    gradient: "from-purple-500/15 to-pink-500/10",
+    iconBg: "from-purple-500 to-pink-500",
+    border: "border-purple-500/30 hover:border-purple-500/60",
+    accentLine: "from-purple-500 via-pink-400 to-purple-500",
+    btnClass: "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-md shadow-purple-500/20",
+    headerColor: "text-purple-500",
+    checkBg: "bg-purple-500/10",
+    checkText: "text-purple-500",
+  },
+  enterprise: {
+    icon: Crown,
+    iconSize: "h-6 w-6",
+    gradient: "from-amber-500/15 to-yellow-500/10",
+    iconBg: "from-amber-500 to-yellow-500",
+    border: "border-amber-500/30 hover:border-amber-500/60",
+    accentLine: "from-amber-500 via-yellow-400 to-amber-500",
+    btnClass: "bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white shadow-md shadow-amber-500/20",
+    headerColor: "text-amber-500",
+    checkBg: "bg-amber-500/10",
+    checkText: "text-amber-500",
+  },
 };
 
 export function CompactPlanCard({ plan, isPopular = false, onSelect, billingPeriod }: CompactPlanCardProps) {
   const { t } = useTranslation();
-  const config = planConfig[plan.slug] ?? planConfig.starter;
-  const Icon = config.icon;
+  const theme = planThemes[plan.slug] ?? planThemes.starter;
+  const Icon = theme.icon;
 
   const yearlyPrice = Math.round(plan.price_cents * 12 * 0.8);
   const displayPrice = billingPeriod === "yearly" ? yearlyPrice / 12 : plan.price_cents;
@@ -32,15 +87,14 @@ export function CompactPlanCard({ plan, isPopular = false, onSelect, billingPeri
   return (
     <Card
       className={cn(
-        "group relative flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-visible cursor-pointer",
-        isPopular && "ring-2 ring-primary shadow-lg shadow-primary/10 scale-[1.02] z-10"
+        "group relative flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-visible cursor-pointer border-2",
+        theme.border,
+        isPopular && "scale-[1.02] z-10 shadow-lg"
       )}
       onClick={() => onSelect(plan)}
     >
-      {/* Top accent line */}
-      {isPopular && (
-        <div className="absolute -top-px left-0 right-0 h-1 bg-gradient-to-r from-primary via-orange-400 to-primary" />
-      )}
+      {/* Top accent line - always visible */}
+      <div className={cn("absolute -top-px left-0 right-0 h-1 rounded-t-lg bg-gradient-to-r", theme.accentLine)} />
 
       {/* Popular badge */}
       {isPopular && (
@@ -52,23 +106,23 @@ export function CompactPlanCard({ plan, isPopular = false, onSelect, billingPeri
         </div>
       )}
 
-      {/* Background gradient on hover */}
+      {/* Background gradient */}
       <div className={cn(
-        "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-lg",
-        config.gradient
+        "absolute inset-0 bg-gradient-to-br opacity-50 group-hover:opacity-100 transition-opacity duration-500 rounded-lg",
+        theme.gradient
       )} />
 
       <CardContent className="relative flex flex-col items-center p-4 pt-6 gap-3">
         {/* Icon */}
         <div className={cn(
-          "flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md transition-transform duration-300 group-hover:scale-110",
-          config.iconBg
+          "flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg transition-transform duration-300 group-hover:scale-110",
+          theme.iconBg
         )}>
-          <Icon className={config.iconSize} />
+          <Icon className={theme.iconSize} />
         </div>
 
         {/* Name */}
-        <h3 className="text-base font-bold">{plan.name}</h3>
+        <h3 className={cn("text-base font-bold", theme.headerColor)}>{plan.name}</h3>
 
         {/* Price */}
         <div className="text-center">
@@ -86,11 +140,7 @@ export function CompactPlanCard({ plan, isPopular = false, onSelect, billingPeri
         {/* CTA */}
         <Button
           size="sm"
-          className={cn(
-            "w-full font-semibold transition-all duration-300",
-            isPopular && "bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 shadow-md shadow-primary/20"
-          )}
-          variant={isPopular ? "default" : "outline"}
+          className={cn("w-full font-semibold transition-all duration-300 border-0", theme.btnClass)}
         >
           {plan.slug === "enterprise" ? t("pricing.contactSales") : t("pricing.selectPlan")}
         </Button>
