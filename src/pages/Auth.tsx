@@ -550,7 +550,16 @@ export default function Auth() {
 
             {/* Password Reset Dialog - Outside of login form to prevent form submission conflicts */}
             <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
-              <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+              <DialogContent 
+                className="sm:max-w-md" 
+                onPointerDownOutside={(e) => e.preventDefault()}
+                onKeyDown={(e) => {
+                  // Prevent Enter key from propagating to any parent forms
+                  if (e.key === 'Enter') {
+                    e.stopPropagation();
+                  }
+                }}
+              >
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
                     <Mail className="h-5 w-5" />
@@ -571,6 +580,12 @@ export default function Auth() {
                       onChange={e => setResetEmail(e.target.value)} 
                       required 
                       autoFocus
+                      onKeyDown={(e) => {
+                        // Prevent Enter from bubbling up to any parent form
+                        if (e.key === 'Enter') {
+                          e.stopPropagation();
+                        }
+                      }}
                     />
                   </div>
                   <div className="flex gap-2 justify-end">
