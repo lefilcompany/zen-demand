@@ -37,6 +37,7 @@ export default function Auth() {
   const [isResetLoading, setIsResetLoading] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resetCooldown, setResetCooldown] = useState(0); // Cooldown in seconds
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -103,6 +104,24 @@ export default function Auth() {
     };
     fetchCities();
   }, [signupData.state]);
+
+  // Cooldown timer effect
+  useEffect(() => {
+    if (resetCooldown <= 0) return;
+    
+    const timer = setInterval(() => {
+      setResetCooldown(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [resetCooldown]);
+
   if (loading) {
     return <div className="flex min-h-screen items-center justify-center bg-sidebar">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -225,6 +244,11 @@ export default function Auth() {
       });
       return;
     }
+
+    if (resetCooldown > 0) {
+      return; // Already in cooldown
+    }
+
     setIsResetLoading(true);
     try {
       await resetPassword(resetEmail.trim());
@@ -234,9 +258,27 @@ export default function Auth() {
       setResetDialogOpen(false);
       setResetEmail("");
     } catch (error: any) {
-      toast.error("Erro ao enviar email", {
-        description: getErrorMessage(error)
-      });
+      const errorMessage = error?.message?.toLowerCase() || "";
+      
+      // Check for rate limit error and extract seconds
+      const rateLimitMatch = errorMessage.match(/after (\d+) seconds/i);
+      if (rateLimitMatch) {
+        const seconds = parseInt(rateLimitMatch[1], 10);
+        setResetCooldown(seconds);
+        toast.error("Aguarde para tentar novamente", {
+          description: `Por segurança, você pode solicitar um novo email em ${seconds} segundos.`,
+        });
+      } else if (errorMessage.includes("rate limit") || errorMessage.includes("security purposes")) {
+        // Generic rate limit without specific seconds
+        setResetCooldown(60);
+        toast.error("Aguarde para tentar novamente", {
+          description: "Por segurança, aguarde 60 segundos antes de solicitar outro email.",
+        });
+      } else {
+        toast.error("Erro ao enviar email", {
+          description: getErrorMessage(error)
+        });
+      }
     } finally {
       setIsResetLoading(false);
     }
@@ -588,12 +630,27 @@ export default function Auth() {
                       }}
                     />
                   </div>
+                  {resetCooldown > 0 && (
+                    <div className="flex items-center gap-2 p-3 rounded-md bg-muted text-muted-foreground text-sm">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Aguarde {resetCooldown}s para solicitar novamente</span>
+                    </div>
+                  )}
                   <div className="flex gap-2 justify-end">
                     <Button type="button" variant="outline" onClick={() => setResetDialogOpen(false)}>
                       Cancelar
                     </Button>
-                    <Button type="submit" disabled={isResetLoading}>
-                      {isResetLoading ? "Enviando..." : "Enviar Link"}
+                    <Button type="submit" disabled={isResetLoading || resetCooldown > 0}>
+                      {isResetLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Enviando...
+                        </>
+                      ) : resetCooldown > 0 ? (
+                        `Aguarde ${resetCooldown}s`
+                      ) : (
+                        "Enviar Link"
+                      )}
                     </Button>
                   </div>
                 </form>
