@@ -24,6 +24,9 @@ interface ConfirmStepProps {
 export function ConfirmStep({ selectedPlan, onBack, onFinish, isProcessing, currentPlanSlug, existingTeamId }: ConfirmStepProps) {
   const { t } = useTranslation();
   
+  const isUpgrade = !!currentPlanSlug && selectedPlan && currentPlanSlug !== selectedPlan.slug;
+  const hasExistingTeam = !!existingTeamId;
+
   const [teamData, setTeamData] = useState({
     name: "",
     description: "",
@@ -38,8 +41,6 @@ export function ConfirmStep({ selectedPlan, onBack, onFinish, isProcessing, curr
 
   if (!selectedPlan) return null;
 
-  const isUpgrade = !!currentPlanSlug && currentPlanSlug !== selectedPlan.slug;
-  const hasExistingTeam = !!existingTeamId;
   const theme = planThemes[selectedPlan.slug] ?? planThemes.starter;
   const Icon = theme.icon;
 
