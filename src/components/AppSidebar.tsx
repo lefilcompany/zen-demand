@@ -199,7 +199,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* Team section */}
-        <SidebarGroup className="pb-0">
+        <SidebarGroup className="mt-auto pb-0">
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
 {/* Equipe - Dropdown style like reference image */}
@@ -334,7 +334,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* Subscription Card - Below Teams section */}
-        <SidebarGroup className="mt-2 pt-0">
+        <SidebarGroup className="pt-1">
           <SidebarGroupContent>
             <SidebarSubscriptionCard />
           </SidebarGroupContent>
