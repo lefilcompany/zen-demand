@@ -259,10 +259,29 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isUploadingRef = useRef(false);
+  const uploadCountRef = useRef<{ count: number; resetTime: number }>({ count: 0, resetTime: Date.now() });
+
+  // Allowed image MIME types for security
+  const ALLOWED_IMAGE_TYPES = [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'image/svg+xml',
+  ];
 
   const uploadImage = useCallback(async (file: File): Promise<string | null> => {
-    if (!file.type.startsWith("image/")) {
-      toast.error("Apenas imagens são permitidas");
+    // Strict MIME type validation
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      toast.error("Tipo de arquivo não permitido. Use JPEG, PNG, GIF, WebP ou SVG.");
+      return null;
+    }
+
+    // Additional file extension validation
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (!ext || !allowedExtensions.includes(ext)) {
+      toast.error("Extensão de arquivo inválida");
       return null;
     }
 
@@ -270,6 +289,22 @@ export function RichTextEditor({
       toast.error("A imagem deve ter no máximo 5MB");
       return null;
     }
+
+    // Application-level rate limiting: max 10 uploads per minute
+    const now = Date.now();
+    const oneMinuteAgo = now - 60000;
+    
+    if (uploadCountRef.current.resetTime < oneMinuteAgo) {
+      // Reset counter after 1 minute
+      uploadCountRef.current = { count: 0, resetTime: now };
+    }
+    
+    if (uploadCountRef.current.count >= 10) {
+      toast.error("Limite de uploads atingido. Aguarde 1 minuto.");
+      return null;
+    }
+    
+    uploadCountRef.current.count++;
 
     isUploadingRef.current = true;
 
@@ -433,35 +468,107 @@ export function RichTextEditor({
   );
 }
 
-// Convert user mentions [[userId:Name]] to styled links
+// Escape HTML special characters to prevent XSS
+function escapeHtml(text: string): string {
+  const htmlEscapes: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  };
+  return text.replace(/[&<>"']/g, (char) => htmlEscapes[char] || char);
+}
+
+// Validate UUID format to prevent injection
+function isValidUUID(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
+// Validate demand code format
+function isValidDemandCode(code: string): boolean {
+  return /^#\d{1,6}$/.test(code);
+}
+
+// Convert user mentions [[userId:Name]] to styled links with proper escaping
 function processMentions(text: string): string {
   // User mentions: [[userId:Name]]
   const userMentionRegex = /\[\[([^:]+):([^\]]+)\]\]/g;
-  text = text.replace(userMentionRegex, (_, userId, name) => {
-    return `<a href="/user/${userId}" data-mention="user" class="inline-flex items-center gap-0.5 bg-primary/10 text-primary border border-primary/20 rounded-md px-1.5 py-0.5 text-xs font-medium mx-0.5 no-underline hover:bg-primary/20 transition-colors">@${name}</a>`;
+  text = text.replace(userMentionRegex, (match, userId, name) => {
+    // Validate userId format to prevent injection
+    if (!isValidUUID(userId)) {
+      return escapeHtml(match); // Return escaped original if invalid
+    }
+    const escapedName = escapeHtml(name);
+    return `<a href="/user/${userId}" data-mention="user" class="inline-flex items-center gap-0.5 bg-primary/10 text-primary border border-primary/20 rounded-md px-1.5 py-0.5 text-xs font-medium mx-0.5 no-underline hover:bg-primary/20 transition-colors">@${escapedName}</a>`;
   });
   
   // Demand mentions: {{demandId:#code}}
   const demandMentionRegex = /\{\{([^:]+):(#[^\}]+)\}\}/g;
-  text = text.replace(demandMentionRegex, (_, demandId, code) => {
-    return `<a href="/demands/${demandId}" data-mention="demand" class="inline-flex items-center gap-0.5 bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-500/20 rounded-md px-1.5 py-0.5 text-xs font-medium mx-0.5 no-underline hover:bg-cyan-500/20 transition-colors">${code}</a>`;
+  text = text.replace(demandMentionRegex, (match, demandId, code) => {
+    // Validate demandId and code format to prevent injection
+    if (!isValidUUID(demandId) || !isValidDemandCode(code)) {
+      return escapeHtml(match); // Return escaped original if invalid
+    }
+    const escapedCode = escapeHtml(code);
+    return `<a href="/demands/${demandId}" data-mention="demand" class="inline-flex items-center gap-0.5 bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-500/20 rounded-md px-1.5 py-0.5 text-xs font-medium mx-0.5 no-underline hover:bg-cyan-500/20 transition-colors">${escapedCode}</a>`;
   });
   
   return text;
 }
 
-// Convert plain URLs in text to clickable links
+// Validate URL format to prevent javascript: and other dangerous protocols
+function isValidUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+// Convert plain URLs in text to clickable links with validation
 function linkifyText(text: string): string {
   const urlRegex = /(https?:\/\/[^\s<>\[\]\{\}]+)/g;
   return text.replace(urlRegex, (url) => {
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline break-all">${url}</a>`;
+    // Validate URL before creating link
+    if (!isValidUrl(url)) {
+      return escapeHtml(url);
+    }
+    const escapedUrl = escapeHtml(url);
+    return `<a href="${escapedUrl}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline break-all">${escapedUrl}</a>`;
   });
 }
 
-// Process text with mentions and links
+// Process text with mentions and links - escapes first, then processes patterns
 function processTextContent(text: string): string {
-  let result = processMentions(text);
-  result = linkifyText(result);
+  // First escape the base text to prevent XSS
+  let result = escapeHtml(text);
+  
+  // Then restore and process valid mention/link patterns
+  // Re-match the patterns in the escaped text and replace with safe HTML
+  
+  // User mentions: [[userId:Name]] - the brackets are escaped as-is
+  const userMentionRegex = /\[\[([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}):([^\]]+)\]\]/gi;
+  result = result.replace(userMentionRegex, (_, userId, name) => {
+    return `<a href="/user/${userId}" data-mention="user" class="inline-flex items-center gap-0.5 bg-primary/10 text-primary border border-primary/20 rounded-md px-1.5 py-0.5 text-xs font-medium mx-0.5 no-underline hover:bg-primary/20 transition-colors">@${name}</a>`;
+  });
+  
+  // Demand mentions: {{demandId:#code}}
+  const demandMentionRegex = /\{\{([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}):(#\d{1,6})\}\}/gi;
+  result = result.replace(demandMentionRegex, (_, demandId, code) => {
+    return `<a href="/demands/${demandId}" data-mention="demand" class="inline-flex items-center gap-0.5 bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-500/20 rounded-md px-1.5 py-0.5 text-xs font-medium mx-0.5 no-underline hover:bg-cyan-500/20 transition-colors">${code}</a>`;
+  });
+  
+  // URLs - only allow http/https
+  const urlRegex = /(https?:\/\/[^\s&lt;&gt;\[\]\{\}]+)/g;
+  result = result.replace(urlRegex, (url) => {
+    // Decode the escaped URL for display but keep it escaped in href
+    const displayUrl = url.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline break-all">${displayUrl}</a>`;
+  });
+  
   return result;
 }
 

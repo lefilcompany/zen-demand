@@ -154,7 +154,10 @@ export function MentionInput({
   const renderValueToEditor = useCallback((storageValue: string) => {
     if (!editorRef.current) return;
     
-    editorRef.current.innerHTML = "";
+    // Clear using safe DOM API instead of innerHTML
+    while (editorRef.current.firstChild) {
+      editorRef.current.removeChild(editorRef.current.firstChild);
+    }
     
     if (!storageValue) return;
     
