@@ -115,46 +115,48 @@ export default function GetStarted() {
       <GetStartedHero />
 
       {/* Right side - Content */}
-      <div className="flex-1 lg:w-3/5 xl:w-[55%] flex flex-col min-h-0 overflow-y-auto">
-        <div className="flex-1 flex flex-col items-center justify-start p-4 sm:p-6 lg:p-8 xl:p-12">
-          <div className="w-full max-w-5xl">
-            {/* Step indicator */}
-            <StepIndicator currentStep={step} totalSteps={3} />
+      <div className="flex-1 lg:w-3/5 xl:w-[55%] flex flex-col min-h-0">
+        <div className="flex-1 overflow-y-auto">
+          <div className={`flex flex-col items-center p-4 sm:p-6 lg:p-6 xl:p-8 min-h-full ${step !== 1 ? "justify-center" : "justify-start pt-6"}`}>
+            <div className="w-full max-w-5xl">
+              {/* Step indicator */}
+              <StepIndicator currentStep={step} totalSteps={3} />
 
-            {/* Step 1: Plan Selection */}
-            {step === 1 && (
-              <PlanSelectionStep 
-                plans={plans} 
-                onSelectPlan={handlePlanSelect} 
-              />
-            )}
+              {/* Step 1: Plan Selection */}
+              {step === 1 && (
+                <PlanSelectionStep 
+                  plans={plans} 
+                  onSelectPlan={handlePlanSelect} 
+                />
+              )}
 
-            {/* Step 2: Authentication */}
-            {step === 2 && !user && (
-              <AuthStep
-                selectedPlan={selectedPlan}
-                onBack={() => setStep(1)}
-                onLoginSuccess={handleLoginSuccess}
-                onSignupSuccess={handleSignupSuccess}
-                signIn={signIn}
-                signUp={signUp}
-              />
-            )}
+              {/* Step 2: Authentication */}
+              {step === 2 && !user && (
+                <AuthStep
+                  selectedPlan={selectedPlan}
+                  onBack={() => setStep(1)}
+                  onLoginSuccess={handleLoginSuccess}
+                  onSignupSuccess={handleSignupSuccess}
+                  signIn={signIn}
+                  signUp={signUp}
+                />
+              )}
 
-            {/* Step 3: Team Setup */}
-            {step === 3 && user && (
-              <TeamStep
-                selectedPlan={selectedPlan}
-                onBack={() => setStep(1)}
-                onFinish={handleFinishAndPay}
-                isProcessing={isProcessing}
-              />
-            )}
+              {/* Step 3: Team Setup */}
+              {step === 3 && user && (
+                <TeamStep
+                  selectedPlan={selectedPlan}
+                  onBack={() => setStep(1)}
+                  onFinish={handleFinishAndPay}
+                  isProcessing={isProcessing}
+                />
+              )}
+            </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="py-4 px-6 border-t border-border/50 text-center">
+        <div className="shrink-0 py-3 px-6 border-t border-border/50 text-center">
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} SoMA. Todos os direitos reservados.
           </p>

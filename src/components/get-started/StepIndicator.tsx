@@ -17,11 +17,8 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
   ];
 
   return (
-    <div className="relative flex items-center justify-center mb-10">
-      {/* Background connector line */}
-      <div className="absolute top-5 left-1/2 -translate-x-1/2 h-0.5 bg-muted w-[calc(100%-120px)] max-w-md hidden sm:block" />
-      
-      <div className="relative flex items-center justify-between w-full max-w-md sm:max-w-lg">
+    <div className="relative flex items-center justify-center mb-4">
+      <div className="relative flex items-center gap-4 sm:gap-8">
         {steps.slice(0, totalSteps).map((step, index) => {
           const stepNumber = index + 1;
           const isActive = stepNumber === currentStep;
@@ -29,39 +26,44 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
           const Icon = step.icon;
 
           return (
-            <div key={index} className="flex flex-col items-center z-10">
-              {/* Step circle */}
-              <div
-                className={cn(
-                  "relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 font-semibold",
-                  isCompleted && "bg-success text-success-foreground shadow-lg shadow-success/30",
-                  isActive && "bg-primary text-primary-foreground shadow-lg shadow-primary/40 ring-4 ring-primary/20",
-                  !isCompleted && !isActive && "bg-muted text-muted-foreground"
-                )}
-              >
-                {isCompleted ? (
-                  <Check className="h-5 w-5" />
-                ) : (
-                  <Icon className="h-5 w-5" />
-                )}
+            <div key={index} className="flex items-center gap-4 sm:gap-8">
+              <div className="flex items-center gap-2">
+                {/* Step circle */}
+                <div
+                  className={cn(
+                    "relative flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 text-sm font-semibold",
+                    isCompleted && "bg-success text-success-foreground",
+                    isActive && "bg-primary text-primary-foreground shadow-md shadow-primary/30",
+                    !isCompleted && !isActive && "bg-muted text-muted-foreground"
+                  )}
+                >
+                  {isCompleted ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Icon className="h-4 w-4" />
+                  )}
+                </div>
                 
-                {/* Active pulse animation */}
-                {isActive && (
-                  <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
-                )}
+                {/* Step label */}
+                <span 
+                  className={cn(
+                    "text-xs font-medium hidden sm:inline",
+                    isActive && "text-primary font-semibold",
+                    isCompleted && "text-success",
+                    !isActive && !isCompleted && "text-muted-foreground"
+                  )}
+                >
+                  {step.label}
+                </span>
               </div>
               
-              {/* Step label */}
-              <span 
-                className={cn(
-                  "mt-3 text-xs font-medium text-center transition-colors max-w-[80px]",
-                  isActive && "text-primary font-semibold",
-                  isCompleted && "text-success",
-                  !isActive && !isCompleted && "text-muted-foreground"
-                )}
-              >
-                {step.label}
-              </span>
+              {/* Connector */}
+              {index < totalSteps - 1 && (
+                <div className={cn(
+                  "h-px w-8 sm:w-12",
+                  isCompleted ? "bg-success" : "bg-border"
+                )} />
+              )}
             </div>
           );
         })}

@@ -16,16 +16,17 @@ export function PlanSelectionStep({ plans, onSelectPlan }: PlanSelectionStepProp
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Header */}
-      <div className="text-center space-y-3">
-        <h2 className="text-2xl sm:text-3xl font-bold">{t("getStarted.step1Title")}</h2>
-        <p className="text-muted-foreground max-w-xl mx-auto">{t("getStarted.selectPlanSubtitle")}</p>
+    <div className="space-y-4 animate-fade-in">
+      {/* Header + Billing toggle */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold">{t("getStarted.step1Title")}</h2>
+          <p className="text-sm text-muted-foreground">{t("getStarted.selectPlanSubtitle")}</p>
+        </div>
         
-        {/* Billing toggle */}
-        <div className="flex items-center justify-center gap-3 pt-4">
+        <div className="flex items-center gap-3 shrink-0">
           <Label
-            htmlFor="billing-toggle"
+            htmlFor="gs-billing-toggle"
             className={`text-sm cursor-pointer transition-colors ${
               billingPeriod === "monthly" ? "font-semibold text-foreground" : "text-muted-foreground"
             }`}
@@ -33,13 +34,13 @@ export function PlanSelectionStep({ plans, onSelectPlan }: PlanSelectionStepProp
             {t("pricing.monthly")}
           </Label>
           <Switch
-            id="billing-toggle"
+            id="gs-billing-toggle"
             checked={billingPeriod === "yearly"}
             onCheckedChange={(checked) => setBillingPeriod(checked ? "yearly" : "monthly")}
           />
           <div className="flex items-center gap-2">
             <Label
-              htmlFor="billing-toggle"
+              htmlFor="gs-billing-toggle"
               className={`text-sm cursor-pointer transition-colors ${
                 billingPeriod === "yearly" ? "font-semibold text-foreground" : "text-muted-foreground"
               }`}
@@ -54,7 +55,7 @@ export function PlanSelectionStep({ plans, onSelectPlan }: PlanSelectionStepProp
       </div>
 
       {/* Plans grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6 pt-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
         {plans?.map((plan, index) => (
           <div 
             key={plan.id} 
