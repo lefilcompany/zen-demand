@@ -98,26 +98,31 @@ export default function GetStarted() {
       // If user already has a team, reuse it for upgrade
       if (existingTeamId) {
         teamId = existingTeamId;
+        console.log("[GetStarted] Using existing team:", teamId);
       } else {
         // Create new team
+        console.log("[GetStarted] Creating new team:", teamData.name);
         const team = await createTeam.mutateAsync({
           name: teamData.name,
           description: teamData.description,
           accessCode: teamData.accessCode,
         });
         teamId = team.id;
+        console.log("[GetStarted] Team created:", teamId);
       }
 
       // Create checkout session
+      console.log("[GetStarted] Creating checkout for plan:", selectedPlan.slug, "team:", teamId);
       const checkoutUrl = await createCheckout.mutateAsync({
         planSlug: selectedPlan.slug,
         teamId,
       });
 
+      console.log("[GetStarted] Redirecting to Stripe checkout");
       // Redirect to Stripe
       window.location.href = checkoutUrl;
     } catch (error: unknown) {
-      console.error("Error in checkout flow:", error);
+      console.error("[GetStarted] Error in checkout flow:", error);
       const errorMessage = error instanceof Error ? error.message : t("getStarted.checkoutError");
       toast.error(t("toast.error"), { description: errorMessage });
       setIsProcessing(false);

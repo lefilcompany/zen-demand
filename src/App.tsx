@@ -81,6 +81,7 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
                         <Route path="/welcome" element={<RequireAuth><Welcome /></RequireAuth>} />
                         <Route path="/teams/create" element={<RequireAuth><CreateTeam /></RequireAuth>} />
                         <Route path="/teams/join" element={<RequireAuth><JoinTeam /></RequireAuth>} />
+                        <Route path="/subscription/success" element={<RequireAuth><SubscriptionSuccess /></RequireAuth>} />
                         
                         {/* Protected routes - require team selection, shared layout */}
                         <Route element={<RequireTeam><ProtectedLayout /></RequireTeam>}>
@@ -116,7 +117,7 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
                           <Route path="/profile" element={<Profile />} />
                           <Route path="/settings" element={<Settings />} />
                           <Route path="/pricing" element={<Pricing />} />
-                          <Route path="/subscription/success" element={<SubscriptionSuccess />} />
+                          {/* subscription/success moved to auth-only routes */}
                         </Route>
                         
                         {/* Catch-all */}
