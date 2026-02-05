@@ -11,6 +11,9 @@ interface UserPreferences {
 }
 
 Deno.serve(async (req: Request) => {
+  const requestId = crypto.randomUUID();
+  const requestTimestamp = new Date().toISOString();
+  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -22,7 +25,7 @@ Deno.serve(async (req: Request) => {
     const cronSecret = Deno.env.get("CRON_SECRET");
     
     if (!cronSecret) {
-      console.error("CRON_SECRET not configured");
+      console.error(`[${requestId}] [${requestTimestamp}] CRON_SECRET not configured - server misconfiguration`);
       return new Response(
         JSON.stringify({ error: "Server configuration error" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -32,14 +35,22 @@ Deno.serve(async (req: Request) => {
     // Check if request has valid authorization
     const expectedAuth = `Bearer ${cronSecret}`;
     if (authHeader !== expectedAuth) {
-      console.warn("Unauthorized access attempt to check-deadlines");
+      // Enhanced security logging for failed auth attempts
+      const clientIP = req.headers.get("x-forwarded-for") || 
+                       req.headers.get("cf-connecting-ip") || 
+                       req.headers.get("x-real-ip") || 
+                       "unknown";
+      const userAgent = req.headers.get("user-agent") || "unknown";
+      
+      console.warn(`[${requestId}] [${requestTimestamp}] SECURITY: Unauthorized access attempt to check-deadlines | IP: ${clientIP} | User-Agent: ${userAgent}`);
+      
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("Starting deadline check...");
+    console.log(`[${requestId}] [${requestTimestamp}] Starting authorized deadline check...`);
     
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

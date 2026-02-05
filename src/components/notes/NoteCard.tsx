@@ -32,12 +32,12 @@ export function NoteCard({ note, onClick, isShared = false, onLeave }: NoteCardP
   const isOwner = note.created_by === user?.id;
   const showMenu = isOwner || isShared;
 
-  // Extract plain text preview from HTML content
+  // Extract plain text preview from HTML content using DOMParser (safer than innerHTML)
   const getPreview = (html: string | null) => {
     if (!html) return "Nota vazia...";
-    const div = document.createElement("div");
-    div.innerHTML = html;
-    const text = div.textContent || div.innerText || "";
+    // Use DOMParser which is safer than creating elements with innerHTML
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const text = doc.body.textContent || "";
     return text.slice(0, 150) + (text.length > 150 ? "..." : "");
   };
 
