@@ -21,13 +21,13 @@ import {
   Search
 } from "lucide-react";
 import { useGlobalSearch } from "@/hooks/useGlobalSearch";
-import { useSelectedBoard } from "@/contexts/BoardContext";
+import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 
 export function CommandMenu() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
-  const { currentBoard } = useSelectedBoard();
+  const { currentBoard } = useSelectedBoardSafe();
   const { data: searchResults, isLoading } = useGlobalSearch(query, currentBoard?.id || null);
 
   useEffect(() => {
