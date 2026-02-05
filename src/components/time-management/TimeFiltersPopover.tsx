@@ -141,9 +141,8 @@ export function TimeFiltersPopover({
   );
 
   const TriggerButton = (
-    <Button variant="outline" size="sm" className="gap-2">
+    <Button variant="outline" size="sm" className="gap-1.5 sm:gap-2 h-8 px-2 sm:px-3">
       <Filter className="h-4 w-4" />
-      <span className="hidden sm:inline">Filtros</span>
       {activeFiltersCount > 0 && (
         <Badge variant="secondary" className="h-5 w-5 p-0 flex items-center justify-center text-xs">
           {activeFiltersCount}
@@ -152,20 +151,21 @@ export function TimeFiltersPopover({
     </Button>
   );
 
-  // Active filter badges to show in header
+  // Active filter badges to show in header - simplified for mobile
   const ActiveFilterBadges = () => (
-    <div className="flex items-center gap-2 flex-wrap">
-      <Badge variant="outline" className="gap-1 text-xs font-normal">
+    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap overflow-hidden">
+      <Badge variant="outline" className="gap-1 text-[10px] sm:text-xs font-normal px-1.5 sm:px-2 py-0.5 shrink-0">
         <Calendar className="h-3 w-3" />
-        {periodLabel}
+        <span className="hidden xs:inline">{periodLabel}</span>
+        <span className="xs:hidden">{periodFilter === "current_month" ? "Atual" : periodLabel.split(" ")[0]}</span>
       </Badge>
       {userLabel && (
-        <Badge variant="outline" className="gap-1 text-xs font-normal">
+        <Badge variant="outline" className="gap-1 text-[10px] sm:text-xs font-normal px-1.5 sm:px-2 py-0.5 max-w-[100px] truncate">
           {userLabel}
         </Badge>
       )}
       {searchTerm && (
-        <Badge variant="outline" className="gap-1 text-xs font-normal">
+        <Badge variant="outline" className="gap-1 text-[10px] sm:text-xs font-normal px-1.5 sm:px-2 py-0.5 max-w-[80px] truncate hidden sm:flex">
           "{searchTerm}"
         </Badge>
       )}

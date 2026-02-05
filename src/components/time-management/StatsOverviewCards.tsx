@@ -61,23 +61,23 @@ export function StatsOverviewCards({
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       {statsCards.map((stat) => (
-        <Card key={stat.label} className="border bg-card">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center gap-2 text-muted-foreground mb-2">
-              <stat.icon className="h-4 w-4" />
-              <span className="text-sm font-medium">{stat.label}</span>
+        <Card key={stat.label} className="border bg-card overflow-hidden">
+          <CardContent className="p-3 sm:pt-4 sm:pb-4 sm:px-6">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground mb-1.5 sm:mb-2">
+              <stat.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+              <span className="text-xs sm:text-sm font-medium truncate">{stat.label}</span>
               {stat.isActive && (
-                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse ml-auto" />
+                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse ml-auto shrink-0" />
               )}
             </div>
             {isLoading ? (
-              <Skeleton className="h-8 w-28" />
+              <Skeleton className="h-6 sm:h-8 w-full max-w-[120px]" />
             ) : (
               <div className={cn(
-                "text-2xl md:text-3xl font-bold",
-                stat.isTime && "font-mono tabular-nums",
+                "text-lg sm:text-2xl md:text-3xl font-bold truncate",
+                stat.isTime && "font-mono tabular-nums tracking-tighter sm:tracking-normal",
                 stat.isActive && "text-primary"
               )}>
                 {stat.value}
