@@ -199,7 +199,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* Team section */}
-        <SidebarGroup className={isCollapsed && !isMobile ? "pb-1" : ""}>
+        <SidebarGroup className="pb-0">
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
 {/* Equipe - Dropdown style like reference image */}
@@ -334,7 +334,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* Subscription Card - Below Teams section */}
-        <SidebarGroup className={`mt-auto ${isCollapsed && !isMobile ? 'pt-1' : 'pt-2'}`}>
+        <SidebarGroup className="mt-auto pt-1">
           <SidebarGroupContent>
             <SidebarSubscriptionCard />
           </SidebarGroupContent>
