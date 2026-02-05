@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Plan } from "@/hooks/usePlans";
+import { planThemes } from "./CompactPlanCard";
 
 interface PlanFeaturesComparisonProps {
   plans: Plan[];
@@ -87,40 +88,47 @@ export function PlanFeaturesComparison({ plans }: PlanFeaturesComparisonProps) {
     <div className="w-full overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-border/50">
-            <th className="text-left py-2 pr-4 font-medium text-muted-foreground text-xs uppercase tracking-wider">
+          <tr className="border-b-2 border-border/50">
+            <th className="text-left py-2.5 pr-4 font-medium text-muted-foreground text-xs uppercase tracking-wider">
               Recursos
             </th>
-            {plans.map((plan) => (
-              <th key={plan.id} className="text-center py-2 px-2 font-semibold text-xs">
-                {plan.name}
-              </th>
-            ))}
+            {plans.map((plan) => {
+              const theme = planThemes[plan.slug] ?? planThemes.starter;
+              return (
+                <th key={plan.id} className={cn("text-center py-2.5 px-2 font-bold text-xs", theme.headerColor)}>
+                  {plan.name}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
           {featureRows.map((row, idx) => (
-            <tr key={idx} className={cn("border-b border-border/30", idx % 2 === 0 && "bg-muted/20")}>
-              <td className="py-2 pr-4 text-sm text-foreground/80">{row.label}</td>
+            <tr key={idx} className={cn("border-b border-border/20", idx % 2 === 0 && "bg-muted/15")}>
+              <td className="py-2.5 pr-4 text-sm text-foreground/80 font-medium">{row.label}</td>
               {plans.map((plan) => {
                 const included = row.getIncluded ? row.getIncluded(plan) : true;
                 const value = row.getValue ? row.getValue(plan) : null;
+                const theme = planThemes[plan.slug] ?? planThemes.starter;
 
                 return (
-                  <td key={plan.id} className="text-center py-2 px-2">
+                  <td key={plan.id} className="text-center py-2.5 px-2">
                     {value !== null && value !== undefined ? (
-                      <span className={cn("text-xs font-medium", included ? "text-foreground" : "text-muted-foreground/40")}>
+                      <span className={cn(
+                        "text-xs font-semibold",
+                        included ? theme.headerColor : "text-muted-foreground/40"
+                      )}>
                         {value}
                       </span>
                     ) : included ? (
                       <div className="flex justify-center">
-                        <div className="h-5 w-5 rounded-full bg-success/10 text-success flex items-center justify-center">
+                        <div className={cn("h-5 w-5 rounded-full flex items-center justify-center", theme.checkBg, theme.checkText)}>
                           <Check className="h-3 w-3" />
                         </div>
                       </div>
                     ) : (
                       <div className="flex justify-center">
-                        <div className="h-5 w-5 rounded-full bg-muted text-muted-foreground/40 flex items-center justify-center">
+                        <div className="h-5 w-5 rounded-full bg-muted text-muted-foreground/30 flex items-center justify-center">
                           <X className="h-3 w-3" />
                         </div>
                       </div>
