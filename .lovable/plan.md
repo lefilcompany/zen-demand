@@ -1,144 +1,219 @@
 
-# Plano: Exportação de PDF Profissional com Estilização Soma+
+# Plano: Refatoração Completa da Tela de Gerenciamento de Tempo
 
-## Objetivo
-Melhorar significativamente a exportação de PDF da análise de IA, incorporando toda a identidade visual do Soma+ (logo, cores, tipografia) e incluindo informações de copyright e direitos autorais.
+## Resumo Executivo
+Redesenhar completamente a tela de Gerenciamento de Tempo para fornecer uma experiência de gestão completa, com foco em visibilidade em tempo real das atividades, rankings competitivos, gráficos de desempenho detalhados e interface 100% responsiva.
 
-## Problemas Identificados no PDF Atual
-1. **Sem logo** - O PDF não inclui a marca Soma+
-2. **Cores básicas** - Apenas texto preto sem as cores da marca (#F28705, #D95204)
-3. **Layout simples** - Apenas texto corrido sem estruturação visual
-4. **Sem métricas visuais** - Os dados analíticos não são apresentados graficamente
-5. **Sem rodapé/cabeçalho** - Falta informações de copyright e branding
+---
 
-## Solução Proposta
+## O que será entregue
 
-### 1. Criar Utilitário de Exportação PDF Profissional
-Criar um novo arquivo `src/lib/pdfExport.ts` com funções reutilizáveis para:
+### 1. Dashboard Principal Renovado
+- Cards de estatísticas com visual moderno e animações
+- Indicadores de atividade ao vivo (timers ativos) em destaque
+- Tempo total do quadro com atualização em tempo real
+- Contadores de membros, demandas e médias
 
-- **Cabeçalho branded**: Logo Soma+ no canto superior + título estilizado
-- **Cores da marca**: Uso de #F28705 (laranja primário) e #D95204 (laranja escuro)
-- **Seções visuais**: Cards com métricas-chave (total, prazo, atrasadas)
-- **Tabelas estilizadas**: Usando jspdf-autotable para dados de equipe e tempo
-- **Markdown parsing**: Converter o texto markdown em formatação PDF estruturada
-- **Rodapé**: Copyright, data de geração e marca d'água
+### 2. Seção "Trabalhando Agora" (Destaque)
+- Cards grandes mostrando quem está trabalhando neste momento
+- Nome do usuário, demanda atual, e timer ao vivo incrementando a cada segundo
+- Avatar do usuário com indicador visual pulsante
+- Link direto para a demanda sendo trabalhada
 
-### 2. Estrutura do PDF Gerado
+### 3. Gráficos de Desempenho Detalhados
+- **Distribuição de Tempo por Usuário**: Gráfico de pizza/donut mostrando proporção
+- **Top Demandas por Tempo**: Gráfico de barras horizontal
+- **Evolução Diária/Semanal**: Novo gráfico de linha mostrando tendência de produtividade
+- **Tempo por Status**: Novo gráfico mostrando onde o tempo está sendo gasto
+
+### 4. Ranking de Membros Aprimorado
+- Ranking visual com medalhas (ouro, prata, bronze)
+- Indicação de quem está trabalhando agora
+- Barras de progresso mostrando proporção relativa
+- Quantidade de demandas e tempo total por membro
+- Filtragem por role (Admin, Coordenador, Agente)
+
+### 5. Detalhamento por Usuário
+- Expandir para ver todas as demandas trabalhadas
+- Tempo dedicado a cada demanda
+- Status e prioridade de cada demanda
+- Timer ao vivo se estiver trabalhando
+
+### 6. Detalhamento por Demanda
+- Expandir para ver todos os usuários que trabalharam
+- Tempo de cada usuário na demanda
+- Indicadores visuais de timer ativo
+
+### 7. Escopo por Quadro
+- Ao trocar de quadro, todos os dados atualizam automaticamente
+- Membros, tempos e estatísticas são filtrados pelo quadro selecionado
+- Título do quadro atual exibido de forma clara
+
+### 8. Interface Responsiva
+- **Mobile**: Layout vertical, cards empilhados, gráficos adaptados
+- **Tablet**: Grid de 2 colunas, filtros colapsáveis
+- **Desktop**: Grid completo, visualização lado a lado
+
+---
+
+## Arquitetura Técnica
+
+### Backend (já existente)
+A tabela `demand_time_entries` já possui a estrutura necessária:
+- `id`, `demand_id`, `user_id`, `started_at`, `ended_at`, `duration_seconds`
+
+Timer ativo = entrada onde `ended_at IS NULL`
+
+### Hooks a serem criados/modificados:
+
+1. **`useBoardTimeStats`** (novo)
+   - Estatísticas agregadas do quadro: tempo total, médias, tendências
+   - Dados para gráficos de evolução temporal
+
+2. **Modificar `useBoardTimeEntries`**
+   - Adicionar dados de role do usuário (admin/moderator/executor)
+   - Melhorar agregação para gráficos
+
+3. **Modificar `useBoardMembersWithTime`**
+   - Incluir role do membro para filtragem
+   - Adicionar contagem de demandas entregues vs em andamento
+
+### Componentes a criar:
 
 ```text
-┌─────────────────────────────────────────┐
-│  [LOGO]    Análise Inteligente          │
-│            Quadro: Nome do Quadro       │
-│            Data: 04/02/2026 às 11:54    │
-├─────────────────────────────────────────┤
-│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐       │
-│  │ 73  │ │ 22% │ │  4  │ │5.1d │       │
-│  │Total│ │Prazo│ │Atra │ │Média│       │
-│  └─────┘ └─────┘ └─────┘ └─────┘       │
-├─────────────────────────────────────────┤
-│  RESUMO EXECUTIVO                       │
-│  [Texto formatado...]                   │
-├─────────────────────────────────────────┤
-│  MÉTRICAS DE PERFORMANCE                │
-│  [Lista formatada...]                   │
-├─────────────────────────────────────────┤
-│  EQUIPE                                 │
-│  ┌───────────────────────────────────┐  │
-│  │ Nome │ Cargo │ Demandas │ Taxa % │  │
-│  ├───────────────────────────────────┤  │
-│  │ ...  │ ...   │   ...    │  ...   │  │
-│  └───────────────────────────────────┘  │
-├─────────────────────────────────────────┤
-│  TEMPO INVESTIDO                        │
-│  ┌───────────────────────────────────┐  │
-│  │ Executor │ Horas │ Demandas      │  │
-│  └───────────────────────────────────┘  │
-├─────────────────────────────────────────┤
-│  © 2026 Soma+ · Todos direitos reserv. │
-│  Gerado automaticamente · Pág 1 de N   │
-└─────────────────────────────────────────┘
+src/pages/TimeManagement.tsx (refatorar completamente)
+  |
+  +-- StatsOverviewCards.tsx (cards de estatísticas)
+  +-- ActiveWorkSection.tsx (quem está trabalhando agora)
+  +-- PerformanceCharts.tsx (todos os gráficos)
+  +-- MemberRanking.tsx (ranking com medalhas)
+  +-- TimeDetailTabs.tsx (tabs por usuário/demanda)
+      +-- UserTimeDetail.tsx (detalhes por usuário)
+      +-- DemandTimeDetail.tsx (detalhes por demanda)
 ```
 
-### 3. Componentes Visuais
+### Fluxo de Dados
 
-**Cores utilizadas:**
-- Laranja primário: RGB(242, 135, 5) - #F28705
-- Laranja escuro: RGB(217, 82, 4) - #D95204
-- Laranja claro: RGB(242, 159, 5) - #F29F05
-- Fundo cinza: RGB(248, 248, 248)
-- Texto: RGB(29, 29, 29) - #1D1D1D
-
-**Elementos visuais:**
-- Barras de progresso coloridas
-- Ícones de status (usando desenhos geométricos)
-- Linhas divisórias com gradiente laranja
-- Cards com bordas arredondadas e sombras sutis
-
-### 4. Arquivos a Modificar
-
-| Arquivo | Ação |
-|---------|------|
-| `src/lib/pdfExport.ts` | **Criar** - Utilitário completo de exportação |
-| `src/pages/BoardSummary.tsx` | **Modificar** - Usar novo utilitário |
-| `src/pages/SharedBoardSummary.tsx` | **Modificar** - Usar novo utilitário |
-
-### 5. Funcionalidades do Novo Utilitário
-
-```typescript
-// Funções principais
-export async function generateBoardSummaryPDF(params: {
-  boardName: string;
-  createdAt: Date;
-  summaryText: string;
-  analytics: BoardAnalytics;
-}): Promise<void>
-
-// Funções auxiliares internas
-- addHeader(): Adiciona logo e título
-- addQuickStats(): Adiciona cards de métricas
-- addSectionTitle(): Adiciona títulos de seção estilizados
-- addMarkdownContent(): Parseia e formata o markdown
-- addMemberTable(): Tabela de membros com jspdf-autotable
-- addTimeTable(): Tabela de tempo investido
-- addFooter(): Rodapé com copyright em cada página
-```
-
-### 6. Texto de Copyright
-```
-© 2026 Soma+ · Gestão Inteligente de Demandas
-Todos os direitos reservados. Este documento foi gerado automaticamente.
-A reprodução ou distribuição não autorizada é proibida.
+```text
+BoardContext (quadro selecionado)
+       |
+       v
+useBoardTimeEntries -> Entries com realtime
+       |
+       v
+useBoardMembersWithTime -> Membros + tempo + role
+       |
+       v
+Componentes visuais com cálculos locais (useMemo)
 ```
 
 ---
 
-## Detalhes Técnicos
+## Layout da Interface
 
-### Conversão do Logo para Base64
-O logo será convertido para base64 e embutido diretamente no código para garantir que funcione offline e sem dependências externas.
+### Mobile (< 768px)
+```text
++--------------------------------+
+| Header + Quadro Atual          |
++--------------------------------+
+| Card: Tempo Total              |
++--------------------------------+
+| Card: Membros Ativos           |
++--------------------------------+
+| "Trabalhando Agora" (scroll h) |
++--------------------------------+
+| Filtros (colapsível)           |
++--------------------------------+
+| Tabs: Usuários | Demandas      |
++--------------------------------+
+| Lista expandível               |
++--------------------------------+
+```
 
-### Suporte a Múltiplas Páginas
-O jsPDF com autoTable já suporta paginação automática. Adicionaremos:
-- Cabeçalho repetido em cada página
-- Numeração de páginas no rodapé
-- Copyright em todas as páginas
+### Desktop (>= 1024px)
+```text
++------------------+------------------+
+| Header + Quadro  |   Botão Export   |
++------------------+------------------+
+| Stats Card 1 | Stats Card 2 | ... 4 |
++------------------------------------------+
+| Seção "Trabalhando Agora" (3 colunas)    |
++------------------------------------------+
+| Gráfico Pizza    | Gráfico Barras        |
++------------------------------------------+
+| Ranking de Membros (com medalhas)        |
++------------------------------------------+
+| Filtros                                  |
++------------------------------------------+
+| Tabs: Por Usuário | Por Demanda          |
++------------------------------------------+
+| Lista detalhada expansível               |
++------------------------------------------+
+```
 
-### Tratamento de Texto Longo
-- Quebra automática de linhas
-- Verificação de espaço restante na página
-- Criação de nova página quando necessário
+---
 
-### Qualidade do PDF
-- Resolução otimizada para impressão
-- Compressão de imagens
-- Metadados do documento (título, autor, assunto)
+## Implementação em Etapas
+
+### Etapa 1: Preparação dos Hooks
+- Modificar `useBoardTimeEntries` para incluir role
+- Criar aggregações para gráficos de tendência
+- Garantir realtime funcionando corretamente
+
+### Etapa 2: Refatorar TimeManagement.tsx
+- Dividir em componentes menores
+- Implementar novo layout responsivo
+- Melhorar organização visual
+
+### Etapa 3: Seção "Trabalhando Agora"
+- Destacar timers ativos
+- Timer incrementando em tempo real
+- Cards visuais com animações
+
+### Etapa 4: Gráficos de Desempenho
+- Distribuição por usuário (Pie/Donut)
+- Top demandas (Bar horizontal)
+- Manter os gráficos existentes funcionando
+
+### Etapa 5: Ranking de Membros
+- Visual com medalhas (1º, 2º, 3º)
+- Barras de progresso relativas
+- Indicadores de timer ativo
+- Incluir TODOS os membros do quadro
+
+### Etapa 6: Detalhamento (Tabs)
+- Tab por Usuário: expandir para ver demandas
+- Tab por Demanda: expandir para ver usuários
+- Timers ao vivo nas expansões
+
+### Etapa 7: Responsividade
+- Testar em mobile, tablet e desktop
+- Ajustar breakpoints
+- Garantir usabilidade em toque
+
+---
+
+## Arquivos que serão modificados
+
+| Arquivo | Ação |
+|---------|------|
+| `src/pages/TimeManagement.tsx` | Refatoração completa |
+| `src/hooks/useBoardTimeEntries.ts` | Adicionar role e melhorias |
+| `src/components/LiveUserTimeRow.tsx` | Melhorias visuais |
+| `src/components/ActiveDemandCard.tsx` | Melhorias responsivas |
+| `src/components/UserDetailTimeRow.tsx` | Ajustes |
+| `src/components/DemandDetailTimeRow.tsx` | Ajustes |
 
 ---
 
 ## Resultado Esperado
-Um PDF profissional e visualmente atraente que:
-- Representa fielmente a identidade visual do Soma+
-- Apresenta os dados de forma clara e organizada
-- Inclui todas as informações legais necessárias
-- Funciona em qualquer dispositivo sem dependências externas
-- Suporta múltiplas páginas automaticamente
+
+Uma tela de gerenciamento de tempo profissional que permite:
+- Ver instantaneamente quem está trabalhando e em qual demanda
+- Acompanhar tempo em tempo real com incremento a cada segundo
+- Analisar distribuição de tempo por gráficos claros
+- Identificar top performers pelo ranking
+- Filtrar por período, usuário e status de entrega
+- Detalhar tempo por usuário ou por demanda
+- Usar confortavelmente em qualquer dispositivo
+- Dados sempre atualizados automaticamente ao trocar de quadro
