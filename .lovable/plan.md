@@ -1,219 +1,154 @@
 
-# Plano: Refatoração Completa da Tela de Gerenciamento de Tempo
+# Plano: Verificação e Correção do Fluxo de Recuperação de Senha
 
 ## Resumo Executivo
-Redesenhar completamente a tela de Gerenciamento de Tempo para fornecer uma experiência de gestão completa, com foco em visibilidade em tempo real das atividades, rankings competitivos, gráficos de desempenho detalhados e interface 100% responsiva.
+
+Após análise detalhada do código, identifiquei que o sistema tem duas formas de envio de email:
+
+1. **Emails Transacionais** (notificações, ajustes): Usam a edge function `send-email` com Resend ✓
+2. **Emails de Autenticação** (recuperação de senha): Usam o sistema nativo do Supabase Auth
+
+O problema potencial é que os emails de recuperação de senha podem não estar sendo enviados corretamente porque o **SMTP customizado do Resend não está configurado nas configurações de autenticação do Supabase**.
 
 ---
 
-## O que será entregue
+## Análise do Fluxo Atual
 
-### 1. Dashboard Principal Renovado
-- Cards de estatísticas com visual moderno e animações
-- Indicadores de atividade ao vivo (timers ativos) em destaque
-- Tempo total do quadro com atualização em tempo real
-- Contadores de membros, demandas e médias
-
-### 2. Seção "Trabalhando Agora" (Destaque)
-- Cards grandes mostrando quem está trabalhando neste momento
-- Nome do usuário, demanda atual, e timer ao vivo incrementando a cada segundo
-- Avatar do usuário com indicador visual pulsante
-- Link direto para a demanda sendo trabalhada
-
-### 3. Gráficos de Desempenho Detalhados
-- **Distribuição de Tempo por Usuário**: Gráfico de pizza/donut mostrando proporção
-- **Top Demandas por Tempo**: Gráfico de barras horizontal
-- **Evolução Diária/Semanal**: Novo gráfico de linha mostrando tendência de produtividade
-- **Tempo por Status**: Novo gráfico mostrando onde o tempo está sendo gasto
-
-### 4. Ranking de Membros Aprimorado
-- Ranking visual com medalhas (ouro, prata, bronze)
-- Indicação de quem está trabalhando agora
-- Barras de progresso mostrando proporção relativa
-- Quantidade de demandas e tempo total por membro
-- Filtragem por role (Admin, Coordenador, Agente)
-
-### 5. Detalhamento por Usuário
-- Expandir para ver todas as demandas trabalhadas
-- Tempo dedicado a cada demanda
-- Status e prioridade de cada demanda
-- Timer ao vivo se estiver trabalhando
-
-### 6. Detalhamento por Demanda
-- Expandir para ver todos os usuários que trabalharam
-- Tempo de cada usuário na demanda
-- Indicadores visuais de timer ativo
-
-### 7. Escopo por Quadro
-- Ao trocar de quadro, todos os dados atualizam automaticamente
-- Membros, tempos e estatísticas são filtrados pelo quadro selecionado
-- Título do quadro atual exibido de forma clara
-
-### 8. Interface Responsiva
-- **Mobile**: Layout vertical, cards empilhados, gráficos adaptados
-- **Tablet**: Grid de 2 colunas, filtros colapsáveis
-- **Desktop**: Grid completo, visualização lado a lado
-
----
-
-## Arquitetura Técnica
-
-### Backend (já existente)
-A tabela `demand_time_entries` já possui a estrutura necessária:
-- `id`, `demand_id`, `user_id`, `started_at`, `ended_at`, `duration_seconds`
-
-Timer ativo = entrada onde `ended_at IS NULL`
-
-### Hooks a serem criados/modificados:
-
-1. **`useBoardTimeStats`** (novo)
-   - Estatísticas agregadas do quadro: tempo total, médias, tendências
-   - Dados para gráficos de evolução temporal
-
-2. **Modificar `useBoardTimeEntries`**
-   - Adicionar dados de role do usuário (admin/moderator/executor)
-   - Melhorar agregação para gráficos
-
-3. **Modificar `useBoardMembersWithTime`**
-   - Incluir role do membro para filtragem
-   - Adicionar contagem de demandas entregues vs em andamento
-
-### Componentes a criar:
+### 1. Solicitação de Reset
 
 ```text
-src/pages/TimeManagement.tsx (refatorar completamente)
-  |
-  +-- StatsOverviewCards.tsx (cards de estatísticas)
-  +-- ActiveWorkSection.tsx (quem está trabalhando agora)
-  +-- PerformanceCharts.tsx (todos os gráficos)
-  +-- MemberRanking.tsx (ranking com medalhas)
-  +-- TimeDetailTabs.tsx (tabs por usuário/demanda)
-      +-- UserTimeDetail.tsx (detalhes por usuário)
-      +-- DemandTimeDetail.tsx (detalhes por demanda)
+┌─────────────────┐      ┌──────────────┐      ┌─────────────────┐
+│  Auth.tsx       │ ──── │  auth.tsx    │ ──── │  Supabase Auth  │
+│  (Formulário)   │      │  (Context)   │      │  (Envia Email)  │
+└─────────────────┘      └──────────────┘      └─────────────────┘
+         │                                              │
+         │  Email do usuário                            │
+         ├──────────────────────────────────────────────┤
+                                                        │
+                                               ┌────────▼────────┐
+                                               │  Email Default  │
+                                               │  Supabase SMTP  │
+                                               │  (Rate Limited) │
+                                               └─────────────────┘
 ```
 
-### Fluxo de Dados
+### 2. Recebimento do Link
+- Usuário recebe email com link: `https://pla.soma.lefil.com.br/reset-password#access_token=...&type=recovery`
 
-```text
-BoardContext (quadro selecionado)
-       |
-       v
-useBoardTimeEntries -> Entries com realtime
-       |
-       v
-useBoardMembersWithTime -> Membros + tempo + role
-       |
-       v
-Componentes visuais com cálculos locais (useMemo)
-```
+### 3. Página ResetPassword.tsx
+- Detecta o token na URL
+- Escuta evento `PASSWORD_RECOVERY`
+- Permite alterar senha
 
 ---
 
-## Layout da Interface
+## Problemas Identificados
 
-### Mobile (< 768px)
-```text
-+--------------------------------+
-| Header + Quadro Atual          |
-+--------------------------------+
-| Card: Tempo Total              |
-+--------------------------------+
-| Card: Membros Ativos           |
-+--------------------------------+
-| "Trabalhando Agora" (scroll h) |
-+--------------------------------+
-| Filtros (colapsível)           |
-+--------------------------------+
-| Tabs: Usuários | Demandas      |
-+--------------------------------+
-| Lista expandível               |
-+--------------------------------+
+### Problema 1: SMTP do Resend Não Configurado para Auth
+
+O Resend está sendo usado apenas nas edge functions personalizadas (`send-email`, `notify-demand-request`). Os emails de autenticação do Supabase (incluindo recuperação de senha) usam o SMTP padrão do Supabase que:
+- Tem rate limits baixos (3 emails/hora)
+- Pode cair em spam
+- Usa domínio genérico
+
+**Solução**: Configurar SMTP customizado nas configurações de autenticação do Supabase com as credenciais do Resend.
+
+### Problema 2: URL de Redirecionamento
+
+A URL `redirectTo` precisa estar na lista de URLs permitidas:
+- `https://pla.soma.lefil.com.br/reset-password`
+- `https://id-preview--74839b7a-ef2a-44d4-8ac6-301dbb814ccc.lovable.app/reset-password`
+
+---
+
+## Passos para Correção
+
+### Passo 1: Configurar SMTP Customizado no Supabase Auth
+
+Para que os emails de recuperação de senha sejam enviados via Resend, é necessário acessar as configurações do backend (Lovable Cloud) e configurar:
+
+| Campo | Valor |
+|-------|-------|
+| **SMTP Host** | `smtp.resend.com` |
+| **SMTP Port** | `465` (SSL) ou `587` (TLS) |
+| **SMTP User** | `resend` |
+| **SMTP Password** | Sua chave de API do Resend |
+| **Sender Email** | `noreply@pla.soma.lefil.com.br` |
+| **Sender Name** | `SoMA+` |
+
+### Passo 2: Verificar URLs Permitidas
+
+Nas configurações de autenticação, adicionar URLs de redirecionamento:
+- `https://pla.soma.lefil.com.br/**`
+- `https://*.lovable.app/**`
+
+### Passo 3: Teste End-to-End
+
+Após configuração, testar:
+1. Solicitar recuperação de senha
+2. Verificar recebimento do email
+3. Clicar no link e verificar redirecionamento
+4. Alterar senha com sucesso
+
+---
+
+## Seção Técnica
+
+### Código Atual (Correto)
+
+**src/lib/auth.tsx** - Função resetPassword:
+```typescript
+const resetPassword = async (email: string) => {
+  const redirectUrl = `${baseUrl}/reset-password`;
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: redirectUrl,
+  });
+  if (error) throw error;
+};
 ```
 
-### Desktop (>= 1024px)
-```text
-+------------------+------------------+
-| Header + Quadro  |   Botão Export   |
-+------------------+------------------+
-| Stats Card 1 | Stats Card 2 | ... 4 |
-+------------------------------------------+
-| Seção "Trabalhando Agora" (3 colunas)    |
-+------------------------------------------+
-| Gráfico Pizza    | Gráfico Barras        |
-+------------------------------------------+
-| Ranking de Membros (com medalhas)        |
-+------------------------------------------+
-| Filtros                                  |
-+------------------------------------------+
-| Tabs: Por Usuário | Por Demanda          |
-+------------------------------------------+
-| Lista detalhada expansível               |
-+------------------------------------------+
+**src/pages/ResetPassword.tsx** - Detecção de Token:
+```typescript
+// Verifica token na URL
+if (params.access_token && params.type === "recovery") {
+  setPageState("loading");
+}
+
+// Escuta evento PASSWORD_RECOVERY
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === "PASSWORD_RECOVERY") {
+    setPageState("ready");
+  }
+});
 ```
 
----
+### Configuração SMTP Necessária
 
-## Implementação em Etapas
+Para habilitar o Resend como SMTP para autenticação, você precisa acessar:
 
-### Etapa 1: Preparação dos Hooks
-- Modificar `useBoardTimeEntries` para incluir role
-- Criar aggregações para gráficos de tendência
-- Garantir realtime funcionando corretamente
+1. **Lovable Cloud** → **Authentication** → **SMTP Settings**
+2. Habilitar "Custom SMTP"
+3. Inserir credenciais do Resend
 
-### Etapa 2: Refatorar TimeManagement.tsx
-- Dividir em componentes menores
-- Implementar novo layout responsivo
-- Melhorar organização visual
+### Edge Function vs Supabase Auth
 
-### Etapa 3: Seção "Trabalhando Agora"
-- Destacar timers ativos
-- Timer incrementando em tempo real
-- Cards visuais com animações
-
-### Etapa 4: Gráficos de Desempenho
-- Distribuição por usuário (Pie/Donut)
-- Top demandas (Bar horizontal)
-- Manter os gráficos existentes funcionando
-
-### Etapa 5: Ranking de Membros
-- Visual com medalhas (1º, 2º, 3º)
-- Barras de progresso relativas
-- Indicadores de timer ativo
-- Incluir TODOS os membros do quadro
-
-### Etapa 6: Detalhamento (Tabs)
-- Tab por Usuário: expandir para ver demandas
-- Tab por Demanda: expandir para ver usuários
-- Timers ao vivo nas expansões
-
-### Etapa 7: Responsividade
-- Testar em mobile, tablet e desktop
-- Ajustar breakpoints
-- Garantir usabilidade em toque
+| Funcionalidade | Método | Status |
+|----------------|--------|--------|
+| Notificações de demanda | Edge Function `send-email` | ✅ Usando Resend |
+| Notificações de ajuste | Edge Function `notify-demand-request` | ✅ Usando Resend |
+| Recuperação de senha | Supabase Auth nativo | ⚠️ SMTP padrão |
+| Confirmação de email | Supabase Auth nativo | ⚠️ SMTP padrão |
 
 ---
 
-## Arquivos que serão modificados
+## Ações Necessárias
 
-| Arquivo | Ação |
-|---------|------|
-| `src/pages/TimeManagement.tsx` | Refatoração completa |
-| `src/hooks/useBoardTimeEntries.ts` | Adicionar role e melhorias |
-| `src/components/LiveUserTimeRow.tsx` | Melhorias visuais |
-| `src/components/ActiveDemandCard.tsx` | Melhorias responsivas |
-| `src/components/UserDetailTimeRow.tsx` | Ajustes |
-| `src/components/DemandDetailTimeRow.tsx` | Ajustes |
+1. **Configurar SMTP Resend** nas configurações de autenticação do Lovable Cloud
+2. **Verificar domínio** - O domínio `pla.soma.lefil.com.br` precisa estar verificado no Resend
+3. **Testar fluxo completo** após configuração
 
 ---
 
-## Resultado Esperado
+## Observações
 
-Uma tela de gerenciamento de tempo profissional que permite:
-- Ver instantaneamente quem está trabalhando e em qual demanda
-- Acompanhar tempo em tempo real com incremento a cada segundo
-- Analisar distribuição de tempo por gráficos claros
-- Identificar top performers pelo ranking
-- Filtrar por período, usuário e status de entrega
-- Detalhar tempo por usuário ou por demanda
-- Usar confortavelmente em qualquer dispositivo
-- Dados sempre atualizados automaticamente ao trocar de quadro
+O código frontend está corretamente implementado. O problema está na **configuração de infraestrutura** (SMTP não configurado para Auth). Após configurar o SMTP customizado com Resend, os emails de recuperação de senha serão enviados corretamente pelo mesmo serviço já utilizado nas outras funcionalidades do sistema.
