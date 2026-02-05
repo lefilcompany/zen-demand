@@ -9,7 +9,14 @@ export function formatTimeDisplay(totalSeconds: number): string | null {
   const seconds = Math.floor(totalSeconds % 60);
   
   const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${pad(days)}:${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+  
+  // If there are days, show them separately with "d" suffix
+  if (days > 0) {
+    return `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+  }
+  
+  // Otherwise, just show hours:minutes:seconds
+  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 }
 
 export function getTotalTimeSinceCreation(createdAt?: string, endAt?: string): string | null {
