@@ -301,8 +301,10 @@ export function useBoardMembersWithTime(boardId: string | null) {
       }
     }
 
-    // Map all members with their time data
-    return query.data.map(member => {
+    // Map all members with their time data (excluding requesters - only internal members)
+    return query.data
+      .filter(member => member.role !== 'requester') // Exclude requesters - only show admins, moderators, executors
+      .map(member => {
       const userEntries = entriesByUser.get(member.userId) || [];
       const demandData = demandDataByUser.get(member.userId) || { 
         demandIds: new Set(), 
