@@ -157,23 +157,23 @@ export function AppSidebar() {
                   : undefined;
                 
                 return (
-                  <SidebarMenuItem key={item.title} className="relative" data-tour={tourId}>
+                <SidebarMenuItem key={item.title} className="relative" data-tour={tourId}>
                     <SidebarMenuButton asChild tooltip={item.title} size={isMobile ? "lg" : "default"}>
-                      <NavLink to={item.url} end={item.url === "/"} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[44px] md:min-h-0 flex-nowrap" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                      <NavLink to={item.url} end={item.url === "/"} onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[44px] md:min-h-0" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                         <item.icon className="h-5 w-5 md:h-4 md:w-4 shrink-0" />
-                        {showText && <span className="text-base md:text-sm truncate">{item.title}</span>}
-                        {showText && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
-                          <Badge variant="destructive" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs shrink-0">
-                            {pendingDemandRequests}
-                          </Badge>
-                        )}
-                        {showText && (item as any).showReturnedBadge && typeof returnedRequestsCount === "number" && returnedRequestsCount > 0 && (
-                          <Badge variant="outline" className="ml-auto h-5 min-w-5 flex items-center justify-center text-xs border-amber-500 text-amber-500 bg-amber-500/10 shrink-0">
-                            {returnedRequestsCount}
-                          </Badge>
-                        )}
+                        {showText && <span className="text-base md:text-sm flex-1">{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
+                    {showText && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
+                      <Badge variant="destructive" className="absolute right-2 top-1/2 -translate-y-1/2 h-5 min-w-5 flex items-center justify-center text-xs">
+                        {pendingDemandRequests}
+                      </Badge>
+                    )}
+                    {showText && (item as any).showReturnedBadge && typeof returnedRequestsCount === "number" && returnedRequestsCount > 0 && (
+                      <Badge variant="outline" className="absolute right-2 top-1/2 -translate-y-1/2 h-5 min-w-5 flex items-center justify-center text-xs border-amber-500 text-amber-500 bg-amber-500/10">
+                        {returnedRequestsCount}
+                      </Badge>
+                    )}
                     {isCollapsed && !isMobile && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
                       <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1">
                         {pendingDemandRequests}
