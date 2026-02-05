@@ -457,13 +457,6 @@ export default function TimeManagement() {
         isLoading={isLoading}
       />
 
-      {/* Member Workload Ranking */}
-      <MemberRanking
-        members={filteredMemberStats}
-        activeTimersCount={totals.activeTimers}
-        maxUserTime={filteredMemberStats.length > 0 ? Math.max(...filteredMemberStats.map(m => m.totalSeconds)) : 0}
-      />
-
       {/* Detail Tabs */}
       <TimeDetailTabs
         activeTab={activeTab}
