@@ -110,12 +110,12 @@ export default function GetStarted() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-background">
+    <div className="flex flex-col lg:flex-row h-screen bg-background">
       {/* Left side - Hero/Branding */}
       <GetStartedHero />
 
       {/* Right side - Content */}
-      <div className="flex-1 lg:w-3/5 xl:w-[55%] flex flex-col overflow-y-auto">
+      <div className="flex-1 lg:w-3/5 xl:w-[55%] flex flex-col min-h-0 overflow-y-auto">
         <div className="flex-1 flex flex-col items-center justify-start p-4 sm:p-6 lg:p-8 xl:p-12">
           <div className="w-full max-w-5xl">
             {/* Step indicator */}
