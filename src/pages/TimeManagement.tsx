@@ -11,7 +11,7 @@ import { useBoardTimeEntries, useBoardMembersWithTime, BoardTimeEntry, BoardMemb
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { 
   StatsOverviewCards, 
-  TimeFilters,
+  TimeFiltersPopover,
   TimeDetailTabs 
 } from "@/components/time-management";
 import { PeriodFilter, getPeriodDates } from "@/components/time-management/TimeFilters";
@@ -412,17 +412,33 @@ export default function TimeManagement() {
       <PageBreadcrumb items={[{ label: "Gerenciamento de Tempo" }]} />
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Gerenciamento de Tempo</h1>
-          <p className="text-muted-foreground">
-            Acompanhe o tempo gasto por cada membro da equipe nas demandas.
-          </p>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">Gerenciamento de Tempo</h1>
+            <p className="text-muted-foreground text-sm">
+              Acompanhe o tempo gasto por cada membro da equipe.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <TimeFiltersPopover
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              userFilter={userFilter}
+              onUserFilterChange={setUserFilter}
+              periodFilter={periodFilter}
+              onPeriodFilterChange={setPeriodFilter}
+              uniqueUsers={uniqueUsers}
+              startDate={startDate}
+              endDate={endDate}
+              onClearFilters={handleClearFilters}
+            />
+            <Button onClick={exportToPDF} variant="outline" size="sm" className="gap-2 shrink-0">
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Exportar PDF</span>
+            </Button>
+          </div>
         </div>
-        <Button onClick={exportToPDF} variant="outline" className="gap-2 shrink-0">
-          <Download className="h-4 w-4" />
-          Exportar PDF
-        </Button>
       </div>
 
       {/* Stats Overview Cards */}
@@ -436,20 +452,6 @@ export default function TimeManagement() {
         avgTimePerUser={totals.avgTimePerUser}
         avgTimePerDemand={totals.avgTimePerDemand}
         isLoading={isLoading}
-      />
-
-
-      {/* Filters */}
-      <TimeFilters
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        userFilter={userFilter}
-        onUserFilterChange={setUserFilter}
-        periodFilter={periodFilter}
-        onPeriodFilterChange={setPeriodFilter}
-        uniqueUsers={uniqueUsers}
-        startDate={startDate}
-        endDate={endDate}
       />
 
       {/* Detail Tabs */}
