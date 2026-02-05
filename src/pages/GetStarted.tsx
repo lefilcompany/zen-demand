@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { usePlans, Plan } from "@/hooks/usePlans";
@@ -17,7 +18,7 @@ import { ConfirmStep } from "@/components/get-started/ConfirmStep";
 export default function GetStarted() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
-  const { user, loading: authLoading, signIn, signUp } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { data: plans, isLoading: plansLoading } = usePlans();
   const { data: userSub, isLoading: subLoading } = useUserSubscription();
   const createTeam = useCreateTeam();
@@ -57,6 +58,24 @@ export default function GetStarted() {
     } else {
       setStep(2);
     }
+  };
+
+  // Direct auth functions that do NOT navigate away
+  const handleSignIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  };
+
+  const handleSignUp = async (email: string, password: string, fullName: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/get-started`,
+        data: { full_name: fullName },
+      },
+    });
+    if (error) throw error;
   };
 
   const handleLoginSuccess = () => {
@@ -149,8 +168,8 @@ export default function GetStarted() {
                   onBack={() => setStep(1)}
                   onLoginSuccess={handleLoginSuccess}
                   onSignupSuccess={handleSignupSuccess}
-                  signIn={signIn}
-                  signUp={signUp}
+                  signIn={handleSignIn}
+                  signUp={handleSignUp}
                 />
               )}
 
