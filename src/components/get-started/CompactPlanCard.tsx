@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Zap, Star, Building2, Crown, Sparkles } from "lucide-react";
+import { Zap, Star, Building2, Crown, Sparkles, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/priceUtils";
 import { Plan } from "@/hooks/usePlans";
@@ -10,6 +10,7 @@ import { Plan } from "@/hooks/usePlans";
 interface CompactPlanCardProps {
   plan: Plan;
   isPopular?: boolean;
+  isCurrent?: boolean;
   onSelect: (plan: Plan) => void;
   billingPeriod: "monthly" | "yearly";
 }
@@ -76,7 +77,7 @@ export const planThemes: Record<string, {
   },
 };
 
-export function CompactPlanCard({ plan, isPopular = false, onSelect, billingPeriod }: CompactPlanCardProps) {
+export function CompactPlanCard({ plan, isPopular = false, isCurrent = false, onSelect, billingPeriod }: CompactPlanCardProps) {
   const { t } = useTranslation();
   const theme = planThemes[plan.slug] ?? planThemes.starter;
   const Icon = theme.icon;
@@ -89,15 +90,26 @@ export function CompactPlanCard({ plan, isPopular = false, onSelect, billingPeri
       className={cn(
         "group relative flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-visible cursor-pointer border-2",
         theme.border,
-        isPopular && "scale-[1.02] z-10 shadow-lg"
+        isPopular && !isCurrent && "scale-[1.02] z-10 shadow-lg",
+        isCurrent && "ring-2 ring-offset-2 ring-primary scale-[1.02] z-10 shadow-lg"
       )}
       onClick={() => onSelect(plan)}
     >
       {/* Top accent line - always visible */}
       <div className={cn("absolute -top-px left-0 right-0 h-1 rounded-t-lg bg-gradient-to-r", theme.accentLine)} />
 
-      {/* Popular badge */}
-      {isPopular && (
+      {/* Current plan badge */}
+      {isCurrent && (
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
+          <Badge className="bg-gradient-to-r from-emerald-500 to-green-500 text-white border-0 shadow-lg shadow-emerald-500/30 px-3 py-0.5 text-[10px] whitespace-nowrap">
+            <Check className="h-3 w-3 mr-1" />
+            {t("pricing.currentPlan")}
+          </Badge>
+        </div>
+      )}
+
+      {/* Popular badge (only if not current) */}
+      {isPopular && !isCurrent && (
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
           <Badge className="bg-gradient-to-r from-primary to-orange-500 text-white border-0 shadow-lg shadow-primary/30 px-3 py-0.5 text-[10px]">
             <Sparkles className="h-3 w-3 mr-1" />
@@ -142,7 +154,11 @@ export function CompactPlanCard({ plan, isPopular = false, onSelect, billingPeri
           size="sm"
           className={cn("w-full font-semibold transition-all duration-300 border-0", theme.btnClass)}
         >
-          {plan.slug === "enterprise" ? t("pricing.contactSales") : t("pricing.selectPlan")}
+          {isCurrent
+            ? t("pricing.currentPlan")
+            : plan.slug === "enterprise"
+              ? t("pricing.contactSales")
+              : t("pricing.selectPlan")}
         </Button>
       </CardContent>
     </Card>

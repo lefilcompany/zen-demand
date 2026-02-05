@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { usePlans, Plan } from "@/hooks/usePlans";
 import { useCreateTeam } from "@/hooks/useTeams";
 import { useCreateCheckout } from "@/hooks/useCheckout";
+import { useUserSubscription } from "@/hooks/useUserSubscription";
 import { StepIndicator } from "@/components/get-started/StepIndicator";
 import { GetStartedHero } from "@/components/get-started/GetStartedHero";
 import { PlanSelectionStep } from "@/components/get-started/PlanSelectionStep";
@@ -18,8 +19,12 @@ export default function GetStarted() {
   const [searchParams] = useSearchParams();
   const { user, loading: authLoading, signIn, signUp } = useAuth();
   const { data: plans, isLoading: plansLoading } = usePlans();
+  const { data: userSub, isLoading: subLoading } = useUserSubscription();
   const createTeam = useCreateTeam();
   const createCheckout = useCreateCheckout();
+
+  const currentPlanSlug = userSub?.subscription?.plan?.slug ?? null;
+  const existingTeamId = userSub?.teamId ?? null;
 
   // Multi-step state
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -69,20 +74,28 @@ export default function GetStarted() {
 
     setIsProcessing(true);
     try {
-      // 1. Create team
-      const team = await createTeam.mutateAsync({
-        name: teamData.name,
-        description: teamData.description,
-        accessCode: teamData.accessCode,
-      });
+      let teamId: string;
 
-      // 2. Create checkout session
+      // If user already has a team, reuse it for upgrade
+      if (existingTeamId) {
+        teamId = existingTeamId;
+      } else {
+        // Create new team
+        const team = await createTeam.mutateAsync({
+          name: teamData.name,
+          description: teamData.description,
+          accessCode: teamData.accessCode,
+        });
+        teamId = team.id;
+      }
+
+      // Create checkout session
       const checkoutUrl = await createCheckout.mutateAsync({
         planSlug: selectedPlan.slug,
-        teamId: team.id,
+        teamId,
       });
 
-      // 3. Redirect to Stripe
+      // Redirect to Stripe
       window.location.href = checkoutUrl;
     } catch (error: unknown) {
       console.error("Error in checkout flow:", error);
@@ -93,7 +106,7 @@ export default function GetStarted() {
   };
 
   // Loading state
-  if (authLoading || plansLoading) {
+  if (authLoading || plansLoading || (user && subLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -124,7 +137,8 @@ export default function GetStarted() {
               {step === 1 && (
                 <PlanSelectionStep 
                   plans={plans} 
-                  onSelectPlan={handlePlanSelect} 
+                  onSelectPlan={handlePlanSelect}
+                  currentPlanSlug={currentPlanSlug}
                 />
               )}
 
@@ -147,6 +161,8 @@ export default function GetStarted() {
                   onBack={() => setStep(1)}
                   onFinish={handleFinishAndPay}
                   isProcessing={isProcessing}
+                  currentPlanSlug={currentPlanSlug}
+                  existingTeamId={existingTeamId}
                 />
               )}
             </div>
