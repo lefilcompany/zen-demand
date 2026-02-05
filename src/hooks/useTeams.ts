@@ -68,6 +68,27 @@ export function useCreateTeam() {
         throw new Error("Você precisa estar logado para criar uma equipe");
       }
       const userId = authData.user.id;
+      const userFullName = authData.user.user_metadata?.full_name || "Usuário";
+
+      // Ensure profile exists (handles race condition with auth trigger)
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (!existingProfile) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert({
+            id: userId,
+            full_name: userFullName,
+            avatar_url: authData.user.user_metadata?.avatar_url || null,
+          });
+        if (profileError && profileError.code !== "23505") {
+          throw profileError;
+        }
+      }
 
       const { data: team, error: teamError } = await supabase
         .from("teams")
