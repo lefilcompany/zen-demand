@@ -181,31 +181,18 @@ export function useBoardSummaryHistory(boardId: string | undefined) {
 }
 
 export async function getSharedSummary(token: string) {
-  const { data: tokenData, error: tokenError } = await supabase
-    .from("board_summary_share_tokens")
-    .select(`
-      id,
-      is_active,
-      expires_at,
-      summary:board_summary_history(
-        id,
-        summary_text,
-        analytics_data,
-        created_at,
-        board:boards(name)
-      )
-    `)
-    .eq("token", token)
-    .eq("is_active", true)
-    .single();
+  // Use RPC function that bypasses RLS for public access
+  const { data, error } = await supabase
+    .rpc('get_shared_board_summary', { p_token: token });
 
-  if (tokenError || !tokenData) {
+  if (error) {
+    console.error("Error fetching shared summary:", error);
     throw new Error("Link inválido ou expirado");
   }
 
-  if (tokenData.expires_at && new Date(tokenData.expires_at) < new Date()) {
-    throw new Error("Link expirado");
+  if (!data) {
+    throw new Error("Link inválido ou expirado");
   }
 
-  return tokenData.summary;
+  return data;
 }
