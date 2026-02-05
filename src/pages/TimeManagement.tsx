@@ -408,7 +408,7 @@ export default function TimeManagement() {
   }
 
   return (
-    <div className="container mx-auto space-y-6">
+    <div className="container mx-auto space-y-6 px-0">
       <PageBreadcrumb items={[{ label: "Gerenciamento de Tempo" }]} />
 
       {/* Header */}
