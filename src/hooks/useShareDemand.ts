@@ -111,13 +111,14 @@ export function useSharedDemand(token: string | null) {
       }
 
       // Then fetch the demand with related data
+      // SECURITY: Only select specific team fields to avoid exposing access_code
       const { data: demand, error: demandError } = await supabase
         .from("demands")
         .select(`
           *,
           demand_statuses(name, color),
           profiles!demands_created_by_fkey(full_name, avatar_url),
-          teams(name),
+          teams(id, name, description),
           services(id, name),
           demand_assignees(
             user_id,
