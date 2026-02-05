@@ -65,6 +65,12 @@ export function TimeFiltersPopover({
     ? uniqueUsers.find(u => u.id === userFilter)?.full_name || "Usuário"
     : null;
 
+  // Count only search and user filters (period is outside now)
+  const filtersInsideCount = [
+    searchTerm !== "",
+    userFilter !== "all",
+  ].filter(Boolean).length;
+
   const FilterContent = () => (
     <div className="space-y-4">
       {/* Search */}
@@ -96,37 +102,17 @@ export function TimeFiltersPopover({
         </Select>
       </div>
 
-      {/* Period Filter */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Período</label>
-        <Select value={periodFilter} onValueChange={(v) => onPeriodFilterChange(v as PeriodFilter)}>
-          <SelectTrigger className="w-full">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <SelectValue placeholder={periodLabel} />
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            {periodOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
       {/* Period indicator */}
       {periodFilter !== "all" && startDate && endDate && (
         <div className="pt-2 border-t">
           <p className="text-xs text-muted-foreground">
-            {format(startDate, "dd/MM/yyyy")} até {format(endDate, "dd/MM/yyyy")}
+            Período: {format(startDate, "dd/MM/yyyy")} até {format(endDate, "dd/MM/yyyy")}
           </p>
         </div>
       )}
 
       {/* Clear filters */}
-      {activeFiltersCount > 0 && (
+      {filtersInsideCount > 0 && (
         <Button 
           variant="ghost" 
           size="sm" 
@@ -141,41 +127,40 @@ export function TimeFiltersPopover({
   );
 
   const TriggerButton = (
-    <Button variant="outline" size="sm" className="gap-1.5 sm:gap-2 h-8 px-2 sm:px-3">
+    <Button variant="outline" size="sm" className="gap-1.5 h-8 px-2 sm:px-3">
       <Filter className="h-4 w-4" />
-      {activeFiltersCount > 0 && (
+      <span className="hidden sm:inline">Filtros</span>
+      {filtersInsideCount > 0 && (
         <Badge variant="secondary" className="h-5 w-5 p-0 flex items-center justify-center text-xs">
-          {activeFiltersCount}
+          {filtersInsideCount}
         </Badge>
       )}
     </Button>
   );
 
-  // Active filter badges to show in header - simplified for mobile
-  const ActiveFilterBadges = () => (
-    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap overflow-hidden">
-      <Badge variant="outline" className="gap-1 text-[10px] sm:text-xs font-normal px-1.5 sm:px-2 py-0.5 shrink-0">
-        <Calendar className="h-3 w-3" />
-        <span className="hidden xs:inline">{periodLabel}</span>
-        <span className="xs:hidden">{periodFilter === "current_month" ? "Atual" : periodLabel.split(" ")[0]}</span>
-      </Badge>
-      {userLabel && (
-        <Badge variant="outline" className="gap-1 text-[10px] sm:text-xs font-normal px-1.5 sm:px-2 py-0.5 max-w-[100px] truncate">
-          {userLabel}
-        </Badge>
-      )}
-      {searchTerm && (
-        <Badge variant="outline" className="gap-1 text-[10px] sm:text-xs font-normal px-1.5 sm:px-2 py-0.5 max-w-[80px] truncate hidden sm:flex">
-          "{searchTerm}"
-        </Badge>
-      )}
-    </div>
+  // Period selector component to be shown outside the filter
+  const PeriodSelector = () => (
+    <Select value={periodFilter} onValueChange={(v) => onPeriodFilterChange(v as PeriodFilter)}>
+      <SelectTrigger className="h-8 w-auto min-w-[120px] sm:min-w-[140px] text-xs sm:text-sm">
+        <div className="flex items-center gap-1.5">
+          <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+          <SelectValue placeholder={periodLabel} />
+        </div>
+      </SelectTrigger>
+      <SelectContent>
+        {periodOptions.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 
   if (isMobile) {
     return (
-      <div className="flex items-center gap-3">
-        <ActiveFilterBadges />
+      <div className="flex items-center gap-2">
+        <PeriodSelector />
         <Drawer open={open} onOpenChange={setOpen}>
           <DrawerTrigger asChild>
             {TriggerButton}
@@ -194,8 +179,8 @@ export function TimeFiltersPopover({
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <ActiveFilterBadges />
+    <div className="flex items-center gap-2">
+      <PeriodSelector />
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           {TriggerButton}
