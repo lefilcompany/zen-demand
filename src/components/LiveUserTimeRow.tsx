@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Play, Trophy, Medal, Award, Clock, Zap } from "lucide-react";
+import { Play, Trophy, Medal, Award, Clock, Zap, CheckCircle2, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -120,6 +120,18 @@ export function LiveUserTimeRow({ stats, rank, maxTime }: LiveUserTimeRowProps) 
                 <Clock className="h-3 w-3" />
                 {stats.demandCount} demanda{stats.demandCount !== 1 ? 's' : ''}
               </span>
+              {stats.deliveredCount !== undefined && stats.deliveredCount > 0 && (
+                <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle2 className="h-3 w-3" />
+                  {stats.deliveredCount} entregue{stats.deliveredCount !== 1 ? 's' : ''}
+                </span>
+              )}
+              {stats.inProgressCount !== undefined && stats.inProgressCount > 0 && (
+                <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
+                  <Loader2 className="h-3 w-3" />
+                  {stats.inProgressCount} em andamento
+                </span>
+              )}
               {stats.isActive && (
                 <Badge 
                   variant="secondary" 

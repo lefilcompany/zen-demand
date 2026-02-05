@@ -28,6 +28,8 @@ export interface BoardTimeEntry {
   };
 }
 
+export type BoardMemberRole = "admin" | "moderator" | "executor" | "requester";
+
 export interface BoardUserTimeStats {
   userId: string;
   profile: {
@@ -35,10 +37,13 @@ export interface BoardUserTimeStats {
     full_name: string;
     avatar_url: string | null;
   };
+  role?: BoardMemberRole;
   totalSeconds: number;
   isActive: boolean;
   activeStartedAt: string | null;
   demandCount: number;
+  deliveredCount: number;
+  inProgressCount: number;
   entries: BoardTimeEntry[];
 }
 
@@ -49,11 +54,13 @@ export interface BoardMemberWithTime {
     full_name: string;
     avatar_url: string | null;
   };
-  role: string;
+  role: BoardMemberRole;
   totalSeconds: number;
   isActive: boolean;
   activeStartedAt: string | null;
   demandCount: number;
+  deliveredCount: number;
+  inProgressCount: number;
   entries: BoardTimeEntry[];
 }
 
@@ -140,7 +147,11 @@ export function useBoardUserTimeStats(boardId: string | null) {
     if (!entries || entries.length === 0) return [];
 
     const userMap = new Map<string, BoardUserTimeStats>();
-    const userDemands = new Map<string, Set<string>>();
+    const userDemandData = new Map<string, { 
+      demandIds: Set<string>;
+      deliveredIds: Set<string>;
+      inProgressIds: Set<string>;
+    }>();
 
     for (const entry of entries) {
       const userId = entry.user_id;
@@ -148,11 +159,22 @@ export function useBoardUserTimeStats(boardId: string | null) {
       
       const entrySeconds = entry.duration_seconds || 0;
       const isActive = !entry.ended_at;
+      const isDelivered = entry.demand.status?.name?.toLowerCase() === "entregue";
 
-      if (!userDemands.has(userId)) {
-        userDemands.set(userId, new Set());
+      if (!userDemandData.has(userId)) {
+        userDemandData.set(userId, { 
+          demandIds: new Set(), 
+          deliveredIds: new Set(), 
+          inProgressIds: new Set() 
+        });
       }
-      userDemands.get(userId)!.add(entry.demand_id);
+      const demandData = userDemandData.get(userId)!;
+      demandData.demandIds.add(entry.demand_id);
+      if (isDelivered) {
+        demandData.deliveredIds.add(entry.demand_id);
+      } else {
+        demandData.inProgressIds.add(entry.demand_id);
+      }
       
       if (existing) {
         existing.totalSeconds += entrySeconds;
@@ -169,6 +191,8 @@ export function useBoardUserTimeStats(boardId: string | null) {
           isActive,
           activeStartedAt: isActive ? entry.started_at : null,
           demandCount: 0,
+          deliveredCount: 0,
+          inProgressCount: 0,
           entries: [entry],
         });
       }
@@ -176,7 +200,12 @@ export function useBoardUserTimeStats(boardId: string | null) {
 
     // Set demand counts
     for (const [userId, stats] of userMap) {
-      stats.demandCount = userDemands.get(userId)?.size || 0;
+      const demandData = userDemandData.get(userId);
+      if (demandData) {
+        stats.demandCount = demandData.demandIds.size;
+        stats.deliveredCount = demandData.deliveredIds.size;
+        stats.inProgressCount = demandData.inProgressIds.size;
+      }
     }
 
     // Sort by total time descending
@@ -240,25 +269,46 @@ export function useBoardMembersWithTime(boardId: string | null) {
     if (!query.data) return [];
 
     const entriesByUser = new Map<string, BoardTimeEntry[]>();
-    const demandsByUser = new Map<string, Set<string>>();
+    const demandDataByUser = new Map<string, { 
+      demandIds: Set<string>;
+      deliveredIds: Set<string>;
+      inProgressIds: Set<string>;
+    }>();
     
     // Group entries by user
     if (entries) {
       for (const entry of entries) {
         const userId = entry.user_id;
+        const isDelivered = entry.demand.status?.name?.toLowerCase() === "entregue";
+        
         if (!entriesByUser.has(userId)) {
           entriesByUser.set(userId, []);
-          demandsByUser.set(userId, new Set());
+          demandDataByUser.set(userId, { 
+            demandIds: new Set(), 
+            deliveredIds: new Set(), 
+            inProgressIds: new Set() 
+          });
         }
         entriesByUser.get(userId)!.push(entry);
-        demandsByUser.get(userId)!.add(entry.demand_id);
+        
+        const demandData = demandDataByUser.get(userId)!;
+        demandData.demandIds.add(entry.demand_id);
+        if (isDelivered) {
+          demandData.deliveredIds.add(entry.demand_id);
+        } else {
+          demandData.inProgressIds.add(entry.demand_id);
+        }
       }
     }
 
     // Map all members with their time data
     return query.data.map(member => {
       const userEntries = entriesByUser.get(member.userId) || [];
-      const userDemands = demandsByUser.get(member.userId) || new Set();
+      const demandData = demandDataByUser.get(member.userId) || { 
+        demandIds: new Set(), 
+        deliveredIds: new Set(), 
+        inProgressIds: new Set() 
+      };
       
       let totalSeconds = 0;
       let isActive = false;
@@ -281,7 +331,9 @@ export function useBoardMembersWithTime(boardId: string | null) {
         totalSeconds,
         isActive,
         activeStartedAt,
-        demandCount: userDemands.size,
+        demandCount: demandData.demandIds.size,
+        deliveredCount: demandData.deliveredIds.size,
+        inProgressCount: demandData.inProgressIds.size,
         entries: userEntries,
       };
     }).sort((a, b) => {

@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useLiveTimer, formatTimeDisplay } from "@/hooks/useLiveTimer";
 import { BoardTimeEntry, BoardUserTimeStats } from "@/hooks/useBoardTimeEntries";
 import { cn } from "@/lib/utils";
+import { CheckCircle2, Loader2 } from "lucide-react";
 
 interface UserDetailTimeRowProps {
   userData: BoardUserTimeStats & { entries: BoardTimeEntry[] };
@@ -148,9 +149,29 @@ export function UserDetailTimeRow({ userData, isExpanded, onToggle }: UserDetail
                     </Badge>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {userData.demandCount} demanda{userData.demandCount !== 1 ? 's' : ''} • {userData.entries.length} entrada{userData.entries.length !== 1 ? 's' : ''}
-                </p>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+                  <span>{userData.demandCount} demanda{userData.demandCount !== 1 ? 's' : ''}</span>
+                  <span>•</span>
+                  <span>{userData.entries.length} entrada{userData.entries.length !== 1 ? 's' : ''}</span>
+                  {userData.deliveredCount !== undefined && userData.deliveredCount > 0 && (
+                    <>
+                      <span>•</span>
+                      <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 className="h-3 w-3" />
+                        {userData.deliveredCount} entregue{userData.deliveredCount !== 1 ? 's' : ''}
+                      </span>
+                    </>
+                  )}
+                  {userData.inProgressCount !== undefined && userData.inProgressCount > 0 && (
+                    <>
+                      <span>•</span>
+                      <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
+                        <Loader2 className="h-3 w-3" />
+                        {userData.inProgressCount} em andamento
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-2">
