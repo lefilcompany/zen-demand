@@ -32,6 +32,14 @@ export default function SubscriptionSuccess() {
     }
   }, [selectedTeamId, teams, setSelectedTeamId, autoSelectAttempted]);
 
+  // Auto-redirect to dashboard after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigate("/");
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [navigate]);
+
   useEffect(() => {
     // Simple celebration effect using CSS animation
     const successElement = document.querySelector('.success-animation');
