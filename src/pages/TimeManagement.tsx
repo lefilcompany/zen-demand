@@ -413,34 +413,30 @@ export default function TimeManagement() {
       <PageBreadcrumb items={[{ label: "Gerenciamento de Tempo" }]} />
 
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:gap-4">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-xl sm:text-2xl font-bold">Gerenciamento de Tempo</h1>
-              <p className="text-muted-foreground text-xs sm:text-sm">
-                Acompanhe o tempo gasto por cada membro da equipe.
-              </p>
-            </div>
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              <TimeFiltersPopover
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                userFilter={userFilter}
-                onUserFilterChange={setUserFilter}
-                periodFilter={periodFilter}
-                onPeriodFilterChange={setPeriodFilter}
-                uniqueUsers={uniqueUsers}
-                startDate={startDate}
-                endDate={endDate}
-                onClearFilters={handleClearFilters}
-              />
-              <Button onClick={exportToPDF} variant="outline" size="sm" className="gap-1.5 h-8 px-2 sm:px-3">
-                <Download className="h-4 w-4" />
-                <span className="hidden sm:inline">Exportar</span>
-              </Button>
-            </div>
-          </div>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold">Gerenciamento de Tempo</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm">
+            Acompanhe o tempo gasto por cada membro da equipe.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <TimeFiltersPopover
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            userFilter={userFilter}
+            onUserFilterChange={setUserFilter}
+            periodFilter={periodFilter}
+            onPeriodFilterChange={setPeriodFilter}
+            uniqueUsers={uniqueUsers}
+            startDate={startDate}
+            endDate={endDate}
+            onClearFilters={handleClearFilters}
+          />
+          <Button onClick={exportToPDF} variant="outline" size="sm" className="gap-1.5 h-8 px-2 sm:px-3">
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Exportar</span>
+          </Button>
         </div>
       </div>
 
