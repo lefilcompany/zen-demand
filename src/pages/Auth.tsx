@@ -217,6 +217,8 @@ export default function Auth() {
   };
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent event from bubbling to parent form
+    
     if (!resetEmail.trim()) {
       toast.warning("Informe o email", {
         description: "Digite o email associado à sua conta."
@@ -415,38 +417,9 @@ export default function Auth() {
                         Manter conectado
                       </Label>
                     </div>
-                    <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button type="button" variant="link" className="p-0 h-auto text-sm text-muted-foreground hover:text-primary">
-                          Esqueceu a senha?
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                          <DialogTitle className="flex items-center gap-2">
-                            <Mail className="h-5 w-5" />
-                            Recuperar Senha
-                          </DialogTitle>
-                          <DialogDescription>
-                            Digite seu email e enviaremos um link para redefinir sua senha.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={handleResetPassword} className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="reset-email">Email</Label>
-                            <Input id="reset-email" type="email" placeholder="seu@email.com" value={resetEmail} onChange={e => setResetEmail(e.target.value)} required />
-                          </div>
-                          <div className="flex gap-2 justify-end">
-                            <Button type="button" variant="outline" onClick={() => setResetDialogOpen(false)}>
-                              Cancelar
-                            </Button>
-                            <Button type="submit" disabled={isResetLoading}>
-                              {isResetLoading ? "Enviando..." : "Enviar Link"}
-                            </Button>
-                          </div>
-                        </form>
-                      </DialogContent>
-                    </Dialog>
+                    <Button type="button" variant="link" className="p-0 h-auto text-sm text-muted-foreground hover:text-primary" onClick={() => setResetDialogOpen(true)}>
+                      Esqueceu a senha?
+                    </Button>
                   </div>
                   
                   <Button type="submit" className="w-full h-11 sm:h-12 text-base font-semibold" disabled={isLoading}>
@@ -574,6 +547,43 @@ export default function Auth() {
                 </form>
               </TabsContent>
             </Tabs>
+
+            {/* Password Reset Dialog - Outside of login form to prevent form submission conflicts */}
+            <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+              <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Mail className="h-5 w-5" />
+                    Recuperar Senha
+                  </DialogTitle>
+                  <DialogDescription>
+                    Digite seu email e enviaremos um link para redefinir sua senha.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleResetPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-email">Email</Label>
+                    <Input 
+                      id="reset-email" 
+                      type="email" 
+                      placeholder="seu@email.com" 
+                      value={resetEmail} 
+                      onChange={e => setResetEmail(e.target.value)} 
+                      required 
+                      autoFocus
+                    />
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button type="button" variant="outline" onClick={() => setResetDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={isResetLoading}>
+                      {isResetLoading ? "Enviando..." : "Enviar Link"}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
