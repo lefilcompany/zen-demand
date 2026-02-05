@@ -10,9 +10,10 @@ import { PlanFeaturesComparison } from "./PlanFeaturesComparison";
 interface PlanSelectionStepProps {
   plans: Plan[] | undefined;
   onSelectPlan: (plan: Plan) => void;
+  currentPlanSlug?: string | null;
 }
 
-export function PlanSelectionStep({ plans, onSelectPlan }: PlanSelectionStepProps) {
+export function PlanSelectionStep({ plans, onSelectPlan, currentPlanSlug }: PlanSelectionStepProps) {
   const { t } = useTranslation();
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
 
@@ -66,6 +67,7 @@ export function PlanSelectionStep({ plans, onSelectPlan }: PlanSelectionStepProp
             <CompactPlanCard
               plan={plan}
               isPopular={plan.slug === "profissional"}
+              isCurrent={plan.slug === currentPlanSlug}
               onSelect={onSelectPlan}
               billingPeriod={billingPeriod}
             />
