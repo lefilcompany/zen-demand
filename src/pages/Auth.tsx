@@ -108,7 +108,13 @@ export default function Auth() {
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>;
   }
-  if (user) {
+  
+  // Only redirect if user is logged in AND not coming from password recovery flow
+  // Check for recovery tokens in URL hash to prevent auto-redirect during password reset
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  const isPasswordRecovery = hashParams.get("type") === "recovery" || hashParams.get("access_token");
+  
+  if (user && !isPasswordRecovery) {
     return <Navigate to="/welcome" replace />;
   }
   const formatPhone = (value: string): string => {
