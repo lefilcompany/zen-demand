@@ -1,5 +1,5 @@
-import { format, startOfMonth, endOfMonth } from "date-fns";
-import { Filter, CalendarIcon, CircleDashed, CheckCircle2, Play } from "lucide-react";
+import { format } from "date-fns";
+import { Filter, CalendarIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,14 +19,14 @@ interface TimeFiltersProps {
   onSearchChange: (value: string) => void;
   userFilter: string;
   onUserFilterChange: (value: string) => void;
-  deliveryFilter: string;
-  onDeliveryFilterChange: (value: string) => void;
+  deliveryFilter?: string;
+  onDeliveryFilterChange?: (value: string) => void;
   startDate: Date | undefined;
   onStartDateChange: (date: Date | undefined) => void;
   endDate: Date | undefined;
   onEndDateChange: (date: Date | undefined) => void;
   uniqueUsers: Profile[];
-  onClearFilters: () => void;
+  onClearFilters?: () => void;
 }
 
 export function TimeFilters({
@@ -34,17 +34,12 @@ export function TimeFilters({
   onSearchChange,
   userFilter,
   onUserFilterChange,
-  deliveryFilter,
-  onDeliveryFilterChange,
   startDate,
   onStartDateChange,
   endDate,
   onEndDateChange,
   uniqueUsers,
-  onClearFilters,
 }: TimeFiltersProps) {
-  const hasActiveFilters = searchTerm || userFilter !== "all" || deliveryFilter !== "all" || startDate || endDate;
-
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -65,40 +60,15 @@ export function TimeFilters({
             </div>
             <Select value={userFilter} onValueChange={onUserFilterChange}>
               <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="Filtrar por usuário" />
+                <SelectValue placeholder="Todos os usuários" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os membros</SelectItem>
+                <SelectItem value="all">Todos os usuários</SelectItem>
                 {uniqueUsers.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.full_name}
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-            <Select value={deliveryFilter} onValueChange={onDeliveryFilterChange}>
-              <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="Status de entrega" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  <div className="flex items-center gap-2">
-                    <CircleDashed className="h-4 w-4" />
-                    Todas as demandas
-                  </div>
-                </SelectItem>
-                <SelectItem value="delivered">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                    Somente entregues
-                  </div>
-                </SelectItem>
-                <SelectItem value="not_delivered">
-                  <div className="flex items-center gap-2">
-                    <Play className="h-4 w-4 text-blue-600" />
-                    Somente não entregues
-                  </div>
-                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -167,18 +137,6 @@ export function TimeFilters({
               </Button>
             )}
           </div>
-          
-          {hasActiveFilters && (
-            <div className="flex justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onClearFilters}
-              >
-                Limpar todos os filtros
-              </Button>
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>

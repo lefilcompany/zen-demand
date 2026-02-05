@@ -1,21 +1,16 @@
 import { useState, useMemo } from "react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
-import { Timer, Download, LayoutGrid, Radio, Shield, ArrowLeft } from "lucide-react";
+import { Download, Shield, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useIsTeamAdminOrModerator } from "@/hooks/useTeamRole";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatTimeDisplay, useLiveTimer } from "@/hooks/useLiveTimer";
 import { useBoardTimeEntries, useBoardMembersWithTime, BoardTimeEntry, BoardMemberWithTime } from "@/hooks/useBoardTimeEntries";
-import { useBoardTimeStats } from "@/hooks/useBoardTimeStats";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { 
   StatsOverviewCards, 
-  ActiveWorkSection, 
-  MemberRanking, 
-  PerformanceCharts, 
   TimeFilters,
   TimeDetailTabs 
 } from "@/components/time-management";
@@ -38,7 +33,6 @@ export default function TimeManagement() {
   
   const [searchTerm, setSearchTerm] = useState("");
   const [userFilter, setUserFilter] = useState<string>("all");
-  const [roleFilter, setRoleFilter] = useState<string>("all");
   const [expandedDemands, setExpandedDemands] = useState<Set<string>>(new Set());
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const [startDate, setStartDate] = useState<Date | undefined>(startOfMonth(new Date()));
@@ -50,12 +44,9 @@ export default function TimeManagement() {
   const { data: timeEntries, isLoading: entriesLoading } = useBoardTimeEntries(selectedBoardId);
   
   // Get ALL board members with their time stats (including those with 0 time)
-  const { data: allBoardMembers, isLoading: membersLoading, activeTimersCount } = useBoardMembersWithTime(selectedBoardId);
-  
-  // Get aggregated stats for charts
-  const { stats: boardStats, isLoading: statsLoading } = useBoardTimeStats(selectedBoardId);
+  const { data: allBoardMembers, isLoading: membersLoading } = useBoardMembersWithTime(selectedBoardId);
 
-  const isLoading = entriesLoading || membersLoading || roleLoading || statsLoading;
+  const isLoading = entriesLoading || membersLoading || roleLoading;
 
   // Get unique users for filter (from all board members)
   const uniqueUsers = useMemo(() => {
@@ -106,22 +97,6 @@ export default function TimeManagement() {
     return filtered;
   }, [timeEntries, searchTerm, userFilter, startDate, endDate, deliveryFilter]);
 
-  // Active demands (demandas com timer ativo)
-  const activeDemands = useMemo(() => {
-    if (!timeEntries) return [];
-    
-    const activeMap = new Map<string, { entry: BoardTimeEntry; totalSeconds: number }>();
-    
-    timeEntries.filter(e => !e.ended_at).forEach(entry => {
-      if (!activeMap.has(entry.demand_id)) {
-        const demandEntries = timeEntries.filter(e => e.demand_id === entry.demand_id);
-        const totalSeconds = demandEntries.reduce((sum, e) => sum + (e.duration_seconds || 0), 0);
-        activeMap.set(entry.demand_id, { entry, totalSeconds });
-      }
-    });
-    
-    return Array.from(activeMap.values());
-  }, [timeEntries]);
 
   // Filter members based on filters - recalculate time from filtered entries
   const filteredMemberStats = useMemo((): BoardMemberWithTime[] => {
@@ -316,11 +291,6 @@ export default function TimeManagement() {
     lastStartedAt: totals.earliestActiveStart,
   });
 
-  // Max time for progress calculation
-  const maxUserTime = useMemo(() => {
-    if (filteredMemberStats.length === 0) return 0;
-    return Math.max(...filteredMemberStats.map(m => m.totalSeconds));
-  }, [filteredMemberStats]);
 
   const toggleUser = (userId: string) => {
     setExpandedUsers((prev) => {
@@ -454,27 +424,10 @@ export default function TimeManagement() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2.5 rounded-xl bg-primary/10">
-              <Timer className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">Gerenciamento de Tempo</h1>
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <LayoutGrid className="h-4 w-4" />
-                <span>Quadro: <span className="font-medium text-foreground">{currentBoard?.name || "Selecione um quadro"}</span></span>
-                {activeTimersCount > 0 && (
-                  <Badge 
-                    variant="secondary" 
-                    className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 animate-pulse ml-2"
-                  >
-                    <Radio className="h-3 w-3 mr-1" />
-                    {activeTimersCount} ativo{activeTimersCount > 1 ? 's' : ''}
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </div>
+          <h1 className="text-2xl font-bold">Gerenciamento de Tempo</h1>
+          <p className="text-muted-foreground">
+            Acompanhe o tempo gasto por cada membro da equipe nas demandas.
+          </p>
         </div>
         <Button onClick={exportToPDF} variant="outline" className="gap-2 shrink-0">
           <Download className="h-4 w-4" />
@@ -482,15 +435,12 @@ export default function TimeManagement() {
         </Button>
       </div>
 
-      {/* Active Work Section */}
-      <ActiveWorkSection activeDemands={activeDemands} />
-
       {/* Stats Overview Cards */}
       <StatsOverviewCards
         totalTimeSeconds={totals.totalTime}
         liveTimeDisplay={liveTotalTime}
         activeTimersCount={totals.activeTimers}
-        totalMembers={allBoardMembers?.length || 0}
+        totalMembers={filteredMemberStats.length}
         totalDemands={totals.totalDemands}
         totalEntries={totals.totalEntries}
         avgTimePerUser={totals.avgTimePerUser}
@@ -498,29 +448,6 @@ export default function TimeManagement() {
         isLoading={isLoading}
       />
 
-      {/* Performance Charts */}
-      {!isLoading && (
-        <PerformanceCharts
-          members={filteredMemberStats}
-          groupedByDemand={groupedByDemand.map(g => ({
-            demand: g.demand,
-            totalSeconds: g.totalSeconds,
-          }))}
-          statusDistribution={boardStats.statusDistribution}
-          dailyTrend={boardStats.dailyTrend}
-        />
-      )}
-
-      {/* Member Ranking */}
-      {!isLoading && filteredMemberStats.length > 0 && (
-        <MemberRanking
-          members={filteredMemberStats}
-          activeTimersCount={activeTimersCount}
-          maxUserTime={maxUserTime}
-          roleFilter={roleFilter}
-          onRoleFilterChange={setRoleFilter}
-        />
-      )}
 
       {/* Filters */}
       <TimeFilters
