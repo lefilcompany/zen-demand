@@ -42,7 +42,7 @@ export function ConfirmStep({ selectedPlan, onBack, onFinish, isProcessing }: Co
   const specRows = [
     { label: t("pricing.features.boards"), value: selectedPlan.max_boards === -1 ? t("pricing.features.unlimited") : `${selectedPlan.max_boards}` },
     { label: t("pricing.features.members"), value: selectedPlan.max_members === -1 ? t("pricing.features.unlimited") : `${selectedPlan.max_members}` },
-    { label: t("pricing.features.demands"), value: selectedPlan.max_demands_per_month === -1 ? t("pricing.features.unlimited") : `${selectedPlan.max_demands_per_month}/mês` },
+    { label: t("pricing.features.demands"), value: selectedPlan.max_demands_per_month === -1 ? t("pricing.features.unlimited") : `${selectedPlan.max_demands_per_month}` },
     { label: t("pricing.features.notes"), value: selectedPlan.max_notes === -1 ? t("pricing.features.unlimited") : `${selectedPlan.max_notes}` },
     { label: t("pricing.features.services"), value: selectedPlan.max_services === -1 ? t("pricing.features.unlimited") : `${selectedPlan.max_services}` },
   ];
