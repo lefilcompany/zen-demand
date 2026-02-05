@@ -1,19 +1,25 @@
-import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, stripe-signature",
+    "authorization, x-client-info, apikey, content-type, stripe-signature, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const logStep = (step: string, details?: unknown) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
 Deno.serve(async (req: Request) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    logStep("Function started");
+
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
 
@@ -22,54 +28,55 @@ Deno.serve(async (req: Request) => {
     }
 
     const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: "2023-10-16",
+      apiVersion: "2025-08-27.basil",
     });
 
-    // Get the signature from headers
     const signature = req.headers.get("stripe-signature");
     const body = await req.text();
 
     let event: Stripe.Event;
 
-    // Verify webhook signature if secret is configured
     if (webhookSecret && signature) {
       try {
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+        logStep("Webhook signature verified");
       } catch (err) {
-        console.error("Webhook signature verification failed:", err);
+        logStep("ERROR: Webhook signature verification failed", { error: String(err) });
         return new Response(
           JSON.stringify({ error: "Webhook signature verification failed" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
     } else {
-      // For development, parse without verification
       event = JSON.parse(body);
-      console.warn("Webhook signature not verified - development mode");
+      logStep("WARN: Webhook signature not verified - no secret configured");
     }
 
-    console.log("Received Stripe event:", event.type);
+    logStep("Received event", { type: event.type });
 
     // Initialize Supabase with service role
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Handle different event types
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        const { teamId, planId, userId } = session.metadata || {};
+        const { teamId, planId } = session.metadata || {};
 
         if (!teamId || !planId) {
-          console.error("Missing metadata in checkout session");
+          logStep("ERROR: Missing metadata in checkout session", { metadata: session.metadata });
           break;
         }
 
-        console.log("Processing checkout completion for team:", teamId);
+        logStep("Processing checkout completion", { teamId, planId });
 
-        // Get subscription details
         const subscriptionId = session.subscription as string;
+        if (!subscriptionId) {
+          logStep("ERROR: No subscription ID in checkout session");
+          break;
+        }
+
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
         // Check if subscription already exists
@@ -80,7 +87,6 @@ Deno.serve(async (req: Request) => {
           .maybeSingle();
 
         if (existingSub) {
-          // Update existing subscription
           const { error: updateError } = await supabase
             .from("subscriptions")
             .update({
@@ -96,12 +102,11 @@ Deno.serve(async (req: Request) => {
             .eq("team_id", teamId);
 
           if (updateError) {
-            console.error("Error updating subscription:", updateError);
+            logStep("ERROR: Failed to update subscription", { error: updateError });
           } else {
-            console.log("Subscription updated for team:", teamId);
+            logStep("Subscription updated successfully", { teamId });
           }
         } else {
-          // Create new subscription
           const { error: insertError } = await supabase.from("subscriptions").insert({
             team_id: teamId,
             plan_id: planId,
@@ -113,9 +118,9 @@ Deno.serve(async (req: Request) => {
           });
 
           if (insertError) {
-            console.error("Error creating subscription:", insertError);
+            logStep("ERROR: Failed to create subscription", { error: insertError });
           } else {
-            console.log("Subscription created for team:", teamId);
+            logStep("Subscription created successfully", { teamId });
           }
         }
         break;
@@ -124,19 +129,16 @@ Deno.serve(async (req: Request) => {
       case "invoice.payment_succeeded": {
         const invoice = event.data.object as Stripe.Invoice;
         const subscriptionId = invoice.subscription as string;
-
         if (!subscriptionId) break;
 
-        // Get subscription to get metadata
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         const teamId = subscription.metadata?.teamId;
 
         if (!teamId) {
-          console.error("No teamId in subscription metadata");
+          logStep("ERROR: No teamId in subscription metadata for invoice.payment_succeeded");
           break;
         }
 
-        // Update subscription period
         const { error } = await supabase
           .from("subscriptions")
           .update({
@@ -148,9 +150,9 @@ Deno.serve(async (req: Request) => {
           .eq("stripe_subscription_id", subscriptionId);
 
         if (error) {
-          console.error("Error updating subscription after payment:", error);
+          logStep("ERROR: Failed to update subscription after payment", { error });
         } else {
-          console.log("Subscription renewed for team:", teamId);
+          logStep("Subscription renewed", { teamId });
         }
         break;
       }
@@ -158,10 +160,8 @@ Deno.serve(async (req: Request) => {
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
         const subscriptionId = invoice.subscription as string;
-
         if (!subscriptionId) break;
 
-        // Mark subscription as past_due
         const { error } = await supabase
           .from("subscriptions")
           .update({
@@ -171,9 +171,9 @@ Deno.serve(async (req: Request) => {
           .eq("stripe_subscription_id", subscriptionId);
 
         if (error) {
-          console.error("Error updating subscription on payment failure:", error);
+          logStep("ERROR: Failed to mark subscription as past_due", { error });
         } else {
-          console.log("Subscription marked as past_due:", subscriptionId);
+          logStep("Subscription marked as past_due", { subscriptionId });
         }
         break;
       }
@@ -183,11 +183,10 @@ Deno.serve(async (req: Request) => {
         const teamId = subscription.metadata?.teamId;
 
         if (!teamId) {
-          console.error("No teamId in subscription metadata");
+          logStep("ERROR: No teamId in subscription metadata for deletion");
           break;
         }
 
-        // Mark subscription as canceled
         const { error } = await supabase
           .from("subscriptions")
           .update({
@@ -197,17 +196,16 @@ Deno.serve(async (req: Request) => {
           .eq("stripe_subscription_id", subscription.id);
 
         if (error) {
-          console.error("Error canceling subscription:", error);
+          logStep("ERROR: Failed to cancel subscription", { error });
         } else {
-          console.log("Subscription canceled for team:", teamId);
+          logStep("Subscription canceled", { teamId });
         }
         break;
       }
 
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
-        
-        // Update cancel_at_period_end status
+
         const { error } = await supabase
           .from("subscriptions")
           .update({
@@ -218,13 +216,15 @@ Deno.serve(async (req: Request) => {
           .eq("stripe_subscription_id", subscription.id);
 
         if (error) {
-          console.error("Error updating subscription:", error);
+          logStep("ERROR: Failed to update subscription status", { error });
+        } else {
+          logStep("Subscription updated", { subscriptionId: subscription.id });
         }
         break;
       }
 
       default:
-        console.log("Unhandled event type:", event.type);
+        logStep("Unhandled event type", { type: event.type });
     }
 
     return new Response(
@@ -232,8 +232,8 @@ Deno.serve(async (req: Request) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
-    console.error("Webhook error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    logStep("FATAL ERROR", { message: errorMessage });
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
