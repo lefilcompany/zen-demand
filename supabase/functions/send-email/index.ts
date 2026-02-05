@@ -1,8 +1,7 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import React from "https://esm.sh/react@18.3.1";
-import { render } from "https://esm.sh/@react-email/render@0.0.12";
+import React from "https://esm.sh/react@18.3.1?target=deno";
+import { render } from "https://esm.sh/@react-email/render@0.0.12?target=deno";
 import { NotificationEmail } from "./_templates/notification.tsx";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -275,4 +274,4 @@ const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-serve(handler);
+Deno.serve(handler);
