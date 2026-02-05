@@ -334,7 +334,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* Subscription Card - Below Teams section */}
-        <SidebarGroup className="mt-auto pt-1">
+        <SidebarGroup className="mt-auto pt-0">
           <SidebarGroupContent>
             <SidebarSubscriptionCard />
           </SidebarGroupContent>
