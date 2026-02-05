@@ -12,7 +12,8 @@ import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { 
   StatsOverviewCards, 
   TimeFiltersPopover,
-  TimeDetailTabs 
+  TimeDetailTabs,
+  MemberRanking 
 } from "@/components/time-management";
 import { PeriodFilter, getPeriodDates } from "@/components/time-management/TimeFilters";
 import jsPDF from "jspdf";
@@ -452,6 +453,13 @@ export default function TimeManagement() {
         avgTimePerUser={totals.avgTimePerUser}
         avgTimePerDemand={totals.avgTimePerDemand}
         isLoading={isLoading}
+      />
+
+      {/* Member Workload Ranking */}
+      <MemberRanking
+        members={filteredMemberStats}
+        activeTimersCount={totals.activeTimers}
+        maxUserTime={filteredMemberStats.length > 0 ? Math.max(...filteredMemberStats.map(m => m.totalSeconds)) : 0}
       />
 
       {/* Detail Tabs */}
