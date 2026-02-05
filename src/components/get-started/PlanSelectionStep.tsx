@@ -1,10 +1,11 @@
 import { useTranslation } from "react-i18next";
-import { PlanCard } from "@/components/PlanCard";
 import { Plan } from "@/hooks/usePlans";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { CompactPlanCard } from "./CompactPlanCard";
+import { PlanFeaturesComparison } from "./PlanFeaturesComparison";
 
 interface PlanSelectionStepProps {
   plans: Plan[] | undefined;
@@ -16,7 +17,7 @@ export function PlanSelectionStep({ plans, onSelectPlan }: PlanSelectionStepProp
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       {/* Header + Billing toggle */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -54,15 +55,15 @@ export function PlanSelectionStep({ plans, onSelectPlan }: PlanSelectionStepProp
         </div>
       </div>
 
-      {/* Plans grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+      {/* Plans grid - 2x2 */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {plans?.map((plan, index) => (
           <div 
             key={plan.id} 
             className="animate-fade-in"
             style={{ animationDelay: `${index * 75}ms` }}
           >
-            <PlanCard
+            <CompactPlanCard
               plan={plan}
               isPopular={plan.slug === "profissional"}
               onSelect={onSelectPlan}
@@ -71,6 +72,14 @@ export function PlanSelectionStep({ plans, onSelectPlan }: PlanSelectionStepProp
           </div>
         ))}
       </div>
+
+      {/* Features comparison */}
+      {plans && plans.length > 0 && (
+        <div className="rounded-xl border border-border/50 bg-card/50 p-4 animate-fade-in" style={{ animationDelay: "300ms" }}>
+          <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Comparação de recursos</h3>
+          <PlanFeaturesComparison plans={plans} />
+        </div>
+      )}
     </div>
   );
 }
