@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { format } from "date-fns";
 import { Download, Shield, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSelectedBoard } from "@/contexts/BoardContext";
@@ -14,6 +14,7 @@ import {
   TimeFilters,
   TimeDetailTabs 
 } from "@/components/time-management";
+import { PeriodFilter, getPeriodDates } from "@/components/time-management/TimeFilters";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
@@ -35,10 +36,11 @@ export default function TimeManagement() {
   const [userFilter, setUserFilter] = useState<string>("all");
   const [expandedDemands, setExpandedDemands] = useState<Set<string>>(new Set());
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
-  const [startDate, setStartDate] = useState<Date | undefined>(startOfMonth(new Date()));
-  const [endDate, setEndDate] = useState<Date | undefined>(endOfMonth(new Date()));
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("current_month");
   const [activeTab, setActiveTab] = useState<string>("users");
-  const [deliveryFilter, setDeliveryFilter] = useState<string>("all");
+
+  // Get dates from period filter
+  const { start: startDate, end: endDate } = useMemo(() => getPeriodDates(periodFilter), [periodFilter]);
 
   // Fetch time entries for the board with realtime updates
   const { data: timeEntries, isLoading: entriesLoading } = useBoardTimeEntries(selectedBoardId);
@@ -84,18 +86,8 @@ export default function TimeManagement() {
       filtered = filtered.filter((entry) => entry.user_id === userFilter);
     }
 
-    if (deliveryFilter === "delivered") {
-      filtered = filtered.filter((entry) => 
-        entry.demand.status?.name?.toLowerCase() === "entregue"
-      );
-    } else if (deliveryFilter === "not_delivered") {
-      filtered = filtered.filter((entry) => 
-        entry.demand.status?.name?.toLowerCase() !== "entregue"
-      );
-    }
-
     return filtered;
-  }, [timeEntries, searchTerm, userFilter, startDate, endDate, deliveryFilter]);
+  }, [timeEntries, searchTerm, userFilter, startDate, endDate]);
 
 
   // Filter members based on filters - recalculate time from filtered entries
@@ -103,7 +95,7 @@ export default function TimeManagement() {
     if (!allBoardMembers) return [];
     
     // If no filters active, return all members with their full time stats
-    const hasFilters = searchTerm || userFilter !== "all" || startDate || endDate || deliveryFilter !== "all";
+    const hasFilters = searchTerm || userFilter !== "all" || startDate || endDate;
     
     if (!hasFilters) {
       return allBoardMembers;
@@ -208,7 +200,7 @@ export default function TimeManagement() {
       if (!a.isActive && b.isActive) return 1;
       return b.totalSeconds - a.totalSeconds;
     });
-  }, [allBoardMembers, filteredEntries, searchTerm, userFilter, startDate, endDate, deliveryFilter]);
+  }, [allBoardMembers, filteredEntries, searchTerm, userFilter, startDate, endDate]);
 
   // Group by demand
   const groupedByDemand = useMemo(() => {
@@ -319,9 +311,7 @@ export default function TimeManagement() {
   const handleClearFilters = () => {
     setSearchTerm("");
     setUserFilter("all");
-    setDeliveryFilter("all");
-    setStartDate(startOfMonth(new Date()));
-    setEndDate(endOfMonth(new Date()));
+    setPeriodFilter("current_month");
   };
 
   const exportToPDF = () => {
@@ -455,14 +445,11 @@ export default function TimeManagement() {
         onSearchChange={setSearchTerm}
         userFilter={userFilter}
         onUserFilterChange={setUserFilter}
-        deliveryFilter={deliveryFilter}
-        onDeliveryFilterChange={setDeliveryFilter}
-        startDate={startDate}
-        onStartDateChange={setStartDate}
-        endDate={endDate}
-        onEndDateChange={setEndDate}
+        periodFilter={periodFilter}
+        onPeriodFilterChange={setPeriodFilter}
         uniqueUsers={uniqueUsers}
-        onClearFilters={handleClearFilters}
+        startDate={startDate}
+        endDate={endDate}
       />
 
       {/* Detail Tabs */}
