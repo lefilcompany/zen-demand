@@ -7,13 +7,11 @@ import { Loader2 } from "lucide-react";
 import { usePlans, Plan } from "@/hooks/usePlans";
 import { useCreateTeam } from "@/hooks/useTeams";
 import { useCreateCheckout } from "@/hooks/useCheckout";
-import {
-  StepIndicator,
-  GetStartedHero,
-  PlanSelectionStep,
-  AuthStep,
-  TeamStep,
-} from "@/components/get-started";
+import { StepIndicator } from "@/components/get-started/StepIndicator";
+import { GetStartedHero } from "@/components/get-started/GetStartedHero";
+import { PlanSelectionStep } from "@/components/get-started/PlanSelectionStep";
+import { AuthStep } from "@/components/get-started/AuthStep";
+import { ConfirmStep } from "@/components/get-started/ConfirmStep";
 
 export default function GetStarted() {
   const { t } = useTranslation();
@@ -142,9 +140,9 @@ export default function GetStarted() {
                 />
               )}
 
-              {/* Step 3: Team Setup */}
+              {/* Step 3: Confirm & Pay */}
               {step === 3 && user && (
-                <TeamStep
+                <ConfirmStep
                   selectedPlan={selectedPlan}
                   onBack={() => setStep(1)}
                   onFinish={handleFinishAndPay}

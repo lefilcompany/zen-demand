@@ -16,7 +16,7 @@ export function useCreateCheckout() {
       }
 
       const successUrl = `${window.location.origin}/subscription/success`;
-      const cancelUrl = `${window.location.origin}/pricing`;
+      const cancelUrl = `${window.location.origin}/get-started`;
 
       const response = await supabase.functions.invoke("create-checkout", {
         body: {
