@@ -100,7 +100,7 @@ function EditorToolbar({ editor, onImageUpload, isUploading }: EditorToolbarProp
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-0.5 p-1 border-b border-border bg-muted/30">
+    <div className="sticky top-0 z-10 flex flex-wrap items-center gap-0.5 p-1 border-b border-border bg-muted/30">
       {/* Text formatting */}
       <Toggle
         size="sm"
