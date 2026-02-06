@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, RefreshCw } from "lucide-react";
-import { generateAccessCode } from "@/hooks/useTeams";
+import { ArrowRight, RefreshCw, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { generateAccessCode, checkAccessCodeAvailable } from "@/hooks/useTeams";
+import { toast } from "sonner";
 
 interface TeamStepProps {
   initialData?: { name: string; description: string; accessCode: string };
@@ -21,11 +22,29 @@ export function TeamStep({ initialData, onNext }: TeamStepProps) {
     description: initialData?.description || "",
     accessCode: initialData?.accessCode || generateAccessCode(),
   });
+  const [isCheckingCode, setIsCheckingCode] = useState(false);
 
-  const handleSubmit = () => {
-    if (teamData.name.trim()) {
+  const handleSubmit = async () => {
+    if (!teamData.name.trim()) return;
+
+    setIsCheckingCode(true);
+    try {
+      const isAvailable = await checkAccessCodeAvailable(teamData.accessCode);
+      if (!isAvailable) {
+        toast.error(t("createTeam.codeUnavailable"));
+        setIsCheckingCode(false);
+        return;
+      }
       onNext(teamData);
+    } catch {
+      toast.error(t("createTeam.checkingAvailability"));
+    } finally {
+      setIsCheckingCode(false);
     }
+  };
+
+  const handleRegenerateCode = () => {
+    setTeamData({ ...teamData, accessCode: generateAccessCode() });
   };
 
   return (
@@ -83,7 +102,7 @@ export function TeamStep({ initialData, onNext }: TeamStepProps) {
                 variant="outline"
                 size="icon"
                 className="h-11 w-11 shrink-0"
-                onClick={() => setTeamData({ ...teamData, accessCode: generateAccessCode() })}
+                onClick={handleRegenerateCode}
                 title={t("createTeam.generateNew")}
               >
                 <RefreshCw className="h-4 w-4" />
@@ -98,10 +117,19 @@ export function TeamStep({ initialData, onNext }: TeamStepProps) {
       <Button
         className="w-full h-14 text-base font-semibold"
         onClick={handleSubmit}
-        disabled={!teamData.name.trim()}
+        disabled={!teamData.name.trim() || isCheckingCode}
       >
-        {t("getStarted.nextStep")}
-        <ArrowRight className="ml-2 h-5 w-5" />
+        {isCheckingCode ? (
+          <>
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            {t("common.loading")}
+          </>
+        ) : (
+          <>
+            {t("getStarted.nextStep")}
+            <ArrowRight className="ml-2 h-5 w-5" />
+          </>
+        )}
       </Button>
     </div>
   );
