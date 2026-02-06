@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Check, User, CreditCard, CheckCircle2 } from "lucide-react";
+import { Check, Users, CreditCard, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface StepIndicatorProps {
@@ -11,8 +11,8 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
   const { t } = useTranslation();
   
   const steps = [
-    { label: t("getStarted.step1"), icon: CreditCard },
-    { label: t("getStarted.step2"), icon: User },
+    { label: t("getStarted.step1"), icon: Users },
+    { label: t("getStarted.step2"), icon: CreditCard },
     { label: t("getStarted.step3"), icon: CheckCircle2 },
   ];
 

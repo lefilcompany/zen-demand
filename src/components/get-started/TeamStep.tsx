@@ -5,30 +5,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, ArrowRight, Loader2, RefreshCw, ShieldCheck, CreditCard } from "lucide-react";
-import { SelectedPlanCard } from "./SelectedPlanCard";
-import { Plan } from "@/hooks/usePlans";
+import { ArrowRight, RefreshCw } from "lucide-react";
 import { generateAccessCode } from "@/hooks/useTeams";
 
 interface TeamStepProps {
-  selectedPlan: Plan | null;
-  onBack: () => void;
-  onFinish: (teamData: { name: string; description: string; accessCode: string }) => void;
-  isProcessing: boolean;
+  initialData?: { name: string; description: string; accessCode: string };
+  onNext: (teamData: { name: string; description: string; accessCode: string }) => void;
 }
 
-export function TeamStep({ selectedPlan, onBack, onFinish, isProcessing }: TeamStepProps) {
+export function TeamStep({ initialData, onNext }: TeamStepProps) {
   const { t } = useTranslation();
   
   const [teamData, setTeamData] = useState({
-    name: "",
-    description: "",
-    accessCode: generateAccessCode(),
+    name: initialData?.name || "",
+    description: initialData?.description || "",
+    accessCode: initialData?.accessCode || generateAccessCode(),
   });
 
   const handleSubmit = () => {
     if (teamData.name.trim()) {
-      onFinish(teamData);
+      onNext(teamData);
     }
   };
 
@@ -36,14 +32,9 @@ export function TeamStep({ selectedPlan, onBack, onFinish, isProcessing }: TeamS
     <div className="w-full max-w-lg mx-auto space-y-6 animate-fade-in">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h2 className="text-2xl sm:text-3xl font-bold">{t("getStarted.step3")}</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold">{t("getStarted.step1Title")}</h2>
         <p className="text-muted-foreground">{t("getStarted.teamSubtitle")}</p>
       </div>
-
-      {/* Selected plan summary */}
-      {selectedPlan && (
-        <SelectedPlanCard plan={selectedPlan} onEdit={onBack} />
-      )}
 
       {/* Team form */}
       <Card className="border-border/50 shadow-sm">
@@ -103,35 +94,14 @@ export function TeamStep({ selectedPlan, onBack, onFinish, isProcessing }: TeamS
         </CardContent>
       </Card>
 
-      {/* Security badge */}
-      <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-        <ShieldCheck className="h-4 w-4 text-success" />
-        <span>{t("getStarted.securePayment")}</span>
-      </div>
-
-      {/* Submit button */}
+      {/* Next button */}
       <Button
-        className="w-full h-14 text-base font-semibold bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg shadow-primary/25"
+        className="w-full h-14 text-base font-semibold"
         onClick={handleSubmit}
-        disabled={isProcessing || !teamData.name.trim()}
+        disabled={!teamData.name.trim()}
       >
-        {isProcessing ? (
-          <>
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-            {t("getStarted.processingCheckout")}
-          </>
-        ) : (
-          <>
-            <CreditCard className="mr-2 h-5 w-5" />
-            {t("getStarted.finishAndPay")}
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </>
-        )}
-      </Button>
-
-      <Button variant="ghost" className="w-full" onClick={onBack}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        {t("getStarted.backToPlans")}
+        {t("getStarted.nextStep")}
+        <ArrowRight className="ml-2 h-5 w-5" />
       </Button>
     </div>
   );

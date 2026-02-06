@@ -3,17 +3,20 @@ import { Plan } from "@/hooks/usePlans";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { CompactPlanCard } from "./CompactPlanCard";
 import { PlanFeaturesComparison } from "./PlanFeaturesComparison";
+import { ArrowLeft } from "lucide-react";
 
 interface PlanSelectionStepProps {
   plans: Plan[] | undefined;
   onSelectPlan: (plan: Plan) => void;
   currentPlanSlug?: string | null;
+  onBack?: () => void;
 }
 
-export function PlanSelectionStep({ plans, onSelectPlan, currentPlanSlug }: PlanSelectionStepProps) {
+export function PlanSelectionStep({ plans, onSelectPlan, currentPlanSlug, onBack }: PlanSelectionStepProps) {
   const { t } = useTranslation();
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
 
@@ -81,6 +84,14 @@ export function PlanSelectionStep({ plans, onSelectPlan, currentPlanSlug }: Plan
           <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Comparação de recursos</h3>
           <PlanFeaturesComparison plans={plans} />
         </div>
+      )}
+
+      {/* Back button */}
+      {onBack && (
+        <Button variant="ghost" className="w-full" onClick={onBack}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          {t("getStarted.backToTeam")}
+        </Button>
       )}
     </div>
   );
