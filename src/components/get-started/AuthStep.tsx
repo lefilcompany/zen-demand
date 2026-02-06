@@ -74,14 +74,9 @@ export function AuthStep({
     <div className="w-full max-w-md mx-auto space-y-6 animate-fade-in">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h2 className="text-2xl sm:text-3xl font-bold">{t("getStarted.step2")}</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold">{t("getStarted.step2Title")}</h2>
         <p className="text-muted-foreground">{t("getStarted.authSubtitle")}</p>
       </div>
-
-      {/* Selected plan summary */}
-      {selectedPlan && (
-        <SelectedPlanCard plan={selectedPlan} onEdit={onBack} />
-      )}
 
       {/* Auth tabs */}
       <Tabs value={authTab} onValueChange={(v) => setAuthTab(v as "login" | "signup")}>
@@ -239,7 +234,7 @@ export function AuthStep({
 
       <Button variant="ghost" className="w-full" onClick={onBack}>
         <ArrowLeft className="mr-2 h-4 w-4" />
-        {t("getStarted.backToPlans")}
+        {t("getStarted.backToTeam")}
       </Button>
     </div>
   );

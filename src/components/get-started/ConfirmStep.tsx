@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, ArrowRight, Loader2, RefreshCw, ShieldCheck, CreditCard, Check, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, RefreshCw, ShieldCheck, CreditCard, Check, X, Users } from "lucide-react";
 import { Plan } from "@/hooks/usePlans";
 import { generateAccessCode } from "@/hooks/useTeams";
 import { formatPrice } from "@/lib/priceUtils";
@@ -14,29 +14,23 @@ import { cn } from "@/lib/utils";
 
 interface ConfirmStepProps {
   selectedPlan: Plan | null;
-  onBack: () => void;
+  teamData: { name: string; description: string; accessCode: string };
+  onBackToPlan: () => void;
+  onBackToTeam: () => void;
   onFinish: (teamData: { name: string; description: string; accessCode: string }) => void;
   isProcessing: boolean;
   currentPlanSlug?: string | null;
   existingTeamId?: string | null;
 }
 
-export function ConfirmStep({ selectedPlan, onBack, onFinish, isProcessing, currentPlanSlug, existingTeamId }: ConfirmStepProps) {
+export function ConfirmStep({ selectedPlan, teamData, onBackToPlan, onBackToTeam, onFinish, isProcessing, currentPlanSlug, existingTeamId }: ConfirmStepProps) {
   const { t } = useTranslation();
   
   const isUpgrade = !!currentPlanSlug && selectedPlan && currentPlanSlug !== selectedPlan.slug;
   const hasExistingTeam = !!existingTeamId;
 
-  const [teamData, setTeamData] = useState({
-    name: "",
-    description: "",
-    accessCode: generateAccessCode(),
-  });
-
   const handleSubmit = () => {
-    if (hasExistingTeam || teamData.name.trim()) {
-      onFinish(teamData);
-    }
+    onFinish(teamData);
   };
 
   if (!selectedPlan) return null;
@@ -72,6 +66,37 @@ export function ConfirmStep({ selectedPlan, onBack, onFinish, isProcessing, curr
           {isUpgrade ? t("getStarted.upgradeSubtitle") : t("getStarted.confirmSubtitle")}
         </p>
       </div>
+
+      {/* Team summary - show when creating new team */}
+      {!hasExistingTeam && (
+        <Card className="border-border/50 shadow-sm">
+          <CardContent className="p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="text-base font-semibold">{t("getStarted.teamInfo")}</h3>
+              </div>
+              <Button variant="ghost" size="sm" className="text-xs" onClick={onBackToTeam}>
+                {t("common.edit")}
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <div>
+                <span className="text-muted-foreground">{t("createTeam.teamName")}:</span>
+                <p className="font-medium">{teamData.name}</p>
+              </div>
+              {teamData.description && (
+                <div>
+                  <span className="text-muted-foreground">{t("common.description")}:</span>
+                  <p className="font-medium line-clamp-2">{teamData.description}</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Selected Plan Card with specs */}
       <Card className={cn("relative overflow-hidden border-2 transition-all", theme.border)}>
@@ -135,72 +160,11 @@ export function ConfirmStep({ selectedPlan, onBack, onFinish, isProcessing, curr
           </div>
 
           {/* Edit plan button */}
-          <Button variant="ghost" size="sm" className="mt-3 text-xs" onClick={onBack}>
+          <Button variant="ghost" size="sm" className="mt-3 text-xs" onClick={onBackToPlan}>
             {t("getStarted.changePlan")}
           </Button>
         </CardContent>
       </Card>
-
-      {/* Team form - only show when creating new team */}
-      {!hasExistingTeam && (
-        <Card className="border-border/50 shadow-sm">
-          <CardContent className="p-5 sm:p-6 space-y-4">
-            <div>
-              <h3 className="text-base font-semibold mb-1">{t("getStarted.teamInfo")}</h3>
-              <p className="text-xs text-muted-foreground">{t("createTeam.formDescription")}</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="team-name" className="flex items-center gap-1 text-sm">
-                {t("createTeam.teamName")}
-                <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="team-name"
-                placeholder={t("createTeam.teamNamePlaceholder")}
-                value={teamData.name}
-                onChange={(e) => setTeamData({ ...teamData, name: e.target.value })}
-                className="h-11"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="team-description" className="text-sm">{t("common.description")}</Label>
-              <Textarea
-                id="team-description"
-                placeholder={t("createTeam.descriptionPlaceholder")}
-                value={teamData.description}
-                onChange={(e) => setTeamData({ ...teamData, description: e.target.value })}
-                rows={2}
-                className="resize-none"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label className="text-sm">{t("createTeam.accessCode")}</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  value={teamData.accessCode}
-                  readOnly
-                  className="font-mono bg-muted/50 h-11"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-11 w-11 shrink-0"
-                  onClick={() => setTeamData({ ...teamData, accessCode: generateAccessCode() })}
-                  title={t("createTeam.generateNew")}
-                >
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">{t("createTeam.accessCodeHint")}</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Security badge */}
       <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
@@ -212,7 +176,7 @@ export function ConfirmStep({ selectedPlan, onBack, onFinish, isProcessing, curr
       <Button
         className={cn("w-full h-14 text-base font-semibold shadow-lg border-0", theme.btnClass)}
         onClick={handleSubmit}
-        disabled={isProcessing || (!hasExistingTeam && !teamData.name.trim())}
+        disabled={isProcessing}
       >
         {isProcessing ? (
           <>
@@ -228,7 +192,7 @@ export function ConfirmStep({ selectedPlan, onBack, onFinish, isProcessing, curr
         )}
       </Button>
 
-      <Button variant="ghost" className="w-full" onClick={onBack}>
+      <Button variant="ghost" className="w-full" onClick={onBackToPlan}>
         <ArrowLeft className="mr-2 h-4 w-4" />
         {t("getStarted.backToPlans")}
       </Button>
