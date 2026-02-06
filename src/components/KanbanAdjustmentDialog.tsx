@@ -253,14 +253,13 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
             <label className="text-sm font-medium">
               Motivo do ajuste <span className="text-destructive">*</span>
             </label>
-            <div className="max-h-[30vh] overflow-y-auto rounded-md border border-input">
-              <RichTextEditor
-                value={reason}
-                onChange={setReason}
-                minHeight="120px"
-                placeholder="Descreva o que precisa ser corrigido ou alterado..."
-              />
-            </div>
+            <RichTextEditor
+              value={reason}
+              onChange={setReason}
+              minHeight="120px"
+              className="max-h-[30vh]"
+              placeholder="Descreva o que precisa ser corrigido ou alterado..."
+            />
           </div>
           
           <div className="space-y-2">

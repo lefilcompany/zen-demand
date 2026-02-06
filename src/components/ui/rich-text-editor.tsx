@@ -100,7 +100,7 @@ function EditorToolbar({ editor, onImageUpload, isUploading }: EditorToolbarProp
   };
 
   return (
-    <div className="sticky top-0 z-10 flex flex-wrap items-center gap-0.5 p-1 border-b border-border bg-muted/30">
+    <div className="flex-shrink-0 flex flex-wrap items-center gap-0.5 p-1 border-b border-border bg-muted/30">
       {/* Text formatting */}
       <Toggle
         size="sm"
@@ -446,7 +446,7 @@ export function RichTextEditor({
 
   return (
     <div className={cn(
-      "border border-input rounded-md bg-background overflow-hidden transition-colors",
+      "border border-input rounded-md bg-background overflow-hidden transition-colors flex flex-col",
       "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
       disabled && "opacity-50 cursor-not-allowed",
       className
@@ -456,7 +456,9 @@ export function RichTextEditor({
         onImageUpload={triggerFileInput}
         isUploading={isUploadingRef.current}
       />
-      <EditorContent editor={editor} />
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <EditorContent editor={editor} />
+      </div>
       <input
         ref={fileInputRef}
         type="file"
