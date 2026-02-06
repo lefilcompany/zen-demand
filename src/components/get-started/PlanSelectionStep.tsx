@@ -208,7 +208,10 @@ export function PlanSelectionStep({ plans, onSelectPlan, currentPlanSlug, onBack
                     )}
                   </div>
                   {plan.description && (
-                    <p className="text-xs text-muted-foreground truncate mt-0.5 hidden sm:block">{plan.description}</p>
+                    <p className={cn(
+                      "text-xs text-muted-foreground mt-0.5 transition-all duration-300",
+                      isOpen ? "whitespace-normal" : "truncate"
+                    )}>{plan.description}</p>
                   )}
                 </div>
 
