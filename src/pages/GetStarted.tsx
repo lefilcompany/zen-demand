@@ -145,7 +145,7 @@ export default function GetStarted() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen bg-background">
+    <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-background">
       {/* Left side - Hero/Branding */}
       <GetStartedHero />
 

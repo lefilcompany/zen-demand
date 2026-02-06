@@ -16,7 +16,7 @@ export function GetStartedHero() {
     <>
       {/* Desktop Hero */}
       <div
-        className="hidden lg:flex lg:w-2/5 xl:w-[45%] h-screen sticky top-0 relative overflow-hidden"
+        className="hidden lg:flex lg:w-2/5 xl:w-[45%] h-full shrink-0 relative overflow-hidden"
         style={{
           backgroundImage: `url(${authBackground})`,
           backgroundSize: "cover",
