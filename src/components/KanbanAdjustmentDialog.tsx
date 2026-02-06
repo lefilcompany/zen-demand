@@ -241,24 +241,26 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
         onOpenChange(isOpen);
       }
     }}>
-      <DialogContent className="max-w-[95vw] sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>
             {dialogDescription}
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-4 py-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">
               Motivo do ajuste <span className="text-destructive">*</span>
             </label>
-            <RichTextEditor
-              value={reason}
-              onChange={setReason}
-              minHeight="120px"
-              placeholder="Descreva o que precisa ser corrigido ou alterado..."
-            />
+            <div className="max-h-[30vh] overflow-y-auto rounded-md border border-input">
+              <RichTextEditor
+                value={reason}
+                onChange={setReason}
+                minHeight="120px"
+                placeholder="Descreva o que precisa ser corrigido ou alterado..."
+              />
+            </div>
           </div>
           
           <div className="space-y-2">
@@ -271,7 +273,7 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
             />
           </div>
         </div>
-        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+        <div className="flex-shrink-0 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
           <Button
             variant="outline"
             onClick={handleClose}
