@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,174 +49,9 @@ function getPasswordStrength(password: string): { level: number; text: string; c
   return { level: 0, text: "", color: "" };
 }
 
-export default function ResetPassword() {
-  const { updatePassword, resetPassword } = useAuth();
-  const navigate = useNavigate();
-  
-  // Page state
-  const [pageState, setPageState] = useState<PageState>("loading");
-  
-  // Form state
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Resend link state
-  const [resendEmail, setResendEmail] = useState("");
-  const [isResending, setIsResending] = useState(false);
-
-  // Initialize page - detect token and set appropriate state
-  useEffect(() => {
-    const hash = window.location.hash;
-    const params = parseHashParams(hash);
-    
-    // Check for error in URL first
-    if (params.error) {
-      const errorCode = params.error_code || params.error;
-      const errorDescription = params.error_description || "";
-      
-      if (errorCode === "otp_expired" || errorDescription.toLowerCase().includes("expired")) {
-        setPageState("expired");
-      } else {
-        setPageState("invalid");
-      }
-      // Clear the hash to prevent confusion on refresh
-      window.history.replaceState(null, "", window.location.pathname);
-      return;
-    }
-    
-    // Check if there's a recovery token
-    if (params.access_token && params.type === "recovery") {
-      // Token exists - Supabase will handle it via onAuthStateChange
-      // Stay in loading state until PASSWORD_RECOVERY event fires
-      setPageState("loading");
-      return;
-    }
-    
-    // No token in URL - check if we already have a valid session
-    // (user may have arrived from a different tab or refreshed)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        // Check if this is a recovery session by looking at the aal claim
-        // or just allow password reset if session exists
-        setPageState("ready");
-      } else {
-        // No token and no session - show request link form
-        setPageState("request-link");
-      }
-    });
-  }, []);
-
-  // Listen for PASSWORD_RECOVERY event from Supabase
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("ResetPassword auth event:", event);
-      
-      if (event === "PASSWORD_RECOVERY") {
-        // Recovery token was valid - user can now set new password
-        setPageState("ready");
-        // Clear the hash from URL
-        window.history.replaceState(null, "", window.location.pathname);
-      } else if (event === "SIGNED_OUT" && pageState === "loading") {
-        // Session was cleared while we were waiting - token must be invalid
-        setPageState("invalid");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [pageState]);
-
-  // Timeout for loading state - if no event after 5s, something went wrong
-  useEffect(() => {
-    if (pageState !== "loading") return;
-    
-    const timeout = setTimeout(() => {
-      // Still loading after 5s - check session one more time
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          setPageState("ready");
-        } else {
-          setPageState("invalid");
-        }
-      });
-    }, 5000);
-
-    return () => clearTimeout(timeout);
-  }, [pageState]);
-
-  // Handle password form submission
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (password.length < 6) {
-      toast.error("Senha muito curta", {
-        description: "A senha deve ter pelo menos 6 caracteres.",
-      });
-      return;
-    }
-    
-    if (password !== confirmPassword) {
-      toast.error("Senhas não coincidem", {
-        description: "As senhas digitadas não são iguais.",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await updatePassword(password);
-      setPageState("success");
-      toast.success("Senha alterada com sucesso!");
-      
-      // Redirect after showing success
-      setTimeout(() => {
-        navigate("/");
-      }, 2000);
-    } catch (error: any) {
-      toast.error("Erro ao alterar senha", {
-        description: error?.message || "Tente novamente mais tarde.",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [password, confirmPassword, updatePassword, navigate]);
-
-  // Handle resend link form submission
-  const handleResendLink = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!resendEmail || !resendEmail.includes("@")) {
-      toast.error("Email inválido", {
-        description: "Por favor, digite um email válido.",
-      });
-      return;
-    }
-
-    setIsResending(true);
-    try {
-      await resetPassword(resendEmail);
-      toast.success("Email enviado!", {
-        description: "Verifique sua caixa de entrada para o link de recuperação.",
-      });
-      setResendEmail("");
-    } catch (error: any) {
-      toast.error("Erro ao enviar email", {
-        description: error?.message || "Tente novamente mais tarde.",
-      });
-    } finally {
-      setIsResending(false);
-    }
-  }, [resendEmail, resetPassword]);
-
-  // Password validation indicators
-  const passwordStrength = getPasswordStrength(password);
-  const passwordsMatch = password.length > 0 && confirmPassword.length > 0 && password === confirmPassword;
-  const passwordsDontMatch = confirmPassword.length > 0 && password !== confirmPassword;
-
-  // Layout wrapper for all states
-  const PageWrapper = ({ children }: { children: React.ReactNode }) => (
+// ---- PageWrapper extracted OUTSIDE the component to avoid remount on re-render ----
+function PageWrapper({ children }: { children: React.ReactNode }) {
+  return (
     <div className="flex flex-col lg:flex-row min-h-screen">
       {/* Mobile Header */}
       <div 
@@ -263,6 +98,200 @@ export default function ResetPassword() {
       </div>
     </div>
   );
+}
+
+export default function ResetPassword() {
+  const { resetPassword } = useAuth();
+  const navigate = useNavigate();
+  
+  // Page state
+  const [pageState, setPageState] = useState<PageState>("loading");
+  const pageStateRef = useRef<PageState>("loading");
+  
+  // Form state
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Resend link state
+  const [resendEmail, setResendEmail] = useState("");
+  const [isResending, setIsResending] = useState(false);
+
+  // Keep ref in sync with state
+  const updatePageState = useCallback((newState: PageState) => {
+    pageStateRef.current = newState;
+    setPageState(newState);
+  }, []);
+
+  // Initialize page - detect token and set appropriate state
+  useEffect(() => {
+    const hash = window.location.hash;
+    const params = parseHashParams(hash);
+    
+    // Check for error in URL first
+    if (params.error) {
+      const errorCode = params.error_code || params.error;
+      const errorDescription = params.error_description || "";
+      
+      if (errorCode === "otp_expired" || errorDescription.toLowerCase().includes("expired")) {
+        updatePageState("expired");
+      } else {
+        updatePageState("invalid");
+      }
+      // Clear the hash to prevent confusion on refresh
+      window.history.replaceState(null, "", window.location.pathname);
+      return;
+    }
+    
+    // Check if there's a recovery token
+    if (params.access_token && params.type === "recovery") {
+      // Token exists - Supabase will handle it via onAuthStateChange
+      // Stay in loading state until PASSWORD_RECOVERY event fires
+      updatePageState("loading");
+      return;
+    }
+    
+    // No token in URL - check if we already have a valid session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        updatePageState("ready");
+      } else {
+        updatePageState("request-link");
+      }
+    });
+  }, [updatePageState]);
+
+  // Listen for PASSWORD_RECOVERY event from Supabase
+  // Using ref to avoid re-subscribing on pageState changes
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      console.log("ResetPassword auth event:", event);
+      
+      if (event === "PASSWORD_RECOVERY") {
+        updatePageState("ready");
+        window.history.replaceState(null, "", window.location.pathname);
+      } else if (event === "SIGNED_OUT" && pageStateRef.current === "loading") {
+        updatePageState("invalid");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [updatePageState]);
+
+  // Timeout for loading state
+  useEffect(() => {
+    if (pageState !== "loading") return;
+    
+    const timeout = setTimeout(() => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          updatePageState("ready");
+        } else {
+          updatePageState("invalid");
+        }
+      });
+    }, 5000);
+
+    return () => clearTimeout(timeout);
+  }, [pageState, updatePageState]);
+
+  // Handle password form submission - calls Supabase directly
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (password.length < 6) {
+      toast.error("Senha muito curta", {
+        description: "A senha deve ter pelo menos 6 caracteres.",
+      });
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      toast.error("Senhas não coincidem", {
+        description: "As senhas digitadas não são iguais.",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Call Supabase directly to update password
+      const { data, error } = await supabase.auth.updateUser({ password });
+      
+      if (error) {
+        throw error;
+      }
+
+      // Verify that the update was successful
+      if (!data.user) {
+        throw new Error("Não foi possível confirmar a alteração da senha.");
+      }
+
+      console.log("Password updated successfully for user:", data.user.id);
+      updatePageState("success");
+      toast.success("Senha alterada com sucesso!", {
+        description: "Você será redirecionado para o login.",
+      });
+
+      // Sign out and redirect after a brief delay
+      setTimeout(async () => {
+        try {
+          // Clear session preferences
+          localStorage.removeItem("rememberMe");
+          sessionStorage.removeItem("sessionOnly");
+          sessionStorage.removeItem("sessionChecked");
+          
+          // Sign out to force re-authentication with new password
+          await supabase.auth.signOut();
+        } catch (signOutError) {
+          console.log("SignOut during password reset:", signOutError);
+        } finally {
+          navigate("/auth");
+        }
+      }, 2000);
+    } catch (error: any) {
+      console.error("Password update failed:", error);
+      toast.error("Erro ao alterar senha", {
+        description: error?.message || "Tente novamente mais tarde.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [password, confirmPassword, navigate, updatePageState]);
+
+  // Handle resend link form submission
+  const handleResendLink = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!resendEmail || !resendEmail.includes("@")) {
+      toast.error("Email inválido", {
+        description: "Por favor, digite um email válido.",
+      });
+      return;
+    }
+
+    setIsResending(true);
+    try {
+      await resetPassword(resendEmail);
+      toast.success("Email enviado!", {
+        description: "Verifique sua caixa de entrada para o link de recuperação.",
+      });
+      setResendEmail("");
+    } catch (error: any) {
+      toast.error("Erro ao enviar email", {
+        description: error?.message || "Tente novamente mais tarde.",
+      });
+    } finally {
+      setIsResending(false);
+    }
+  }, [resendEmail, resetPassword]);
+
+  // Password validation indicators
+  const passwordStrength = getPasswordStrength(password);
+  const passwordsMatch = password.length > 0 && confirmPassword.length > 0 && password === confirmPassword;
+  const passwordsDontMatch = confirmPassword.length > 0 && password !== confirmPassword;
 
   // Loading State
   if (pageState === "loading") {
@@ -295,7 +324,7 @@ export default function ResetPassword() {
             <div>
               <h3 className="font-semibold text-xl">Senha alterada!</h3>
               <p className="text-muted-foreground mt-2">
-                Sua senha foi alterada com sucesso. Redirecionando...
+                Sua senha foi alterada com sucesso. Redirecionando para o login...
               </p>
             </div>
           </CardContent>
