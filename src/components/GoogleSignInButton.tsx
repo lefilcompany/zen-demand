@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { lovable } from "@/integrations/lovable/index";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export function GoogleSignInButton() {
@@ -10,11 +11,30 @@ export function GoogleSignInButton() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
-      });
-      if (error) {
-        throw error;
+      const hostname = window.location.hostname;
+      const isEditorPreview =
+        hostname.includes("id-preview--") && hostname.includes("lovable.app");
+
+      if (isEditorPreview) {
+        // Editor preview: use Lovable managed OAuth broker
+        const { error } = await lovable.auth.signInWithOAuth("google", {
+          redirect_uri: window.location.origin,
+        });
+        if (error) throw error;
+      } else {
+        // Custom domain or published preview: use Supabase OAuth directly
+        // bypassing the Lovable auth-bridge with skipBrowserRedirect
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: window.location.origin,
+            skipBrowserRedirect: true,
+          },
+        });
+        if (error) throw error;
+        if (data?.url) {
+          window.location.href = data.url;
+        }
       }
     } catch (err: any) {
       toast.error("Erro ao entrar com Google", {
