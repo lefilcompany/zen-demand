@@ -1,82 +1,95 @@
 
+# API de Webhooks e Integracoes
 
-# Plano: Corrigir Redefinicao de Senha
+## Objetivo
+Criar uma API REST publica autenticada por API Keys que permite sistemas externos (como n8n, Zapier, ou sistemas internos dos clientes) receberem e enviarem dados para o SoMA+.
 
-## Problemas Identificados
+## Arquitetura
 
-### 1. Input trava apos cada tecla digitada (BUG CRITICO)
-O componente `PageWrapper` esta definido **dentro** da funcao `ResetPassword`. Isso significa que a cada re-render (cada tecla digitada), o React cria uma **nova referencia** de componente, desmonta toda a arvore e remonta do zero. Resultado: o input perde o foco e o usuario nao consegue digitar mais de um caractere.
+### 1. Tabela de API Keys
+Criar uma tabela `api_keys` para gerenciar chaves de acesso por equipe:
+- `id`, `team_id`, `name` (descricao da chave), `key_hash` (hash SHA-256 da chave), `key_prefix` (primeiros 8 chars para identificacao)
+- `permissions` (JSONB - quais endpoints a chave pode acessar)
+- `is_active`, `last_used_at`, `expires_at`, `created_by`, `created_at`
+- RLS policies para que apenas admins da equipe possam gerenciar chaves
 
-```text
-Tecla digitada
-  -> setState (re-render)
-  -> PageWrapper e redefinido como nova funcao
-  -> React ve componente "diferente"
-  -> Desmonta arvore inteira (inputs perdem foco)
-  -> Remonta tudo do zero
-```
+### 2. Edge Function: `public-api`
+Uma unica Edge Function que roteia por path e metodo HTTP:
 
-### 2. Senha nao e realmente alterada
-A funcao `updatePassword` chama `supabase.auth.updateUser({ password })`, o que depende de uma sessao valida. Porem, ha dois listeners de `onAuthStateChange` concorrentes (um no `AuthContext`, outro no `ResetPassword`), e a logica de sessao do `AuthContext` pode estar interferindo com a sessao de recuperacao. Alem disso, nao ha verificacao pos-update para confirmar que a mudanca foi persistida.
+**Endpoints disponiveis:**
 
-### 3. Redirecionamento incorreto
-Apos alterar a senha, o codigo redireciona para `/` (dashboard). O comportamento correto e: deslogar o usuario e redirecionar para `/auth` (tela de login) para que ele entre com a nova senha.
+| Metodo | Path | Descricao |
+|--------|------|-----------|
+| GET | `/demands` | Listar demandas da equipe |
+| GET | `/demands/:id` | Detalhes de uma demanda |
+| POST | `/demands` | Criar nova demanda |
+| PATCH | `/demands/:id/status` | Atualizar status |
+| GET | `/boards` | Listar quadros |
+| GET | `/statuses` | Listar status disponiveis |
+| POST | `/webhooks/test` | Testar conectividade |
 
----
+**Autenticacao:** Header `X-API-Key: sk_xxxxx`
+A funcao valida o hash da chave contra a tabela `api_keys`.
 
-## Solucao
+### 3. Tabela de Webhook Subscriptions
+Tabela `webhook_subscriptions` para enviar eventos para URLs externas:
+- `id`, `team_id`, `url`, `events` (array de eventos como `demand.created`, `demand.status_changed`)
+- `secret` (para assinatura HMAC dos payloads)
+- `is_active`, `last_triggered_at`
 
-### Passo 1: Extrair PageWrapper para fora do componente
-Mover a definicao do `PageWrapper` para fora da funcao `ResetPassword`, tornando-o um componente estavel que nao e recriado a cada render.
-
-### Passo 2: Reescrever o fluxo de submit da senha
-- Chamar `supabase.auth.updateUser({ password })` diretamente (sem depender do `updatePassword` do AuthContext, que pode ser afetado pelo state management do contexto)
-- Verificar o retorno da API para garantir que a senha foi alterada
-- Apos sucesso, chamar `supabase.auth.signOut()` para encerrar a sessao de recuperacao
-- Limpar localStorage/sessionStorage de preferencias de sessao
-- Redirecionar para `/auth`
-
-### Passo 3: Simplificar o listener de auth do ResetPassword
-- Remover a dependencia de `pageState` do useEffect do `onAuthStateChange` para evitar resubscricoes desnecessarias
-- Usar um `useRef` para trackear o pageState dentro do callback sem causar re-renders do effect
-
-### Passo 4: Proteger contra interferencia do AuthContext
-- O `AuthContext` tem logica que pode deslogar o usuario automaticamente (verificacao de `rememberMe`/`sessionOnly`). A pagina `/reset-password` ja e checada com `isPasswordResetPage`, mas vamos garantir que essa protecao funcione em todos os cenarios.
-
----
+### 4. Pagina de Gerenciamento
+Tela em `/settings` (ou nova rota `/api-settings`) onde admins podem:
+- Gerar/revogar API Keys
+- Configurar URLs de webhook
+- Ver logs de chamadas recentes
+- Copiar exemplos de uso (cURL, JavaScript)
 
 ## Detalhes Tecnicos
 
-### Arquivos a serem modificados
-
-**`src/pages/ResetPassword.tsx`**:
-- Extrair `PageWrapper` como componente no nivel do modulo (fora de `ResetPassword`)
-- Passar `authBackground` e `logoSomaDark` como props ou via import direto
-- Refatorar `handleSubmit` para:
-  1. Chamar `supabase.auth.updateUser({ password })` diretamente
-  2. Verificar `data.user` no retorno para confirmar sucesso
-  3. Mostrar toast de sucesso
-  4. Chamar `supabase.auth.signOut()` para limpar a sessao
-  5. Limpar `localStorage.removeItem("rememberMe")` e sessionStorage
-  6. Redirecionar para `/auth` apos breve delay (2 segundos para o usuario ver a mensagem de sucesso)
-- Corrigir o `useEffect` do `onAuthStateChange` para usar `useRef` ao inves de `pageState` na dependencia
-- Remover import de `useAuth` (nao sera mais necessario para `updatePassword`, apenas para `resetPassword` no formulario de reenvio)
-
-**`src/lib/auth.tsx`**:
-- Nenhuma mudanca necessaria -- a protecao `isPasswordResetPage` ja existe
-
-### Fluxo apos as mudancas
-
+### Geracao de API Key
 ```text
-Usuario clica no link de recuperacao
-  -> /reset-password carrega
-  -> PASSWORD_RECOVERY event seta pageState = "ready"
-  -> Usuario digita nova senha normalmente (PageWrapper estavel)
-  -> Clica "Alterar Senha"
-  -> supabase.auth.updateUser({ password }) -- senha alterada
-  -> supabase.auth.signOut() -- sessao encerrada
-  -> Toast "Senha alterada com sucesso!"
-  -> Redirect para /auth (2s delay)
-  -> Usuario faz login com nova senha
+Formato: sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+Armazenamento: apenas o hash SHA-256 no banco
+Exibicao: mostrada apenas uma vez ao criar
 ```
 
+### Payload de Webhook (exemplo)
+```text
+POST -> URL do cliente
+Headers:
+  Content-Type: application/json
+  X-Webhook-Signature: sha256=HMAC_HASH
+Body:
+  {
+    "event": "demand.status_changed",
+    "timestamp": "2026-02-09T...",
+    "data": { demanda completa }
+  }
+```
+
+### Disparo de Webhooks
+Triggers no banco detectam eventos (demanda criada, status alterado) e chamam uma Edge Function `dispatch-webhook` que envia o payload para as URLs cadastradas.
+
+### Seguranca
+- API Keys hasheadas (nunca armazenadas em texto plano)
+- Rate limiting por chave (via contador na tabela)
+- Permissoes granulares por chave
+- Assinatura HMAC nos webhooks para validacao pelo cliente
+- Verificacao de plano: apenas equipes com `features.api = true` podem usar
+
+### Arquivos a criar/editar
+
+**Novos:**
+- `supabase/functions/public-api/index.ts` - Edge Function principal da API
+- `supabase/functions/dispatch-webhook/index.ts` - Disparo de webhooks
+- `src/pages/ApiSettings.tsx` - Pagina de gerenciamento
+- `src/hooks/useApiKeys.ts` - Hook para gerenciar API keys
+- `src/hooks/useWebhookSubscriptions.ts` - Hook para gerenciar webhooks
+- `src/components/api/ApiKeyManager.tsx` - Componente de gerenciamento de chaves
+- `src/components/api/WebhookManager.tsx` - Componente de gerenciamento de webhooks
+- `src/components/api/ApiDocsPanel.tsx` - Documentacao inline da API
+
+**Editados:**
+- `src/App.tsx` - Adicionar rota `/api-settings`
+- `src/components/AppSidebar.tsx` - Adicionar link no menu
+- Migracao SQL para criar tabelas `api_keys` e `webhook_subscriptions`
