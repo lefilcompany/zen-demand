@@ -1341,7 +1341,6 @@ export type Database = {
           avatar_url: string | null
           banner_url: string | null
           bio: string | null
-          city: string | null
           created_at: string
           full_name: string
           github_url: string | null
@@ -1349,8 +1348,6 @@ export type Database = {
           job_title: string | null
           linkedin_url: string | null
           location: string | null
-          phone: string | null
-          state: string | null
           trial_ends_at: string | null
           updated_at: string
           website: string | null
@@ -1359,7 +1356,6 @@ export type Database = {
           avatar_url?: string | null
           banner_url?: string | null
           bio?: string | null
-          city?: string | null
           created_at?: string
           full_name: string
           github_url?: string | null
@@ -1367,8 +1363,6 @@ export type Database = {
           job_title?: string | null
           linkedin_url?: string | null
           location?: string | null
-          phone?: string | null
-          state?: string | null
           trial_ends_at?: string | null
           updated_at?: string
           website?: string | null
@@ -1377,7 +1371,6 @@ export type Database = {
           avatar_url?: string | null
           banner_url?: string | null
           bio?: string | null
-          city?: string | null
           created_at?: string
           full_name?: string
           github_url?: string | null
@@ -1385,8 +1378,6 @@ export type Database = {
           job_title?: string | null
           linkedin_url?: string | null
           location?: string | null
-          phone?: string | null
-          state?: string | null
           trial_ends_at?: string | null
           updated_at?: string
           website?: string | null

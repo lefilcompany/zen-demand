@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
-import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { SelectedPlanCard } from "./SelectedPlanCard";
 import { Plan } from "@/hooks/usePlans";
 
@@ -176,15 +174,6 @@ export function AuthStep({
                 </>
               )}
             </Button>
-
-            {/* Google Sign In */}
-            <div className="relative my-4">
-              <Separator />
-              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-3 text-xs text-muted-foreground">
-                ou
-              </span>
-            </div>
-            <GoogleSignInButton />
           </form>
         </TabsContent>
 
@@ -239,15 +228,6 @@ export function AuthStep({
                 </>
               )}
             </Button>
-
-            {/* Google Sign In */}
-            <div className="relative my-4">
-              <Separator />
-              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-3 text-xs text-muted-foreground">
-                ou
-              </span>
-            </div>
-            <GoogleSignInButton />
           </form>
         </TabsContent>
       </Tabs>

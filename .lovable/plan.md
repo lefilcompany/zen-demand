@@ -1,63 +1,82 @@
 
 
-## Corrigir Google OAuth -- Solucao Definitiva
+# Plano: Corrigir Redefinicao de Senha
 
-### Problema
-O codigo atual tenta usar `supabase.auth.signInWithOAuth` diretamente quando voce acessa pelo dominio customizado (`pla.soma.lefil.com.br`). Mas o projeto Supabase NAO tem o Google Client ID/Secret configurado diretamente nele -- esses dados estao apenas no broker do Lovable Cloud. Por isso da o erro "missing OAuth secret".
+## Problemas Identificados
 
-### Solucao
-Remover toda a logica condicional e usar **SEMPRE** o broker do Lovable Cloud (`lovable.auth.signInWithOAuth`) em qualquer dominio. O parametro `redirect_uri: window.location.origin` garante que apos autenticar, o usuario volta para o dominio de onde veio (seja `pla.soma.lefil.com.br`, preview, etc).
+### 1. Input trava apos cada tecla digitada (BUG CRITICO)
+O componente `PageWrapper` esta definido **dentro** da funcao `ResetPassword`. Isso significa que a cada re-render (cada tecla digitada), o React cria uma **nova referencia** de componente, desmonta toda a arvore e remonta do zero. Resultado: o input perde o foco e o usuario nao consegue digitar mais de um caractere.
 
-O broker ja esta configurado com a URL correta (`oauthBrokerUrl`) no arquivo `src/integrations/lovable/index.ts`, entao ele funciona independente do dominio.
-
-### Arquivo modificado: `src/components/GoogleSignInButton.tsx`
-
-Simplificar para:
-
-```typescript
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { lovable } from "@/integrations/lovable/index";
-import { toast } from "sonner";
-
-export function GoogleSignInButton() {
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    try {
-      const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
-      });
-      if (error) throw error;
-    } catch (err: any) {
-      toast.error("Erro ao entrar com Google", {
-        description: err?.message || "Tente novamente mais tarde.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // ... botao permanece igual
-}
+```text
+Tecla digitada
+  -> setState (re-render)
+  -> PageWrapper e redefinido como nova funcao
+  -> React ve componente "diferente"
+  -> Desmonta arvore inteira (inputs perdem foco)
+  -> Remonta tudo do zero
 ```
 
-### O que muda
-- Remove import do `supabase` (nao precisa mais)
-- Remove toda a deteccao de dominio (`isEditorPreview`, etc)
-- Remove o fallback para `supabase.auth.signInWithOAuth` que causava o erro
-- Usa SEMPRE `lovable.auth.signInWithOAuth` com `redirect_uri: window.location.origin`
+### 2. Senha nao e realmente alterada
+A funcao `updatePassword` chama `supabase.auth.updateUser({ password })`, o que depende de uma sessao valida. Porem, ha dois listeners de `onAuthStateChange` concorrentes (um no `AuthContext`, outro no `ResetPassword`), e a logica de sessao do `AuthContext` pode estar interferindo com a sessao de recuperacao. Alem disso, nao ha verificacao pos-update para confirmar que a mudanca foi persistida.
 
-### Por que funciona
-- O broker do Lovable Cloud tem os credentials do Google configurados
-- O `redirect_uri` garante que voce volta para `pla.soma.lefil.com.br` (ou qualquer dominio que esteja usando)
-- O `oauthBrokerUrl` no `src/integrations/lovable/index.ts` ja aponta para o broker correto
+### 3. Redirecionamento incorreto
+Apos alterar a senha, o codigo redireciona para `/` (dashboard). O comportamento correto e: deslogar o usuario e redirecionar para `/auth` (tela de login) para que ele entre com a nova senha.
 
-### Requisito no Google Cloud Console
-Certifique-se de que a URL de callback do Supabase esta nos **Authorized redirect URIs** do Google:
-```
-https://dcojvsftpzwfhgvamdgm.supabase.co/auth/v1/callback
+---
+
+## Solucao
+
+### Passo 1: Extrair PageWrapper para fora do componente
+Mover a definicao do `PageWrapper` para fora da funcao `ResetPassword`, tornando-o um componente estavel que nao e recriado a cada render.
+
+### Passo 2: Reescrever o fluxo de submit da senha
+- Chamar `supabase.auth.updateUser({ password })` diretamente (sem depender do `updatePassword` do AuthContext, que pode ser afetado pelo state management do contexto)
+- Verificar o retorno da API para garantir que a senha foi alterada
+- Apos sucesso, chamar `supabase.auth.signOut()` para encerrar a sessao de recuperacao
+- Limpar localStorage/sessionStorage de preferencias de sessao
+- Redirecionar para `/auth`
+
+### Passo 3: Simplificar o listener de auth do ResetPassword
+- Remover a dependencia de `pageState` do useEffect do `onAuthStateChange` para evitar resubscricoes desnecessarias
+- Usar um `useRef` para trackear o pageState dentro do callback sem causar re-renders do effect
+
+### Passo 4: Proteger contra interferencia do AuthContext
+- O `AuthContext` tem logica que pode deslogar o usuario automaticamente (verificacao de `rememberMe`/`sessionOnly`). A pagina `/reset-password` ja e checada com `isPasswordResetPage`, mas vamos garantir que essa protecao funcione em todos os cenarios.
+
+---
+
+## Detalhes Tecnicos
+
+### Arquivos a serem modificados
+
+**`src/pages/ResetPassword.tsx`**:
+- Extrair `PageWrapper` como componente no nivel do modulo (fora de `ResetPassword`)
+- Passar `authBackground` e `logoSomaDark` como props ou via import direto
+- Refatorar `handleSubmit` para:
+  1. Chamar `supabase.auth.updateUser({ password })` diretamente
+  2. Verificar `data.user` no retorno para confirmar sucesso
+  3. Mostrar toast de sucesso
+  4. Chamar `supabase.auth.signOut()` para limpar a sessao
+  5. Limpar `localStorage.removeItem("rememberMe")` e sessionStorage
+  6. Redirecionar para `/auth` apos breve delay (2 segundos para o usuario ver a mensagem de sucesso)
+- Corrigir o `useEffect` do `onAuthStateChange` para usar `useRef` ao inves de `pageState` na dependencia
+- Remover import de `useAuth` (nao sera mais necessario para `updatePassword`, apenas para `resetPassword` no formulario de reenvio)
+
+**`src/lib/auth.tsx`**:
+- Nenhuma mudanca necessaria -- a protecao `isPasswordResetPage` ja existe
+
+### Fluxo apos as mudancas
+
+```text
+Usuario clica no link de recuperacao
+  -> /reset-password carrega
+  -> PASSWORD_RECOVERY event seta pageState = "ready"
+  -> Usuario digita nova senha normalmente (PageWrapper estavel)
+  -> Clica "Alterar Senha"
+  -> supabase.auth.updateUser({ password }) -- senha alterada
+  -> supabase.auth.signOut() -- sessao encerrada
+  -> Toast "Senha alterada com sucesso!"
+  -> Redirect para /auth (2s delay)
+  -> Usuario faz login com nova senha
 ```
 
