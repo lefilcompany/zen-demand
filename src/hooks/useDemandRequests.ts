@@ -411,15 +411,17 @@ export function useApproveDemandRequest() {
         if (assignError) console.error("Erro ao atribuir responsáveis:", assignError);
       }
 
-      // Copy attachments from request to demand
+      // Copy attachments from request to demand (only request-level, not comment attachments)
       if (demand) {
         const { data: requestAttachments } = await supabase
           .from("demand_request_attachments")
           .select("*")
-          .eq("demand_request_id", requestId);
+          .eq("demand_request_id", requestId)
+          .is("comment_id", null);
 
         if (requestAttachments && requestAttachments.length > 0) {
           // Insert attachment records pointing to the same files
+          // Use current user as uploaded_by to satisfy RLS policy (uploaded_by = auth.uid())
           const { error: attachError } = await supabase
             .from("demand_attachments")
             .insert(
@@ -429,7 +431,7 @@ export function useApproveDemandRequest() {
                 file_path: att.file_path,
                 file_type: att.file_type,
                 file_size: att.file_size,
-                uploaded_by: att.uploaded_by,
+                uploaded_by: user.id,
               }))
             );
 
