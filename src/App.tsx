@@ -54,6 +54,7 @@ import NotFound from "./pages/NotFound";
 import Pricing from "./pages/Pricing";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import GetStarted from "./pages/GetStarted";
+import ApiSettings from "./pages/ApiSettings";
 const queryClient = new QueryClient();
 const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
     <QueryClientProvider client={queryClient}>
@@ -116,6 +117,7 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
                           <Route path="/reports" element={<Reports />} />
                           <Route path="/profile" element={<Profile />} />
                           <Route path="/settings" element={<Settings />} />
+                          <Route path="/api-settings" element={<ApiSettings />} />
                           <Route path="/pricing" element={<Pricing />} />
                           {/* subscription/success moved to auth-only routes */}
                         </Route>
