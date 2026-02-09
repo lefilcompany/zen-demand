@@ -7,10 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2, Mail, Check, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { lovable } from "@/integrations/lovable/index";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
 interface IBGEState {
@@ -305,7 +308,7 @@ export default function Auth() {
     }
     setIsLoading(true);
     try {
-      await signUp(signupData.email, signupData.password, signupData.fullName);
+      await signUp(signupData.email, signupData.password, signupData.fullName, signupData.phone, signupData.state, signupData.city);
       toast.success(t("toast.success"), {
         description: t("welcome.title")
       });
@@ -467,6 +470,15 @@ export default function Auth() {
                   <Button type="submit" className="w-full h-11 sm:h-12 text-base font-semibold" disabled={isLoading}>
                     {isLoading ? t("common.loading") : t("auth.login")}
                   </Button>
+
+                  {/* Google Sign In */}
+                  <div className="relative my-4">
+                    <Separator />
+                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-3 text-xs text-muted-foreground">
+                      ou
+                    </span>
+                  </div>
+                  <GoogleSignInButton />
                 </form>
               </TabsContent>
 
@@ -586,6 +598,15 @@ export default function Auth() {
                   <Button type="submit" className="w-full h-11 text-base font-semibold mt-2" disabled={isLoading || passwordsDontMatch}>
                     {isLoading ? t("common.loading") : t("auth.signup")}
                   </Button>
+
+                  {/* Google Sign In */}
+                  <div className="relative my-4">
+                    <Separator />
+                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-3 text-xs text-muted-foreground">
+                      ou
+                    </span>
+                  </div>
+                  <GoogleSignInButton />
                 </form>
               </TabsContent>
             </Tabs>
