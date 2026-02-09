@@ -1,121 +1,63 @@
 
 
-## Implementacao do Login com Google OAuth - Captura Completa de Dados
+## Corrigir Google OAuth -- Solucao Definitiva
 
-### Resumo
-Adicionar login com Google nas telas de autenticacao, capturando todos os dados possiveis (nome, email, foto de perfil). Tambem adicionar colunas `phone`, `state` e `city` na tabela `profiles` para que o cadastro manual salve esses dados corretamente, e atualizar o trigger do banco para mapear todos os campos.
+### Problema
+O codigo atual tenta usar `supabase.auth.signInWithOAuth` diretamente quando voce acessa pelo dominio customizado (`pla.soma.lefil.com.br`). Mas o projeto Supabase NAO tem o Google Client ID/Secret configurado diretamente nele -- esses dados estao apenas no broker do Lovable Cloud. Por isso da o erro "missing OAuth secret".
 
-### O que o Google fornece automaticamente
-- **Nome completo** (full_name) -- salvo automaticamente
-- **Foto de perfil** (avatar_url) -- salva automaticamente  
-- **Email** -- gerenciado pela autenticacao, nao precisa de coluna extra
-- **Locale** (idioma/regiao) -- disponivel nos metadados
+### Solucao
+Remover toda a logica condicional e usar **SEMPRE** o broker do Lovable Cloud (`lovable.auth.signInWithOAuth`) em qualquer dominio. O parametro `redirect_uri: window.location.origin` garante que apos autenticar, o usuario volta para o dominio de onde veio (seja `pla.soma.lefil.com.br`, preview, etc).
 
-### O que o Google NAO fornece
-- Telefone, estado, cidade -- esses dados so sao coletados no cadastro manual
+O broker ja esta configurado com a URL correta (`oauthBrokerUrl`) no arquivo `src/integrations/lovable/index.ts`, entao ele funciona independente do dominio.
 
-### Etapas
+### Arquivo modificado: `src/components/GoogleSignInButton.tsx`
 
-1. **Adicionar colunas na tabela `profiles`**
-   - `phone` (text, nullable)
-   - `state` (text, nullable)
-   - `city` (text, nullable)
-   - Isso permite que o cadastro manual salve telefone, estado e cidade
+Simplificar para:
 
-2. **Atualizar o trigger `handle_new_user`**
-   - Capturar `phone`, `state`, `city` e `locale` dos metadados do usuario
-   - Para cadastro manual: pega phone/state/city que serao passados via `signUp`
-   - Para Google: pega full_name, avatar_url e locale automaticamente
-
-3. **Atualizar a funcao `signUp` no `src/lib/auth.tsx`**
-   - Passar `phone`, `state` e `city` como `data` (metadados) no `signUp`
-   - Atualmente so passa `full_name`
-
-4. **Atualizar `handleSignup` em `src/pages/Auth.tsx`**
-   - Passar phone, state e city para a funcao `signUp`
-
-5. **Configurar o provedor Google no Lovable Cloud**
-   - Usar a ferramenta `configure-social-auth` para gerar o modulo de integracao
-
-6. **Adicionar botao "Continuar com Google" em `src/pages/Auth.tsx`**
-   - Botao com icone SVG do Google
-   - Separador visual "ou" entre formulario e botao
-   - Aparece tanto na tab Login quanto Cadastrar
-
-7. **Adicionar botao "Continuar com Google" em `src/components/get-started/AuthStep.tsx`**
-   - Mesma logica para consistencia
-
-### Detalhes Tecnicos
-
-**Migracao SQL:**
-```sql
-ALTER TABLE public.profiles 
-  ADD COLUMN phone text,
-  ADD COLUMN state text,
-  ADD COLUMN city text;
-
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger AS $$
-BEGIN
-  INSERT INTO public.profiles (id, full_name, avatar_url, phone, state, city)
-  VALUES (
-    new.id,
-    COALESCE(new.raw_user_meta_data->>'full_name', 'Usuario'),
-    new.raw_user_meta_data->>'avatar_url',
-    new.raw_user_meta_data->>'phone',
-    new.raw_user_meta_data->>'state',
-    new.raw_user_meta_data->>'city'
-  );
-  
-  IF (SELECT COUNT(*) FROM public.profiles) = 1 THEN
-    INSERT INTO public.user_roles (user_id, role)
-    VALUES (new.id, 'admin');
-  ELSE
-    INSERT INTO public.user_roles (user_id, role)
-    VALUES (new.id, 'member');
-  END IF;
-  
-  RETURN new;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-```
-
-**Assinatura atualizada do signUp:**
 ```typescript
-signUp: (email, password, fullName, phone?, state?, city?) => Promise<void>
-```
-
-**Chamada Google OAuth:**
-```typescript
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { lovable } from "@/integrations/lovable/index";
+import { toast } from "sonner";
 
-const handleGoogleSignIn = async () => {
-  const { error } = await lovable.auth.signInWithOAuth("google", {
-    redirect_uri: window.location.origin,
-  });
-  if (error) toast.error("Erro ao entrar com Google");
-};
+export function GoogleSignInButton() {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      toast.error("Erro ao entrar com Google", {
+        description: err?.message || "Tente novamente mais tarde.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ... botao permanece igual
+}
 ```
 
-**Fluxo Google:**
-```text
-Usuario clica "Continuar com Google"
-  -> Redirecionado para tela Google
-  -> Google retorna com token
-  -> Trigger salva: full_name, avatar_url (foto)
-  -> phone/state/city ficam null (Google nao fornece)
-  -> onAuthStateChange detecta SIGNED_IN
-  -> Redirecionado para /welcome
+### O que muda
+- Remove import do `supabase` (nao precisa mais)
+- Remove toda a deteccao de dominio (`isEditorPreview`, etc)
+- Remove o fallback para `supabase.auth.signInWithOAuth` que causava o erro
+- Usa SEMPRE `lovable.auth.signInWithOAuth` com `redirect_uri: window.location.origin`
+
+### Por que funciona
+- O broker do Lovable Cloud tem os credentials do Google configurados
+- O `redirect_uri` garante que voce volta para `pla.soma.lefil.com.br` (ou qualquer dominio que esteja usando)
+- O `oauthBrokerUrl` no `src/integrations/lovable/index.ts` ja aponta para o broker correto
+
+### Requisito no Google Cloud Console
+Certifique-se de que a URL de callback do Supabase esta nos **Authorized redirect URIs** do Google:
+```
+https://dcojvsftpzwfhgvamdgm.supabase.co/auth/v1/callback
 ```
 
-### Arquivos Modificados
-- `src/lib/auth.tsx` -- Atualizar signUp para aceitar phone/state/city
-- `src/pages/Auth.tsx` -- Botao Google + passar dados extras no signup
-- `src/components/get-started/AuthStep.tsx` -- Botao Google
-
-### Arquivos Gerados Automaticamente
-- `src/integrations/lovable/` -- Gerado pela ferramenta configure-social-auth
-
-### Migracao de Banco
-- Adicionar colunas phone, state, city na tabela profiles
-- Atualizar trigger handle_new_user
