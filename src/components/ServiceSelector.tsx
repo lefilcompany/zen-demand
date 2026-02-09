@@ -62,10 +62,19 @@ export function ServiceSelector({
       boardServicesUsage?.map(bs => [bs.service_id, bs]) || []
     );
 
-    const buildDisplayService = (service: any): DisplayService => {
+    // Set of service IDs available for this board
+    const boardServiceIds = new Set(
+      boardServicesUsage?.map(bs => bs.service_id) || []
+    );
+
+    const buildDisplayService = (service: any): DisplayService | null => {
       const boardUsage = boardUsageMap.get(service.id);
       
-      // If board has services configured AND this service has usage info, use it
+      // If board has services configured, only show services linked to this board
+      if (hasBoardServices && !service.isCategory && !boardUsage) {
+        return null;
+      }
+      
       if (boardUsage) {
         return {
           id: service.id,
@@ -82,7 +91,6 @@ export function ServiceSelector({
         };
       }
       
-      // For services without board-specific limits, show them as unlimited
       return {
         id: service.id,
         name: service.name,
@@ -106,13 +114,20 @@ export function ServiceSelector({
     hierarchicalServices?.forEach(service => {
       if (service.isCategory) {
         const categoryDisplay = buildDisplayService(service);
-        const childrenDisplay = service.children.map(child => buildDisplayService(child));
-        cats.push({ category: categoryDisplay, children: childrenDisplay });
-        allDisplay.push(...childrenDisplay);
+        const childrenDisplay = service.children
+          .map(child => buildDisplayService(child))
+          .filter((c): c is DisplayService => c !== null);
+        // Only show category if it has visible children
+        if (childrenDisplay.length > 0) {
+          cats.push({ category: categoryDisplay || { ...buildDisplayService(service)!, isCategory: true }, children: childrenDisplay });
+          allDisplay.push(...childrenDisplay);
+        }
       } else {
         const display = buildDisplayService(service);
-        standalone.push(display);
-        allDisplay.push(display);
+        if (display) {
+          standalone.push(display);
+          allDisplay.push(display);
+        }
       }
     });
 
