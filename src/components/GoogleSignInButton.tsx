@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { lovable } from "@/integrations/lovable/index";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export function GoogleSignInButton() {
@@ -11,39 +10,11 @@ export function GoogleSignInButton() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const hostname = window.location.hostname;
-
-      // Check if we're on a custom domain or published preview (not id-preview--)
-      const isLovableEditorPreview =
-        hostname.includes("id-preview--") && hostname.includes("lovable.app");
-      const isLovableDomain =
-        hostname.includes("lovable.app") || hostname.includes("lovableproject.com");
-      const isCustomDomain = !isLovableDomain;
-
-      if (isCustomDomain || (isLovableDomain && !isLovableEditorPreview)) {
-        // For custom domains or published preview URLs, bypass auth-bridge
-        // and use Supabase OAuth directly
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: {
-            redirectTo: window.location.origin,
-            skipBrowserRedirect: true,
-          },
-        });
-
-        if (error) throw error;
-
-        if (data?.url) {
-          window.location.href = data.url;
-        }
-      } else {
-        // For Lovable editor preview, use the managed OAuth flow
-        const { error } = await lovable.auth.signInWithOAuth("google", {
-          redirect_uri: window.location.origin,
-        });
-        if (error) {
-          throw error;
-        }
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (error) {
+        throw error;
       }
     } catch (err: any) {
       toast.error("Erro ao entrar com Google", {
