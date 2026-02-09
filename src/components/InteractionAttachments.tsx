@@ -44,7 +44,6 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
   
   const isImage = attachment.file_type.startsWith("image/");
   
-  // Load signed URL for image
   useEffect(() => {
     if (isImage) {
       getAttachmentUrl(attachment.file_path).then((url) => {
@@ -69,32 +68,46 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  if (isImage) {
-    return (
-      <>
-        <div 
-          className="relative group cursor-pointer rounded-lg overflow-hidden border border-border bg-muted/30"
-          onClick={() => setIsExpanded(true)}
-        >
-          {isLoading ? (
-            <div className="w-full h-32 bg-muted animate-pulse" />
+  return (
+    <>
+      <div 
+        className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/30 hover:bg-muted/50 transition-colors"
+      >
+        {isImage ? (
+          isLoading ? (
+            <div className="h-10 w-10 rounded bg-muted animate-pulse flex-shrink-0" />
           ) : imageUrl ? (
             <img
               src={imageUrl}
               alt={attachment.file_name}
-              className="max-w-full max-h-48 object-contain"
+              className="h-10 w-10 object-cover rounded flex-shrink-0"
               loading="lazy"
             />
           ) : (
-            <div className="w-full h-32 bg-muted flex items-center justify-center text-muted-foreground text-sm">
-              Erro ao carregar imagem
+            <div className="h-10 w-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
+              <FileText className="h-4 w-4 text-muted-foreground" />
             </div>
-          )}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-            <Maximize2 className="h-6 w-6 text-white drop-shadow-lg" />
-          </div>
+          )
+        ) : (
+          <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate">{attachment.file_name}</p>
+          <p className="text-xs text-muted-foreground">{formatFileSize(attachment.file_size)}</p>
         </div>
-        
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {isImage && imageUrl && (
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsExpanded(true)}>
+              <Maximize2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleDownload}>
+            <Download className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      {isImage && (
         <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
           <DialogContent className="max-w-[90vw] max-h-[90vh] p-2">
             <Button
@@ -123,22 +136,8 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
             </div>
           </DialogContent>
         </Dialog>
-      </>
-    );
-  }
-
-  return (
-    <div 
-      className="flex items-center gap-2 p-2 rounded-lg border border-border bg-muted/30 hover:bg-muted/50 cursor-pointer transition-colors"
-      onClick={handleDownload}
-    >
-      <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{attachment.file_name}</p>
-        <p className="text-xs text-muted-foreground">{formatFileSize(attachment.file_size)}</p>
-      </div>
-      <Download className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-    </div>
+      )}
+    </>
   );
 }
 
@@ -149,25 +148,11 @@ export function InteractionAttachments({ interactionId, className }: Interaction
     return null;
   }
 
-  const images = attachments.filter(a => a.file_type.startsWith("image/"));
-  const files = attachments.filter(a => !a.file_type.startsWith("image/"));
-
   return (
-    <div className={cn("mt-2 space-y-2", className)}>
-      {images.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {images.map((attachment) => (
-            <AttachmentItem key={attachment.id} attachment={attachment} />
-          ))}
-        </div>
-      )}
-      {files.length > 0 && (
-        <div className="space-y-1">
-          {files.map((attachment) => (
-            <AttachmentItem key={attachment.id} attachment={attachment} />
-          ))}
-        </div>
-      )}
+    <div className={cn("mt-2 space-y-1", className)}>
+      {attachments.map((attachment) => (
+        <AttachmentItem key={attachment.id} attachment={attachment} />
+      ))}
     </div>
   );
 }
