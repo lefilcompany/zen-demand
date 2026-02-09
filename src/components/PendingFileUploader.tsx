@@ -122,7 +122,7 @@ export function PendingFileUploader({
       </div>
 
       {files.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div className="space-y-1">
           {files.map((pf) => {
             const Icon = getFileIcon(pf.file.type);
             const isImage = pf.file.type.startsWith("image/");
@@ -130,35 +130,30 @@ export function PendingFileUploader({
             return (
               <div
                 key={pf.id}
-                className="relative group rounded-lg border bg-muted/30 p-2"
+                className="flex items-center gap-2 p-2 rounded-lg border bg-muted/30 group"
               >
+                {isImage && pf.preview ? (
+                  <img
+                    src={pf.preview}
+                    alt={pf.file.name}
+                    className="h-10 w-10 object-cover rounded flex-shrink-0"
+                  />
+                ) : (
+                  <Icon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm truncate">{pf.file.name}</p>
+                  <p className="text-xs text-muted-foreground">{formatSize(pf.file.size)}</p>
+                </div>
                 <Button
                   type="button"
-                  variant="destructive"
+                  variant="ghost"
                   size="icon"
-                  className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  className="h-7 w-7 flex-shrink-0 text-muted-foreground hover:text-destructive"
                   onClick={() => removeFile(pf.id)}
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-3.5 w-3.5" />
                 </Button>
-
-                <div className="flex flex-col items-center gap-1">
-                  {isImage && pf.preview ? (
-                    <img
-                      src={pf.preview}
-                      alt={pf.file.name}
-                      className="h-16 w-full object-cover rounded"
-                    />
-                  ) : (
-                    <Icon className="h-10 w-10 text-muted-foreground" />
-                  )}
-                  <p className="text-xs truncate w-full text-center">
-                    {pf.file.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatSize(pf.file.size)}
-                  </p>
-                </div>
               </div>
             );
           })}

@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Paperclip, X, Download, FileText, Image, File, Trash2, Loader2 } from "lucide-react";
+import { Paperclip, X, Download, FileText, Image, File, Trash2, Loader2, Maximize2 } from "lucide-react";
 import { useAttachments, useUploadAttachment, useDeleteAttachment, getAttachmentUrl } from "@/hooks/useAttachments";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -34,6 +35,7 @@ interface AttachmentItemProps {
 function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps) {
   const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -64,54 +66,99 @@ function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps)
   const isImage = attachment.file_type.startsWith("image/");
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 group">
-      {loading ? (
-        <div className="h-10 w-10 flex items-center justify-center">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        </div>
-      ) : isImage && url ? (
-        <img
-          src={url}
-          alt={attachment.file_name}
-          className="h-10 w-10 object-cover rounded"
-        />
-      ) : (
-        <Icon className="h-10 w-10 p-2 bg-background rounded" />
-      )}
-      
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{attachment.file_name}</p>
-        <p className="text-xs text-muted-foreground">
-          {formatSize(attachment.file_size)} • {format(new Date(attachment.created_at), "dd/MM/yyyy", { locale: ptBR })}
-        </p>
-      </div>
-
-      <div className="flex items-center gap-1">
-        {url && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            asChild
-          >
-            <a href={url} download={attachment.file_name} target="_blank" rel="noopener noreferrer">
-              <Download className="h-4 w-4" />
-            </a>
-          </Button>
+    <>
+      <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 group">
+        {loading ? (
+          <div className="h-10 w-10 flex items-center justify-center flex-shrink-0">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : isImage && url ? (
+          <img
+            src={url}
+            alt={attachment.file_name}
+            className="h-10 w-10 object-cover rounded flex-shrink-0"
+          />
+        ) : (
+          <Icon className="h-10 w-10 p-2 bg-background rounded flex-shrink-0" />
         )}
         
-        {!readOnly && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 opacity-0 group-hover:opacity-100"
-            onClick={() => onDelete(attachment.id, attachment.file_path)}
-          >
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate">{attachment.file_name}</p>
+          <p className="text-xs text-muted-foreground">
+            {formatSize(attachment.file_size)} • {format(new Date(attachment.created_at), "dd/MM/yyyy", { locale: ptBR })}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-1">
+          {isImage && url && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setIsExpanded(true)}
+            >
+              <Maximize2 className="h-4 w-4" />
+            </Button>
+          )}
+          {url && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              asChild
+            >
+              <a href={url} download={attachment.file_name} target="_blank" rel="noopener noreferrer">
+                <Download className="h-4 w-4" />
+              </a>
+            </Button>
+          )}
+          
+          {!readOnly && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 opacity-0 group-hover:opacity-100"
+              onClick={() => onDelete(attachment.id, attachment.file_path)}
+            >
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          )}
+        </div>
       </div>
-    </div>
+
+      {isImage && (
+        <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
+          <DialogContent className="max-w-[90vw] max-h-[90vh] p-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-2 z-10"
+              onClick={() => setIsExpanded(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            {url && (
+              <img
+                src={url}
+                alt={attachment.file_name}
+                className="max-w-full max-h-[85vh] object-contain mx-auto"
+              />
+            )}
+            <div className="flex items-center justify-between mt-2 px-2">
+              <span className="text-sm text-muted-foreground truncate max-w-[70%]">
+                {attachment.file_name}
+              </span>
+              <Button variant="outline" size="sm" asChild>
+                <a href={url || "#"} download={attachment.file_name} target="_blank" rel="noopener noreferrer">
+                  <Download className="h-4 w-4 mr-1" />
+                  Baixar
+                </a>
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 }
 
