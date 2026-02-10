@@ -150,10 +150,14 @@ export function InteractionAttachments({ interactionId, className }: Interaction
   }
 
   return (
-    <div className={cn("mt-2 space-y-1", className)}>
-      {attachments.map((attachment) => (
-        <AttachmentItem key={attachment.id} attachment={attachment} />
-      ))}
+    <div className={cn("mt-2", className)}>
+      <ScrollArea className="max-h-48">
+        <div className="space-y-1 pr-2">
+          {attachments.map((attachment) => (
+            <AttachmentItem key={attachment.id} attachment={attachment} />
+          ))}
+        </div>
+      </ScrollArea>
     </div>
   );
 }

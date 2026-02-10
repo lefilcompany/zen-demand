@@ -160,6 +160,7 @@ export function PendingFileUploader({
             );
           })}
         </div>
+        </ScrollArea>
       )}
     </div>
   );
