@@ -6,6 +6,7 @@ import { FileText, Download, Maximize2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Attachment {
   id: string;
@@ -149,10 +150,14 @@ export function InteractionAttachments({ interactionId, className }: Interaction
   }
 
   return (
-    <div className={cn("mt-2 space-y-1", className)}>
-      {attachments.map((attachment) => (
-        <AttachmentItem key={attachment.id} attachment={attachment} />
-      ))}
+    <div className={cn("mt-2", className)}>
+      <ScrollArea className="max-h-48">
+        <div className="space-y-1 pr-2">
+          {attachments.map((attachment) => (
+            <AttachmentItem key={attachment.id} attachment={attachment} />
+          ))}
+        </div>
+      </ScrollArea>
     </div>
   );
 }

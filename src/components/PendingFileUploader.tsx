@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Paperclip, X, Image, FileText, File } from "lucide-react";
 
 export interface PendingFile {
@@ -122,7 +123,8 @@ export function PendingFileUploader({
       </div>
 
       {files.length > 0 && (
-        <div className="space-y-1">
+        <ScrollArea className="max-h-48">
+        <div className="space-y-1 pr-2">
           {files.map((pf) => {
             const Icon = getFileIcon(pf.file.type);
             const isImage = pf.file.type.startsWith("image/");
@@ -158,6 +160,7 @@ export function PendingFileUploader({
             );
           })}
         </div>
+        </ScrollArea>
       )}
     </div>
   );
