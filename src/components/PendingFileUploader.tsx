@@ -123,7 +123,8 @@ export function PendingFileUploader({
       </div>
 
       {files.length > 0 && (
-        <div className="space-y-1">
+        <ScrollArea className="max-h-48">
+        <div className="space-y-1 pr-2">
           {files.map((pf) => {
             const Icon = getFileIcon(pf.file.type);
             const isImage = pf.file.type.startsWith("image/");
