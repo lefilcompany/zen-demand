@@ -374,7 +374,7 @@ export default function MyDemandRequests() {
               {editingRequest?.status === "returned" ? "Editar e Reenviar Solicitação" : "Editar Solicitação"}
             </DialogTitle>
           </DialogHeader>
-          <ScrollArea className="flex-1 min-h-0 pr-4">
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1">
             <form onSubmit={handleResubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label>Título *</Label>
@@ -425,7 +425,7 @@ export default function MyDemandRequests() {
                 </div>
               )}
               
-              <div className="flex gap-2 pt-2">
+              <div className="flex gap-2 pt-2 pb-1">
                 <Button type="button" variant="outline" onClick={() => setEditingRequest(null)} className="flex-1">
                   Cancelar
                 </Button>
@@ -434,7 +434,7 @@ export default function MyDemandRequests() {
                 </Button>
               </div>
             </form>
-          </ScrollArea>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
