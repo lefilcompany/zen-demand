@@ -17,6 +17,7 @@ import { RichTextEditor, RichTextDisplay } from "@/components/ui/rich-text-edito
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { RequestAttachmentUploader } from "@/components/RequestAttachmentUploader";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { RequestAttachmentBadge } from "@/components/RequestAttachmentBadge";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { getErrorMessage } from "@/lib/errorUtils";
@@ -367,71 +368,73 @@ export default function MyDemandRequests() {
 
       {/* Edit/Resubmit Dialog */}
       <Dialog open={!!editingRequest} onOpenChange={() => setEditingRequest(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>
               {editingRequest?.status === "returned" ? "Editar e Reenviar Solicitação" : "Editar Solicitação"}
             </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleResubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label>Título *</Label>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Descrição</Label>
-              <RichTextEditor
-                value={description}
-                onChange={setDescription}
-                minHeight="100px"
-                placeholder="Descreva sua solicitação..."
-              />
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
+          <ScrollArea className="flex-1 min-h-0 pr-4">
+            <form onSubmit={handleResubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label>Prioridade</Label>
-                <Select value={priority} onValueChange={setPriority}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="baixa">Baixa</SelectItem>
-                    <SelectItem value="média">Média</SelectItem>
-                    <SelectItem value="alta">Alta</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Serviço</Label>
-                <ServiceSelector
-                  teamId={editingRequest?.team_id}
-                  boardId={editingRequest?.board_id || selectedBoardId}
-                  value={serviceId}
-                  onChange={setServiceId}
+                <Label>Título *</Label>
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
                 />
               </div>
-            </div>
-
-            {/* Attachments Section */}
-            {editingRequest && (
-              <div className="border-t pt-4">
-                <RequestAttachmentUploader requestId={editingRequest.id} />
+              <div className="space-y-2">
+                <Label>Descrição</Label>
+                <RichTextEditor
+                  value={description}
+                  onChange={setDescription}
+                  minHeight="100px"
+                  placeholder="Descreva sua solicitação..."
+                />
               </div>
-            )}
-            
-            <div className="flex gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => setEditingRequest(null)} className="flex-1">
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={updateRequest.isPending} className="flex-1">
-                {updateRequest.isPending ? "Salvando..." : editingRequest?.status === "returned" ? "Reenviar" : "Salvar"}
-              </Button>
-            </div>
-          </form>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Prioridade</Label>
+                  <Select value={priority} onValueChange={setPriority}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="baixa">Baixa</SelectItem>
+                      <SelectItem value="média">Média</SelectItem>
+                      <SelectItem value="alta">Alta</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Serviço</Label>
+                  <ServiceSelector
+                    teamId={editingRequest?.team_id}
+                    boardId={editingRequest?.board_id || selectedBoardId}
+                    value={serviceId}
+                    onChange={setServiceId}
+                  />
+                </div>
+              </div>
+
+              {/* Attachments Section */}
+              {editingRequest && (
+                <div className="border-t pt-4">
+                  <RequestAttachmentUploader requestId={editingRequest.id} />
+                </div>
+              )}
+              
+              <div className="flex gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => setEditingRequest(null)} className="flex-1">
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={updateRequest.isPending} className="flex-1">
+                  {updateRequest.isPending ? "Salvando..." : editingRequest?.status === "returned" ? "Reenviar" : "Salvar"}
+                </Button>
+              </div>
+            </form>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </div>
