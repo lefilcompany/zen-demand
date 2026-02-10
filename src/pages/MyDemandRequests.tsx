@@ -17,6 +17,7 @@ import { RichTextEditor, RichTextDisplay } from "@/components/ui/rich-text-edito
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { RequestAttachmentUploader } from "@/components/RequestAttachmentUploader";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { RequestAttachmentBadge } from "@/components/RequestAttachmentBadge";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { getErrorMessage } from "@/lib/errorUtils";
