@@ -97,21 +97,26 @@ export async function sendAdjustmentPushNotification({
 
 /**
  * Send push notification for adjustment completion
+ * Sends to creator + board admins (deduplicated)
  */
 export async function sendAdjustmentCompletionPushNotification({
   creatorId,
+  adminIds,
   demandId,
   demandTitle,
   boardName,
 }: {
   creatorId: string;
+  adminIds?: string[];
   demandId: string;
   demandTitle: string;
   boardName?: string;
 }) {
+  // Deduplicate: creator + admins
+  const allIds = new Set([creatorId, ...(adminIds || [])]);
   const boardPrefix = boardName ? `[${boardName}] ` : "";
   return sendPushNotification({
-    userIds: [creatorId],
+    userIds: Array.from(allIds),
     title: `✅ ${boardPrefix}Ajuste concluído`,
     body: `O ajuste na demanda "${demandTitle.substring(0, 50)}${demandTitle.length > 50 ? "..." : ""}" foi finalizado`,
     link: `/demands/${demandId}`,

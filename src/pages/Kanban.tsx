@@ -201,6 +201,7 @@ export default function Kanban() {
             readOnly={isReadOnly}
             userRole={role || undefined}
             boardName={currentBoard?.name}
+            boardId={selectedBoardId || undefined}
             initialColumnsOpen={preferences.defaultColumnsOpen}
           />
         ) : (
