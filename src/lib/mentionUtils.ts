@@ -7,7 +7,7 @@ const USER_MENTION_REGEX = /\[\[([^:]+):([^\]]+)\]\]/g;
 const DEMAND_MENTION_REGEX = /\{\{([^:]+):(#[^\}]+)\}\}/g;
 
 // Regex para detectar URLs
-const URL_REGEX = /(https?:\/\/[^\s<>\[\]\{\}]+)/g;
+const URL_REGEX = /(https?:\/\/[^\s<>]+)/g;
 
 // Converte texto com marcadores para array de strings e objetos de menção
 export interface ParsedUserMention {

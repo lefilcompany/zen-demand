@@ -12,7 +12,7 @@ export function LinkifiedText({
   return <span className={cn("inline", className)}>
       {parts.map((part, index) => {
       if (typeof part === "string") {
-        return;
+        return <span key={`text-${index}`}>{part}</span>;
       }
       return <a key={`link-${index}`} href={part.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all cursor-pointer" onClick={e => {
         e.preventDefault();
