@@ -235,7 +235,7 @@ export default function DemandDetail() {
   // Demandas entregues são apenas visualizáveis
   const isDeliveredStatus = demand?.status_id === deliveredStatusId;
   const canManageAssignees = !isDeliveredStatus && (role === "admin" || role === "moderator");
-  const canEdit = !isDeliveredStatus && (role === "admin" || role === "moderator" || role === "executor" || demand?.created_by === user?.id);
+  const canEdit = !isDeliveredStatus; // Todas as roles podem editar demandas
   const canArchive = !isDeliveredStatus; // Qualquer usuário pode arquivar demandas, exceto as entregues
   const canChangeBoard = !isDeliveredStatus && (role === "admin" || role === "moderator");
   const isCreator = demand?.created_by === user?.id;
