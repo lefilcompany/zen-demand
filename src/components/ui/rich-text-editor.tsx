@@ -564,7 +564,7 @@ function processTextContent(text: string): string {
   });
   
   // URLs - only allow http/https
-  const urlRegex = /(https?:\/\/[^\s&lt;&gt;]+)/g;
+  const urlRegex = /(https?:\/\/[^\s]+?)(?=&lt;|&gt;|\s|$)/g;
   result = result.replace(urlRegex, (url) => {
     // Decode the escaped URL for display but keep it escaped in href
     const displayUrl = url.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
