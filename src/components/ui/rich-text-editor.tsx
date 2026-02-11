@@ -532,7 +532,7 @@ function isValidUrl(url: string): boolean {
 
 // Convert plain URLs in text to clickable links with validation
 function linkifyText(text: string): string {
-  const urlRegex = /(https?:\/\/[^\s<>\[\]\{\}]+)/g;
+  const urlRegex = /(https?:\/\/[^\s<>]+)/g;
   return text.replace(urlRegex, (url) => {
     // Validate URL before creating link
     if (!isValidUrl(url)) {
@@ -564,7 +564,7 @@ function processTextContent(text: string): string {
   });
   
   // URLs - only allow http/https
-  const urlRegex = /(https?:\/\/[^\s&lt;&gt;\[\]\{\}]+)/g;
+  const urlRegex = /(https?:\/\/[^\s&lt;&gt;]+)/g;
   result = result.replace(urlRegex, (url) => {
     // Decode the escaped URL for display but keep it escaped in href
     const displayUrl = url.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
@@ -588,7 +588,7 @@ function processContentWithLinks(html: string): string {
     if (node.nodeType === Node.TEXT_NODE && node.textContent) {
       const text = node.textContent;
       // Check if text contains mentions or URLs
-      if (/\[\[([^:]+):([^\]]+)\]\]|\{\{([^:]+):(#[^\}]+)\}\}|(https?:\/\/[^\s<>\[\]\{\}]+)/.test(text)) {
+      if (/\[\[([^:]+):([^\]]+)\]\]|\{\{([^:]+):(#[^\}]+)\}\}|(https?:\/\/[^\s<>]+)/.test(text)) {
         const span = document.createElement("span");
         span.innerHTML = processTextContent(text);
         node.parentNode?.replaceChild(span, node);
