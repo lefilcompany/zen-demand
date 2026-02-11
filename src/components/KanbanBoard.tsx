@@ -88,6 +88,7 @@ interface KanbanBoardProps {
   readOnly?: boolean;
   userRole?: string;
   boardName?: string;
+  boardId?: string;
   initialColumnsOpen?: boolean; // If true, all columns start open
 }
 
@@ -166,7 +167,7 @@ function useIsLargeDesktop() {
 // No limit on open columns - users can open all if they want
 // Horizontal scroll handles overflow
 
-export function KanbanBoard({ demands, columns: propColumns, onDemandClick, readOnly = false, userRole, boardName, initialColumnsOpen = false }: KanbanBoardProps) {
+export function KanbanBoard({ demands, columns: propColumns, onDemandClick, readOnly = false, userRole, boardName, boardId, initialColumnsOpen = false }: KanbanBoardProps) {
   // Use provided columns or fallback to default
   const columns = propColumns && propColumns.length > 0 ? propColumns : DEFAULT_COLUMNS;
   const { t } = useTranslation();
@@ -423,11 +424,23 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
             
             // Special handling for adjustment completion
             if (isAdjustmentCompletion && demand.created_by) {
-              // Send push notification
+              // Fetch admin IDs from board for push notification
+              const adminIds: string[] = [];
+              if (boardId) {
+                const { data: admins } = await supabase
+                  .from("board_members")
+                  .select("user_id")
+                  .eq("board_id", boardId)
+                  .eq("role", "admin");
+                if (admins) adminIds.push(...admins.map(a => a.user_id));
+              }
+              // Send push notification to creator + admins
               sendAdjustmentCompletionPushNotification({
                 creatorId: demand.created_by,
+                adminIds,
                 demandId: demand.id,
                 demandTitle: demand.title,
+                boardName,
               }).catch(err => console.error("Erro ao enviar push de ajuste concluído:", err));
             }
           }
@@ -538,11 +551,21 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
             
             // Special handling for adjustment completion
             if (isAdjustmentCompletion && demand.created_by) {
-              // Send push notification
+              const adminIds: string[] = [];
+              if (boardId) {
+                const { data: admins } = await supabase
+                  .from("board_members")
+                  .select("user_id")
+                  .eq("board_id", boardId)
+                  .eq("role", "admin");
+                if (admins) adminIds.push(...admins.map(a => a.user_id));
+              }
               sendAdjustmentCompletionPushNotification({
                 creatorId: demand.created_by,
+                adminIds,
                 demandId: demand.id,
                 demandTitle: demand.title,
+                boardName,
               }).catch(err => console.error("Erro ao enviar push de ajuste concluído:", err));
             }
           }
