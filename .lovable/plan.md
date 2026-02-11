@@ -1,95 +1,56 @@
 
-# API de Webhooks e Integracoes
+
+# Melhorar Notificações por Papel (Role-Based Notifications)
 
 ## Objetivo
-Criar uma API REST publica autenticada por API Keys que permite sistemas externos (como n8n, Zapier, ou sistemas internos dos clientes) receberem e enviarem dados para o SoMA+.
+Ajustar o sistema de notificações para que:
+- **Admin**: receba TODAS as notificações do quadro
+- **Coordenador/Agente (moderator/executor)**: receba apenas notificações de demandas onde estão como responsáveis (assignees)
+- **Solicitante (requester)**: mantém o comportamento atual (notificações das demandas que criou)
 
-## Arquitetura
+## Funções de Notificação a Alterar
 
-### 1. Tabela de API Keys
-Criar uma tabela `api_keys` para gerenciar chaves de acesso por equipe:
-- `id`, `team_id`, `name` (descricao da chave), `key_hash` (hash SHA-256 da chave), `key_prefix` (primeiros 8 chars para identificacao)
-- `permissions` (JSONB - quais endpoints a chave pode acessar)
-- `is_active`, `last_used_at`, `expires_at`, `created_by`, `created_at`
-- RLS policies para que apenas admins da equipe possam gerenciar chaves
+### 1. `notify_demand_created` (Trigger: INSERT em demands)
+**Atual**: Notifica TODOS os membros do quadro (exceto o criador).
+**Novo**: Notifica apenas os **admins** do quadro (exceto o criador). Coordenadores/Agentes nao recebem, pois ainda nao sao responsaveis.
 
-### 2. Edge Function: `public-api`
-Uma unica Edge Function que roteia por path e metodo HTTP:
+### 2. `notify_demand_status_changed` (Trigger: UPDATE em demands)
+**Atual**: Notifica o criador + assignees da demanda.
+**Novo**: Notifica o criador + assignees + **admins do quadro** (sem duplicatas). Admins sempre recebem, independente de serem assignees ou criadores.
 
-**Endpoints disponiveis:**
+### 3. `notify_adjustment_completed` (Trigger: UPDATE em demands)
+**Atual**: Notifica apenas o criador da demanda.
+**Novo**: Notifica o criador + **admins do quadro** (sem duplicatas).
 
-| Metodo | Path | Descricao |
-|--------|------|-----------|
-| GET | `/demands` | Listar demandas da equipe |
-| GET | `/demands/:id` | Detalhes de uma demanda |
-| POST | `/demands` | Criar nova demanda |
-| PATCH | `/demands/:id/status` | Atualizar status |
-| GET | `/boards` | Listar quadros |
-| GET | `/statuses` | Listar status disponiveis |
-| POST | `/webhooks/test` | Testar conectividade |
+### Funcoes que NAO mudam
+- `notify_assignee_added` - notifica o usuario atribuido (correto, e direcionado)
+- `notify_demand_assigned` - notifica o usuario atribuido (correto)
+- `notify_mention` - notifica o mencionado (correto, e direcionado)
+- `notify_demand_request_created` - notifica admins/moderators (correto, e sobre solicitacoes)
+- `notify_demand_request_status_changed` - notifica o solicitante (correto)
+- `notify_request_comment_created` - ja tem logica correta
+- `notify_team_join_request_*` - sobre equipe, nao demandas
 
-**Autenticacao:** Header `X-API-Key: sk_xxxxx`
-A funcao valida o hash da chave contra a tabela `api_keys`.
+### 4. Push Notifications (client-side)
+Atualizar as funcoes em `useSendPushNotification.ts` que enviam push para "todos os membros do board" para filtrar por papel, enviando para admins sempre e para os demais apenas se forem assignees.
 
-### 3. Tabela de Webhook Subscriptions
-Tabela `webhook_subscriptions` para enviar eventos para URLs externas:
-- `id`, `team_id`, `url`, `events` (array de eventos como `demand.created`, `demand.status_changed`)
-- `secret` (para assinatura HMAC dos payloads)
-- `is_active`, `last_triggered_at`
-
-### 4. Pagina de Gerenciamento
-Tela em `/settings` (ou nova rota `/api-settings`) onde admins podem:
-- Gerar/revogar API Keys
-- Configurar URLs de webhook
-- Ver logs de chamadas recentes
-- Copiar exemplos de uso (cURL, JavaScript)
+Tambem atualizar hooks que disparam push notifications (como criacao de demanda, mudanca de status) para respeitar a mesma logica.
 
 ## Detalhes Tecnicos
 
-### Geracao de API Key
-```text
-Formato: sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-Armazenamento: apenas o hash SHA-256 no banco
-Exibicao: mostrada apenas uma vez ao criar
-```
+### Migracao SQL
+Uma unica migracao que recria as 3 funcoes trigger:
 
-### Payload de Webhook (exemplo)
-```text
-POST -> URL do cliente
-Headers:
-  Content-Type: application/json
-  X-Webhook-Signature: sha256=HMAC_HASH
-Body:
-  {
-    "event": "demand.status_changed",
-    "timestamp": "2026-02-09T...",
-    "data": { demanda completa }
-  }
-```
+1. **`notify_demand_created`**: Loop apenas em `board_members WHERE role = 'admin'`
+2. **`notify_demand_status_changed`**: Apos notificar criador e assignees, adiciona loop para admins do board com verificacao `NOT IN` para evitar duplicatas
+3. **`notify_adjustment_completed`**: Apos notificar criador, adiciona loop para admins do board (exceto criador)
 
-### Disparo de Webhooks
-Triggers no banco detectam eventos (demanda criada, status alterado) e chamam uma Edge Function `dispatch-webhook` que envia o payload para as URLs cadastradas.
+### Client-side (Push Notifications)
+- `sendNewDemandPushNotification`: Filtrar `teamMemberIds` no chamador para enviar apenas para admins (os hooks que chamam esta funcao precisam buscar apenas admin IDs do board)
+- `sendStatusChangePushNotification`: Adicionar admin IDs aos `userIds` no chamador
 
-### Seguranca
-- API Keys hasheadas (nunca armazenadas em texto plano)
-- Rate limiting por chave (via contador na tabela)
-- Permissoes granulares por chave
-- Assinatura HMAC nos webhooks para validacao pelo cliente
-- Verificacao de plano: apenas equipes com `features.api = true` podem usar
+### Arquivos a editar
+- Nova migracao SQL (3 funcoes trigger reescritas)
+- `src/hooks/useDemands.ts` ou hooks que chamam push notifications na criacao de demanda - ajustar para filtrar por role
+- Possivelmente `src/pages/DemandDetail.tsx` ou `src/components/KanbanBoard.tsx` onde status changes disparam push
 
-### Arquivos a criar/editar
-
-**Novos:**
-- `supabase/functions/public-api/index.ts` - Edge Function principal da API
-- `supabase/functions/dispatch-webhook/index.ts` - Disparo de webhooks
-- `src/pages/ApiSettings.tsx` - Pagina de gerenciamento
-- `src/hooks/useApiKeys.ts` - Hook para gerenciar API keys
-- `src/hooks/useWebhookSubscriptions.ts` - Hook para gerenciar webhooks
-- `src/components/api/ApiKeyManager.tsx` - Componente de gerenciamento de chaves
-- `src/components/api/WebhookManager.tsx` - Componente de gerenciamento de webhooks
-- `src/components/api/ApiDocsPanel.tsx` - Documentacao inline da API
-
-**Editados:**
-- `src/App.tsx` - Adicionar rota `/api-settings`
-- `src/components/AppSidebar.tsx` - Adicionar link no menu
-- Migracao SQL para criar tabelas `api_keys` e `webhook_subscriptions`
