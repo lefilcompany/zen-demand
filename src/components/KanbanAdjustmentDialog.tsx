@@ -95,7 +95,7 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
       const typeLabel = isInternal ? "Ajuste Interno" : "Ajuste Externo";
       
       // Criar interação de solicitação de ajuste com metadata do tipo
-      await new Promise<void>((resolve, reject) => {
+      const createdInteraction = await new Promise<{ id: string }>((resolve, reject) => {
         createInteraction.mutate(
           {
             demand_id: demandId,
@@ -104,7 +104,7 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
             metadata: { adjustment_type: adjustmentType },
           },
           {
-            onSuccess: () => resolve(),
+            onSuccess: (data) => resolve(data),
             onError: (error) => reject(error),
           }
         );
@@ -123,9 +123,9 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
       
       toast.success(`${typeLabel} solicitado com sucesso!`);
       
-      // Upload pending files
+      // Upload pending files linked to the interaction
       if (pendingFiles.length > 0) {
-        const { success, failed } = await uploadPendingFiles(demandId, pendingFiles, uploadAttachment);
+        const { success, failed } = await uploadPendingFiles(demandId, pendingFiles, uploadAttachment, createdInteraction.id);
         if (failed > 0) {
           toast.warning(`${success} arquivo(s) enviado(s), ${failed} falhou(ram)`);
         }
