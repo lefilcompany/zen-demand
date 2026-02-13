@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCommentAttachments, getRequestAttachmentUrl } from "@/hooks/useRequestAttachments";
 import { FileText, Image as ImageIcon, File, Download, X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -142,7 +142,7 @@ function ImageThumbnail({ attachment, onClick, cachedUrl, onLoadUrl }: ImageThum
   const [url, setUrl] = useState<string | null>(cachedUrl || null);
   const [loading, setLoading] = useState(!cachedUrl);
 
-  useState(() => {
+  useEffect(() => {
     if (!cachedUrl) {
       getRequestAttachmentUrl(attachment.file_path).then((loadedUrl) => {
         if (loadedUrl) {
@@ -152,7 +152,7 @@ function ImageThumbnail({ attachment, onClick, cachedUrl, onLoadUrl }: ImageThum
         setLoading(false);
       });
     }
-  });
+  }, [attachment.file_path, cachedUrl]);
 
   return (
     <button
