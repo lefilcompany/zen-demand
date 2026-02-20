@@ -9,6 +9,7 @@ import { usePendingRequestsCount as usePendingDemandRequestsCount, useReturnedRe
 import { usePendingRequestsCount as usePendingJoinRequestsCount } from "@/hooks/useTeamJoinRequests";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useTeamSubscription } from "@/hooks/useSubscription";
 import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { SidebarSyncIndicator } from "@/components/SidebarSyncIndicator";
@@ -34,7 +35,8 @@ export function AppSidebar() {
   const location = useLocation();
   const isCollapsed = state === "collapsed";
   const {
-    selectedTeamId
+    selectedTeamId,
+    currentTeam
   } = useSelectedTeam();
   const { selectedBoardId } = useSelectedBoardSafe();
   const {
@@ -44,6 +46,7 @@ export function AppSidebar() {
   const { data: pendingDemandRequests } = usePendingDemandRequestsCount();
   const { data: pendingJoinRequests } = usePendingJoinRequestsCount(selectedTeamId);
   const { data: returnedRequestsCount } = useReturnedRequestsCount();
+  const { data: subscription } = useTeamSubscription(currentTeam?.id);
   
   const isTeamAdminOrModerator = role === "admin" || role === "moderator";
   const isBoardAdminOrModerator = boardRole === "admin" || boardRole === "moderator";
@@ -227,7 +230,12 @@ export function AppSidebar() {
                       </div>
                       {(!isCollapsed || isMobile) && (
                         <>
-                          <span className="flex-1 text-left text-sm font-medium text-sidebar-foreground">Equipe</span>
+                          <div className="flex-1 text-left min-w-0">
+                            <span className="text-sm font-medium text-sidebar-foreground block">Equipe</span>
+                            {subscription?.plan?.name && (
+                              <span className="text-[11px] text-muted-foreground truncate block">{subscription.plan.name}</span>
+                            )}
+                          </div>
                           <ChevronUp className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${popoverOpen ? '' : 'rotate-180'}`} />
                         </>
                       )}
