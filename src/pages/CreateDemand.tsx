@@ -21,6 +21,8 @@ import { UnsavedChangesDialog } from "@/components/UnsavedChangesDialog";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { useNavigationBlock } from "@/hooks/useNavigationBlock";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import { RecurrenceConfig, RecurrenceData, defaultRecurrenceData } from "@/components/RecurrenceConfig";
+import { useCreateRecurringDemand } from "@/hooks/useRecurringDemands";
 import { AlertTriangle, Ban, CloudOff, WifiOff, Package, Briefcase, Plus } from "lucide-react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
@@ -68,8 +70,10 @@ export default function CreateDemand() {
   const [serviceId, setServiceId] = useState("");
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
   
   const uploadAttachment = useUploadAttachment();
+  const createRecurringDemand = useCreateRecurringDemand();
 
   // Draft persistence
   const draftFields = useMemo(
@@ -207,6 +211,30 @@ export default function CreateDemand() {
             setPendingFiles([]);
           }
           
+          // Create recurring demand if recurrence is enabled
+          if (!wasCreatedOffline && recurrence.enabled && demand && selectedTeamId && selectedBoardId) {
+            try {
+              await createRecurringDemand.mutateAsync({
+                team_id: selectedTeamId,
+                board_id: selectedBoardId,
+                title: title.trim(),
+                description: description.trim() || null,
+                priority,
+                status_id: statusId,
+                service_id: serviceId && serviceId !== "none" ? serviceId : null,
+                assignee_ids: assigneeIds,
+                frequency: recurrence.frequency,
+                weekdays: recurrence.frequency === "weekly" ? recurrence.weekdays : [],
+                day_of_month: recurrence.frequency === "monthly" ? recurrence.dayOfMonth : null,
+                start_date: recurrence.startDate,
+                end_date: recurrence.endDate || null,
+              });
+            } catch (recError) {
+              console.error("Erro ao criar recorrência:", recError);
+              toast.warning("Demanda criada, mas houve um erro ao configurar a recorrência");
+            }
+          }
+
           if (wasCreatedOffline) {
             toast.success(t("sync.createdOffline"), {
               description: t("sync.createdOfflineDescription"),
@@ -424,6 +452,9 @@ export default function CreateDemand() {
                 </p>
               )}
             </div>
+
+            {/* Recurrence Config */}
+            <RecurrenceConfig value={recurrence} onChange={setRecurrence} />
 
             <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4">
               <Button
