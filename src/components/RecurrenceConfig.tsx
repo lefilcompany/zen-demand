@@ -220,7 +220,7 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                       : "Selecione a data"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0" align="start" side="top">
                   <Calendar
                     mode="single"
                     selected={startDate}
@@ -270,7 +270,7 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                       : "Sem data de fim"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0" align="start" side="top">
                   <div className="flex flex-col">
                     <Calendar
                       mode="single"
