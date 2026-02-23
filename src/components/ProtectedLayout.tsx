@@ -202,7 +202,7 @@ export function ProtectedLayout() {
               </DropdownMenu>
             </div>
           </header>
-          <div className={`p-3 md:p-6 ${isFullHeightRoute ? "flex-1 min-h-0 overflow-hidden" : "overflow-y-auto flex-1"}`}>
+          <div className={`flex-1 min-h-0 p-3 md:p-6 ${isFullHeightRoute ? "overflow-hidden" : "overflow-y-auto"}`}>
             <Outlet />
           </div>
           <FloatingCreateButton />
