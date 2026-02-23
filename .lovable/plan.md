@@ -1,103 +1,53 @@
 
-# Demandas Recorrentes (Automacao de Repeticao)
 
-## Resumo
-Adicionar a possibilidade de configurar demandas recorrentes na criacao de demandas. O usuario podera definir que uma demanda se repita diariamente, semanalmente ou mensalmente, com data de inicio e fim opcional.
+# Restaurar Layout Board-Style do Sistema
 
-## Como vai funcionar
+## Problema Identificado
 
-1. Na tela de criacao de demandas, um novo campo "Recorrencia" aparece com opcoes: Nenhuma, Diaria, Semanal, Mensal
-2. Ao selecionar uma recorrencia, campos adicionais aparecem: data de inicio e data de fim (opcional)
-3. Para semanal: selecionar dias da semana
-4. Uma Edge Function executada via cron cria automaticamente as demandas nos dias corretos
+O layout do sistema deveria seguir o padrao visual onde:
+- O **fundo externo** (area atras do conteudo principal) tem uma cor diferente (warm/tinted)
+- O **conteudo** aparece como um "board" branco arredondado com sombra por cima desse fundo
+- A sidebar fica separada visualmente
+
+Analisando o codigo atual em `ProtectedLayout.tsx`, a estrutura base ja existe (`bg-sidebar` no container externo, `bg-background rounded-xl shadow-xl` no main), porem o `bg-sidebar` usa a cor escura do sidebar (`0 0% 11%` - preto), que nao cria o contraste correto com o conteudo branco no modo claro.
+
+Nas imagens de referencia, o fundo externo e uma cor quente/alaranjada suave, nao o preto do sidebar.
+
+## Solucao
+
+### 1. Criar uma nova variavel CSS para o fundo da area externa do board
+
+No `src/index.css`, adicionar uma variavel `--board-background` que sera uma cor quente/alaranjada suave no modo claro e uma cor escura no modo dark:
+
+- **Light mode**: Uma cor warm sutil (tipo `30 30% 95%` - um bege/peach claro) que combine com a paleta laranja
+- **Dark mode**: Manter algo proximo ao sidebar escuro (`0 0% 8%`)
+
+### 2. Atualizar o ProtectedLayout.tsx
+
+Trocar `bg-sidebar` no container externo por uma classe que use a nova variavel, garantindo que:
+- O padding ao redor do board se mantenha (`p-2 md:p-3`)
+- O `rounded-xl` e `shadow-xl` do main continuem criando o efeito de board flutuante
+- O header do board mantenha o `rounded-t-xl` e `border-b`
+
+### 3. Garantir consistencia nos estados de loading
+
+Atualizar os componentes `RequireAuth.tsx`, `RequireTeam.tsx` e o loading do `ProtectedLayout.tsx` para usar a mesma cor de fundo, mantendo a consistencia visual.
 
 ---
 
-## Detalhes Tecnicos
+### Detalhes Tecnicos
 
-### 1. Nova tabela `recurring_demands`
+**Arquivo: `src/index.css`**
+- Adicionar variavel `--board-background` em `:root` com valor warm (ex: `30 25% 95%`)
+- Adicionar variavel `--board-background` em `.dark` com valor escuro (ex: `0 0% 6%`)
 
-```sql
-CREATE TABLE public.recurring_demands (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  team_id UUID NOT NULL REFERENCES teams(id),
-  board_id UUID NOT NULL REFERENCES boards(id),
-  created_by UUID NOT NULL,
-  
-  -- Template da demanda
-  title TEXT NOT NULL,
-  description TEXT,
-  priority TEXT DEFAULT 'media',
-  status_id UUID NOT NULL,
-  service_id UUID,
-  assignee_ids UUID[] DEFAULT '{}',
-  
-  -- Configuracao de recorrencia
-  frequency TEXT NOT NULL CHECK (frequency IN ('daily', 'weekly', 'monthly')),
-  weekdays INTEGER[] DEFAULT '{}',  -- 0=Dom, 1=Seg... (usado para weekly)
-  day_of_month INTEGER,             -- 1-28 (usado para monthly)
-  start_date DATE NOT NULL,
-  end_date DATE,                    -- NULL = sem fim
-  
-  -- Controle
-  is_active BOOLEAN NOT NULL DEFAULT true,
-  last_generated_at TIMESTAMPTZ,
-  next_run_date DATE NOT NULL,
-  
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-```
+**Arquivo: `src/components/ProtectedLayout.tsx`**
+- Linha 117: Trocar `bg-sidebar` por uma classe customizada usando `bg-[hsl(var(--board-background))]`
+- Manter toda a estrutura de layout existente (flex, overflow, padding)
 
-Com RLS policies para que membros do board possam gerenciar suas recorrencias.
+**Arquivo: `src/components/RequireAuth.tsx`**
+- Atualizar `bg-sidebar` para `bg-[hsl(var(--board-background))]`
 
-### 2. Edge Function `process-recurring-demands`
+**Arquivo: `src/components/RequireTeam.tsx`**  
+- Atualizar `bg-sidebar` para `bg-[hsl(var(--board-background))]`
 
-Nova Edge Function que:
-- Roda via cron (a cada hora, junto com check-deadlines, ou separadamente)
-- Busca todas as `recurring_demands` ativas onde `next_run_date <= hoje`
-- Para cada uma, cria a demanda na tabela `demands` com os dados do template
-- Atualiza `next_run_date` e `last_generated_at`
-- Respeita `end_date` (desativa se passou)
-- Adiciona assignees se configurados
-
-### 3. Alteracoes no Frontend
-
-**`src/pages/CreateDemand.tsx`**:
-- Novo toggle/secao "Repetir demanda" com switch
-- Ao ativar, mostra:
-  - Select de frequencia (Diaria, Semanal, Mensal)
-  - Para Semanal: checkboxes dos dias da semana
-  - Para Mensal: select do dia do mes (1-28)
-  - Data de inicio (obrigatorio)
-  - Data de fim (opcional)
-- No submit, se recorrencia ativa:
-  - Cria a demanda normalmente (primeira ocorrencia)
-  - Insere registro em `recurring_demands` com os dados
-
-**`src/components/CreateDemandQuickDialog.tsx`**:
-- Versao simplificada: apenas toggle de recorrencia com frequencia basica
-
-**Novo componente `src/components/RecurrenceConfig.tsx`**:
-- Componente reutilizavel com toda a UI de configuracao de recorrencia
-- Inclui os selects de frequencia, dias, datas
-
-**Novo hook `src/hooks/useRecurringDemands.ts`**:
-- CRUD para `recurring_demands`
-- Query para listar recorrencias ativas do board
-
-### 4. Cron Job
-
-Adicionar um cron job (via pg_cron) que chama `process-recurring-demands` diariamente as 06:00 (horario de Brasilia).
-
-### 5. Arquivos que serao criados/modificados
-
-| Arquivo | Acao |
-|---------|------|
-| Migration SQL (nova tabela + RLS + cron) | Criar |
-| `supabase/functions/process-recurring-demands/index.ts` | Criar |
-| `src/components/RecurrenceConfig.tsx` | Criar |
-| `src/hooks/useRecurringDemands.ts` | Criar |
-| `src/pages/CreateDemand.tsx` | Modificar (adicionar secao de recorrencia) |
-| `src/components/CreateDemandQuickDialog.tsx` | Modificar (adicionar toggle simples) |
-| `src/hooks/useDemands.ts` | Modificar (salvar recorrencia apos criar demanda) |
