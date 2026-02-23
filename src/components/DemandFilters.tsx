@@ -280,8 +280,8 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[340px] p-0" align="start">
-        <div className="border-b border-border bg-muted/30 px-4 py-3 rounded-t-lg">
+      <PopoverContent className="w-[340px] p-0 flex flex-col max-h-[min(500px,calc(100vh-120px))]" align="start" side="bottom" avoidCollisions>
+        <div className="border-b border-border bg-muted/30 px-4 py-3 rounded-t-lg shrink-0">
           <div className="flex items-center justify-between">
             <h4 className="font-semibold text-sm">Filtros</h4>
             {activeFiltersCount > 0 && (
@@ -298,7 +298,7 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
           </div>
         </div>
 
-        <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+        <div className="p-4 space-y-4 overflow-y-auto flex-1 min-h-0">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Prioridade</label>
             <NativeSelect
