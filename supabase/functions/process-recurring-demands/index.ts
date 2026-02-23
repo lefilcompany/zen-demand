@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
     // Fetch active recurring demands where next_run_date <= today
     const { data: recurringDemands, error: fetchError } = await supabase
       .from("recurring_demands")
-      .select("*")
+      .select("*, services:service_id(estimated_hours)")
       .eq("is_active", true)
       .lte("next_run_date", today);
 
@@ -48,6 +48,12 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        // Calculate due_date: if service has estimated_hours, add business days
+        const estimatedHours = rd.services?.estimated_hours;
+        const dueDate = estimatedHours
+          ? calculateBusinessDueDate(rd.next_run_date, estimatedHours)
+          : adjustDueDateToBusinessDay(rd.next_run_date);
+
         // Create the demand
         const { data: newDemand, error: createError } = await supabase
           .from("demands")
@@ -60,7 +66,7 @@ Deno.serve(async (req) => {
             board_id: rd.board_id,
             team_id: rd.team_id,
             created_by: rd.created_by,
-            due_date: adjustDueDateToBusinessDay(rd.next_run_date),
+            due_date: dueDate,
           })
           .select("id")
           .single();
@@ -71,14 +77,17 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Add assignees if configured
+        // Add assignees if configured (triggers notify_assignee_added for notifications)
         if (rd.assignee_ids && rd.assignee_ids.length > 0 && newDemand) {
           const assigneeInserts = rd.assignee_ids.map((userId: string) => ({
             demand_id: newDemand.id,
             user_id: userId,
           }));
 
-          await supabase.from("demand_assignees").insert(assigneeInserts);
+          const { error: assignError } = await supabase.from("demand_assignees").insert(assigneeInserts);
+          if (assignError) {
+            console.error(`Error adding assignees for recurring demand ${rd.id}:`, assignError);
+          }
         }
 
         // Calculate next_run_date
@@ -120,6 +129,21 @@ Deno.serve(async (req) => {
     );
   }
 });
+
+function calculateBusinessDueDate(startDateStr: string, estimatedHours: number): string {
+  const hoursPerDay = 8;
+  let businessDays = Math.ceil(estimatedHours / hoursPerDay);
+  if (businessDays < 1) businessDays = 1;
+
+  const d = new Date(startDateStr + "T23:59:59Z");
+  let added = 0;
+  while (added < businessDays) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    const day = d.getUTCDay();
+    if (day !== 0 && day !== 6) added++;
+  }
+  return d.toISOString();
+}
 
 function adjustDueDateToBusinessDay(dateStr: string): string {
   const d = new Date(dateStr + "T23:59:59Z");
