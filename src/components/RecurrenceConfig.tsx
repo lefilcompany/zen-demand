@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -67,6 +66,8 @@ function formatDateStr(date: Date | undefined): string {
   if (!date) return "";
   return format(date, "yyyy-MM-dd");
 }
+
+const today = new Date(new Date().setHours(0, 0, 0, 0));
 
 export function RecurrenceConfig({ value, onChange, compact = false }: RecurrenceConfigProps) {
   const update = (partial: Partial<RecurrenceData>) => {
@@ -201,9 +202,12 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                     mode="single"
                     selected={startDateObj}
                     onSelect={(date) => update({ startDate: formatDateStr(date) })}
+                    disabled={(date) => date < today}
                     locale={ptBR}
+                    captionLayout="dropdown-buttons"
+                    fromDate={today}
+                    toYear={today.getFullYear() + 5}
                     initialFocus
-                    className={cn("p-3 pointer-events-auto")}
                   />
                 </PopoverContent>
               </Popover>
@@ -233,12 +237,16 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                     mode="single"
                     selected={endDateObj}
                     onSelect={(date) => update({ endDate: formatDateStr(date) })}
-                    disabled={(date) =>
-                      startDateObj ? date < startDateObj : false
-                    }
+                    disabled={(date) => {
+                      if (date < today) return true;
+                      if (startDateObj && date < startDateObj) return true;
+                      return false;
+                    }}
                     locale={ptBR}
+                    captionLayout="dropdown-buttons"
+                    fromDate={startDateObj || today}
+                    toYear={today.getFullYear() + 5}
                     initialFocus
-                    className={cn("p-3 pointer-events-auto")}
                   />
                 </PopoverContent>
               </Popover>
