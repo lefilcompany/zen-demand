@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -227,7 +228,6 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                       if (date) {
                         const newStart = toLocalDateStr(date);
                         const updates: Partial<RecurrenceData> = { startDate: newStart };
-                        // If end date is before new start, clear it
                         if (value.endDate && value.endDate < newStart) {
                           updates.endDate = "";
                         }
@@ -240,7 +240,7 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                       d.setHours(0, 0, 0, 0);
                       return d < today;
                     }}
-                    locale={ptBR}
+                    disablePastDates
                     initialFocus
                     className="p-3 pointer-events-auto"
                   />
@@ -287,7 +287,7 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                         const minDate = startDate || today;
                         return d < minDate;
                       }}
-                      locale={ptBR}
+                      disablePastDates
                       initialFocus
                       className="p-3 pointer-events-auto"
                     />
