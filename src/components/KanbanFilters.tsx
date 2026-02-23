@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -5,45 +6,253 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Filter, X, User, Flag, Clock, Briefcase } from "lucide-react";
+import { Filter, X, User, Flag, Clock, Briefcase, ChevronDown, Check, Wrench } from "lucide-react";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useTeamPositions } from "@/hooks/useTeamPositions";
+import { useBoardMembers } from "@/hooks/useBoardMembers";
+import { useServices } from "@/hooks/useServices";
 import { useAuth } from "@/lib/auth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export interface KanbanFiltersState {
   myTasks: boolean;
   priority: string | null;
   dueDate: "overdue" | "today" | "week" | null;
   position: string | null;
+  assignee: string | null;
+  service: string | null;
 }
 
 interface KanbanFiltersProps {
   teamId: string | null;
+  boardId?: string | null;
   filters: KanbanFiltersState;
   onChange: (filters: KanbanFiltersState) => void;
 }
 
-export function KanbanFilters({ teamId, filters, onChange }: KanbanFiltersProps) {
+interface NativeSelectProps {
+  value: string | null;
+  onChange: (value: string | null) => void;
+  options: { value: string; label: string; color?: string; icon?: React.ReactNode }[];
+  placeholder: string;
+  showColorDot?: boolean;
+}
+
+function NativeSelect({ value, onChange, options, placeholder, showColorDot }: NativeSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(opt => opt.value === value);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex h-8 w-full items-center justify-between rounded-lg border border-input bg-background/50 px-3 py-1.5 text-sm transition-colors hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+      >
+        <span className={`flex items-center gap-2 ${selectedOption ? "text-foreground" : "text-muted-foreground"}`}>
+          {selectedOption?.icon}
+          {showColorDot && selectedOption?.color && (
+            <div 
+              className="w-2.5 h-2.5 rounded-full ring-1 ring-black/10" 
+              style={{ backgroundColor: selectedOption.color }} 
+            />
+          )}
+          {selectedOption?.label || placeholder}
+        </span>
+        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+      {isOpen && (
+        <div className="absolute z-[60] mt-1.5 w-full rounded-lg border border-border bg-popover p-1 shadow-lg animate-in fade-in-0 zoom-in-95">
+          <div className="max-h-48 overflow-y-auto">
+            {options.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value === "all" ? null : option.value);
+                  setIsOpen(false);
+                }}
+                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent ${
+                  (option.value === "all" && !value) || option.value === value 
+                    ? "bg-accent/50 font-medium" 
+                    : ""
+                }`}
+              >
+                <div className="flex h-4 w-4 items-center justify-center">
+                  {(option.value === "all" && !value) || option.value === value ? (
+                    <Check className="h-3.5 w-3.5 text-primary" />
+                  ) : null}
+                </div>
+                {option.icon}
+                {showColorDot && option.color && (
+                  <div 
+                    className="w-2.5 h-2.5 rounded-full ring-1 ring-black/10" 
+                    style={{ backgroundColor: option.color }} 
+                  />
+                )}
+                <span className="truncate">{option.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface AssigneeSelectProps {
+  value: string | null;
+  onChange: (value: string | null) => void;
+  members: Array<{ user_id: string; profile?: { full_name: string; avatar_url?: string | null } | null }> | undefined;
+}
+
+function AssigneeSelect({ value, onChange, members }: AssigneeSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedMember = members?.find(m => m.user_id === value);
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex h-8 w-full items-center justify-between rounded-lg border border-input bg-background/50 px-3 py-1.5 text-sm transition-colors hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+      >
+        <span className={`flex items-center gap-2 ${selectedMember ? "text-foreground" : "text-muted-foreground"}`}>
+          {selectedMember && (
+            <Avatar className="h-5 w-5">
+              <AvatarImage src={selectedMember.profile?.avatar_url || undefined} />
+              <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
+                {getInitials(selectedMember.profile?.full_name || "?")}
+              </AvatarFallback>
+            </Avatar>
+          )}
+          {selectedMember?.profile?.full_name || "Todos"}
+        </span>
+        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+      {isOpen && (
+        <div className="absolute z-[60] mt-1.5 w-full rounded-lg border border-border bg-popover p-1 shadow-lg animate-in fade-in-0 zoom-in-95">
+          <div className="max-h-48 overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => {
+                onChange(null);
+                setIsOpen(false);
+              }}
+              className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent ${
+                !value ? "bg-accent/50 font-medium" : ""
+              }`}
+            >
+              <div className="flex h-4 w-4 items-center justify-center">
+                {!value && <Check className="h-3.5 w-3.5 text-primary" />}
+              </div>
+              <span>Todos</span>
+            </button>
+            {members?.map((member) => (
+              <button
+                key={member.user_id}
+                type="button"
+                onClick={() => {
+                  onChange(member.user_id);
+                  setIsOpen(false);
+                }}
+                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent ${
+                  member.user_id === value ? "bg-accent/50 font-medium" : ""
+                }`}
+              >
+                <div className="flex h-4 w-4 items-center justify-center">
+                  {member.user_id === value && <Check className="h-3.5 w-3.5 text-primary" />}
+                </div>
+                <Avatar className="h-5 w-5">
+                  <AvatarImage src={member.profile?.avatar_url || undefined} />
+                  <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
+                    {getInitials(member.profile?.full_name || "?")}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="truncate">{member.profile?.full_name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function KanbanFilters({ teamId, boardId, filters, onChange }: KanbanFiltersProps) {
   const { user } = useAuth();
-  const { data: members } = useTeamMembers(teamId);
   const { data: positions } = useTeamPositions(teamId);
+  const { data: members } = useBoardMembers(boardId || null);
+  const { data: services } = useServices(teamId, boardId);
   
   const activeFiltersCount = 
     (filters.myTasks ? 1 : 0) + 
     (filters.priority ? 1 : 0) + 
     (filters.dueDate ? 1 : 0) +
-    (filters.position ? 1 : 0);
+    (filters.position ? 1 : 0) +
+    (filters.assignee ? 1 : 0) +
+    (filters.service ? 1 : 0);
 
   const clearFilters = () => {
-    onChange({ myTasks: false, priority: null, dueDate: null, position: null });
+    onChange({ myTasks: false, priority: null, dueDate: null, position: null, assignee: null, service: null });
   };
+
+  const priorityOptions = [
+    { value: "all", label: "Todas" },
+    { value: "baixa", label: "Baixa" },
+    { value: "média", label: "Média" },
+    { value: "alta", label: "Alta" },
+  ];
+
+  const dueDateOptions = [
+    { value: "all", label: "Todos" },
+    { value: "overdue", label: "Vencidos", icon: <div className="w-2 h-2 rounded-full bg-destructive" /> },
+    { value: "today", label: "Hoje", icon: <div className="w-2 h-2 rounded-full bg-yellow-500" /> },
+    { value: "week", label: "Esta semana", icon: <div className="w-2 h-2 rounded-full bg-blue-500" /> },
+  ];
+
+  const serviceOptions = [
+    { value: "all", label: "Todos" },
+    ...(services?.map(s => ({ value: s.id, label: s.name })) || [])
+  ];
+
+  const positionOptions = [
+    { value: "all", label: "Todos" },
+    ...(positions?.map(p => ({ value: p.id, label: p.name, color: p.color })) || [])
+  ];
 
   return (
     <div className="flex items-center gap-2">
@@ -76,8 +285,14 @@ export function KanbanFilters({ teamId, filters, onChange }: KanbanFiltersProps)
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-72 p-0" align="start">
-          <div className="border-b border-border bg-muted/30 px-4 py-3 rounded-t-lg">
+        <PopoverContent 
+          className="w-[320px] p-0 flex flex-col" 
+          align="end" 
+          side="bottom" 
+          avoidCollisions
+          style={{ maxHeight: 'min(480px, calc(100vh - 200px))' }}
+        >
+          <div className="border-b border-border bg-muted/30 px-4 py-3 rounded-t-lg shrink-0">
             <div className="flex items-center justify-between">
               <h4 className="font-semibold text-sm">Filtros</h4>
               {activeFiltersCount > 0 && (
@@ -94,89 +309,68 @@ export function KanbanFilters({ teamId, filters, onChange }: KanbanFiltersProps)
             </div>
           </div>
 
-          <div className="p-4 space-y-4">
+          <div className="p-4 space-y-4 overflow-y-auto flex-1 min-h-0">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                 <Flag className="h-3 w-3" /> Prioridade
               </label>
-              <Select
-                value={filters.priority || "all"}
-                onValueChange={(v) => onChange({ ...filters, priority: v === "all" ? null : v })}
-              >
-                <SelectTrigger className="h-8 rounded-lg bg-background/50">
-                  <SelectValue placeholder="Todas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="baixa">Baixa</SelectItem>
-                  <SelectItem value="média">Média</SelectItem>
-                  <SelectItem value="alta">Alta</SelectItem>
-                </SelectContent>
-              </Select>
+              <NativeSelect
+                value={filters.priority}
+                onChange={(v) => onChange({ ...filters, priority: v })}
+                options={priorityOptions}
+                placeholder="Todas"
+              />
             </div>
 
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                 <Clock className="h-3 w-3" /> Vencimento
               </label>
-              <Select
-                value={filters.dueDate || "all"}
-                onValueChange={(v) => onChange({ ...filters, dueDate: v === "all" ? null : (v as KanbanFiltersState["dueDate"]) })}
-              >
-                <SelectTrigger className="h-8 rounded-lg bg-background/50">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="overdue">
-                    <span className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-destructive" />
-                      Vencidos
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="today">
-                    <span className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-yellow-500" />
-                      Hoje
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="week">
-                    <span className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-blue-500" />
-                      Esta semana
-                    </span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <NativeSelect
+                value={filters.dueDate}
+                onChange={(v) => onChange({ ...filters, dueDate: v as KanbanFiltersState["dueDate"] })}
+                options={dueDateOptions}
+                placeholder="Todos"
+              />
             </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                <User className="h-3 w-3" /> Responsável
+              </label>
+              <AssigneeSelect
+                value={filters.assignee}
+                onChange={(v) => onChange({ ...filters, assignee: v })}
+                members={members}
+              />
+            </div>
+
+            {services && services.length > 0 && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <Wrench className="h-3 w-3" /> Serviço
+                </label>
+                <NativeSelect
+                  value={filters.service}
+                  onChange={(v) => onChange({ ...filters, service: v })}
+                  options={serviceOptions}
+                  placeholder="Todos"
+                />
+              </div>
+            )}
 
             {positions && positions.length > 0 && (
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                   <Briefcase className="h-3 w-3" /> Cargo
                 </label>
-                <Select
-                  value={filters.position || "all"}
-                  onValueChange={(v) => onChange({ ...filters, position: v === "all" ? null : v })}
-                >
-                  <SelectTrigger className="h-8 rounded-lg bg-background/50">
-                    <SelectValue placeholder="Todos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    {positions.map((pos) => (
-                      <SelectItem key={pos.id} value={pos.id}>
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="w-2.5 h-2.5 rounded-full ring-1 ring-black/10" 
-                            style={{ backgroundColor: pos.color }} 
-                          />
-                          {pos.name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <NativeSelect
+                  value={filters.position}
+                  onChange={(v) => onChange({ ...filters, position: v })}
+                  options={positionOptions}
+                  placeholder="Todos"
+                  showColorDot
+                />
               </div>
             )}
           </div>
