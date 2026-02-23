@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 export interface RecurrenceData {
   enabled: boolean;
-  frequency: "daily" | "weekly" | "monthly";
+  frequency: "daily" | "weekly" | "biweekly" | "monthly";
   weekdays: number[];
   dayOfMonth: number | null;
   startDate: string;
@@ -110,10 +110,11 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
             <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Frequência
             </Label>
-            <div className="grid grid-cols-3 gap-1.5 p-1 bg-muted/50 rounded-lg">
+            <div className="grid grid-cols-4 gap-1.5 p-1 bg-muted/50 rounded-lg">
               {[
                 { value: "daily" as const, label: "Diária" },
                 { value: "weekly" as const, label: "Semanal" },
+                { value: "biweekly" as const, label: "Quinzenal" },
                 { value: "monthly" as const, label: "Mensal" },
               ].map((opt) => (
                 <button
@@ -133,8 +134,8 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
             </div>
           </div>
 
-          {/* Weekly: weekday selector */}
-          {value.frequency === "weekly" && (
+          {/* Weekly/Biweekly: weekday selector */}
+          {(value.frequency === "weekly" || value.frequency === "biweekly") && (
             <div className="space-y-2">
               <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Dias da semana
@@ -314,16 +315,23 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
           {/* Info text */}
           <div className="rounded-lg bg-muted/40 px-3 py-2.5">
             <p className="text-xs text-muted-foreground leading-relaxed">
-              {value.frequency === "daily" && "Uma nova demanda será criada todos os dias."}
+              {value.frequency === "daily" && "Uma nova demanda será criada todos os dias úteis (seg-sex)."}
               {value.frequency === "weekly" &&
                 (value.weekdays.length > 0
                   ? `Demandas serão criadas: ${value.weekdays
                       .sort()
                       .map((d) => WEEKDAY_LABELS.find((l) => l.value === d)?.label)
-                      .join(", ")}`
+                      .join(", ")} (somente dias úteis)`
+                  : "Selecione pelo menos um dia da semana.")}
+              {value.frequency === "biweekly" &&
+                (value.weekdays.length > 0
+                  ? `Demandas serão criadas a cada 2 semanas: ${value.weekdays
+                      .sort()
+                      .map((d) => WEEKDAY_LABELS.find((l) => l.value === d)?.label)
+                      .join(", ")} (somente dias úteis)`
                   : "Selecione pelo menos um dia da semana.")}
               {value.frequency === "monthly" &&
-                `Uma nova demanda será criada todo dia ${value.dayOfMonth || 1} de cada mês.`}
+                `Uma nova demanda será criada todo dia ${value.dayOfMonth || 1} de cada mês (ajustado para dia útil).`}
             </p>
           </div>
         </div>

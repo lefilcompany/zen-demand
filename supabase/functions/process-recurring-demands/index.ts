@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
             board_id: rd.board_id,
             team_id: rd.team_id,
             created_by: rd.created_by,
-            due_date: new Date(rd.next_run_date + "T23:59:59").toISOString(),
+            due_date: adjustDueDateToBusinessDay(rd.next_run_date),
           })
           .select("id")
           .single();
@@ -121,6 +121,22 @@ Deno.serve(async (req) => {
   }
 });
 
+function adjustDueDateToBusinessDay(dateStr: string): string {
+  const d = new Date(dateStr + "T23:59:59Z");
+  const day = d.getUTCDay();
+  if (day === 0) d.setUTCDate(d.getUTCDate() + 1);
+  if (day === 6) d.setUTCDate(d.getUTCDate() + 2);
+  return d.toISOString();
+}
+
+function adjustToBusinessDay(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getUTCDay();
+  if (day === 0) d.setUTCDate(d.getUTCDate() + 1); // Sunday -> Monday
+  if (day === 6) d.setUTCDate(d.getUTCDate() + 2); // Saturday -> Monday
+  return d;
+}
+
 function calculateNextRunDate(
   frequency: string,
   currentDate: string,
@@ -131,45 +147,49 @@ function calculateNextRunDate(
 
   if (frequency === "daily") {
     current.setUTCDate(current.getUTCDate() + 1);
-    return formatDate(current);
+    return formatDate(adjustToBusinessDay(current));
   }
 
-  if (frequency === "weekly") {
+  if (frequency === "weekly" || frequency === "biweekly") {
+    const jumpWeeks = frequency === "biweekly" ? 2 : 1;
+
     if (!weekdays || weekdays.length === 0) {
-      // Default: same day next week
-      current.setUTCDate(current.getUTCDate() + 7);
-      return formatDate(current);
+      current.setUTCDate(current.getUTCDate() + 7 * jumpWeeks);
+      return formatDate(adjustToBusinessDay(current));
     }
 
-    // Find next weekday in the list
     const sortedDays = [...weekdays].sort((a, b) => a - b);
     const currentDay = current.getUTCDay();
 
-    // Find next day after current
+    // Find next day after current in the same week cycle
     let nextDay = sortedDays.find((d) => d > currentDay);
-    if (nextDay !== undefined) {
+    if (nextDay !== undefined && frequency === "weekly") {
       const diff = nextDay - currentDay;
       current.setUTCDate(current.getUTCDate() + diff);
+    } else if (nextDay !== undefined && frequency === "biweekly") {
+      // For biweekly, if there's a next day in the same week, check if we already processed this week
+      // Always jump to next cycle's first matching day
+      const diff = 7 * jumpWeeks - currentDay + sortedDays[0];
+      current.setUTCDate(current.getUTCDate() + diff);
     } else {
-      // Wrap to next week, first day in list
-      const diff = 7 - currentDay + sortedDays[0];
+      // Wrap to next week(s), first day in list
+      const diff = 7 * jumpWeeks - currentDay + sortedDays[0];
       current.setUTCDate(current.getUTCDate() + diff);
     }
-    return formatDate(current);
+    return formatDate(adjustToBusinessDay(current));
   }
 
   if (frequency === "monthly") {
     const day = dayOfMonth || current.getUTCDate();
     current.setUTCMonth(current.getUTCMonth() + 1);
-    // Clamp to valid day (e.g., 31 in a 30-day month)
     const maxDay = new Date(current.getUTCFullYear(), current.getUTCMonth() + 1, 0).getUTCDate();
     current.setUTCDate(Math.min(day, maxDay));
-    return formatDate(current);
+    return formatDate(adjustToBusinessDay(current));
   }
 
-  // Fallback: next day
+  // Fallback: next business day
   current.setUTCDate(current.getUTCDate() + 1);
-  return formatDate(current);
+  return formatDate(adjustToBusinessDay(current));
 }
 
 function formatDate(date: Date): string {
