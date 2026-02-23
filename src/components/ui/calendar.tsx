@@ -34,7 +34,7 @@ function Calendar({
     controlledMonth || props.defaultMonth || new Date()
   );
   const [yearPageStart, setYearPageStart] = React.useState(
-    Math.floor((controlledMonth || new Date()).getFullYear() / 12) * 12
+    Math.floor((controlledMonth || new Date()).getFullYear() / 10) * 10
   );
 
   const displayMonth = controlledMonth || internalMonth;
@@ -59,7 +59,7 @@ function Calendar({
       if (disablePastDates && next.getFullYear() < today.getFullYear()) return;
       handleMonthChange(next);
     } else if (viewMode === "years") {
-      setYearPageStart((prev) => prev + delta * 12);
+      setYearPageStart((prev) => prev + delta * 10);
     }
   };
 
@@ -150,7 +150,7 @@ function Calendar({
     return (
       <div className={cn("p-3 pointer-events-auto select-none w-[252px]", className)}>
         {renderHeader(`${displayMonth.getFullYear()}`, () => {
-          setYearPageStart(Math.floor(displayMonth.getFullYear() / 12) * 12);
+          setYearPageStart(Math.floor(displayMonth.getFullYear() / 10) * 10);
           setViewMode("years");
         })}
         <div className="grid grid-cols-3 gap-1">
@@ -173,10 +173,10 @@ function Calendar({
 
   // Year picker
   if (viewMode === "years") {
-    const years = Array.from({ length: 12 }, (_, i) => yearPageStart + i);
+    const years = Array.from({ length: 10 }, (_, i) => yearPageStart + i);
     return (
       <div className={cn("p-3 pointer-events-auto select-none w-[252px]", className)}>
-        {renderHeader(`${yearPageStart} – ${yearPageStart + 11}`)}
+        {renderHeader(`${yearPageStart} – ${yearPageStart + 9}`)}
         <div className="grid grid-cols-3 gap-1">
           {years.map((year) => renderCell(
             String(year),
