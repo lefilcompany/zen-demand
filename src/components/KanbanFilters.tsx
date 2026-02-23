@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -10,7 +10,7 @@ import { Filter, X, User, Flag, Clock, Briefcase, ChevronDown, Check, Wrench } f
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useTeamPositions } from "@/hooks/useTeamPositions";
 import { useBoardMembers } from "@/hooks/useBoardMembers";
-import { useServices } from "@/hooks/useServices";
+import { useHierarchicalServices } from "@/hooks/useServices";
 import { useAuth } from "@/lib/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -216,7 +216,7 @@ export function KanbanFilters({ teamId, boardId, filters, onChange }: KanbanFilt
   const { user } = useAuth();
   const { data: positions } = useTeamPositions(teamId);
   const { data: members } = useBoardMembers(boardId || null);
-  const { data: services } = useServices(teamId, boardId);
+  const { data: hierarchicalServices, rawServices: services } = useHierarchicalServices(teamId, boardId);
   
   const activeFiltersCount = 
     (filters.myTasks ? 1 : 0) + 
@@ -244,10 +244,20 @@ export function KanbanFilters({ teamId, boardId, filters, onChange }: KanbanFilt
     { value: "week", label: "Esta semana", icon: <div className="w-2 h-2 rounded-full bg-blue-500" /> },
   ];
 
-  const serviceOptions = [
-    { value: "all", label: "Todos" },
-    ...(services?.map(s => ({ value: s.id, label: s.name })) || [])
-  ];
+  const serviceOptions = useMemo(() => {
+    const opts: { value: string; label: string }[] = [{ value: "all", label: "Todos" }];
+    if (!hierarchicalServices) return opts;
+    
+    hierarchicalServices.forEach(service => {
+      opts.push({ value: service.id, label: service.name });
+      if (service.isCategory) {
+        service.children.forEach(child => {
+          opts.push({ value: child.id, label: `  ${child.name}` });
+        });
+      }
+    });
+    return opts;
+  }, [hierarchicalServices]);
 
   const positionOptions = [
     { value: "all", label: "Todos" },
