@@ -46,6 +46,8 @@ export default function Kanban() {
     priority: null,
     dueDate: null,
     position: null,
+    assignee: null,
+    service: null,
   });
   
   // Fetch members with selected position for filtering
@@ -97,6 +99,19 @@ export default function Kanban() {
           (a) => membersByPosition.includes(a.user_id)
         ) || (d.assigned_to && membersByPosition.includes(d.assigned_to));
         if (!hasAssigneeWithPosition) return false;
+      }
+
+      // Assignee filter
+      if (filters.assignee) {
+        const isAssigned = d.demand_assignees?.some(
+          (a) => a.user_id === filters.assignee
+        ) || d.assigned_to === filters.assignee;
+        if (!isAssigned) return false;
+      }
+
+      // Service filter
+      if (filters.service && d.service_id !== filters.service) {
+        return false;
       }
       
       return true;
@@ -165,6 +180,7 @@ export default function Kanban() {
           {/* Kanban Filters */}
           <KanbanFilters 
             teamId={currentTeamId} 
+            boardId={selectedBoardId}
             filters={filters} 
             onChange={setFilters} 
           />
