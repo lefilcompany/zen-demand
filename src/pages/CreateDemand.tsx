@@ -262,7 +262,7 @@ export default function CreateDemand() {
     !isServiceValid();
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fade-in px-1 min-h-full">
+    <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fade-in px-1 pb-6">
       {/* Unsaved Changes Dialog */}
       <UnsavedChangesDialog
         open={isBlocked}
