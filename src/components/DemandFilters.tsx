@@ -298,7 +298,7 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
           </div>
         </div>
 
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Prioridade</label>
             <NativeSelect
