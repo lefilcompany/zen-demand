@@ -224,7 +224,7 @@ export default function CreateDemand() {
                 service_id: serviceId && serviceId !== "none" ? serviceId : null,
                 assignee_ids: assigneeIds,
                 frequency: recurrence.frequency,
-                weekdays: recurrence.frequency === "weekly" ? recurrence.weekdays : [],
+                weekdays: (recurrence.frequency === "weekly" || recurrence.frequency === "biweekly") ? recurrence.weekdays : [],
                 day_of_month: recurrence.frequency === "monthly" ? recurrence.dayOfMonth : null,
                 start_date: recurrence.startDate,
                 end_date: recurrence.endDate || null,
