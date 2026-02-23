@@ -280,7 +280,7 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[340px] p-0 flex flex-col max-h-[min(500px,calc(100vh-120px))]" align="start" side="bottom" avoidCollisions>
+      <PopoverContent className="w-[340px] p-0 flex flex-col" align="start" side="bottom" avoidCollisions style={{ maxHeight: 'min(480px, calc(100vh - 200px))' }}>
         <div className="border-b border-border bg-muted/30 px-4 py-3 rounded-t-lg shrink-0">
           <div className="flex items-center justify-between">
             <h4 className="font-semibold text-sm">Filtros</h4>
