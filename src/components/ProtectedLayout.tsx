@@ -3,7 +3,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { BoardSelector } from "@/components/BoardSelector";
 import { GlobalSearchBar } from "@/components/GlobalSearchBar";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { RotateCcw, LogOut, User, Users, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -37,7 +37,11 @@ import { useTranslation } from "react-i18next";
 export function ProtectedLayout() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
+
+  // Routes that need full-height with internal overflow (e.g. Kanban)
+  const isFullHeightRoute = location.pathname === "/kanban";
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const {
     isOpen,
@@ -198,7 +202,7 @@ export function ProtectedLayout() {
               </DropdownMenu>
             </div>
           </header>
-          <div className="flex-1 overflow-y-auto min-h-0 p-3 md:p-6">
+          <div className={`p-3 md:p-6 ${isFullHeightRoute ? "flex-1 min-h-0 overflow-hidden" : "overflow-y-auto flex-1"}`}>
             <Outlet />
           </div>
           <FloatingCreateButton />
