@@ -1485,6 +1485,104 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_demands: {
+        Row: {
+          assignee_ids: string[] | null
+          board_id: string
+          created_at: string
+          created_by: string
+          day_of_month: number | null
+          description: string | null
+          end_date: string | null
+          frequency: string
+          id: string
+          is_active: boolean
+          last_generated_at: string | null
+          next_run_date: string
+          priority: string | null
+          service_id: string | null
+          start_date: string
+          status_id: string
+          team_id: string
+          title: string
+          updated_at: string
+          weekdays: number[] | null
+        }
+        Insert: {
+          assignee_ids?: string[] | null
+          board_id: string
+          created_at?: string
+          created_by: string
+          day_of_month?: number | null
+          description?: string | null
+          end_date?: string | null
+          frequency: string
+          id?: string
+          is_active?: boolean
+          last_generated_at?: string | null
+          next_run_date: string
+          priority?: string | null
+          service_id?: string | null
+          start_date: string
+          status_id: string
+          team_id: string
+          title: string
+          updated_at?: string
+          weekdays?: number[] | null
+        }
+        Update: {
+          assignee_ids?: string[] | null
+          board_id?: string
+          created_at?: string
+          created_by?: string
+          day_of_month?: number | null
+          description?: string | null
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          last_generated_at?: string | null
+          next_run_date?: string
+          priority?: string | null
+          service_id?: string | null
+          start_date?: string
+          status_id?: string
+          team_id?: string
+          title?: string
+          updated_at?: string
+          weekdays?: number[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_demands_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_demands_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_demands_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "demand_statuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_demands_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           board_id: string | null

@@ -26,6 +26,8 @@ import { useCreateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardServices } from "@/hooks/useBoardServices";
 import { useFormDraft } from "@/hooks/useFormDraft";
+import { RecurrenceConfig, RecurrenceData, defaultRecurrenceData } from "@/components/RecurrenceConfig";
+import { useCreateRecurringDemand } from "@/hooks/useRecurringDemands";
 import { toast } from "sonner";
 import { Calendar, Loader2 } from "lucide-react";
 
@@ -52,6 +54,9 @@ export function CreateDemandQuickDialog({
   const [priority, setPriority] = useState<string>("média");
   const [serviceId, setServiceId] = useState<string>("");
   const [statusId, setStatusId] = useState<string>("");
+  const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
+
+  const createRecurringDemand = useCreateRecurringDemand();
 
   // Draft persistence
   const draftFields = useMemo(
@@ -116,6 +121,29 @@ export function CreateDemandQuickDialog({
       // Clear draft on success
       clearDraft();
 
+      // Create recurring demand if recurrence is enabled
+      if (recurrence.enabled && result && selectedBoardId && currentTeamId) {
+        try {
+          await createRecurringDemand.mutateAsync({
+            team_id: currentTeamId,
+            board_id: selectedBoardId,
+            title: title.trim(),
+            description: description.trim() || null,
+            priority,
+            status_id: statusId || defaultStatusId,
+            service_id: serviceId || null,
+            frequency: recurrence.frequency,
+            weekdays: recurrence.frequency === "weekly" ? recurrence.weekdays : [],
+            day_of_month: recurrence.frequency === "monthly" ? recurrence.dayOfMonth : null,
+            start_date: recurrence.startDate,
+            end_date: recurrence.endDate || null,
+          });
+        } catch (recError) {
+          console.error("Erro ao criar recorrência:", recError);
+          toast.warning("Demanda criada, mas erro ao configurar recorrência");
+        }
+      }
+
       toast.success("Demanda criada com sucesso!");
       onOpenChange(false);
       resetForm();
@@ -136,6 +164,7 @@ export function CreateDemandQuickDialog({
     setPriority("média");
     setServiceId("");
     setStatusId("");
+    setRecurrence(defaultRecurrenceData);
   };
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -263,6 +292,9 @@ export function CreateDemandQuickDialog({
               </Select>
             </div>
           )}
+
+          {/* Recurrence Config */}
+          <RecurrenceConfig value={recurrence} onChange={setRecurrence} compact />
 
           <DialogFooter className="gap-2 sm:gap-0">
             <Button
