@@ -128,19 +128,20 @@ function Calendar({
     );
   }
 
-  // Year grid view
+  // Year grid view - decades (e.g. 2020-2029, 2030-2039)
   if (pickerView === "years") {
-    const startDecade = Math.floor(currentYear / 12) * 12;
-    const visibleYears = years.filter(y => y >= startDecade && y < startDecade + 12);
-    const canGoPrev = years[0] < startDecade;
-    const canGoNext = years[years.length - 1] >= startDecade + 12;
+    const decadeStart = Math.floor(currentYear / 10) * 10;
+    const decadeEnd = decadeStart + 9;
+    const visibleYears = years.filter(y => y >= decadeStart && y <= decadeEnd);
+    const canGoPrev = years.some(y => y < decadeStart);
+    const canGoNext = years.some(y => y > decadeEnd);
 
     return (
       <div className={cn("p-3 pointer-events-auto w-[280px]", className)}>
         <div className="flex items-center justify-between mb-4">
           <button
             type="button"
-            onClick={() => setDisplayMonth(setYear(displayMonth, currentYear - 12))}
+            onClick={() => setDisplayMonth(setYear(displayMonth, currentYear - 10))}
             className={cn(
               buttonVariants({ variant: "outline" }),
               "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
@@ -150,11 +151,11 @@ function Calendar({
             <ChevronLeft className="h-4 w-4" />
           </button>
           <span className="text-sm font-semibold text-foreground">
-            {visibleYears[0]} – {visibleYears[visibleYears.length - 1]}
+            {decadeStart} – {decadeEnd}
           </span>
           <button
             type="button"
-            onClick={() => setDisplayMonth(setYear(displayMonth, currentYear + 12))}
+            onClick={() => setDisplayMonth(setYear(displayMonth, currentYear + 10))}
             className={cn(
               buttonVariants({ variant: "outline" }),
               "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
