@@ -45,7 +45,13 @@ const WEEKDAY_LABELS = [
   { value: 6, label: "Sáb" },
 ];
 
-const DAYS_OF_MONTH = Array.from({ length: 28 }, (_, i) => i + 1);
+const DAYS_OF_MONTH = Array.from({ length: 31 }, (_, i) => i + 1);
+
+const SPECIAL_DAYS = [
+  { value: -1, label: "Último dia" },
+  { value: -2, label: "1º dia útil" },
+  { value: -3, label: "Último dia útil" },
+];
 
 export const defaultRecurrenceData: RecurrenceData = {
   enabled: false,
@@ -153,25 +159,52 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
             </div>
           )}
 
-          {/* Monthly: day of month */}
+          {/* Monthly: day of month - visual grid */}
           {value.frequency === "monthly" && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label>Dia do mês</Label>
-              <Select
-                value={String(value.dayOfMonth || 1)}
-                onValueChange={(v) => update({ dayOfMonth: parseInt(v) })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {DAYS_OF_MONTH.map((day) => (
-                    <SelectItem key={day} value={String(day)}>
-                      Dia {day}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Special options */}
+              <div className="flex flex-wrap gap-2">
+                {SPECIAL_DAYS.map((special) => (
+                  <button
+                    key={special.value}
+                    type="button"
+                    onClick={() => update({ dayOfMonth: special.value })}
+                    className={cn(
+                      "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
+                      value.dayOfMonth === special.value
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-background hover:bg-primary/10 hover:text-primary border-border"
+                    )}
+                  >
+                    {special.label}
+                  </button>
+                ))}
+              </div>
+              {/* Day grid */}
+              <div className="grid grid-cols-7 gap-1">
+                {DAYS_OF_MONTH.map((day) => (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => update({ dayOfMonth: day })}
+                    className={cn(
+                      "h-8 w-full rounded-md text-xs font-medium transition-colors",
+                      value.dayOfMonth === day
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-background hover:bg-primary/10 hover:text-primary border border-border/50",
+                      day > 28 && "opacity-60"
+                    )}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
+              {(value.dayOfMonth ?? 0) > 28 && (
+                <p className="text-xs text-destructive/80">
+                  ⚠ Meses com menos de {value.dayOfMonth} dias usarão o último dia disponível.
+                </p>
+              )}
             </div>
           )}
 
@@ -263,8 +296,15 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                     .map((d) => WEEKDAY_LABELS.find((l) => l.value === d)?.label)
                     .join(", ")}`
                 : "Selecione pelo menos um dia da semana.")}
-            {value.frequency === "monthly" &&
-              `Uma nova demanda será criada todo dia ${value.dayOfMonth || 1} de cada mês.`}
+            {value.frequency === "monthly" && (
+              value.dayOfMonth === -1
+                ? "Uma nova demanda será criada no último dia de cada mês."
+                : value.dayOfMonth === -2
+                ? "Uma nova demanda será criada no primeiro dia útil de cada mês."
+                : value.dayOfMonth === -3
+                ? "Uma nova demanda será criada no último dia útil de cada mês."
+                : `Uma nova demanda será criada todo dia ${value.dayOfMonth || 1} de cada mês.`
+            )}
           </p>
         </div>
       )}
