@@ -5,13 +5,6 @@ import { ptBR } from "date-fns/locale";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -172,27 +165,32 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
             </div>
           )}
 
-          {/* Monthly: day of month */}
+          {/* Monthly: day of month grid */}
           {value.frequency === "monthly" && (
             <div className="space-y-2">
               <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Dia do mês
               </Label>
-              <Select
-                value={String(value.dayOfMonth || 1)}
-                onValueChange={(v) => update({ dayOfMonth: parseInt(v) })}
-              >
-                <SelectTrigger className="rounded-lg">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {DAYS_OF_MONTH.map((day) => (
-                    <SelectItem key={day} value={String(day)}>
-                      Dia {day}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="grid grid-cols-7 gap-1.5">
+                {DAYS_OF_MONTH.map((day) => (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => update({ dayOfMonth: day })}
+                    className={cn(
+                      "h-9 w-full rounded-full text-sm font-medium transition-colors duration-150",
+                      (value.dayOfMonth || 1) === day
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-muted/50 text-foreground hover:bg-accent hover:text-accent-foreground"
+                    )}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Limitado a 28 para compatibilidade com todos os meses.
+              </p>
             </div>
           )}
 
