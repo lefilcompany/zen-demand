@@ -11,7 +11,7 @@ export interface RecurringDemandInput {
   status_id: string;
   service_id?: string | null;
   assignee_ids?: string[];
-  frequency: "daily" | "weekly" | "monthly";
+  frequency: "daily" | "weekly" | "biweekly" | "monthly";
   weekdays?: number[];
   day_of_month?: number | null;
   start_date: string;
@@ -116,32 +116,33 @@ function calculateInitialNextRunDate(
 
   // If start_date is in the future, use it directly (or find first matching day)
   if (start >= today) {
-    if (frequency === "weekly" && weekdays && weekdays.length > 0) {
-      // Find first matching weekday on or after start_date
+    if ((frequency === "weekly" || frequency === "biweekly") && weekdays && weekdays.length > 0) {
       const d = new Date(start);
-      for (let i = 0; i < 7; i++) {
+      const maxDays = frequency === "biweekly" ? 14 : 7;
+      for (let i = 0; i < maxDays; i++) {
         if (weekdays.includes(d.getDay())) {
-          return formatDate(d);
+          return formatDate(adjustToBusinessDay(d));
         }
         d.setDate(d.getDate() + 1);
       }
     }
-    return startDate;
+    return formatDate(adjustToBusinessDay(start));
   }
 
   // If start_date is today or past, next run is tomorrow or next matching day
   if (frequency === "daily") {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    return formatDate(tomorrow);
+    return formatDate(adjustToBusinessDay(tomorrow));
   }
 
-  if (frequency === "weekly" && weekdays && weekdays.length > 0) {
+  if ((frequency === "weekly" || frequency === "biweekly") && weekdays && weekdays.length > 0) {
     const d = new Date(today);
     d.setDate(d.getDate() + 1); // start from tomorrow
-    for (let i = 0; i < 7; i++) {
+    const maxDays = frequency === "biweekly" ? 14 : 7;
+    for (let i = 0; i < maxDays; i++) {
       if (weekdays.includes(d.getDay())) {
-        return formatDate(d);
+        return formatDate(adjustToBusinessDay(d));
       }
       d.setDate(d.getDate() + 1);
     }
@@ -150,13 +151,21 @@ function calculateInitialNextRunDate(
   if (frequency === "monthly") {
     const day = dayOfMonth || start.getDate();
     const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, Math.min(day, 28));
-    return formatDate(nextMonth);
+    return formatDate(adjustToBusinessDay(nextMonth));
   }
 
   // Fallback
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  return formatDate(tomorrow);
+  return formatDate(adjustToBusinessDay(tomorrow));
+}
+
+function adjustToBusinessDay(date: Date): Date {
+  const d = new Date(date);
+  const dayOfWeek = d.getDay();
+  if (dayOfWeek === 0) d.setDate(d.getDate() + 1); // Sunday -> Monday
+  if (dayOfWeek === 6) d.setDate(d.getDate() + 2); // Saturday -> Monday
+  return d;
 }
 
 function formatDate(date: Date): string {
