@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/tooltip";
 
 import { useDemands } from "@/hooks/useDemands";
+import { useServices } from "@/hooks/useServices";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useBoard } from "@/hooks/useBoards";
@@ -52,6 +53,20 @@ export default function Kanban() {
   
   // Fetch members with selected position for filtering
   const { data: membersByPosition } = useMembersByPosition(currentTeamId, filters.position);
+  const { data: allServices } = useServices(currentTeamId, selectedBoardId);
+  
+  // Build a map of parent service ID -> array of child service IDs
+  const serviceChildMap = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    if (!allServices) return map;
+    allServices.forEach(s => {
+      if (s.parent_id) {
+        if (!map[s.parent_id]) map[s.parent_id] = [];
+        map[s.parent_id].push(s.id);
+      }
+    });
+    return map;
+  }, [allServices]);
   
   // Enable realtime updates for demands
   useRealtimeDemands(selectedBoardId || undefined);
@@ -109,14 +124,20 @@ export default function Kanban() {
         if (!isAssigned) return false;
       }
 
-      // Service filter
-      if (filters.service && d.service_id !== filters.service) {
-        return false;
+      // Service filter - include child services when a parent (macro) service is selected
+      if (filters.service) {
+        if (d.service_id === filters.service) {
+          // Direct match
+        } else if (serviceChildMap[filters.service]?.includes(d.service_id || "")) {
+          // Demand has a child service of the selected parent
+        } else {
+          return false;
+        }
       }
       
       return true;
     });
-  }, [demands, filters, user?.id, membersByPosition]);
+  }, [demands, filters, user?.id, membersByPosition, serviceChildMap]);
 
   // Count user's demands
   const myDemandsCount = useMemo(() => {
