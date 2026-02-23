@@ -93,154 +93,112 @@ function Calendar({
     return false;
   };
 
-  const captionLabel =
-    viewMode === "years"
-      ? `${yearPageStart} – ${yearPageStart + 11}`
-      : viewMode === "months"
-        ? `${displayMonth.getFullYear()}`
-        : `${MONTH_NAMES_SHORT[displayMonth.getMonth()]} ${displayMonth.getFullYear()}`;
+  const navButtonClass = cn(
+    buttonVariants({ variant: "outline" }),
+    "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 disabled:opacity-20 disabled:cursor-not-allowed"
+  );
 
-  // Month grid
+  // Shared header
+  const renderHeader = (label: string, onLabelClick?: () => void) => (
+    <div className="flex items-center justify-between px-1 pb-3">
+      <button type="button" onClick={() => navigateMonth(-1)} disabled={isPrevDisabled()} className={navButtonClass}>
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+      {onLabelClick ? (
+        <button
+          type="button"
+          onClick={onLabelClick}
+          className="text-sm font-semibold hover:bg-accent rounded-md px-2.5 py-1 transition-colors"
+        >
+          {label}
+        </button>
+      ) : (
+        <span className="text-sm font-semibold px-2.5 py-1">{label}</span>
+      )}
+      <button type="button" onClick={() => navigateMonth(1)} className={navButtonClass}>
+        <ChevronRight className="h-4 w-4" />
+      </button>
+    </div>
+  );
+
+  // Grid cell renderer
+  const renderCell = (
+    label: string,
+    isSelected: boolean,
+    isCurrent: boolean,
+    isDisabled: boolean,
+    onClick: () => void
+  ) => (
+    <button
+      type="button"
+      disabled={isDisabled}
+      onClick={onClick}
+      className={cn(
+        "flex items-center justify-center rounded-md text-sm font-medium transition-colors h-9",
+        isDisabled && "text-muted-foreground/30 cursor-not-allowed",
+        !isDisabled && !isSelected && "hover:bg-accent hover:text-accent-foreground",
+        isSelected && "bg-primary text-primary-foreground hover:bg-primary/90",
+        isCurrent && !isSelected && "bg-accent text-accent-foreground font-semibold"
+      )}
+    >
+      {label}
+    </button>
+  );
+
+  // Month picker
   if (viewMode === "months") {
     return (
-      <div className={cn("p-3 pointer-events-auto select-none", className)}>
-        <div className="flex items-center justify-between mb-3">
-          <button
-            type="button"
-            onClick={() => navigateMonth(-1)}
-            disabled={isPrevDisabled()}
-            className={cn(
-              buttonVariants({ variant: "outline" }),
-              "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 disabled:opacity-20 disabled:cursor-not-allowed"
-            )}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setYearPageStart(Math.floor(displayMonth.getFullYear() / 12) * 12);
-              setViewMode("years");
-            }}
-            className="text-sm font-semibold hover:bg-accent rounded-md px-2 py-1 transition-colors"
-          >
-            {captionLabel}
-          </button>
-          <button
-            type="button"
-            onClick={() => navigateMonth(1)}
-            className={cn(
-              buttonVariants({ variant: "outline" }),
-              "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
-            )}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="grid grid-cols-3 gap-1.5">
-          {MONTH_NAMES_SHORT.map((name, i) => {
-            const isCurrent =
-              displayMonth.getFullYear() === today.getFullYear() &&
-              i === today.getMonth();
-            const isSelected = i === displayMonth.getMonth();
-            const isDisabled = isMonthDisabled(i);
-
-            return (
-              <button
-                key={i}
-                type="button"
-                disabled={isDisabled}
-                onClick={() => {
-                  const next = new Date(displayMonth);
-                  next.setMonth(i);
-                  handleMonthChange(next);
-                  setViewMode("days");
-                }}
-                className={cn(
-                  "h-9 rounded-md text-sm font-medium transition-colors",
-                  isDisabled && "text-muted-foreground/40 cursor-not-allowed",
-                  !isDisabled && !isSelected && "hover:bg-accent hover:text-accent-foreground",
-                  isSelected && "bg-primary text-primary-foreground",
-                  isCurrent && !isSelected && "bg-accent text-accent-foreground"
-                )}
-              >
-                {name}
-              </button>
-            );
-          })}
+      <div className={cn("p-3 pointer-events-auto select-none w-[252px]", className)}>
+        {renderHeader(`${displayMonth.getFullYear()}`, () => {
+          setYearPageStart(Math.floor(displayMonth.getFullYear() / 12) * 12);
+          setViewMode("years");
+        })}
+        <div className="grid grid-cols-3 gap-1">
+          {MONTH_NAMES_SHORT.map((name, i) => renderCell(
+            name,
+            i === displayMonth.getMonth(),
+            displayMonth.getFullYear() === today.getFullYear() && i === today.getMonth(),
+            isMonthDisabled(i),
+            () => {
+              const next = new Date(displayMonth);
+              next.setMonth(i);
+              handleMonthChange(next);
+              setViewMode("days");
+            }
+          ))}
         </div>
       </div>
     );
   }
 
-  // Year grid
+  // Year picker
   if (viewMode === "years") {
     const years = Array.from({ length: 12 }, (_, i) => yearPageStart + i);
     return (
-      <div className={cn("p-3 pointer-events-auto select-none", className)}>
-        <div className="flex items-center justify-between mb-3">
-          <button
-            type="button"
-            onClick={() => navigateMonth(-1)}
-            disabled={isPrevDisabled()}
-            className={cn(
-              buttonVariants({ variant: "outline" }),
-              "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 disabled:opacity-20 disabled:cursor-not-allowed"
-            )}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <span className="text-sm font-semibold">{captionLabel}</span>
-          <button
-            type="button"
-            onClick={() => navigateMonth(1)}
-            className={cn(
-              buttonVariants({ variant: "outline" }),
-              "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
-            )}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="grid grid-cols-3 gap-1.5">
-          {years.map((year) => {
-            const isCurrent = year === today.getFullYear();
-            const isSelected = year === displayMonth.getFullYear();
-            const yearDisabled = isYearDisabled(year);
-
-            return (
-              <button
-                key={year}
-                type="button"
-                disabled={yearDisabled}
-                onClick={() => {
-                  const next = new Date(displayMonth);
-                  next.setFullYear(year);
-                  // Clamp month if going to current year
-                  if (disablePastDates && year === today.getFullYear() && next.getMonth() < today.getMonth()) {
-                    next.setMonth(today.getMonth());
-                  }
-                  handleMonthChange(next);
-                  setViewMode("months");
-                }}
-                className={cn(
-                  "h-9 rounded-md text-sm font-medium transition-colors",
-                  yearDisabled && "text-muted-foreground/40 cursor-not-allowed",
-                  !yearDisabled && !isSelected && "hover:bg-accent hover:text-accent-foreground",
-                  isSelected && "bg-primary text-primary-foreground",
-                  isCurrent && !isSelected && "bg-accent text-accent-foreground"
-                )}
-              >
-                {year}
-              </button>
-            );
-          })}
+      <div className={cn("p-3 pointer-events-auto select-none w-[252px]", className)}>
+        {renderHeader(`${yearPageStart} – ${yearPageStart + 11}`)}
+        <div className="grid grid-cols-3 gap-1">
+          {years.map((year) => renderCell(
+            String(year),
+            year === displayMonth.getFullYear(),
+            year === today.getFullYear(),
+            isYearDisabled(year),
+            () => {
+              const next = new Date(displayMonth);
+              next.setFullYear(year);
+              if (disablePastDates && year === today.getFullYear() && next.getMonth() < today.getMonth()) {
+                next.setMonth(today.getMonth());
+              }
+              handleMonthChange(next);
+              setViewMode("months");
+            }
+          ))}
         </div>
       </div>
     );
   }
 
-  // Days view (default DayPicker)
+  // Days view
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -252,7 +210,7 @@ function Calendar({
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
         caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-semibold cursor-pointer hover:bg-accent rounded-md px-2 py-1 transition-colors",
+        caption_label: "hidden",
         nav: "space-x-1 flex items-center",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
@@ -284,7 +242,7 @@ function Calendar({
           <button
             type="button"
             onClick={() => setViewMode("months")}
-            className="text-sm font-semibold hover:bg-accent rounded-md px-2 py-1 transition-colors"
+            className="text-sm font-semibold hover:bg-accent rounded-md px-2.5 py-1 transition-colors"
           >
             {MONTH_NAMES_SHORT[dm.getMonth()]} {dm.getFullYear()}
           </button>
