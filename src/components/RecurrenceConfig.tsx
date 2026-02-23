@@ -204,7 +204,7 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                     onSelect={(date) => update({ startDate: formatDateStr(date) })}
                     disabled={(date) => date < today}
                     locale={ptBR}
-                    captionLayout="dropdown-buttons"
+                    
                     fromDate={today}
                     toYear={today.getFullYear() + 5}
                     initialFocus
@@ -243,7 +243,7 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                       return false;
                     }}
                     locale={ptBR}
-                    captionLayout="dropdown-buttons"
+                    
                     fromDate={startDateObj || today}
                     toYear={today.getFullYear() + 5}
                     initialFocus
