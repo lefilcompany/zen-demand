@@ -182,9 +182,29 @@ function calculateNextRunDate(
   if (frequency === "monthly") {
     const day = dayOfMonth || current.getUTCDate();
     current.setUTCMonth(current.getUTCMonth() + 1);
-    // Clamp to valid day (e.g., 31 in a 30-day month)
-    const maxDay = new Date(current.getUTCFullYear(), current.getUTCMonth() + 1, 0).getUTCDate();
-    current.setUTCDate(Math.min(day, maxDay));
+
+    if (day === -1) {
+      // Last day of month
+      const lastDay = new Date(current.getUTCFullYear(), current.getUTCMonth() + 1, 0).getUTCDate();
+      current.setUTCDate(lastDay);
+    } else if (day === -2) {
+      // First business day
+      current.setUTCDate(1);
+      while (current.getUTCDay() === 0 || current.getUTCDay() === 6) {
+        current.setUTCDate(current.getUTCDate() + 1);
+      }
+    } else if (day === -3) {
+      // Last business day
+      const lastDay = new Date(current.getUTCFullYear(), current.getUTCMonth() + 1, 0).getUTCDate();
+      current.setUTCDate(lastDay);
+      while (current.getUTCDay() === 0 || current.getUTCDay() === 6) {
+        current.setUTCDate(current.getUTCDate() - 1);
+      }
+    } else {
+      // Clamp to valid day (e.g., 31 in a 30-day month)
+      const maxDay = new Date(current.getUTCFullYear(), current.getUTCMonth() + 1, 0).getUTCDate();
+      current.setUTCDate(Math.min(day, maxDay));
+    }
     return formatDate(current);
   }
 
