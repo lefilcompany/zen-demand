@@ -198,7 +198,7 @@ export function ProtectedLayout() {
               </DropdownMenu>
             </div>
           </header>
-          <div className="flex-1 overflow-y-auto p-3 md:p-6">
+          <div className="flex-1 overflow-y-auto p-3 md:p-6 min-h-0">
             <Outlet />
           </div>
           <FloatingCreateButton />
