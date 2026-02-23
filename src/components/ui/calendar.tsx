@@ -237,7 +237,7 @@ function Calendar({
           <button
             type="button"
             onClick={() => setPickerView("months")}
-            className="text-sm font-semibold cursor-pointer hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-accent"
+            className="text-sm font-semibold cursor-pointer hover:text-primary-foreground transition-colors px-3 py-1.5 rounded-full hover:bg-primary/90"
           >
             {capitalizedCaption}
           </button>
