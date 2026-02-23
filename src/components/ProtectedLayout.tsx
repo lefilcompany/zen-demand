@@ -3,7 +3,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { BoardSelector } from "@/components/BoardSelector";
 import { GlobalSearchBar } from "@/components/GlobalSearchBar";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { RotateCcw, LogOut, User, Users, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -37,11 +37,7 @@ import { useTranslation } from "react-i18next";
 export function ProtectedLayout() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const { t } = useTranslation();
-
-  // Routes that need full-height with internal overflow (e.g. Kanban)
-  const isFullHeightRoute = location.pathname === "/kanban";
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const {
     isOpen,
@@ -120,7 +116,7 @@ export function ProtectedLayout() {
     <SidebarProvider defaultOpen={defaultSidebarOpen} key={isTablet ? 'tablet' : 'desktop'}>
       <div className="flex h-[100dvh] w-full bg-sidebar p-2 md:p-3 overflow-hidden">
         <AppSidebar />
-        <main className={`flex-1 flex flex-col bg-background rounded-xl shadow-xl min-h-0 ${isFullHeightRoute ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+        <main className="flex-1 flex flex-col bg-background rounded-xl shadow-xl overflow-hidden min-h-0">
           <header className="flex h-12 sm:h-14 md:h-16 shrink-0 items-center justify-between gap-1 sm:gap-2 bg-background px-2 sm:px-3 md:px-6 border-b border-border rounded-t-xl overflow-visible">
             <div className="flex items-center gap-1 sm:gap-2 md:gap-4 min-w-0">
               <SidebarTrigger className="text-foreground hover:bg-muted shrink-0 h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9" />
@@ -202,7 +198,7 @@ export function ProtectedLayout() {
               </DropdownMenu>
             </div>
           </header>
-          <div className={`p-3 md:p-6 ${isFullHeightRoute ? "flex-1 min-h-0 overflow-hidden" : ""}`}>
+          <div className="flex-1 overflow-y-auto min-h-0 p-3 md:p-6">
             <Outlet />
           </div>
           <FloatingCreateButton />
