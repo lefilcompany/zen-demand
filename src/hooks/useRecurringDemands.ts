@@ -117,6 +117,7 @@ function calculateInitialNextRunDate(
   // If start_date is in the future, use it directly (or find first matching day)
   if (start >= today) {
     if (frequency === "weekly" && weekdays && weekdays.length > 0) {
+      // Find first matching weekday on or after start_date
       const d = new Date(start);
       for (let i = 0; i < 7; i++) {
         if (weekdays.includes(d.getDay())) {
@@ -125,13 +126,10 @@ function calculateInitialNextRunDate(
         d.setDate(d.getDate() + 1);
       }
     }
-    if (frequency === "monthly" && dayOfMonth && dayOfMonth < 0) {
-      return resolveSpecialMonthDay(start.getFullYear(), start.getMonth(), dayOfMonth);
-    }
     return startDate;
   }
 
-  // If start_date is today or past
+  // If start_date is today or past, next run is tomorrow or next matching day
   if (frequency === "daily") {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -140,7 +138,7 @@ function calculateInitialNextRunDate(
 
   if (frequency === "weekly" && weekdays && weekdays.length > 0) {
     const d = new Date(today);
-    d.setDate(d.getDate() + 1);
+    d.setDate(d.getDate() + 1); // start from tomorrow
     for (let i = 0; i < 7; i++) {
       if (weekdays.includes(d.getDay())) {
         return formatDate(d);
@@ -151,16 +149,6 @@ function calculateInitialNextRunDate(
 
   if (frequency === "monthly") {
     const day = dayOfMonth || start.getDate();
-    if (day < 0) {
-      // Special values: try this month first, if past use next month
-      const thisMonth = resolveSpecialMonthDay(today.getFullYear(), today.getMonth(), day);
-      if (new Date(thisMonth + "T00:00:00") > today) return thisMonth;
-      return resolveSpecialMonthDay(
-        today.getMonth() === 11 ? today.getFullYear() + 1 : today.getFullYear(),
-        (today.getMonth() + 1) % 12,
-        day
-      );
-    }
     const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, Math.min(day, 28));
     return formatDate(nextMonth);
   }
@@ -169,31 +157,6 @@ function calculateInitialNextRunDate(
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
   return formatDate(tomorrow);
-}
-
-function resolveSpecialMonthDay(year: number, month: number, specialDay: number): string {
-  if (specialDay === -1) {
-    // Last day of month
-    const d = new Date(year, month + 1, 0);
-    return formatDate(d);
-  }
-  if (specialDay === -2) {
-    // First business day
-    const d = new Date(year, month, 1);
-    while (d.getDay() === 0 || d.getDay() === 6) {
-      d.setDate(d.getDate() + 1);
-    }
-    return formatDate(d);
-  }
-  if (specialDay === -3) {
-    // Last business day
-    const d = new Date(year, month + 1, 0);
-    while (d.getDay() === 0 || d.getDay() === 6) {
-      d.setDate(d.getDate() - 1);
-    }
-    return formatDate(d);
-  }
-  return formatDate(new Date(year, month, 1));
 }
 
 function formatDate(date: Date): string {

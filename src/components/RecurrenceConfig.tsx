@@ -1,14 +1,7 @@
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -17,8 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Repeat, CalendarDays, CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Repeat, CalendarDays } from "lucide-react";
 
 export interface RecurrenceData {
   enabled: boolean;
@@ -45,43 +37,21 @@ const WEEKDAY_LABELS = [
   { value: 6, label: "Sáb" },
 ];
 
-const DAYS_OF_MONTH = Array.from({ length: 31 }, (_, i) => i + 1);
-
-const SPECIAL_DAYS = [
-  { value: -1, label: "Último dia" },
-  { value: -2, label: "1º dia útil" },
-  { value: -3, label: "Último dia útil" },
-];
+const DAYS_OF_MONTH = Array.from({ length: 28 }, (_, i) => i + 1);
 
 export const defaultRecurrenceData: RecurrenceData = {
   enabled: false,
   frequency: "daily",
-  weekdays: [1, 2, 3, 4, 5],
+  weekdays: [1, 2, 3, 4, 5], // Mon-Fri default
   dayOfMonth: 1,
   startDate: new Date().toISOString().split("T")[0],
   endDate: "",
 };
 
-function parseDate(dateStr: string): Date | undefined {
-  if (!dateStr) return undefined;
-  const [year, month, day] = dateStr.split("-").map(Number);
-  return new Date(year, month - 1, day);
-}
-
-function formatDateStr(date: Date | undefined): string {
-  if (!date) return "";
-  return format(date, "yyyy-MM-dd");
-}
-
-const today = new Date(new Date().setHours(0, 0, 0, 0));
-
 export function RecurrenceConfig({ value, onChange, compact = false }: RecurrenceConfigProps) {
   const update = (partial: Partial<RecurrenceData>) => {
     onChange({ ...value, ...partial });
   };
-
-  const startDateObj = parseDate(value.startDate);
-  const endDateObj = parseDate(value.endDate);
 
   return (
     <div className="space-y-4">
@@ -120,9 +90,15 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="daily">Diária</SelectItem>
-                <SelectItem value="weekly">Semanal</SelectItem>
-                <SelectItem value="monthly">Mensal</SelectItem>
+                <SelectItem value="daily">
+                  <span className="flex items-center gap-2">Diária</span>
+                </SelectItem>
+                <SelectItem value="weekly">
+                  <span className="flex items-center gap-2">Semanal</span>
+                </SelectItem>
+                <SelectItem value="monthly">
+                  <span className="flex items-center gap-2">Mensal</span>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -135,12 +111,11 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                 {WEEKDAY_LABELS.map((day) => (
                   <label
                     key={day.value}
-                    className={cn(
-                      "flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm cursor-pointer transition-colors",
+                    className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm cursor-pointer transition-colors ${
                       value.weekdays.includes(day.value)
                         ? "bg-primary text-primary-foreground border-primary"
                         : "bg-background hover:bg-muted"
-                    )}
+                    }`}
                   >
                     <Checkbox
                       checked={value.weekdays.includes(day.value)}
@@ -159,130 +134,53 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
             </div>
           )}
 
-          {/* Monthly: day of month - visual grid */}
+          {/* Monthly: day of month */}
           {value.frequency === "monthly" && (
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label>Dia do mês</Label>
-              {/* Special options */}
-              <div className="flex flex-wrap gap-2">
-                {SPECIAL_DAYS.map((special) => (
-                  <button
-                    key={special.value}
-                    type="button"
-                    onClick={() => update({ dayOfMonth: special.value })}
-                    className={cn(
-                      "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
-                      value.dayOfMonth === special.value
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-background hover:bg-primary/10 hover:text-primary border-border"
-                    )}
-                  >
-                    {special.label}
-                  </button>
-                ))}
-              </div>
-              {/* Day grid */}
-              <div className="grid grid-cols-7 gap-1">
-                {DAYS_OF_MONTH.map((day) => (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => update({ dayOfMonth: day })}
-                    className={cn(
-                      "h-8 w-full rounded-md text-xs font-medium transition-colors",
-                      value.dayOfMonth === day
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-background hover:bg-primary/10 hover:text-primary border border-border/50",
-                      day > 28 && "opacity-60"
-                    )}
-                  >
-                    {day}
-                  </button>
-                ))}
-              </div>
-              {(value.dayOfMonth ?? 0) > 28 && (
-                <p className="text-xs text-destructive/80">
-                  ⚠ Meses com menos de {value.dayOfMonth} dias usarão o último dia disponível.
-                </p>
-              )}
+              <Select
+                value={String(value.dayOfMonth || 1)}
+                onValueChange={(v) => update({ dayOfMonth: parseInt(v) })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DAYS_OF_MONTH.map((day) => (
+                    <SelectItem key={day} value={String(day)}>
+                      Dia {day}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
-          {/* Date range with Calendar Popovers */}
+          {/* Date range */}
           <div className={compact ? "space-y-3" : "grid grid-cols-2 gap-4"}>
             <div className="space-y-2">
               <Label className="flex items-center gap-1.5">
                 <CalendarDays className="h-3.5 w-3.5" />
                 Data de início *
               </Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !startDateObj && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDateObj
-                      ? format(startDateObj, "dd/MM/yyyy", { locale: ptBR })
-                      : "Selecione uma data"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={startDateObj}
-                    onSelect={(date) => update({ startDate: formatDateStr(date) })}
-                    disabled={(date) => date < today}
-                    locale={ptBR}
-                    
-                    fromDate={today}
-                    toYear={today.getFullYear() + 5}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <Input
+                type="date"
+                value={value.startDate}
+                onChange={(e) => update({ startDate: e.target.value })}
+                required={value.enabled}
+              />
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-1.5">
                 <CalendarDays className="h-3.5 w-3.5" />
                 Data de fim (opcional)
               </Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !endDateObj && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDateObj
-                      ? format(endDateObj, "dd/MM/yyyy", { locale: ptBR })
-                      : "Sem data de fim"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={endDateObj}
-                    onSelect={(date) => update({ endDate: formatDateStr(date) })}
-                    disabled={(date) => {
-                      if (date < today) return true;
-                      if (startDateObj && date < startDateObj) return true;
-                      return false;
-                    }}
-                    locale={ptBR}
-                    
-                    fromDate={startDateObj || today}
-                    toYear={today.getFullYear() + 5}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <Input
+                type="date"
+                value={value.endDate}
+                onChange={(e) => update({ endDate: e.target.value })}
+                min={value.startDate}
+              />
             </div>
           </div>
 
@@ -296,15 +194,8 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                     .map((d) => WEEKDAY_LABELS.find((l) => l.value === d)?.label)
                     .join(", ")}`
                 : "Selecione pelo menos um dia da semana.")}
-            {value.frequency === "monthly" && (
-              value.dayOfMonth === -1
-                ? "Uma nova demanda será criada no último dia de cada mês."
-                : value.dayOfMonth === -2
-                ? "Uma nova demanda será criada no primeiro dia útil de cada mês."
-                : value.dayOfMonth === -3
-                ? "Uma nova demanda será criada no último dia útil de cada mês."
-                : `Uma nova demanda será criada todo dia ${value.dayOfMonth || 1} de cada mês.`
-            )}
+            {value.frequency === "monthly" &&
+              `Uma nova demanda será criada todo dia ${value.dayOfMonth || 1} de cada mês.`}
           </p>
         </div>
       )}

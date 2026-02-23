@@ -48,27 +48,6 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Calculate due_date based on service estimated_hours
-        let dueDate: string | null = null;
-        if (rd.service_id) {
-          const { data: service } = await supabase
-            .from("services")
-            .select("estimated_hours")
-            .eq("id", rd.service_id)
-            .single();
-
-          if (service && service.estimated_hours > 0) {
-            const now = new Date();
-            const dueDateObj = new Date(now.getTime() + service.estimated_hours * 60 * 60 * 1000);
-            // Skip weekends
-            while (dueDateObj.getDay() === 0 || dueDateObj.getDay() === 6) {
-              dueDateObj.setDate(dueDateObj.getDate() + 1);
-            }
-            dueDate = dueDateObj.toISOString();
-          }
-        }
-
-        // Fallback: if no service or no estimated_hours, no due_date
         // Create the demand
         const { data: newDemand, error: createError } = await supabase
           .from("demands")
@@ -81,7 +60,7 @@ Deno.serve(async (req) => {
             board_id: rd.board_id,
             team_id: rd.team_id,
             created_by: rd.created_by,
-            due_date: dueDate,
+            due_date: new Date(rd.next_run_date + "T23:59:59").toISOString(),
           })
           .select("id")
           .single();
@@ -182,29 +161,9 @@ function calculateNextRunDate(
   if (frequency === "monthly") {
     const day = dayOfMonth || current.getUTCDate();
     current.setUTCMonth(current.getUTCMonth() + 1);
-
-    if (day === -1) {
-      // Last day of month
-      const lastDay = new Date(current.getUTCFullYear(), current.getUTCMonth() + 1, 0).getUTCDate();
-      current.setUTCDate(lastDay);
-    } else if (day === -2) {
-      // First business day
-      current.setUTCDate(1);
-      while (current.getUTCDay() === 0 || current.getUTCDay() === 6) {
-        current.setUTCDate(current.getUTCDate() + 1);
-      }
-    } else if (day === -3) {
-      // Last business day
-      const lastDay = new Date(current.getUTCFullYear(), current.getUTCMonth() + 1, 0).getUTCDate();
-      current.setUTCDate(lastDay);
-      while (current.getUTCDay() === 0 || current.getUTCDay() === 6) {
-        current.setUTCDate(current.getUTCDate() - 1);
-      }
-    } else {
-      // Clamp to valid day (e.g., 31 in a 30-day month)
-      const maxDay = new Date(current.getUTCFullYear(), current.getUTCMonth() + 1, 0).getUTCDate();
-      current.setUTCDate(Math.min(day, maxDay));
-    }
+    // Clamp to valid day (e.g., 31 in a 30-day month)
+    const maxDay = new Date(current.getUTCFullYear(), current.getUTCMonth() + 1, 0).getUTCDate();
+    current.setUTCDate(Math.min(day, maxDay));
     return formatDate(current);
   }
 
