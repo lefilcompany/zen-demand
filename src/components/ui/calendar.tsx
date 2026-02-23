@@ -85,7 +85,7 @@ function Calendar({
           <button
             type="button"
             onClick={() => setPickerView("years")}
-            className="text-sm font-semibold hover:text-primary transition-colors cursor-pointer px-2 py-1 rounded-md hover:bg-accent"
+            className="text-sm font-semibold hover:text-primary-foreground transition-colors cursor-pointer px-3 py-1.5 rounded-full hover:bg-primary/90"
           >
             {currentYear}
           </button>
@@ -115,7 +115,7 @@ function Calendar({
                   "rounded-lg px-2 py-2.5 text-sm font-medium transition-all duration-200",
                   isActive
                     ? "bg-primary text-primary-foreground shadow-sm"
-                    : "hover:bg-accent hover:text-accent-foreground text-foreground",
+                    : "hover:bg-primary/15 hover:text-primary text-foreground",
                   disabled && "text-muted-foreground opacity-40 cursor-not-allowed"
                 )}
               >
@@ -178,7 +178,7 @@ function Calendar({
                   "rounded-lg px-2 py-2.5 text-sm font-medium transition-all duration-200",
                   isActive
                     ? "bg-primary text-primary-foreground shadow-sm"
-                    : "hover:bg-accent hover:text-accent-foreground text-foreground",
+                    : "hover:bg-primary/15 hover:text-primary text-foreground",
                   disabled && "text-muted-foreground opacity-40 cursor-not-allowed"
                 )}
               >
