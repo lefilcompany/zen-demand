@@ -102,7 +102,7 @@ function NativeSelect({ value, onChange, options, placeholder, showColorDot }: N
                     style={{ backgroundColor: option.color }} 
                   />
                 )}
-                <span className="truncate">{option.label}</span>
+                <span className="truncate" title={option.label.trim()}>{option.label}</span>
               </button>
             ))}
           </div>
