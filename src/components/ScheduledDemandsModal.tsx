@@ -16,7 +16,7 @@ import { RichTextEditor, RichTextDisplay } from "@/components/ui/rich-text-edito
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useRecurringDemands, useUpdateRecurringDemand, useDeleteRecurringDemand } from "@/hooks/useRecurringDemands";
+import { useRecurringDemands, useUpdateRecurringDemand, useDeleteRecurringDemand, calculateNextRunDate } from "@/hooks/useRecurringDemands";
 import { toast } from "sonner";
 
 interface ScheduledDemandsModalProps {
@@ -196,6 +196,19 @@ function ScheduledDemandItem({
 }: ScheduledDemandItemProps) {
   const [isOpen, setIsOpen] = useState(false);
 
+  // Compute the effective next run date: if stored date is today or past, recalculate
+  const getEffectiveNextRunDate = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const stored = new Date(item.next_run_date + "T00:00:00");
+    if (stored <= today) {
+      return calculateNextRunDate(item.frequency, item.next_run_date, item.weekdays, item.day_of_month);
+    }
+    return item.next_run_date;
+  };
+
+  const effectiveNextRun = getEffectiveNextRunDate();
+
   const priorityColor: Record<string, string> = {
     baixa: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
     média: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
@@ -221,7 +234,7 @@ function ScheduledDemandItem({
                 </span>
                 <span className="text-xs text-muted-foreground">•</span>
                 <span className="text-xs text-muted-foreground">
-                  Próxima: {format(new Date(item.next_run_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}
+                  Próxima: {format(new Date(effectiveNextRun + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}
                 </span>
               </div>
             </div>
@@ -369,7 +382,7 @@ function ScheduledDemandItem({
                   <div>
                     <span className="text-muted-foreground">Próxima criação:</span>{" "}
                     <span className="font-medium">
-                      {format(new Date(item.next_run_date + "T00:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })}
+                      {format(new Date(effectiveNextRun + "T00:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })}
                     </span>
                   </div>
                   <div>
