@@ -128,7 +128,7 @@ export function ScheduledDemandsModal({ boardId, teamId }: ScheduledDemandsModal
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-3xl h-[85vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CalendarClock className="h-5 w-5" />
@@ -146,7 +146,7 @@ export function ScheduledDemandsModal({ boardId, teamId }: ScheduledDemandsModal
             <p className="text-sm">Nenhuma demanda agendada para este quadro.</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2 flex-1 overflow-y-auto pr-1">
             {recurringDemands.map((item: any) => (
               <ScheduledDemandItem
                 key={item.id}
