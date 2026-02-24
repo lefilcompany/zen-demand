@@ -123,16 +123,19 @@ function NativeSelect({ value, onChange, options, placeholder, showColorDot, ico
   );
 }
 
-// Multi-select for boards with tooltips
-interface BoardMultiSelectProps {
-  selected: string[];
+// Standalone board multi-select button for use outside the filter popover
+export function BoardMultiSelectButton({ 
+  teamId, 
+  selected, 
+  onChange 
+}: { 
+  teamId: string | null; 
+  selected: string[]; 
   onChange: (boards: string[]) => void;
-  boards: Array<{ id: string; name: string }> | undefined;
-}
-
-function BoardMultiSelect({ selected, onChange, boards }: BoardMultiSelectProps) {
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { data: boards } = useBoards(teamId);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -159,46 +162,43 @@ function BoardMultiSelect({ selected, onChange, boards }: BoardMultiSelectProps)
   };
 
   const displayText = isAllSelected
-    ? "Todos"
+    ? "Quadros"
     : selected.length === 1
       ? boards?.find(b => b.id === selected[0])?.name || "1 quadro"
       : `${selected.length} quadros`;
 
   return (
     <div ref={containerRef} className="relative">
-      <button
-        type="button"
+      <Button
+        variant={!isAllSelected ? "default" : "outline"}
+        size="sm"
+        className="gap-2"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex h-8 w-full items-center justify-between rounded-lg border border-input bg-background/50 px-3 py-1.5 text-sm transition-colors hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
       >
-        <span className={`flex items-center gap-2 truncate ${!isAllSelected ? "text-foreground" : "text-muted-foreground"}`}>
-          <LayoutGrid className="h-3.5 w-3.5 shrink-0" />
-          <span className="truncate">{displayText}</span>
-        </span>
-        <div className="flex items-center gap-1 shrink-0">
-          {!isAllSelected && (
-            <Badge variant="secondary" className="h-4 min-w-4 px-1 text-[9px] justify-center">
-              {selected.length}
-            </Badge>
-          )}
-          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
-        </div>
-      </button>
+        <LayoutGrid className="h-4 w-4" />
+        <span className="hidden sm:inline truncate max-w-[120px]">{displayText}</span>
+        {!isAllSelected && (
+          <Badge variant="secondary" className="h-5 min-w-5 px-1.5 justify-center bg-background text-foreground">
+            {selected.length}
+          </Badge>
+        )}
+        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+      </Button>
       {isOpen && (
-        <div className="absolute z-50 mt-1.5 w-full rounded-lg border border-border bg-popover/95 backdrop-blur-sm p-1 shadow-lg animate-in fade-in-0 zoom-in-95">
-          <div className="max-h-60 overflow-y-auto">
+        <div className="absolute z-50 mt-1.5 w-[260px] rounded-lg border border-border bg-popover p-1 shadow-lg animate-in fade-in-0 zoom-in-95">
+          <div className="max-h-72 overflow-y-auto">
             {/* "Todos" option */}
             <button
               type="button"
               onClick={selectAll}
-              className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent ${
+              className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-accent ${
                 isAllSelected ? "bg-accent/50 font-medium" : ""
               }`}
             >
-              <div className="flex h-4 w-4 items-center justify-center">
+              <div className="flex h-4 w-4 items-center justify-center shrink-0">
                 {isAllSelected && <Check className="h-3.5 w-3.5 text-primary" />}
               </div>
-              <span>Todos</span>
+              <span>Todos os quadros</span>
             </button>
             {/* Board options */}
             {boards?.map((board) => {
@@ -209,7 +209,7 @@ function BoardMultiSelect({ selected, onChange, boards }: BoardMultiSelectProps)
                   type="button"
                   title={board.name}
                   onClick={() => toggleBoard(board.id)}
-                  className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent ${
+                  className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-accent ${
                     isSelected ? "bg-accent/50 font-medium" : ""
                   }`}
                 >
@@ -345,14 +345,14 @@ export function SelectedBoardChips({
         const board = boards.find(b => b.id === id);
         if (!board) return null;
         return (
-          <TooltipProvider key={id} delayDuration={300}>
+          <TooltipProvider key={id} delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Badge
-                  variant="secondary"
-                  className="gap-1 pl-2 pr-1 py-0.5 text-xs font-normal max-w-[160px] cursor-default"
+                  variant="outline"
+                  className="gap-1 pl-2 pr-1 py-0.5 text-xs font-normal max-w-[180px] cursor-default bg-primary/10 border-primary/20 text-foreground hover:bg-primary/15"
                 >
-                  <LayoutGrid className="h-3 w-3 shrink-0 text-muted-foreground" />
+                  <LayoutGrid className="h-3 w-3 shrink-0 text-primary" />
                   <span className="truncate">{board.name}</span>
                   <button
                     type="button"
@@ -366,11 +366,9 @@ export function SelectedBoardChips({
                   </button>
                 </Badge>
               </TooltipTrigger>
-              {board.name.length > 16 && (
-                <TooltipContent>
-                  <p>{board.name}</p>
-                </TooltipContent>
-              )}
+              <TooltipContent side="bottom">
+                <p>{board.name}</p>
+              </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         );
@@ -383,14 +381,13 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
   const [open, setOpen] = useState(false);
   const { data: services } = useServices(teamId, null);
   const { data: positions } = useTeamPositions(teamId);
-  const { data: boards } = useBoards(teamId);
   const { data: members } = useTeamMembers(teamId);
 
   // Count active filters excluding status
   const activeFiltersCount = Object.entries(filters)
     .filter(([key, value]) => {
       if (key === 'status') return false;
-      if (key === 'boards') return (value as string[]).length > 0;
+      if (key === 'boards') return false; // boards are outside the popup now
       return Boolean(value);
     })
     .length;
@@ -480,7 +477,7 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
         </div>
 
         <div className="p-3 space-y-3">
-          {/* Row 1: Priority + Board (multi-select) */}
+          {/* Row 1: Priority + Service */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center">Prioridade</label>
@@ -492,20 +489,6 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center gap-1">
-                <LayoutGrid className="h-3 w-3" /> Quadros
-              </label>
-              <BoardMultiSelect
-                selected={filters.boards}
-                onChange={(v) => updateFilter("boards", v)}
-                boards={boards}
-              />
-            </div>
-          </div>
-
-          {/* Row 2: Service + Position */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
               <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center">Serviço</label>
               <NativeSelect
                 value={filters.service}
@@ -514,7 +497,11 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
                 placeholder="Todos"
               />
             </div>
-            {positions && positions.length > 0 ? (
+          </div>
+
+          {/* Row 2: Position + Assignee */}
+          <div className="grid grid-cols-2 gap-3">
+            {positions && positions.length > 0 && (
               <div className="space-y-1">
                 <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center gap-1">
                   <Briefcase className="h-3 w-3" /> Cargo
@@ -527,20 +514,7 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
                   showColorDot
                 />
               </div>
-            ) : (
-              <div className="space-y-1">
-                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center">Responsável</label>
-                <AssigneeSelect
-                  value={filters.assignee}
-                  onChange={(v) => updateFilter("assignee", v)}
-                  members={members}
-                />
-              </div>
             )}
-          </div>
-
-          {/* Row 3: Assignee (if positions exist) */}
-          {positions && positions.length > 0 && (
             <div className="space-y-1">
               <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center">Responsável</label>
               <AssigneeSelect
@@ -549,7 +523,9 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
                 members={members}
               />
             </div>
-          )}
+          </div>
+
+
 
           {/* Row 4: Due date range */}
           <div className="space-y-1">
