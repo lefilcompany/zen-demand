@@ -6,6 +6,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Calendar } from "@/components/ui/calendar";
 import { Filter, X, CalendarIcon, ChevronDown, Check, Briefcase, LayoutGrid } from "lucide-react";
 import { useServices } from "@/hooks/useServices";
@@ -26,7 +32,7 @@ export interface TeamDemandsFiltersState {
   dueDateFrom: Date | null;
   dueDateTo: Date | null;
   position: string | null;
-  board: string | null;
+  boards: string[];
 }
 
 interface TeamDemandsFiltersProps {
@@ -110,6 +116,119 @@ function NativeSelect({ value, onChange, options, placeholder, showColorDot, ico
                 <span className="truncate">{option.label}</span>
               </button>
             ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Multi-select for boards with tooltips
+interface BoardMultiSelectProps {
+  selected: string[];
+  onChange: (boards: string[]) => void;
+  boards: Array<{ id: string; name: string }> | undefined;
+}
+
+function BoardMultiSelect({ selected, onChange, boards }: BoardMultiSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const isAllSelected = selected.length === 0;
+
+  const toggleBoard = (boardId: string) => {
+    if (selected.includes(boardId)) {
+      onChange(selected.filter(id => id !== boardId));
+    } else {
+      onChange([...selected, boardId]);
+    }
+  };
+
+  const selectAll = () => {
+    onChange([]);
+  };
+
+  const displayText = isAllSelected
+    ? "Todos"
+    : selected.length === 1
+      ? boards?.find(b => b.id === selected[0])?.name || "1 quadro"
+      : `${selected.length} quadros`;
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex h-8 w-full items-center justify-between rounded-lg border border-input bg-background/50 px-3 py-1.5 text-sm transition-colors hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+      >
+        <span className={`flex items-center gap-2 truncate ${!isAllSelected ? "text-foreground" : "text-muted-foreground"}`}>
+          <LayoutGrid className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">{displayText}</span>
+        </span>
+        <div className="flex items-center gap-1 shrink-0">
+          {!isAllSelected && (
+            <Badge variant="secondary" className="h-4 min-w-4 px-1 text-[9px] justify-center">
+              {selected.length}
+            </Badge>
+          )}
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        </div>
+      </button>
+      {isOpen && (
+        <div className="absolute z-50 mt-1.5 w-full rounded-lg border border-border bg-popover/95 backdrop-blur-sm p-1 shadow-lg animate-in fade-in-0 zoom-in-95">
+          <div className="max-h-60 overflow-y-auto">
+            {/* "Todos" option */}
+            <button
+              type="button"
+              onClick={selectAll}
+              className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent ${
+                isAllSelected ? "bg-accent/50 font-medium" : ""
+              }`}
+            >
+              <div className="flex h-4 w-4 items-center justify-center">
+                {isAllSelected && <Check className="h-3.5 w-3.5 text-primary" />}
+              </div>
+              <span>Todos</span>
+            </button>
+            {/* Board options */}
+            {boards?.map((board) => {
+              const isSelected = selected.includes(board.id);
+              return (
+                <TooltipProvider key={board.id} delayDuration={300}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => toggleBoard(board.id)}
+                        className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent ${
+                          isSelected ? "bg-accent/50 font-medium" : ""
+                        }`}
+                      >
+                        <div className="flex h-4 w-4 items-center justify-center shrink-0">
+                          {isSelected && <Check className="h-3.5 w-3.5 text-primary" />}
+                        </div>
+                        <span className="truncate">{board.name}</span>
+                      </button>
+                    </TooltipTrigger>
+                    {board.name.length > 18 && (
+                      <TooltipContent side="right" className="max-w-[250px]">
+                        <p>{board.name}</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
+              );
+            })}
           </div>
         </div>
       )}
@@ -217,6 +336,58 @@ function AssigneeSelect({ value, onChange, members }: AssigneeSelectProps) {
   );
 }
 
+// Exported component for selected board chips shown outside the popover
+export function SelectedBoardChips({ 
+  boards, 
+  selectedIds, 
+  onRemove 
+}: { 
+  boards: Array<{ id: string; name: string }> | undefined;
+  selectedIds: string[];
+  onRemove: (id: string) => void;
+}) {
+  if (!selectedIds.length || !boards) return null;
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {selectedIds.map(id => {
+        const board = boards.find(b => b.id === id);
+        if (!board) return null;
+        return (
+          <TooltipProvider key={id} delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge
+                  variant="secondary"
+                  className="gap-1 pl-2 pr-1 py-0.5 text-xs font-normal max-w-[160px] cursor-default"
+                >
+                  <LayoutGrid className="h-3 w-3 shrink-0 text-muted-foreground" />
+                  <span className="truncate">{board.name}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemove(id);
+                    }}
+                    className="ml-0.5 rounded-full p-0.5 hover:bg-destructive/20 hover:text-destructive transition-colors"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              </TooltipTrigger>
+              {board.name.length > 16 && (
+                <TooltipContent>
+                  <p>{board.name}</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        );
+      })}
+    </div>
+  );
+}
+
 export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFiltersProps) {
   const [open, setOpen] = useState(false);
   const { data: services } = useServices(teamId, null);
@@ -224,9 +395,13 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
   const { data: boards } = useBoards(teamId);
   const { data: members } = useTeamMembers(teamId);
 
-  // Count active filters excluding status (since it's now in tabs)
+  // Count active filters excluding status
   const activeFiltersCount = Object.entries(filters)
-    .filter(([key, value]) => key !== 'status' && Boolean(value))
+    .filter(([key, value]) => {
+      if (key === 'status') return false;
+      if (key === 'boards') return (value as string[]).length > 0;
+      return Boolean(value);
+    })
     .length;
 
   // Persist position filter to localStorage
@@ -247,7 +422,7 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
       dueDateFrom: null,
       dueDateTo: null,
       position: null,
-      board: null,
+      boards: [],
     });
   };
 
@@ -273,11 +448,6 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
   const positionOptions = [
     { value: "all", label: "Todos" },
     ...(positions?.map(p => ({ value: p.id, label: p.name, color: p.color })) || [])
-  ];
-
-  const boardOptions = [
-    { value: "all", label: "Todos" },
-    ...(boards?.map(b => ({ value: b.id, label: b.name })) || [])
   ];
 
   return (
@@ -319,7 +489,7 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
         </div>
 
         <div className="p-3 space-y-3">
-          {/* Row 1: Priority + Board */}
+          {/* Row 1: Priority + Board (multi-select) */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center">Prioridade</label>
@@ -332,13 +502,12 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center gap-1">
-                <LayoutGrid className="h-3 w-3" /> Quadro
+                <LayoutGrid className="h-3 w-3" /> Quadros
               </label>
-              <NativeSelect
-                value={filters.board}
-                onChange={(v) => updateFilter("board", v)}
-                options={boardOptions}
-                placeholder="Todos"
+              <BoardMultiSelect
+                selected={filters.boards}
+                onChange={(v) => updateFilter("boards", v)}
+                boards={boards}
               />
             </div>
           </div>
