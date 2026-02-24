@@ -28,7 +28,7 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table";
 import { teamDemandColumns, TeamDemandTableRow } from "@/components/team-demands/columns";
-import { TeamDemandsFilters, TeamDemandsFiltersState, SelectedBoardChips } from "@/components/TeamDemandsFilters";
+import { TeamDemandsFilters, TeamDemandsFiltersState, SelectedBoardChips, BoardMultiSelectButton } from "@/components/TeamDemandsFilters";
 import { StatusFilterTabs } from "@/components/StatusFilterTabs";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { DemandsCalendarView } from "@/components/DemandsCalendarView";
@@ -418,7 +418,12 @@ export default function TeamDemands() {
                 className="pl-9 w-full sm:w-[220px] md:w-[280px]"
               />
             </div>
-            <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:ml-auto">
+           <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:ml-auto">
+              <BoardMultiSelectButton
+                teamId={selectedTeamId}
+                selected={filters.boards}
+                onChange={(boards) => setFilters({ ...filters, boards })}
+              />
               <TeamDemandsFilters 
                 teamId={selectedTeamId} 
                 filters={filters} 
