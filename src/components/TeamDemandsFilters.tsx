@@ -185,13 +185,13 @@ export function BoardMultiSelectButton({
         <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </Button>
       {isOpen && (
-        <div className="absolute z-50 mt-1.5 w-[260px] rounded-lg border border-border bg-popover p-1 shadow-lg animate-in fade-in-0 zoom-in-95">
-          <div className="max-h-72 overflow-y-auto">
+        <div className="absolute z-50 mt-1.5 w-[260px] rounded-lg border border-border bg-popover p-1.5 shadow-lg animate-in fade-in-0 zoom-in-95">
+          <div className="max-h-72 overflow-y-auto space-y-0.5">
             {/* "Todos" option */}
             <button
               type="button"
               onClick={selectAll}
-              className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-accent ${
+              className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-2.5 text-sm transition-colors hover:bg-accent ${
                 isAllSelected ? "bg-accent/50 font-medium" : ""
               }`}
             >
@@ -209,7 +209,7 @@ export function BoardMultiSelectButton({
                   type="button"
                   title={board.name}
                   onClick={() => toggleBoard(board.id)}
-                  className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-accent ${
+                  className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-2.5 text-sm transition-colors hover:bg-accent ${
                     isSelected ? "bg-accent/50 font-medium" : ""
                   }`}
                 >
