@@ -208,7 +208,7 @@ export default function Kanban() {
           />
 
           {/* Scheduled demands */}
-          <ScheduledDemandsModal boardId={selectedBoardId} teamId={currentTeamId} />
+          <ScheduledDemandsModal boardId={selectedBoardId} teamId={currentTeamId} buttonStyle="standard" />
 
           <Button onClick={() => navigate("/demands/create")} className="shadow-primary">
             <Plus className="mr-2 h-4 w-4" />
