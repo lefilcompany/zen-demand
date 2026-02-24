@@ -300,8 +300,8 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[320px] p-0" align="start" sideOffset={8}>
-        <div className="border-b border-border bg-muted/30 px-4 py-3 rounded-t-lg sticky top-0 z-10">
+      <PopoverContent className="w-[380px] p-0" align="start" sideOffset={8}>
+        <div className="border-b border-border bg-muted/30 px-4 py-3 rounded-t-lg">
           <div className="flex items-center justify-between">
             <h4 className="font-semibold text-sm">Filtros</h4>
             {activeFiltersCount > 0 && (
@@ -319,7 +319,8 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
         </div>
 
         <div className="p-3 space-y-3">
-          <div className="grid grid-cols-2 gap-2">
+          {/* Row 1: Priority + Board */}
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Prioridade</label>
               <NativeSelect
@@ -329,7 +330,6 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
                 placeholder="Todas"
               />
             </div>
-
             <div className="space-y-1">
               <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                 <LayoutGrid className="h-3 w-3" /> Quadro
@@ -343,16 +343,8 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Responsável</label>
-            <AssigneeSelect
-              value={filters.assignee}
-              onChange={(v) => updateFilter("assignee", v)}
-              members={members}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
+          {/* Row 2: Service + Position */}
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Serviço</label>
               <NativeSelect
@@ -362,8 +354,7 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
                 placeholder="Todos"
               />
             </div>
-
-            {positions && positions.length > 0 && (
+            {positions && positions.length > 0 ? (
               <div className="space-y-1">
                 <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                   <Briefcase className="h-3 w-3" /> Cargo
@@ -376,24 +367,46 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
                   showColorDot
                 />
               </div>
+            ) : (
+              <div className="space-y-1">
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Responsável</label>
+                <AssigneeSelect
+                  value={filters.assignee}
+                  onChange={(v) => updateFilter("assignee", v)}
+                  members={members}
+                />
+              </div>
             )}
           </div>
 
+          {/* Row 3: Assignee (if positions exist) */}
+          {positions && positions.length > 0 && (
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Responsável</label>
+              <AssigneeSelect
+                value={filters.assignee}
+                onChange={(v) => updateFilter("assignee", v)}
+                members={members}
+              />
+            </div>
+          )}
+
+          {/* Row 4: Due date range */}
           <div className="space-y-1">
             <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Vencimento</label>
-            <div className="flex gap-1.5">
+            <div className="grid grid-cols-2 gap-3">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className={`flex-1 justify-start h-8 rounded-lg bg-background/50 hover:bg-accent/50 text-xs px-2 ${
+                    className={`w-full justify-start h-8 rounded-lg bg-background/50 hover:bg-accent/50 text-xs px-3 ${
                       filters.dueDateFrom ? "text-foreground" : "text-muted-foreground"
                     }`}
                   >
                     <CalendarIcon className="mr-1.5 h-3 w-3" />
                     {filters.dueDateFrom
-                      ? format(filters.dueDateFrom, "dd/MM", { locale: ptBR })
+                      ? format(filters.dueDateFrom, "dd/MM/yyyy", { locale: ptBR })
                       : "De"}
                   </Button>
                 </PopoverTrigger>
@@ -411,13 +424,13 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className={`flex-1 justify-start h-8 rounded-lg bg-background/50 hover:bg-accent/50 text-xs px-2 ${
+                    className={`w-full justify-start h-8 rounded-lg bg-background/50 hover:bg-accent/50 text-xs px-3 ${
                       filters.dueDateTo ? "text-foreground" : "text-muted-foreground"
                     }`}
                   >
                     <CalendarIcon className="mr-1.5 h-3 w-3" />
                     {filters.dueDateTo
-                      ? format(filters.dueDateTo, "dd/MM", { locale: ptBR })
+                      ? format(filters.dueDateTo, "dd/MM/yyyy", { locale: ptBR })
                       : "Até"}
                   </Button>
                 </PopoverTrigger>
