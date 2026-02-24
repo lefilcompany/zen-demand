@@ -8,7 +8,13 @@ import { RotateCcw, LogOut, User, Users, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
@@ -39,26 +45,19 @@ export function ProtectedLayout() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
-  const {
-    isOpen,
-    steps,
-    closeTour,
-    completeOnboarding,
-    resetOnboarding,
-    hasCompleted
-  } = useOnboarding();
+  const { isOpen, steps, closeTour, completeOnboarding, resetOnboarding, hasCompleted } = useOnboarding();
   const { currentTeam } = useSelectedTeam();
-  
+
   // Trial and subscription status
   const { isTrialExpired, isLoading: trialLoading } = useTrialStatus();
   const { data: subscription, isLoading: subLoading } = useTeamSubscription(currentTeam?.id);
-  
+
   // Initialize data precaching for offline support
   useDataPrecache();
 
   // Detect if tablet/medium screen to collapse sidebar by default
   const [isTablet, setIsTablet] = useState(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const width = window.innerWidth;
       return width >= 768 && width < 1280;
     }
@@ -70,25 +69,27 @@ export function ProtectedLayout() {
       const width = window.innerWidth;
       setIsTablet(width >= 768 && width < 1280);
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data } = await supabase
-        .from("profiles")
-        .select("full_name, avatar_url")
-        .eq("id", user.id)
-        .single();
+      const { data } = await supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).single();
       return data;
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
   });
 
-  const initials = profile?.full_name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "U";
+  const initials =
+    profile?.full_name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "U";
 
   // Sidebar starts collapsed on tablet, open on desktop
   const defaultSidebarOpen = !isTablet;
@@ -113,8 +114,8 @@ export function ProtectedLayout() {
   }
 
   return (
-    <SidebarProvider defaultOpen={defaultSidebarOpen} key={isTablet ? 'tablet' : 'desktop'}>
-      <div className="flex h-[100dvh] w-full bg-sidebar p-2 md:p-3 overflow-hidden">
+    <SidebarProvider defaultOpen={defaultSidebarOpen} key={isTablet ? "tablet" : "desktop"}>
+      <div className="flex h-full w-full bg-sidebar p-2 md:p-3 overflow-hidden">
         <AppSidebar />
         <main className="flex-1 flex flex-col bg-background rounded-xl shadow-xl overflow-hidden min-h-0">
           <header className="flex h-12 sm:h-14 md:h-16 shrink-0 items-center justify-between gap-1 sm:gap-2 bg-background px-2 sm:px-3 md:px-6 border-b border-border rounded-t-xl overflow-visible">
@@ -129,7 +130,7 @@ export function ProtectedLayout() {
               <div className="h-5 w-px bg-border hidden lg:block" />
               <BoardSelector />
             </div>
-            
+
             <div className="flex items-center gap-2 sm:gap-1.5 md:gap-2 flex-1 justify-end">
               <div className="flex-1 min-w-0 max-w-md hidden sm:block">
                 <GlobalSearchBar />
@@ -146,7 +147,12 @@ export function ProtectedLayout() {
               </div>
 
               {/* Settings - Hidden on mobile */}
-              <Button variant="ghost" size="icon" onClick={() => navigate("/settings")} className="hidden sm:flex h-8 w-8 sm:h-9 sm:w-9">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/settings")}
+                className="hidden sm:flex h-8 w-8 sm:h-9 sm:w-9"
+              >
                 <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
 
@@ -162,13 +168,14 @@ export function ProtectedLayout() {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-lg border bg-popover/95 backdrop-blur-sm animate-slide-up-fade">
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56 rounded-xl shadow-lg border bg-popover/95 backdrop-blur-sm animate-slide-up-fade"
+                >
                   <div className="flex items-center gap-2 p-2">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={profile?.avatar_url || undefined} />
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                        {initials}
-                      </AvatarFallback>
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">{initials}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
                       <span className="text-sm font-medium">{profile?.full_name || "Usuário"}</span>
@@ -204,10 +211,10 @@ export function ProtectedLayout() {
           <FloatingCreateButton />
         </main>
       </div>
-      
+
       {/* Onboarding Tour */}
       <OnboardingTour steps={steps} isOpen={isOpen} onClose={closeTour} onComplete={completeOnboarding} />
-      
+
       {/* First Board Modal - shown when user has no boards */}
       <FirstBoardModal />
 
@@ -216,17 +223,15 @@ export function ProtectedLayout() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("auth.logoutConfirm")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("auth.logoutDescription")}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{t("auth.logoutDescription")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={async () => {
                 await signOut();
                 setLogoutDialogOpen(false);
-              }} 
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {t("auth.logout")}
