@@ -12,6 +12,8 @@ import { UnsavedChangesDialog } from "@/components/UnsavedChangesDialog";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { useNavigationBlock } from "@/hooks/useNavigationBlock";
 import { calculateBusinessDueDate, formatDueDateForInput, toDateOnly } from "@/lib/dateUtils";
+import { RecurrenceConfig, RecurrenceData, defaultRecurrenceData } from "@/components/RecurrenceConfig";
+import { useRecurringDemands, useCreateRecurringDemand, useUpdateRecurringDemand, useDeleteRecurringDemand } from "@/hooks/useRecurringDemands";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
@@ -39,6 +41,12 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
   const { data: currentAssignees } = useDemandAssignees(demand.id);
   const { data: role } = useTeamRole(demand.team_id);
 
+  // Recurring demands
+  const { data: recurringDemands } = useRecurringDemands(demand.board_id);
+  const createRecurring = useCreateRecurringDemand();
+  const updateRecurring = useUpdateRecurringDemand();
+  const deleteRecurring = useDeleteRecurringDemand();
+
   const canAssignResponsibles = role !== "requester";
 
   const [title, setTitle] = useState(demand.title);
@@ -50,12 +58,35 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
   );
   const [serviceId, setServiceId] = useState(demand.service_id || "");
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
+  const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
+  const [matchedRecurringId, setMatchedRecurringId] = useState<string | null>(null);
 
   useEffect(() => {
     if (currentAssignees) {
       setSelectedAssignees(currentAssignees.map(a => a.user_id));
     }
   }, [currentAssignees]);
+
+  // Load existing recurring demand that matches this demand
+  useEffect(() => {
+    if (recurringDemands && (recurringDemands as any[]).length > 0) {
+      const items = recurringDemands as any[];
+      const match = items.find(
+        (rd) => rd.title === demand.title && rd.board_id === demand.board_id
+      );
+      if (match) {
+        setMatchedRecurringId(match.id);
+        setRecurrence({
+          enabled: true,
+          frequency: match.frequency as RecurrenceData["frequency"],
+          weekdays: match.weekdays || [1, 2, 3, 4, 5],
+          dayOfMonth: match.day_of_month || 1,
+          startDate: match.start_date || new Date().toISOString().split("T")[0],
+          endDate: match.end_date || "",
+        });
+      }
+    }
+  }, [recurringDemands, demand.title, demand.board_id]);
 
   // Draft persistence
   const draftFields = useMemo(
@@ -128,6 +159,9 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
         userIds: selectedAssignees,
       });
 
+      // Handle recurrence
+      await handleRecurrence();
+
       // Clear draft on success
       clearDraft();
 
@@ -139,6 +173,50 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
       });
     }
   };
+
+  const handleRecurrence = async () => {
+    try {
+      if (recurrence.enabled) {
+        const recurrencePayload = {
+          title: title.trim(),
+          description: description.trim() || null,
+          priority,
+          frequency: recurrence.frequency,
+          weekdays: (recurrence.frequency === "weekly" || recurrence.frequency === "biweekly") ? recurrence.weekdays : [],
+          day_of_month: recurrence.frequency === "monthly" ? recurrence.dayOfMonth : null,
+          start_date: recurrence.startDate,
+          end_date: recurrence.endDate || null,
+        };
+
+        if (matchedRecurringId) {
+          // Update existing recurring demand
+          await updateRecurring.mutateAsync({
+            id: matchedRecurringId,
+            ...recurrencePayload,
+          });
+        } else {
+          // Create new recurring demand
+          await createRecurring.mutateAsync({
+            team_id: demand.team_id,
+            board_id: demand.board_id,
+            status_id: statusId,
+            service_id: serviceId && serviceId !== "none" ? serviceId : null,
+            assignee_ids: selectedAssignees,
+            ...recurrencePayload,
+          });
+        }
+      } else if (matchedRecurringId) {
+        // Recurrence was disabled - deactivate it
+        await deleteRecurring.mutateAsync(matchedRecurringId);
+        setMatchedRecurringId(null);
+      }
+    } catch (recError) {
+      console.error("Erro ao salvar recorrência:", recError);
+      toast.warning("Demanda atualizada, mas houve um erro ao salvar a recorrência");
+    }
+  };
+
+  const isSaving = updateDemand.isPending || setAssignees.isPending || createRecurring.isPending || updateRecurring.isPending || deleteRecurring.isPending;
 
   return (
     <>
@@ -236,6 +314,9 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
           />
         </div>
 
+        {/* Recurrence Config */}
+        <RecurrenceConfig value={recurrence} onChange={setRecurrence} compact />
+
         <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4 sticky bottom-0 bg-background pb-1">
           <Button
             type="button"
@@ -247,10 +328,10 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
           </Button>
           <Button
             type="submit"
-            disabled={updateDemand.isPending || setAssignees.isPending || !title.trim() || !statusId}
+            disabled={isSaving || !title.trim() || !statusId}
             className="flex-1"
           >
-            {updateDemand.isPending || setAssignees.isPending ? "Salvando..." : "Salvar Alterações"}
+            {isSaving ? "Salvando..." : "Salvar Alterações"}
           </Button>
         </div>
       </form>
