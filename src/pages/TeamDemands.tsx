@@ -23,7 +23,8 @@ import {
   ClipboardList,
   Clock,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Filter
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table";
@@ -92,16 +93,33 @@ export default function TeamDemands() {
   // Force grid view on mobile/tablet (screens < 1024px), but allow calendar on all devices
   const effectiveViewMode = isTabletOrSmaller && viewMode !== "calendar" ? "grid" : viewMode;
 
-  // Board-filtered demands for stats
-  const boardFilteredDemands = useMemo(() => {
-    if (!demands) return [];
-    if (filters.boards.length === 0) return demands;
-    return demands.filter(d => filters.boards.includes(d.board_id));
-  }, [demands, filters.boards]);
-
-  // Statistics based on board filter
+  // Statistics based on all filters (excluding hideDelivered and status, which are view-level)
   const stats = useMemo(() => {
-    const source = boardFilteredDemands;
+    if (!demands) return { total: 0, inProgress: 0, delivered: 0, overdue: 0 };
+
+    // Apply all filters except status and hideDelivered
+    const source = demands.filter((d) => {
+      if (filters.boards.length > 0 && !filters.boards.includes(d.board_id)) return false;
+      if (filters.priority && d.priority !== filters.priority) return false;
+      if (filters.assignee) {
+        const isAssigned = d.demand_assignees?.some(a => a.user_id === filters.assignee) || d.assigned_to === filters.assignee;
+        if (!isAssigned) return false;
+      }
+      if (filters.service && d.service_id !== filters.service) return false;
+      if (filters.position && membersByPosition) {
+        const has = d.demand_assignees?.some(a => membersByPosition.includes(a.user_id)) || (d.assigned_to && membersByPosition.includes(d.assigned_to));
+        if (!has) return false;
+      }
+      if (d.due_date) {
+        const dueDate = new Date(d.due_date);
+        if (filters.dueDateFrom && isBefore(dueDate, startOfDay(filters.dueDateFrom))) return false;
+        if (filters.dueDateTo && isAfter(dueDate, endOfDay(filters.dueDateTo))) return false;
+      } else if (filters.dueDateFrom || filters.dueDateTo) {
+        return false;
+      }
+      return true;
+    });
+
     const total = source.length;
     const inProgress = source.filter(d => d.demand_statuses?.name === "Fazendo").length;
     const delivered = source.filter(d => d.demand_statuses?.name === "Entregue").length;
@@ -109,10 +127,11 @@ export default function TeamDemands() {
       if (!d.due_date || d.demand_statuses?.name === "Entregue") return false;
       return isDateOverdue(d.due_date);
     }).length;
-    
-    return { total, inProgress, delivered, overdue };
-  }, [boardFilteredDemands]);
 
+    return { total, inProgress, delivered, overdue };
+  }, [demands, filters, membersByPosition]);
+
+  const hasAnyFilter = filters.boards.length > 0 || filters.priority || filters.assignee || filters.service || filters.position || filters.dueDateFrom || filters.dueDateTo;
   const hasBoardFilter = filters.boards.length > 0;
   const selectedBoardNames = useMemo(() => {
     if (!hasBoardFilter || !boards) return "";
@@ -364,10 +383,13 @@ export default function TeamDemands() {
 
       {/* Stats Cards */}
       <div className="space-y-2">
-        {hasBoardFilter && (
+        {hasAnyFilter && (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <LayoutGrid className="h-3.5 w-3.5 text-primary" />
-            <span>Exibindo dados de: <span className="font-medium text-foreground">{selectedBoardNames}</span></span>
+            <Filter className="h-3.5 w-3.5 text-primary" />
+            <span>
+              Dados filtrados
+              {hasBoardFilter && <> • <span className="font-medium text-foreground">{selectedBoardNames}</span></>}
+            </span>
           </div>
         )}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
