@@ -322,7 +322,7 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
           {/* Row 1: Priority + Board */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Prioridade</label>
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center">Prioridade</label>
               <NativeSelect
                 value={filters.priority}
                 onChange={(v) => updateFilter("priority", v)}
@@ -331,7 +331,7 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center gap-1">
                 <LayoutGrid className="h-3 w-3" /> Quadro
               </label>
               <NativeSelect
@@ -346,7 +346,7 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
           {/* Row 2: Service + Position */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Serviço</label>
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center">Serviço</label>
               <NativeSelect
                 value={filters.service}
                 onChange={(v) => updateFilter("service", v)}
@@ -356,7 +356,7 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
             </div>
             {positions && positions.length > 0 ? (
               <div className="space-y-1">
-                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center gap-1">
                   <Briefcase className="h-3 w-3" /> Cargo
                 </label>
                 <NativeSelect
@@ -369,7 +369,7 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
               </div>
             ) : (
               <div className="space-y-1">
-                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Responsável</label>
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center">Responsável</label>
                 <AssigneeSelect
                   value={filters.assignee}
                   onChange={(v) => updateFilter("assignee", v)}
@@ -382,7 +382,7 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
           {/* Row 3: Assignee (if positions exist) */}
           {positions && positions.length > 0 && (
             <div className="space-y-1">
-              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Responsável</label>
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center">Responsável</label>
               <AssigneeSelect
                 value={filters.assignee}
                 onChange={(v) => updateFilter("assignee", v)}
@@ -393,7 +393,7 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
 
           {/* Row 4: Due date range */}
           <div className="space-y-1">
-            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Vencimento</label>
+            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center">Vencimento</label>
             <div className="grid grid-cols-2 gap-3">
               <Popover>
                 <PopoverTrigger asChild>
