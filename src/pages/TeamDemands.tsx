@@ -28,7 +28,7 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table";
 import { teamDemandColumns, TeamDemandTableRow } from "@/components/team-demands/columns";
-import { TeamDemandsFilters, TeamDemandsFiltersState } from "@/components/TeamDemandsFilters";
+import { TeamDemandsFilters, TeamDemandsFiltersState, SelectedBoardChips } from "@/components/TeamDemandsFilters";
 import { StatusFilterTabs } from "@/components/StatusFilterTabs";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { DemandsCalendarView } from "@/components/DemandsCalendarView";
@@ -68,7 +68,7 @@ export default function TeamDemands() {
       dueDateFrom: null,
       dueDateTo: null,
       position: savedPosition,
-      board: null,
+      boards: [],
     };
   });
   
@@ -136,8 +136,8 @@ export default function TeamDemands() {
         return false;
       }
       
-      // Board filter
-      if (filters.board && d.board_id !== filters.board) {
+      // Board filter (multi-select)
+      if (filters.boards.length > 0 && !filters.boards.includes(d.board_id)) {
         return false;
       }
       
@@ -407,7 +407,7 @@ export default function TeamDemands() {
 
       {/* Filters and Actions */}
       <Card className="border-border/50">
-        <CardContent className="p-4">
+        <CardContent className="p-4 space-y-3">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <div className="relative flex-1 sm:flex-none">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -480,13 +480,20 @@ export default function TeamDemands() {
             </div>
           </div>
           
+          {/* Selected board chips */}
+          {filters.boards.length > 0 && (
+            <SelectedBoardChips
+              boards={boards}
+              selectedIds={filters.boards}
+              onRemove={(id) => setFilters({ ...filters, boards: filters.boards.filter(b => b !== id) })}
+            />
+          )}
+
           {/* Active filters indicator */}
           {filteredDemands.length !== stats.total && (
-            <div className="mt-3 pt-3 border-t border-border">
-              <p className="text-sm text-muted-foreground">
-                Exibindo <span className="font-medium text-foreground">{filteredDemands.length}</span> de {stats.total} demandas
-              </p>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Exibindo <span className="font-medium text-foreground">{filteredDemands.length}</span> de {stats.total} demandas
+            </p>
           )}
         </CardContent>
       </Card>
