@@ -300,7 +300,7 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[320px] p-0 max-h-[80vh] overflow-y-auto" align="start" sideOffset={8}>
+      <PopoverContent className="w-[320px] p-0" align="start" sideOffset={8}>
         <div className="border-b border-border bg-muted/30 px-4 py-3 rounded-t-lg sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <h4 className="font-semibold text-sm">Filtros</h4>
