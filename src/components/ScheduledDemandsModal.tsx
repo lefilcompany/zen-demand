@@ -114,7 +114,7 @@ export function ScheduledDemandsModal({ boardId, teamId }: ScheduledDemandsModal
         <Button 
           variant={count > 0 ? "default" : "outline"} 
           size="sm" 
-          className="relative gap-1 rounded-full h-8 px-3 text-xs"
+          className="relative gap-1 rounded-full h-7 px-2.5 text-[11px]"
         >
           <CalendarClock className="h-4 w-4" />
           Agendadas
