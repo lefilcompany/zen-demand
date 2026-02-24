@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor, RichTextDisplay } from "@/components/ui/rich-text-editor";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -246,11 +246,11 @@ function ScheduledDemandItem({
                 </div>
                 <div>
                   <label className="text-xs font-medium text-muted-foreground mb-1 block">Descrição</label>
-                  <Textarea
+                  <RichTextEditor
                     value={editForm.description}
-                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                    className="text-sm min-h-[60px]"
-                    rows={2}
+                    onChange={(html) => setEditForm({ ...editForm, description: html })}
+                    minHeight="80px"
+                    placeholder="Descrição da demanda..."
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -354,7 +354,7 @@ function ScheduledDemandItem({
               /* View Mode */
               <>
                 {item.description && (
-                  <div className="text-sm text-muted-foreground prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: item.description }} />
+                  <RichTextDisplay content={item.description} className="text-sm text-muted-foreground" />
                 )}
 
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
