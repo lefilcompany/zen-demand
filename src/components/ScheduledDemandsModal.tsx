@@ -111,19 +111,22 @@ export function ScheduledDemandsModal({ boardId, teamId }: ScheduledDemandsModal
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium 
-            bg-background border border-border/60 hover:border-primary/40 hover:text-primary
-            transition-all duration-200 whitespace-nowrap"
+        <Button 
+          variant={count > 0 ? "default" : "outline"} 
+          size="sm" 
+          className="relative gap-2"
         >
-          <CalendarClock className="h-3.5 w-3.5" />
-          <span>Agendadas</span>
+          <CalendarClock className="h-4 w-4" />
+          Agendadas
           {count > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
+            <Badge 
+              variant="secondary" 
+              className="h-5 min-w-5 px-1.5 justify-center bg-background text-foreground"
+            >
               {count}
-            </span>
+            </Badge>
           )}
-        </button>
+        </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
