@@ -354,7 +354,7 @@ function ScheduledDemandItem({
               /* View Mode */
               <>
                 {item.description && (
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
+                  <div className="text-sm text-muted-foreground prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: item.description }} />
                 )}
 
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
@@ -412,7 +412,7 @@ function ScheduledDemandItem({
                     variant="ghost"
                     onClick={onDeactivate}
                     disabled={isDeactivating}
-                    className="h-7 text-xs text-destructive hover:text-destructive"
+                    className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
                     {isDeactivating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Power className="h-3 w-3 mr-1" />}
                     Desativar
