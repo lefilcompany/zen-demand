@@ -22,6 +22,7 @@ import { toast } from "sonner";
 interface ScheduledDemandsModalProps {
   boardId: string | null;
   teamId: string | null;
+  buttonStyle?: "compact" | "standard";
 }
 
 const WEEKDAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -38,7 +39,7 @@ const PRIORITY_OPTIONS = [
   { value: "urgente", label: "Urgente" },
 ];
 
-export function ScheduledDemandsModal({ boardId, teamId }: ScheduledDemandsModalProps) {
+export function ScheduledDemandsModal({ boardId, teamId, buttonStyle = "compact" }: ScheduledDemandsModalProps) {
   const { t } = useTranslation();
   const { data: recurringDemands, isLoading } = useRecurringDemands(boardId || undefined);
   const updateMutation = useUpdateRecurringDemand();
@@ -114,10 +115,13 @@ export function ScheduledDemandsModal({ boardId, teamId }: ScheduledDemandsModal
         <Button 
           variant={count > 0 ? "default" : "outline"} 
           size="sm" 
-          className="relative gap-1 rounded-full h-7 px-2.5 text-[11px]"
+          className={buttonStyle === "compact" 
+            ? "relative gap-1 rounded-full h-7 px-2.5 text-[11px]" 
+            : "gap-2"
+          }
         >
           <CalendarClock className="h-4 w-4" />
-          Agendadas
+          <span className={buttonStyle === "standard" ? "hidden sm:inline" : ""}>Agendadas</span>
           {count > 0 && (
             <Badge 
               variant="secondary" 
