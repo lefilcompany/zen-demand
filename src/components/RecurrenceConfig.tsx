@@ -45,7 +45,7 @@ export const defaultRecurrenceData: RecurrenceData = {
   enabled: false,
   frequency: "daily",
   weekdays: [1, 2, 3, 4, 5],
-  dayOfMonth: 1,
+  dayOfMonth: Math.min(new Date().getDate(), 28),
   startDate: new Date().toISOString().split("T")[0],
   endDate: "",
 };
@@ -177,7 +177,18 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                   <button
                     key={day}
                     type="button"
-                    onClick={() => update({ dayOfMonth: day })}
+                    onClick={() => {
+                      const now = new Date();
+                      const targetMonth = day >= now.getDate() ? now.getMonth() : now.getMonth() + 1;
+                      const targetYear = targetMonth > 11 ? now.getFullYear() + 1 : now.getFullYear();
+                      const normalizedMonth = targetMonth % 12;
+                      const newStart = `${targetYear}-${String(normalizedMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                      const updates: Partial<RecurrenceData> = { dayOfMonth: day, startDate: newStart };
+                      if (value.endDate && value.endDate < newStart) {
+                        updates.endDate = "";
+                      }
+                      update(updates);
+                    }}
                     className={cn(
                       "h-9 w-full rounded-full text-sm font-medium transition-colors duration-150",
                       (value.dayOfMonth || 1) === day
