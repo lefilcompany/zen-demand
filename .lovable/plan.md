@@ -1,82 +1,31 @@
 
 
-# Visualizador de Demandas Agendadas (Recorrentes)
+# Fix: "Proxima criacao" showing today instead of the next real date
 
-## Resumo
-Adicionar um botao/chip nas telas de **Demandas** e **Kanban** que abre um modal (dialog) mostrando todas as demandas recorrentes ativas do quadro atual. Cada item mostra as especificacoes em um dropdown expansivel, com possibilidade de edicao individual e garantia de que nenhuma data caia em fim de semana.
+## Problem
+The `calculateNextRunDate` function in `src/hooks/useRecurringDemands.ts` has a logic bug on line 172:
 
----
-
-## Fluxo do Usuario
-
-1. Na toolbar das telas Demandas e Kanban, aparece um botao "Agendadas" com badge indicando a quantidade
-2. Ao clicar, abre um Dialog/Modal listando as demandas recorrentes ativas
-3. Cada demanda agendada e um item expansivel (Collapsible/Accordion) que mostra:
-   - Titulo, descricao, prioridade, frequencia
-   - Proxima data de criacao (`next_run_date`)
-   - Dias da semana (se semanal/quinzenal)
-   - Dia do mes (se mensal)
-   - Data de inicio e fim
-   - Participantes (assignee_ids)
-4. Botao "Editar" em cada item abre um formulario inline para alterar os campos
-5. Botao "Desativar" para cancelar a recorrencia
-6. Ao salvar edicao, o `next_run_date` e recalculado garantindo dia util
-
----
-
-## Detalhes Tecnicos
-
-### 1. Novo componente: `ScheduledDemandsModal.tsx`
-
-Componente Dialog que:
-- Recebe `boardId` e `teamId` como props
-- Usa `useRecurringDemands(boardId)` para listar demandas agendadas
-- Renderiza cada item como um `Collapsible` com detalhes expandiveis
-- Modo edicao inline por item (titulo, descricao, prioridade, frequencia, weekdays, dayOfMonth, datas)
-- Usa `useUpdateRecurringDemand()` para salvar e `useDeleteRecurringDemand()` para desativar
-
-### 2. Novo hook: `useUpdateRecurringDemand` (em `useRecurringDemands.ts`)
-
-```typescript
-export function useUpdateRecurringDemand() {
-  // useMutation que faz supabase.from("recurring_demands").update(...)
-  // Recalcula next_run_date com adjustToBusinessDay
-  // Invalida queryKey ["recurring-demands"]
-}
+```
+if (start >= today) { ... }
 ```
 
-### 3. Integracao na pagina Demands (`src/pages/Demands.tsx`)
+When `start_date` equals today (e.g. 2026-02-24), this condition is `true`, so it returns today's date. But the demand for today was already created -- the next creation should be **tomorrow** (2026-02-25 for daily).
 
-- Importar `ScheduledDemandsModal` e `useRecurringDemands`
-- Adicionar botao "Agendadas" na toolbar (ao lado dos filtros)
-- Botao mostra badge com contagem de demandas recorrentes ativas
-- Clicar abre o modal
+## Fix
 
-### 4. Integracao na pagina Kanban (`src/pages/Kanban.tsx`)
+**File: `src/hooks/useRecurringDemands.ts`** (line 172)
 
-- Mesma logica: botao "Agendadas" na barra de acoes
-- Badge com contagem
-- Modal identico
+Change the condition from `>=` to strictly `>`:
 
-### 5. Recalculo de datas (business day enforcement)
+```typescript
+// Before
+if (start >= today) {
 
-Ao editar qualquer campo que afete datas (frequencia, weekdays, dayOfMonth, startDate), o `next_run_date` e recalculado no frontend usando a funcao `calculateInitialNextRunDate` ja existente, que aplica `adjustToBusinessDay` para garantir que nunca caia em sabado ou domingo.
+// After
+if (start > today) {
+```
 
-### 6. Busca de dados complementares
+This single-character change makes the function fall through to the frequency-specific logic (daily -> tomorrow, weekly -> next matching weekday, etc.) whenever `start_date` is today or in the past, which correctly computes the next future run date.
 
-A query de `useRecurringDemands` sera atualizada para trazer:
-- Nomes dos participantes (join com profiles via assignee_ids)
-- Nome do servico (join com services)
-- Nome do status (join com demand_statuses)
-
-### Arquivos a criar
-- `src/components/ScheduledDemandsModal.tsx`
-
-### Arquivos a editar
-- `src/hooks/useRecurringDemands.ts` (adicionar `useUpdateRecurringDemand`, melhorar query com joins, exportar funcao de recalculo)
-- `src/pages/Demands.tsx` (adicionar botao + modal)
-- `src/pages/Kanban.tsx` (adicionar botao + modal)
-
-### Sem alteracoes no banco de dados
-As RLS policies ja permitem SELECT, UPDATE e DELETE na tabela `recurring_demands`. Nenhuma migracao necessaria.
+No other files need changes -- `ScheduledDemandsModal.tsx` already calls this function and will display the corrected date automatically.
 
