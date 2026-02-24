@@ -92,20 +92,36 @@ export default function TeamDemands() {
   // Force grid view on mobile/tablet (screens < 1024px), but allow calendar on all devices
   const effectiveViewMode = isTabletOrSmaller && viewMode !== "calendar" ? "grid" : viewMode;
 
-  // Statistics
+  // Board-filtered demands for stats
+  const boardFilteredDemands = useMemo(() => {
+    if (!demands) return [];
+    if (filters.boards.length === 0) return demands;
+    return demands.filter(d => filters.boards.includes(d.board_id));
+  }, [demands, filters.boards]);
+
+  // Statistics based on board filter
   const stats = useMemo(() => {
-    if (!demands) return { total: 0, inProgress: 0, delivered: 0, overdue: 0 };
-    
-    const total = demands.length;
-    const inProgress = demands.filter(d => d.demand_statuses?.name === "Fazendo").length;
-    const delivered = demands.filter(d => d.demand_statuses?.name === "Entregue").length;
-    const overdue = demands.filter(d => {
+    const source = boardFilteredDemands;
+    const total = source.length;
+    const inProgress = source.filter(d => d.demand_statuses?.name === "Fazendo").length;
+    const delivered = source.filter(d => d.demand_statuses?.name === "Entregue").length;
+    const overdue = source.filter(d => {
       if (!d.due_date || d.demand_statuses?.name === "Entregue") return false;
       return isDateOverdue(d.due_date);
     }).length;
     
     return { total, inProgress, delivered, overdue };
-  }, [demands]);
+  }, [boardFilteredDemands]);
+
+  const hasBoardFilter = filters.boards.length > 0;
+  const selectedBoardNames = useMemo(() => {
+    if (!hasBoardFilter || !boards) return "";
+    const names = filters.boards
+      .map(id => boards.find(b => b.id === id)?.name)
+      .filter(Boolean);
+    if (names.length === 1) return names[0]!;
+    return `${names.length} quadros`;
+  }, [filters.boards, boards, hasBoardFilter]);
 
   const filteredDemands = useMemo(() => {
     if (!demands) return [];
@@ -347,62 +363,70 @@ export default function TeamDemands() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <ClipboardList className="h-5 w-5 text-primary" />
+      <div className="space-y-2">
+        {hasBoardFilter && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <LayoutGrid className="h-3.5 w-3.5 text-primary" />
+            <span>Exibindo dados de: <span className="font-medium text-foreground">{selectedBoardNames}</span></span>
+          </div>
+        )}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className="border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <ClipboardList className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-2xl font-bold text-foreground">{stats.total}</p>
+                  <p className="text-xs text-muted-foreground truncate">Total</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-                <p className="text-xs text-muted-foreground truncate">Total</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
-                <Clock className="h-5 w-5 text-blue-500" />
+          <Card className="border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                  <Clock className="h-5 w-5 text-blue-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-2xl font-bold text-foreground">{stats.inProgress}</p>
+                  <p className="text-xs text-muted-foreground truncate">Em Andamento</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-2xl font-bold text-foreground">{stats.inProgress}</p>
-                <p className="text-xs text-muted-foreground truncate">Em Andamento</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+          <Card className="border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-2xl font-bold text-foreground">{stats.delivered}</p>
+                  <p className="text-xs text-muted-foreground truncate">Entregues</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-2xl font-bold text-foreground">{stats.delivered}</p>
-                <p className="text-xs text-muted-foreground truncate">Entregues</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className={`border-border/50 ${stats.overdue > 0 ? "border-destructive/30 bg-destructive/5" : ""}`}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${stats.overdue > 0 ? "bg-destructive/10" : "bg-muted"}`}>
-                <AlertTriangle className={`h-5 w-5 ${stats.overdue > 0 ? "text-destructive" : "text-muted-foreground"}`} />
+          <Card className={`border-border/50 ${stats.overdue > 0 ? "border-destructive/30 bg-destructive/5" : ""}`}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${stats.overdue > 0 ? "bg-destructive/10" : "bg-muted"}`}>
+                  <AlertTriangle className={`h-5 w-5 ${stats.overdue > 0 ? "text-destructive" : "text-muted-foreground"}`} />
+                </div>
+                <div className="min-w-0">
+                  <p className={`text-2xl font-bold ${stats.overdue > 0 ? "text-destructive" : "text-foreground"}`}>{stats.overdue}</p>
+                  <p className="text-xs text-muted-foreground truncate">Atrasadas</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className={`text-2xl font-bold ${stats.overdue > 0 ? "text-destructive" : "text-foreground"}`}>{stats.overdue}</p>
-                <p className="text-xs text-muted-foreground truncate">Atrasadas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Filters and Actions */}
