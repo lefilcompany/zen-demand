@@ -29,6 +29,7 @@ import { Plus, LayoutGrid, Columns3, Loader2, Kanban as KanbanIcon } from "lucid
 import { useNavigate } from "react-router-dom";
 import { useRealtimeDemands, useKanbanRealtimeNotifications } from "@/hooks/useRealtimeDemands";
 import { isToday, isThisWeek, isPast } from "date-fns";
+import { ScheduledDemandsModal } from "@/components/ScheduledDemandsModal";
 
 export default function Kanban() {
   const { t } = useTranslation();
@@ -205,6 +206,9 @@ export default function Kanban() {
             filters={filters} 
             onChange={setFilters} 
           />
+
+          {/* Scheduled demands */}
+          <ScheduledDemandsModal boardId={selectedBoardId} teamId={currentTeamId} />
 
           <Button onClick={() => navigate("/demands/create")} className="shadow-primary">
             <Plus className="mr-2 h-4 w-4" />
