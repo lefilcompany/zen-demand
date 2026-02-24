@@ -128,7 +128,7 @@ export function ScheduledDemandsModal({ boardId, teamId }: ScheduledDemandsModal
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[calc(100%-2rem)] max-w-3xl h-[85vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-3xl h-[90vh] sm:h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CalendarClock className="h-5 w-5" />
