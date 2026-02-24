@@ -366,7 +366,7 @@ export default function Demands() {
 
             {/* Right side: View toggle */}
             <div className="flex items-center gap-1.5 ml-auto shrink-0">
-              <div className="flex items-center bg-background rounded-lg border border-border/60 overflow-hidden">
+              <div className="flex items-center bg-background rounded-full border border-border/60 overflow-hidden">
                 <button
                   onClick={() => setViewMode("table")}
                   className={`

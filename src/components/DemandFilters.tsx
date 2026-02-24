@@ -266,7 +266,7 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
         <Button 
           variant={activeFiltersCount > 0 ? "default" : "outline"} 
           size="sm" 
-          className="relative gap-2"
+          className="relative gap-2 rounded-full"
         >
           <Filter className="h-4 w-4" />
           Filtros
