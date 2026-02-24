@@ -48,7 +48,7 @@ export function useCreateRecurringDemand() {
       if (!userId) throw new Error("Usuário não autenticado");
 
       // Calculate next_run_date based on frequency and start_date
-      const nextRunDate = calculateInitialNextRunDate(
+      const nextRunDate = calculateNextRunDate(
         input.frequency,
         input.start_date,
         input.weekdays,
@@ -86,6 +86,60 @@ export function useCreateRecurringDemand() {
   });
 }
 
+export interface RecurringDemandUpdate {
+  id: string;
+  title?: string;
+  description?: string | null;
+  priority?: string;
+  frequency?: "daily" | "weekly" | "biweekly" | "monthly";
+  weekdays?: number[];
+  day_of_month?: number | null;
+  start_date?: string;
+  end_date?: string | null;
+}
+
+export function useUpdateRecurringDemand() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: RecurringDemandUpdate) => {
+      const { id, ...fields } = input;
+
+      // Recalculate next_run_date if schedule fields changed
+      const updateData: Record<string, any> = { ...fields };
+      if (fields.frequency || fields.weekdays || fields.day_of_month || fields.start_date) {
+        // We need current data to fill in missing fields
+        const { data: current } = await supabase
+          .from("recurring_demands" as any)
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (current) {
+          const freq = fields.frequency || (current as any).frequency;
+          const start = fields.start_date || (current as any).start_date;
+          const wdays = fields.weekdays ?? (current as any).weekdays;
+          const dom = fields.day_of_month !== undefined ? fields.day_of_month : (current as any).day_of_month;
+          updateData.next_run_date = calculateNextRunDate(freq, start, wdays, dom);
+        }
+      }
+
+      const { data, error } = await supabase
+        .from("recurring_demands" as any)
+        .update(updateData)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recurring-demands"] });
+    },
+  });
+}
+
 export function useDeleteRecurringDemand() {
   const queryClient = useQueryClient();
 
@@ -104,7 +158,7 @@ export function useDeleteRecurringDemand() {
   });
 }
 
-function calculateInitialNextRunDate(
+export function calculateNextRunDate(
   frequency: string,
   startDate: string,
   weekdays?: number[],

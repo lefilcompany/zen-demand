@@ -21,6 +21,7 @@ import { DemandsCalendarView } from "@/components/DemandsCalendarView";
 import { CreateDemandQuickDialog } from "@/components/CreateDemandQuickDialog";
 import { CreateRequestQuickDialog } from "@/components/CreateRequestQuickDialog";
 import { useDemandAssignees } from "@/hooks/useDemandAssignees";
+import { ScheduledDemandsModal } from "@/components/ScheduledDemandsModal";
 type ViewMode = "table" | "grid" | "calendar";
 const TABLET_BREAKPOINT = 1024;
 export default function Demands() {
@@ -301,6 +302,9 @@ export default function Demands() {
             <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
               {/* Filters Button */}
               <DemandFilters boardId={selectedBoardId} filters={filters} onChange={setFilters} />
+              
+              {/* Scheduled demands button */}
+              <ScheduledDemandsModal boardId={selectedBoardId} teamId={currentTeamId} />
               
               {/* Quick toggle chips */}
               {!isReadOnly && myDemandsCount > 0 && (
