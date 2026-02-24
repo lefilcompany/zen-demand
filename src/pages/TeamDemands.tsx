@@ -34,6 +34,7 @@ import { StatusFilterTabs } from "@/components/StatusFilterTabs";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { DemandsCalendarView } from "@/components/DemandsCalendarView";
 import { isDateOverdue } from "@/lib/dateUtils";
+import { InfoTooltip } from "@/components/InfoTooltip";
 
 type ViewMode = "table" | "grid" | "calendar";
 
@@ -401,7 +402,10 @@ export default function TeamDemands() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-                  <p className="text-xs text-muted-foreground truncate">Total</p>
+                  <div className="flex items-center gap-1">
+                    <p className="text-xs text-muted-foreground truncate">Total</p>
+                    <InfoTooltip text="Número total de demandas ativas nos quadros da equipe, considerando os filtros aplicados." />
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -415,7 +419,10 @@ export default function TeamDemands() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-2xl font-bold text-foreground">{stats.inProgress}</p>
-                  <p className="text-xs text-muted-foreground truncate">Em Andamento</p>
+                  <div className="flex items-center gap-1">
+                    <p className="text-xs text-muted-foreground truncate">Em Andamento</p>
+                    <InfoTooltip text="Demandas que estão atualmente sendo executadas (status 'Fazendo')." />
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -429,7 +436,10 @@ export default function TeamDemands() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-2xl font-bold text-foreground">{stats.delivered}</p>
-                  <p className="text-xs text-muted-foreground truncate">Entregues</p>
+                  <div className="flex items-center gap-1">
+                    <p className="text-xs text-muted-foreground truncate">Entregues</p>
+                    <InfoTooltip text="Demandas que foram concluídas e entregues com sucesso (status 'Entregue')." />
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -443,7 +453,10 @@ export default function TeamDemands() {
                 </div>
                 <div className="min-w-0">
                   <p className={`text-2xl font-bold ${stats.overdue > 0 ? "text-destructive" : "text-foreground"}`}>{stats.overdue}</p>
-                  <p className="text-xs text-muted-foreground truncate">Atrasadas</p>
+                  <div className="flex items-center gap-1">
+                    <p className="text-xs text-muted-foreground truncate">Atrasadas</p>
+                    <InfoTooltip text="Demandas cuja data de entrega já passou e que ainda não foram entregues. Demandas já entregues não são contabilizadas." />
+                  </div>
                 </div>
               </div>
             </CardContent>
