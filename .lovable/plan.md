@@ -1,103 +1,82 @@
 
-# Demandas Recorrentes (Automacao de Repeticao)
+
+# Visualizador de Demandas Agendadas (Recorrentes)
 
 ## Resumo
-Adicionar a possibilidade de configurar demandas recorrentes na criacao de demandas. O usuario podera definir que uma demanda se repita diariamente, semanalmente ou mensalmente, com data de inicio e fim opcional.
+Adicionar um botao/chip nas telas de **Demandas** e **Kanban** que abre um modal (dialog) mostrando todas as demandas recorrentes ativas do quadro atual. Cada item mostra as especificacoes em um dropdown expansivel, com possibilidade de edicao individual e garantia de que nenhuma data caia em fim de semana.
 
-## Como vai funcionar
+---
 
-1. Na tela de criacao de demandas, um novo campo "Recorrencia" aparece com opcoes: Nenhuma, Diaria, Semanal, Mensal
-2. Ao selecionar uma recorrencia, campos adicionais aparecem: data de inicio e data de fim (opcional)
-3. Para semanal: selecionar dias da semana
-4. Uma Edge Function executada via cron cria automaticamente as demandas nos dias corretos
+## Fluxo do Usuario
+
+1. Na toolbar das telas Demandas e Kanban, aparece um botao "Agendadas" com badge indicando a quantidade
+2. Ao clicar, abre um Dialog/Modal listando as demandas recorrentes ativas
+3. Cada demanda agendada e um item expansivel (Collapsible/Accordion) que mostra:
+   - Titulo, descricao, prioridade, frequencia
+   - Proxima data de criacao (`next_run_date`)
+   - Dias da semana (se semanal/quinzenal)
+   - Dia do mes (se mensal)
+   - Data de inicio e fim
+   - Participantes (assignee_ids)
+4. Botao "Editar" em cada item abre um formulario inline para alterar os campos
+5. Botao "Desativar" para cancelar a recorrencia
+6. Ao salvar edicao, o `next_run_date` e recalculado garantindo dia util
 
 ---
 
 ## Detalhes Tecnicos
 
-### 1. Nova tabela `recurring_demands`
+### 1. Novo componente: `ScheduledDemandsModal.tsx`
 
-```sql
-CREATE TABLE public.recurring_demands (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  team_id UUID NOT NULL REFERENCES teams(id),
-  board_id UUID NOT NULL REFERENCES boards(id),
-  created_by UUID NOT NULL,
-  
-  -- Template da demanda
-  title TEXT NOT NULL,
-  description TEXT,
-  priority TEXT DEFAULT 'media',
-  status_id UUID NOT NULL,
-  service_id UUID,
-  assignee_ids UUID[] DEFAULT '{}',
-  
-  -- Configuracao de recorrencia
-  frequency TEXT NOT NULL CHECK (frequency IN ('daily', 'weekly', 'monthly')),
-  weekdays INTEGER[] DEFAULT '{}',  -- 0=Dom, 1=Seg... (usado para weekly)
-  day_of_month INTEGER,             -- 1-28 (usado para monthly)
-  start_date DATE NOT NULL,
-  end_date DATE,                    -- NULL = sem fim
-  
-  -- Controle
-  is_active BOOLEAN NOT NULL DEFAULT true,
-  last_generated_at TIMESTAMPTZ,
-  next_run_date DATE NOT NULL,
-  
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+Componente Dialog que:
+- Recebe `boardId` e `teamId` como props
+- Usa `useRecurringDemands(boardId)` para listar demandas agendadas
+- Renderiza cada item como um `Collapsible` com detalhes expandiveis
+- Modo edicao inline por item (titulo, descricao, prioridade, frequencia, weekdays, dayOfMonth, datas)
+- Usa `useUpdateRecurringDemand()` para salvar e `useDeleteRecurringDemand()` para desativar
+
+### 2. Novo hook: `useUpdateRecurringDemand` (em `useRecurringDemands.ts`)
+
+```typescript
+export function useUpdateRecurringDemand() {
+  // useMutation que faz supabase.from("recurring_demands").update(...)
+  // Recalcula next_run_date com adjustToBusinessDay
+  // Invalida queryKey ["recurring-demands"]
+}
 ```
 
-Com RLS policies para que membros do board possam gerenciar suas recorrencias.
+### 3. Integracao na pagina Demands (`src/pages/Demands.tsx`)
 
-### 2. Edge Function `process-recurring-demands`
+- Importar `ScheduledDemandsModal` e `useRecurringDemands`
+- Adicionar botao "Agendadas" na toolbar (ao lado dos filtros)
+- Botao mostra badge com contagem de demandas recorrentes ativas
+- Clicar abre o modal
 
-Nova Edge Function que:
-- Roda via cron (a cada hora, junto com check-deadlines, ou separadamente)
-- Busca todas as `recurring_demands` ativas onde `next_run_date <= hoje`
-- Para cada uma, cria a demanda na tabela `demands` com os dados do template
-- Atualiza `next_run_date` e `last_generated_at`
-- Respeita `end_date` (desativa se passou)
-- Adiciona assignees se configurados
+### 4. Integracao na pagina Kanban (`src/pages/Kanban.tsx`)
 
-### 3. Alteracoes no Frontend
+- Mesma logica: botao "Agendadas" na barra de acoes
+- Badge com contagem
+- Modal identico
 
-**`src/pages/CreateDemand.tsx`**:
-- Novo toggle/secao "Repetir demanda" com switch
-- Ao ativar, mostra:
-  - Select de frequencia (Diaria, Semanal, Mensal)
-  - Para Semanal: checkboxes dos dias da semana
-  - Para Mensal: select do dia do mes (1-28)
-  - Data de inicio (obrigatorio)
-  - Data de fim (opcional)
-- No submit, se recorrencia ativa:
-  - Cria a demanda normalmente (primeira ocorrencia)
-  - Insere registro em `recurring_demands` com os dados
+### 5. Recalculo de datas (business day enforcement)
 
-**`src/components/CreateDemandQuickDialog.tsx`**:
-- Versao simplificada: apenas toggle de recorrencia com frequencia basica
+Ao editar qualquer campo que afete datas (frequencia, weekdays, dayOfMonth, startDate), o `next_run_date` e recalculado no frontend usando a funcao `calculateInitialNextRunDate` ja existente, que aplica `adjustToBusinessDay` para garantir que nunca caia em sabado ou domingo.
 
-**Novo componente `src/components/RecurrenceConfig.tsx`**:
-- Componente reutilizavel com toda a UI de configuracao de recorrencia
-- Inclui os selects de frequencia, dias, datas
+### 6. Busca de dados complementares
 
-**Novo hook `src/hooks/useRecurringDemands.ts`**:
-- CRUD para `recurring_demands`
-- Query para listar recorrencias ativas do board
+A query de `useRecurringDemands` sera atualizada para trazer:
+- Nomes dos participantes (join com profiles via assignee_ids)
+- Nome do servico (join com services)
+- Nome do status (join com demand_statuses)
 
-### 4. Cron Job
+### Arquivos a criar
+- `src/components/ScheduledDemandsModal.tsx`
 
-Adicionar um cron job (via pg_cron) que chama `process-recurring-demands` diariamente as 06:00 (horario de Brasilia).
+### Arquivos a editar
+- `src/hooks/useRecurringDemands.ts` (adicionar `useUpdateRecurringDemand`, melhorar query com joins, exportar funcao de recalculo)
+- `src/pages/Demands.tsx` (adicionar botao + modal)
+- `src/pages/Kanban.tsx` (adicionar botao + modal)
 
-### 5. Arquivos que serao criados/modificados
+### Sem alteracoes no banco de dados
+As RLS policies ja permitem SELECT, UPDATE e DELETE na tabela `recurring_demands`. Nenhuma migracao necessaria.
 
-| Arquivo | Acao |
-|---------|------|
-| Migration SQL (nova tabela + RLS + cron) | Criar |
-| `supabase/functions/process-recurring-demands/index.ts` | Criar |
-| `src/components/RecurrenceConfig.tsx` | Criar |
-| `src/hooks/useRecurringDemands.ts` | Criar |
-| `src/pages/CreateDemand.tsx` | Modificar (adicionar secao de recorrencia) |
-| `src/components/CreateDemandQuickDialog.tsx` | Modificar (adicionar toggle simples) |
-| `src/hooks/useDemands.ts` | Modificar (salvar recorrencia apos criar demanda) |
