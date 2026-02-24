@@ -125,7 +125,9 @@ export default function TeamDemands() {
     const inProgress = source.filter(d => d.demand_statuses?.name === "Fazendo").length;
     const delivered = source.filter(d => d.demand_statuses?.name === "Entregue").length;
     const overdue = source.filter(d => {
-      if (!d.due_date || d.demand_statuses?.name === "Entregue") return false;
+      if (!d.due_date) return false;
+      // Demandas entregues não são consideradas atrasadas
+      if (d.demand_statuses?.name === "Entregue" || d.delivered_at) return false;
       return isDateOverdue(d.due_date);
     }).length;
 
