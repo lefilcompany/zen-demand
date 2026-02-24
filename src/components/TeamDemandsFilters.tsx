@@ -204,29 +204,20 @@ function BoardMultiSelect({ selected, onChange, boards }: BoardMultiSelectProps)
             {boards?.map((board) => {
               const isSelected = selected.includes(board.id);
               return (
-                <TooltipProvider key={board.id} delayDuration={300}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={() => toggleBoard(board.id)}
-                        className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent ${
-                          isSelected ? "bg-accent/50 font-medium" : ""
-                        }`}
-                      >
-                        <div className="flex h-4 w-4 items-center justify-center shrink-0">
-                          {isSelected && <Check className="h-3.5 w-3.5 text-primary" />}
-                        </div>
-                        <span className="truncate">{board.name}</span>
-                      </button>
-                    </TooltipTrigger>
-                    {board.name.length > 18 && (
-                      <TooltipContent side="right" className="max-w-[250px]">
-                        <p>{board.name}</p>
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
+                <button
+                  key={board.id}
+                  type="button"
+                  title={board.name}
+                  onClick={() => toggleBoard(board.id)}
+                  className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent ${
+                    isSelected ? "bg-accent/50 font-medium" : ""
+                  }`}
+                >
+                  <div className="flex h-4 w-4 items-center justify-center shrink-0">
+                    {isSelected && <Check className="h-3.5 w-3.5 text-primary" />}
+                  </div>
+                  <span className="truncate">{board.name}</span>
+                </button>
               );
             })}
           </div>
