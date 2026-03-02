@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useTranslation } from "react-i18next";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
-import { Moon, Sun, Monitor, Bell, Mail, Smartphone, Loader2, Send, LogOut, Users, Trash2, Eye, EyeOff, Settings as SettingsIcon } from "lucide-react";
+import { Moon, Sun, Monitor, Bell, Mail, Smartphone, Loader2, Send, LogOut, Users, Trash2, Eye, EyeOff, Settings as SettingsIcon, CalendarDays, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -65,6 +65,8 @@ export default function Settings() {
   const [transferAdminDialogOpen, setTransferAdminDialogOpen] = useState(false);
   const [selectedNewAdmin, setSelectedNewAdmin] = useState<string | null>(null);
   const [isTransferringAdmin, setIsTransferringAdmin] = useState(false);
+  const [hasGoogleCalendar, setHasGoogleCalendar] = useState(false);
+  const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
   const { preferences, updatePreferences, isLoading } = useNotificationPreferences();
   const { 
     isSupported: isPushSupported, 
@@ -228,6 +230,19 @@ export default function Settings() {
       setIsSendingTest(false);
     }
   };
+
+  // Check Google Calendar connection status
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setHasGoogleCalendar(!!data?.session?.provider_token);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setHasGoogleCalendar(!!session?.provider_token);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -553,6 +568,76 @@ export default function Settings() {
                   disabled={isLoading}
                 />
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Google Calendar Integration */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <CalendarDays className="h-5 w-5" />
+              Integrações
+            </CardTitle>
+            <CardDescription>
+              Conecte serviços externos à sua conta
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border border-border bg-muted/30">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <CalendarDays className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">Google Calendar</p>
+                  <p className="text-sm text-muted-foreground">
+                    {hasGoogleCalendar
+                      ? "Conectado — reuniões serão criadas no seu calendário"
+                      : "Conecte para agendar reuniões com Google Meet"
+                    }
+                  </p>
+                </div>
+              </div>
+              {hasGoogleCalendar ? (
+                <div className="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
+                  <Check className="h-4 w-4" />
+                  Conectado
+                </div>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={async () => {
+                    setIsConnectingGoogle(true);
+                    try {
+                      const { error } = await supabase.auth.signInWithOAuth({
+                        provider: "google",
+                        options: {
+                          scopes: "https://www.googleapis.com/auth/calendar.events",
+                          queryParams: {
+                            access_type: "offline",
+                            prompt: "consent",
+                          },
+                          redirectTo: window.location.origin + "/settings",
+                        },
+                      });
+                      if (error) {
+                        toast.error("Erro ao conectar Google Calendar");
+                        console.error(error);
+                      }
+                    } catch (err) {
+                      toast.error("Erro ao conectar Google Calendar");
+                      console.error(err);
+                    } finally {
+                      setIsConnectingGoogle(false);
+                    }
+                  }}
+                  disabled={isConnectingGoogle}
+                >
+                  {isConnectingGoogle && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Conectar
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

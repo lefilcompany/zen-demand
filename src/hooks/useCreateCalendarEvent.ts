@@ -7,6 +7,7 @@ interface CreateCalendarEventInput {
   startTime: string;
   endTime: string;
   attendeeEmails: string[];
+  googleAccessToken: string;
 }
 
 interface CalendarEventResult {
