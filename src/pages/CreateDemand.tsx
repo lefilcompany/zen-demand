@@ -23,6 +23,8 @@ import { useNavigationBlock } from "@/hooks/useNavigationBlock";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { RecurrenceConfig, RecurrenceData, defaultRecurrenceData } from "@/components/RecurrenceConfig";
 import { useCreateRecurringDemand } from "@/hooks/useRecurringDemands";
+import { MeetingFields, MeetingData, defaultMeetingData } from "@/components/MeetingFields";
+import { useCreateCalendarEvent } from "@/hooks/useCreateCalendarEvent";
 import { AlertTriangle, Ban, CloudOff, WifiOff, Package, Briefcase, Plus } from "lucide-react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
@@ -57,11 +59,6 @@ export default function CreateDemand() {
   const selectedTeam = teams?.find(t => t.id === selectedTeamId);
   const canAssignResponsibles = role !== "requester";
 
-  // Redirect requesters to the request page
-  if (role === "requester") {
-    return <Navigate to="/demands/request" replace />;
-  }
-
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [statusId, setStatusId] = useState("");
@@ -71,9 +68,28 @@ export default function CreateDemand() {
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
+  const [meetingData, setMeetingData] = useState<MeetingData>(defaultMeetingData);
+  const [userEmail, setUserEmail] = useState<string>("");
   
   const uploadAttachment = useUploadAttachment();
   const createRecurringDemand = useCreateRecurringDemand();
+  const createCalendarEvent = useCreateCalendarEvent();
+
+  // Detect if selected service is "Reunião"
+  const { boardServices } = useHasBoardServices(selectedBoardId);
+  const selectedServiceName = boardServices?.find(
+    (bs) => bs.service_id === serviceId
+  )?.service?.name;
+  const isMeeting = selectedServiceName
+    ? /reuni[aã]o/i.test(selectedServiceName)
+    : false;
+
+  // Get current user email
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.email) setUserEmail(data.user.email);
+    });
+  }, []);
 
   // Draft persistence
   const draftFields = useMemo(
@@ -131,6 +147,11 @@ export default function CreateDemand() {
     }
   }, [statuses, statusId]);
 
+  // Redirect requesters to the request page
+  if (role === "requester") {
+    return <Navigate to="/demands/request" replace />;
+  }
+
   const handleServiceChange = (newServiceId: string, estimatedHours?: number) => {
     setServiceId(newServiceId);
     if (newServiceId !== "none" && estimatedHours) {
@@ -159,6 +180,12 @@ export default function CreateDemand() {
 
     if (canCreateWithService === false) {
       toast.error("Limite mensal deste serviço foi atingido");
+      return;
+    }
+
+    // Validate meeting fields
+    if (isMeeting && (!meetingData.startTime || !meetingData.endTime)) {
+      toast.error("Para reuniões, as datas de início e fim são obrigatórias");
       return;
     }
 
@@ -235,12 +262,39 @@ export default function CreateDemand() {
             }
           }
 
+          // Create calendar event if meeting
+          if (!wasCreatedOffline && isMeeting && meetingData.startTime && meetingData.endTime) {
+            try {
+              const allEmails = userEmail
+                ? [userEmail, ...meetingData.attendeeEmails.filter((e) => e !== userEmail)]
+                : meetingData.attendeeEmails;
+
+              const result = await createCalendarEvent.mutateAsync({
+                title: title.trim(),
+                description: description.trim() || undefined,
+                startTime: new Date(meetingData.startTime).toISOString(),
+                endTime: new Date(meetingData.endTime).toISOString(),
+                attendeeEmails: allEmails,
+              });
+
+              if (result.meetLink) {
+                toast.success("Reunião agendada com sucesso!", {
+                  description: `Link do Meet: ${result.meetLink}`,
+                  duration: 10000,
+                });
+              }
+            } catch (calError) {
+              console.error("Erro ao criar evento:", calError);
+              toast.warning("Demanda criada, mas houve um erro ao agendar a reunião");
+            }
+          }
+
           if (wasCreatedOffline) {
             toast.success(t("sync.createdOffline"), {
               description: t("sync.createdOfflineDescription"),
               icon: <CloudOff className="h-4 w-4" />,
             });
-          } else {
+          } else if (!isMeeting) {
             toast.success("Demanda criada com sucesso!");
           }
           navigate("/kanban");
@@ -255,11 +309,13 @@ export default function CreateDemand() {
   };
 
   const isSubmitDisabled = createDemand.isPending || 
+    createCalendarEvent.isPending ||
     !title.trim() || 
     !statusId || 
     !selectedBoardId || 
     canCreate === false || 
-    !isServiceValid();
+    !isServiceValid() ||
+    (isMeeting && (!meetingData.startTime || !meetingData.endTime));
 
   return (
     <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fade-in px-1">
@@ -452,6 +508,15 @@ export default function CreateDemand() {
                 </p>
               )}
             </div>
+
+            {/* Meeting Fields - shown when service is "Reunião" */}
+            {isMeeting && (
+              <MeetingFields
+                value={meetingData}
+                onChange={setMeetingData}
+                creatorEmail={userEmail}
+              />
+            )}
 
             {/* Recurrence Config */}
             <RecurrenceConfig value={recurrence} onChange={setRecurrence} />
