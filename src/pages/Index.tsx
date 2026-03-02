@@ -28,6 +28,7 @@ import { useCanCreateDemandOnBoard } from "@/hooks/useBoardScope";
 import { useDemandsByPeriod } from "@/hooks/useDemandsByPeriod";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
+import { InfoTooltip } from "@/components/InfoTooltip";
 import { ptBR, enUS, es } from "date-fns/locale";
 
 const Index = () => {
@@ -168,9 +169,12 @@ const Index = () => {
         <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                {periodLabels[period]}
-              </CardTitle>
+              <div className="flex items-center gap-1">
+                <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
+                  {periodLabels[period]}
+                </CardTitle>
+                <InfoTooltip text="Total de demandas criadas no período selecionado." />
+              </div>
               <FileText className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
@@ -183,9 +187,12 @@ const Index = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                {t("dashboard.delivered")}
-              </CardTitle>
+              <div className="flex items-center gap-1">
+                <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
+                  {t("dashboard.delivered")}
+                </CardTitle>
+                <InfoTooltip text="Demandas que foram concluídas e entregues com sucesso no período." />
+              </div>
               <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4 text-green-500" />
             </CardHeader>
             <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
@@ -198,9 +205,12 @@ const Index = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                {t("dashboard.inProgress")}
-              </CardTitle>
+              <div className="flex items-center gap-1">
+                <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
+                  {t("dashboard.inProgress")}
+                </CardTitle>
+                <InfoTooltip text="Demandas que estão atualmente sendo executadas pela equipe." />
+              </div>
               <Clock className="h-3 w-3 md:h-4 md:w-4 text-primary" />
             </CardHeader>
             <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
@@ -213,9 +223,12 @@ const Index = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                {t("kanban.toStart")}
-              </CardTitle>
+              <div className="flex items-center gap-1">
+                <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
+                  {t("kanban.toStart")}
+                </CardTitle>
+                <InfoTooltip text="Demandas que ainda não foram iniciadas e aguardam execução." />
+              </div>
               <Clock className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
@@ -345,7 +358,10 @@ const Index = () => {
         <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-5">
           <Card className="border-l-4 border-l-primary hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium">{t("dashboard.totalDemands")}</CardTitle>
+              <div className="flex items-center gap-1">
+                <CardTitle className="text-xs md:text-sm font-medium">{t("dashboard.totalDemands")}</CardTitle>
+                <InfoTooltip text="Número total de demandas no quadro selecionado, incluindo todos os status." />
+              </div>
               <Briefcase className="h-3 w-3 md:h-4 md:w-4 text-primary" />
             </CardHeader>
             <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
@@ -356,7 +372,10 @@ const Index = () => {
 
           <Card className="border-l-4 border-l-warning hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium">{t("kanban.toStart")}</CardTitle>
+              <div className="flex items-center gap-1">
+                <CardTitle className="text-xs md:text-sm font-medium">{t("kanban.toStart")}</CardTitle>
+                <InfoTooltip text="Demandas que ainda não foram iniciadas e aguardam execução (status 'A Iniciar')." />
+              </div>
               <Clock className="h-3 w-3 md:h-4 md:w-4 text-warning" />
             </CardHeader>
             <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
@@ -367,7 +386,10 @@ const Index = () => {
 
           <Card className="border-l-4 border-l-accent hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium">{t("dashboard.inProgress")}</CardTitle>
+              <div className="flex items-center gap-1">
+                <CardTitle className="text-xs md:text-sm font-medium">{t("dashboard.inProgress")}</CardTitle>
+                <InfoTooltip text="Demandas que estão atualmente sendo executadas pela equipe (status 'Fazendo')." />
+              </div>
               <Timer className="h-3 w-3 md:h-4 md:w-4 text-accent" />
             </CardHeader>
             <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
@@ -378,7 +400,10 @@ const Index = () => {
 
           <Card className="border-l-4 border-l-purple-500 hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium">{t("dashboard.adjustments")}</CardTitle>
+              <div className="flex items-center gap-1">
+                <CardTitle className="text-xs md:text-sm font-medium">{t("dashboard.adjustments")}</CardTitle>
+                <InfoTooltip text="Demandas que foram devolvidas para correção ou ajustes após revisão (status 'Em Ajuste')." />
+              </div>
               <RefreshCw className="h-3 w-3 md:h-4 md:w-4 text-purple-500" />
             </CardHeader>
             <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
@@ -389,7 +414,10 @@ const Index = () => {
 
           <Card className="border-l-4 border-l-success hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <CardTitle className="text-xs md:text-sm font-medium">{t("dashboard.delivered")}</CardTitle>
+              <div className="flex items-center gap-1">
+                <CardTitle className="text-xs md:text-sm font-medium">{t("dashboard.delivered")}</CardTitle>
+                <InfoTooltip text="Demandas que foram concluídas e entregues com sucesso (status 'Entregue')." />
+              </div>
               <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4 text-success" />
             </CardHeader>
             <CardContent className="p-3 pt-0 md:p-6 md:pt-0">

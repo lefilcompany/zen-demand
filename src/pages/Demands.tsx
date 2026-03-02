@@ -311,7 +311,7 @@ export default function Demands() {
                 <button
                   onClick={() => setShowOnlyMine(!showOnlyMine)}
                   className={`
-                    inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium 
+                    inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium h-8
                     transition-all duration-200 whitespace-nowrap
                     ${showOnlyMine 
                       ? "bg-primary text-primary-foreground shadow-sm" 
@@ -323,7 +323,7 @@ export default function Demands() {
                   <User className="h-3.5 w-3.5" />
                   <span>Minhas</span>
                   <span className={`
-                    inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 
+                    inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 
                     rounded-full text-[10px] font-bold
                     ${showOnlyMine 
                       ? "bg-primary-foreground/20 text-primary-foreground" 
@@ -339,7 +339,7 @@ export default function Demands() {
                 <button
                   onClick={() => setHideDelivered(!hideDelivered)}
                   className={`
-                    inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium 
+                    inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium h-8
                     transition-all duration-200 whitespace-nowrap
                     ${hideDelivered 
                       ? "bg-muted-foreground text-background shadow-sm" 
@@ -351,7 +351,7 @@ export default function Demands() {
                   {hideDelivered ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                   <span>{hideDelivered ? "Ocultas" : "Entregues"}</span>
                   <span className={`
-                    inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 
+                    inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 
                     rounded-full text-[10px] font-bold
                     ${hideDelivered 
                       ? "bg-background/20 text-background" 
@@ -366,7 +366,7 @@ export default function Demands() {
 
             {/* Right side: View toggle */}
             <div className="flex items-center gap-1.5 ml-auto shrink-0">
-              <div className="flex items-center bg-background rounded-lg border border-border/60 overflow-hidden">
+              <div className="flex items-center bg-background rounded-full border border-border/60 overflow-hidden">
                 <button
                   onClick={() => setViewMode("table")}
                   className={`

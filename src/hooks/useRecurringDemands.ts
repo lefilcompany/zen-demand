@@ -172,8 +172,8 @@ export function calculateNextRunDate(
   if (start > today) {
     if ((frequency === "weekly" || frequency === "biweekly") && weekdays && weekdays.length > 0) {
       const d = new Date(start);
-      const maxDays = frequency === "biweekly" ? 14 : 7;
-      for (let i = 0; i < maxDays; i++) {
+      // Find first matching weekday from start_date
+      for (let i = 0; i < 7; i++) {
         if (weekdays.includes(d.getDay())) {
           return formatDate(adjustToBusinessDay(d));
         }
@@ -190,16 +190,50 @@ export function calculateNextRunDate(
     return formatDate(adjustToBusinessDay(tomorrow));
   }
 
-  if ((frequency === "weekly" || frequency === "biweekly") && weekdays && weekdays.length > 0) {
+  if (frequency === "weekly" && weekdays && weekdays.length > 0) {
     const d = new Date(today);
     d.setDate(d.getDate() + 1); // start from tomorrow
-    const maxDays = frequency === "biweekly" ? 14 : 7;
-    for (let i = 0; i < maxDays; i++) {
+    for (let i = 0; i < 7; i++) {
       if (weekdays.includes(d.getDay())) {
         return formatDate(adjustToBusinessDay(d));
       }
       d.setDate(d.getDate() + 1);
     }
+  }
+
+  if (frequency === "biweekly") {
+    // Biweekly: 2 weeks from start_date, find matching weekday
+    const d = new Date(today);
+    d.setDate(d.getDate() + 1); // start from tomorrow
+    
+    if (weekdays && weekdays.length > 0) {
+      // Calculate weeks elapsed since start_date to align to the 2-week cycle
+      const startMs = start.getTime();
+      const diffMs = d.getTime() - startMs;
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const diffWeeks = Math.floor(diffDays / 7);
+      const weeksUntilNextCycle = diffWeeks % 2 === 0 ? 0 : 1;
+      
+      // Jump to the start of the next valid 2-week cycle
+      const cycleStart = new Date(d);
+      if (weeksUntilNextCycle > 0) {
+        cycleStart.setDate(cycleStart.getDate() + (7 * weeksUntilNextCycle) - (cycleStart.getDay() || 7) + 1);
+      }
+      
+      // Find first matching weekday in the cycle week
+      for (let i = 0; i < 14; i++) {
+        const candidate = new Date(cycleStart);
+        candidate.setDate(candidate.getDate() + i);
+        if (candidate > today && weekdays.includes(candidate.getDay())) {
+          return formatDate(adjustToBusinessDay(candidate));
+        }
+      }
+    }
+    
+    // Fallback: just add 14 days from start or today
+    const next = new Date(today);
+    next.setDate(next.getDate() + 14);
+    return formatDate(adjustToBusinessDay(next));
   }
 
   if (frequency === "monthly") {

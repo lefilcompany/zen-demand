@@ -6,6 +6,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Calendar } from "@/components/ui/calendar";
 import { Filter, X, CalendarIcon, ChevronDown, Check, Briefcase, LayoutGrid } from "lucide-react";
 import { useServices } from "@/hooks/useServices";
@@ -26,7 +32,7 @@ export interface TeamDemandsFiltersState {
   dueDateFrom: Date | null;
   dueDateTo: Date | null;
   position: string | null;
-  board: string | null;
+  boards: string[];
 }
 
 interface TeamDemandsFiltersProps {
@@ -110,6 +116,110 @@ function NativeSelect({ value, onChange, options, placeholder, showColorDot, ico
                 <span className="truncate">{option.label}</span>
               </button>
             ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Standalone board multi-select button for use outside the filter popover
+export function BoardMultiSelectButton({ 
+  teamId, 
+  selected, 
+  onChange 
+}: { 
+  teamId: string | null; 
+  selected: string[]; 
+  onChange: (boards: string[]) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { data: boards } = useBoards(teamId);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const isAllSelected = selected.length === 0;
+
+  const toggleBoard = (boardId: string) => {
+    if (selected.includes(boardId)) {
+      onChange(selected.filter(id => id !== boardId));
+    } else {
+      onChange([...selected, boardId]);
+    }
+  };
+
+  const selectAll = () => {
+    onChange([]);
+  };
+
+  const displayText = isAllSelected
+    ? "Quadros"
+    : selected.length === 1
+      ? boards?.find(b => b.id === selected[0])?.name || "1 quadro"
+      : `${selected.length} quadros`;
+
+  return (
+    <div ref={containerRef} className="relative">
+      <Button
+        variant={!isAllSelected ? "default" : "outline"}
+        size="sm"
+        className="gap-2"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <LayoutGrid className="h-4 w-4" />
+        <span className="hidden sm:inline truncate max-w-[120px]">{displayText}</span>
+        {!isAllSelected && (
+          <Badge variant="secondary" className="h-5 min-w-5 px-1.5 justify-center bg-background text-foreground">
+            {selected.length}
+          </Badge>
+        )}
+        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+      </Button>
+      {isOpen && (
+        <div className="absolute z-50 mt-1.5 w-[260px] rounded-lg border border-border bg-popover p-1.5 shadow-lg animate-in fade-in-0 zoom-in-95">
+          <div className="max-h-72 overflow-y-auto space-y-0.5">
+            {/* "Todos" option */}
+            <button
+              type="button"
+              onClick={selectAll}
+              className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-2.5 text-sm transition-colors hover:bg-accent ${
+                isAllSelected ? "bg-accent/50 font-medium" : ""
+              }`}
+            >
+              <div className="flex h-4 w-4 items-center justify-center shrink-0">
+                {isAllSelected && <Check className="h-3.5 w-3.5 text-primary" />}
+              </div>
+              <span>Todos os quadros</span>
+            </button>
+            {/* Board options */}
+            {boards?.map((board) => {
+              const isSelected = selected.includes(board.id);
+              return (
+                <button
+                  key={board.id}
+                  type="button"
+                  title={board.name}
+                  onClick={() => toggleBoard(board.id)}
+                  className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-2.5 text-sm transition-colors hover:bg-accent ${
+                    isSelected ? "bg-accent/50 font-medium" : ""
+                  }`}
+                >
+                  <div className="flex h-4 w-4 items-center justify-center shrink-0">
+                    {isSelected && <Check className="h-3.5 w-3.5 text-primary" />}
+                  </div>
+                  <span className="truncate">{board.name}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -217,16 +327,69 @@ function AssigneeSelect({ value, onChange, members }: AssigneeSelectProps) {
   );
 }
 
+// Exported component for selected board chips shown outside the popover
+export function SelectedBoardChips({ 
+  boards, 
+  selectedIds, 
+  onRemove 
+}: { 
+  boards: Array<{ id: string; name: string }> | undefined;
+  selectedIds: string[];
+  onRemove: (id: string) => void;
+}) {
+  if (!selectedIds.length || !boards) return null;
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {selectedIds.map(id => {
+        const board = boards.find(b => b.id === id);
+        if (!board) return null;
+        return (
+          <TooltipProvider key={id} delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge
+                  variant="outline"
+                  className="gap-1 pl-2 pr-1 py-0.5 text-xs font-normal max-w-[180px] cursor-default bg-primary/10 border-primary/20 text-foreground hover:bg-primary/15"
+                >
+                  <LayoutGrid className="h-3 w-3 shrink-0 text-primary" />
+                  <span className="truncate">{board.name}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemove(id);
+                    }}
+                    className="ml-0.5 rounded-full p-0.5 hover:bg-destructive/20 hover:text-destructive transition-colors"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>{board.name}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      })}
+    </div>
+  );
+}
+
 export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFiltersProps) {
   const [open, setOpen] = useState(false);
   const { data: services } = useServices(teamId, null);
   const { data: positions } = useTeamPositions(teamId);
-  const { data: boards } = useBoards(teamId);
   const { data: members } = useTeamMembers(teamId);
 
-  // Count active filters excluding status (since it's now in tabs)
+  // Count active filters excluding status
   const activeFiltersCount = Object.entries(filters)
-    .filter(([key, value]) => key !== 'status' && Boolean(value))
+    .filter(([key, value]) => {
+      if (key === 'status') return false;
+      if (key === 'boards') return false; // boards are outside the popup now
+      return Boolean(value);
+    })
     .length;
 
   // Persist position filter to localStorage
@@ -247,7 +410,7 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
       dueDateFrom: null,
       dueDateTo: null,
       position: null,
-      board: null,
+      boards: [],
     });
   };
 
@@ -275,11 +438,6 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
     ...(positions?.map(p => ({ value: p.id, label: p.name, color: p.color })) || [])
   ];
 
-  const boardOptions = [
-    { value: "all", label: "Todos" },
-    ...(boards?.map(b => ({ value: b.id, label: b.name })) || [])
-  ];
-
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -300,8 +458,8 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[320px] p-0 max-h-[80vh] overflow-y-auto" align="start" sideOffset={8}>
-        <div className="border-b border-border bg-muted/30 px-4 py-3 rounded-t-lg sticky top-0 z-10">
+      <PopoverContent className="w-[380px] p-0" align="start" sideOffset={8}>
+        <div className="border-b border-border bg-muted/30 px-4 py-3 rounded-t-lg">
           <div className="flex items-center justify-between">
             <h4 className="font-semibold text-sm">Filtros</h4>
             {activeFiltersCount > 0 && (
@@ -319,9 +477,10 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
         </div>
 
         <div className="p-3 space-y-3">
-          <div className="grid grid-cols-2 gap-2">
+          {/* Row 1: Priority + Service */}
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Prioridade</label>
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center">Prioridade</label>
               <NativeSelect
                 value={filters.priority}
                 onChange={(v) => updateFilter("priority", v)}
@@ -329,32 +488,8 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
                 placeholder="Todas"
               />
             </div>
-
             <div className="space-y-1">
-              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                <LayoutGrid className="h-3 w-3" /> Quadro
-              </label>
-              <NativeSelect
-                value={filters.board}
-                onChange={(v) => updateFilter("board", v)}
-                options={boardOptions}
-                placeholder="Todos"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Responsável</label>
-            <AssigneeSelect
-              value={filters.assignee}
-              onChange={(v) => updateFilter("assignee", v)}
-              members={members}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Serviço</label>
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center">Serviço</label>
               <NativeSelect
                 value={filters.service}
                 onChange={(v) => updateFilter("service", v)}
@@ -362,10 +497,13 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
                 placeholder="Todos"
               />
             </div>
+          </div>
 
+          {/* Row 2: Position + Assignee */}
+          <div className="grid grid-cols-2 gap-3">
             {positions && positions.length > 0 && (
               <div className="space-y-1">
-                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center gap-1">
                   <Briefcase className="h-3 w-3" /> Cargo
                 </label>
                 <NativeSelect
@@ -377,23 +515,34 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
                 />
               </div>
             )}
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center">Responsável</label>
+              <AssigneeSelect
+                value={filters.assignee}
+                onChange={(v) => updateFilter("assignee", v)}
+                members={members}
+              />
+            </div>
           </div>
 
+
+
+          {/* Row 4: Due date range */}
           <div className="space-y-1">
-            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Vencimento</label>
-            <div className="flex gap-1.5">
+            <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide h-4 flex items-center">Vencimento</label>
+            <div className="grid grid-cols-2 gap-3">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className={`flex-1 justify-start h-8 rounded-lg bg-background/50 hover:bg-accent/50 text-xs px-2 ${
+                    className={`w-full justify-start h-8 rounded-lg bg-background/50 hover:bg-accent/50 text-xs px-3 ${
                       filters.dueDateFrom ? "text-foreground" : "text-muted-foreground"
                     }`}
                   >
                     <CalendarIcon className="mr-1.5 h-3 w-3" />
                     {filters.dueDateFrom
-                      ? format(filters.dueDateFrom, "dd/MM", { locale: ptBR })
+                      ? format(filters.dueDateFrom, "dd/MM/yyyy", { locale: ptBR })
                       : "De"}
                   </Button>
                 </PopoverTrigger>
@@ -411,13 +560,13 @@ export function TeamDemandsFilters({ teamId, filters, onChange }: TeamDemandsFil
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className={`flex-1 justify-start h-8 rounded-lg bg-background/50 hover:bg-accent/50 text-xs px-2 ${
+                    className={`w-full justify-start h-8 rounded-lg bg-background/50 hover:bg-accent/50 text-xs px-3 ${
                       filters.dueDateTo ? "text-foreground" : "text-muted-foreground"
                     }`}
                   >
                     <CalendarIcon className="mr-1.5 h-3 w-3" />
                     {filters.dueDateTo
-                      ? format(filters.dueDateTo, "dd/MM", { locale: ptBR })
+                      ? format(filters.dueDateTo, "dd/MM/yyyy", { locale: ptBR })
                       : "Até"}
                   </Button>
                 </PopoverTrigger>

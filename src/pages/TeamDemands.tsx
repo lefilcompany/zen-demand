@@ -23,16 +23,18 @@ import {
   ClipboardList,
   Clock,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Filter
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table";
 import { teamDemandColumns, TeamDemandTableRow } from "@/components/team-demands/columns";
-import { TeamDemandsFilters, TeamDemandsFiltersState } from "@/components/TeamDemandsFilters";
+import { TeamDemandsFilters, TeamDemandsFiltersState, SelectedBoardChips, BoardMultiSelectButton } from "@/components/TeamDemandsFilters";
 import { StatusFilterTabs } from "@/components/StatusFilterTabs";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { DemandsCalendarView } from "@/components/DemandsCalendarView";
 import { isDateOverdue } from "@/lib/dateUtils";
+import { InfoTooltip } from "@/components/InfoTooltip";
 
 type ViewMode = "table" | "grid" | "calendar";
 
@@ -68,7 +70,7 @@ export default function TeamDemands() {
       dueDateFrom: null,
       dueDateTo: null,
       position: savedPosition,
-      board: null,
+      boards: [],
     };
   });
   
@@ -92,20 +94,56 @@ export default function TeamDemands() {
   // Force grid view on mobile/tablet (screens < 1024px), but allow calendar on all devices
   const effectiveViewMode = isTabletOrSmaller && viewMode !== "calendar" ? "grid" : viewMode;
 
-  // Statistics
+  // Statistics based on all filters (excluding hideDelivered and status, which are view-level)
   const stats = useMemo(() => {
     if (!demands) return { total: 0, inProgress: 0, delivered: 0, overdue: 0 };
-    
-    const total = demands.length;
-    const inProgress = demands.filter(d => d.demand_statuses?.name === "Fazendo").length;
-    const delivered = demands.filter(d => d.demand_statuses?.name === "Entregue").length;
-    const overdue = demands.filter(d => {
-      if (!d.due_date || d.demand_statuses?.name === "Entregue") return false;
+
+    // Apply all filters except status and hideDelivered
+    const source = demands.filter((d) => {
+      if (filters.boards.length > 0 && !filters.boards.includes(d.board_id)) return false;
+      if (filters.priority && d.priority !== filters.priority) return false;
+      if (filters.assignee) {
+        const isAssigned = d.demand_assignees?.some(a => a.user_id === filters.assignee) || d.assigned_to === filters.assignee;
+        if (!isAssigned) return false;
+      }
+      if (filters.service && d.service_id !== filters.service) return false;
+      if (filters.position && membersByPosition) {
+        const has = d.demand_assignees?.some(a => membersByPosition.includes(a.user_id)) || (d.assigned_to && membersByPosition.includes(d.assigned_to));
+        if (!has) return false;
+      }
+      if (d.due_date) {
+        const dueDate = new Date(d.due_date);
+        if (filters.dueDateFrom && isBefore(dueDate, startOfDay(filters.dueDateFrom))) return false;
+        if (filters.dueDateTo && isAfter(dueDate, endOfDay(filters.dueDateTo))) return false;
+      } else if (filters.dueDateFrom || filters.dueDateTo) {
+        return false;
+      }
+      return true;
+    });
+
+    const total = source.length;
+    const inProgress = source.filter(d => d.demand_statuses?.name === "Fazendo").length;
+    const delivered = source.filter(d => d.demand_statuses?.name === "Entregue").length;
+    const overdue = source.filter(d => {
+      if (!d.due_date) return false;
+      // Demandas entregues não são consideradas atrasadas
+      if (d.demand_statuses?.name === "Entregue" || d.delivered_at) return false;
       return isDateOverdue(d.due_date);
     }).length;
-    
+
     return { total, inProgress, delivered, overdue };
-  }, [demands]);
+  }, [demands, filters, membersByPosition]);
+
+  const hasAnyFilter = filters.boards.length > 0 || filters.priority || filters.assignee || filters.service || filters.position || filters.dueDateFrom || filters.dueDateTo;
+  const hasBoardFilter = filters.boards.length > 0;
+  const selectedBoardNames = useMemo(() => {
+    if (!hasBoardFilter || !boards) return "";
+    const names = filters.boards
+      .map(id => boards.find(b => b.id === id)?.name)
+      .filter(Boolean);
+    if (names.length === 1) return names[0]!;
+    return `${names.length} quadros`;
+  }, [filters.boards, boards, hasBoardFilter]);
 
   const filteredDemands = useMemo(() => {
     if (!demands) return [];
@@ -136,8 +174,8 @@ export default function TeamDemands() {
         return false;
       }
       
-      // Board filter
-      if (filters.board && d.board_id !== filters.board) {
+      // Board filter (multi-select)
+      if (filters.boards.length > 0 && !filters.boards.includes(d.board_id)) {
         return false;
       }
       
@@ -347,67 +385,90 @@ export default function TeamDemands() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <ClipboardList className="h-5 w-5 text-primary" />
+      <div className="space-y-2">
+        {hasAnyFilter && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Filter className="h-3.5 w-3.5 text-primary" />
+            <span>
+              Dados filtrados
+              {hasBoardFilter && <> • <span className="font-medium text-foreground">{selectedBoardNames}</span></>}
+            </span>
+          </div>
+        )}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className="border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <ClipboardList className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-2xl font-bold text-foreground">{stats.total}</p>
+                  <div className="flex items-center gap-1">
+                    <p className="text-xs text-muted-foreground truncate">Total</p>
+                    <InfoTooltip text="Número total de demandas ativas nos quadros da equipe, considerando os filtros aplicados." />
+                  </div>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-                <p className="text-xs text-muted-foreground truncate">Total</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
-                <Clock className="h-5 w-5 text-blue-500" />
+          <Card className="border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                  <Clock className="h-5 w-5 text-blue-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-2xl font-bold text-foreground">{stats.inProgress}</p>
+                  <div className="flex items-center gap-1">
+                    <p className="text-xs text-muted-foreground truncate">Em Andamento</p>
+                    <InfoTooltip text="Demandas que estão atualmente sendo executadas (status 'Fazendo')." />
+                  </div>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-2xl font-bold text-foreground">{stats.inProgress}</p>
-                <p className="text-xs text-muted-foreground truncate">Em Andamento</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+          <Card className="border-border/50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-2xl font-bold text-foreground">{stats.delivered}</p>
+                  <div className="flex items-center gap-1">
+                    <p className="text-xs text-muted-foreground truncate">Entregues</p>
+                    <InfoTooltip text="Demandas que foram concluídas e entregues com sucesso (status 'Entregue')." />
+                  </div>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-2xl font-bold text-foreground">{stats.delivered}</p>
-                <p className="text-xs text-muted-foreground truncate">Entregues</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className={`border-border/50 ${stats.overdue > 0 ? "border-destructive/30 bg-destructive/5" : ""}`}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${stats.overdue > 0 ? "bg-destructive/10" : "bg-muted"}`}>
-                <AlertTriangle className={`h-5 w-5 ${stats.overdue > 0 ? "text-destructive" : "text-muted-foreground"}`} />
+          <Card className={`border-border/50 ${stats.overdue > 0 ? "border-destructive/30 bg-destructive/5" : ""}`}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${stats.overdue > 0 ? "bg-destructive/10" : "bg-muted"}`}>
+                  <AlertTriangle className={`h-5 w-5 ${stats.overdue > 0 ? "text-destructive" : "text-muted-foreground"}`} />
+                </div>
+                <div className="min-w-0">
+                  <p className={`text-2xl font-bold ${stats.overdue > 0 ? "text-destructive" : "text-foreground"}`}>{stats.overdue}</p>
+                  <div className="flex items-center gap-1">
+                    <p className="text-xs text-muted-foreground truncate">Atrasadas</p>
+                    <InfoTooltip text="Demandas cuja data de entrega já passou e que ainda não foram entregues. Demandas já entregues não são contabilizadas." />
+                  </div>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className={`text-2xl font-bold ${stats.overdue > 0 ? "text-destructive" : "text-foreground"}`}>{stats.overdue}</p>
-                <p className="text-xs text-muted-foreground truncate">Atrasadas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Filters and Actions */}
       <Card className="border-border/50">
-        <CardContent className="p-4">
+        <CardContent className="p-4 space-y-3">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <div className="relative flex-1 sm:flex-none">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -418,7 +479,12 @@ export default function TeamDemands() {
                 className="pl-9 w-full sm:w-[220px] md:w-[280px]"
               />
             </div>
-            <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:ml-auto">
+           <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:ml-auto">
+              <BoardMultiSelectButton
+                teamId={selectedTeamId}
+                selected={filters.boards}
+                onChange={(boards) => setFilters({ ...filters, boards })}
+              />
               <TeamDemandsFilters 
                 teamId={selectedTeamId} 
                 filters={filters} 
@@ -480,13 +546,20 @@ export default function TeamDemands() {
             </div>
           </div>
           
+          {/* Selected board chips */}
+          {filters.boards.length > 0 && (
+            <SelectedBoardChips
+              boards={boards}
+              selectedIds={filters.boards}
+              onRemove={(id) => setFilters({ ...filters, boards: filters.boards.filter(b => b !== id) })}
+            />
+          )}
+
           {/* Active filters indicator */}
           {filteredDemands.length !== stats.total && (
-            <div className="mt-3 pt-3 border-t border-border">
-              <p className="text-sm text-muted-foreground">
-                Exibindo <span className="font-medium text-foreground">{filteredDemands.length}</span> de {stats.total} demandas
-              </p>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Exibindo <span className="font-medium text-foreground">{filteredDemands.length}</span> de {stats.total} demandas
+            </p>
           )}
         </CardContent>
       </Card>

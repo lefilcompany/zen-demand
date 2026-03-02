@@ -168,12 +168,12 @@ export default function Kanban() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar">
           {/* Kanban Column Preference Switch */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-md border bg-background/50">
+                <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-md border bg-background/50 shrink-0">
                   <Columns3 className="h-4 w-4 text-muted-foreground" />
                   <Switch
                     id="columns-open-preference"
@@ -208,11 +208,10 @@ export default function Kanban() {
           />
 
           {/* Scheduled demands */}
-          <ScheduledDemandsModal boardId={selectedBoardId} teamId={currentTeamId} />
+          <ScheduledDemandsModal boardId={selectedBoardId} teamId={currentTeamId} buttonStyle="standard" />
 
-          <Button onClick={() => navigate("/demands/create")} className="shadow-primary">
-            <Plus className="mr-2 h-4 w-4" />
-            <span className="sm:hidden">{t("demands.newDemand").split(" ")[0]}</span>
+          <Button onClick={() => navigate("/demands/create")} size="sm" className="shadow-primary shrink-0 sm:size-default">
+            <Plus className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">{t("demands.newDemand")}</span>
           </Button>
         </div>
