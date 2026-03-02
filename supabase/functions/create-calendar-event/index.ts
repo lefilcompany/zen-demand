@@ -97,14 +97,20 @@ Deno.serve(async (req) => {
 
     // Create calendar event with Meet link
     const requestId = crypto.randomUUID();
-    const attendees = (attendeeEmails || []).map((email: string) => ({ email }));
+
+    // Build event description with attendee list (since service accounts
+    // cannot invite attendees without Domain-Wide Delegation)
+    let fullDescription = description || "";
+    if (attendeeEmails && attendeeEmails.length > 0) {
+      fullDescription += (fullDescription ? "\n\n" : "") +
+        "Participantes:\n" + attendeeEmails.map((e: string) => `• ${e}`).join("\n");
+    }
 
     const calendarEvent = {
       summary: title,
-      description: description || "",
+      description: fullDescription,
       start: { dateTime: startTime, timeZone: "America/Sao_Paulo" },
       end: { dateTime: endTime, timeZone: "America/Sao_Paulo" },
-      attendees,
       conferenceData: {
         createRequest: {
           requestId,
