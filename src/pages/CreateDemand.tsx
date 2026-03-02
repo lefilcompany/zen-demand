@@ -25,7 +25,8 @@ import { RecurrenceConfig, RecurrenceData, defaultRecurrenceData } from "@/compo
 import { useCreateRecurringDemand } from "@/hooks/useRecurringDemands";
 import { MeetingFields, MeetingData, defaultMeetingData } from "@/components/MeetingFields";
 import { useCreateCalendarEvent } from "@/hooks/useCreateCalendarEvent";
-import { AlertTriangle, Ban, CloudOff, WifiOff, Package, Briefcase, Plus } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { AlertTriangle, Ban, CloudOff, WifiOff, Package, Briefcase, Plus, CalendarPlus } from "lucide-react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { calculateBusinessDueDate, formatDueDateForInput } from "@/lib/dateUtils";
@@ -69,20 +70,15 @@ export default function CreateDemand() {
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
   const [meetingData, setMeetingData] = useState<MeetingData>(defaultMeetingData);
+  const [createMeeting, setCreateMeeting] = useState(false);
   const [userEmail, setUserEmail] = useState<string>("");
   
   const uploadAttachment = useUploadAttachment();
   const createRecurringDemand = useCreateRecurringDemand();
   const createCalendarEvent = useCreateCalendarEvent();
 
-  // Detect if selected service is "Reunião"
-  const { boardServices } = useHasBoardServices(selectedBoardId);
-  const selectedServiceName = boardServices?.find(
-    (bs) => bs.service_id === serviceId
-  )?.service?.name;
-  const isMeeting = selectedServiceName
-    ? /reuni[aã]o/i.test(selectedServiceName)
-    : false;
+  // Meeting is enabled via toggle
+  const isMeeting = createMeeting;
 
   // Get current user email
   useEffect(() => {
@@ -515,7 +511,29 @@ export default function CreateDemand() {
               )}
             </div>
 
-            {/* Meeting Fields - shown when service is "Reunião" */}
+            {/* Google Calendar Meeting Toggle */}
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="flex items-center gap-3">
+                <CalendarPlus className="h-5 w-5 text-primary" />
+                <div className="space-y-0.5">
+                  <Label htmlFor="create-meeting" className="text-sm font-medium cursor-pointer">
+                    Agendar reunião no Google Calendar
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Cria um evento com link do Google Meet automaticamente
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="create-meeting"
+                checked={createMeeting}
+                onCheckedChange={(checked) => {
+                  setCreateMeeting(checked);
+                  if (!checked) setMeetingData(defaultMeetingData);
+                }}
+              />
+            </div>
+
             {isMeeting && (
               <MeetingFields
                 value={meetingData}
