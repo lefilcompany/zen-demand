@@ -32,7 +32,8 @@ import { useCreateRecurringDemand } from "@/hooks/useRecurringDemands";
 import { useCreateCalendarEvent } from "@/hooks/useCreateCalendarEvent";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Calendar, Loader2 } from "lucide-react";
+import { Calendar, Loader2, CalendarPlus } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 interface CreateDemandQuickDialogProps {
   open: boolean;
@@ -59,18 +60,13 @@ export function CreateDemandQuickDialog({
   const [statusId, setStatusId] = useState<string>("");
   const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
   const [meetingData, setMeetingData] = useState<MeetingData>(defaultMeetingData);
+  const [createMeeting, setCreateMeeting] = useState(false);
   const [userEmail, setUserEmail] = useState<string>("");
 
   const createRecurringDemand = useCreateRecurringDemand();
   const createCalendarEvent = useCreateCalendarEvent();
 
-  // Detect if selected service is "Reunião"
-  const selectedServiceName = boardServices?.find(
-    (bs) => bs.service?.id === serviceId
-  )?.service?.name;
-  const isMeeting = selectedServiceName
-    ? /reuni[aã]o/i.test(selectedServiceName)
-    : false;
+  const isMeeting = createMeeting;
 
   // Get current user email
   useEffect(() => {
@@ -222,6 +218,7 @@ export function CreateDemandQuickDialog({
     setStatusId("");
     setRecurrence(defaultRecurrenceData);
     setMeetingData(defaultMeetingData);
+    setCreateMeeting(false);
   };
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -350,7 +347,26 @@ export function CreateDemandQuickDialog({
             </div>
           )}
 
-          {/* Meeting Fields - shown when service is "Reunião" */}
+          {/* Google Calendar Meeting Toggle */}
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div className="flex items-center gap-2">
+              <CalendarPlus className="h-4 w-4 text-primary" />
+              <div>
+                <Label htmlFor="quick-create-meeting" className="text-xs font-medium cursor-pointer">
+                  Agendar reunião no Google Calendar
+                </Label>
+              </div>
+            </div>
+            <Switch
+              id="quick-create-meeting"
+              checked={createMeeting}
+              onCheckedChange={(checked) => {
+                setCreateMeeting(checked);
+                if (!checked) setMeetingData(defaultMeetingData);
+              }}
+            />
+          </div>
+
           {isMeeting && (
             <MeetingFields
               value={meetingData}
