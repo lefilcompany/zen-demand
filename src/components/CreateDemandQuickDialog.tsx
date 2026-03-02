@@ -170,9 +170,7 @@ export function CreateDemandQuickDialog({
       // Create calendar event if meeting
       if (isMeeting && meetingData.startTime && meetingData.endTime) {
         try {
-          const allEmails = userEmail
-            ? [userEmail, ...meetingData.attendeeEmails.filter((e) => e !== userEmail)]
-            : meetingData.attendeeEmails;
+          const allEmails = meetingData.attendeeEmails;
 
           const calResult = await createCalendarEvent.mutateAsync({
             title: title.trim(),
@@ -362,7 +360,11 @@ export function CreateDemandQuickDialog({
               checked={createMeeting}
               onCheckedChange={(checked) => {
                 setCreateMeeting(checked);
-                if (!checked) setMeetingData(defaultMeetingData);
+                if (checked && userEmail) {
+                  setMeetingData({ ...defaultMeetingData, attendeeEmails: [userEmail] });
+                } else if (!checked) {
+                  setMeetingData(defaultMeetingData);
+                }
               }}
             />
           </div>
