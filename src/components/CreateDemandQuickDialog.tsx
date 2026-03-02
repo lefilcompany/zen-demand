@@ -170,6 +170,19 @@ export function CreateDemandQuickDialog({
       // Create calendar event if meeting
       if (isMeeting && meetingData.startTime && meetingData.endTime) {
         try {
+          // Get Google access token from session
+          const { data: sessionData } = await supabase.auth.getSession();
+          const googleAccessToken = sessionData?.session?.provider_token;
+
+          if (!googleAccessToken) {
+            toast.error("Precisa conectar o seu Google Calendar nas configurações antes de agendar uma reunião");
+            // Demand was already created, navigate to it
+            if (result?.id) navigate(`/demands/${result.id}`);
+            onOpenChange(false);
+            resetForm();
+            return;
+          }
+
           const allEmails = meetingData.attendeeEmails;
 
           const calResult = await createCalendarEvent.mutateAsync({
@@ -178,6 +191,7 @@ export function CreateDemandQuickDialog({
             startTime: new Date(meetingData.startTime).toISOString(),
             endTime: new Date(meetingData.endTime).toISOString(),
             attendeeEmails: allEmails,
+            googleAccessToken,
           });
 
           if (calResult.meetLink) {
