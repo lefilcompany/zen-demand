@@ -261,9 +261,7 @@ export default function CreateDemand() {
           // Create calendar event if meeting
           if (!wasCreatedOffline && isMeeting && meetingData.startTime && meetingData.endTime) {
             try {
-              const allEmails = userEmail
-                ? [userEmail, ...meetingData.attendeeEmails.filter((e) => e !== userEmail)]
-                : meetingData.attendeeEmails;
+              const allEmails = meetingData.attendeeEmails;
 
               const result = await createCalendarEvent.mutateAsync({
                 title: title.trim(),
@@ -529,7 +527,11 @@ export default function CreateDemand() {
                 checked={createMeeting}
                 onCheckedChange={(checked) => {
                   setCreateMeeting(checked);
-                  if (!checked) setMeetingData(defaultMeetingData);
+                  if (checked && userEmail) {
+                    setMeetingData({ ...defaultMeetingData, attendeeEmails: [userEmail] });
+                  } else if (!checked) {
+                    setMeetingData(defaultMeetingData);
+                  }
                 }}
               />
             </div>

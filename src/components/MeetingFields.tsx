@@ -105,25 +105,18 @@ export function MeetingFields({ value, onChange, creatorEmail }: MeetingFieldsPr
 
         {(value.attendeeEmails.length > 0 || creatorEmail) && (
           <div className="flex flex-wrap gap-1.5 mt-2">
-            {creatorEmail && (
-              <Badge variant="secondary" className="text-xs">
-                {creatorEmail} (você)
+            {value.attendeeEmails.map((email) => (
+              <Badge key={email} variant={email === creatorEmail ? "secondary" : "outline"} className="text-xs gap-1">
+                {email}{email === creatorEmail ? " (você)" : ""}
+                <button
+                  type="button"
+                  onClick={() => removeEmail(email)}
+                  className="hover:text-destructive"
+                >
+                  <X className="h-3 w-3" />
+                </button>
               </Badge>
-            )}
-            {value.attendeeEmails
-              .filter((e) => e !== creatorEmail)
-              .map((email) => (
-                <Badge key={email} variant="outline" className="text-xs gap-1">
-                  {email}
-                  <button
-                    type="button"
-                    onClick={() => removeEmail(email)}
-                    className="hover:text-destructive"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
+            ))}
           </div>
         )}
 
