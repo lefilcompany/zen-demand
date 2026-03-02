@@ -122,7 +122,7 @@ export function MeetingFields({ value, onChange, creatorEmail }: MeetingFieldsPr
 
         <p className="text-xs text-muted-foreground">
           Os participantes receberão um convite por email com o link do Google Meet.
-          {creatorEmail && " O seu email será incluído automaticamente."}
+          Você foi adicionado automaticamente, mas pode se remover se desejar.
         </p>
       </div>
     </div>
