@@ -980,6 +980,7 @@ export type Database = {
           due_date: string | null
           id: string
           last_started_at: string | null
+          meet_link: string | null
           priority: string | null
           service_id: string | null
           status_id: string
@@ -1001,6 +1002,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           last_started_at?: string | null
+          meet_link?: string | null
           priority?: string | null
           service_id?: string | null
           status_id: string
@@ -1022,6 +1024,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           last_started_at?: string | null
+          meet_link?: string | null
           priority?: string | null
           service_id?: string | null
           status_id?: string

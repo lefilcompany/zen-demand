@@ -1,0 +1,1 @@
+ALTER TABLE public.demands ADD COLUMN meet_link text;
