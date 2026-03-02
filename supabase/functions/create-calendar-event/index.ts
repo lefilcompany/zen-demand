@@ -7,6 +7,103 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function toICSDate(isoString: string): string {
+  const d = new Date(isoString);
+  return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+}
+
+function escapeICS(text: string): string {
+  return (text || "").replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+}
+
+function generateICS(params: {
+  uid: string;
+  title: string;
+  description: string;
+  startTime: string;
+  endTime: string;
+  meetLink: string | null;
+  attendeeEmails: string[];
+}): string {
+  const { uid, title, description, startTime, endTime, meetLink, attendeeEmails } = params;
+
+  const descWithMeet = meetLink
+    ? `${description}${description ? "\\n\\n" : ""}Link da reunião: ${meetLink}`
+    : description;
+
+  const attendeeLines = attendeeEmails
+    .map((e) => `ATTENDEE;RSVP=TRUE;CN=${e}:mailto:${e}`)
+    .join("\r\n");
+
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//SoMA+//Calendar//PT",
+    "METHOD:REQUEST",
+    "CALSCALE:GREGORIAN",
+    "BEGIN:VEVENT",
+    `UID:${uid}@soma.lefil.com.br`,
+    `DTSTART:${toICSDate(startTime)}`,
+    `DTEND:${toICSDate(endTime)}`,
+    `SUMMARY:${escapeICS(title)}`,
+    `DESCRIPTION:${escapeICS(descWithMeet)}`,
+    meetLink ? `LOCATION:${escapeICS(meetLink)}` : "",
+    "STATUS:CONFIRMED",
+    "ORGANIZER;CN=SoMA+:mailto:noreply@pla.soma.lefil.com.br",
+    attendeeLines,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ]
+    .filter(Boolean)
+    .join("\r\n");
+}
+
+function buildInviteHTML(params: {
+  title: string;
+  description: string;
+  startTime: string;
+  endTime: string;
+  meetLink: string | null;
+  attendeeEmails: string[];
+}): string {
+  const { title, description, startTime, endTime, meetLink, attendeeEmails } = params;
+
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+  const dateStr = start.toLocaleDateString("pt-BR", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "America/Sao_Paulo" });
+  const startStr = start.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
+  const endStr = end.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
+
+  const participantsList = attendeeEmails.map((e) => `<li>${e}</li>`).join("");
+
+  return `
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="font-family:Arial,sans-serif;background:#f9fafb;padding:20px;">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+    <div style="background:#7c3aed;padding:24px 28px;">
+      <h1 style="color:#fff;margin:0;font-size:20px;">📅 Convite de Reunião</h1>
+    </div>
+    <div style="padding:28px;">
+      <h2 style="margin:0 0 16px;color:#1f2937;">${title}</h2>
+      ${description ? `<p style="color:#6b7280;margin:0 0 16px;">${description}</p>` : ""}
+      <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+        <tr><td style="padding:8px 0;color:#6b7280;width:80px;">📆 Data</td><td style="padding:8px 0;color:#1f2937;">${dateStr}</td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;">🕐 Horário</td><td style="padding:8px 0;color:#1f2937;">${startStr} – ${endStr}</td></tr>
+      </table>
+      ${meetLink ? `<a href="${meetLink}" style="display:inline-block;background:#7c3aed;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;margin-bottom:20px;">Entrar na reunião (Google Meet)</a>` : ""}
+      ${attendeeEmails.length > 0 ? `<div style="margin-top:20px;"><p style="color:#6b7280;margin:0 0 8px;font-size:14px;">Participantes:</p><ul style="margin:0;padding-left:20px;color:#1f2937;">${participantsList}</ul></div>` : ""}
+      <p style="color:#9ca3af;font-size:12px;margin-top:24px;">Este convite foi enviado via SoMA+. Abra o arquivo .ics em anexo para adicionar ao seu calendário.</p>
+    </div>
+  </div>
+</body></html>`;
+}
+
+// Base64 encode for Deno
+function toBase64(str: string): string {
+  return btoa(unescape(encodeURIComponent(str)));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -58,7 +155,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fix escaped newlines in the private key
     const cleanPrivateKey = privateKeyPem.replace(/\\n/g, "\n");
 
     // Sign JWT for Google OAuth2
@@ -95,11 +191,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create calendar event with Meet link
+    // Create calendar event with Meet link (no attendees - service account limitation)
     const requestId = crypto.randomUUID();
 
-    // Build event description with attendee list (since service accounts
-    // cannot invite attendees without Domain-Wide Delegation)
     let fullDescription = description || "";
     if (attendeeEmails && attendeeEmails.length > 0) {
       fullDescription += (fullDescription ? "\n\n" : "") +
@@ -153,11 +247,85 @@ Deno.serve(async (req) => {
         (ep: any) => ep.entryPointType === "video"
       )?.uri || null;
 
+    // Send .ics invite emails to attendees via Resend
+    const emailsSent: string[] = [];
+    const emailsFailed: string[] = [];
+
+    if (attendeeEmails && attendeeEmails.length > 0) {
+      const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+
+      if (RESEND_API_KEY) {
+        const icsContent = generateICS({
+          uid: eventData.id || requestId,
+          title,
+          description: description || "",
+          startTime,
+          endTime,
+          meetLink,
+          attendeeEmails,
+        });
+
+        const emailHTML = buildInviteHTML({
+          title,
+          description: description || "",
+          startTime,
+          endTime,
+          meetLink,
+          attendeeEmails,
+        });
+
+        const icsBase64 = toBase64(icsContent);
+
+        const emailPromises = attendeeEmails.map(async (email: string) => {
+          try {
+            const res = await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${RESEND_API_KEY}`,
+              },
+              body: JSON.stringify({
+                from: "SoMA+ <noreply@pla.soma.lefil.com.br>",
+                to: [email],
+                subject: `Convite: ${title}`,
+                html: emailHTML,
+                attachments: [
+                  {
+                    filename: "invite.ics",
+                    content: icsBase64,
+                    content_type: "text/calendar; method=REQUEST",
+                  },
+                ],
+              }),
+            });
+
+            const resData = await res.json();
+            if (res.ok) {
+              emailsSent.push(email);
+            } else {
+              console.error(`Failed to send invite to ${email}:`, resData);
+              emailsFailed.push(email);
+            }
+          } catch (err) {
+            console.error(`Error sending invite to ${email}:`, err);
+            emailsFailed.push(email);
+          }
+        });
+
+        await Promise.all(emailPromises);
+        console.log(`Invites sent: ${emailsSent.length}, failed: ${emailsFailed.length}`);
+      } else {
+        console.warn("RESEND_API_KEY not configured, skipping invite emails");
+      }
+    }
+
     return new Response(
       JSON.stringify({
         eventId: eventData.id,
         eventLink: eventData.htmlLink,
         meetLink,
+        emailsSent,
+        emailsFailed,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
