@@ -22,7 +22,6 @@ import { toast } from "sonner";
 interface ScheduledDemandsModalProps {
   boardId: string | null;
   teamId: string | null;
-  buttonStyle?: "compact" | "standard";
 }
 
 const WEEKDAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -39,7 +38,7 @@ const PRIORITY_OPTIONS = [
   { value: "urgente", label: "Urgente" },
 ];
 
-export function ScheduledDemandsModal({ boardId, teamId, buttonStyle = "compact" }: ScheduledDemandsModalProps) {
+export function ScheduledDemandsModal({ boardId, teamId }: ScheduledDemandsModalProps) {
   const { t } = useTranslation();
   const { data: recurringDemands, isLoading } = useRecurringDemands(boardId || undefined);
   const updateMutation = useUpdateRecurringDemand();
@@ -115,13 +114,10 @@ export function ScheduledDemandsModal({ boardId, teamId, buttonStyle = "compact"
         <Button 
           variant={count > 0 ? "default" : "outline"} 
           size="sm" 
-          className={buttonStyle === "compact" 
-            ? "relative gap-1 rounded-full h-7 px-2.5 text-[11px]" 
-            : "gap-2"
-          }
+          className="relative gap-2"
         >
           <CalendarClock className="h-4 w-4" />
-          <span className={buttonStyle === "standard" ? "hidden sm:inline" : ""}>Agendadas</span>
+          Agendadas
           {count > 0 && (
             <Badge 
               variant="secondary" 
@@ -132,7 +128,7 @@ export function ScheduledDemandsModal({ boardId, teamId, buttonStyle = "compact"
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[calc(100%-2rem)] max-w-3xl h-[90vh] sm:h-[85vh] flex flex-col overflow-hidden">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CalendarClock className="h-5 w-5" />
@@ -150,7 +146,7 @@ export function ScheduledDemandsModal({ boardId, teamId, buttonStyle = "compact"
             <p className="text-sm">Nenhuma demanda agendada para este quadro.</p>
           </div>
         ) : (
-          <div className="space-y-2 flex-1 overflow-y-auto pr-1">
+          <div className="space-y-2">
             {recurringDemands.map((item: any) => (
               <ScheduledDemandItem
                 key={item.id}

@@ -174,53 +174,32 @@ function calculateNextRunDate(
     return formatDate(adjustToBusinessDay(current));
   }
 
-  if (frequency === "weekly") {
+  if (frequency === "weekly" || frequency === "biweekly") {
+    const jumpWeeks = frequency === "biweekly" ? 2 : 1;
+
     if (!weekdays || weekdays.length === 0) {
-      current.setUTCDate(current.getUTCDate() + 7);
+      current.setUTCDate(current.getUTCDate() + 7 * jumpWeeks);
       return formatDate(adjustToBusinessDay(current));
     }
 
     const sortedDays = [...weekdays].sort((a, b) => a - b);
     const currentDay = current.getUTCDay();
 
-    // Find next day after current in the same week
-    const nextDay = sortedDays.find((d) => d > currentDay);
-    if (nextDay !== undefined) {
-      current.setUTCDate(current.getUTCDate() + (nextDay - currentDay));
+    // Find next day after current in the same week cycle
+    let nextDay = sortedDays.find((d) => d > currentDay);
+    if (nextDay !== undefined && frequency === "weekly") {
+      const diff = nextDay - currentDay;
+      current.setUTCDate(current.getUTCDate() + diff);
+    } else if (nextDay !== undefined && frequency === "biweekly") {
+      // For biweekly, if there's a next day in the same week, check if we already processed this week
+      // Always jump to next cycle's first matching day
+      const diff = 7 * jumpWeeks - currentDay + sortedDays[0];
+      current.setUTCDate(current.getUTCDate() + diff);
     } else {
-      // Wrap to next week, first day in list
-      const diff = 7 - currentDay + sortedDays[0];
+      // Wrap to next week(s), first day in list
+      const diff = 7 * jumpWeeks - currentDay + sortedDays[0];
       current.setUTCDate(current.getUTCDate() + diff);
     }
-    return formatDate(adjustToBusinessDay(current));
-  }
-
-  if (frequency === "biweekly") {
-    if (!weekdays || weekdays.length === 0) {
-      // No specific weekdays: simply add 14 days
-      current.setUTCDate(current.getUTCDate() + 14);
-      return formatDate(adjustToBusinessDay(current));
-    }
-
-    // Biweekly with weekdays: jump 2 weeks and find first matching weekday
-    const sortedDays = [...weekdays].sort((a, b) => a - b);
-    const currentDay = current.getUTCDay();
-    
-    // Jump to the same day 2 weeks from now, then find the first matching weekday
-    const twoWeeksLater = new Date(current);
-    twoWeeksLater.setUTCDate(twoWeeksLater.getUTCDate() + 14 - currentDay); // Go to start of that week (Sunday)
-    
-    // Find first matching weekday in that week
-    for (const wd of sortedDays) {
-      const candidate = new Date(twoWeeksLater);
-      candidate.setUTCDate(candidate.getUTCDate() + wd);
-      if (candidate > current) {
-        return formatDate(adjustToBusinessDay(candidate));
-      }
-    }
-    
-    // Fallback: just add 14 days
-    current.setUTCDate(current.getUTCDate() + 14);
     return formatDate(adjustToBusinessDay(current));
   }
 

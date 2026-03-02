@@ -228,7 +228,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
         onDontShowAgain={setDontShowAgain}
       />
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto max-h-[70vh] pr-1">
         <div className="space-y-2">
           <Label htmlFor="edit-title">Título *</Label>
           <Input

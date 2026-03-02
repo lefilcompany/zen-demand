@@ -27,13 +27,9 @@ import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardServices } from "@/hooks/useBoardServices";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { RecurrenceConfig, RecurrenceData, defaultRecurrenceData } from "@/components/RecurrenceConfig";
-import { MeetingFields, MeetingData, defaultMeetingData } from "@/components/MeetingFields";
 import { useCreateRecurringDemand } from "@/hooks/useRecurringDemands";
-import { useCreateCalendarEvent } from "@/hooks/useCreateCalendarEvent";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Calendar, Loader2, CalendarPlus } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { Calendar, Loader2 } from "lucide-react";
 
 interface CreateDemandQuickDialogProps {
   open: boolean;
@@ -59,21 +55,8 @@ export function CreateDemandQuickDialog({
   const [serviceId, setServiceId] = useState<string>("");
   const [statusId, setStatusId] = useState<string>("");
   const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
-  const [meetingData, setMeetingData] = useState<MeetingData>(defaultMeetingData);
-  const [createMeeting, setCreateMeeting] = useState(false);
-  const [userEmail, setUserEmail] = useState<string>("");
 
   const createRecurringDemand = useCreateRecurringDemand();
-  const createCalendarEvent = useCreateCalendarEvent();
-
-  const isMeeting = createMeeting;
-
-  // Get current user email
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user?.email) setUserEmail(data.user.email);
-    });
-  }, []);
 
   // Draft persistence
   const draftFields = useMemo(
@@ -121,12 +104,6 @@ export function CreateDemandQuickDialog({
       return;
     }
 
-    // Validate meeting fields
-    if (isMeeting && (!meetingData.startTime || !meetingData.endTime)) {
-      toast.error("Para reuniões, as datas de início e fim são obrigatórias");
-      return;
-    }
-
     try {
       const result = await createDemand.mutateAsync({
         title: title.trim(),
@@ -167,48 +144,7 @@ export function CreateDemandQuickDialog({
         }
       }
 
-      // Create calendar event if meeting
-      if (isMeeting && meetingData.startTime && meetingData.endTime) {
-        try {
-          // Get Google access token from session
-          const { data: sessionData } = await supabase.auth.getSession();
-          const googleAccessToken = sessionData?.session?.provider_token;
-
-          if (!googleAccessToken) {
-            toast.error("Precisa conectar o seu Google Calendar nas configurações antes de agendar uma reunião");
-            // Demand was already created, navigate to it
-            if (result?.id) navigate(`/demands/${result.id}`);
-            onOpenChange(false);
-            resetForm();
-            return;
-          }
-
-          const allEmails = meetingData.attendeeEmails;
-
-          const calResult = await createCalendarEvent.mutateAsync({
-            title: title.trim(),
-            description: description.trim() || undefined,
-            startTime: new Date(meetingData.startTime).toISOString(),
-            endTime: new Date(meetingData.endTime).toISOString(),
-            attendeeEmails: allEmails,
-            googleAccessToken,
-          });
-
-          if (calResult.meetLink) {
-            toast.success("Reunião agendada com sucesso!", {
-              description: `Link do Meet: ${calResult.meetLink}`,
-              duration: 10000,
-            });
-          }
-        } catch (calError) {
-          console.error("Erro ao criar evento:", calError);
-          toast.warning("Demanda criada, mas erro ao agendar reunião");
-        }
-      }
-
-      if (!isMeeting) {
-        toast.success("Demanda criada com sucesso!");
-      }
+      toast.success("Demanda criada com sucesso!");
       onOpenChange(false);
       resetForm();
 
@@ -229,8 +165,6 @@ export function CreateDemandQuickDialog({
     setServiceId("");
     setStatusId("");
     setRecurrence(defaultRecurrenceData);
-    setMeetingData(defaultMeetingData);
-    setCreateMeeting(false);
   };
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -359,38 +293,6 @@ export function CreateDemandQuickDialog({
             </div>
           )}
 
-          {/* Google Calendar Meeting Toggle */}
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <div className="flex items-center gap-2">
-              <CalendarPlus className="h-4 w-4 text-primary" />
-              <div>
-                <Label htmlFor="quick-create-meeting" className="text-xs font-medium cursor-pointer">
-                  Agendar reunião no Google Calendar
-                </Label>
-              </div>
-            </div>
-            <Switch
-              id="quick-create-meeting"
-              checked={createMeeting}
-              onCheckedChange={(checked) => {
-                setCreateMeeting(checked);
-                if (checked && userEmail) {
-                  setMeetingData({ ...defaultMeetingData, attendeeEmails: [userEmail] });
-                } else if (!checked) {
-                  setMeetingData(defaultMeetingData);
-                }
-              }}
-            />
-          </div>
-
-          {isMeeting && (
-            <MeetingFields
-              value={meetingData}
-              onChange={setMeetingData}
-              creatorEmail={userEmail}
-            />
-          )}
-
           {/* Recurrence Config */}
           <RecurrenceConfig value={recurrence} onChange={setRecurrence} compact />
 
@@ -402,11 +304,8 @@ export function CreateDemandQuickDialog({
             >
               Cancelar
             </Button>
-            <Button
-              type="submit"
-              disabled={createDemand.isPending || createCalendarEvent.isPending || (isMeeting && (!meetingData.startTime || !meetingData.endTime))}
-            >
-              {(createDemand.isPending || createCalendarEvent.isPending) && (
+            <Button type="submit" disabled={createDemand.isPending}>
+              {createDemand.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
               Criar Demanda

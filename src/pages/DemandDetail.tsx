@@ -27,7 +27,7 @@ import { DemandEditForm } from "@/components/DemandEditForm";
 import { AttachmentUploader } from "@/components/AttachmentUploader";
 import { AttachmentCounter } from "@/components/AttachmentCounter";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter, MoreHorizontal, Trash2, AlertTriangle, LayoutGrid, List, ChevronDown, Kanban, CalendarDays, LucideIcon, Share2, Video } from "lucide-react";
+import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter, MoreHorizontal, Trash2, AlertTriangle, LayoutGrid, List, ChevronDown, Kanban, CalendarDays, LucideIcon, Share2 } from "lucide-react";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { ShareDemandButton } from "@/components/ShareDemandButton";
 import { Link } from "react-router-dom";
@@ -961,23 +961,6 @@ export default function DemandDetail() {
                 <span className="font-medium">
                   {formatDateOnlyBR(demand.due_date)}
                 </span>
-              </div>}
-
-            {/* Google Meet Link */}
-            {(demand as any).meet_link && <div className="flex items-center gap-2 text-sm">
-                <Video className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <span className="text-muted-foreground">Reunião:</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 gap-1.5 text-xs border-primary/20 text-primary hover:bg-primary/5"
-                  asChild
-                >
-                  <a href={(demand as any).meet_link} target="_blank" rel="noopener noreferrer">
-                    <Video className="h-3 w-3" />
-                    Abrir Google Meet
-                  </a>
-                </Button>
               </div>}
 
             {/* Service tag */}
