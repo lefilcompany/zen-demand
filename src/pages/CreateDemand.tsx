@@ -278,6 +278,12 @@ export default function CreateDemand() {
               });
 
               if (result.meetLink) {
+                // Save meet link to the demand
+                await supabase
+                  .from("demands")
+                  .update({ meet_link: result.meetLink })
+                  .eq("id", demand.id);
+
                 toast.success("Reunião agendada com sucesso!", {
                   description: `Link do Meet: ${result.meetLink}`,
                   duration: 10000,
