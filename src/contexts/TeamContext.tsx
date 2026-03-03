@@ -66,7 +66,17 @@ export function TeamProvider({ children }: { children: ReactNode }) {
 export function useSelectedTeam() {
   const context = useContext(TeamContext);
   if (context === undefined) {
-    throw new Error("useSelectedTeam must be used within a TeamProvider");
+    // Return safe defaults instead of throwing to prevent blank screens
+    // This can happen during HMR/hot reload or stale cache scenarios
+    console.warn("useSelectedTeam called outside TeamProvider - returning defaults");
+    return {
+      selectedTeamId: null,
+      setSelectedTeamId: () => {},
+      teams: undefined,
+      currentTeam: undefined,
+      hasTeams: false,
+      isLoading: true,
+    } as TeamContextType;
   }
   return context;
 }
