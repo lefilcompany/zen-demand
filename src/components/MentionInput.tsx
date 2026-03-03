@@ -505,13 +505,38 @@ export function MentionInput({
     
     const clipboardData = e.clipboardData;
     
-    // Check for pasted images first
+    // Check for pasted image files (screenshots, copied images)
     const items = clipboardData.items;
     for (const item of items) {
       if (item.type.startsWith("image/")) {
-        // For image files, we can't handle upload here without supabase import
-        // But we can handle HTML img tags from rich content
-        break;
+        const file = item.getAsFile();
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const dataUrl = reader.result as string;
+            const selection = window.getSelection();
+            if (!selection || !selection.rangeCount || !editorRef.current) return;
+            
+            const range = selection.getRangeAt(0);
+            range.deleteContents();
+            
+            const img = document.createElement("img");
+            img.src = dataUrl;
+            img.className = "max-w-[300px] h-auto rounded-md my-2 inline-block";
+            range.insertNode(img);
+            
+            // Move cursor after image
+            range.setStartAfter(img);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
+            onChange(getStorageValue());
+            setIsEmpty(checkIsEmpty());
+          };
+          reader.readAsDataURL(file);
+          return;
+        }
       }
     }
     
