@@ -638,7 +638,7 @@ export function RichTextDisplay({ content, className }: RichTextDisplayProps) {
 
   return (
     <div 
-      className={cn("prose prose-sm dark:prose-invert max-w-none [&_a]:text-primary [&_a]:hover:underline [&_a]:break-all [&_a]:cursor-pointer [&_a[data-mention]]:no-underline [&_a[data-mention]]:text-inherit", className)}
+      className={cn("prose prose-sm dark:prose-invert max-w-none [&_a]:text-primary [&_a]:hover:underline [&_a]:break-all [&_a]:cursor-pointer [&_a[data-mention]]:no-underline [&_a[data-mention]]:text-inherit [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md [&_img]:my-2 [&_img]:inline-block", className)}
       dangerouslySetInnerHTML={{ __html: sanitizeHtml(processedContent) }}
       onClick={handleClick}
     />
