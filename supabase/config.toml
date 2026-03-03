@@ -1,7 +1,1 @@
 project_id = "dcojvsftpzwfhgvamdgm"
-
-[functions.create-calendar-event]
-verify_jwt = false
-
-[functions.google-calendar-auth]
-verify_jwt = false
