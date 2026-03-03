@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useTranslation } from "react-i18next";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
-import { Moon, Sun, Monitor, Bell, Mail, Smartphone, Loader2, Send, LogOut, Users, Trash2, Eye, EyeOff, Settings as SettingsIcon } from "lucide-react";
+import { Moon, Sun, Monitor, Bell, Mail, Smartphone, Loader2, Send, LogOut, Users, Trash2, Eye, EyeOff, Settings as SettingsIcon, CalendarDays, Check, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,7 @@ import { useTeamRole } from "@/hooks/useTeamRole";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -74,6 +76,7 @@ export default function Settings() {
     enablePushNotifications, 
     disablePushNotifications 
   } = usePushNotifications();
+  const { isConnected: isGoogleCalendarConnected, isLoading: isGoogleCalendarLoading, connectGoogleCalendar } = useGoogleCalendar();
   
   const isAdmin = myRole === "admin";
   const isOnlyMember = teamMembers?.length === 1;
@@ -553,6 +556,54 @@ export default function Settings() {
                   disabled={isLoading}
                 />
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Google Calendar Integration */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <CalendarDays className="h-5 w-5" />
+              Google Calendar
+            </CardTitle>
+            <CardDescription>
+              Conecte sua conta Google para agendar reuniões com Google Meet diretamente nas demandas
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border border-border bg-muted/30">
+              <div className="flex items-center gap-3">
+                <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="font-medium text-foreground">
+                    {isGoogleCalendarConnected ? "Google Calendar conectado" : "Conectar Google Calendar"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {isGoogleCalendarConnected
+                      ? "Sua conta Google está conectada. Você pode agendar reuniões com Google Meet nas demandas."
+                      : "Permita que o SoMA+ crie eventos e reuniões no seu Google Calendar."
+                    }
+                  </p>
+                </div>
+              </div>
+              {isGoogleCalendarConnected ? (
+                <Badge variant="outline" className="gap-1.5 text-success border-success/30 shrink-0">
+                  <Check className="h-3.5 w-3.5" />
+                  Conectado
+                </Badge>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={connectGoogleCalendar}
+                  disabled={isGoogleCalendarLoading}
+                  className="shrink-0"
+                >
+                  {isGoogleCalendarLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Conectar
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
