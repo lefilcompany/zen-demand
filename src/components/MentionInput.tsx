@@ -7,6 +7,52 @@ import { formatMentionForStorage, formatDemandMentionForStorage, parseMentionsTo
 import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { cn, truncateText } from "@/lib/utils";
 
+// Attach resize handle to an image inside contenteditable
+function attachResizeHandle(img: HTMLImageElement, onResize: () => void) {
+  // Wrap image in a relative container if not already wrapped
+  if (img.parentElement?.classList.contains("mention-img-wrapper")) return;
+  
+  const wrapper = document.createElement("span");
+  wrapper.contentEditable = "false";
+  wrapper.className = "mention-img-wrapper";
+  wrapper.style.cssText = "position:relative;display:inline-block;vertical-align:bottom;margin:4px 2px;";
+  
+  img.parentNode?.insertBefore(wrapper, img);
+  wrapper.appendChild(img);
+  
+  const handle = document.createElement("div");
+  handle.style.cssText = "position:absolute;bottom:2px;right:2px;width:14px;height:14px;cursor:nwse-resize;background:hsl(var(--primary));border-radius:2px;opacity:0;transition:opacity 0.15s;";
+  handle.contentEditable = "false";
+  wrapper.appendChild(handle);
+
+  wrapper.addEventListener("mouseenter", () => { handle.style.opacity = "0.7"; });
+  wrapper.addEventListener("mouseleave", () => { handle.style.opacity = "0"; });
+
+  let startX = 0;
+  let startW = 0;
+
+  const onMouseMove = (e: MouseEvent) => {
+    const newW = Math.max(50, Math.min(800, startW + (e.clientX - startX)));
+    img.style.width = newW + "px";
+    img.setAttribute("width", String(Math.round(newW)));
+  };
+
+  const onMouseUp = () => {
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+    onResize();
+  };
+
+  handle.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    startX = e.clientX;
+    startW = img.getBoundingClientRect().width;
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  });
+}
+
 interface MentionInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -142,10 +188,11 @@ export function MentionInput({
           } else if (demandId && demandCode) {
             result += formatDemandMentionForStorage(demandId, demandCode);
           } else if (element.tagName === "IMG") {
-            // Preserve inline images
+            // Preserve inline images with width
             const src = element.getAttribute("src");
+            const width = element.getAttribute("width") || element.style.width?.replace("px", "");
             if (src) {
-              result += `<img src="${src}" />`;
+              result += width ? `<img src="${src}" width="${parseInt(width, 10)}" />` : `<img src="${src}" />`; 
             }
           } else if (element.tagName === "BR") {
             result += "\n";
@@ -186,7 +233,7 @@ export function MentionInput({
     parts.forEach((part) => {
       if (typeof part === "string") {
         // Check for inline images within text parts
-        const imgRegex = /<img\s+src="([^"]+)"\s*\/?>/g;
+        const imgRegex = /<img\s+src="([^"]+)"(?:\s+width="(\d+)")?\s*\/?>/g;
         let lastIndex = 0;
         let match;
         
@@ -208,6 +255,10 @@ export function MentionInput({
           const img = document.createElement("img");
           img.src = match[1];
           img.className = "max-w-[300px] h-auto rounded-md my-2 inline-block";
+          if (match[2]) {
+            img.style.width = match[2] + "px";
+            img.setAttribute("width", match[2]);
+          }
           editorRef.current!.appendChild(img);
           lastIndex = match.index + match[0].length;
         }
@@ -241,10 +292,18 @@ export function MentionInput({
       const currentValue = getStorageValue();
       if (value !== currentValue) {
         renderValueToEditor(value);
+        // Attach resize handles to all images after rendering
+        setTimeout(() => {
+          if (!editorRef.current) return;
+          const images = editorRef.current.querySelectorAll("img");
+          images.forEach((img) => {
+            attachResizeHandle(img as HTMLImageElement, () => onChange(getStorageValue()));
+          });
+        }, 0);
       }
       setIsEmpty(checkIsEmpty());
     }
-  }, [value, getStorageValue, renderValueToEditor, checkIsEmpty]);
+  }, [value, getStorageValue, renderValueToEditor, checkIsEmpty, onChange]);
 
   // Fecha sugestões ao clicar fora
   useEffect(() => {
@@ -525,8 +584,16 @@ export function MentionInput({
             img.className = "max-w-[300px] h-auto rounded-md my-2 inline-block";
             range.insertNode(img);
             
-            // Move cursor after image
-            range.setStartAfter(img);
+            // Attach resize handle
+            attachResizeHandle(img, () => onChange(getStorageValue()));
+            
+            // Move cursor after wrapper
+            const wrapper = img.parentElement;
+            if (wrapper) {
+              range.setStartAfter(wrapper);
+            } else {
+              range.setStartAfter(img);
+            }
             range.collapse(true);
             selection.removeAllRanges();
             selection.addRange(range);
@@ -589,6 +656,14 @@ export function MentionInput({
         range.collapse(false);
         selection.removeAllRanges();
         selection.addRange(range);
+        
+        // Attach resize handles to pasted images
+        setTimeout(() => {
+          if (!editorRef.current) return;
+          editorRef.current.querySelectorAll("img").forEach((img) => {
+            attachResizeHandle(img as HTMLImageElement, () => onChange(getStorageValue()));
+          });
+        }, 0);
         
         onChange(getStorageValue());
         setIsEmpty(checkIsEmpty());
