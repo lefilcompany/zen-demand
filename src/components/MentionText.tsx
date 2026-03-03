@@ -55,6 +55,16 @@ export function MentionText({ text, className }: MentionTextProps) {
             </a>
           );
         }
+        if (part.type === "inline_image") {
+          return (
+            <img
+              key={`img-${index}`}
+              src={part.src}
+              alt="Imagem"
+              className="max-w-[300px] h-auto rounded-md my-2 inline-block"
+            />
+          );
+        }
         return null;
       })}
     </span>
