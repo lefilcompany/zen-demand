@@ -1,30 +1,29 @@
 
+## Problem Analysis
 
-## Plan: Privacy Policy & Terms of Service Pages
+When a user opens the app in a new tab, the "remember me" logic in `src/lib/auth.tsx` (lines 92-158) calls `supabase.auth.signOut()` **globally** — this invalidates the session in localStorage, which triggers a `SIGNED_OUT` event on ALL other open tabs, logging the user out everywhere.
 
-### What will be built
+The root cause is two-fold:
+1. `sessionStorage` is per-tab, so each new tab sees `sessionChecked` as missing and treats itself as a "fresh browser session"
+2. `supabase.auth.signOut()` defaults to `scope: 'global'`, which revokes the session server-side and clears localStorage, affecting all tabs
 
-1. **Two new public pages**:
-   - `/privacy-policy` — Política de Privacidade
-   - `/terms-of-service` — Termos de Serviço
+## Solution
 
-   Content will be tailored to **SoMA+**, a demand/task management platform for teams, covering: data collected (name, email, phone, location, profile photo), authentication (email + Google OAuth), data storage, cookies, user rights (LGPD compliance), and service usage rules.
+### 1. Fix the "remember me" session check (src/lib/auth.tsx)
 
-2. **Links on the Auth page**: Add a footer below the login/signup form with links to both pages (e.g., "Ao continuar, você concorda com nossa Política de Privacidade e Termos de Serviço").
+- Change `supabase.auth.signOut()` on line 152 to use `scope: 'local'` — this only clears the session from the current tab's perspective without invalidating the refresh token server-side or affecting other tabs
+- Add cross-tab synchronization via the `storage` event listener so that if one tab signs in/out intentionally, other tabs react properly
+- Ensure the `onAuthStateChange` handler properly syncs state when receiving cross-tab events
 
-3. **Route registration**: Add both routes as public routes in `App.tsx`.
+### 2. Ensure intentional logout remains global (src/lib/auth.tsx)
 
-### Files to create
-- `src/pages/PrivacyPolicy.tsx` — Full privacy policy page with SoMA branding, scroll layout, back-to-login link
-- `src/pages/TermsOfService.tsx` — Full terms of service page, same layout pattern
+- The explicit `signOut()` function (user clicks "Sair da Conta") should keep using the default `scope: 'global'` so it properly logs out everywhere — this is the desired behavior for intentional logout
 
-### Files to edit
-- `src/App.tsx` — Add two public routes (`/privacy-policy`, `/terms-of-service`)
-- `src/pages/Auth.tsx` — Add footer links below the form area (after the Dialog, before closing divs around line 740)
+### Changes Summary
 
-### Content highlights
-- **Privacy Policy**: Data collected (personal info, location via IBGE, Google profile data), purpose, storage (Lovable Cloud), sharing policy, cookies, LGPD rights (access, correction, deletion), contact info
-- **Terms of Service**: Eligibility, account responsibilities, acceptable use, intellectual property, service availability, limitation of liability, termination, governing law (Brazil)
+**File: `src/lib/auth.tsx`**
+- Line 152: Change `supabase.auth.signOut()` → `supabase.auth.signOut({ scope: 'local' })` so the "remember me" check doesn't kill sessions in other tabs
+- Add a `window.addEventListener('storage', ...)` listener that detects when the Supabase auth key changes in localStorage (from another tab signing in) and re-syncs the session via `getSession()` — this ensures new logins in other tabs are reflected without causing logout
+- On the `SIGNED_OUT` event from `onAuthStateChange`, only navigate to `/auth` if the event originated from the current tab (not a cross-tab storage sync)
 
-Both pages will use the app's existing styling (dark/light theme support) with a clean reading layout and a header with the SoMA logo.
-
+This is a minimal, targeted fix that preserves the existing "remember me" behavior while allowing multiple tabs to coexist with the same authenticated session.
