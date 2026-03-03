@@ -57,6 +57,7 @@ import GetStarted from "./pages/GetStarted";
 import CompleteProfile from "./pages/CompleteProfile";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import GCalCallback from "./pages/GCalCallback";
 const queryClient = new QueryClient();
 const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
     <QueryClientProvider client={queryClient}>
@@ -81,6 +82,9 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
                         <Route path="/reset-password" element={<ResetPassword />} />
                         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                         <Route path="/terms-of-service" element={<TermsOfService />} />
+
+                        {/* Google Calendar OAuth callback */}
+                        <Route path="/settings/gcal-callback" element={<RequireAuth><GCalCallback /></RequireAuth>} />
 
                         {/* Auth-only routes (no team required) */}
                         <Route path="/welcome" element={<RequireAuth><Welcome /></RequireAuth>} />

@@ -76,7 +76,7 @@ export default function Settings() {
     enablePushNotifications, 
     disablePushNotifications 
   } = usePushNotifications();
-  const { isConnected: isGoogleCalendarConnected, isLoading: isGoogleCalendarLoading, connectGoogleCalendar } = useGoogleCalendar();
+  const { isConnected: isGoogleCalendarConnected, isLoading: isGoogleCalendarLoading, connectGoogleCalendar, disconnectGoogleCalendar } = useGoogleCalendar();
   
   const isAdmin = myRole === "admin";
   const isOnlyMember = teamMembers?.length === 1;
@@ -588,10 +588,19 @@ export default function Settings() {
                 </div>
               </div>
               {isGoogleCalendarConnected ? (
-                <Badge variant="outline" className="gap-1.5 text-success border-success/30 shrink-0">
-                  <Check className="h-3.5 w-3.5" />
-                  Conectado
-                </Badge>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Badge variant="outline" className="gap-1.5 text-success border-success/30">
+                    <Check className="h-3.5 w-3.5" />
+                    Conectado
+                  </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={disconnectGoogleCalendar}
+                  >
+                    Desconectar
+                  </Button>
+                </div>
               ) : (
                 <Button
                   size="sm"
