@@ -192,21 +192,27 @@ export function UserTimeTrackingDisplay({
 
   // Detail variant - show full breakdown
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-3 md:p-4">
       {/* Summary header */}
-      <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded-md px-3 py-2">
-        <Clock className="h-4 w-4" />
-        <span className="text-xs uppercase font-medium">Seu tempo:</span>
-        <span className="font-mono font-medium">
-          {currentUserLiveTime || formatTimeDisplay(totalSeconds) || "00:00:00:00"}
-        </span>
-        {isTimerRunning && (
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-        )}
-        <div className="ml-auto flex items-center gap-1">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center h-10 w-10 rounded-full bg-emerald-500/15 shrink-0">
+          <Clock className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 uppercase tracking-wide">Tempo de Execução</p>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-lg md:text-xl font-bold text-emerald-600 dark:text-emerald-400">
+              {currentUserLiveTime || formatTimeDisplay(totalSeconds) || "00:00:00:00"}
+            </span>
+            {isTimerRunning && (
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5">
           {demandId && canEdit && (
             <TimeEntryEditDialog
               entries={currentUserEntries}
@@ -219,7 +225,7 @@ export function UserTimeTrackingDisplay({
               variant="ghost"
               size="icon"
               className={cn(
-                "h-7 w-7 shrink-0",
+                "h-9 w-9 rounded-full shrink-0",
                 isTimerRunning 
                   ? "bg-amber-500/20 text-amber-600 hover:bg-amber-500/30 hover:text-amber-700" 
                   : "bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30 hover:text-emerald-700"
@@ -236,11 +242,11 @@ export function UserTimeTrackingDisplay({
               title={isTimerRunning ? "Pausar meu timer" : "Iniciar meu timer"}
             >
               {isTimerLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4.5 w-4.5 animate-spin" />
               ) : isTimerRunning ? (
-                <Pause className="h-4 w-4" />
+                <Pause className="h-4.5 w-4.5" />
               ) : (
-                <Play className="h-4 w-4" />
+                <Play className="h-4.5 w-4.5" />
               )}
             </Button>
           )}
