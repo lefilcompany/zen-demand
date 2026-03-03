@@ -1,8 +1,10 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useSelectedTeam } from "@/contexts/TeamContext";
+import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Plus, Users, ArrowRight, Sparkles } from "lucide-react";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
@@ -10,16 +12,44 @@ import authBackground from "@/assets/auth-background.jpg";
 export default function Welcome() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { hasTeams, isLoading } = useSelectedTeam();
+  const [checkingProfile, setCheckingProfile] = useState(true);
+  const [profileIncomplete, setProfileIncomplete] = useState(false);
+
+  // Check if Google user needs to complete profile
+  useEffect(() => {
+    if (!user) {
+      setCheckingProfile(false);
+      return;
+    }
+    const checkProfile = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("phone, state, city")
+        .eq("id", user.id)
+        .single();
+      
+      if (!data?.phone || !data?.state || !data?.city) {
+        setProfileIncomplete(true);
+      }
+      setCheckingProfile(false);
+    };
+    checkProfile();
+  }, [user]);
 
   // Show loading while checking teams
-  if (isLoading) {
+  if (isLoading || checkingProfile) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
+  }
+
+  // Redirect to complete profile if missing fields
+  if (profileIncomplete) {
+    return <Navigate to="/complete-profile" replace />;
   }
 
   // If user already has teams, redirect to home

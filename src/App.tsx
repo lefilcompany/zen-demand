@@ -54,6 +54,7 @@ import NotFound from "./pages/NotFound";
 import Pricing from "./pages/Pricing";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import GetStarted from "./pages/GetStarted";
+import CompleteProfile from "./pages/CompleteProfile";
 const queryClient = new QueryClient();
 const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
     <QueryClientProvider client={queryClient}>
@@ -79,6 +80,7 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
 
                         {/* Auth-only routes (no team required) */}
                         <Route path="/welcome" element={<RequireAuth><Welcome /></RequireAuth>} />
+                        <Route path="/complete-profile" element={<RequireAuth><CompleteProfile /></RequireAuth>} />
                         <Route path="/teams/create" element={<RequireAuth><CreateTeam /></RequireAuth>} />
                         <Route path="/teams/join" element={<RequireAuth><JoinTeam /></RequireAuth>} />
                         <Route path="/subscription/success" element={<RequireAuth><SubscriptionSuccess /></RequireAuth>} />
