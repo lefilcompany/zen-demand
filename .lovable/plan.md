@@ -1,31 +1,30 @@
 
 
-# Fix: "Proxima criacao" showing today instead of the next real date
+## Plan: Privacy Policy & Terms of Service Pages
 
-## Problem
-The `calculateNextRunDate` function in `src/hooks/useRecurringDemands.ts` has a logic bug on line 172:
+### What will be built
 
-```
-if (start >= today) { ... }
-```
+1. **Two new public pages**:
+   - `/privacy-policy` — Política de Privacidade
+   - `/terms-of-service` — Termos de Serviço
 
-When `start_date` equals today (e.g. 2026-02-24), this condition is `true`, so it returns today's date. But the demand for today was already created -- the next creation should be **tomorrow** (2026-02-25 for daily).
+   Content will be tailored to **SoMA+**, a demand/task management platform for teams, covering: data collected (name, email, phone, location, profile photo), authentication (email + Google OAuth), data storage, cookies, user rights (LGPD compliance), and service usage rules.
 
-## Fix
+2. **Links on the Auth page**: Add a footer below the login/signup form with links to both pages (e.g., "Ao continuar, você concorda com nossa Política de Privacidade e Termos de Serviço").
 
-**File: `src/hooks/useRecurringDemands.ts`** (line 172)
+3. **Route registration**: Add both routes as public routes in `App.tsx`.
 
-Change the condition from `>=` to strictly `>`:
+### Files to create
+- `src/pages/PrivacyPolicy.tsx` — Full privacy policy page with SoMA branding, scroll layout, back-to-login link
+- `src/pages/TermsOfService.tsx` — Full terms of service page, same layout pattern
 
-```typescript
-// Before
-if (start >= today) {
+### Files to edit
+- `src/App.tsx` — Add two public routes (`/privacy-policy`, `/terms-of-service`)
+- `src/pages/Auth.tsx` — Add footer links below the form area (after the Dialog, before closing divs around line 740)
 
-// After
-if (start > today) {
-```
+### Content highlights
+- **Privacy Policy**: Data collected (personal info, location via IBGE, Google profile data), purpose, storage (Lovable Cloud), sharing policy, cookies, LGPD rights (access, correction, deletion), contact info
+- **Terms of Service**: Eligibility, account responsibilities, acceptable use, intellectual property, service availability, limitation of liability, termination, governing law (Brazil)
 
-This single-character change makes the function fall through to the frequency-specific logic (daily -> tomorrow, weekly -> next matching weekday, etc.) whenever `start_date` is today or in the past, which correctly computes the next future run date.
-
-No other files need changes -- `ScheduledDemandsModal.tsx` already calls this function and will display the corrected date automatically.
+Both pages will use the app's existing styling (dark/light theme support) with a clean reading layout and a header with the SoMA logo.
 
