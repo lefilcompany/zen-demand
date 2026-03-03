@@ -27,7 +27,7 @@ import { DemandEditForm } from "@/components/DemandEditForm";
 import { AttachmentUploader } from "@/components/AttachmentUploader";
 import { AttachmentCounter } from "@/components/AttachmentCounter";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter, MoreHorizontal, Trash2, AlertTriangle, LayoutGrid, List, ChevronDown, Kanban, CalendarDays, LucideIcon, Share2 } from "lucide-react";
+import { ArrowLeft, Calendar, Users, MessageSquare, Archive, Pencil, Wrench, Filter, MoreHorizontal, Trash2, AlertTriangle, LayoutGrid, List, ChevronDown, Kanban, CalendarDays, LucideIcon, Share2, Copy } from "lucide-react";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { ShareDemandButton } from "@/components/ShareDemandButton";
 import { Link } from "react-router-dom";
@@ -1125,21 +1125,54 @@ export default function DemandDetail() {
                         })}
                           </span>
                         </div>
-                        {canEditInteraction && !isEditing && <DropdownMenu>
+                        {!isEditing && <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0">
                                 <MoreHorizontal className="h-3 w-3" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEditInteraction(interaction.id, interaction.content || "")}>
-                                <Pencil className="h-3 w-3 mr-2" />
-                                Editar
+                              <DropdownMenuItem onClick={async () => {
+                                const content = interaction.content || "";
+                                try {
+                                  // Create a temporary element to render HTML
+                                  const tempDiv = document.createElement("div");
+                                  tempDiv.innerHTML = content;
+                                  const plainText = tempDiv.textContent || tempDiv.innerText || "";
+                                  
+                                  // Use Clipboard API to copy both HTML and plain text
+                                  const blob = new Blob([content], { type: "text/html" });
+                                  const textBlob = new Blob([plainText], { type: "text/plain" });
+                                  const clipboardItem = new ClipboardItem({
+                                    "text/html": blob,
+                                    "text/plain": textBlob,
+                                  });
+                                  await navigator.clipboard.write([clipboardItem]);
+                                  toast.success("Comentário copiado com formatação!");
+                                } catch {
+                                  // Fallback: copy plain text
+                                  const tempDiv = document.createElement("div");
+                                  tempDiv.innerHTML = content;
+                                  const plainText = tempDiv.textContent || tempDiv.innerText || "";
+                                  await navigator.clipboard.writeText(plainText);
+                                  toast.success("Comentário copiado!");
+                                }
+                              }}>
+                                <Copy className="h-3 w-3 mr-2" />
+                                Copiar
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleDeleteInteraction(interaction.id)} className="text-destructive focus:text-destructive">
-                                <Trash2 className="h-3 w-3 mr-2" />
-                                Excluir
-                              </DropdownMenuItem>
+                              {canEditInteraction && (
+                                <>
+                                  <DropdownMenuItem onClick={() => handleEditInteraction(interaction.id, interaction.content || "")}>
+                                    <Pencil className="h-3 w-3 mr-2" />
+                                    Editar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleDeleteInteraction(interaction.id)} className="text-destructive focus:text-destructive">
+                                    <Trash2 className="h-3 w-3 mr-2" />
+                                    Excluir
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>}
                       </div>
