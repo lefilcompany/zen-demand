@@ -1,39 +1,65 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
 
 export function useGoogleCalendar() {
+  const { user } = useAuth();
   const [isConnected, setIsConnected] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const checkConnection = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    setIsConnected(!!session?.provider_token);
-  }, []);
+    if (!user?.id) {
+      setIsConnected(false);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("google_calendar_tokens")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      setIsConnected(!!data && !error);
+    } catch {
+      setIsConnected(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     checkConnection();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      checkConnection();
-    });
-    return () => subscription.unsubscribe();
   }, [checkConnection]);
 
   const connectGoogleCalendar = async () => {
+    if (!user?.id) {
+      toast.error("Você precisa estar logado");
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          scopes: "https://www.googleapis.com/auth/calendar.events",
-          queryParams: {
-            access_type: "offline",
-            prompt: "consent",
-          },
-          redirectTo: window.location.origin + "/settings",
+      const redirectUri = `${window.location.origin}/settings/gcal-callback`;
+
+      const { data, error } = await supabase.functions.invoke("google-calendar-auth", {
+        body: {
+          action: "authorize",
+          userId: user.id,
+          redirectUri,
         },
       });
+
       if (error) throw error;
+
+      if (data?.authUrl) {
+        // Store userId for callback
+        sessionStorage.setItem("gcal_user_id", user.id);
+        sessionStorage.setItem("gcal_redirect_uri", redirectUri);
+        window.location.href = data.authUrl;
+      }
     } catch (error: any) {
       console.error("Error connecting Google Calendar:", error);
       toast.error("Erro ao conectar Google Calendar");
@@ -41,9 +67,67 @@ export function useGoogleCalendar() {
     }
   };
 
-  const getProviderToken = async (): Promise<string | null> => {
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.provider_token || null;
+  const disconnectGoogleCalendar = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from("google_calendar_tokens")
+        .delete()
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      setIsConnected(false);
+      toast.success("Google Calendar desconectado");
+    } catch (error: any) {
+      console.error("Error disconnecting:", error);
+      toast.error("Erro ao desconectar Google Calendar");
+    }
+  };
+
+  const getValidAccessToken = async (): Promise<string | null> => {
+    if (!user?.id) return null;
+
+    const { data, error } = await supabase
+      .from("google_calendar_tokens")
+      .select("access_token, refresh_token, token_expires_at")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    // Check if token expires in less than 5 minutes
+    const expiresAt = new Date(data.token_expires_at).getTime();
+    const now = Date.now();
+    const fiveMinutes = 5 * 60 * 1000;
+
+    if (expiresAt - now > fiveMinutes) {
+      return data.access_token;
+    }
+
+    // Refresh the token
+    try {
+      const { data: refreshData, error: refreshError } = await supabase.functions.invoke(
+        "google-calendar-auth",
+        {
+          body: {
+            action: "refresh",
+            refreshToken: data.refresh_token,
+            userId: user.id,
+          },
+        }
+      );
+
+      if (refreshError || !refreshData?.access_token) {
+        console.error("Failed to refresh token:", refreshError);
+        return null;
+      }
+
+      return refreshData.access_token;
+    } catch {
+      return null;
+    }
   };
 
   const createCalendarEvent = async (params: {
@@ -53,8 +137,8 @@ export function useGoogleCalendar() {
     endTime: string;
     attendeeEmails?: string[];
   }) => {
-    const providerToken = await getProviderToken();
-    if (!providerToken) {
+    const accessToken = await getValidAccessToken();
+    if (!accessToken) {
       toast.error("Precisa conectar o seu Google Calendar nas configurações antes de agendar uma reunião");
       return null;
     }
@@ -62,7 +146,7 @@ export function useGoogleCalendar() {
     const { data, error } = await supabase.functions.invoke("create-calendar-event", {
       body: {
         ...params,
-        googleAccessToken: providerToken,
+        googleAccessToken: accessToken,
       },
     });
 
@@ -79,7 +163,9 @@ export function useGoogleCalendar() {
     isConnected,
     isLoading,
     connectGoogleCalendar,
+    disconnectGoogleCalendar,
     createCalendarEvent,
-    getProviderToken,
+    getValidAccessToken,
+    checkConnection,
   };
 }
