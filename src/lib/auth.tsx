@@ -22,6 +22,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Token refresh interval (5 minutes before expiry)
 const TOKEN_REFRESH_MARGIN = 5 * 60 * 1000; // 5 minutes in ms
 
+// Session duration without "remember me" (4 hours)
+const SHORT_SESSION_DURATION = 4 * 60 * 60 * 1000;
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -90,9 +93,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [scheduleTokenRefresh]);
 
   useEffect(() => {
-    // Check if user should be logged out (session only, no remember me)
-    const shouldLogout = sessionStorage.getItem("sessionOnly") === null && 
-                         localStorage.getItem("rememberMe") !== "true";
+    // Determine if session should be cleared based on remember me / time-based expiry
+    const rememberMe = localStorage.getItem("rememberMe") === "true";
+    const sessionExpiresAt = localStorage.getItem("sessionExpiresAt");
+    const isShortSessionExpired = !rememberMe && sessionExpiresAt && Date.now() > parseInt(sessionExpiresAt, 10);
     
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -133,23 +137,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Handle error from getSession (e.g., invalid refresh token)
       if (error) {
         console.log("getSession error (likely stale token):", error.message);
-        // Clear any stale localStorage data
         localStorage.removeItem("rememberMe");
-        sessionStorage.removeItem("sessionOnly");
-        sessionStorage.setItem("sessionChecked", "true");
+        localStorage.removeItem("sessionExpiresAt");
         setSession(null);
         setUser(null);
         setLoading(false);
         return;
       }
 
-      // If there's a session but "remember me" was not checked and this is a new browser session
-      // BUT skip this check if we're on the password reset page (to allow password recovery)
+      // If there's a session but the short session has expired, sign out locally
       const isPasswordResetPage = window.location.pathname === "/reset-password";
       
-      if (existingSession && shouldLogout && !sessionStorage.getItem("sessionChecked") && !isPasswordResetPage) {
-        sessionStorage.setItem("sessionChecked", "true");
-        // User didn't check "remember me" and this is a fresh browser session - log them out
+      if (existingSession && isShortSessionExpired && !isPasswordResetPage) {
+        console.log("Short session expired, signing out locally");
+        localStorage.removeItem("sessionExpiresAt");
         supabase.auth.signOut({ scope: 'local' }).then(() => {
           setSession(null);
           setUser(null);
@@ -158,7 +159,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
       
-      sessionStorage.setItem("sessionChecked", "true");
       setSession(existingSession);
       setUser(existingSession?.user ?? null);
       setLoading(false);
@@ -248,8 +248,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     // Clear remember me preferences on logout
     localStorage.removeItem("rememberMe");
-    sessionStorage.removeItem("sessionOnly");
-    sessionStorage.removeItem("sessionChecked");
+    localStorage.removeItem("sessionExpiresAt");
     
     // Clear local state first
     setSession(null);

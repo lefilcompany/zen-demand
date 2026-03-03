@@ -240,10 +240,12 @@ export default function Auth() {
       // Store remember me preference
       if (rememberMe) {
         localStorage.setItem("rememberMe", "true");
-        sessionStorage.removeItem("sessionOnly");
+        localStorage.removeItem("sessionExpiresAt");
       } else {
         localStorage.removeItem("rememberMe");
-        sessionStorage.setItem("sessionOnly", "true");
+        // Set session expiry to 4 hours from now
+        const expiresAt = Date.now() + 4 * 60 * 60 * 1000;
+        localStorage.setItem("sessionExpiresAt", expiresAt.toString());
       }
       await signIn(loginData.email, loginData.password);
       toast.success("Bem-vindo ao SoMA+", {
