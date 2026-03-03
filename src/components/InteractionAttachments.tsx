@@ -110,23 +110,15 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
 
       {isImage && (
         <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
-          <DialogContent className="max-w-[90vw] max-h-[90vh] p-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-2 top-2 z-10"
-              onClick={() => setIsExpanded(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+          <DialogContent className="max-w-[90vw] max-h-[90vh] p-4 flex flex-col items-center justify-center gap-3">
             {imageUrl && (
               <img
                 src={imageUrl}
                 alt={attachment.file_name}
-                className="max-w-full max-h-[85vh] object-contain mx-auto"
+                className="max-w-full max-h-[78vh] object-contain rounded-md"
               />
             )}
-            <div className="flex items-center justify-between mt-2 px-2">
+            <div className="flex items-center justify-between w-full px-1">
               <span className="text-sm text-muted-foreground truncate max-w-[70%]">
                 {attachment.file_name}
               </span>
