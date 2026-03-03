@@ -122,32 +122,47 @@ export function MentionInput({
   const getStorageValue = useCallback((): string => {
     if (!editorRef.current) return "";
     
-    let result = "";
-    const nodes = editorRef.current.childNodes;
-    
-    nodes.forEach((node) => {
-      if (node.nodeType === Node.TEXT_NODE) {
-        result += node.textContent || "";
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        const element = node as HTMLElement;
-        const userId = element.getAttribute("data-mention-user-id");
-        const userName = element.getAttribute("data-mention-name");
-        const demandId = element.getAttribute("data-mention-demand-id");
-        const demandCode = element.getAttribute("data-mention-demand-code");
-        
-        if (userId && userName) {
-          result += formatMentionForStorage(userId, userName);
-        } else if (demandId && demandCode) {
-          result += formatDemandMentionForStorage(demandId, demandCode);
-        } else if (element.tagName === "BR") {
-          result += "\n";
-        } else {
-          result += element.textContent || "";
+    const extractContent = (parent: Node): string => {
+      let result = "";
+      const nodes = parent.childNodes;
+      
+      nodes.forEach((node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          result += node.textContent || "";
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          const element = node as HTMLElement;
+          const userId = element.getAttribute("data-mention-user-id");
+          const userName = element.getAttribute("data-mention-name");
+          const demandId = element.getAttribute("data-mention-demand-id");
+          const demandCode = element.getAttribute("data-mention-demand-code");
+          
+          if (userId && userName) {
+            result += formatMentionForStorage(userId, userName);
+          } else if (demandId && demandCode) {
+            result += formatDemandMentionForStorage(demandId, demandCode);
+          } else if (element.tagName === "BR") {
+            result += "\n";
+          } else if (["P", "DIV", "BLOCKQUOTE", "LI"].includes(element.tagName)) {
+            // Block-level elements: recurse into children and add newline after
+            const inner = extractContent(element);
+            if (result && !result.endsWith("\n") && inner) {
+              result += "\n";
+            }
+            result += inner;
+            if (inner && !inner.endsWith("\n")) {
+              result += "\n";
+            }
+          } else {
+            // Inline elements: recurse into children
+            result += extractContent(element);
+          }
         }
-      }
-    });
+      });
+      
+      return result;
+    };
     
-    return result;
+    return extractContent(editorRef.current).replace(/\n+$/, "");
   }, []);
 
   // Renderiza valor inicial no editor
@@ -448,6 +463,55 @@ export function MentionInput({
     }
   };
 
+  // Handle paste: strip formatting but preserve line breaks and plain text
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    e.preventDefault();
+    
+    const clipboardData = e.clipboardData;
+    // Prefer plain text to avoid pasting HTML formatting
+    let text = clipboardData.getData("text/plain");
+    
+    if (!text) {
+      // Fallback: extract text from HTML
+      const html = clipboardData.getData("text/html");
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, "text/html");
+        text = doc.body.textContent || "";
+      }
+    }
+    
+    if (!text) return;
+    
+    // Insert text preserving line breaks as <br> elements
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) return;
+    
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+    
+    const lines = text.split(/\r?\n/);
+    const fragment = document.createDocumentFragment();
+    
+    lines.forEach((line, index) => {
+      if (line) {
+        fragment.appendChild(document.createTextNode(line));
+      }
+      if (index < lines.length - 1) {
+        fragment.appendChild(document.createElement("br"));
+      }
+    });
+    
+    range.insertNode(fragment);
+    
+    // Move cursor to end of inserted content
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    
+    onChange(getStorageValue());
+    setIsEmpty(checkIsEmpty());
+  }, [onChange, getStorageValue, checkIsEmpty]);
+
   // Previne Enter de criar divs
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey && !showUserSuggestions && !showDemandSuggestions) {
@@ -463,6 +527,7 @@ export function MentionInput({
         contentEditable
         onInput={handleInput}
         onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
         onKeyPress={handleKeyPress}
         onBlur={() => {
           setIsEmpty(checkIsEmpty());
