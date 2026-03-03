@@ -1144,11 +1144,12 @@ export default function DemandDetail() {
                           </DropdownMenu>}
                       </div>
                       {isEditing ? <div className="space-y-2">
-                          <RichTextEditor 
+                          <MentionInput 
                             value={editingInteractionContent} 
                             onChange={setEditingInteractionContent} 
-                            minHeight="80px" 
-                            placeholder="Edite seu comentário..."
+                            boardId={demand.board_id}
+                            placeholder="Edite seu comentário... Use @ para mencionar alguém"
+                            className="text-sm md:text-base min-h-[80px]"
                           />
                           <div className="flex gap-2">
                             <Button size="sm" onClick={handleSaveInteraction} disabled={updateInteraction.isPending || !editingInteractionContent.trim()}>
