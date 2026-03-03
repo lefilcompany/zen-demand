@@ -55,6 +55,8 @@ import Pricing from "./pages/Pricing";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import GetStarted from "./pages/GetStarted";
 import CompleteProfile from "./pages/CompleteProfile";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 const queryClient = new QueryClient();
 const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
     <QueryClientProvider client={queryClient}>
@@ -77,6 +79,8 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
                         <Route path="/shared/note/:token" element={<SharedNote />} />
                         <Route path="/shared/summary/:token" element={<SharedBoardSummary />} />
                         <Route path="/reset-password" element={<ResetPassword />} />
+                        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                        <Route path="/terms-of-service" element={<TermsOfService />} />
 
                         {/* Auth-only routes (no team required) */}
                         <Route path="/welcome" element={<RequireAuth><Welcome /></RequireAuth>} />

@@ -737,6 +737,13 @@ export default function Auth() {
                 </form>
               </DialogContent>
             </Dialog>
+
+            <p className="text-center text-xs text-muted-foreground mt-4">
+              Ao continuar, você concorda com nossa{" "}
+              <a href="/privacy-policy" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Política de Privacidade</a>{" "}
+              e{" "}
+              <a href="/terms-of-service" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Termos de Serviço</a>.
+            </p>
           </div>
         </div>
       </div>
