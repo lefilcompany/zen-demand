@@ -360,7 +360,8 @@ export function RichTextEditor({
         inline: true,
         allowBase64: false,
         HTMLAttributes: {
-          class: "max-w-full h-auto rounded-md my-2",
+          class: "max-w-[300px] h-auto rounded-md my-2 resize cursor-pointer hover:ring-2 hover:ring-primary/30 transition-shadow",
+          style: "overflow: hidden;",
         },
       }),
     ],
@@ -638,7 +639,7 @@ export function RichTextDisplay({ content, className }: RichTextDisplayProps) {
 
   return (
     <div 
-      className={cn("prose prose-sm dark:prose-invert max-w-none [&_a]:text-primary [&_a]:hover:underline [&_a]:break-all [&_a]:cursor-pointer [&_a[data-mention]]:no-underline [&_a[data-mention]]:text-inherit [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md [&_img]:my-2 [&_img]:inline-block", className)}
+      className={cn("prose prose-sm dark:prose-invert max-w-none [&_a]:text-primary [&_a]:hover:underline [&_a]:break-all [&_a]:cursor-pointer [&_a[data-mention]]:no-underline [&_a[data-mention]]:text-inherit [&_img]:max-w-[300px] [&_img]:h-auto [&_img]:rounded-md [&_img]:my-2 [&_img]:inline-block [&_img]:resize [&_img]:overflow-hidden [&_img]:cursor-pointer [&_img]:hover:ring-2 [&_img]:hover:ring-primary/30", className)}
       dangerouslySetInnerHTML={{ __html: sanitizeHtml(processedContent) }}
       onClick={handleClick}
     />
