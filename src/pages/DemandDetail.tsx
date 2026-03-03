@@ -945,6 +945,11 @@ export default function DemandDetail() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4 md:space-y-6 p-3 sm:p-4 md:p-6 pt-0 md:pt-0">
+          {/* Time tracking display - prominent position (hidden for board requesters) */}
+          {(isInProgress || isInAdjustment || isDelivered) && boardRole !== "requester" && (
+            <UserTimeTrackingDisplay demandId={demand.id} variant="detail" showControls={canControlTimer} canControl={canControlTimer} canEdit={role === "admin" || role === "moderator" || role === "executor"} />
+          )}
+
           {demand.description && <div className="w-full overflow-hidden">
               <h3 className="font-semibold mb-2 text-sm md:text-base">Descrição</h3>
               <div className="w-full overflow-x-auto">
@@ -999,11 +1004,7 @@ export default function DemandDetail() {
             </div>
           </div>
 
-          {/* Time tracking display - per user (hidden for board requesters) */}
-          {(isInProgress || isInAdjustment || isDelivered) && boardRole !== "requester" && <div>
-              <h3 className="font-semibold mb-2 text-sm md:text-base">Tempo de Execução</h3>
-              <UserTimeTrackingDisplay demandId={demand.id} variant="detail" showControls={canControlTimer} canControl={canControlTimer} canEdit={role === "admin" || role === "moderator" || role === "executor"} />
-            </div>}
+
 
           {/* Attachments section - result/deliverables - only agents/admins can upload */}
           <div>
