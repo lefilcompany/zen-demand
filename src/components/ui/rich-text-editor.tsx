@@ -300,14 +300,14 @@ const ResizableImage = Image.extend({
       let startWidth = 0;
 
       const onMouseMove = (e: MouseEvent) => {
-        const newWidth = Math.max(50, Math.min(800, startWidth + (e.clientX - startX)));
+        const newWidth = Math.max(50, Math.min(1200, startWidth + (e.clientX - startX)));
         img.style.width = `${newWidth}px`;
       };
 
       const onMouseUp = (e: MouseEvent) => {
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
-        const finalWidth = Math.max(50, Math.min(800, startWidth + (e.clientX - startX)));
+        const finalWidth = Math.max(50, Math.min(1200, startWidth + (e.clientX - startX)));
         if (typeof getPos === "function") {
           editor.chain().focus().command(({ tr }) => {
             tr.setNodeMarkup(getPos(), undefined, {

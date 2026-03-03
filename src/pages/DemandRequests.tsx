@@ -152,9 +152,18 @@ export default function DemandRequests() {
   const handleAddComment = async () => {
     if (!viewing || !commentText.trim()) return;
     try {
+      // Upload any inline base64 images to storage before saving
+      let content = commentText.trim();
+      try {
+        const { uploadInlineImages } = await import("@/lib/imageUploadUtils");
+        content = await uploadInlineImages(content);
+      } catch (err) {
+        console.error("Error uploading inline images:", err);
+      }
+      
       const comment = await createComment.mutateAsync({
         requestId: viewing.id,
-        content: commentText.trim()
+        content,
       });
 
       if (pendingFiles.length > 0) {

@@ -430,7 +430,15 @@ export default function DemandDetail() {
   };
   const handleAddComment = async () => {
     if (!comment.trim() || !id) return;
-    const commentContent = comment.trim();
+    let commentContent = comment.trim();
+    
+    // Upload any inline base64 images to storage before saving
+    try {
+      const { uploadInlineImages } = await import("@/lib/imageUploadUtils");
+      commentContent = await uploadInlineImages(commentContent);
+    } catch (err) {
+      console.error("Error uploading inline images:", err);
+    }
     
     // Check if user is in "Ajustes" filter - if so, create adjustment_request instead
     const isAdjustmentMode = interactionFilter === "adjustment_request";

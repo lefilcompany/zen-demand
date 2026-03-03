@@ -55,7 +55,7 @@ export const InteractionCreateSchema = z.object({
   demand_id: z.string().uuid("ID da demanda inválido"),
   interaction_type: nonEmptyString.max(50, "Tipo de interação muito longo"),
   content: trimmedString
-    .max(10000, "Conteúdo deve ter no máximo 10000 caracteres")
+    .max(50000, "Conteúdo deve ter no máximo 50000 caracteres")
     .optional()
     .nullable(),
   metadata: z.any().optional().nullable(),
