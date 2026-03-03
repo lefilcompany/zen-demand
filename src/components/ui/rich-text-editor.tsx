@@ -1,11 +1,11 @@
-import { useEditor, EditorContent, Editor } from "@tiptap/react";
+import { useEditor, EditorContent, Editor, NodeViewWrapper, NodeViewProps } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import TextAlign from "@tiptap/extension-text-align";
 import Highlight from "@tiptap/extension-highlight";
 import Underline from "@tiptap/extension-underline";
 import Image from "@tiptap/extension-image";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -22,6 +22,7 @@ import {
   Highlighter,
   ImageIcon,
   Loader2,
+  X,
 } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import {
@@ -30,6 +31,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface RichTextEditorProps {
   value: string;
@@ -55,7 +61,7 @@ export function sanitizeHtml(html: string): string {
       "p", "br", "strong", "em", "u", "s", "span", "img", 
       "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "mark", "a"
     ],
-    ALLOWED_ATTR: ["style", "src", "alt", "class", "data-color", "href", "target", "rel", "data-mention"],
+    ALLOWED_ATTR: ["style", "src", "alt", "class", "data-color", "href", "target", "rel", "data-mention", "width", "height"],
     ADD_ATTR: ["style", "data-color", "data-mention"],
   });
 }
@@ -75,26 +81,20 @@ interface EditorToolbarProps {
 function EditorToolbar({ editor, onImageUpload, isUploading }: EditorToolbarProps) {
   if (!editor) return null;
 
-  // Function to handle text alignment
-  // TextAlign in TipTap works at block (paragraph) level
-  // - With selection: aligns paragraphs containing the selection
-  // - Without selection (cursor only): if we want to align all, we select all first
   const handleAlignment = (alignment: "left" | "center" | "right" | "justify") => {
     const { from, to } = editor.state.selection;
     const hasSelection = from !== to;
 
     if (hasSelection) {
-      // User has selected text - align only the paragraphs containing the selection
       editor.chain().focus().setTextAlign(alignment).run();
     } else {
-      // No selection (just cursor) - select all content and align everything
       const currentPos = from;
       editor
         .chain()
         .focus()
         .selectAll()
         .setTextAlign(alignment)
-        .setTextSelection(currentPos) // Return cursor to original position
+        .setTextSelection(currentPos)
         .run();
     }
   };
@@ -249,6 +249,104 @@ function EditorToolbar({ editor, onImageUpload, isUploading }: EditorToolbarProp
   );
 }
 
+// Custom resizable Image extension
+const ResizableImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      width: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("width") || element.style.width || null,
+        renderHTML: (attributes) => {
+          if (!attributes.width) return {};
+          return { width: attributes.width, style: `width: ${attributes.width}px` };
+        },
+      },
+    };
+  },
+
+  addNodeView() {
+    return ({ node, editor, getPos }) => {
+      const container = document.createElement("div");
+      container.classList.add("resizable-image-wrapper");
+      container.style.display = "inline-block";
+      container.style.position = "relative";
+      container.style.maxWidth = "100%";
+      container.style.lineHeight = "0";
+
+      const img = document.createElement("img");
+      img.src = node.attrs.src;
+      img.alt = node.attrs.alt || "";
+      img.classList.add("rounded-md", "my-2", "cursor-pointer");
+      img.style.maxWidth = "100%";
+      img.style.height = "auto";
+      img.style.display = "block";
+
+      if (node.attrs.width) {
+        img.style.width = `${node.attrs.width}px`;
+      } else {
+        img.style.width = "300px";
+      }
+
+      // Resize handle
+      const handle = document.createElement("div");
+      handle.style.cssText = "position:absolute;bottom:2px;right:2px;width:14px;height:14px;background:hsl(var(--primary));border-radius:2px;cursor:nwse-resize;opacity:0;transition:opacity 0.15s;display:flex;align-items:center;justify-content:center;";
+      handle.innerHTML = `<svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M7 1L1 7M7 4L4 7M7 7L7 7" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+
+      container.addEventListener("mouseenter", () => { handle.style.opacity = "1"; });
+      container.addEventListener("mouseleave", () => { handle.style.opacity = "0"; });
+
+      let startX = 0;
+      let startWidth = 0;
+
+      const onMouseMove = (e: MouseEvent) => {
+        const newWidth = Math.max(50, Math.min(800, startWidth + (e.clientX - startX)));
+        img.style.width = `${newWidth}px`;
+      };
+
+      const onMouseUp = (e: MouseEvent) => {
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        const finalWidth = Math.max(50, Math.min(800, startWidth + (e.clientX - startX)));
+        if (typeof getPos === "function") {
+          editor.chain().focus().command(({ tr }) => {
+            tr.setNodeMarkup(getPos(), undefined, {
+              ...node.attrs,
+              width: finalWidth,
+            });
+            return true;
+          }).run();
+        }
+      };
+
+      handle.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        startX = e.clientX;
+        startWidth = img.offsetWidth;
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+      });
+
+      container.appendChild(img);
+      container.appendChild(handle);
+
+      return {
+        dom: container,
+        contentDOM: null,
+        update: (updatedNode: any) => {
+          if (updatedNode.type.name !== "image") return false;
+          img.src = updatedNode.attrs.src;
+          if (updatedNode.attrs.width) {
+            img.style.width = `${updatedNode.attrs.width}px`;
+          }
+          return true;
+        },
+      };
+    };
+  },
+});
+
 export function RichTextEditor({
   value,
   onChange,
@@ -261,7 +359,6 @@ export function RichTextEditor({
   const isUploadingRef = useRef(false);
   const uploadCountRef = useRef<{ count: number; resetTime: number }>({ count: 0, resetTime: Date.now() });
 
-  // Allowed image MIME types for security
   const ALLOWED_IMAGE_TYPES = [
     'image/jpeg',
     'image/png',
@@ -271,13 +368,11 @@ export function RichTextEditor({
   ];
 
   const uploadImage = useCallback(async (file: File): Promise<string | null> => {
-    // Strict MIME type validation
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       toast.error("Tipo de arquivo não permitido. Use JPEG, PNG, GIF, WebP ou SVG.");
       return null;
     }
 
-    // Additional file extension validation
     const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
     const ext = file.name.split('.').pop()?.toLowerCase();
     if (!ext || !allowedExtensions.includes(ext)) {
@@ -290,12 +385,10 @@ export function RichTextEditor({
       return null;
     }
 
-    // Application-level rate limiting: max 10 uploads per minute
     const now = Date.now();
     const oneMinuteAgo = now - 60000;
     
     if (uploadCountRef.current.resetTime < oneMinuteAgo) {
-      // Reset counter after 1 minute
       uploadCountRef.current = { count: 0, resetTime: now };
     }
     
@@ -305,16 +398,14 @@ export function RichTextEditor({
     }
     
     uploadCountRef.current.count++;
-
     isUploadingRef.current = true;
 
     try {
-      // Get current user for folder organization
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id || "anonymous";
       
-      const ext = file.name.split(".").pop() || "png";
-      const fileName = `${crypto.randomUUID()}.${ext}`;
+      const fileExt = file.name.split(".").pop() || "png";
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
       const filePath = `${userId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -356,13 +447,9 @@ export function RichTextEditor({
         },
       }),
       Underline,
-      Image.configure({
+      ResizableImage.configure({
         inline: true,
         allowBase64: false,
-        HTMLAttributes: {
-          class: "max-w-[300px] h-auto rounded-md my-2 resize cursor-pointer hover:ring-2 hover:ring-primary/30 transition-shadow",
-          style: "overflow: hidden;",
-        },
       }),
     ],
     content: value,
@@ -435,7 +522,6 @@ export function RichTextEditor({
       editor.chain().focus().setImage({ src: url }).run();
     }
 
-    // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -496,23 +582,19 @@ function isValidDemandCode(code: string): boolean {
 
 // Convert user mentions [[userId:Name]] to styled links with proper escaping
 function processMentions(text: string): string {
-  // User mentions: [[userId:Name]]
   const userMentionRegex = /\[\[([^:]+):([^\]]+)\]\]/g;
   text = text.replace(userMentionRegex, (match, userId, name) => {
-    // Validate userId format to prevent injection
     if (!isValidUUID(userId)) {
-      return escapeHtml(match); // Return escaped original if invalid
+      return escapeHtml(match);
     }
     const escapedName = escapeHtml(name);
     return `<a href="/user/${userId}" data-mention="user" class="inline-flex items-center gap-0.5 bg-primary/10 text-primary border border-primary/20 rounded-md px-1.5 py-0.5 text-xs font-medium mx-0.5 no-underline hover:bg-primary/20 transition-colors">@${escapedName}</a>`;
   });
   
-  // Demand mentions: {{demandId:#code}}
   const demandMentionRegex = /\{\{([^:]+):(#[^\}]+)\}\}/g;
   text = text.replace(demandMentionRegex, (match, demandId, code) => {
-    // Validate demandId and code format to prevent injection
     if (!isValidUUID(demandId) || !isValidDemandCode(code)) {
-      return escapeHtml(match); // Return escaped original if invalid
+      return escapeHtml(match);
     }
     const escapedCode = escapeHtml(code);
     return `<a href="/demands/${demandId}" data-mention="demand" class="inline-flex items-center gap-0.5 bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-500/20 rounded-md px-1.5 py-0.5 text-xs font-medium mx-0.5 no-underline hover:bg-cyan-500/20 transition-colors">${escapedCode}</a>`;
@@ -521,7 +603,7 @@ function processMentions(text: string): string {
   return text;
 }
 
-// Validate URL format to prevent javascript: and other dangerous protocols
+// Validate URL format
 function isValidUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
@@ -531,11 +613,10 @@ function isValidUrl(url: string): boolean {
   }
 }
 
-// Convert plain URLs in text to clickable links with validation
+// Convert plain URLs in text to clickable links
 function linkifyText(text: string): string {
   const urlRegex = /(https?:\/\/[^\s<>]+)/g;
   return text.replace(urlRegex, (url) => {
-    // Validate URL before creating link
     if (!isValidUrl(url)) {
       return escapeHtml(url);
     }
@@ -544,30 +625,22 @@ function linkifyText(text: string): string {
   });
 }
 
-// Process text with mentions and links - escapes first, then processes patterns
+// Process text with mentions and links
 function processTextContent(text: string): string {
-  // First escape the base text to prevent XSS
   let result = escapeHtml(text);
   
-  // Then restore and process valid mention/link patterns
-  // Re-match the patterns in the escaped text and replace with safe HTML
-  
-  // User mentions: [[userId:Name]] - the brackets are escaped as-is
   const userMentionRegex = /\[\[([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}):([^\]]+)\]\]/gi;
   result = result.replace(userMentionRegex, (_, userId, name) => {
     return `<a href="/user/${userId}" data-mention="user" class="inline-flex items-center gap-0.5 bg-primary/10 text-primary border border-primary/20 rounded-md px-1.5 py-0.5 text-xs font-medium mx-0.5 no-underline hover:bg-primary/20 transition-colors">@${name}</a>`;
   });
   
-  // Demand mentions: {{demandId:#code}}
   const demandMentionRegex = /\{\{([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}):(#\d{1,6})\}\}/gi;
   result = result.replace(demandMentionRegex, (_, demandId, code) => {
     return `<a href="/demands/${demandId}" data-mention="demand" class="inline-flex items-center gap-0.5 bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-500/20 rounded-md px-1.5 py-0.5 text-xs font-medium mx-0.5 no-underline hover:bg-cyan-500/20 transition-colors">${code}</a>`;
   });
   
-  // URLs - only allow http/https
   const urlRegex = /(https?:\/\/[^\s]+?)(?=&lt;|&gt;|\s|$)/g;
   result = result.replace(urlRegex, (url) => {
-    // Decode the escaped URL for display but keep it escaped in href
     const displayUrl = url.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
     return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline break-all">${displayUrl}</a>`;
   });
@@ -577,25 +650,21 @@ function processTextContent(text: string): string {
 
 // Process HTML content to make URLs and mentions clickable
 function processContentWithLinks(html: string): string {
-  // If it's plain text, process it directly
   if (!/<[a-z][\s\S]*>/i.test(html)) {
     return `<p class="whitespace-pre-wrap">${processTextContent(html)}</p>`;
   }
   
-  // For HTML content, we need to process text nodes only
   const doc = new DOMParser().parseFromString(html, "text/html");
   
   const processTextNodes = (node: Node) => {
     if (node.nodeType === Node.TEXT_NODE && node.textContent) {
       const text = node.textContent;
-      // Check if text contains mentions or URLs
       if (/\[\[([^:]+):([^\]]+)\]\]|\{\{([^:]+):(#[^\}]+)\}\}|(https?:\/\/[^\s<>]+)/.test(text)) {
         const span = document.createElement("span");
         span.innerHTML = processTextContent(text);
         node.parentNode?.replaceChild(span, node);
       }
     } else if (node.nodeType === Node.ELEMENT_NODE) {
-      // Don't process content that's already processed (links or mention spans)
       if ((node as Element).tagName !== "A" && !(node as Element).hasAttribute("data-mention")) {
         Array.from(node.childNodes).forEach(processTextNodes);
       }
@@ -606,19 +675,33 @@ function processContentWithLinks(html: string): string {
   return doc.body.innerHTML;
 }
 
-// Component for displaying rich text content (read-only)
+// Component for displaying rich text content (read-only) with image lightbox
 interface RichTextDisplayProps {
   content: string | null | undefined;
   className?: string;
 }
 
 export function RichTextDisplay({ content, className }: RichTextDisplayProps) {
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+
   if (!content) return null;
 
   const processedContent = processContentWithLinks(content);
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
+    
+    // Handle image clicks - open lightbox
+    if (target.tagName === 'IMG') {
+      e.preventDefault();
+      e.stopPropagation();
+      const src = target.getAttribute('src');
+      if (src) {
+        setLightboxSrc(src);
+      }
+      return;
+    }
+
     if (target.tagName === 'A') {
       e.preventDefault();
       e.stopPropagation();
@@ -627,10 +710,8 @@ export function RichTextDisplay({ content, className }: RichTextDisplayProps) {
       
       if (href) {
         if (isMention) {
-          // Internal navigation for mentions
           window.location.href = href;
         } else {
-          // External links open in new tab
           window.open(href, '_blank', 'noopener,noreferrer');
         }
       }
@@ -638,10 +719,35 @@ export function RichTextDisplay({ content, className }: RichTextDisplayProps) {
   };
 
   return (
-    <div 
-      className={cn("prose prose-sm dark:prose-invert max-w-none [&_a]:text-primary [&_a]:hover:underline [&_a]:break-all [&_a]:cursor-pointer [&_a[data-mention]]:no-underline [&_a[data-mention]]:text-inherit [&_img]:max-w-[300px] [&_img]:h-auto [&_img]:rounded-md [&_img]:my-2 [&_img]:inline-block [&_img]:resize [&_img]:overflow-hidden [&_img]:cursor-pointer [&_img]:hover:ring-2 [&_img]:hover:ring-primary/30", className)}
-      dangerouslySetInnerHTML={{ __html: sanitizeHtml(processedContent) }}
-      onClick={handleClick}
-    />
+    <>
+      <div 
+        className={cn(
+          "prose prose-sm dark:prose-invert max-w-none",
+          "[&_a]:text-primary [&_a]:hover:underline [&_a]:break-all [&_a]:cursor-pointer",
+          "[&_a[data-mention]]:no-underline [&_a[data-mention]]:text-inherit",
+          "[&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md [&_img]:my-2 [&_img]:inline-block",
+          "[&_img]:cursor-pointer [&_img]:hover:ring-2 [&_img]:hover:ring-primary/30 [&_img]:transition-shadow",
+          className
+        )}
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(processedContent) }}
+        onClick={handleClick}
+      />
+      
+      {/* Image Lightbox */}
+      <Dialog open={!!lightboxSrc} onOpenChange={(open) => !open && setLightboxSrc(null)}>
+        <DialogContent className="max-w-[90vw] max-h-[90vh] p-2 bg-background/95 backdrop-blur-sm border-border">
+          <DialogTitle className="sr-only">Visualizar imagem</DialogTitle>
+          <div className="flex items-center justify-center w-full h-full overflow-auto">
+            {lightboxSrc && (
+              <img
+                src={lightboxSrc}
+                alt="Imagem ampliada"
+                className="max-w-full max-h-[85vh] object-contain rounded-md"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
