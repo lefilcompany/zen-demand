@@ -1,30 +1,63 @@
 
 
-## Plan: Privacy Policy & Terms of Service Pages
+## Plan: Fix Google Calendar Integration with Standalone OAuth Flow
 
-### What will be built
+### Problem
+The `useGoogleCalendar.ts` hook calls `supabase.auth.signInWithOAuth({ provider: 'google' })` directly, which fails with "missing OAuth secret" because Lovable Cloud manages Google OAuth through `lovable.auth`, not through Supabase's GoTrue directly. Additionally, even if we switch to `lovable.auth.signInWithOAuth`, the `provider_token` (Google's access token) is not preserved in the session because Lovable Cloud's flow only returns Supabase JWT tokens.
 
-1. **Two new public pages**:
-   - `/privacy-policy` — Política de Privacidade
-   - `/terms-of-service` — Termos de Serviço
+### Solution: Standalone Google OAuth Flow for Calendar
 
-   Content will be tailored to **SoMA+**, a demand/task management platform for teams, covering: data collected (name, email, phone, location, profile photo), authentication (email + Google OAuth), data storage, cookies, user rights (LGPD compliance), and service usage rules.
+Instead of relying on the auth session's `provider_token`, we'll implement a **separate OAuth 2.0 flow** specifically for Google Calendar. This completely decouples calendar access from the login mechanism.
 
-2. **Links on the Auth page**: Add a footer below the login/signup form with links to both pages (e.g., "Ao continuar, você concorda com nossa Política de Privacidade e Termos de Serviço").
+```text
+┌──────────┐    ┌──────────────────────┐    ┌────────┐    ┌──────────┐
+│ Settings │───>│ Edge: google-calendar │───>│ Google │───>│ Callback │
+│  Button  │    │  -auth (get URL)     │    │ OAuth  │    │  /gcal   │
+└──────────┘    └──────────────────────┘    └────────┘    └──────────┘
+                                                              │
+                                                              ▼
+                                                    ┌──────────────────┐
+                                                    │ Edge: exchange   │
+                                                    │ code for tokens  │
+                                                    │ → store in DB    │
+                                                    └──────────────────┘
+```
 
-3. **Route registration**: Add both routes as public routes in `App.tsx`.
+### Requirements
+Two new secrets needed: **GOOGLE_CLIENT_ID** and **GOOGLE_CLIENT_SECRET** (from the same Google Cloud project used for login). The user will need to provide these.
 
-### Files to create
-- `src/pages/PrivacyPolicy.tsx` — Full privacy policy page with SoMA branding, scroll layout, back-to-login link
-- `src/pages/TermsOfService.tsx` — Full terms of service page, same layout pattern
+### Database Changes
+Create a `google_calendar_tokens` table:
+- `id` (uuid, PK)
+- `user_id` (uuid, references auth.users, unique)
+- `access_token` (text)
+- `refresh_token` (text)
+- `token_expires_at` (timestamptz)
+- `created_at`, `updated_at`
+- RLS: users can only read/manage their own tokens
 
-### Files to edit
-- `src/App.tsx` — Add two public routes (`/privacy-policy`, `/terms-of-service`)
-- `src/pages/Auth.tsx` — Add footer links below the form area (after the Dialog, before closing divs around line 740)
+### Files to Create
+1. **`supabase/functions/google-calendar-auth/index.ts`** — Two actions:
+   - `action: "authorize"`: Builds Google OAuth URL with `calendar.events` scope and redirects
+   - `action: "callback"`: Exchanges auth code for tokens, stores in DB, redirects back to `/settings`
+   - `action: "refresh"`: Refreshes expired access tokens using stored refresh_token
 
-### Content highlights
-- **Privacy Policy**: Data collected (personal info, location via IBGE, Google profile data), purpose, storage (Lovable Cloud), sharing policy, cookies, LGPD rights (access, correction, deletion), contact info
-- **Terms of Service**: Eligibility, account responsibilities, acceptable use, intellectual property, service availability, limitation of liability, termination, governing law (Brazil)
+### Files to Edit
+1. **`src/hooks/useGoogleCalendar.ts`** — Refactor completely:
+   - Check connection via DB query (`google_calendar_tokens` table) instead of `provider_token`
+   - `connectGoogleCalendar()`: Opens the edge function authorize URL (full redirect)
+   - `createCalendarEvent()`: Fetches stored token from DB, refreshes if expired, passes to `create-calendar-event`
+   - Add `disconnectGoogleCalendar()` to delete stored tokens
 
-Both pages will use the app's existing styling (dark/light theme support) with a clean reading layout and a header with the SoMA logo.
+2. **`src/pages/Settings.tsx`** — Add disconnect button, update connection status display
+
+3. **`supabase/functions/create-calendar-event/index.ts`** — Minor update: also accept fetching token from DB as fallback
+
+4. **Frontend callback route**: Add `/settings/gcal-callback` route that captures the auth code from URL, sends to edge function, then redirects to `/settings`
+
+### Flow Summary
+1. User clicks "Conectar Google Calendar" → redirected to Google consent (with calendar scope only)
+2. Google redirects back → edge function exchanges code → stores tokens in `google_calendar_tokens`
+3. When creating a meeting → hook fetches stored Google token from DB → passes to edge function
+4. If token expired → automatically refreshes using stored refresh_token
 
