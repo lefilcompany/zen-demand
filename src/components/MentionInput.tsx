@@ -32,7 +32,7 @@ function attachResizeHandle(img: HTMLImageElement, onResize: () => void) {
   let startW = 0;
 
   const onMouseMove = (e: MouseEvent) => {
-    const newW = Math.max(50, Math.min(800, startW + (e.clientX - startX)));
+    const newW = Math.max(50, Math.min(1200, startW + (e.clientX - startX)));
     img.style.width = newW + "px";
     img.setAttribute("width", String(Math.round(newW)));
   };

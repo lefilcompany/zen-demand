@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Paperclip, X, Image, FileText, File, FileSpreadsheet, FileArchive, FileCode, Presentation, Loader2, Check, AlertCircle } from "lucide-react";
+import { Paperclip, X, Image, FileText, File as FileIcon, FileSpreadsheet, FileArchive, FileCode, Presentation, Loader2, Check, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 
@@ -88,10 +88,11 @@ export function InlineFileUploader({
           // Create a more descriptive name for pasted images
           const extension = item.type.split("/")[1] || "png";
           const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-          // Rename file by creating a new blob with the file data
-          const renamedFile = Object.assign(file, {
-            name: `imagem-colada-${timestamp}.${extension}`,
-          }) as File;
+          // Create a new File with a descriptive name (File.name is read-only)
+          const renamedFile = new File([file], `imagem-colada-${timestamp}.${extension}`, {
+            type: file.type,
+            lastModified: file.lastModified,
+          });
           imageFiles.push(renamedFile);
         }
       }
@@ -137,7 +138,7 @@ export function InlineFileUploader({
     if (ext === "zip" || ext === "rar" || ext === "7z" || type.includes("zip") || type.includes("rar")) return FileArchive;
     if (ext === "json" || ext === "xml" || ext === "html" || ext === "css" || ext === "js" || ext === "ts") return FileCode;
     if (type.includes("document") || ext === "doc" || ext === "docx" || ext === "txt") return FileText;
-    return File;
+    return FileIcon;
   };
 
   const getFileExtension = (name: string) => {
