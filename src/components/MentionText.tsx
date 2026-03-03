@@ -14,12 +14,23 @@ export function MentionText({ text, className }: MentionTextProps) {
   const parts = parseMentionsToArray(text);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
+  // Render a string part, converting \n to <br> elements
+  const renderStringPart = (str: string, baseKey: number) => {
+    const lines = str.split("\n");
+    return lines.map((line, i) => (
+      <span key={`${baseKey}-line-${i}`}>
+        {line}
+        {i < lines.length - 1 && <br />}
+      </span>
+    ));
+  };
+
   return (
     <>
-      <span className={cn("inline", className)}>
+      <div className={cn("whitespace-pre-wrap", className)}>
         {parts.map((part, index) => {
           if (typeof part === "string") {
-            return <span key={index}>{part}</span>;
+            return <span key={index}>{renderStringPart(part, index)}</span>;
           }
           if (part.type === "user_mention") {
             return (
@@ -65,8 +76,8 @@ export function MentionText({ text, className }: MentionTextProps) {
                 key={`img-${index}`}
                 src={part.src}
                 alt="Imagem"
-                className="max-w-[300px] h-auto rounded-md my-2 inline-block cursor-pointer hover:opacity-90 transition-opacity"
-                style={part.width ? { width: `${part.width}px`, maxWidth: '100%' } : undefined}
+                className="max-w-full h-auto rounded-md my-2 block cursor-pointer hover:opacity-90 transition-opacity"
+                style={part.width ? { width: `${part.width}px`, maxWidth: '100%' } : { maxWidth: '400px' }}
                 onClick={(e) => {
                   e.stopPropagation();
                   setLightboxSrc(part.src);
@@ -76,7 +87,7 @@ export function MentionText({ text, className }: MentionTextProps) {
           }
           return null;
         })}
-      </span>
+      </div>
 
       {/* Lightbox Dialog */}
       <Dialog open={!!lightboxSrc} onOpenChange={(open) => !open && setLightboxSrc(null)}>
