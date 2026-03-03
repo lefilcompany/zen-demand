@@ -31,6 +31,7 @@ export interface ParsedLink {
 export interface ParsedImage {
   type: "inline_image";
   src: string;
+  width?: number;
 }
 
 export type ParsedContent = string | ParsedUserMention | ParsedDemandMention | ParsedLink | ParsedImage;
@@ -39,7 +40,7 @@ export function parseMentionsToArray(text: string): ParsedContent[] {
   const parts: ParsedContent[] = [];
   
   // Combined regex to match mentions, demands, and URLs
-  const COMBINED_REGEX = /(\[\[([^:]+):([^\]]+)\]\])|(\{\{([^:]+):(#[^\}]+)\}\})|(<img\s+src="([^"]+)"\s*\/?>)|(https?:\/\/[^\s<>\[\]\{\}]+)/g;
+  const COMBINED_REGEX = /(\[\[([^:]+):([^\]]+)\]\])|(\{\{([^:]+):(#[^\}]+)\}\})|(<img\s+src="([^"]+)"(?:\s+width="(\d+)")?\s*\/?>)|(https?:\/\/[^\s<>\[\]\{\}]+)/g;
   
   let lastIndex = 0;
   COMBINED_REGEX.lastIndex = 0;
@@ -62,12 +63,13 @@ export function parseMentionsToArray(text: string): ParsedContent[] {
       const code = match[6];
       parts.push({ type: "demand_mention", demandId, code });
     } else if (match[7]) {
-      // Inline image: <img src="..." />
+      // Inline image: <img src="..." width="..." />
       const src = match[8];
-      parts.push({ type: "inline_image", src });
-    } else if (match[9]) {
+      const width = match[9] ? parseInt(match[9], 10) : undefined;
+      parts.push({ type: "inline_image", src, width });
+    } else if (match[10]) {
       // URL link
-      const url = match[9];
+      const url = match[10];
       parts.push({ type: "link", url, displayText: url });
     }
     
