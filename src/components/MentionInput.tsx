@@ -188,11 +188,13 @@ export function MentionInput({
           } else if (demandId && demandCode) {
             result += formatDemandMentionForStorage(demandId, demandCode);
           } else if (element.tagName === "IMG") {
-            // Preserve inline images with width
+            // Preserve inline images with width, ensuring newlines around images
             const src = element.getAttribute("src");
             const width = element.getAttribute("width") || element.style.width?.replace("px", "");
             if (src) {
-              result += width ? `<img src="${src}" width="${parseInt(width, 10)}" />` : `<img src="${src}" />`; 
+              if (result && !result.endsWith("\n")) result += "\n";
+              result += width ? `<img src="${src}" width="${parseInt(width, 10)}" />` : `<img src="${src}" />`;
+              result += "\n";
             }
           } else if (element.tagName === "BR") {
             result += "\n";
