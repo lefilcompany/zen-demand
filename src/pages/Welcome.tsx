@@ -17,12 +17,21 @@ export default function Welcome() {
   const [checkingProfile, setCheckingProfile] = useState(true);
   const [profileIncomplete, setProfileIncomplete] = useState(false);
 
-  // Check if Google user needs to complete profile
+  // Check if OAuth user needs to complete profile (only for non-email providers)
   useEffect(() => {
     if (!user) {
       setCheckingProfile(false);
       return;
     }
+
+    // Only check profile completion for OAuth users (Google, etc.)
+    // Email users already provide phone/state/city during signup
+    const provider = user.app_metadata?.provider;
+    if (provider === "email") {
+      setCheckingProfile(false);
+      return;
+    }
+
     const checkProfile = async () => {
       const { data } = await supabase
         .from("profiles")
@@ -30,7 +39,13 @@ export default function Welcome() {
         .eq("id", user.id)
         .single();
       
-      if (!data?.phone || !data?.state || !data?.city) {
+      // Only mark as incomplete if ALL three fields are missing/empty
+      // If at least some data exists, the profile was partially completed
+      const phoneMissing = !data?.phone || data.phone.trim() === "";
+      const stateMissing = !data?.state || data.state.trim() === "";
+      const cityMissing = !data?.city || data.city.trim() === "";
+      
+      if (phoneMissing && stateMissing && cityMissing) {
         setProfileIncomplete(true);
       }
       setCheckingProfile(false);
