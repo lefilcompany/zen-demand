@@ -28,6 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const intentionalSignOutRef = useRef(false);
 
   // Function to schedule automatic token refresh
   const scheduleTokenRefresh = useCallback((currentSession: Session | null) => {
@@ -149,7 +150,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (existingSession && shouldLogout && !sessionStorage.getItem("sessionChecked") && !isPasswordResetPage) {
         sessionStorage.setItem("sessionChecked", "true");
         // User didn't check "remember me" and this is a fresh browser session - log them out
-        supabase.auth.signOut().then(() => {
+        supabase.auth.signOut({ scope: 'local' }).then(() => {
           setSession(null);
           setUser(null);
           setLoading(false);
@@ -174,14 +175,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
+    // Cross-tab session synchronization
+    const handleStorageChange = (e: StorageEvent) => {
+      // Detect changes to Supabase auth keys in localStorage from other tabs
+      if (e.key && e.key.startsWith('sb-') && e.key.endsWith('-auth-token')) {
+        if (e.newValue === null) {
+          // Another tab cleared the session (intentional global logout)
+          setSession(null);
+          setUser(null);
+          navigate("/auth");
+        } else {
+          // Another tab signed in or refreshed - re-sync
+          supabase.auth.getSession().then(({ data: { session: newSession } }) => {
+            setSession(newSession);
+            setUser(newSession?.user ?? null);
+            if (newSession) {
+              scheduleTokenRefresh(newSession);
+            }
+          });
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
     // Cleanup on unmount
     return () => {
       subscription.unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
       }
     };
-  }, [scheduleTokenRefresh]);
+  }, [scheduleTokenRefresh, navigate]);
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
