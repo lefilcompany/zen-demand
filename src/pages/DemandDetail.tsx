@@ -433,11 +433,16 @@ export default function DemandDetail() {
     let commentContent = comment.trim();
     
     // Upload any inline base64 images to storage before saving
-    try {
-      const { uploadInlineImages } = await import("@/lib/imageUploadUtils");
-      commentContent = await uploadInlineImages(commentContent);
-    } catch (err) {
-      console.error("Error uploading inline images:", err);
+    // This prevents large base64 data from exceeding character limits
+    if (commentContent.includes('data:image')) {
+      try {
+        const { uploadInlineImages } = await import("@/lib/imageUploadUtils");
+        commentContent = await uploadInlineImages(commentContent);
+      } catch (err) {
+        console.error("Error uploading inline images:", err);
+        // If upload fails, strip base64 images to prevent oversized content
+        commentContent = commentContent.replace(/<img\s+src="data:[^"]*"[^>]*\/?>/g, '[imagem não enviada]');
+      }
     }
     
     // Check if user is in "Ajustes" filter - if so, create adjustment_request instead

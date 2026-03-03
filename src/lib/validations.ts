@@ -50,12 +50,13 @@ export const DemandUpdateSchema = z.object({
 });
 
 // ==================== INTERACTION SCHEMAS ====================
+// Content limit raised to 50000 to support inline images with storage URLs
 
 export const InteractionCreateSchema = z.object({
   demand_id: z.string().uuid("ID da demanda inválido"),
   interaction_type: nonEmptyString.max(50, "Tipo de interação muito longo"),
   content: trimmedString
-    .max(50000, "Conteúdo deve ter no máximo 50000 caracteres")
+    .max(50000, "Conteúdo excede o limite permitido")
     .optional()
     .nullable(),
   metadata: z.any().optional().nullable(),
