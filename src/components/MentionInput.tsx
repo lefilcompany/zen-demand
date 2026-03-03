@@ -69,7 +69,8 @@ export function MentionInput({
   const checkIsEmpty = useCallback(() => {
     if (!editorRef.current) return true;
     const text = editorRef.current.textContent || "";
-    return text.trim() === "";
+    const hasImages = editorRef.current.querySelector("img") !== null;
+    return text.trim() === "" && !hasImages;
   }, []);
 
   // Calculate dropdown position based on available space
@@ -140,10 +141,15 @@ export function MentionInput({
             result += formatMentionForStorage(userId, userName);
           } else if (demandId && demandCode) {
             result += formatDemandMentionForStorage(demandId, demandCode);
+          } else if (element.tagName === "IMG") {
+            // Preserve inline images
+            const src = element.getAttribute("src");
+            if (src) {
+              result += `<img src="${src}" />`;
+            }
           } else if (element.tagName === "BR") {
             result += "\n";
           } else if (["P", "DIV", "BLOCKQUOTE", "LI"].includes(element.tagName)) {
-            // Block-level elements: recurse into children and add newline after
             const inner = extractContent(element);
             if (result && !result.endsWith("\n") && inner) {
               result += "\n";
@@ -153,7 +159,6 @@ export function MentionInput({
               result += "\n";
             }
           } else {
-            // Inline elements: recurse into children
             result += extractContent(element);
           }
         }
@@ -180,15 +185,46 @@ export function MentionInput({
     
     parts.forEach((part) => {
       if (typeof part === "string") {
-        const lines = part.split("\n");
-        lines.forEach((line, index) => {
-          if (line) {
-            editorRef.current!.appendChild(document.createTextNode(line));
+        // Check for inline images within text parts
+        const imgRegex = /<img\s+src="([^"]+)"\s*\/?>/g;
+        let lastIndex = 0;
+        let match;
+        
+        while ((match = imgRegex.exec(part)) !== null) {
+          // Add text before the image
+          const textBefore = part.slice(lastIndex, match.index);
+          if (textBefore) {
+            const lines = textBefore.split("\n");
+            lines.forEach((line, index) => {
+              if (line) {
+                editorRef.current!.appendChild(document.createTextNode(line));
+              }
+              if (index < lines.length - 1) {
+                editorRef.current!.appendChild(document.createElement("br"));
+              }
+            });
           }
-          if (index < lines.length - 1) {
-            editorRef.current!.appendChild(document.createElement("br"));
-          }
-        });
+          // Add the image element
+          const img = document.createElement("img");
+          img.src = match[1];
+          img.className = "max-w-[300px] h-auto rounded-md my-2 inline-block";
+          editorRef.current!.appendChild(img);
+          lastIndex = match.index + match[0].length;
+        }
+        
+        // Add remaining text after last image (or all text if no images)
+        const remaining = part.slice(lastIndex);
+        if (remaining) {
+          const lines = remaining.split("\n");
+          lines.forEach((line, index) => {
+            if (line) {
+              editorRef.current!.appendChild(document.createTextNode(line));
+            }
+            if (index < lines.length - 1) {
+              editorRef.current!.appendChild(document.createElement("br"));
+            }
+          });
+        }
       } else if (part.type === "user_mention") {
         const mentionEl = createUserMentionElement(part.userId, part.name);
         editorRef.current!.appendChild(mentionEl);
@@ -468,21 +504,82 @@ export function MentionInput({
     e.preventDefault();
     
     const clipboardData = e.clipboardData;
-    // Prefer plain text to avoid pasting HTML formatting
-    let text = clipboardData.getData("text/plain");
     
-    if (!text) {
-      // Fallback: extract text from HTML
-      const html = clipboardData.getData("text/html");
-      if (html) {
-        const doc = new DOMParser().parseFromString(html, "text/html");
-        text = doc.body.textContent || "";
+    // Check for pasted images first
+    const items = clipboardData.items;
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        // For image files, we can't handle upload here without supabase import
+        // But we can handle HTML img tags from rich content
+        break;
       }
+    }
+    
+    // Try HTML first to preserve images
+    const html = clipboardData.getData("text/html");
+    if (html) {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const images = doc.querySelectorAll("img");
+      
+      if (images.length > 0) {
+        // Has images - preserve them along with text
+        const selection = window.getSelection();
+        if (!selection || !selection.rangeCount) return;
+        
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+        const fragment = document.createDocumentFragment();
+        
+        const processNode = (node: Node) => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.textContent || "";
+            const lines = text.split(/\r?\n/);
+            lines.forEach((line, idx) => {
+              if (line) fragment.appendChild(document.createTextNode(line));
+              if (idx < lines.length - 1) fragment.appendChild(document.createElement("br"));
+            });
+          } else if (node.nodeType === Node.ELEMENT_NODE) {
+            const el = node as HTMLElement;
+            if (el.tagName === "IMG") {
+              const src = el.getAttribute("src");
+              if (src && src.startsWith("http")) {
+                const img = document.createElement("img");
+                img.src = src;
+                img.className = "max-w-[300px] h-auto rounded-md my-2 inline-block";
+                fragment.appendChild(img);
+              }
+            } else if (el.tagName === "BR") {
+              fragment.appendChild(document.createElement("br"));
+            } else {
+              el.childNodes.forEach(processNode);
+              if (["P", "DIV"].includes(el.tagName)) {
+                fragment.appendChild(document.createElement("br"));
+              }
+            }
+          }
+        };
+        
+        doc.body.childNodes.forEach(processNode);
+        range.insertNode(fragment);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        
+        onChange(getStorageValue());
+        setIsEmpty(checkIsEmpty());
+        return;
+      }
+    }
+    
+    // Fallback: plain text
+    let text = clipboardData.getData("text/plain");
+    if (!text && html) {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      text = doc.body.textContent || "";
     }
     
     if (!text) return;
     
-    // Insert text preserving line breaks as <br> elements
     const selection = window.getSelection();
     if (!selection || !selection.rangeCount) return;
     
@@ -502,8 +599,6 @@ export function MentionInput({
     });
     
     range.insertNode(fragment);
-    
-    // Move cursor to end of inserted content
     range.collapse(false);
     selection.removeAllRanges();
     selection.addRange(range);
