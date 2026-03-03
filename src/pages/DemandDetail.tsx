@@ -41,6 +41,7 @@ import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { cn } from "@/lib/utils";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
+import { copyRichContent } from "@/lib/clipboardUtils";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { sendAdjustmentPushNotification, sendCommentPushNotification, sendMentionPushNotification } from "@/hooks/useSendPushNotification";
@@ -1132,32 +1133,7 @@ export default function DemandDetail() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={async () => {
-                                const content = interaction.content || "";
-                                try {
-                                  // Create a temporary element to render HTML
-                                  const tempDiv = document.createElement("div");
-                                  tempDiv.innerHTML = content;
-                                  const plainText = tempDiv.textContent || tempDiv.innerText || "";
-                                  
-                                  // Use Clipboard API to copy both HTML and plain text
-                                  const blob = new Blob([content], { type: "text/html" });
-                                  const textBlob = new Blob([plainText], { type: "text/plain" });
-                                  const clipboardItem = new ClipboardItem({
-                                    "text/html": blob,
-                                    "text/plain": textBlob,
-                                  });
-                                  await navigator.clipboard.write([clipboardItem]);
-                                  toast.success("Comentário copiado com formatação!");
-                                } catch {
-                                  // Fallback: copy plain text
-                                  const tempDiv = document.createElement("div");
-                                  tempDiv.innerHTML = content;
-                                  const plainText = tempDiv.textContent || tempDiv.innerText || "";
-                                  await navigator.clipboard.writeText(plainText);
-                                  toast.success("Comentário copiado!");
-                                }
-                              }}>
+                              <DropdownMenuItem onClick={() => copyRichContent(interaction.content || "")}>
                                 <Copy className="h-3 w-3 mr-2" />
                                 Copiar
                               </DropdownMenuItem>
