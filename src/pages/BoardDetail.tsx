@@ -111,7 +111,7 @@ function RoleSelector({
         type="button"
         onClick={handleToggle}
         disabled={isLoading}
-        className={`text-xs px-3 py-1.5 rounded-full border font-medium flex items-center gap-1.5 transition-all duration-200 shadow-sm ${roleButtonColors[currentRole] || ""}`}
+        className={`text-[11px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border font-medium flex items-center gap-1 sm:gap-1.5 transition-all duration-200 shadow-sm ${roleButtonColors[currentRole] || ""}`}
       >
         {isLoading ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
