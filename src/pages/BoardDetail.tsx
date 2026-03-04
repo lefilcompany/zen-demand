@@ -97,10 +97,10 @@ function RoleSelector({
 
   if (disabled) {
     return (
-      <Badge className={`text-xs ${roleColors[currentRole] || ""} flex items-center gap-1`}>
+      <span className={`inline-flex items-center gap-1 text-[11px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-full border font-medium ${roleButtonColors[currentRole] || ""}`}>
         {roleIcons[currentRole]}
-        {roleLabels[currentRole] || currentRole}
-      </Badge>
+        <span className="truncate max-w-[80px] sm:max-w-none">{roleLabels[currentRole] || currentRole}</span>
+      </span>
     );
   }
 
@@ -111,15 +111,15 @@ function RoleSelector({
         type="button"
         onClick={handleToggle}
         disabled={isLoading}
-        className={`text-xs px-3 py-1.5 rounded-full border font-medium flex items-center gap-1.5 transition-all duration-200 shadow-sm ${roleButtonColors[currentRole] || ""}`}
+        className={`text-[11px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border font-medium flex items-center gap-1 sm:gap-1.5 transition-all duration-200 shadow-sm ${roleButtonColors[currentRole] || ""}`}
       >
         {isLoading ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" />
         ) : (
           <>
             {roleIcons[currentRole]}
-            {roleLabels[currentRole] || currentRole}
-            <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+            <span className="truncate max-w-[70px] sm:max-w-none">{roleLabels[currentRole] || currentRole}</span>
+            <ChevronDown className={`h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform duration-200 shrink-0 ${isOpen ? "rotate-180" : ""}`} />
           </>
         )}
       </button>
@@ -563,16 +563,16 @@ export default function BoardDetail() {
                 return (
                   <div 
                     key={member.id} 
-                    className="rounded-xl border bg-card shadow-sm hover:shadow-md transition-shadow relative group"
+                    className="rounded-xl border bg-card shadow-sm hover:shadow-md transition-shadow relative group overflow-hidden"
                   >
                     {/* Colored Banner */}
-                    <div className={`h-10 sm:h-14 bg-gradient-to-r rounded-t-xl ${roleBannerColors[member.role] || "from-primary/80 via-primary to-primary/60"}`} />
+                    <div className={`h-12 sm:h-14 bg-gradient-to-r ${roleBannerColors[member.role] || "from-primary/80 via-primary to-primary/60"}`} />
                     
                     {/* "Você" Badge - top right corner */}
                     {isCurrentUser && (
-                      <div className="absolute top-2 right-2">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/90 dark:bg-background/90 text-primary shadow-md backdrop-blur-sm border border-white/50 dark:border-border">
-                          <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2">
+                        <span className="inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-white/90 dark:bg-background/90 text-primary shadow-md backdrop-blur-sm border border-white/50 dark:border-border">
+                          <svg className="h-2.5 w-2.5 sm:h-3 sm:w-3" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                           </svg>
                           Você
@@ -582,11 +582,11 @@ export default function BoardDetail() {
                     
                     {/* Remove Button - positioned on banner */}
                     {canManage && !isCurrentUser && (
-                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="secondary" size="icon" className="h-7 w-7 bg-background/80 hover:bg-background text-destructive hover:text-destructive">
-                              <UserMinus className="h-3.5 w-3.5" />
+                            <Button variant="secondary" size="icon" className="h-6 w-6 sm:h-7 sm:w-7 bg-background/80 hover:bg-background text-destructive hover:text-destructive">
+                              <UserMinus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
@@ -612,28 +612,26 @@ export default function BoardDetail() {
                     
                     {/* Avatar positioned over banner */}
                     <div className="relative px-3 sm:px-4 pb-3 sm:pb-4">
-                      <div className="absolute -top-6 sm:-top-8 left-1/2 -translate-x-1/2">
-                        <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-[3px] sm:border-4 border-background shadow-lg">
+                      <div className="absolute -top-7 sm:-top-8 left-1/2 -translate-x-1/2">
+                        <Avatar className="h-14 w-14 sm:h-16 sm:w-16 border-[3px] sm:border-4 border-background shadow-lg">
                           <AvatarImage src={member.profile?.avatar_url || undefined} className="object-cover" />
-                          <AvatarFallback className="text-base sm:text-xl bg-muted font-semibold">
+                          <AvatarFallback className="text-lg sm:text-xl bg-muted font-semibold">
                             {getInitials(member.profile?.full_name)}
                           </AvatarFallback>
                         </Avatar>
                       </div>
                       
                       {/* Member Info */}
-                      <div className="pt-8 sm:pt-10 text-center flex flex-col items-center">
-                        <p className="font-semibold text-xs sm:text-sm line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem]">
+                      <div className="pt-9 sm:pt-10 text-center flex flex-col items-center gap-1.5 sm:gap-2">
+                        <p className="font-semibold text-xs sm:text-sm line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] leading-tight">
                           {member.profile?.full_name || "Usuário"}
                         </p>
-                        <div className="mt-1">
-                          <RoleSelector
-                            currentRole={member.role}
-                            onRoleChange={(newRole) => handleRoleChange(member.id, newRole)}
-                            isLoading={updateRole.isPending}
-                            disabled={!canChangeRole}
-                          />
-                        </div>
+                        <RoleSelector
+                          currentRole={member.role}
+                          onRoleChange={(newRole) => handleRoleChange(member.id, newRole)}
+                          isLoading={updateRole.isPending}
+                          disabled={!canChangeRole}
+                        />
                       </div>
                     </div>
                   </div>
