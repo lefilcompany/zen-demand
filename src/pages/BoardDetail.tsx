@@ -97,10 +97,10 @@ function RoleSelector({
 
   if (disabled) {
     return (
-      <Badge className={`text-xs ${roleColors[currentRole] || ""} flex items-center gap-1`}>
+      <span className={`inline-flex items-center gap-1 text-[11px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-full border font-medium ${roleButtonColors[currentRole] || ""}`}>
         {roleIcons[currentRole]}
-        {roleLabels[currentRole] || currentRole}
-      </Badge>
+        <span className="truncate max-w-[80px] sm:max-w-none">{roleLabels[currentRole] || currentRole}</span>
+      </span>
     );
   }
 
