@@ -494,9 +494,9 @@ export default function BoardDetail() {
         {isAdmin && !board.is_default && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm" className="hidden sm:inline-flex shrink-0">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Excluir Quadro
+              <Button variant="destructive" size="sm" className="shrink-0">
+                <Trash2 className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Excluir Quadro</span>
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
