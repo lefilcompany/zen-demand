@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { UserPlus, Loader2, Shield, Users, Wrench, MessageSquare } from "lucide-react";
+import { UserPlus, Loader2, Shield, Users, Wrench, MessageSquare, Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const roleOptions: { value: BoardRole; label: string; description: string; icon: React.ElementType }[] = [
