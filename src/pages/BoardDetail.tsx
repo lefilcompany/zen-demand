@@ -523,7 +523,7 @@ export default function BoardDetail() {
       {/* Members - Full width below */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                 <Users className="h-5 w-5 shrink-0" />
@@ -537,9 +537,9 @@ export default function BoardDetail() {
               <AddBoardMemberDialog 
                 boardId={board.id}
                 trigger={
-                  <Button size="sm" className="hidden sm:inline-flex shrink-0">
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Adicionar
+                  <Button size="sm" className="shrink-0">
+                    <UserPlus className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Adicionar</span>
                   </Button>
                 }
               />
