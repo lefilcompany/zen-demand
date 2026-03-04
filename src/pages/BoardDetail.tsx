@@ -611,19 +611,19 @@ export default function BoardDetail() {
                     )}
                     
                     {/* Avatar positioned over banner */}
-                    <div className="relative px-4 pb-4">
-                      <div className="absolute -top-8 left-1/2 -translate-x-1/2">
-                        <Avatar className="h-16 w-16 border-4 border-background shadow-lg">
+                    <div className="relative px-3 sm:px-4 pb-3 sm:pb-4">
+                      <div className="absolute -top-6 sm:-top-8 left-1/2 -translate-x-1/2">
+                        <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-[3px] sm:border-4 border-background shadow-lg">
                           <AvatarImage src={member.profile?.avatar_url || undefined} className="object-cover" />
-                          <AvatarFallback className="text-xl bg-muted font-semibold">
+                          <AvatarFallback className="text-base sm:text-xl bg-muted font-semibold">
                             {getInitials(member.profile?.full_name)}
                           </AvatarFallback>
                         </Avatar>
                       </div>
                       
                       {/* Member Info */}
-                      <div className="pt-10 text-center flex flex-col items-center">
-                        <p className="font-semibold text-sm line-clamp-2 min-h-[2.5rem]">
+                      <div className="pt-8 sm:pt-10 text-center flex flex-col items-center">
+                        <p className="font-semibold text-xs sm:text-sm line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem]">
                           {member.profile?.full_name || "Usuário"}
                         </p>
                         <div className="mt-1">
