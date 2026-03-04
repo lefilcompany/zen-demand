@@ -82,7 +82,7 @@ function RoleSelector({
     if (!isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
-      const dropdownHeight = 180;
+      const dropdownHeight = 180; // approximate height of dropdown
       setOpenUpward(spaceBelow < dropdownHeight);
     }
     setIsOpen(!isOpen);
@@ -189,6 +189,7 @@ export default function BoardDetail() {
   const removeMember = useRemoveBoardMember();
   const updateRole = useUpdateBoardMemberRole();
 
+  // Edit state
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editName, setEditName] = useState("");
@@ -198,6 +199,7 @@ export default function BoardDetail() {
   const isAdmin = myRole === "admin";
   const isRequester = myRole === "requester";
 
+  // Initialize edit values when board loads
   useEffect(() => {
     if (board) {
       setEditName(board.name);
@@ -210,7 +212,9 @@ export default function BoardDetail() {
     try {
       await updateBoard.mutateAsync({ id: board.id, name: editName.trim() });
       setIsEditingName(false);
-    } catch (error) {}
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
   const handleSaveDescription = async () => {
@@ -218,7 +222,9 @@ export default function BoardDetail() {
     try {
       await updateBoard.mutateAsync({ id: board.id, description: editDescription.trim() || null });
       setIsEditingDescription(false);
-    } catch (error) {}
+    } catch (error) {
+      // Error handled by hook
+    }
   };
 
   const handleCancelName = () => {
@@ -233,6 +239,7 @@ export default function BoardDetail() {
 
   const handleDeleteBoard = async () => {
     if (!board) return;
+    
     try {
       await deleteBoard.mutateAsync({ boardId: board.id, teamId: board.team_id });
       toast.success("Quadro excluído com sucesso!");
@@ -244,6 +251,7 @@ export default function BoardDetail() {
 
   const handleRemoveMember = async (memberId: string) => {
     if (!boardId) return;
+    
     try {
       await removeMember.mutateAsync({ memberId, boardId });
     } catch (error) {
@@ -253,6 +261,7 @@ export default function BoardDetail() {
 
   const handleRoleChange = async (memberId: string, newRole: BoardRole) => {
     if (!boardId) return;
+    
     try {
       await updateRole.mutateAsync({ memberId, boardId, newRole });
     } catch (error) {
@@ -285,16 +294,19 @@ export default function BoardDetail() {
     );
   }
 
-  // Requester view
+  // Requester view - simplified with description and horizontal member list
   if (isRequester) {
     return (
       <div className="space-y-4 sm:space-y-6">
+        {/* Breadcrumbs */}
         <PageBreadcrumb
           items={[
             { label: "Quadros", href: "/boards", icon: LayoutGrid },
             { label: board.name, isCurrent: true },
           ]}
         />
+
+        {/* Header */}
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{board.name}</h1>
@@ -303,6 +315,8 @@ export default function BoardDetail() {
             )}
           </div>
         </div>
+
+        {/* Description Card */}
         {board.description && (
           <Card>
             <CardHeader className="pb-3">
@@ -313,6 +327,8 @@ export default function BoardDetail() {
             </CardContent>
           </Card>
         )}
+
+        {/* Members - Grid Layout */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
@@ -337,7 +353,10 @@ export default function BoardDetail() {
                     key={member.id} 
                     className="rounded-xl border bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                   >
+                    {/* Colored Banner */}
                     <div className={`h-16 bg-gradient-to-r ${roleBannerColors[member.role] || "from-primary/80 via-primary to-primary/60"}`} />
+                    
+                    {/* Avatar positioned over banner */}
                     <div className="relative px-4 pb-4">
                       <div className="absolute -top-10 left-1/2 -translate-x-1/2">
                         <Avatar className="h-20 w-20 border-4 border-background shadow-lg">
@@ -347,6 +366,8 @@ export default function BoardDetail() {
                           </AvatarFallback>
                         </Avatar>
                       </div>
+                      
+                      {/* Member Info */}
                       <div className="pt-12 text-center">
                         <p className="font-semibold text-sm sm:text-base line-clamp-2 min-h-[2.5rem]">
                           {member.profile?.full_name || "Usuário"}
@@ -371,166 +392,152 @@ export default function BoardDetail() {
     );
   }
 
-  // Admin/Moderator/Executor view - floating card design
+  // Admin/Moderator/Executor view - full view
   return (
-    <div className="min-h-full -mx-4 sm:-mx-6 md:-mx-8 -mt-4 sm:-mt-6">
-      {/* Dark contrasting header */}
-      <div className="bg-gradient-to-br from-sidebar-background via-sidebar-background to-sidebar-accent px-4 sm:px-6 md:px-8 pt-4 sm:pt-6 pb-28 sm:pb-32 relative overflow-hidden">
-        {/* Dot pattern overlay */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
-        
-        {/* Primary accent glow */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        
-        <div className="relative z-10">
-          <PageBreadcrumb
-            items={[
-              { label: "Quadros", href: "/boards", icon: LayoutGrid },
-              { label: board.name, isCurrent: true },
-            ]}
-          />
-        </div>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Breadcrumbs */}
+      <PageBreadcrumb
+        items={[
+          { label: "Quadros", href: "/boards", icon: LayoutGrid },
+          { label: board.name, isCurrent: true },
+        ]}
+      />
 
-        <div className="relative z-10 mt-5 sm:mt-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 flex-1 space-y-2">
-            {/* Editable Name */}
-            <div className="flex flex-wrap items-center gap-2">
-              {isEditingName && canManage ? (
-                <div className="flex items-center gap-2 flex-1 max-w-md">
-                  <Input
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="text-xl font-bold bg-white/10 border-white/20 text-sidebar-foreground placeholder:text-sidebar-foreground/50 focus:border-primary"
-                    placeholder="Nome do quadro"
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleSaveName();
-                      if (e.key === "Escape") handleCancelName();
-                    }}
-                  />
-                  <Button size="icon" variant="ghost" onClick={handleSaveName} disabled={!editName.trim() || updateBoard.isPending} className="text-sidebar-foreground hover:bg-white/10">
-                    {updateBoard.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4 text-green-400" />}
-                  </Button>
-                  <Button size="icon" variant="ghost" onClick={handleCancelName} className="text-sidebar-foreground/60 hover:bg-white/10">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 group">
-                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight truncate text-sidebar-foreground">{board.name}</h1>
-                  {canManage && (
-                    <Button 
-                      size="icon" 
-                      variant="ghost" 
-                      className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-sidebar-foreground/60 hover:bg-white/10"
-                      onClick={() => setIsEditingName(true)}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
-                </div>
-              )}
-              {board.is_default && (
-                <Badge className="text-xs shrink-0 bg-white/15 text-sidebar-foreground border-white/20 hover:bg-white/20">Padrão</Badge>
-              )}
-            </div>
-
-            {/* Editable Description */}
-            {isEditingDescription && canManage ? (
-              <div className="flex items-start gap-2 max-w-lg">
-                <Textarea
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                  className="text-sm min-h-[60px] bg-white/10 border-white/20 text-sidebar-foreground placeholder:text-sidebar-foreground/50"
-                  placeholder="Descrição do quadro (opcional)"
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1 space-y-2">
+          {/* Editable Name */}
+          <div className="flex flex-wrap items-center gap-2">
+            {isEditingName && canManage ? (
+              <div className="flex items-center gap-2 flex-1 max-w-md">
+                <Input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="text-xl font-bold"
+                  placeholder="Nome do quadro"
                   autoFocus
                   onKeyDown={(e) => {
-                    if (e.key === "Escape") handleCancelDescription();
+                    if (e.key === "Enter") handleSaveName();
+                    if (e.key === "Escape") handleCancelName();
                   }}
                 />
-                <div className="flex flex-col gap-1">
-                  <Button size="icon" variant="ghost" onClick={handleSaveDescription} disabled={updateBoard.isPending} className="text-sidebar-foreground hover:bg-white/10">
-                    {updateBoard.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4 text-green-400" />}
-                  </Button>
-                  <Button size="icon" variant="ghost" onClick={handleCancelDescription} className="text-sidebar-foreground/60 hover:bg-white/10">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
+                <Button size="icon" variant="ghost" onClick={handleSaveName} disabled={!editName.trim() || updateBoard.isPending}>
+                  {updateBoard.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4 text-green-600" />}
+                </Button>
+                <Button size="icon" variant="ghost" onClick={handleCancelName}>
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </Button>
               </div>
             ) : (
               <div className="flex items-center gap-2 group">
-                {board.description ? (
-                  <p className="text-sm text-sidebar-foreground/60 line-clamp-2">{board.description}</p>
-                ) : canManage ? (
-                  <p className="text-sm text-sidebar-foreground/30 italic cursor-pointer hover:text-sidebar-foreground/50 transition-colors" onClick={() => setIsEditingDescription(true)}>Clique para adicionar descrição</p>
-                ) : null}
-                {canManage && board.description && (
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight truncate">{board.name}</h1>
+                {canManage && (
                   <Button 
                     size="icon" 
                     variant="ghost" 
-                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 text-sidebar-foreground/60 hover:bg-white/10"
-                    onClick={() => setIsEditingDescription(true)}
+                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => setIsEditingName(true)}
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
                 )}
               </div>
             )}
+            {board.is_default && (
+              <Badge variant="secondary" className="text-xs shrink-0">Padrão</Badge>
+            )}
           </div>
-          
-          {isAdmin && !board.is_default && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button size="sm" className="shrink-0 bg-red-500/20 border border-red-400/30 text-red-300 hover:bg-red-500/30 hover:text-red-200">
-                  <Trash2 className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Excluir Quadro</span>
+
+          {/* Editable Description */}
+          {isEditingDescription && canManage ? (
+            <div className="flex items-start gap-2 max-w-lg">
+              <Textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                className="text-sm min-h-[60px]"
+                placeholder="Descrição do quadro (opcional)"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") handleCancelDescription();
+                }}
+              />
+              <div className="flex flex-col gap-1">
+                <Button size="icon" variant="ghost" onClick={handleSaveDescription} disabled={updateBoard.isPending}>
+                  {updateBoard.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4 text-green-600" />}
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Excluir Quadro</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Tem certeza que deseja excluir o quadro "{board.name}"? Esta ação não pode ser desfeita.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteBoard} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    Excluir
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                <Button size="icon" variant="ghost" onClick={handleCancelDescription}>
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 group">
+              {board.description ? (
+                <p className="text-sm text-muted-foreground line-clamp-2">{board.description}</p>
+              ) : canManage ? (
+                <p className="text-sm text-muted-foreground/60 italic">Clique para adicionar descrição</p>
+              ) : null}
+              {canManage && (
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  onClick={() => setIsEditingDescription(true)}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
           )}
         </div>
+        
+        {isAdmin && !board.is_default && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm" className="shrink-0">
+                <Trash2 className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Excluir Quadro</span>
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Excluir Quadro</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tem certeza que deseja excluir o quadro "{board.name}"? Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteBoard} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Excluir
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
 
-      {/* Floating cards overlapping dark header */}
-      <div className="relative -mt-20 sm:-mt-24 px-4 sm:px-6 md:px-8 space-y-4 sm:space-y-6 pb-6">
-        {/* Services floating card */}
-        <div className="bg-card rounded-xl sm:rounded-2xl border shadow-lg shadow-black/5 dark:shadow-black/20 p-4 sm:p-6">
-          <BoardScopeConfig boardId={board.id} canEdit={canManage} />
-        </div>
+      {/* Services - Full width */}
+      <BoardScopeConfig boardId={board.id} canEdit={canManage} />
 
-        {/* Members floating card */}
-        <div className="bg-card rounded-xl sm:rounded-2xl border shadow-lg shadow-black/5 dark:shadow-black/20 overflow-hidden">
-          <div className="p-4 sm:p-6 pb-3 flex items-start justify-between gap-3 border-b">
+      {/* Members - Full width below */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="flex items-center gap-2 text-base sm:text-lg font-semibold text-foreground">
-                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Users className="h-4 w-4 text-primary" />
-                </div>
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Users className="h-5 w-5 shrink-0" />
                 <span className="truncate">Membros do Quadro</span>
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1 ml-10">
+              </CardTitle>
+              <CardDescription className="text-sm">
                 {members?.length || 0} membros neste quadro
-              </p>
+              </CardDescription>
             </div>
             {canManage && (
               <AddBoardMemberDialog 
                 boardId={board.id}
                 trigger={
-                  <Button size="sm" className="shrink-0 shadow-sm">
+                  <Button size="sm" className="shrink-0">
                     <UserPlus className="h-4 w-4 sm:mr-2" />
                     <span className="hidden sm:inline">Adicionar</span>
                   </Button>
@@ -538,105 +545,107 @@ export default function BoardDetail() {
               />
             )}
           </div>
-          <div className="p-4 sm:p-6">
-            {membersLoading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <Skeleton key={i} className="h-32 sm:h-40 rounded-xl" />
-                ))}
-              </div>
-            ) : members && members.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                {members.map((member) => {
-                  const isCurrentUser = member.user_id === user?.id;
-                  const canChangeRole = isAdmin && !isCurrentUser;
+        </CardHeader>
+        <CardContent>
+          {membersLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="h-32 sm:h-40 rounded-xl" />
+              ))}
+            </div>
+          ) : members && members.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              {members.map((member) => {
+                const isCurrentUser = member.user_id === user?.id;
+                // Only admins can change roles, and they can't change their own
+                const canChangeRole = isAdmin && !isCurrentUser;
 
-                  return (
-                    <div 
-                      key={member.id} 
-                      className="rounded-xl border bg-background shadow-sm hover:shadow-md transition-all duration-200 relative group overflow-hidden hover:-translate-y-0.5"
-                    >
-                      {/* Colored Banner */}
-                      <div className={`h-12 sm:h-14 bg-gradient-to-r ${roleBannerColors[member.role] || "from-primary/80 via-primary to-primary/60"}`} />
+                return (
+                  <div 
+                    key={member.id} 
+                    className="rounded-xl border bg-card shadow-sm hover:shadow-md transition-shadow relative group overflow-hidden"
+                  >
+                    {/* Colored Banner */}
+                    <div className={`h-12 sm:h-14 bg-gradient-to-r ${roleBannerColors[member.role] || "from-primary/80 via-primary to-primary/60"}`} />
+                    
+                    {/* "Você" Badge - top right corner */}
+                    {isCurrentUser && (
+                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2">
+                        <span className="inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-white/90 dark:bg-background/90 text-primary shadow-md backdrop-blur-sm border border-white/50 dark:border-border">
+                          <svg className="h-2.5 w-2.5 sm:h-3 sm:w-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                          </svg>
+                          Você
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Remove Button - positioned on banner */}
+                    {canManage && !isCurrentUser && (
+                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="secondary" size="icon" className="h-6 w-6 sm:h-7 sm:w-7 bg-background/80 hover:bg-background text-destructive hover:text-destructive">
+                              <UserMinus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remover Membro</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja remover {member.profile?.full_name} deste quadro?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleRemoveMember(member.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Remover
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    )}
+                    
+                    {/* Avatar positioned over banner */}
+                    <div className="relative px-3 sm:px-4 pb-3 sm:pb-4">
+                      <div className="absolute -top-7 sm:-top-8 left-1/2 -translate-x-1/2">
+                        <Avatar className="h-14 w-14 sm:h-16 sm:w-16 border-[3px] sm:border-4 border-background shadow-lg">
+                          <AvatarImage src={member.profile?.avatar_url || undefined} className="object-cover" />
+                          <AvatarFallback className="text-lg sm:text-xl bg-muted font-semibold">
+                            {getInitials(member.profile?.full_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
                       
-                      {/* "Você" Badge */}
-                      {isCurrentUser && (
-                        <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2">
-                          <span className="inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-white/90 dark:bg-background/90 text-primary shadow-md backdrop-blur-sm border border-white/50 dark:border-border">
-                            <svg className="h-2.5 w-2.5 sm:h-3 sm:w-3" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                            </svg>
-                            Você
-                          </span>
-                        </div>
-                      )}
-                      
-                      {/* Remove Button */}
-                      {canManage && !isCurrentUser && (
-                        <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="secondary" size="icon" className="h-6 w-6 sm:h-7 sm:w-7 bg-background/80 hover:bg-background text-destructive hover:text-destructive">
-                                <UserMinus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Remover Membro</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Tem certeza que deseja remover {member.profile?.full_name} deste quadro?
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction 
-                                  onClick={() => handleRemoveMember(member.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Remover
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      )}
-                      
-                      {/* Avatar */}
-                      <div className="relative px-3 sm:px-4 pb-3 sm:pb-4">
-                        <div className="absolute -top-7 sm:-top-8 left-1/2 -translate-x-1/2">
-                          <Avatar className="h-14 w-14 sm:h-16 sm:w-16 border-[3px] sm:border-4 border-background shadow-lg ring-2 ring-white/20">
-                            <AvatarImage src={member.profile?.avatar_url || undefined} className="object-cover" />
-                            <AvatarFallback className="text-lg sm:text-xl bg-muted font-semibold">
-                              {getInitials(member.profile?.full_name)}
-                            </AvatarFallback>
-                          </Avatar>
-                        </div>
-                        
-                        <div className="pt-9 sm:pt-10 text-center flex flex-col items-center gap-1.5 sm:gap-2">
-                          <p className="font-semibold text-xs sm:text-sm line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] leading-tight">
-                            {member.profile?.full_name || "Usuário"}
-                          </p>
-                          <RoleSelector
-                            currentRole={member.role}
-                            onRoleChange={(newRole) => handleRoleChange(member.id, newRole)}
-                            isLoading={updateRole.isPending}
-                            disabled={!canChangeRole}
-                          />
-                        </div>
+                      {/* Member Info */}
+                      <div className="pt-9 sm:pt-10 text-center flex flex-col items-center gap-1.5 sm:gap-2">
+                        <p className="font-semibold text-xs sm:text-sm line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] leading-tight">
+                          {member.profile?.full_name || "Usuário"}
+                        </p>
+                        <RoleSelector
+                          currentRole={member.role}
+                          onRoleChange={(newRole) => handleRoleChange(member.id, newRole)}
+                          isLoading={updateRole.isPending}
+                          disabled={!canChangeRole}
+                        />
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>Nenhum membro neste quadro</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p>Nenhum membro neste quadro</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
