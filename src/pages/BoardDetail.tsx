@@ -114,12 +114,12 @@ function RoleSelector({
         className={`text-[11px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border font-medium flex items-center gap-1 sm:gap-1.5 transition-all duration-200 shadow-sm ${roleButtonColors[currentRole] || ""}`}
       >
         {isLoading ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          <Loader2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" />
         ) : (
           <>
             {roleIcons[currentRole]}
-            {roleLabels[currentRole] || currentRole}
-            <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+            <span className="truncate max-w-[70px] sm:max-w-none">{roleLabels[currentRole] || currentRole}</span>
+            <ChevronDown className={`h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform duration-200 shrink-0 ${isOpen ? "rotate-180" : ""}`} />
           </>
         )}
       </button>
