@@ -347,7 +347,7 @@ export default function BoardDetail() {
                 ))}
               </div>
             ) : members && members.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                 {members.map((member) => (
                   <div 
                     key={member.id} 
@@ -494,9 +494,9 @@ export default function BoardDetail() {
         {isAdmin && !board.is_default && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm" className="hidden sm:inline-flex shrink-0">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Excluir Quadro
+              <Button variant="destructive" size="sm" className="shrink-0">
+                <Trash2 className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Excluir Quadro</span>
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -523,7 +523,7 @@ export default function BoardDetail() {
       {/* Members - Full width below */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                 <Users className="h-5 w-5 shrink-0" />
@@ -537,9 +537,9 @@ export default function BoardDetail() {
               <AddBoardMemberDialog 
                 boardId={board.id}
                 trigger={
-                  <Button size="sm" className="hidden sm:inline-flex shrink-0">
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Adicionar
+                  <Button size="sm" className="shrink-0">
+                    <UserPlus className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Adicionar</span>
                   </Button>
                 }
               />
@@ -548,13 +548,13 @@ export default function BoardDetail() {
         </CardHeader>
         <CardContent>
           {membersLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-40 rounded-xl" />
+                <Skeleton key={i} className="h-32 sm:h-40 rounded-xl" />
               ))}
             </div>
           ) : members && members.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {members.map((member) => {
                 const isCurrentUser = member.user_id === user?.id;
                 // Only admins can change roles, and they can't change their own
@@ -566,7 +566,7 @@ export default function BoardDetail() {
                     className="rounded-xl border bg-card shadow-sm hover:shadow-md transition-shadow relative group"
                   >
                     {/* Colored Banner */}
-                    <div className={`h-14 bg-gradient-to-r rounded-t-xl ${roleBannerColors[member.role] || "from-primary/80 via-primary to-primary/60"}`} />
+                    <div className={`h-10 sm:h-14 bg-gradient-to-r rounded-t-xl ${roleBannerColors[member.role] || "from-primary/80 via-primary to-primary/60"}`} />
                     
                     {/* "Você" Badge - top right corner */}
                     {isCurrentUser && (
@@ -611,19 +611,19 @@ export default function BoardDetail() {
                     )}
                     
                     {/* Avatar positioned over banner */}
-                    <div className="relative px-4 pb-4">
-                      <div className="absolute -top-8 left-1/2 -translate-x-1/2">
-                        <Avatar className="h-16 w-16 border-4 border-background shadow-lg">
+                    <div className="relative px-3 sm:px-4 pb-3 sm:pb-4">
+                      <div className="absolute -top-6 sm:-top-8 left-1/2 -translate-x-1/2">
+                        <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-[3px] sm:border-4 border-background shadow-lg">
                           <AvatarImage src={member.profile?.avatar_url || undefined} className="object-cover" />
-                          <AvatarFallback className="text-xl bg-muted font-semibold">
+                          <AvatarFallback className="text-base sm:text-xl bg-muted font-semibold">
                             {getInitials(member.profile?.full_name)}
                           </AvatarFallback>
                         </Avatar>
                       </div>
                       
                       {/* Member Info */}
-                      <div className="pt-10 text-center flex flex-col items-center">
-                        <p className="font-semibold text-sm line-clamp-2 min-h-[2.5rem]">
+                      <div className="pt-8 sm:pt-10 text-center flex flex-col items-center">
+                        <p className="font-semibold text-xs sm:text-sm line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem]">
                           {member.profile?.full_name || "Usuário"}
                         </p>
                         <div className="mt-1">
