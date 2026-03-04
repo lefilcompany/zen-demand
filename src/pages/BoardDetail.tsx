@@ -566,7 +566,7 @@ export default function BoardDetail() {
                     className="rounded-xl border bg-card shadow-sm hover:shadow-md transition-shadow relative group"
                   >
                     {/* Colored Banner */}
-                    <div className={`h-14 bg-gradient-to-r rounded-t-xl ${roleBannerColors[member.role] || "from-primary/80 via-primary to-primary/60"}`} />
+                    <div className={`h-10 sm:h-14 bg-gradient-to-r rounded-t-xl ${roleBannerColors[member.role] || "from-primary/80 via-primary to-primary/60"}`} />
                     
                     {/* "Você" Badge - top right corner */}
                     {isCurrentUser && (
