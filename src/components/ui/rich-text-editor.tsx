@@ -654,7 +654,14 @@ function processContentWithLinks(html: string): string {
     return `<p class="whitespace-pre-wrap">${processTextContent(html)}</p>`;
   }
   
-  const doc = new DOMParser().parseFromString(html, "text/html");
+  // When content has HTML tags (e.g. <img>) mixed with \n line breaks,
+  // convert \n to <br> so line breaks survive DOM parsing
+  let normalizedHtml = html;
+  if (/\n/.test(html)) {
+    normalizedHtml = html.replace(/\n/g, '<br>');
+  }
+  
+  const doc = new DOMParser().parseFromString(normalizedHtml, "text/html");
   
   const processTextNodes = (node: Node) => {
     if (node.nodeType === Node.TEXT_NODE && node.textContent) {

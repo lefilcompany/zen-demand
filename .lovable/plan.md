@@ -1,31 +1,29 @@
 
+## Problem Analysis
 
-## Problems Identified
+When a user opens the app in a new tab, the "remember me" logic in `src/lib/auth.tsx` (lines 92-158) calls `supabase.auth.signOut()` **globally** — this invalidates the session in localStorage, which triggers a `SIGNED_OUT` event on ALL other open tabs, logging the user out everywhere.
 
-1. **Line breaks lost when images present**: `MentionInput` stores line breaks as `\n`. `RichTextDisplay.processContentWithLinks` only preserves `\n` via `whitespace-pre-wrap` when there are NO HTML tags. When `<img>` tags are present, it parses as HTML and `\n` are ignored by the browser.
+The root cause is two-fold:
+1. `sessionStorage` is per-tab, so each new tab sees `sessionChecked` as missing and treats itself as a "fresh browser session"
+2. `supabase.auth.signOut()` defaults to `scope: 'global'`, which revokes the session server-side and clears localStorage, affecting all tabs
 
-2. **No drag-and-drop support**: `MentionInput` only handles paste for images, not drag-and-drop.
+## Solution
 
-## Plan
+### 1. Fix the "remember me" session check (src/lib/auth.tsx)
 
-### Fix 1: Convert `\n` to `<br>` before HTML processing (rich-text-editor.tsx)
+- Change `supabase.auth.signOut()` on line 152 to use `scope: 'local'` — this only clears the session from the current tab's perspective without invalidating the refresh token server-side or affecting other tabs
+- Add cross-tab synchronization via the `storage` event listener so that if one tab signs in/out intentionally, other tabs react properly
+- Ensure the `onAuthStateChange` handler properly syncs state when receiving cross-tab events
 
-In `processContentWithLinks`, before parsing as HTML, replace `\n` with `<br>` so line breaks survive the DOM parsing. This must be done carefully to avoid breaking existing `<br>` or block-level elements.
+### 2. Ensure intentional logout remains global (src/lib/auth.tsx)
 
-**File**: `src/components/ui/rich-text-editor.tsx` (~line 652)
-- Before the HTML tag check, normalize `\n` to `<br>\n` when the content contains both HTML tags and `\n` characters
-- This ensures MentionInput content (mixed `\n` + `<img>`) renders correctly
+- The explicit `signOut()` function (user clicks "Sair da Conta") should keep using the default `scope: 'global'` so it properly logs out everywhere — this is the desired behavior for intentional logout
 
-### Fix 2: Add drag-and-drop to MentionInput (MentionInput.tsx)
+### Changes Summary
 
-Add `onDragOver` and `onDrop` event handlers to the contentEditable div to accept dropped image files.
+**File: `src/lib/auth.tsx`**
+- Line 152: Change `supabase.auth.signOut()` → `supabase.auth.signOut({ scope: 'local' })` so the "remember me" check doesn't kill sessions in other tabs
+- Add a `window.addEventListener('storage', ...)` listener that detects when the Supabase auth key changes in localStorage (from another tab signing in) and re-syncs the session via `getSession()` — this ensures new logins in other tabs are reflected without causing logout
+- On the `SIGNED_OUT` event from `onAuthStateChange`, only navigate to `/auth` if the event originated from the current tab (not a cross-tab storage sync)
 
-**File**: `src/components/MentionInput.tsx` (~line 720-742)
-- Add `onDragOver` handler to prevent default and allow drop
-- Add `onDrop` handler that reads dropped files, converts images to data URLs, inserts them at the drop position, and attaches resize handles
-- Reuse the same image insertion logic from the paste handler
-
-### Summary of changes
-- **`src/components/ui/rich-text-editor.tsx`**: Fix `processContentWithLinks` to convert `\n` → `<br>` when content has HTML tags
-- **`src/components/MentionInput.tsx`**: Add `onDragOver`/`onDrop` handlers for image drag-and-drop
-
+This is a minimal, targeted fix that preserves the existing "remember me" behavior while allowing multiple tabs to coexist with the same authenticated session.
