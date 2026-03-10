@@ -431,26 +431,22 @@ export default function DemandDetail() {
   };
   const handleAddComment = async () => {
     if (!comment.trim() || !id) return;
+    setIsSendingComment(true);
     let commentContent = comment.trim();
     
     // Upload any inline base64 images to storage before saving
-    // This prevents large base64 data from exceeding character limits
     if (commentContent.includes('data:image')) {
       try {
         const { uploadInlineImages } = await import("@/lib/imageUploadUtils");
         commentContent = await uploadInlineImages(commentContent);
       } catch (err) {
         console.error("Error uploading inline images:", err);
-        // If upload fails, strip base64 images to prevent oversized content
         commentContent = commentContent.replace(/<img\s+src="data:[^"]*"[^>]*\/?>/g, '[imagem não enviada]');
       }
     }
     
-    // Check if user is in "Ajustes" filter - if so, create adjustment_request instead
     const isAdjustmentMode = interactionFilter === "adjustment_request";
     const interactionType = isAdjustmentMode ? "adjustment_request" : "comment";
-    
-    // Determine adjustment type based on role (same logic as adjustment dialog)
     const determinedAdjustmentType: "internal" | "external" = role === 'requester' ? 'external' : 'internal';
     
     createInteraction.mutate({
@@ -460,14 +456,11 @@ export default function DemandDetail() {
       ...(isAdjustmentMode && { metadata: { adjustment_type: determinedAdjustmentType } })
     }, {
       onSuccess: async createdInteraction => {
-        // If in adjustment mode, also update the demand status to "Em Ajuste"
+        // If in adjustment mode, update demand status
         if (isAdjustmentMode && adjustmentStatusId) {
           try {
             await new Promise<void>((resolve, reject) => {
-              updateDemand.mutate({
-                id,
-                status_id: adjustmentStatusId
-              }, {
+              updateDemand.mutate({ id, status_id: adjustmentStatusId }, {
                 onSuccess: () => resolve(),
                 onError: error => reject(error)
               });
@@ -477,12 +470,9 @@ export default function DemandDetail() {
           }
         }
         
-        // Upload pending files linked to the interaction
+        // Upload pending files
         if (commentPendingFiles.length > 0 && createdInteraction?.id) {
-          const {
-            success,
-            failed
-          } = await uploadPendingFiles(id, commentPendingFiles, uploadAttachment, createdInteraction.id);
+          const { success, failed } = await uploadPendingFiles(id, commentPendingFiles, uploadAttachment, createdInteraction.id);
           if (failed > 0) {
             toast.warning(`${isAdjustmentMode ? 'Ajuste' : 'Comentário'} adicionado! ${success} arquivo(s) enviado(s), ${failed} falhou(ram)`);
           } else {
@@ -494,185 +484,150 @@ export default function DemandDetail() {
           const typeLabel = isInternal ? "Ajuste Interno" : "Ajuste Externo";
           toast.success(isAdjustmentMode ? `${typeLabel} solicitado com sucesso!` : "Comentário adicionado!");
         }
+        
+        // Clear comment and stop sending state immediately
         setComment("");
-
-        // Stop typing indicator
+        setIsSendingComment(false);
         stopTyping();
 
-        // Notify assignees and creator about the new comment (excluding current user)
-        const usersToNotify = new Set<string>();
-
-        // Add all assignees
-        assignees?.forEach(a => usersToNotify.add(a.user_id));
-
-        // Add demand creator
-        if (demand?.created_by) {
-          usersToNotify.add(demand.created_by);
-        }
-
-        // Remove current user from notification list
-        if (user?.id) {
-          usersToNotify.delete(user.id);
-        }
-        const notifyUserIds = Array.from(usersToNotify);
-        if (notifyUserIds.length > 0) {
-          // Get current user's name
-          const {
-            data: currentProfile
-          } = await supabase.from("profiles").select("full_name").eq("id", user?.id || "").single();
-          const commenterName = currentProfile?.full_name || "Alguém";
-
-          // Create in-app notifications - different for adjustments vs comments
-          if (isAdjustmentMode) {
-            const isInternal = determinedAdjustmentType === "internal";
-            const boardPrefix = currentBoard?.name ? `[${currentBoard.name}] ` : "";
-            const notificationTitle = isInternal ? `${boardPrefix}Ajuste interno solicitado` : `${boardPrefix}Ajuste externo solicitado`;
-            const notificationMessage = isInternal 
-              ? `Foi solicitado um ajuste interno na demanda "${demand?.title}": ${commentContent.substring(0, 100)}${commentContent.length > 100 ? '...' : ''}`
-              : `O cliente solicitou um ajuste na demanda "${demand?.title}": ${commentContent.substring(0, 100)}${commentContent.length > 100 ? '...' : ''}`;
-            
-            const notifications = notifyUserIds.map(userId => ({
-              user_id: userId,
-              title: notificationTitle,
-              message: notificationMessage,
-              type: "warning",
-              link: `/demands/${id}`
-            }));
-            await supabase.from("notifications").insert(notifications);
-
-            // Send push notifications for adjustment
-            sendAdjustmentPushNotification({
-              assigneeIds: notifyUserIds,
-              demandId: id,
-              demandTitle: demand?.title || "",
-              reason: commentContent,
-              isInternal,
-              boardName: currentBoard?.name
-            }).catch(err => console.error("Error sending push notification:", err));
-
-            // Send email notifications for adjustment with public link
-            const publicUrl = await buildPublicDemandUrl(id, user?.id || "");
-            const typeLabel = isInternal ? "Ajuste Interno" : "Ajuste Externo";
-            for (const userId of notifyUserIds) {
-              try {
-                const { data: userProfile } = await supabase
-                  .from("profiles")
-                  .select("full_name")
-                  .eq("id", userId)
-                  .single();
-                
-                await supabase.functions.invoke("send-email", {
-                  body: {
-                    to: userId,
-                    subject: `🔧 ${currentBoard?.name ? `[${currentBoard.name}] ` : ""}${typeLabel} solicitado: ${demand?.title}`,
-                    template: "notification",
-                    templateData: {
-                      title: notificationTitle,
-                      message: `${isInternal ? 'Foi solicitado um ajuste interno' : 'O cliente solicitou um ajuste'} na demanda "${demand?.title}".\n\nMotivo: ${commentContent}`,
-                      actionUrl: publicUrl,
-                      actionText: "Ver Demanda",
-                      userName: userProfile?.full_name || "Usuário",
-                      type: "warning" as const
-                    }
-                  }
-                });
-              } catch (emailError) {
-                console.error("Error sending adjustment email:", emailError);
-              }
-            }
-          } else {
-            // Standard comment notifications
-            const notifications = notifyUserIds.map(userId => ({
-              user_id: userId,
-              title: "Novo comentário",
-              message: `${commenterName} comentou na demanda "${demand?.title}": ${commentContent.substring(0, 100)}${commentContent.length > 100 ? "..." : ""}`,
-              type: "info",
-              link: `/demands/${id}`
-            }));
-            await supabase.from("notifications").insert(notifications);
-
-            // Send push notifications
-            sendCommentPushNotification({
-              userIds: notifyUserIds,
-              demandId: id,
-              demandTitle: demand?.title || "",
-              commenterName,
-              commentPreview: commentContent
-            }).catch(err => console.error("Error sending comment push notification:", err));
-
-            // Send email notifications to each user with public link
-            const publicUrl = await buildPublicDemandUrl(id, user?.id || "");
-            for (const userId of notifyUserIds) {
-              sendEmail.mutate({
-                to: userId,
-                subject: `💬 Novo comentário em "${demand?.title}"`,
-                template: 'notification',
-                templateData: {
-                  title: "Novo comentário na demanda",
-                  message: `${commenterName} comentou na demanda "${demand?.title}":\n\n"${commentContent.substring(0, 200)}${commentContent.length > 200 ? "..." : ""}"`,
-                  actionUrl: publicUrl,
-                  actionText: "Ver demanda",
-                  type: 'info'
-                }
-              });
-            }
-          }
-        }
-
-        // Handle mention notifications separately
-        const mentionedUserIds = extractMentionedUserIds(commentContent);
-        const mentionedToNotify = mentionedUserIds.filter(mentionId => mentionId !== user?.id);
-        if (mentionedToNotify.length > 0) {
-          // Get current user's name for mention notifications
-          const {
-            data: currentProfile
-          } = await supabase.from("profiles").select("full_name").eq("id", user?.id || "").single();
-          const mentionerName = currentProfile?.full_name || "Alguém";
-
-          // Create in-app notifications for mentions
-          const mentionNotifications = mentionedToNotify.map(mentionedUserId => ({
-            user_id: mentionedUserId,
-            title: "Você foi mencionado",
-            message: `${mentionerName} mencionou você em um comentário na demanda "${demand?.title}"`,
-            type: "mention",
-            link: `/demands/${id}`
-          }));
-          await supabase.from("notifications").insert(mentionNotifications);
-
-          // Send push notifications for mentions
-          for (const mentionedUserId of mentionedToNotify) {
-            sendMentionPushNotification({
-              mentionedUserId,
-              demandId: id,
-              demandTitle: demand?.title || "",
-              mentionerName
-            }).catch(err => console.error("Error sending mention push notification:", err));
-          }
-
-          // Send email notifications for mentions with public link
-          const mentionPublicUrl = await buildPublicDemandUrl(id, user?.id || "");
-          for (const mentionedUserId of mentionedToNotify) {
-            sendEmail.mutate({
-              to: mentionedUserId,
-              subject: `💬 ${mentionerName} mencionou você em "${demand?.title}"`,
-              template: 'notification',
-              templateData: {
-                title: "Você foi mencionado em um comentário",
-                message: `${mentionerName} mencionou você na demanda "${demand?.title}":\n\n"${commentContent.substring(0, 200)}${commentContent.length > 200 ? "..." : ""}"`,
-                actionUrl: mentionPublicUrl,
-                actionText: "Ver demanda",
-                type: 'info'
-              }
-            });
-          }
-        }
+        // Fire notifications in the background (non-blocking)
+        fireCommentNotifications({
+          commentContent,
+          isAdjustmentMode,
+          determinedAdjustmentType,
+          demandId: id,
+          demandTitle: demand?.title || "",
+          boardName: currentBoard?.name,
+          userId: user?.id || "",
+          assignees: assignees || [],
+          createdBy: demand?.created_by || "",
+        }).catch(err => console.error("Error sending notifications:", err));
       },
       onError: (error: any) => {
+        setIsSendingComment(false);
         toast.error("Erro ao adicionar comentário", {
           description: getErrorMessage(error)
         });
       }
     });
+  };
+
+  // Background notification handler - runs after comment is already visible
+  const fireCommentNotifications = async ({
+    commentContent, isAdjustmentMode, determinedAdjustmentType, demandId, demandTitle, boardName, userId, assignees: notifyAssignees, createdBy
+  }: {
+    commentContent: string; isAdjustmentMode: boolean; determinedAdjustmentType: "internal" | "external";
+    demandId: string; demandTitle: string; boardName?: string; userId: string;
+    assignees: { user_id: string }[]; createdBy: string;
+  }) => {
+    const usersToNotify = new Set<string>();
+    notifyAssignees.forEach(a => usersToNotify.add(a.user_id));
+    if (createdBy) usersToNotify.add(createdBy);
+    usersToNotify.delete(userId);
+    const notifyUserIds = Array.from(usersToNotify);
+
+    if (notifyUserIds.length > 0) {
+      const { data: currentProfile } = await supabase.from("profiles").select("full_name").eq("id", userId).single();
+      const commenterName = currentProfile?.full_name || "Alguém";
+
+      if (isAdjustmentMode) {
+        const isInternal = determinedAdjustmentType === "internal";
+        const boardPrefix = boardName ? `[${boardName}] ` : "";
+        const notificationTitle = isInternal ? `${boardPrefix}Ajuste interno solicitado` : `${boardPrefix}Ajuste externo solicitado`;
+        const notificationMessage = isInternal 
+          ? `Foi solicitado um ajuste interno na demanda "${demandTitle}": ${commentContent.substring(0, 100)}${commentContent.length > 100 ? '...' : ''}`
+          : `O cliente solicitou um ajuste na demanda "${demandTitle}": ${commentContent.substring(0, 100)}${commentContent.length > 100 ? '...' : ''}`;
+        
+        const notifications = notifyUserIds.map(uid => ({
+          user_id: uid, title: notificationTitle, message: notificationMessage, type: "warning", link: `/demands/${demandId}`
+        }));
+        await supabase.from("notifications").insert(notifications);
+
+        sendAdjustmentPushNotification({
+          assigneeIds: notifyUserIds, demandId, demandTitle, reason: commentContent, isInternal, boardName
+        }).catch(err => console.error("Error sending push notification:", err));
+
+        const publicUrl = await buildPublicDemandUrl(demandId, userId);
+        const typeLabel = isInternal ? "Ajuste Interno" : "Ajuste Externo";
+        for (const uid of notifyUserIds) {
+          try {
+            const { data: userProfile } = await supabase.from("profiles").select("full_name").eq("id", uid).single();
+            await supabase.functions.invoke("send-email", {
+              body: {
+                to: uid,
+                subject: `🔧 ${boardName ? `[${boardName}] ` : ""}${typeLabel} solicitado: ${demandTitle}`,
+                template: "notification",
+                templateData: {
+                  title: notificationTitle,
+                  message: `${isInternal ? 'Foi solicitado um ajuste interno' : 'O cliente solicitou um ajuste'} na demanda "${demandTitle}".\n\nMotivo: ${commentContent}`,
+                  actionUrl: publicUrl, actionText: "Ver Demanda", userName: userProfile?.full_name || "Usuário", type: "warning" as const
+                }
+              }
+            });
+          } catch (emailError) {
+            console.error("Error sending adjustment email:", emailError);
+          }
+        }
+      } else {
+        const notifications = notifyUserIds.map(uid => ({
+          user_id: uid, title: "Novo comentário",
+          message: `${commenterName} comentou na demanda "${demandTitle}": ${commentContent.substring(0, 100)}${commentContent.length > 100 ? "..." : ""}`,
+          type: "info", link: `/demands/${demandId}`
+        }));
+        await supabase.from("notifications").insert(notifications);
+
+        sendCommentPushNotification({
+          userIds: notifyUserIds, demandId, demandTitle, commenterName, commentPreview: commentContent
+        }).catch(err => console.error("Error sending comment push notification:", err));
+
+        const publicUrl = await buildPublicDemandUrl(demandId, userId);
+        for (const uid of notifyUserIds) {
+          sendEmail.mutate({
+            to: uid, subject: `💬 Novo comentário em "${demandTitle}"`,
+            template: 'notification',
+            templateData: {
+              title: "Novo comentário na demanda",
+              message: `${commenterName} comentou na demanda "${demandTitle}":\n\n"${commentContent.substring(0, 200)}${commentContent.length > 200 ? "..." : ""}"`,
+              actionUrl: publicUrl, actionText: "Ver demanda", type: 'info'
+            }
+          });
+        }
+      }
+    }
+
+    // Handle mention notifications
+    const mentionedUserIds = extractMentionedUserIds(commentContent);
+    const mentionedToNotify = mentionedUserIds.filter(mid => mid !== userId);
+    if (mentionedToNotify.length > 0) {
+      const { data: currentProfile } = await supabase.from("profiles").select("full_name").eq("id", userId).single();
+      const mentionerName = currentProfile?.full_name || "Alguém";
+
+      const mentionNotifications = mentionedToNotify.map(mentionedUserId => ({
+        user_id: mentionedUserId, title: "Você foi mencionado",
+        message: `${mentionerName} mencionou você em um comentário na demanda "${demandTitle}"`,
+        type: "mention", link: `/demands/${demandId}`
+      }));
+      await supabase.from("notifications").insert(mentionNotifications);
+
+      for (const mentionedUserId of mentionedToNotify) {
+        sendMentionPushNotification({
+          mentionedUserId, demandId, demandTitle, mentionerName
+        }).catch(err => console.error("Error sending mention push notification:", err));
+      }
+
+      const mentionPublicUrl = await buildPublicDemandUrl(demandId, userId);
+      for (const mentionedUserId of mentionedToNotify) {
+        sendEmail.mutate({
+          to: mentionedUserId, subject: `💬 ${mentionerName} mencionou você em "${demandTitle}"`,
+          template: 'notification',
+          templateData: {
+            title: "Você foi mencionado em um comentário",
+            message: `${mentionerName} mencionou você na demanda "${demandTitle}":\n\n"${commentContent.substring(0, 200)}${commentContent.length > 200 ? "..." : ""}"`,
+            actionUrl: mentionPublicUrl, actionText: "Ver demanda", type: 'info'
+          }
+        });
+      }
+    }
   };
   const handleEditInteraction = (interactionId: string, content: string) => {
     setEditingInteractionId(interactionId);
