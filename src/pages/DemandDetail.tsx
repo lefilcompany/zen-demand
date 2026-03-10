@@ -160,6 +160,7 @@ export default function DemandDetail() {
   } = useUserTimerControl(id);
   const sendEmail = useSendEmail();
   const [comment, setComment] = useState("");
+  const [isSendingComment, setIsSendingComment] = useState(false);
   const [commentPendingFiles, setCommentPendingFiles] = useState<PendingFile[]>([]);
   const [adjustmentPendingFiles, setAdjustmentPendingFiles] = useState<PendingFile[]>([]);
   const [editingAssignees, setEditingAssignees] = useState(false);
