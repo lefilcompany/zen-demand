@@ -1040,13 +1040,13 @@ export default function DemandDetail() {
                   stopTyping();
                   handleAddComment();
                 }} 
-                disabled={!comment.trim() || createInteraction.isPending} 
+                disabled={!comment.trim() || isSendingComment || createInteraction.isPending} 
                 className={cn(
                   "w-full sm:w-auto",
                   interactionFilter === "adjustment_request" && "bg-purple-600 hover:bg-purple-700"
                 )}
               >
-                {createInteraction.isPending 
+                {isSendingComment || createInteraction.isPending 
                   ? "Enviando..." 
                   : interactionFilter === "adjustment_request" 
                     ? "Solicitar Ajuste" 
