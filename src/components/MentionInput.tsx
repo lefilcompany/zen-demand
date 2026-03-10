@@ -726,6 +726,41 @@ export function MentionInput({
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
         onKeyPress={handleKeyPress}
+        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        onDrop={(e) => {
+          const files = Array.from(e.dataTransfer.files);
+          const imageFiles = files.filter(f => f.type.startsWith('image/'));
+          if (imageFiles.length === 0) return;
+          e.preventDefault();
+          e.stopPropagation();
+          for (const file of imageFiles) {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const dataUrl = reader.result as string;
+              const selection = window.getSelection();
+              if (!selection || !editorRef.current) return;
+              const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : document.createRange();
+              if (!editorRef.current.contains(range.startContainer)) {
+                range.selectNodeContents(editorRef.current);
+                range.collapse(false);
+              }
+              range.deleteContents();
+              const img = document.createElement("img");
+              img.src = dataUrl;
+              img.className = "max-w-[300px] h-auto rounded-md my-2 inline-block";
+              range.insertNode(img);
+              attachResizeHandle(img, () => onChange(getStorageValue()));
+              const wrapper = img.parentElement;
+              if (wrapper) { range.setStartAfter(wrapper); } else { range.setStartAfter(img); }
+              range.collapse(true);
+              selection.removeAllRanges();
+              selection.addRange(range);
+              onChange(getStorageValue());
+              setIsEmpty(checkIsEmpty());
+            };
+            reader.readAsDataURL(file);
+          }
+        }}
         onBlur={() => {
           setIsEmpty(checkIsEmpty());
           setTimeout(() => {
