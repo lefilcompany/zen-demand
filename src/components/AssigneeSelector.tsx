@@ -84,6 +84,15 @@ export function AssigneeSelector({
 
   const isLoading = boardId ? loadingBoard : loadingTeam;
 
+  const filteredMembers = useMemo(() => {
+    if (!members) return [];
+    if (!search.trim()) return members;
+    const q = search.toLowerCase().trim();
+    return members.filter((m) =>
+      m.profile?.full_name?.toLowerCase().includes(q)
+    );
+  }, [members, search]);
+
   const toggleUser = (userId: string) => {
     if (selectedUserIds.includes(userId)) {
       onChange(selectedUserIds.filter((id) => id !== userId));
