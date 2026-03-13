@@ -257,7 +257,7 @@ export function AssigneeSelector({
                 {search.trim() ? "Nenhum membro encontrado para essa busca" : "Nenhum membro encontrado"}
               </p>
             )}
-          </ScrollArea>
+          </div>
 
           <DialogFooter className="flex-row gap-2 sm:gap-2">
             {selectedUserIds.length > 0 && (
