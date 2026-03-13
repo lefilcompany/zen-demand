@@ -168,13 +168,24 @@ export function AssigneeSelector({
       </button>
 
       {/* Dialog with Member Cards */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setSearch(""); }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Selecionar Responsáveis</DialogTitle>
           </DialogHeader>
 
-          <ScrollArea className="max-h-[60vh] pr-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar membro por nome..."
+              className="flex h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+          </div>
+
+          <ScrollArea className="flex-1 min-h-0 max-h-[55vh] pr-3">
             {isLoading ? (
               <p className="text-sm text-muted-foreground p-4 text-center">
                 Carregando...
