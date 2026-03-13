@@ -185,7 +185,7 @@ export function AssigneeSelector({
             />
           </div>
 
-          <ScrollArea className="flex-1 min-h-0 max-h-[55vh] pr-3">
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1">
             {isLoading ? (
               <p className="text-sm text-muted-foreground p-4 text-center">
                 Carregando...
