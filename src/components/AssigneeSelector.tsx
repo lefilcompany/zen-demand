@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useBoardMembers } from "@/hooks/useBoardMembers";
-import { Users, X, Check, ShieldCheck, Shield, Zap, User } from "lucide-react";
+import { Users, X, Check, ShieldCheck, Shield, Zap, User, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
