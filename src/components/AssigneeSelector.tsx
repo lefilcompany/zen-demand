@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useBoardMembers } from "@/hooks/useBoardMembers";
-import { Users, X, Check, ShieldCheck, Shield, Zap, User } from "lucide-react";
+import { Users, X, Check, ShieldCheck, Shield, Zap, User, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -60,6 +60,7 @@ export function AssigneeSelector({
   disabled = false,
 }: AssigneeSelectorProps) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   const { data: teamMembers, isLoading: loadingTeam } = useTeamMembers(teamId);
   const { data: boardMembers, isLoading: loadingBoard } = useBoardMembers(
@@ -82,6 +83,15 @@ export function AssigneeSelector({
       }));
 
   const isLoading = boardId ? loadingBoard : loadingTeam;
+
+  const filteredMembers = useMemo(() => {
+    if (!members) return [];
+    if (!search.trim()) return members;
+    const q = search.toLowerCase().trim();
+    return members.filter((m) =>
+      m.profile?.full_name?.toLowerCase().includes(q)
+    );
+  }, [members, search]);
 
   const toggleUser = (userId: string) => {
     if (selectedUserIds.includes(userId)) {
@@ -158,20 +168,31 @@ export function AssigneeSelector({
       </button>
 
       {/* Dialog with Member Cards */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setSearch(""); }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Selecionar Responsáveis</DialogTitle>
           </DialogHeader>
 
-          <ScrollArea className="max-h-[60vh] pr-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar membro por nome..."
+              className="flex h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+          </div>
+
+          <ScrollArea className="flex-1 min-h-0 max-h-[55vh] pr-3">
             {isLoading ? (
               <p className="text-sm text-muted-foreground p-4 text-center">
                 Carregando...
               </p>
-            ) : members && members.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 p-2">
-                {members.map((member) => {
+            ) : filteredMembers.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-2">
+                {filteredMembers.map((member) => {
                   const isSelected = selectedUserIds.includes(member.user_id);
                   const config = roleConfig[member.role] || roleConfig.requester;
                   
@@ -232,8 +253,8 @@ export function AssigneeSelector({
                 })}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground p-4 text-center">
-                Nenhum membro encontrado
+              <p className="text-sm text-muted-foreground p-8 text-center">
+                {search.trim() ? "Nenhum membro encontrado para essa busca" : "Nenhum membro encontrado"}
               </p>
             )}
           </ScrollArea>
