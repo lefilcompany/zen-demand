@@ -169,7 +169,7 @@ export function AssigneeSelector({
 
       {/* Dialog with Member Cards */}
       <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setSearch(""); }}>
-        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>Selecionar Responsáveis</DialogTitle>
           </DialogHeader>
