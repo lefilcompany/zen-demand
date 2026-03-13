@@ -253,8 +253,8 @@ export function AssigneeSelector({
                 })}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground p-4 text-center">
-                Nenhum membro encontrado
+              <p className="text-sm text-muted-foreground p-8 text-center">
+                {search.trim() ? "Nenhum membro encontrado para essa busca" : "Nenhum membro encontrado"}
               </p>
             )}
           </ScrollArea>
