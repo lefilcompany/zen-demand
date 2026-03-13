@@ -190,9 +190,9 @@ export function AssigneeSelector({
               <p className="text-sm text-muted-foreground p-4 text-center">
                 Carregando...
               </p>
-            ) : members && members.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 p-2">
-                {members.map((member) => {
+            ) : filteredMembers.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-2">
+                {filteredMembers.map((member) => {
                   const isSelected = selectedUserIds.includes(member.user_id);
                   const config = roleConfig[member.role] || roleConfig.requester;
                   
