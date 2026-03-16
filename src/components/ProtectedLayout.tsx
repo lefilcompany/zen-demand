@@ -146,16 +146,6 @@ export function ProtectedLayout() {
                 <NotificationDropdown />
               </div>
 
-              {/* Settings - Hidden on mobile */}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate("/settings")}
-                className="hidden sm:flex h-8 w-8 sm:h-9 sm:w-9"
-              >
-                <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
-
               {/* Profile */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -186,6 +176,10 @@ export function ProtectedLayout() {
                   <DropdownMenuItem onClick={() => navigate("/profile")}>
                     <User className="h-4 w-4 mr-2" />
                     Meu Perfil
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/settings")}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Configurações
                   </DropdownMenuItem>
                   {hasCompleted && (
                     <DropdownMenuItem onClick={() => resetOnboarding(() => navigate("/"))}>
@@ -227,15 +221,15 @@ export function ProtectedLayout() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
+            <Button
+              variant="destructive"
               onClick={async () => {
-                await signOut();
                 setLogoutDialogOpen(false);
+                await signOut();
               }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {t("auth.logout")}
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
