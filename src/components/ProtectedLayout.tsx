@@ -221,15 +221,15 @@ export function ProtectedLayout() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
+            <Button
+              variant="destructive"
               onClick={async () => {
-                await signOut();
                 setLogoutDialogOpen(false);
+                await signOut();
               }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {t("auth.logout")}
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
