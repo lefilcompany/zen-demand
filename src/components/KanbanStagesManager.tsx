@@ -127,18 +127,13 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
     }
   }, [boardId, queryClient]);
 
-  // Keep local state in sync with server data, ensuring fixed statuses are at boundaries
+  // Keep local state in sync with server data, ensuring "Entregue" is always last
   useEffect(() => {
     if (boardStatuses) {
-      // Sort statuses: "A Iniciar" first, "Entregue" last, others in between by position
       const sorted = [...boardStatuses].sort((a, b) => {
-        const aIsStart = a.status.name === FIXED_START_STATUS;
-        const bIsStart = b.status.name === FIXED_START_STATUS;
         const aIsEnd = a.status.name === FIXED_END_STATUS;
         const bIsEnd = b.status.name === FIXED_END_STATUS;
         
-        if (aIsStart) return -1;
-        if (bIsStart) return 1;
         if (aIsEnd) return 1;
         if (bIsEnd) return -1;
         return a.position - b.position;
