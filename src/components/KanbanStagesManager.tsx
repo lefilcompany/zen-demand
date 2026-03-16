@@ -57,7 +57,6 @@ import {
   useCreateCustomStatus,
   BoardStatus,
   isFixedBoundaryStatus,
-  FIXED_START_STATUS,
   FIXED_END_STATUS,
   AdjustmentType,
 } from "@/hooks/useBoardStatuses";
