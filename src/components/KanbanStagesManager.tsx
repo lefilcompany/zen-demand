@@ -620,8 +620,8 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
             </div>
 
             <p className="text-xs text-muted-foreground mt-4">
-              As etapas "A Iniciar" e "Entregue" são fixas e essenciais para o fluxo de demandas. 
-              Novas etapas são criadas entre elas. Desativar uma etapa apenas a oculta no Kanban.
+              A etapa "Entregue" é fixa e essencial para o fluxo de demandas. 
+              As demais etapas podem ser reordenadas livremente. Desativar uma etapa apenas a oculta no Kanban.
             </p>
           </div>
         </SheetContent>
