@@ -28,13 +28,12 @@ export interface KanbanColumn {
   adjustmentType: AdjustmentType;
 }
 
-// Fixed stages that cannot be deleted or reordered (start and end of workflow)
-export const FIXED_START_STATUS = "A Iniciar";
+// Fixed stages that cannot be deleted or reordered
 export const FIXED_END_STATUS = "Entregue";
 
-// Check if a status is a fixed boundary stage
+// Check if a status is a fixed boundary stage (only "Entregue" is fixed)
 export function isFixedBoundaryStatus(statusName: string): boolean {
-  return statusName === FIXED_START_STATUS || statusName === FIXED_END_STATUS;
+  return statusName === FIXED_END_STATUS;
 }
 
 // Default columns fallback (matches current static columns)
@@ -457,16 +456,12 @@ export function useCreateCustomStatus() {
   });
 }
 
-// Sort board statuses ensuring fixed boundaries are at start/end
+// Sort board statuses ensuring "Entregue" is always last
 function sortWithFixedBoundaries(statuses: BoardStatus[]): BoardStatus[] {
   return [...statuses].sort((a, b) => {
-    const aIsStart = a.status.name === FIXED_START_STATUS;
-    const bIsStart = b.status.name === FIXED_START_STATUS;
     const aIsEnd = a.status.name === FIXED_END_STATUS;
     const bIsEnd = b.status.name === FIXED_END_STATUS;
     
-    if (aIsStart) return -1;
-    if (bIsStart) return 1;
     if (aIsEnd) return 1;
     if (bIsEnd) return -1;
     return a.position - b.position;
