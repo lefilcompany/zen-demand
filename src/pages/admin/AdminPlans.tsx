@@ -13,9 +13,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Plus, Pencil, CreditCard, Crown, Users, Trash2,
-  Check, Star, Zap, GripVertical,
+  Check, Star, Zap, GripVertical, Info,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PlanFormData {
   name: string;
