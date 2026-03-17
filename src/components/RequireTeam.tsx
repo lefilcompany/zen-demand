@@ -143,8 +143,8 @@ export function RequireTeam({ children }: RequireTeamProps) {
     return <Navigate to="/auth" replace />;
   }
 
-  // System admin without teams → go directly to admin panel
-  if (userRole === "admin" && !hasTeams) {
+  // System admin should always access admin panel directly
+  if (userRole === "admin") {
     return <Navigate to="/admin" replace />;
   }
 

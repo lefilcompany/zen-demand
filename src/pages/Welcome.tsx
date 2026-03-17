@@ -66,7 +66,7 @@ export default function Welcome() {
   }
 
   // Redirect system admins to admin panel
-  if (userRole === "admin" && !hasTeams) {
+  if (userRole === "admin") {
     return <Navigate to="/admin" replace />;
   }
 
