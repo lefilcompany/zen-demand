@@ -104,9 +104,6 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     return true;
   };
 
-  const handleClose = () => {
-    navigate(-1);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
