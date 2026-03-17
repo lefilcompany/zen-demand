@@ -89,7 +89,7 @@ export default function CreateDemand() {
   }
 
 
-    if (!hasBoardServices) return true;
+    const isServiceValid = () => {
     if (!serviceId || serviceId === "none") return false;
     if (canCreateWithService === false) return false;
     return true;
