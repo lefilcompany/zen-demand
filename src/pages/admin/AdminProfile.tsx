@@ -26,6 +26,8 @@ export default function AdminProfile() {
 
   // Password fields
   const [currentPassword, setCurrentPassword] = useState("");
+  const [currentPasswordVerified, setCurrentPasswordVerified] = useState(false);
+  const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
