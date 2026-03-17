@@ -62,6 +62,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCoupons from "./pages/admin/AdminCoupons";
 import AdminTeams from "./pages/admin/AdminTeams";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminPlans from "./pages/admin/AdminPlans";
 const queryClient = new QueryClient();
 const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
     <QueryClientProvider client={queryClient}>
