@@ -1447,6 +1447,7 @@ export type Database = {
         Row: {
           billing_period: string
           created_at: string | null
+          currency: string
           description: string | null
           features: Json | null
           id: string
@@ -1459,12 +1460,17 @@ export type Database = {
           max_teams: number | null
           name: string
           price_cents: number
+          price_cents_monthly: number
+          price_cents_yearly: number
+          promo_price_cents_monthly: number | null
+          promo_price_cents_yearly: number | null
           slug: string
           sort_order: number | null
         }
         Insert: {
           billing_period?: string
           created_at?: string | null
+          currency?: string
           description?: string | null
           features?: Json | null
           id?: string
@@ -1477,12 +1483,17 @@ export type Database = {
           max_teams?: number | null
           name: string
           price_cents?: number
+          price_cents_monthly?: number
+          price_cents_yearly?: number
+          promo_price_cents_monthly?: number | null
+          promo_price_cents_yearly?: number | null
           slug: string
           sort_order?: number | null
         }
         Update: {
           billing_period?: string
           created_at?: string | null
+          currency?: string
           description?: string | null
           features?: Json | null
           id?: string
@@ -1495,6 +1506,10 @@ export type Database = {
           max_teams?: number | null
           name?: string
           price_cents?: number
+          price_cents_monthly?: number
+          price_cents_yearly?: number
+          promo_price_cents_monthly?: number | null
+          promo_price_cents_yearly?: number | null
           slug?: string
           sort_order?: number | null
         }
@@ -2299,6 +2314,7 @@ export type Database = {
         Returns: {
           billing_period: string
           created_at: string | null
+          currency: string
           description: string | null
           features: Json | null
           id: string
@@ -2311,6 +2327,10 @@ export type Database = {
           max_teams: number | null
           name: string
           price_cents: number
+          price_cents_monthly: number
+          price_cents_yearly: number
+          promo_price_cents_monthly: number | null
+          promo_price_cents_yearly: number | null
           slug: string
           sort_order: number | null
         }
