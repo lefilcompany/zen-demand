@@ -96,6 +96,7 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
                           <Route path="coupons" element={<AdminCoupons />} />
                           <Route path="teams" element={<AdminTeams />} />
                           <Route path="users" element={<AdminUsers />} />
+                          <Route path="profile" element={<AdminProfile />} />
                         </Route>
 
                         {/* Auth-only routes (no team required) */}
