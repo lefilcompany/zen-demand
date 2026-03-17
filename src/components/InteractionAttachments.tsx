@@ -134,22 +134,36 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
   );
 }
 
+const COLLAPSED_COUNT = 3;
+
 export function InteractionAttachments({ interactionId, className }: InteractionAttachmentsProps) {
   const { data: attachments, isLoading } = useInteractionAttachments(interactionId);
+  const [expanded, setExpanded] = useState(false);
 
   if (isLoading || !attachments || attachments.length === 0) {
     return null;
   }
 
+  const hasMore = attachments.length > COLLAPSED_COUNT;
+  const visibleAttachments = expanded ? attachments : attachments.slice(0, COLLAPSED_COUNT);
+  const hiddenCount = attachments.length - COLLAPSED_COUNT;
+
   return (
     <div className={cn("mt-2", className)}>
-      <ScrollArea className="max-h-48">
-        <div className="space-y-1 pr-2">
-          {attachments.map((attachment) => (
-            <AttachmentItem key={attachment.id} attachment={attachment} />
-          ))}
-        </div>
-      </ScrollArea>
+      <div className="space-y-1">
+        {visibleAttachments.map((attachment) => (
+          <AttachmentItem key={attachment.id} attachment={attachment} />
+        ))}
+      </div>
+      {hasMore && (
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          className="mt-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors cursor-pointer"
+        >
+          {expanded ? "Mostrar menos" : `Ver mais ${hiddenCount} anexo(s)`}
+        </button>
+      )}
     </div>
   );
 }
