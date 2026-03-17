@@ -390,6 +390,25 @@ export default function AdminProfile() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2 md:col-span-2">
+              <Label className="text-sm">Senha Atual *</Label>
+              <div className="relative">
+                <Input
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Digite sua senha atual"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label className="text-sm">Nova Senha</Label>
               <div className="relative">
@@ -434,7 +453,7 @@ export default function AdminProfile() {
           <Button
             variant="outline"
             onClick={handleChangePassword}
-            disabled={isChangingPassword || !newPassword || !passwordsMatch}
+            disabled={isChangingPassword || !currentPassword || !newPassword || !passwordsMatch}
             className="gap-2"
           >
             {isChangingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
