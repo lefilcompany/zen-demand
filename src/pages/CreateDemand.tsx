@@ -377,7 +377,12 @@ export default function CreateDemand() {
             {/* Row: Attachments + Recurrence */}
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Anexos</Label>
+                <div className="flex items-center justify-between">
+                  <Label>Anexos</Label>
+                  {pendingFiles.length > 0 && (
+                    <span className="text-xs text-muted-foreground">{pendingFiles.length} arquivo(s)</span>
+                  )}
+                </div>
                 <InlineFileUploader
                   pendingFiles={pendingFiles}
                   onFilesChange={setPendingFiles}
