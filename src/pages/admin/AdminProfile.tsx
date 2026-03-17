@@ -152,6 +152,10 @@ export default function AdminProfile() {
   };
 
   const handleChangePassword = async () => {
+    if (!currentPassword) {
+      toast.error("Informe a senha atual");
+      return;
+    }
     if (!newPassword || newPassword.length < 6) {
       toast.error("A nova senha deve ter pelo menos 6 caracteres");
       return;
@@ -163,9 +167,20 @@ export default function AdminProfile() {
 
     setIsChangingPassword(true);
     try {
+      // Verify current password by re-authenticating
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email || "",
+        password: currentPassword,
+      });
+      if (signInError) {
+        toast.error("Senha atual incorreta");
+        return;
+      }
+
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
       toast.success("Senha alterada com sucesso!");
+      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (error: any) {
