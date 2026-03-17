@@ -243,6 +243,8 @@ export default function AdminPlans() {
 
   const openEdit = (plan: Plan) => {
     setEditingPlan(plan);
+    const yearlyPrice = (plan as any).price_cents_yearly ?? 0;
+    setHasYearlyPricing(yearlyPrice > 0);
     setForm({
       name: plan.name,
       slug: plan.slug,
@@ -251,7 +253,7 @@ export default function AdminPlans() {
       billing_period: plan.billing_period,
       currency: (plan as any).currency || "BRL",
       price_cents_monthly: (plan as any).price_cents_monthly ?? 0,
-      price_cents_yearly: (plan as any).price_cents_yearly ?? 0,
+      price_cents_yearly: yearlyPrice,
       promo_price_cents_monthly: (plan as any).promo_price_cents_monthly ?? null,
       promo_price_cents_yearly: (plan as any).promo_price_cents_yearly ?? null,
       max_teams: plan.max_teams ?? 1,
