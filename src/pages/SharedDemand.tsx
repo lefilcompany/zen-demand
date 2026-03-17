@@ -14,6 +14,7 @@ import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { cn } from "@/lib/utils";
 import logoSoma from "@/assets/logo-soma.png";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function SharedDemand() {
   const { token } = useParams<{ token: string }>();
@@ -21,9 +22,7 @@ export default function SharedDemand() {
   const { data: interactions } = useSharedDemandInteractions(token || null, demand?.id || null);
   const { data: attachments } = useSharedDemandAttachments(token || null, demand?.id || null);
 
-  // No redirect for logged-in users — always show read-only public view
-
-  const comments = interactions?.filter(i => i.interaction_type === "comment") || [];
+  const comments = interactions?.filter((i: any) => i.interaction_type === "comment") || [];
 
   const formattedAssignees = demand?.demand_assignees?.map((a: any) => ({
     id: a.user_id,
@@ -82,7 +81,6 @@ export default function SharedDemand() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b bg-card">
         <div className="container max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -101,18 +99,15 @@ export default function SharedDemand() {
         </div>
       </header>
 
-      {/* Content */}
       <main className="container max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* Info Banner */}
         <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 flex items-start gap-3">
           <Lock className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-amber-800 dark:text-amber-200">
-            <strong>Modo de visualização:</strong> Você está visualizando esta demanda através de um link de compartilhamento. 
+            <strong>Modo de visualização:</strong> Você está visualizando esta demanda através de um link de compartilhamento.
             Para editar ou interagir, faça login no sistema.
           </div>
         </div>
 
-        {/* Demand Card */}
         <Card>
           <CardHeader>
             <div className="space-y-3">
@@ -123,17 +118,17 @@ export default function SharedDemand() {
                   </Badge>
                 )}
                 {demand.demand_statuses && (
-                  <Badge 
+                  <Badge
                     style={{
                       backgroundColor: `${demand.demand_statuses.color}20`,
                       borderColor: `${demand.demand_statuses.color}40`,
-                      color: demand.demand_statuses.color
+                      color: demand.demand_statuses.color,
                     }}
                     className="gap-1"
                   >
-                    <div 
-                      className="w-2 h-2 rounded-full" 
-                      style={{ backgroundColor: demand.demand_statuses.color }} 
+                    <div
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: demand.demand_statuses.color }}
                     />
                     {demand.demand_statuses.name}
                   </Badge>
@@ -147,38 +142,37 @@ export default function SharedDemand() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Description */}
             {demand.description && (
               <div>
                 <h3 className="font-semibold mb-2 text-sm">Descrição</h3>
-                <RichTextDisplay 
-                  content={demand.description} 
-                  className="text-sm text-muted-foreground" 
+                <RichTextDisplay
+                  content={demand.description}
+                  className="text-sm text-muted-foreground"
                 />
               </div>
             )}
 
-            {/* Details Grid */}
             <div className="grid gap-4 md:grid-cols-2">
               {demand.due_date && (
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                   <span className="text-muted-foreground">Vencimento:</span>
-                  <span className="font-medium">
-                    {formatDateOnlyBR(demand.due_date)}
-                  </span>
+                  <span className="font-medium">{formatDateOnlyBR(demand.due_date)}</span>
                 </div>
               )}
 
               <div className="flex items-center gap-2 text-sm">
                 <Wrench className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <span className="text-muted-foreground">Serviço:</span>
-                <Badge variant="outline" className={cn(
-                  "text-xs",
-                  demand.services?.name 
-                    ? "bg-primary/5 text-primary border-primary/20" 
-                    : "bg-muted/50 text-muted-foreground border-muted-foreground/20"
-                )}>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-xs",
+                    demand.services?.name
+                      ? "bg-primary/5 text-primary border-primary/20"
+                      : "bg-muted/50 text-muted-foreground border-muted-foreground/20"
+                  )}
+                >
                   {demand.services?.name || "Nenhum serviço"}
                 </Badge>
               </div>
@@ -216,12 +210,10 @@ export default function SharedDemand() {
               </div>
             </div>
 
-            {/* Attachments */}
-            <SharedAttachments attachments={attachments} token={token!} />
+            <SharedAttachments attachments={attachments} token={token || ""} />
           </CardContent>
         </Card>
 
-        {/* Comments */}
         {comments.length > 0 && (
           <Card>
             <CardHeader>
@@ -241,9 +233,7 @@ export default function SharedDemand() {
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-sm">
-                        {comment.profiles?.full_name || "Usuário"}
-                      </span>
+                      <span className="font-medium text-sm">{comment.profiles?.full_name || "Usuário"}</span>
                       <span className="text-xs text-muted-foreground">
                         {format(new Date(comment.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                       </span>
@@ -258,7 +248,6 @@ export default function SharedDemand() {
           </Card>
         )}
 
-        {/* Footer */}
         <div className="text-center text-sm text-muted-foreground py-4">
           <p>Visualização pública gerada pelo sistema de gestão de demandas</p>
         </div>
@@ -267,7 +256,6 @@ export default function SharedDemand() {
   );
 }
 
-// Separate component for attachments with signed URL support
 function SharedAttachments({ attachments, token }: { attachments: any[] | undefined; token: string }) {
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
@@ -275,44 +263,37 @@ function SharedAttachments({ attachments, token }: { attachments: any[] | undefi
   if (!attachments || attachments.length === 0) return null;
 
   const handleAttachmentClick = async (attachment: any) => {
-    // If we already have a signed URL, use it
+    if (!token) {
+      toast.error("Link de compartilhamento inválido para abrir anexo.");
+      return;
+    }
+
     if (signedUrls[attachment.id]) {
       window.open(signedUrls[attachment.id], "_blank");
       return;
     }
 
-    setLoadingIds(prev => new Set(prev).add(attachment.id));
+    setLoadingIds((prev) => new Set(prev).add(attachment.id));
 
     try {
-      // Try to get a signed URL via edge function
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/shared-attachment-url`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, filePath: attachment.file_path }),
-        }
-      );
+      const { data, error } = await supabase.functions.invoke("shared-attachment-url", {
+        body: { token, filePath: attachment.file_path },
+      });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.signedUrl) {
-          setSignedUrls(prev => ({ ...prev, [attachment.id]: data.signedUrl }));
-          window.open(data.signedUrl, "_blank");
-          return;
-        }
+      if (error) throw error;
+
+      const signedUrl = (data as { signedUrl?: string } | null)?.signedUrl;
+      if (!signedUrl) {
+        throw new Error("SIGNED_URL_NOT_FOUND");
       }
 
-      // Fallback: try public URL (works if bucket is public)
-      const publicUrl = supabase.storage.from("demand-attachments").getPublicUrl(attachment.file_path).data.publicUrl;
-      window.open(publicUrl, "_blank");
-    } catch {
-      // Fallback to public URL
-      const publicUrl = supabase.storage.from("demand-attachments").getPublicUrl(attachment.file_path).data.publicUrl;
-      window.open(publicUrl, "_blank");
+      setSignedUrls((prev) => ({ ...prev, [attachment.id]: signedUrl }));
+      window.open(signedUrl, "_blank");
+    } catch (err) {
+      console.error("Erro ao abrir anexo compartilhado:", err);
+      toast.error("Não foi possível abrir o anexo agora. Tente novamente.");
     } finally {
-      setLoadingIds(prev => {
+      setLoadingIds((prev) => {
         const next = new Set(prev);
         next.delete(attachment.id);
         return next;

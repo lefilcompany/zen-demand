@@ -6,42 +6,68 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const jsonHeaders = {
+  ...corsHeaders,
+  "Content-Type": "application/json",
+};
+
+const createResponse = (status: number, body: Record<string, unknown>) =>
+  new Response(JSON.stringify(body), { status, headers: jsonHeaders });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { token, filePath } = await req.json();
+    const payload = await req.json().catch(() => null);
+    const token = typeof payload?.token === "string" ? payload.token.trim() : "";
+    const filePath = typeof payload?.filePath === "string" ? payload.filePath.trim() : "";
 
     if (!token || !filePath) {
-      return new Response(
-        JSON.stringify({ error: "Missing token or filePath" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createResponse(400, {
+        code: "BAD_REQUEST",
+        error: "Missing token or filePath",
+      });
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Validate the share token
     const { data: tokenData, error: tokenError } = await supabase
       .from("demand_share_tokens")
-      .select("demand_id")
+      .select("id, demand_id, is_active, expires_at")
       .eq("token", token)
-      .eq("is_active", true)
-      .or("expires_at.is.null,expires_at.gt.now()")
       .maybeSingle();
 
-    if (tokenError || !tokenData) {
-      return new Response(
-        JSON.stringify({ error: "Invalid or expired share token" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (tokenError) {
+      console.error("Error validating attachment token:", tokenError);
+      return createResponse(500, {
+        code: "LOAD_ERROR",
+        error: "Failed to validate share token",
+      });
     }
 
-    // Verify the attachment belongs to the shared demand
+    if (!tokenData || !tokenData.is_active) {
+      return createResponse(403, {
+        code: "INVALID_TOKEN",
+        error: "Invalid or revoked share token",
+      });
+    }
+
+    if (tokenData.expires_at && new Date(tokenData.expires_at) <= new Date()) {
+      await supabase
+        .from("demand_share_tokens")
+        .update({ is_active: false })
+        .eq("id", tokenData.id);
+
+      return createResponse(410, {
+        code: "EXPIRED_TOKEN",
+        error: "Share token expired",
+      });
+    }
+
     const { data: attachment, error: attachError } = await supabase
       .from("demand_attachments")
       .select("id")
@@ -50,32 +76,30 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (attachError || !attachment) {
-      return new Response(
-        JSON.stringify({ error: "Attachment not found for this demand" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return createResponse(404, {
+        code: "ATTACHMENT_NOT_FOUND",
+        error: "Attachment not found for this shared demand",
+      });
     }
 
-    // Generate signed URL (valid for 1 hour)
     const { data: signedData, error: signError } = await supabase.storage
       .from("demand-attachments")
       .createSignedUrl(filePath, 3600);
 
     if (signError || !signedData?.signedUrl) {
-      return new Response(
-        JSON.stringify({ error: "Failed to generate signed URL" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      console.error("Error creating signed URL:", signError);
+      return createResponse(500, {
+        code: "SIGNED_URL_ERROR",
+        error: "Failed to generate signed URL",
+      });
     }
 
-    return new Response(
-      JSON.stringify({ signedUrl: signedData.signedUrl }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return createResponse(200, { signedUrl: signedData.signedUrl });
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    console.error("Unexpected shared-attachment-url error:", error);
+    return createResponse(500, {
+      code: "LOAD_ERROR",
+      error: "Internal server error",
+    });
   }
 });
