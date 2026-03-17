@@ -1,21 +1,53 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { LayoutGrid, Users, Settings2, Plus } from "lucide-react";
+import { LayoutGrid, Users, Settings2, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
-import { useBoards } from "@/hooks/useBoards";
+import { useBoards, useDeleteBoard } from "@/hooks/useBoards";
 import { useBoardMembers, useBoardRole } from "@/hooks/useBoardMembers";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { CreateBoardDialog } from "@/components/CreateBoardDialog";
 
-function BoardCard({ board }: { board: { id: string; name: string; description: string | null; is_default: boolean; monthly_demand_limit: number } }) {
+function BoardCard({ board }: { board: { id: string; name: string; description: string | null; is_default: boolean; monthly_demand_limit: number; team_id: string } }) {
   const navigate = useNavigate();
   const { data: members, isLoading: membersLoading } = useBoardMembers(board.id);
   const { data: role } = useBoardRole(board.id);
+  const deleteBoard = useDeleteBoard();
+
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [confirmInput, setConfirmInput] = useState("");
+
+  const canDelete = role === "admin" && !board.is_default;
+  const confirmText = board.name.toUpperCase();
+  const isConfirmed = confirmInput.toUpperCase() === confirmText;
+
+  const handleDelete = async () => {
+    if (!isConfirmed) return;
+    try {
+      await deleteBoard.mutateAsync({ boardId: board.id, teamId: board.team_id });
+      setShowDeleteDialog(false);
+      setConfirmInput("");
+    } catch {
+      // handled by hook
+    }
+  };
 
   const roleLabels: Record<string, string> = {
     admin: "Administrador",
@@ -32,50 +64,104 @@ function BoardCard({ board }: { board: { id: string; name: string; description: 
   };
 
   return (
-    <Card 
-      className="cursor-pointer hover:shadow-lg transition-all hover:border-primary/50 min-w-0"
-      onClick={() => navigate(`/boards/${board.id}`)}
-    >
-      <CardHeader className="pb-3 space-y-2">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <LayoutGrid className="h-5 w-5 text-primary shrink-0" />
-            <CardTitle className="text-base font-semibold truncate">{board.name}</CardTitle>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-1.5">
-          {board.is_default && (
-            <Badge variant="secondary" className="text-xs shrink-0">Padrão</Badge>
-          )}
-          {role && (
-            <Badge className={`text-xs shrink-0 pointer-events-none ${roleColors[role] || ""}`}>
-              {roleLabels[role] || role}
-            </Badge>
-          )}
-        </div>
-        {board.description && (
-          <CardDescription className="line-clamp-2 text-sm">{board.description}</CardDescription>
+    <>
+      <Card 
+        className="cursor-pointer hover:shadow-lg transition-all hover:border-primary/50 min-w-0 group relative"
+        onClick={() => navigate(`/boards/${board.id}`)}
+      >
+        {canDelete && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10 z-10"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowDeleteDialog(true);
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         )}
-      </CardHeader>
-      <CardContent className="pt-0">
-        <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <Users className="h-4 w-4 shrink-0" />
-            <span className="truncate">
-              {membersLoading ? (
-                <Skeleton className="h-4 w-8 inline-block" />
-              ) : (
-                `${members?.length || 0} membros`
-              )}
-            </span>
+        <CardHeader className="pb-3 space-y-2">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <LayoutGrid className="h-5 w-5 text-primary shrink-0" />
+              <CardTitle className="text-base font-semibold truncate">{board.name}</CardTitle>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5 min-w-0">
-            <Settings2 className="h-4 w-4 shrink-0" />
-            <span className="truncate">{board.monthly_demand_limit || "Ilimitado"}</span>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {board.is_default && (
+              <Badge variant="secondary" className="text-xs shrink-0">Padrão</Badge>
+            )}
+            {role && (
+              <Badge className={`text-xs shrink-0 pointer-events-none ${roleColors[role] || ""}`}>
+                {roleLabels[role] || role}
+              </Badge>
+            )}
           </div>
-        </div>
-      </CardContent>
-    </Card>
+          {board.description && (
+            <CardDescription className="line-clamp-2 text-sm">{board.description}</CardDescription>
+          )}
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Users className="h-4 w-4 shrink-0" />
+              <span className="truncate">
+                {membersLoading ? (
+                  <Skeleton className="h-4 w-8 inline-block" />
+                ) : (
+                  `${members?.length || 0} membros`
+                )}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Settings2 className="h-4 w-4 shrink-0" />
+              <span className="truncate">{board.monthly_demand_limit || "Ilimitado"}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={(open) => {
+        setShowDeleteDialog(open);
+        if (!open) setConfirmInput("");
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir quadro "{board.name}"?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <span className="block">
+                Esta ação é irreversível. Todas as demandas, anexos e dados associados a este quadro serão permanentemente excluídos.
+              </span>
+              <span className="block font-medium text-foreground">
+                Digite <span className="font-bold text-destructive">{confirmText}</span> para confirmar:
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-2">
+            <Label htmlFor="confirm-delete" className="sr-only">Confirmação</Label>
+            <Input
+              id="confirm-delete"
+              value={confirmInput}
+              onChange={(e) => setConfirmInput(e.target.value)}
+              placeholder={confirmText}
+              autoComplete="off"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={!isConfirmed || deleteBoard.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteBoard.isPending ? "Excluindo..." : "Excluir Quadro"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
@@ -107,7 +193,6 @@ export default function Boards() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Breadcrumbs */}
       <PageBreadcrumb
         items={[
           { label: "Quadros", icon: LayoutGrid, isCurrent: true },
