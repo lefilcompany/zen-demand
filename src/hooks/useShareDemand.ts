@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-// Type for share token
 interface ShareToken {
   id: string;
   demand_id: string;
@@ -12,7 +11,6 @@ interface ShareToken {
   is_active: boolean;
 }
 
-// Generate a random token
 function generateToken(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let token = '';
@@ -38,7 +36,20 @@ export function useShareToken(demandId: string | null) {
         .maybeSingle();
 
       if (result.error) throw result.error;
-      return result.data as unknown as ShareToken | null;
+      
+      const token = result.data as unknown as ShareToken | null;
+      
+      // Also filter expiration client-side for safety
+      if (token?.expires_at && new Date(token.expires_at) <= new Date()) {
+        // Deactivate expired token
+        await supabase
+          .from("demand_share_tokens" as any)
+          .update({ is_active: false })
+          .eq("id", token.id);
+        return null;
+      }
+      
+      return token;
     },
     enabled: !!demandId,
   });
@@ -96,22 +107,26 @@ export function useSharedDemand(token: string | null) {
     queryFn: async () => {
       if (!token) return null;
 
-      // First verify the token is valid
+      // Verify the token is valid (RLS already filters is_active=true AND not expired)
       const tokenResult = await supabase
         .from("demand_share_tokens" as any)
-        .select("demand_id")
+        .select("demand_id, expires_at")
         .eq("token", token)
         .eq("is_active", true)
         .maybeSingle();
 
-      const tokenData = tokenResult.data as unknown as { demand_id: string } | null;
+      const tokenData = tokenResult.data as unknown as { demand_id: string; expires_at: string | null } | null;
       
       if (tokenResult.error || !tokenData) {
-        throw new Error("Link de compartilhamento inválido ou expirado");
+        throw new Error("INVALID_TOKEN");
       }
 
-      // Then fetch the demand with related data
-      // SECURITY: Only select specific team fields to avoid exposing access_code
+      // Extra client-side expiration check
+      if (tokenData.expires_at && new Date(tokenData.expires_at) <= new Date()) {
+        throw new Error("EXPIRED_TOKEN");
+      }
+
+      // Fetch the demand with related data
       const { data: demand, error: demandError } = await supabase
         .from("demands")
         .select(`
@@ -132,6 +147,8 @@ export function useSharedDemand(token: string | null) {
       return demand;
     },
     enabled: !!token,
+    retry: false,
+    staleTime: 1000 * 60 * 5,
   });
 }
 
@@ -155,6 +172,7 @@ export function useSharedDemandInteractions(token: string | null, demandId: stri
       return data;
     },
     enabled: !!token && !!demandId,
+    retry: false,
   });
 }
 
@@ -179,5 +197,6 @@ export function useSharedDemandAttachments(token: string | null, demandId: strin
       return data;
     },
     enabled: !!token && !!demandId,
+    retry: false,
   });
 }

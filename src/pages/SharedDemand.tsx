@@ -1,12 +1,12 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { RichTextDisplay } from "@/components/ui/rich-text-editor";
-import { MentionText } from "@/components/MentionText";
 import { useSharedDemand, useSharedDemandInteractions, useSharedDemandAttachments } from "@/hooks/useShareDemand";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { Calendar, Users, Wrench, ExternalLink, Lock, MessageSquare, Kanban } from "lucide-react";
+import { useParams, Link } from "react-router-dom";
+import { Calendar, Users, Wrench, ExternalLink, Lock, MessageSquare, Loader2, AlertTriangle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatDateOnlyBR } from "@/lib/dateUtils";
@@ -14,32 +14,17 @@ import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { cn } from "@/lib/utils";
 import logoSoma from "@/assets/logo-soma.png";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
-import { useEffect } from "react";
-import { toast } from "sonner";
 
 export default function SharedDemand() {
   const { token } = useParams<{ token: string }>();
-  const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
   const { data: demand, isLoading, error } = useSharedDemand(token || null);
   const { data: interactions } = useSharedDemandInteractions(token || null, demand?.id || null);
   const { data: attachments } = useSharedDemandAttachments(token || null, demand?.id || null);
 
-  // Redirect logged-in users to the full demand page
-  useEffect(() => {
-    if (!authLoading && user && demand?.id) {
-      toast.success("Você foi redirecionado para a visualização completa", {
-        description: "Como você está logado e tem acesso ao quadro, pode interagir com esta demanda.",
-      });
-      navigate(`/demands/${demand.id}`, { replace: true });
-    }
-  }, [authLoading, user, demand?.id, navigate]);
+  // No redirect for logged-in users — always show read-only public view
 
-  // Filter only comments for public view
   const comments = interactions?.filter(i => i.interaction_type === "comment") || [];
 
-  // Format assignees for display
   const formattedAssignees = demand?.demand_assignees?.map((a: any) => ({
     id: a.user_id,
     full_name: a.profile?.full_name || "Usuário",
@@ -49,22 +34,42 @@ export default function SharedDemand() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Carregando...</div>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>Carregando demanda...</span>
+        </div>
       </div>
     );
   }
 
   if (error || !demand) {
+    const errorMessage = error?.message;
+    const isExpired = errorMessage === "EXPIRED_TOKEN";
+    const isInvalid = errorMessage === "INVALID_TOKEN";
+
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center space-y-4">
-            <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto">
-              <Lock className="w-8 h-8 text-destructive" />
+            <div className={cn(
+              "w-16 h-16 rounded-full flex items-center justify-center mx-auto",
+              isExpired ? "bg-amber-100 dark:bg-amber-950/30" : "bg-destructive/10"
+            )}>
+              {isExpired ? (
+                <Clock className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+              ) : (
+                <AlertTriangle className="w-8 h-8 text-destructive" />
+              )}
             </div>
-            <h2 className="text-xl font-semibold">Link inválido ou expirado</h2>
+            <h2 className="text-xl font-semibold">
+              {isExpired ? "Link expirado" : isInvalid ? "Link inválido" : "Erro ao carregar"}
+            </h2>
             <p className="text-muted-foreground">
-              Este link de compartilhamento não é mais válido. Solicite um novo link ao responsável pela demanda.
+              {isExpired
+                ? "Este link de compartilhamento expirou. Solicite um novo link ao responsável pela demanda."
+                : isInvalid
+                ? "Este link de compartilhamento não é válido ou foi revogado."
+                : "Não foi possível carregar esta demanda. Tente novamente mais tarde."}
             </p>
             <Button asChild>
               <Link to="/auth">Fazer login</Link>
@@ -212,25 +217,7 @@ export default function SharedDemand() {
             </div>
 
             {/* Attachments */}
-            {attachments && attachments.length > 0 && (
-              <div>
-                <h3 className="font-semibold mb-2 text-sm">Anexos</h3>
-                <div className="flex flex-wrap gap-2">
-                  {attachments.map((attachment: any) => (
-                    <a
-                      key={attachment.id}
-                      href={supabase.storage.from("demand-attachments").getPublicUrl(attachment.file_path).data.publicUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-3 py-2 bg-muted rounded-md hover:bg-muted/80 transition-colors text-sm"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      {attachment.file_name}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
+            <SharedAttachments attachments={attachments} token={token!} />
           </CardContent>
         </Card>
 
@@ -276,6 +263,83 @@ export default function SharedDemand() {
           <p>Visualização pública gerada pelo sistema de gestão de demandas</p>
         </div>
       </main>
+    </div>
+  );
+}
+
+// Separate component for attachments with signed URL support
+function SharedAttachments({ attachments, token }: { attachments: any[] | undefined; token: string }) {
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
+
+  if (!attachments || attachments.length === 0) return null;
+
+  const handleAttachmentClick = async (attachment: any) => {
+    // If we already have a signed URL, use it
+    if (signedUrls[attachment.id]) {
+      window.open(signedUrls[attachment.id], "_blank");
+      return;
+    }
+
+    setLoadingIds(prev => new Set(prev).add(attachment.id));
+
+    try {
+      // Try to get a signed URL via edge function
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/shared-attachment-url`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, filePath: attachment.file_path }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.signedUrl) {
+          setSignedUrls(prev => ({ ...prev, [attachment.id]: data.signedUrl }));
+          window.open(data.signedUrl, "_blank");
+          return;
+        }
+      }
+
+      // Fallback: try public URL (works if bucket is public)
+      const publicUrl = supabase.storage.from("demand-attachments").getPublicUrl(attachment.file_path).data.publicUrl;
+      window.open(publicUrl, "_blank");
+    } catch {
+      // Fallback to public URL
+      const publicUrl = supabase.storage.from("demand-attachments").getPublicUrl(attachment.file_path).data.publicUrl;
+      window.open(publicUrl, "_blank");
+    } finally {
+      setLoadingIds(prev => {
+        const next = new Set(prev);
+        next.delete(attachment.id);
+        return next;
+      });
+    }
+  };
+
+  return (
+    <div>
+      <h3 className="font-semibold mb-2 text-sm">Anexos</h3>
+      <div className="flex flex-wrap gap-2">
+        {attachments.map((attachment: any) => (
+          <button
+            key={attachment.id}
+            onClick={() => handleAttachmentClick(attachment)}
+            disabled={loadingIds.has(attachment.id)}
+            className="flex items-center gap-2 px-3 py-2 bg-muted rounded-md hover:bg-muted/80 transition-colors text-sm cursor-pointer disabled:opacity-50"
+          >
+            {loadingIds.has(attachment.id) ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ExternalLink className="h-4 w-4" />
+            )}
+            {attachment.file_name}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
