@@ -12,9 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Plus, Pencil, ArrowUp, ArrowDown, CreditCard, Crown,
-  LayoutGrid, Users, Kanban, FileText, Layers, StickyNote,
-  Check, X, Infinity,
+  Plus, Pencil, CreditCard, Crown, Users, Trash2,
+  Check, Star, Zap, GripVertical,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -65,89 +64,58 @@ const featureOptions = [
 ];
 
 function formatCurrency(cents: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(cents / 100);
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
 }
 
-const tierAccents: Record<string, { gradient: string; border: string; icon: string; bg: string }> = {
+const tierConfig: Record<string, { icon: React.ElementType; borderColor: string; badgeBg: string; badgeText: string; label: string }> = {
   starter: {
-    gradient: "from-amber-500/10 to-orange-500/5",
-    border: "border-amber-500/30",
-    icon: "text-amber-500",
-    bg: "bg-amber-500/10",
+    icon: Star,
+    borderColor: "border-amber-300/50",
+    badgeBg: "bg-amber-100 dark:bg-amber-900/30",
+    badgeText: "text-amber-700 dark:text-amber-300",
+    label: "ESSENCIAL",
   },
   profissional: {
-    gradient: "from-orange-500/10 to-amber-500/5",
-    border: "border-orange-500/30",
-    icon: "text-orange-500",
-    bg: "bg-orange-500/10",
+    icon: Zap,
+    borderColor: "border-orange-400/50",
+    badgeBg: "bg-orange-100 dark:bg-orange-900/30",
+    badgeText: "text-orange-700 dark:text-orange-300",
+    label: "POPULAR",
   },
   business: {
-    gradient: "from-orange-600/10 to-red-500/5",
-    border: "border-orange-600/30",
-    icon: "text-orange-600",
-    bg: "bg-orange-600/10",
+    icon: Crown,
+    borderColor: "border-primary/40",
+    badgeBg: "bg-primary/10",
+    badgeText: "text-primary",
+    label: "BUSINESS",
   },
   enterprise: {
-    gradient: "from-primary/10 to-orange-600/5",
-    border: "border-primary/30",
-    icon: "text-primary",
-    bg: "bg-primary/10",
+    icon: Crown,
+    borderColor: "border-purple-400/50",
+    badgeBg: "bg-purple-100 dark:bg-purple-900/30",
+    badgeText: "text-purple-700 dark:text-purple-300",
+    label: "PREMIUM",
   },
 };
 
-const defaultAccent = {
-  gradient: "from-muted/50 to-muted/20",
-  border: "border-border",
-  icon: "text-primary",
-  bg: "bg-primary/10",
+const defaultTier = {
+  icon: Star,
+  borderColor: "border-border",
+  badgeBg: "bg-muted",
+  badgeText: "text-muted-foreground",
+  label: "PLANO",
 };
 
-function LimitItem({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: number | null }) {
-  const isUnlimited = value === -1;
-  const isDisabled = value === 0;
-
+function LimitLine({ label, value }: { label: string; value: number | null }) {
+  const display =
+    value === -1 ? "Ilimitado" : value === 0 ? "Desabilitado" : `${value}`;
   return (
-    <div className="flex items-center gap-2.5 py-1.5">
-      <div className="h-7 w-7 rounded-md bg-muted/60 flex items-center justify-center shrink-0">
-        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-      </div>
-      <span className="text-xs text-muted-foreground flex-1">{label}</span>
-      {isUnlimited ? (
-        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 gap-1 font-medium">
-          <Infinity className="h-3 w-3" />
-          Ilimitado
-        </Badge>
-      ) : isDisabled ? (
-        <span className="text-xs text-muted-foreground/50">—</span>
-      ) : (
-        <span className="text-sm font-semibold tabular-nums">{value}</span>
-      )}
-    </div>
-  );
-}
-
-function FeaturePill({ label, value }: { label: string; value: any }) {
-  if (value === true) {
-    return (
-      <div className="flex items-center gap-1 text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full px-2 py-0.5 font-medium">
-        <Check className="h-2.5 w-2.5" />
+    <div className="flex items-start gap-2 text-sm">
+      <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+      <span className="text-foreground/80">
+        <span className="font-semibold uppercase">{display}</span>{" "}
         {label}
-      </div>
-    );
-  }
-  if (value === false || !value || value === "disabled") {
-    return (
-      <div className="flex items-center gap-1 text-[10px] bg-muted/60 text-muted-foreground/60 rounded-full px-2 py-0.5 line-through">
-        {label}
-      </div>
-    );
-  }
-  return (
-    <div className="flex items-center gap-1 text-[10px] bg-primary/10 text-primary rounded-full px-2 py-0.5 font-medium">
-      {value.charAt(0).toUpperCase() + value.slice(1)}
+      </span>
     </div>
   );
 }
@@ -212,13 +180,11 @@ export default function AdminPlans() {
     if (!plans) return;
     const swapIndex = direction === "up" ? index - 1 : index + 1;
     if (swapIndex < 0 || swapIndex >= plans.length) return;
-
     const updates = plans.map((p, i) => {
       if (i === index) return { id: p.id, sort_order: plans[swapIndex].sort_order };
       if (i === swapIndex) return { id: p.id, sort_order: plans[index].sort_order };
       return { id: p.id, sort_order: p.sort_order };
     });
-
     try {
       await reorderPlans.mutateAsync(updates);
       toast.success("Ordem atualizada");
@@ -237,10 +203,7 @@ export default function AdminPlans() {
   };
 
   const updateFeature = (key: string, value: any) => {
-    setForm((prev) => ({
-      ...prev,
-      features: { ...prev.features, [key]: value },
-    }));
+    setForm((prev) => ({ ...prev, features: { ...prev.features, [key]: value } }));
   };
 
   return (
@@ -259,118 +222,99 @@ export default function AdminPlans() {
 
       {/* Plans Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-80 rounded-xl" />
+            <Skeleton key={i} className="h-72 rounded-2xl" />
           ))}
         </div>
       ) : !plans || plans.length === 0 ? (
-        <Card>
+        <Card className="rounded-2xl">
           <CardContent className="py-16 text-center text-muted-foreground">
             <CreditCard className="h-10 w-10 mx-auto mb-3 opacity-40" />
             <p>Nenhum plano cadastrado</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {plans.map((plan, index) => {
-            const accent = tierAccents[plan.slug] || defaultAccent;
-            const features = plan.features || {};
+            const tier = tierConfig[plan.slug] || defaultTier;
+            const TierIcon = tier.icon;
 
             return (
               <Card
                 key={plan.id}
-                className={`relative overflow-hidden transition-all hover:shadow-lg border ${accent.border} ${
-                  !plan.is_active ? "opacity-50 grayscale" : ""
+                className={`relative rounded-2xl border-2 transition-all hover:shadow-xl ${tier.borderColor} ${
+                  !plan.is_active ? "opacity-40 grayscale" : ""
                 }`}
               >
-                {/* Gradient top strip */}
-                <div className={`h-1.5 bg-gradient-to-r ${accent.gradient.replace("/10", "").replace("/5", "")} ${accent.gradient}`} />
-
-                <CardContent className="p-4 space-y-4">
-                  {/* Header: Order + Name + Actions */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className={`h-9 w-9 rounded-lg ${accent.bg} flex items-center justify-center shrink-0`}>
-                        <Crown className={`h-4.5 w-4.5 ${accent.icon}`} />
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="font-semibold text-sm truncate">{plan.name}</h3>
-                        <code className="text-[10px] text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded">
-                          {plan.slug}
-                        </code>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-0.5 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        disabled={index === 0 || reorderPlans.isPending}
-                        onClick={() => handleMove(index, "up")}
-                      >
-                        <ArrowUp className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        disabled={index === plans.length - 1 || reorderPlans.isPending}
-                        onClick={() => handleMove(index, "down")}
-                      >
-                        <ArrowDown className="h-3 w-3" />
-                      </Button>
-                    </div>
+                <CardContent className="p-5 flex flex-col h-full">
+                  {/* Tier Badge */}
+                  <div className="mb-4">
+                    <Badge
+                      variant="secondary"
+                      className={`rounded-full px-3 py-1 text-[11px] font-bold tracking-wider gap-1.5 ${tier.badgeBg} ${tier.badgeText} border-0`}
+                    >
+                      <TierIcon className="h-3.5 w-3.5" />
+                      {tier.label}
+                    </Badge>
                   </div>
 
+                  {/* Name */}
+                  <h3 className="text-lg font-extrabold uppercase leading-tight tracking-tight mb-1">
+                    {plan.name}
+                  </h3>
+
+                  {/* Description */}
+                  {plan.description && (
+                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                      {plan.description}
+                    </p>
+                  )}
+
                   {/* Price */}
-                  <div>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold tracking-tight">
-                        {formatCurrency(plan.price_cents)}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        /{plan.billing_period === "yearly" ? "ano" : "mês"}
-                      </span>
-                    </div>
-                    {plan.description && (
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{plan.description}</p>
-                    )}
+                  <div className="flex items-baseline gap-1.5 mb-5">
+                    <span className="text-3xl font-black tracking-tight">
+                      {formatCurrency(plan.price_cents)}
+                    </span>
+                    <span className="text-sm text-muted-foreground font-medium">
+                      /{plan.billing_period === "yearly" ? "ano" : "mês"}
+                    </span>
                   </div>
 
                   {/* Limits */}
-                  <div className="space-y-0.5 border-t border-b py-3 border-border/50">
-                    <LimitItem icon={Layers} label="Equipes" value={plan.max_teams} />
-                    <LimitItem icon={LayoutGrid} label="Quadros" value={plan.max_boards} />
-                    <LimitItem icon={Users} label="Membros" value={plan.max_members} />
-                    <LimitItem icon={Kanban} label="Demandas/mês" value={plan.max_demands_per_month} />
-                    <LimitItem icon={FileText} label="Serviços" value={plan.max_services} />
-                    <LimitItem icon={StickyNote} label="Notas" value={plan.max_notes} />
+                  <div className="space-y-2 mb-5 flex-1">
+                    <LimitLine label="quadros" value={plan.max_boards} />
+                    <LimitLine label="membros" value={plan.max_members} />
+                    <LimitLine label="demandas/mês" value={plan.max_demands_per_month} />
+                    <LimitLine label="serviços" value={plan.max_services} />
                   </div>
 
-                  {/* Features pills */}
-                  <div className="flex flex-wrap gap-1">
-                    {featureOptions.map((feat) => (
-                      <FeaturePill key={feat.key} label={feat.label} value={features[feat.key]} />
-                    ))}
-                  </div>
-
-                  {/* Footer: Status + Edit */}
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={plan.is_active}
-                        onCheckedChange={() => handleToggleActive(plan)}
-                        disabled={updatePlan.isPending}
-                      />
-                      <span className="text-xs text-muted-foreground">
-                        {plan.is_active ? "Ativo" : "Inativo"}
-                      </span>
+                  {/* Status row */}
+                  {!plan.is_active && (
+                    <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2 mb-4">
+                      <p className="text-xs text-destructive font-medium text-center">
+                        PLANO INATIVO
+                      </p>
                     </div>
-                    <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs" onClick={() => openEdit(plan)}>
-                      <Pencil className="h-3 w-3" />
-                      Editar
-                    </Button>
+                  )}
+
+                  {/* Footer */}
+                  <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Users className="h-3.5 w-3.5" />
+                      <span>0 assinantes</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1.5 text-xs rounded-lg"
+                        onClick={() => openEdit(plan)}
+                      >
+                        <Pencil className="h-3 w-3" />
+                        Editar
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -445,30 +389,23 @@ export default function AdminPlans() {
               <Label className="text-base font-semibold">Limites</Label>
               <p className="text-xs text-muted-foreground mb-3">Use -1 para ilimitado, 0 para desabilitado</p>
               <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-1">
-                  <Label className="text-xs">Equipes</Label>
-                  <Input type="number" value={form.max_teams} onChange={(e) => setForm((f) => ({ ...f, max_teams: parseInt(e.target.value) || 0 }))} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Quadros</Label>
-                  <Input type="number" value={form.max_boards} onChange={(e) => setForm((f) => ({ ...f, max_boards: parseInt(e.target.value) || 0 }))} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Membros</Label>
-                  <Input type="number" value={form.max_members} onChange={(e) => setForm((f) => ({ ...f, max_members: parseInt(e.target.value) || 0 }))} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Demandas/mês</Label>
-                  <Input type="number" value={form.max_demands_per_month} onChange={(e) => setForm((f) => ({ ...f, max_demands_per_month: parseInt(e.target.value) || 0 }))} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Serviços</Label>
-                  <Input type="number" value={form.max_services} onChange={(e) => setForm((f) => ({ ...f, max_services: parseInt(e.target.value) || 0 }))} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Notas</Label>
-                  <Input type="number" value={form.max_notes} onChange={(e) => setForm((f) => ({ ...f, max_notes: parseInt(e.target.value) || 0 }))} />
-                </div>
+                {[
+                  { key: "max_teams", label: "Equipes" },
+                  { key: "max_boards", label: "Quadros" },
+                  { key: "max_members", label: "Membros" },
+                  { key: "max_demands_per_month", label: "Demandas/mês" },
+                  { key: "max_services", label: "Serviços" },
+                  { key: "max_notes", label: "Notas" },
+                ].map((field) => (
+                  <div key={field.key} className="space-y-1">
+                    <Label className="text-xs">{field.label}</Label>
+                    <Input
+                      type="number"
+                      value={(form as any)[field.key]}
+                      onChange={(e) => setForm((f) => ({ ...f, [field.key]: parseInt(e.target.value) || 0 }))}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -502,6 +439,17 @@ export default function AdminPlans() {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Ordering */}
+            <div className="space-y-2">
+              <Label>Ordem de exibição</Label>
+              <Input
+                type="number"
+                value={form.sort_order}
+                onChange={(e) => setForm((f) => ({ ...f, sort_order: parseInt(e.target.value) || 0 }))}
+              />
+              <p className="text-xs text-muted-foreground">Menor número aparece primeiro</p>
             </div>
 
             <div className="flex items-center justify-between border-t pt-4">
