@@ -54,13 +54,20 @@ export default function Welcome() {
     checkProfile();
   }, [user]);
 
+  const { data: userRole, isLoading: roleLoading } = useUserRole();
+
   // Show loading while checking teams
-  if (isLoading || checkingProfile) {
+  if (isLoading || checkingProfile || roleLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
+  }
+
+  // Redirect system admins to admin panel
+  if (userRole === "admin" && !hasTeams) {
+    return <Navigate to="/admin" replace />;
   }
 
   // Redirect to complete profile if missing fields
