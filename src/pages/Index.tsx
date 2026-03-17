@@ -341,7 +341,7 @@ const Index = () => {
         <div className="flex items-center gap-2">
           <Button 
             onClick={() => openCreateDemand()}
-            className="gap-2"
+            className="gap-2 bg-[hsl(32,95%,50%)] hover:bg-[hsl(32,95%,45%)] text-white rounded-lg px-5 h-10 shadow-md"
             data-tour="new-demand-btn"
           >
             <PlusCircle className="h-4 w-4" />
