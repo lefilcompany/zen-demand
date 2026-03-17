@@ -202,7 +202,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
           } else {
             toast.success("Demanda criada com sucesso!");
           }
-          navigate("/kanban");
+          handleClose();
         },
         onError: (error: any) => {
           toast.error("Erro ao criar demanda", {
