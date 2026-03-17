@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAdminPlans, useCreatePlan, useUpdatePlan, useReorderPlans } from "@/hooks/admin/useAdminPlans";
 import type { Plan } from "@/hooks/usePlans";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,9 +10,12 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Pencil, ArrowUp, ArrowDown, CreditCard, Crown, Check, X } from "lucide-react";
+import {
+  Plus, Pencil, ArrowUp, ArrowDown, CreditCard, Crown,
+  LayoutGrid, Users, Kanban, FileText, Layers, StickyNote,
+  Check, X, Infinity,
+} from "lucide-react";
 import { toast } from "sonner";
 
 interface PlanFormData {
@@ -68,10 +71,85 @@ function formatCurrency(cents: number) {
   }).format(cents / 100);
 }
 
-function LimitDisplay({ value }: { value: number | null }) {
-  if (value === null || value === undefined) return <span className="text-muted-foreground">—</span>;
-  if (value === -1) return <Badge variant="secondary" className="text-xs">Ilimitado</Badge>;
-  return <span>{value}</span>;
+const tierAccents: Record<string, { gradient: string; border: string; icon: string; bg: string }> = {
+  starter: {
+    gradient: "from-amber-500/10 to-orange-500/5",
+    border: "border-amber-500/30",
+    icon: "text-amber-500",
+    bg: "bg-amber-500/10",
+  },
+  profissional: {
+    gradient: "from-orange-500/10 to-amber-500/5",
+    border: "border-orange-500/30",
+    icon: "text-orange-500",
+    bg: "bg-orange-500/10",
+  },
+  business: {
+    gradient: "from-orange-600/10 to-red-500/5",
+    border: "border-orange-600/30",
+    icon: "text-orange-600",
+    bg: "bg-orange-600/10",
+  },
+  enterprise: {
+    gradient: "from-primary/10 to-orange-600/5",
+    border: "border-primary/30",
+    icon: "text-primary",
+    bg: "bg-primary/10",
+  },
+};
+
+const defaultAccent = {
+  gradient: "from-muted/50 to-muted/20",
+  border: "border-border",
+  icon: "text-primary",
+  bg: "bg-primary/10",
+};
+
+function LimitItem({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: number | null }) {
+  const isUnlimited = value === -1;
+  const isDisabled = value === 0;
+
+  return (
+    <div className="flex items-center gap-2.5 py-1.5">
+      <div className="h-7 w-7 rounded-md bg-muted/60 flex items-center justify-center shrink-0">
+        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+      </div>
+      <span className="text-xs text-muted-foreground flex-1">{label}</span>
+      {isUnlimited ? (
+        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 gap-1 font-medium">
+          <Infinity className="h-3 w-3" />
+          Ilimitado
+        </Badge>
+      ) : isDisabled ? (
+        <span className="text-xs text-muted-foreground/50">—</span>
+      ) : (
+        <span className="text-sm font-semibold tabular-nums">{value}</span>
+      )}
+    </div>
+  );
+}
+
+function FeaturePill({ label, value }: { label: string; value: any }) {
+  if (value === true) {
+    return (
+      <div className="flex items-center gap-1 text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full px-2 py-0.5 font-medium">
+        <Check className="h-2.5 w-2.5" />
+        {label}
+      </div>
+    );
+  }
+  if (value === false || !value || value === "disabled") {
+    return (
+      <div className="flex items-center gap-1 text-[10px] bg-muted/60 text-muted-foreground/60 rounded-full px-2 py-0.5 line-through">
+        {label}
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1 text-[10px] bg-primary/10 text-primary rounded-full px-2 py-0.5 font-medium">
+      {value.charAt(0).toUpperCase() + value.slice(1)}
+    </div>
+  );
 }
 
 export default function AdminPlans() {
@@ -86,10 +164,7 @@ export default function AdminPlans() {
 
   const openCreate = () => {
     setEditingPlan(null);
-    setForm({
-      ...defaultForm,
-      sort_order: (plans?.length ?? 0) + 1,
-    });
+    setForm({ ...defaultForm, sort_order: (plans?.length ?? 0) + 1 });
     setDialogOpen(true);
   };
 
@@ -119,7 +194,6 @@ export default function AdminPlans() {
       toast.error("Nome e slug são obrigatórios");
       return;
     }
-
     try {
       if (editingPlan) {
         await updatePlan.mutateAsync({ id: editingPlan.id, ...form });
@@ -171,10 +245,11 @@ export default function AdminPlans() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Planos</h1>
-          <p className="text-muted-foreground">Gerencie os planos de assinatura do sistema</p>
+          <p className="text-muted-foreground text-sm">Gerencie os planos de assinatura do sistema</p>
         </div>
         <Button onClick={openCreate} className="gap-2">
           <Plus className="h-4 w-4" />
@@ -182,93 +257,127 @@ export default function AdminPlans() {
         </Button>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-6 space-y-3">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[60px]">Ordem</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Slug</TableHead>
-                  <TableHead>Preço</TableHead>
-                  <TableHead className="text-center">Quadros</TableHead>
-                  <TableHead className="text-center">Membros</TableHead>
-                  <TableHead className="text-center">Demandas/mês</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {plans?.map((plan, index) => (
-                  <TableRow key={plan.id} className={!plan.is_active ? "opacity-50" : ""}>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          disabled={index === 0 || reorderPlans.isPending}
-                          onClick={() => handleMove(index, "up")}
-                        >
-                          <ArrowUp className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          disabled={index === (plans?.length ?? 0) - 1 || reorderPlans.isPending}
-                          onClick={() => handleMove(index, "down")}
-                        >
-                          <ArrowDown className="h-3 w-3" />
-                        </Button>
+      {/* Plans Grid */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-80 rounded-xl" />
+          ))}
+        </div>
+      ) : !plans || plans.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 text-center text-muted-foreground">
+            <CreditCard className="h-10 w-10 mx-auto mb-3 opacity-40" />
+            <p>Nenhum plano cadastrado</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {plans.map((plan, index) => {
+            const accent = tierAccents[plan.slug] || defaultAccent;
+            const features = plan.features || {};
+
+            return (
+              <Card
+                key={plan.id}
+                className={`relative overflow-hidden transition-all hover:shadow-lg border ${accent.border} ${
+                  !plan.is_active ? "opacity-50 grayscale" : ""
+                }`}
+              >
+                {/* Gradient top strip */}
+                <div className={`h-1.5 bg-gradient-to-r ${accent.gradient.replace("/10", "").replace("/5", "")} ${accent.gradient}`} />
+
+                <CardContent className="p-4 space-y-4">
+                  {/* Header: Order + Name + Actions */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`h-9 w-9 rounded-lg ${accent.bg} flex items-center justify-center shrink-0`}>
+                        <Crown className={`h-4.5 w-4.5 ${accent.icon}`} />
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Crown className="h-4 w-4 text-primary" />
-                        <span className="font-medium">{plan.name}</span>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-sm truncate">{plan.name}</h3>
+                        <code className="text-[10px] text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded">
+                          {plan.slug}
+                        </code>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{plan.slug}</code>
-                    </TableCell>
-                    <TableCell className="font-medium">{formatCurrency(plan.price_cents)}</TableCell>
-                    <TableCell className="text-center"><LimitDisplay value={plan.max_boards} /></TableCell>
-                    <TableCell className="text-center"><LimitDisplay value={plan.max_members} /></TableCell>
-                    <TableCell className="text-center"><LimitDisplay value={plan.max_demands_per_month} /></TableCell>
-                    <TableCell className="text-center">
+                    </div>
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={index === 0 || reorderPlans.isPending}
+                        onClick={() => handleMove(index, "up")}
+                      >
+                        <ArrowUp className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={index === plans.length - 1 || reorderPlans.isPending}
+                        onClick={() => handleMove(index, "down")}
+                      >
+                        <ArrowDown className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Price */}
+                  <div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-bold tracking-tight">
+                        {formatCurrency(plan.price_cents)}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        /{plan.billing_period === "yearly" ? "ano" : "mês"}
+                      </span>
+                    </div>
+                    {plan.description && (
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{plan.description}</p>
+                    )}
+                  </div>
+
+                  {/* Limits */}
+                  <div className="space-y-0.5 border-t border-b py-3 border-border/50">
+                    <LimitItem icon={Layers} label="Equipes" value={plan.max_teams} />
+                    <LimitItem icon={LayoutGrid} label="Quadros" value={plan.max_boards} />
+                    <LimitItem icon={Users} label="Membros" value={plan.max_members} />
+                    <LimitItem icon={Kanban} label="Demandas/mês" value={plan.max_demands_per_month} />
+                    <LimitItem icon={FileText} label="Serviços" value={plan.max_services} />
+                    <LimitItem icon={StickyNote} label="Notas" value={plan.max_notes} />
+                  </div>
+
+                  {/* Features pills */}
+                  <div className="flex flex-wrap gap-1">
+                    {featureOptions.map((feat) => (
+                      <FeaturePill key={feat.key} label={feat.label} value={features[feat.key]} />
+                    ))}
+                  </div>
+
+                  {/* Footer: Status + Edit */}
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex items-center gap-2">
                       <Switch
                         checked={plan.is_active}
                         onCheckedChange={() => handleToggleActive(plan)}
                         disabled={updatePlan.isPending}
                       />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(plan)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {(!plans || plans.length === 0) && (
-                  <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                      Nenhum plano cadastrado
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                      <span className="text-xs text-muted-foreground">
+                        {plan.is_active ? "Ativo" : "Inativo"}
+                      </span>
+                    </div>
+                    <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs" onClick={() => openEdit(plan)}>
+                      <Pencil className="h-3 w-3" />
+                      Editar
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -281,7 +390,6 @@ export default function AdminPlans() {
           </DialogHeader>
 
           <div className="space-y-6">
-            {/* Basic Info */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Nome *</Label>
@@ -319,16 +427,12 @@ export default function AdminPlans() {
                   value={form.price_cents}
                   onChange={(e) => setForm((f) => ({ ...f, price_cents: parseInt(e.target.value) || 0 }))}
                 />
-                <p className="text-xs text-muted-foreground">
-                  {formatCurrency(form.price_cents)}
-                </p>
+                <p className="text-xs text-muted-foreground">{formatCurrency(form.price_cents)}</p>
               </div>
               <div className="space-y-2">
                 <Label>Período de Cobrança</Label>
                 <Select value={form.billing_period} onValueChange={(v) => setForm((f) => ({ ...f, billing_period: v }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="monthly">Mensal</SelectItem>
                     <SelectItem value="yearly">Anual</SelectItem>
@@ -337,7 +441,6 @@ export default function AdminPlans() {
               </div>
             </div>
 
-            {/* Limits */}
             <div>
               <Label className="text-base font-semibold">Limites</Label>
               <p className="text-xs text-muted-foreground mb-3">Use -1 para ilimitado, 0 para desabilitado</p>
@@ -369,7 +472,6 @@ export default function AdminPlans() {
               </div>
             </div>
 
-            {/* Features */}
             <div>
               <Label className="text-base font-semibold">Funcionalidades</Label>
               <div className="mt-3 space-y-3">
@@ -386,9 +488,7 @@ export default function AdminPlans() {
                         value={form.features[feat.key] || ""}
                         onValueChange={(v) => updateFeature(feat.key, v)}
                       >
-                        <SelectTrigger className="w-40">
-                          <SelectValue placeholder="Desabilitado" />
-                        </SelectTrigger>
+                        <SelectTrigger className="w-40"><SelectValue placeholder="Desabilitado" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="disabled">Desabilitado</SelectItem>
                           {feat.options?.map((opt) => (
@@ -404,7 +504,6 @@ export default function AdminPlans() {
               </div>
             </div>
 
-            {/* Active */}
             <div className="flex items-center justify-between border-t pt-4">
               <div>
                 <Label>Plano ativo</Label>
@@ -418,13 +517,8 @@ export default function AdminPlans() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSave}
-              disabled={createPlan.isPending || updatePlan.isPending}
-            >
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={createPlan.isPending || updatePlan.isPending}>
               {createPlan.isPending || updatePlan.isPending ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
