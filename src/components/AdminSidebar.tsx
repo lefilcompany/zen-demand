@@ -1,4 +1,4 @@
-import { LayoutDashboard, Ticket, Building2, Users, LogOut } from "lucide-react";
+import { LayoutDashboard, Ticket, Building2, Users, LogOut, CreditCard } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
