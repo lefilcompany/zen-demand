@@ -21,7 +21,7 @@ import { RecurrenceConfig, RecurrenceData, defaultRecurrenceData } from "@/compo
 import { useCreateRecurringDemand } from "@/hooks/useRecurringDemands";
 import { AlertTriangle, Ban, CloudOff, WifiOff, Package } from "lucide-react";
 import { useNavigate, Navigate } from "react-router-dom";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
 import { calculateBusinessDueDate, formatDueDateForInput } from "@/lib/dateUtils";
 import { supabase } from "@/integrations/supabase/client";
