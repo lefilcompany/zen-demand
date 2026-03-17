@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Paperclip, X, Image, FileText, File as FileIcon, FileSpreadsheet, FileArchive, FileCode, Presentation, Loader2, Check, AlertCircle } from "lucide-react";
+import { Paperclip, X, Image, FileText, File as FileIcon, FileSpreadsheet, FileArchive, FileCode, Presentation, Loader2, Check, AlertCircle, ImagePlus, ClipboardPaste } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 
