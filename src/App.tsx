@@ -149,8 +149,9 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
                         {/* Catch-all */}
                         <Route path="*" element={<NotFound />} />
                       </Routes>
-                    </SwipeNavigationProvider>
-                  </KeyboardShortcutsProvider>
+                      </SwipeNavigationProvider>
+                    </KeyboardShortcutsProvider>
+                  </CreateDemandProvider>
                 </BoardProvider>
               </TeamProvider>
             </PresenceProvider>
