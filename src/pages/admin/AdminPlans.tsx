@@ -237,6 +237,7 @@ export default function AdminPlans() {
   const openCreate = () => {
     setEditingPlan(null);
     setForm({ ...defaultForm, sort_order: (plans?.length ?? 0) + 1 });
+    setHasYearlyPricing(false);
     setDialogOpen(true);
   };
 
