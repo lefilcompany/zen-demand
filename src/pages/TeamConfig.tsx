@@ -58,8 +58,11 @@ export default function TeamConfig() {
   const removeMember = useRemoveMember();
   const assignPosition = useAssignPosition();
   const queryClient = useQueryClient();
+  const redeemCoupon = useRedeemCoupon();
   
   const [copied, setCopied] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const [couponSuccess, setCouponSuccess] = useState(false);
   const [changeCodeOpen, setChangeCodeOpen] = useState(false);
   const [newAccessCode, setNewAccessCode] = useState("");
   const [password, setPassword] = useState("");
