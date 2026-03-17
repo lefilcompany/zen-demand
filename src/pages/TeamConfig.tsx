@@ -28,6 +28,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { useRedeemCoupon } from "@/hooks/useTrialCoupon";
+import { Ticket, CheckCircle2 } from "lucide-react";
 
 const roleLabels: Record<string, string> = {
   admin: "Administrador",
