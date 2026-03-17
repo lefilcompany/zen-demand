@@ -91,6 +91,7 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
                         {/* Admin routes */}
                         <Route path="/admin" element={<RequireAuth><AdminLayout /></RequireAuth>}>
                           <Route index element={<AdminDashboard />} />
+                          <Route path="plans" element={<AdminPlans />} />
                           <Route path="coupons" element={<AdminCoupons />} />
                           <Route path="teams" element={<AdminTeams />} />
                           <Route path="users" element={<AdminUsers />} />
