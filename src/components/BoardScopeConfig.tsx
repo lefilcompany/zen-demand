@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Save, Loader2, Plus, Trash2, Package, AlertCircle, Infinity } from "lucide-react";
+import { Save, Loader2, Plus, Trash2, Package, AlertCircle, Infinity, ListPlus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
