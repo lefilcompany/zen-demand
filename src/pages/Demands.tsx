@@ -274,7 +274,7 @@ export default function Demands() {
           
           {/* Create Button - Desktop */}
           <Button 
-            onClick={() => navigate("/demands/create")} 
+            onClick={() => openCreateDemand()} 
             className="hidden sm:flex shadow-sm"
             size="default"
           >
