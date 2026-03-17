@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Paperclip, X, Image, FileText, File as FileIcon, FileSpreadsheet, FileArchive, FileCode, Presentation, Loader2, Check, AlertCircle } from "lucide-react";
+import { Paperclip, X, Image, FileText, File as FileIcon, FileSpreadsheet, FileArchive, FileCode, Presentation, Loader2, Check, AlertCircle, ImagePlus, ClipboardPaste } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 
@@ -29,7 +29,7 @@ const MAX_DEFAULT_SIZE = 10 * 1024 * 1024; // 10MB
 export function InlineFileUploader({
   pendingFiles,
   onFilesChange,
-  maxFiles = 20,
+  maxFiles = 999,
   maxSizeMB = 10,
   accept = "image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.json,.xml",
   disabled = false,
@@ -151,17 +151,46 @@ export function InlineFileUploader({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const handlePasteClick = useCallback(() => {
+    if (disabled) return;
+    navigator.clipboard.read?.().then(async (items) => {
+      const imageFiles: File[] = [];
+      for (const item of items) {
+        for (const type of item.types) {
+          if (type.startsWith("image/")) {
+            const blob = await item.getType(type);
+            const ext = type.split("/")[1] || "png";
+            const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+            const file = new File([blob], `imagem-colada-${timestamp}.${ext}`, { type, lastModified: Date.now() });
+            imageFiles.push(file);
+          }
+        }
+      }
+      if (imageFiles.length > 0) {
+        handleFiles(imageFiles);
+        toast.success(`${imageFiles.length} imagem(ns) colada(s)`);
+      } else {
+        toast.info("Nenhuma imagem encontrada na área de transferência");
+      }
+    }).catch(() => {
+      toast.info("Use Ctrl+V para colar imagens");
+    });
+  }, [handleFiles, disabled]);
+
   return (
     <div className="space-y-3">
-      {/* Upload button with drag area */}
+      {/* Upload area inspired by reference */}
       <div
-        className={`relative border border-dashed rounded-lg p-3 transition-colors ${
-          isDragging ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/50"
+        className={`relative flex items-stretch gap-0 rounded-xl border-2 border-dashed transition-all ${
+          isDragging 
+            ? "border-primary bg-primary/5" 
+            : "border-border/60 hover:border-primary/40"
         } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
         onDragOver={(e) => { e.preventDefault(); if (!disabled) setIsDragging(true); }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
       >
+        {/* Main drop zone */}
         <input
           type="file"
           id="inline-file-upload"
@@ -171,16 +200,37 @@ export function InlineFileUploader({
           onChange={(e) => handleFiles(e.target.files)}
           disabled={disabled}
         />
-        <label 
-          htmlFor="inline-file-upload" 
-          className={`flex items-center justify-center gap-2 cursor-pointer ${disabled ? "cursor-not-allowed" : ""}`}
+        <label
+          htmlFor="inline-file-upload"
+          className={`flex-1 flex flex-col items-center justify-center gap-1.5 py-5 px-4 cursor-pointer ${disabled ? "cursor-not-allowed" : ""}`}
         >
-          <Paperclip className="h-4 w-4 text-muted-foreground" />
+          <ImagePlus className="h-7 w-7 text-muted-foreground/60" />
           <span className="text-sm text-muted-foreground">
-            Arraste, <span className="text-primary">clique</span> ou <kbd className="px-1 py-0.5 bg-muted rounded text-xs font-mono">Ctrl+V</kbd> para anexar
+            Clique para adicionar arquivos
+          </span>
+          <span className="text-[11px] text-muted-foreground/50">
+            JPG, PNG, PDF, DOC e outros · Máx {maxSizeMB}MB cada
           </span>
         </label>
+
+        {/* Paste button */}
+        <button
+          type="button"
+          onClick={handlePasteClick}
+          disabled={disabled}
+          className="flex flex-col items-center justify-center gap-1.5 px-5 border-l-2 border-dashed border-border/60 hover:bg-muted/50 transition-colors rounded-r-xl cursor-pointer"
+        >
+          <ClipboardPaste className="h-5 w-5 text-muted-foreground/60" />
+          <span className="text-[11px] text-muted-foreground whitespace-nowrap">Colar arquivo</span>
+        </button>
       </div>
+
+      {/* Counter */}
+      {pendingFiles.length > 0 && (
+        <p className="text-xs text-muted-foreground text-right">
+          {pendingFiles.length} arquivo(s) anexado(s)
+        </p>
+      )}
 
       {/* File previews */}
       {pendingFiles.length > 0 && (
