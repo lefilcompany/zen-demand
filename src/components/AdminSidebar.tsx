@@ -19,6 +19,7 @@ import logoFull from "@/assets/logo-soma-dark.png";
 
 const navItems = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
+  { to: "/admin/plans", icon: CreditCard, label: "Planos" },
   { to: "/admin/coupons", icon: Ticket, label: "Cupons" },
   { to: "/admin/teams", icon: Building2, label: "Equipes" },
   { to: "/admin/users", icon: Users, label: "Usuários" },
