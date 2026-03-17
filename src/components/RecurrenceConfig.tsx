@@ -129,7 +129,7 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-80 p-0" align="start" side="top">
-            <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+            <div className="p-4 space-y-4">
               {/* Frequency */}
               <div className="space-y-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
