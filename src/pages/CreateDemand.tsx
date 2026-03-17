@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCreateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSelectedBoard } from "@/contexts/BoardContext";
@@ -17,13 +17,9 @@ import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { ScopeProgressBar } from "@/components/ScopeProgressBar";
 import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/components/InlineFileUploader";
 import { useUploadAttachment } from "@/hooks/useAttachments";
-import { UnsavedChangesDialog } from "@/components/UnsavedChangesDialog";
-import { useFormDraft } from "@/hooks/useFormDraft";
-import { useNavigationBlock } from "@/hooks/useNavigationBlock";
-import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { RecurrenceConfig, RecurrenceData, defaultRecurrenceData } from "@/components/RecurrenceConfig";
 import { useCreateRecurringDemand } from "@/hooks/useRecurringDemands";
-import { AlertTriangle, Ban, CloudOff, WifiOff, Package, Briefcase, Plus } from "lucide-react";
+import { AlertTriangle, Ban, CloudOff, WifiOff, Package } from "lucide-react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { calculateBusinessDueDate, formatDueDateForInput } from "@/lib/dateUtils";
@@ -51,13 +47,10 @@ export default function CreateDemand() {
   } = useCanCreateDemandOnBoard(selectedBoardId, selectedTeamId);
   const { data: role } = useTeamRole(selectedTeamId);
   const { data: boardRole } = useBoardRole(selectedBoardId);
-  // Board services hooks
-  const { hasBoardServices, isLoading: boardServicesLoading } = useHasBoardServices(selectedBoardId);
+  const { hasBoardServices } = useHasBoardServices(selectedBoardId);
 
-  const selectedTeam = teams?.find(t => t.id === selectedTeamId);
   const canAssignResponsibles = role !== "requester";
 
-  // Redirect requesters to the request page
   if (role === "requester") {
     return <Navigate to="/demands/request" replace />;
   }
@@ -75,55 +68,11 @@ export default function CreateDemand() {
   const uploadAttachment = useUploadAttachment();
   const createRecurringDemand = useCreateRecurringDemand();
 
-  // Draft persistence
-  const draftFields = useMemo(
-    () => ({
-      title,
-      description,
-      priority,
-      dueDate,
-      serviceId,
-      assigneeIds,
-    }),
-    [title, description, priority, dueDate, serviceId, assigneeIds]
-  );
-
-  const draftSetters = useMemo(
-    () => ({
-      title: setTitle,
-      description: setDescription,
-      priority: setPriority,
-      dueDate: setDueDate,
-      serviceId: setServiceId,
-      assigneeIds: setAssigneeIds,
-    }),
-    []
-  );
-
-  const { hasContent, clearDraft } = useFormDraft({
-    formId: `create-demand-${selectedBoardId || "default"}`,
-    fields: draftFields,
-    setters: draftSetters,
-  });
-
-  // Navigation blocking
-  const {
-    isBlocked,
-    attemptNavigation,
-    confirmNavigation,
-    cancelNavigation,
-    setDontShowAgain,
-  } = useNavigationBlock({
-    shouldBlock: hasContent(),
-  });
-
-  // Check if can create with selected service
   const { canCreate: canCreateWithService, serviceInfo } = useCanCreateWithService(
     selectedBoardId, 
     serviceId && serviceId !== "none" ? serviceId : null
   );
 
-  // Set default status when statuses load
   useEffect(() => {
     if (statuses && statuses.length > 0 && !statusId) {
       const defaultStatus = statuses.find(s => s.name === "A Iniciar") || statuses[0];
@@ -139,19 +88,21 @@ export default function CreateDemand() {
     }
   };
 
-  // Validate service selection
   const isServiceValid = () => {
-    if (!hasBoardServices) return true; // No board services configured, service is optional
-    if (!serviceId || serviceId === "none") return false; // Service required but not selected
-    if (canCreateWithService === false) return false; // Service limit reached
+    if (!hasBoardServices) return true;
+    if (!serviceId || serviceId === "none") return false;
+    if (canCreateWithService === false) return false;
     return true;
+  };
+
+  const handleClose = () => {
+    navigate(-1);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !selectedTeamId || !selectedBoardId || !statusId || !canCreate) return;
 
-    // Validate service for boards with configured services
     if (hasBoardServices && (!serviceId || serviceId === "none")) {
       toast.error("Selecione um serviço para esta demanda");
       return;
@@ -162,7 +113,6 @@ export default function CreateDemand() {
       return;
     }
 
-    // Upload inline base64 images in description before saving
     let finalDescription = description.trim() || undefined;
     if (finalDescription && finalDescription.includes('data:image')) {
       try {
@@ -187,13 +137,8 @@ export default function CreateDemand() {
       },
       {
         onSuccess: async (demand) => {
-          // Clear draft on success
-          clearDraft();
-          
-          // Check if this was created offline
           const wasCreatedOffline = (demand as any)?._isOffline;
           
-          // Add assignees if any (only if online - offline demands can't have assignees yet)
           if (!wasCreatedOffline && assigneeIds.length > 0 && demand) {
             const { error: assignError } = await supabase
               .from("demand_assignees")
@@ -206,13 +151,10 @@ export default function CreateDemand() {
             
             if (assignError) {
               console.error("Erro ao atribuir responsáveis:", assignError);
-              toast.warning("Demanda criada, mas houve um erro ao atribuir responsáveis", {
-                description: "Você pode atribuir responsáveis na tela de detalhes.",
-              });
+              toast.warning("Demanda criada, mas houve um erro ao atribuir responsáveis");
             }
           }
           
-          // Upload pending files
           if (!wasCreatedOffline && pendingFiles.length > 0 && demand) {
             const { success, failed } = await uploadPendingFiles(demand.id, pendingFiles, uploadAttachment);
             if (failed > 0) {
@@ -223,7 +165,6 @@ export default function CreateDemand() {
             setPendingFiles([]);
           }
           
-          // Create recurring demand if recurrence is enabled
           if (!wasCreatedOffline && recurrence.enabled && demand && selectedTeamId && selectedBoardId) {
             try {
               await createRecurringDemand.mutateAsync({
@@ -274,87 +215,64 @@ export default function CreateDemand() {
     !isServiceValid();
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fade-in px-1">
-      {/* Unsaved Changes Dialog */}
-      <UnsavedChangesDialog
-        open={isBlocked}
-        onConfirm={confirmNavigation}
-        onCancel={cancelNavigation}
-        onDontShowAgain={setDontShowAgain}
-      />
+    <Dialog open onOpenChange={(open) => { if (!open) handleClose(); }}>
+      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
+          <DialogTitle className="text-xl font-bold">Nova Demanda</DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            Criar demanda para o quadro <span className="font-medium text-primary">{currentBoard?.name}</span>
+          </p>
+        </DialogHeader>
 
-      <PageBreadcrumb
-        items={[
-          { label: t("demands.title"), href: "/demands", icon: Briefcase },
-          { label: "Nova Demanda", icon: Plus, isCurrent: true },
-        ]}
-      />
-      
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Nova Demanda</h1>
-        <p className="text-sm md:text-base text-muted-foreground">
-          Criar demanda para o quadro <span className="font-medium text-primary">{currentBoard?.name}</span>
-        </p>
-      </div>
+        <div className="flex-1 overflow-y-auto px-6 pb-6">
+          {/* Alerts */}
+          <div className="space-y-3 mb-4">
+            {isOffline && (
+              <Alert className="border-amber-500/50 bg-amber-500/10">
+                <WifiOff className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-amber-700 dark:text-amber-400">
+                  Você está offline. A demanda será salva localmente e sincronizada quando a conexão for restaurada.
+                </AlertDescription>
+              </Alert>
+            )}
 
-      {/* Offline Mode Alert */}
-      {isOffline && (
-        <Alert className="border-amber-500/50 bg-amber-500/10">
-          <WifiOff className="h-4 w-4 text-amber-600" />
-          <AlertDescription className="text-amber-700 dark:text-amber-400">
-            Você está offline. A demanda será salva localmente e sincronizada quando a conexão for restaurada.
-          </AlertDescription>
-        </Alert>
-      )}
+            {!isTeamActive && (
+              <Alert variant="destructive">
+                <Ban className="h-4 w-4" />
+                <AlertDescription>
+                  O contrato desta equipe está inativo. Não é possível criar novas demandas.
+                </AlertDescription>
+              </Alert>
+            )}
 
-      {/* Team Inactive Alert */}
-      {!isTeamActive && (
-        <Alert variant="destructive">
-          <Ban className="h-4 w-4" />
-          <AlertDescription>
-            O contrato desta equipe está inativo. Não é possível criar novas demandas.
-          </AlertDescription>
-        </Alert>
-      )}
+            {hasBoardLimit && isTeamActive && (
+              <div className="rounded-lg border border-border bg-card p-3">
+                <ScopeProgressBar used={monthlyCount} limit={limit} />
+              </div>
+            )}
 
-      {/* Board Limit Progress */}
-      {hasBoardLimit && isTeamActive && (
-        <Card>
-          <CardContent className="pt-6">
-            <ScopeProgressBar used={monthlyCount} limit={limit} />
-          </CardContent>
-        </Card>
-      )}
+            {!isWithinLimit && isTeamActive && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  O limite mensal de demandas deste quadro foi atingido.
+                </AlertDescription>
+              </Alert>
+            )}
 
-      {/* Board Limit Reached Alert */}
-      {!isWithinLimit && isTeamActive && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            O limite mensal de demandas deste quadro foi atingido. Entre em contato com o administrador para mais informações.
-          </AlertDescription>
-        </Alert>
-      )}
+            {canCreateWithService === false && serviceInfo && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Limite mensal para o serviço selecionado atingido ({serviceInfo.currentCount}/{serviceInfo.monthly_limit}).
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
 
-      {/* Service Limit Reached Alert */}
-      {canCreateWithService === false && serviceInfo && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            O limite mensal para o serviço selecionado foi atingido ({serviceInfo.currentCount}/{serviceInfo.monthly_limit}).
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Informações da Demanda</CardTitle>
-          <CardDescription>
-            Preencha os dados para criar uma nova demanda
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Form */}
+          <form id="create-demand-form" onSubmit={handleSubmit} className="space-y-5">
+            {/* Title - full width */}
             <div className="space-y-2">
               <Label htmlFor="title">Título *</Label>
               <Input
@@ -363,25 +281,17 @@ export default function CreateDemand() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
+                autoFocus
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Descrição</Label>
-              <RichTextEditor
-                value={description}
-                onChange={setDescription}
-                placeholder="Descreva os detalhes da demanda... (cole imagens diretamente no editor)"
-                minHeight="150px"
-              />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
+            {/* Row: Status + Priority + Due Date */}
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="status">Status *</Label>
                 <Select value={statusId} onValueChange={setStatusId} required>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione um status" />
+                    <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
                     {statuses?.map((status) => (
@@ -406,88 +316,103 @@ export default function CreateDemand() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Package className="h-4 w-4" />
-                Serviço {hasBoardServices ? "*" : ""}
-              </Label>
-              <ServiceSelector
-                teamId={selectedTeamId}
-                boardId={selectedBoardId}
-                value={serviceId}
-                onChange={handleServiceChange}
-                userRole={boardRole}
-              />
-              <p className="text-xs text-muted-foreground">
-                {hasBoardServices 
-                  ? "Selecione um serviço obrigatório para esta demanda"
-                  : "Selecione um serviço para calcular automaticamente a data de entrega"
-                }
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dueDate">Data de Entrega</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-              />
-            </div>
-
-            {canAssignResponsibles && (
               <div className="space-y-2">
-                <Label>Responsáveis</Label>
-                <AssigneeSelector
-                  teamId={selectedTeamId}
-                  boardId={selectedBoardId}
-                  selectedUserIds={assigneeIds}
-                  onChange={setAssigneeIds}
+                <Label htmlFor="dueDate">Data de Entrega</Label>
+                <Input
+                  id="dueDate"
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
                 />
               </div>
-            )}
+            </div>
 
-            <div className="space-y-2">
-              <Label>Anexos</Label>
-              <InlineFileUploader
-                pendingFiles={pendingFiles}
-                onFilesChange={setPendingFiles}
-                disabled={isOffline}
-                listenToGlobalPaste={!isOffline}
-              />
-              {isOffline && (
+            {/* Row: Service + Assignees */}
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Serviço {hasBoardServices ? "*" : ""}
+                </Label>
+                <ServiceSelector
+                  teamId={selectedTeamId}
+                  boardId={selectedBoardId}
+                  value={serviceId}
+                  onChange={handleServiceChange}
+                  userRole={boardRole}
+                />
                 <p className="text-xs text-muted-foreground">
-                  Anexos não podem ser adicionados offline
+                  {hasBoardServices 
+                    ? "Serviço obrigatório para esta demanda"
+                    : "Selecione para calcular data de entrega"
+                  }
                 </p>
+              </div>
+
+              {canAssignResponsibles && (
+                <div className="space-y-2">
+                  <Label>Responsáveis</Label>
+                  <AssigneeSelector
+                    teamId={selectedTeamId}
+                    boardId={selectedBoardId}
+                    selectedUserIds={assigneeIds}
+                    onChange={setAssigneeIds}
+                  />
+                </div>
               )}
             </div>
 
-            {/* Recurrence Config */}
-            <RecurrenceConfig value={recurrence} onChange={setRecurrence} />
+            {/* Description - full width */}
+            <div className="space-y-2">
+              <Label htmlFor="description">Descrição</Label>
+              <RichTextEditor
+                value={description}
+                onChange={setDescription}
+                placeholder="Descreva os detalhes da demanda... (cole imagens diretamente)"
+                minHeight="120px"
+              />
+            </div>
 
-            <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => attemptNavigation("/demands")}
-                className="flex-1"
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitDisabled}
-                className="flex-1"
-              >
-                {createDemand.isPending ? "Criando..." : "Criar Demanda"}
-              </Button>
+            {/* Row: Attachments + Recurrence */}
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Anexos</Label>
+                <InlineFileUploader
+                  pendingFiles={pendingFiles}
+                  onFilesChange={setPendingFiles}
+                  disabled={isOffline}
+                  listenToGlobalPaste={!isOffline}
+                />
+                {isOffline && (
+                  <p className="text-xs text-muted-foreground">
+                    Anexos não podem ser adicionados offline
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Recorrência</Label>
+                <RecurrenceConfig value={recurrence} onChange={setRecurrence} />
+              </div>
             </div>
           </form>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+
+        {/* Footer */}
+        <div className="shrink-0 border-t border-border px-6 py-4 flex justify-end gap-3 bg-card">
+          <Button type="button" variant="outline" onClick={handleClose}>
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            form="create-demand-form"
+            disabled={isSubmitDisabled}
+          >
+            {createDemand.isPending ? "Criando..." : "Criar Demanda"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
