@@ -11,8 +11,8 @@ import {
   Preview,
   Section,
   Text,
-} from "https://esm.sh/@react-email/components@0.0.12";
-import React from "https://esm.sh/react@18.3.1";
+} from "npm:@react-email/components@0.0.12";
+import React from "npm:react@18.3.1";
 
 interface NotificationEmailProps {
   title: string

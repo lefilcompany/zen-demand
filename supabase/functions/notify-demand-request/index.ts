@@ -1,5 +1,5 @@
-import React from "https://esm.sh/react@18.3.1?target=deno";
-import { render } from "https://esm.sh/@react-email/render@0.0.12?target=deno";
+import React from "npm:react@18.3.1";
+import { render } from "npm:@react-email/render@0.0.12";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import {
   Html,
@@ -13,7 +13,7 @@ import {
   Hr,
   Img,
   Link,
-} from "https://esm.sh/@react-email/components@0.0.22";
+} from "npm:@react-email/components@0.0.22";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
