@@ -160,7 +160,7 @@ const Index = () => {
               className="gap-2"
               data-tour="new-demand-btn"
             >
-              <PlusCircle className="h-4 w-4" />
+              <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">{t("demands.newDemand")}</span>
               <span className="sm:hidden">{t("demands.newDemand").split(" ")[0]}</span>
             </Button>
