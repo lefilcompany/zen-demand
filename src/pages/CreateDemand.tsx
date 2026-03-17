@@ -51,10 +51,6 @@ export default function CreateDemand() {
 
   const canAssignResponsibles = role !== "requester";
 
-  if (role === "requester") {
-    return <Navigate to="/demands/request" replace />;
-  }
-
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [statusId, setStatusId] = useState("");
