@@ -499,26 +499,131 @@ export default function AdminPlans() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Preço (centavos)</Label>
-                <Input
-                  type="number"
-                  value={form.price_cents}
-                  onChange={(e) => setForm((f) => ({ ...f, price_cents: parseInt(e.target.value) || 0 }))}
-                />
-                <p className="text-xs text-muted-foreground">{formatCurrency(form.price_cents)}</p>
+            {/* Currency */}
+            <div className="space-y-2">
+              <Label>Moeda</Label>
+              <Select value={form.currency} onValueChange={(v) => setForm((f) => ({ ...f, currency: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {currencyOptions.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Monthly pricing */}
+            <div className="rounded-lg border border-border p-4 space-y-4">
+              <Label className="text-base font-semibold">Preço Mensal</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs">Preço Regular</Label>
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={centsToDecimal(form.price_cents_monthly)}
+                    onChange={(e) => {
+                      const cents = decimalToCents(e.target.value);
+                      setForm((f) => ({ ...f, price_cents_monthly: cents, price_cents: cents }));
+                    }}
+                    onBlur={(e) => {
+                      const cents = decimalToCents(e.target.value);
+                      e.target.value = centsToDecimal(cents);
+                    }}
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-muted-foreground">{formatCurrency(form.price_cents_monthly, form.currency)}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs flex items-center gap-1.5">
+                    Preço Promocional
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">Opcional</Badge>
+                  </Label>
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={form.promo_price_cents_monthly != null ? centsToDecimal(form.promo_price_cents_monthly) : ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "") {
+                        setForm((f) => ({ ...f, promo_price_cents_monthly: null }));
+                      } else {
+                        setForm((f) => ({ ...f, promo_price_cents_monthly: decimalToCents(val) }));
+                      }
+                    }}
+                    onBlur={(e) => {
+                      if (e.target.value !== "") {
+                        const cents = decimalToCents(e.target.value);
+                        e.target.value = centsToDecimal(cents);
+                      }
+                    }}
+                    placeholder="Sem promoção"
+                  />
+                  {form.promo_price_cents_monthly != null && (
+                    <p className="text-xs text-green-600 dark:text-green-400">
+                      {formatCurrency(form.promo_price_cents_monthly, form.currency)}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Período de Cobrança</Label>
-                <Select value={form.billing_period} onValueChange={(v) => setForm((f) => ({ ...f, billing_period: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="monthly">Mensal</SelectItem>
-                    <SelectItem value="yearly">Anual</SelectItem>
-                  </SelectContent>
-                </Select>
+            </div>
+
+            {/* Yearly pricing */}
+            <div className="rounded-lg border border-border p-4 space-y-4">
+              <Label className="text-base font-semibold">Preço Anual</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs">Preço Regular</Label>
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={centsToDecimal(form.price_cents_yearly)}
+                    onChange={(e) => setForm((f) => ({ ...f, price_cents_yearly: decimalToCents(e.target.value) }))}
+                    onBlur={(e) => {
+                      const cents = decimalToCents(e.target.value);
+                      e.target.value = centsToDecimal(cents);
+                    }}
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-muted-foreground">{formatCurrency(form.price_cents_yearly, form.currency)}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs flex items-center gap-1.5">
+                    Preço Promocional
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">Opcional</Badge>
+                  </Label>
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={form.promo_price_cents_yearly != null ? centsToDecimal(form.promo_price_cents_yearly) : ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "") {
+                        setForm((f) => ({ ...f, promo_price_cents_yearly: null }));
+                      } else {
+                        setForm((f) => ({ ...f, promo_price_cents_yearly: decimalToCents(val) }));
+                      }
+                    }}
+                    onBlur={(e) => {
+                      if (e.target.value !== "") {
+                        const cents = decimalToCents(e.target.value);
+                        e.target.value = centsToDecimal(cents);
+                      }
+                    }}
+                    placeholder="Sem promoção"
+                  />
+                  {form.promo_price_cents_yearly != null && (
+                    <p className="text-xs text-green-600 dark:text-green-400">
+                      {formatCurrency(form.promo_price_cents_yearly, form.currency)}
+                    </p>
+                  )}
+                </div>
               </div>
+              {form.price_cents_monthly > 0 && form.price_cents_yearly > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  💡 Economia anual: {Math.round((1 - form.price_cents_yearly / (form.price_cents_monthly * 12)) * 100)}%
+                </p>
+              )}
             </div>
 
             <div>
