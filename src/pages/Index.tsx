@@ -153,7 +153,7 @@ const Index = () => {
               }}
             />
             <Button 
-              onClick={() => navigate("/demands/create")}
+              onClick={() => openCreateDemand()}
               disabled={!canCreate || !isTeamActive}
               className="gap-2"
               data-tour="new-demand-btn"
