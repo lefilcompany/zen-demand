@@ -100,8 +100,19 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     }
   }, [statuses, statusId]);
 
+  const handleServiceChange = (newServiceId: string, estimatedHours?: number) => {
+    setServiceId(newServiceId);
+    if (newServiceId !== "none" && estimatedHours) {
+      const calculatedDate = calculateBusinessDueDate(estimatedHours);
+      setDueDate(formatDueDateForInput(calculatedDate));
+    }
+  };
 
-    const isServiceValid = () => {
+  if (role === "requester") {
+    return <Navigate to="/demands/request" replace />;
+  }
+
+  const isServiceValid = () => {
     if (!serviceId || serviceId === "none") return false;
     if (canCreateWithService === false) return false;
     return true;
