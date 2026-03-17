@@ -379,14 +379,44 @@ export default function AdminPlans() {
                     </p>
                   )}
 
-                  {/* Price */}
-                  <div className="flex items-baseline gap-1.5 mb-5">
-                    <span className="text-3xl font-black tracking-tight">
-                      {formatCurrency(plan.price_cents)}
-                    </span>
-                    <span className="text-sm text-muted-foreground font-medium">
-                      /{plan.billing_period === "yearly" ? "ano" : "mês"}
-                    </span>
+                  {/* Price - Monthly */}
+                  <div className="mb-5">
+                    <div className="flex items-baseline gap-1.5">
+                      {(plan as any).promo_price_cents_monthly != null && (plan as any).promo_price_cents_monthly < (plan as any).price_cents_monthly ? (
+                        <>
+                          <span className="text-lg font-medium text-muted-foreground line-through">
+                            {formatCurrency((plan as any).price_cents_monthly, (plan as any).currency)}
+                          </span>
+                          <span className="text-3xl font-black tracking-tight text-green-600 dark:text-green-400">
+                            {formatCurrency((plan as any).promo_price_cents_monthly, (plan as any).currency)}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-3xl font-black tracking-tight">
+                          {formatCurrency((plan as any).price_cents_monthly || plan.price_cents, (plan as any).currency)}
+                        </span>
+                      )}
+                      <span className="text-sm text-muted-foreground font-medium">/mês</span>
+                    </div>
+                    {(plan as any).price_cents_yearly > 0 && (
+                      <div className="flex items-baseline gap-1.5 mt-1">
+                        {(plan as any).promo_price_cents_yearly != null && (plan as any).promo_price_cents_yearly < (plan as any).price_cents_yearly ? (
+                          <>
+                            <span className="text-xs text-muted-foreground line-through">
+                              {formatCurrency((plan as any).price_cents_yearly, (plan as any).currency)}
+                            </span>
+                            <span className="text-sm font-bold text-green-600 dark:text-green-400">
+                              {formatCurrency((plan as any).promo_price_cents_yearly, (plan as any).currency)}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            {formatCurrency((plan as any).price_cents_yearly, (plan as any).currency)}
+                          </span>
+                        )}
+                        <span className="text-xs text-muted-foreground">/ano</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Limits */}
