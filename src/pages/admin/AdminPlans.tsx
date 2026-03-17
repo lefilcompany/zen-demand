@@ -232,6 +232,7 @@ export default function AdminPlans() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [form, setForm] = useState<PlanFormData>(defaultForm);
+  const [hasYearlyPricing, setHasYearlyPricing] = useState(false);
 
   const openCreate = () => {
     setEditingPlan(null);
