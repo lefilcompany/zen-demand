@@ -127,9 +127,10 @@ function SelectTeamPrompt() {
 export function RequireTeam({ children }: RequireTeamProps) {
   const { user, loading: authLoading } = useAuth();
   const { hasTeams, selectedTeamId, isLoading } = useSelectedTeam();
+  const { data: userRole, isLoading: roleLoading } = useUserRole();
 
-  // Show loading while checking auth and teams
-  if (authLoading || isLoading) {
+  // Show loading while checking auth, teams, and role
+  if (authLoading || isLoading || roleLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-sidebar">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -140,6 +141,11 @@ export function RequireTeam({ children }: RequireTeamProps) {
   // Redirect to auth if not logged in
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // System admin without teams → go directly to admin panel
+  if (userRole === "admin" && !hasTeams) {
+    return <Navigate to="/admin" replace />;
   }
 
   // Redirect to welcome if user has no teams
