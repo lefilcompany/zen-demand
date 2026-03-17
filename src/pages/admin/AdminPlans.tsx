@@ -1,4 +1,4 @@
-import { useState } from "react"; // force rebuild
+import { useState } from "react";
 import { useAdminPlans, useCreatePlan, useUpdatePlan, useReorderPlans } from "@/hooks/admin/useAdminPlans";
 import type { Plan } from "@/hooks/usePlans";
 import { Card, CardContent } from "@/components/ui/card";
@@ -151,15 +151,23 @@ function formatCurrency(cents: number, currency = "BRL") {
   return new Intl.NumberFormat(opt.locale, { style: "currency", currency }).format(cents / 100);
 }
 
-/** Converts a decimal string like "59.90" to cents integer 5990 */
-function decimalToCents(val: string): number {
-  const num = parseFloat(val.replace(",", "."));
-  return isNaN(num) ? 0 : Math.round(num * 100);
+/** 
+ * Format cents as a display string with 2 decimal places using locale separator.
+ * E.g. 5990 → "59,90" for BRL or "59.90" for USD
+ */
+function centsToDisplay(cents: number, currency = "BRL"): string {
+  const sep = currency === "BRL" ? "," : ".";
+  const val = (cents / 100).toFixed(2);
+  return currency === "BRL" ? val.replace(".", ",") : val;
 }
 
-/** Converts cents to a decimal string "59.90" */
-function centsToDecimal(cents: number): string {
-  return (cents / 100).toFixed(2);
+/**
+ * ATM-style currency input handler.
+ * Strips non-digits, treats the raw number as cents, returns cents integer.
+ */
+function parseCurrencyInput(raw: string): number {
+  const digits = raw.replace(/\D/g, "");
+  return parseInt(digits, 10) || 0;
 }
 
 const tierConfig: Record<string, { icon: React.ElementType; borderColor: string; badgeBg: string; badgeText: string; label: string }> = {
@@ -224,15 +232,19 @@ export default function AdminPlans() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [form, setForm] = useState<PlanFormData>(defaultForm);
+  const [hasYearlyPricing, setHasYearlyPricing] = useState(false);
 
   const openCreate = () => {
     setEditingPlan(null);
     setForm({ ...defaultForm, sort_order: (plans?.length ?? 0) + 1 });
+    setHasYearlyPricing(false);
     setDialogOpen(true);
   };
 
   const openEdit = (plan: Plan) => {
     setEditingPlan(plan);
+    const yearlyPrice = (plan as any).price_cents_yearly ?? 0;
+    setHasYearlyPricing(yearlyPrice > 0);
     setForm({
       name: plan.name,
       slug: plan.slug,
@@ -241,7 +253,7 @@ export default function AdminPlans() {
       billing_period: plan.billing_period,
       currency: (plan as any).currency || "BRL",
       price_cents_monthly: (plan as any).price_cents_monthly ?? 0,
-      price_cents_yearly: (plan as any).price_cents_yearly ?? 0,
+      price_cents_yearly: yearlyPrice,
       promo_price_cents_monthly: (plan as any).promo_price_cents_monthly ?? null,
       promo_price_cents_yearly: (plan as any).promo_price_cents_yearly ?? null,
       max_teams: plan.max_teams ?? 1,
@@ -499,131 +511,128 @@ export default function AdminPlans() {
               />
             </div>
 
-            {/* Currency */}
-            <div className="space-y-2">
-              <Label>Moeda</Label>
-              <Select value={form.currency} onValueChange={(v) => setForm((f) => ({ ...f, currency: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {currencyOptions.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Pricing Section */}
+            <div className="rounded-lg border border-border p-4 space-y-5">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold">Preços</Label>
+                <Select value={form.currency} onValueChange={(v) => setForm((f) => ({ ...f, currency: v }))}>
+                  <SelectTrigger className="w-[140px] h-8 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {currencyOptions.map((c) => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Monthly pricing */}
-            <div className="rounded-lg border border-border p-4 space-y-4">
-              <Label className="text-base font-semibold">Preço Mensal</Label>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-xs">Preço Regular</Label>
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={centsToDecimal(form.price_cents_monthly)}
-                    onChange={(e) => {
-                      const cents = decimalToCents(e.target.value);
-                      setForm((f) => ({ ...f, price_cents_monthly: cents, price_cents: cents }));
-                    }}
-                    onBlur={(e) => {
-                      const cents = decimalToCents(e.target.value);
-                      e.target.value = centsToDecimal(cents);
-                    }}
-                    placeholder="0.00"
-                  />
-                  <p className="text-xs text-muted-foreground">{formatCurrency(form.price_cents_monthly, form.currency)}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs flex items-center gap-1.5">
-                    Preço Promocional
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">Opcional</Badge>
-                  </Label>
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={form.promo_price_cents_monthly != null ? centsToDecimal(form.promo_price_cents_monthly) : ""}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === "") {
-                        setForm((f) => ({ ...f, promo_price_cents_monthly: null }));
-                      } else {
-                        setForm((f) => ({ ...f, promo_price_cents_monthly: decimalToCents(val) }));
-                      }
-                    }}
-                    onBlur={(e) => {
-                      if (e.target.value !== "") {
-                        const cents = decimalToCents(e.target.value);
-                        e.target.value = centsToDecimal(cents);
-                      }
-                    }}
-                    placeholder="Sem promoção"
-                  />
-                  {form.promo_price_cents_monthly != null && (
-                    <p className="text-xs text-green-600 dark:text-green-400">
-                      {formatCurrency(form.promo_price_cents_monthly, form.currency)}
-                    </p>
-                  )}
+              {/* Monthly */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Mensal</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Regular</Label>
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      value={centsToDisplay(form.price_cents_monthly, form.currency)}
+                      onChange={(e) => {
+                        const cents = parseCurrencyInput(e.target.value);
+                        setForm((f) => ({ ...f, price_cents_monthly: cents, price_cents: cents }));
+                      }}
+                      placeholder="0,00"
+                    />
+                    <p className="text-xs text-muted-foreground">{formatCurrency(form.price_cents_monthly, form.currency)}</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      Promocional
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">Opcional</Badge>
+                    </Label>
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      value={form.promo_price_cents_monthly != null ? centsToDisplay(form.promo_price_cents_monthly, form.currency) : ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "" || val.replace(/\D/g, "") === "") {
+                          setForm((f) => ({ ...f, promo_price_cents_monthly: null }));
+                        } else {
+                          setForm((f) => ({ ...f, promo_price_cents_monthly: parseCurrencyInput(val) }));
+                        }
+                      }}
+                      placeholder="Sem promoção"
+                    />
+                    {form.promo_price_cents_monthly != null && form.promo_price_cents_monthly > 0 && (
+                      <p className="text-xs text-green-600 dark:text-green-400">
+                        {formatCurrency(form.promo_price_cents_monthly, form.currency)}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Yearly pricing */}
-            <div className="rounded-lg border border-border p-4 space-y-4">
-              <Label className="text-base font-semibold">Preço Anual</Label>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-xs">Preço Regular</Label>
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={centsToDecimal(form.price_cents_yearly)}
-                    onChange={(e) => setForm((f) => ({ ...f, price_cents_yearly: decimalToCents(e.target.value) }))}
-                    onBlur={(e) => {
-                      const cents = decimalToCents(e.target.value);
-                      e.target.value = centsToDecimal(cents);
-                    }}
-                    placeholder="0.00"
-                  />
-                  <p className="text-xs text-muted-foreground">{formatCurrency(form.price_cents_yearly, form.currency)}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs flex items-center gap-1.5">
-                    Preço Promocional
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">Opcional</Badge>
-                  </Label>
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    value={form.promo_price_cents_yearly != null ? centsToDecimal(form.promo_price_cents_yearly) : ""}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === "") {
-                        setForm((f) => ({ ...f, promo_price_cents_yearly: null }));
-                      } else {
-                        setForm((f) => ({ ...f, promo_price_cents_yearly: decimalToCents(val) }));
+              {/* Yearly toggle + fields */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={hasYearlyPricing}
+                    onCheckedChange={(checked) => {
+                      setHasYearlyPricing(checked);
+                      if (!checked) {
+                        setForm((f) => ({ ...f, price_cents_yearly: 0, promo_price_cents_yearly: null }));
                       }
                     }}
-                    onBlur={(e) => {
-                      if (e.target.value !== "") {
-                        const cents = decimalToCents(e.target.value);
-                        e.target.value = centsToDecimal(cents);
-                      }
-                    }}
-                    placeholder="Sem promoção"
                   />
-                  {form.promo_price_cents_yearly != null && (
-                    <p className="text-xs text-green-600 dark:text-green-400">
-                      {formatCurrency(form.promo_price_cents_yearly, form.currency)}
-                    </p>
-                  )}
+                  <Label className="text-sm font-medium">Preço Anual</Label>
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">Opcional</Badge>
                 </div>
+
+                {hasYearlyPricing && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">Regular</Label>
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        value={centsToDisplay(form.price_cents_yearly, form.currency)}
+                        onChange={(e) => setForm((f) => ({ ...f, price_cents_yearly: parseCurrencyInput(e.target.value) }))}
+                        placeholder="0,00"
+                      />
+                      <p className="text-xs text-muted-foreground">{formatCurrency(form.price_cents_yearly, form.currency)}</p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        Promocional
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">Opcional</Badge>
+                      </Label>
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        value={form.promo_price_cents_yearly != null ? centsToDisplay(form.promo_price_cents_yearly, form.currency) : ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "" || val.replace(/\D/g, "") === "") {
+                            setForm((f) => ({ ...f, promo_price_cents_yearly: null }));
+                          } else {
+                            setForm((f) => ({ ...f, promo_price_cents_yearly: parseCurrencyInput(val) }));
+                          }
+                        }}
+                        placeholder="Sem promoção"
+                      />
+                      {form.promo_price_cents_yearly != null && form.promo_price_cents_yearly > 0 && (
+                        <p className="text-xs text-green-600 dark:text-green-400">
+                          {formatCurrency(form.promo_price_cents_yearly, form.currency)}
+                        </p>
+                      )}
+                    </div>
+                    {form.price_cents_monthly > 0 && form.price_cents_yearly > 0 && (
+                      <p className="text-xs text-muted-foreground col-span-2">
+                        💡 Economia anual: {Math.round((1 - form.price_cents_yearly / (form.price_cents_monthly * 12)) * 100)}%
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
-              {form.price_cents_monthly > 0 && form.price_cents_yearly > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  💡 Economia anual: {Math.round((1 - form.price_cents_yearly / (form.price_cents_monthly * 12)) * 100)}%
-                </p>
-              )}
             </div>
 
             <div>
