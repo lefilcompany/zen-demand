@@ -87,6 +87,14 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
                         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                         <Route path="/terms-of-service" element={<TermsOfService />} />
 
+                        {/* Admin routes */}
+                        <Route path="/admin" element={<RequireAuth><AdminLayout /></RequireAuth>}>
+                          <Route index element={<AdminDashboard />} />
+                          <Route path="coupons" element={<AdminCoupons />} />
+                          <Route path="teams" element={<AdminTeams />} />
+                          <Route path="users" element={<AdminUsers />} />
+                        </Route>
+
                         {/* Auth-only routes (no team required) */}
                         <Route path="/welcome" element={<RequireAuth><Welcome /></RequireAuth>} />
                         <Route path="/complete-profile" element={<RequireAuth><CompleteProfile /></RequireAuth>} />

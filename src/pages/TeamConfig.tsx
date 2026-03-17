@@ -547,6 +547,57 @@ export default function TeamConfig() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Coupon Section */}
+      {isAdmin && selectedTeamId && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Ticket className="h-5 w-5" />
+              Aplicar Cupom de Teste
+            </CardTitle>
+            <CardDescription>Ative um período de teste grátis com um código de cupom</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {couponSuccess ? (
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-primary/10 border border-primary/20">
+                <CheckCircle2 className="h-5 w-5 text-primary" />
+                <p className="text-sm font-medium">Teste grátis ativado com sucesso!</p>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Ex: SOMA-ABC123"
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                  className="font-mono"
+                />
+                <Button
+                  disabled={!couponInput.trim() || redeemCoupon.isPending}
+                  onClick={async () => {
+                    try {
+                      const result = await redeemCoupon.mutateAsync({
+                        code: couponInput,
+                        teamId: selectedTeamId,
+                      });
+                      toast.success("Teste grátis ativado!", {
+                        description: `${result.trial_days} dias do plano ${result.plan_name}`,
+                      });
+                      setCouponSuccess(true);
+                      queryClient.invalidateQueries({ queryKey: ["user-subscription"] });
+                      queryClient.invalidateQueries({ queryKey: ["subscription"] });
+                    } catch (e: any) {
+                      toast.error(e.message || "Erro ao aplicar cupom");
+                    }
+                  }}
+                >
+                  {redeemCoupon.isPending ? "Aplicando..." : "Aplicar"}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -11,7 +11,7 @@ import { ArrowRight, RefreshCw, Loader2, Ticket, CheckCircle2, XCircle } from "l
 import { generateAccessCode, checkAccessCodeAvailable } from "@/hooks/useTeams";
 import { useValidateCoupon } from "@/hooks/useTrialCoupon";
 import { toast } from "sonner";
-import { useDebounce } from "@/hooks/use-mobile";
+
 
 interface TeamStepProps {
   initialData?: { name: string; description: string; accessCode: string };
