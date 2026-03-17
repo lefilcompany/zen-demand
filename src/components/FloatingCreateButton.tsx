@@ -11,6 +11,7 @@ import { CreateBoardDialog } from "@/components/CreateBoardDialog";
 export function FloatingCreateButton() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { openCreateDemand } = useCreateDemandModal();
   const location = useLocation();
   const { selectedTeamId } = useSelectedTeam();
   const { data: role } = useTeamRole(selectedTeamId);
