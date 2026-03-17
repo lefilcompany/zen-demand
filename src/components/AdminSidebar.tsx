@@ -1,4 +1,4 @@
-import { LayoutDashboard, Ticket, Building2, Users, LogOut } from "lucide-react";
+import { LayoutDashboard, Ticket, Building2, Users, LogOut, CreditCard } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,7 @@ import logoFull from "@/assets/logo-soma-dark.png";
 
 const navItems = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
+  { to: "/admin/plans", icon: CreditCard, label: "Planos" },
   { to: "/admin/coupons", icon: Ticket, label: "Cupons" },
   { to: "/admin/teams", icon: Building2, label: "Equipes" },
   { to: "/admin/users", icon: Users, label: "Usuários" },

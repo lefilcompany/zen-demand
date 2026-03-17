@@ -62,6 +62,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCoupons from "./pages/admin/AdminCoupons";
 import AdminTeams from "./pages/admin/AdminTeams";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminPlans from "./pages/admin/AdminPlans";
 const queryClient = new QueryClient();
 const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
     <QueryClientProvider client={queryClient}>
@@ -90,6 +91,7 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
                         {/* Admin routes */}
                         <Route path="/admin" element={<RequireAuth><AdminLayout /></RequireAuth>}>
                           <Route index element={<AdminDashboard />} />
+                          <Route path="plans" element={<AdminPlans />} />
                           <Route path="coupons" element={<AdminCoupons />} />
                           <Route path="teams" element={<AdminTeams />} />
                           <Route path="users" element={<AdminUsers />} />
