@@ -16,6 +16,7 @@ import { useBoardMembers, useBoardRole, useRemoveBoardMember, useUpdateBoardMemb
 import { BoardScopeConfig } from "@/components/BoardScopeConfig";
 import { AddBoardMemberDialog } from "@/components/AddBoardMemberDialog";
 import { useAuth } from "@/lib/auth";
+import { useTeamRole } from "@/hooks/useTeamRole";
 import { toast } from "sonner";
 
 const roleLabels: Record<string, string> = {
