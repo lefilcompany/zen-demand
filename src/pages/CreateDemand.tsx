@@ -221,7 +221,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     !isServiceValid();
 
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) handleClose(); }}>
+    <Dialog open={isOpen} onOpenChange={(o) => { if (!o) handleClose(); }}>
       <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
           <DialogTitle className="text-xl font-bold">Nova Demanda</DialogTitle>
