@@ -109,21 +109,23 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
             <Button
               type="button"
               variant="outline"
-              className="w-full justify-between text-left font-normal rounded-lg h-10"
+              className="w-full justify-between text-left font-normal rounded-lg h-10 border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 transition-all duration-200 group"
             >
               <span className="flex items-center gap-2 text-sm">
-                <CalendarDays className="h-4 w-4 opacity-60" />
-                {value.frequency === "daily" && "Diária"}
-                {value.frequency === "weekly" && "Semanal"}
-                {value.frequency === "biweekly" && "Quinzenal"}
-                {value.frequency === "monthly" && `Mensal (dia ${value.dayOfMonth || 1})`}
+                <CalendarDays className="h-4 w-4 text-primary/70 group-hover:text-primary transition-colors" />
+                <span className="font-medium text-foreground">
+                  {value.frequency === "daily" && "Diária"}
+                  {value.frequency === "weekly" && "Semanal"}
+                  {value.frequency === "biweekly" && "Quinzenal"}
+                  {value.frequency === "monthly" && `Mensal (dia ${value.dayOfMonth || 1})`}
+                </span>
                 {startDate && (
                   <span className="text-muted-foreground">
                     · a partir de {format(startDate, "dd/MM/yy", { locale: ptBR })}
                   </span>
                 )}
               </span>
-              <span className="text-xs text-primary">Configurar</span>
+              <span className="text-xs font-medium text-primary/70 group-hover:text-primary transition-colors">Configurar</span>
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-80 p-0" align="start" side="top">
