@@ -146,8 +146,20 @@ const featureOptions: {
   },
 ];
 
-function formatCurrency(cents: number) {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
+function formatCurrency(cents: number, currency = "BRL") {
+  const opt = currencyOptions.find((c) => c.value === currency) || currencyOptions[0];
+  return new Intl.NumberFormat(opt.locale, { style: "currency", currency }).format(cents / 100);
+}
+
+/** Converts a decimal string like "59.90" to cents integer 5990 */
+function decimalToCents(val: string): number {
+  const num = parseFloat(val.replace(",", "."));
+  return isNaN(num) ? 0 : Math.round(num * 100);
+}
+
+/** Converts cents to a decimal string "59.90" */
+function centsToDecimal(cents: number): string {
+  return (cents / 100).toFixed(2);
 }
 
 const tierConfig: Record<string, { icon: React.ElementType; borderColor: string; badgeBg: string; badgeText: string; label: string }> = {
