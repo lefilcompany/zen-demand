@@ -338,7 +338,7 @@ const Index = () => {
         </div>
         <div className="flex items-center gap-2">
           <Button 
-            onClick={() => navigate("/demands/create")}
+            onClick={() => openCreateDemand()}
             className="gap-2"
             data-tour="new-demand-btn"
           >

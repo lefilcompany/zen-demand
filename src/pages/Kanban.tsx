@@ -255,7 +255,7 @@ export default function Kanban() {
             </p>
             {!filters.myTasks && (
               <div className="mt-6">
-                <Button onClick={() => navigate("/demands/create")}>
+                <Button onClick={() => openCreateDemand()}>
                   <Plus className="mr-2 h-4 w-4" />
                   {t("demands.createFirst")}
                 </Button>

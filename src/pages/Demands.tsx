@@ -410,7 +410,7 @@ export default function Demands() {
               
               {/* Create Button - Mobile (Floating style) */}
               <Button 
-                onClick={() => navigate("/demands/create")} 
+                onClick={() => openCreateDemand()} 
                 size="icon"
                 className="sm:hidden h-8 w-8 rounded-full shadow-sm"
               >
