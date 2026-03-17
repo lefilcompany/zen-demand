@@ -52,7 +52,7 @@ export function KeyboardShortcutsProvider({ children }: { children: React.ReactN
       // Ctrl+N for new demand
       if (e.key === "n" && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
-        navigate("/demands/create");
+        window.dispatchEvent(new CustomEvent("open-create-demand"));
         return;
       }
 

@@ -47,7 +47,7 @@ export function CommandMenu() {
   }, []);
 
   const quickActions = [
-    { icon: Plus, label: "Nova Demanda", action: () => navigate("/demands/create") },
+    { icon: Plus, label: "Nova Demanda", action: () => { navigate("/"); setTimeout(() => { const event = new CustomEvent("open-create-demand"); window.dispatchEvent(event); }, 0); } },
     { icon: LayoutDashboard, label: "Dashboard", action: () => navigate("/") },
     { icon: Kanban, label: "Kanban", action: () => navigate("/kanban") },
     { icon: FileText, label: "Demandas", action: () => navigate("/demands") },
