@@ -12,7 +12,7 @@ interface CommentAttachmentUploaderProps {
   filesListOnly?: boolean;
 }
 
-const MAX_FILES = 5;
+const MAX_FILES = 20;
 
 function getFileIcon(fileType: string) {
   if (fileType.startsWith("image/")) return ImageIcon;
