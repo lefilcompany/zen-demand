@@ -66,6 +66,20 @@ export function BoardScopeConfig({ boardId, canEdit = false }: BoardScopeConfigP
     }
   };
 
+  const handleAddAllServices = async () => {
+    if (availableServices.length === 0) return;
+    
+    try {
+      await addBoardServices.mutateAsync({
+        boardId,
+        services: availableServices.map(s => ({ serviceId: s.id, monthlyLimit: 0 })),
+      });
+      toast.success(`${availableServices.length} serviços adicionados ao quadro`);
+    } catch (error) {
+      toast.error("Erro ao adicionar serviços");
+    }
+  };
+
   const handleUpdateLimit = async (id: string, newLimit: number) => {
     try {
       await updateLimit.mutateAsync({
