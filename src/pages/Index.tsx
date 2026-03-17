@@ -301,7 +301,7 @@ const Index = () => {
                     <Button 
                       variant="link" 
                       className="mt-2 text-sm"
-                      onClick={() => navigate("/demands/create")}
+                      onClick={() => openCreateDemand()}
                     >
                       {t("demands.createFirst")}
                     </Button>
