@@ -4,6 +4,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Plus, Users, ArrowRight, Sparkles } from "lucide-react";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
