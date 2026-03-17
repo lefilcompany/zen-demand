@@ -11,13 +11,87 @@ interface ShareToken {
   is_active: boolean;
 }
 
+interface SharedDemandPayload {
+  demand: any;
+  interactions: any[];
+  attachments: any[];
+}
+
 function generateToken(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let token = '';
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let token = "";
   for (let i = 0; i < 32; i++) {
     token += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return token;
+}
+
+async function resolveSharedErrorCode(error: unknown): Promise<"INVALID_TOKEN" | "EXPIRED_TOKEN" | "LOAD_ERROR"> {
+  const fallback: "LOAD_ERROR" = "LOAD_ERROR";
+
+  if (!error || typeof error !== "object") {
+    return fallback;
+  }
+
+  const maybeContext = (error as { context?: unknown }).context;
+  if (maybeContext instanceof Response) {
+    try {
+      const payload = (await maybeContext.clone().json()) as { code?: string };
+      if (payload?.code === "INVALID_TOKEN" || payload?.code === "EXPIRED_TOKEN") {
+        return payload.code;
+      }
+    } catch {
+      // ignore parse errors and fallback to status code mapping
+    }
+
+    if (maybeContext.status === 410) {
+      return "EXPIRED_TOKEN";
+    }
+
+    if (maybeContext.status === 403 || maybeContext.status === 404) {
+      return "INVALID_TOKEN";
+    }
+  }
+
+  const message = ((error as { message?: string }).message || "").toUpperCase();
+  if (message.includes("EXPIRED")) return "EXPIRED_TOKEN";
+  if (message.includes("INVALID") || message.includes("403") || message.includes("404")) {
+    return "INVALID_TOKEN";
+  }
+
+  return fallback;
+}
+
+async function fetchSharedDemandPayload(token: string): Promise<SharedDemandPayload> {
+  const { data, error } = await supabase.functions.invoke("shared-demand", {
+    body: { token },
+  });
+
+  if (error) {
+    const code = await resolveSharedErrorCode(error);
+    throw new Error(code);
+  }
+
+  const payload = data as SharedDemandPayload | null;
+  if (!payload?.demand) {
+    throw new Error("INVALID_TOKEN");
+  }
+
+  return {
+    demand: payload.demand,
+    interactions: payload.interactions || [],
+    attachments: payload.attachments || [],
+  };
+}
+
+function sharedPayloadQueryConfig(token: string | null) {
+  return {
+    queryKey: ["shared-demand-payload", token],
+    queryFn: () => fetchSharedDemandPayload(token as string),
+    enabled: !!token,
+    retry: false as const,
+    staleTime: 1000 * 60 * 5,
+  };
 }
 
 export function useShareToken(demandId: string | null) {
@@ -25,7 +99,7 @@ export function useShareToken(demandId: string | null) {
     queryKey: ["share-token", demandId],
     queryFn: async () => {
       if (!demandId) return null;
-      
+
       const result = await supabase
         .from("demand_share_tokens" as any)
         .select("*")
@@ -36,19 +110,17 @@ export function useShareToken(demandId: string | null) {
         .maybeSingle();
 
       if (result.error) throw result.error;
-      
+
       const token = result.data as unknown as ShareToken | null;
-      
-      // Also filter expiration client-side for safety
+
       if (token?.expires_at && new Date(token.expires_at) <= new Date()) {
-        // Deactivate expired token
         await supabase
           .from("demand_share_tokens" as any)
           .update({ is_active: false })
           .eq("id", token.id);
         return null;
       }
-      
+
       return token;
     },
     enabled: !!demandId,
@@ -61,7 +133,7 @@ export function useCreateShareToken() {
   return useMutation({
     mutationFn: async ({ demandId, userId, expiresAt }: { demandId: string; userId: string; expiresAt?: string | null }) => {
       const token = generateToken();
-      
+
       const result = await supabase
         .from("demand_share_tokens" as any)
         .insert({
@@ -100,103 +172,25 @@ export function useRevokeShareToken() {
   });
 }
 
-// Hook for public access - gets demand by share token
 export function useSharedDemand(token: string | null) {
   return useQuery({
-    queryKey: ["shared-demand", token],
-    queryFn: async () => {
-      if (!token) return null;
-
-      // Verify the token is valid (RLS already filters is_active=true AND not expired)
-      const tokenResult = await supabase
-        .from("demand_share_tokens" as any)
-        .select("demand_id, expires_at")
-        .eq("token", token)
-        .eq("is_active", true)
-        .maybeSingle();
-
-      const tokenData = tokenResult.data as unknown as { demand_id: string; expires_at: string | null } | null;
-      
-      if (tokenResult.error || !tokenData) {
-        throw new Error("INVALID_TOKEN");
-      }
-
-      // Extra client-side expiration check
-      if (tokenData.expires_at && new Date(tokenData.expires_at) <= new Date()) {
-        throw new Error("EXPIRED_TOKEN");
-      }
-
-      // Fetch the demand with related data
-      const { data: demand, error: demandError } = await supabase
-        .from("demands")
-        .select(`
-          *,
-          demand_statuses(name, color),
-          profiles!demands_created_by_fkey(full_name, avatar_url),
-          teams(id, name, description),
-          services(id, name),
-          demand_assignees(
-            user_id,
-            profile:profiles(full_name, avatar_url)
-          )
-        `)
-        .eq("id", tokenData.demand_id)
-        .single();
-
-      if (demandError) throw demandError;
-      return demand;
-    },
-    enabled: !!token,
-    retry: false,
-    staleTime: 1000 * 60 * 5,
+    ...sharedPayloadQueryConfig(token),
+    select: (payload: SharedDemandPayload) => payload.demand,
   });
 }
 
-// Hook for public access - gets interactions by share token
 export function useSharedDemandInteractions(token: string | null, demandId: string | null) {
   return useQuery({
-    queryKey: ["shared-demand-interactions", token, demandId],
-    queryFn: async () => {
-      if (!token || !demandId) return [];
-
-      const { data, error } = await supabase
-        .from("demand_interactions")
-        .select(`
-          *,
-          profiles(full_name, avatar_url)
-        `)
-        .eq("demand_id", demandId)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
+    ...sharedPayloadQueryConfig(token),
     enabled: !!token && !!demandId,
-    retry: false,
+    select: (payload: SharedDemandPayload) => (demandId ? payload.interactions : []),
   });
 }
 
-// Hook for public access - gets attachments by share token
 export function useSharedDemandAttachments(token: string | null, demandId: string | null) {
   return useQuery({
-    queryKey: ["shared-demand-attachments", token, demandId],
-    queryFn: async () => {
-      if (!token || !demandId) return [];
-
-      const { data, error } = await supabase
-        .from("demand_attachments")
-        .select(`
-          *,
-          profiles(full_name, avatar_url)
-        `)
-        .eq("demand_id", demandId)
-        .is("interaction_id", null)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
+    ...sharedPayloadQueryConfig(token),
     enabled: !!token && !!demandId,
-    retry: false,
+    select: (payload: SharedDemandPayload) => (demandId ? payload.attachments : []),
   });
 }
