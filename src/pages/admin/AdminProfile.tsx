@@ -153,9 +153,34 @@ export default function AdminProfile() {
     }
   };
 
-  const handleChangePassword = async () => {
+  const handleVerifyCurrentPassword = async () => {
     if (!currentPassword) {
       toast.error("Informe a senha atual");
+      return;
+    }
+    setIsVerifyingPassword(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: user?.email || "",
+        password: currentPassword,
+      });
+      if (error) {
+        toast.error("Senha atual incorreta");
+        setCurrentPasswordVerified(false);
+        return;
+      }
+      setCurrentPasswordVerified(true);
+      toast.success("Senha verificada! Agora defina a nova senha.");
+    } catch {
+      toast.error("Erro ao verificar senha");
+    } finally {
+      setIsVerifyingPassword(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPasswordVerified) {
+      toast.error("Verifique a senha atual primeiro");
       return;
     }
     if (!newPassword || newPassword.length < 6) {
@@ -169,22 +194,13 @@ export default function AdminProfile() {
 
     setIsChangingPassword(true);
     try {
-      // Verify current password by re-authenticating
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user?.email || "",
-        password: currentPassword,
-      });
-      if (signInError) {
-        toast.error("Senha atual incorreta");
-        return;
-      }
-
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
       toast.success("Senha alterada com sucesso!");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      setCurrentPasswordVerified(false);
     } catch (error: any) {
       toast.error(error.message || "Erro ao alterar senha");
     } finally {
