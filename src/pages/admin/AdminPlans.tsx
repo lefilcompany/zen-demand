@@ -243,26 +243,37 @@ export default function AdminPlans() {
             return (
               <Card
                 key={plan.id}
-                className={`relative rounded-2xl border-2 transition-all hover:shadow-xl ${tier.borderColor} ${
+                className={`relative rounded-2xl border transition-all hover:shadow-lg overflow-hidden ${
                   !plan.is_active ? "opacity-40 grayscale" : ""
                 }`}
               >
-                <CardContent className="p-5 flex flex-col h-full">
-                  {/* Tier Badge */}
-                  <div className="mb-4">
-                    <Badge
-                      variant="secondary"
-                      className={`rounded-full px-3 py-1 text-[11px] font-bold tracking-wider gap-1.5 ${tier.badgeBg} ${tier.badgeText} border-0`}
-                    >
-                      <TierIcon className="h-3.5 w-3.5" />
-                      {tier.label}
-                    </Badge>
-                  </div>
+                {/* Left accent bar */}
+                <div
+                  className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl"
+                  style={{
+                    background:
+                      plan.slug === "starter"
+                        ? "linear-gradient(to bottom, #F59E0B, #D97706)"
+                        : plan.slug === "profissional"
+                        ? "linear-gradient(to bottom, #F97316, #EA580C)"
+                        : plan.slug === "business"
+                        ? "linear-gradient(to bottom, hsl(var(--primary)), hsl(var(--primary) / 0.7))"
+                        : plan.slug === "enterprise"
+                        ? "linear-gradient(to bottom, #A855F7, #7C3AED)"
+                        : "hsl(var(--muted-foreground))",
+                  }}
+                />
 
-                  {/* Name */}
-                  <h3 className="text-lg font-extrabold uppercase leading-tight tracking-tight mb-1">
-                    {plan.name}
-                  </h3>
+                <CardContent className="p-5 pl-6 flex flex-col h-full">
+                  {/* Name + tier inline */}
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-lg font-extrabold uppercase leading-tight tracking-tight">
+                      {plan.name}
+                    </h3>
+                    <span className={`text-[10px] font-bold tracking-widest uppercase ${tier.badgeText}`}>
+                      {tier.label}
+                    </span>
+                  </div>
 
                   {/* Description */}
                   {plan.description && (
@@ -304,17 +315,15 @@ export default function AdminPlans() {
                       <Users className="h-3.5 w-3.5" />
                       <span>0 assinantes</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 gap-1.5 text-xs rounded-lg"
-                        onClick={() => openEdit(plan)}
-                      >
-                        <Pencil className="h-3 w-3" />
-                        Editar
-                      </Button>
-                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1.5 text-xs rounded-lg"
+                      onClick={() => openEdit(plan)}
+                    >
+                      <Pencil className="h-3 w-3" />
+                      Editar
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
