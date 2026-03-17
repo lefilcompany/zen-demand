@@ -74,11 +74,13 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
             <PresenceProvider>
               <TeamProvider>
                 <BoardProvider>
-                  <KeyboardShortcutsProvider>
-                    <SwipeNavigationProvider>
-                      <Toaster position="top-right" richColors />
-                      <CommandMenu />
-                      <PWAInstallPrompt />
+                  <CreateDemandProvider>
+                    <KeyboardShortcutsProvider>
+                      <SwipeNavigationProvider>
+                        <Toaster position="top-right" richColors />
+                        <CommandMenu />
+                        <PWAInstallPrompt />
+                        <CreateDemandGlobal />
                       <Routes>
                         {/* Public routes */}
                         <Route path="/auth" element={<Auth />} />
