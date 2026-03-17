@@ -15,8 +15,7 @@ import {
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
-import logoFull from "@/assets/logo-soma.png";
-import logoIcon from "@/assets/logo-soma-icon.png";
+import logoFull from "@/assets/logo-soma-dark.png";
 
 const navItems = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
@@ -35,9 +34,9 @@ export function AdminSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4 flex items-center justify-center">
         {collapsed ? (
-          <img src={logoIcon} alt="SoMA" className="h-8 w-8" />
+          <img src="/lovable-uploads/8967ad53-156a-4e31-a5bd-b472b7cde839.png" alt="SoMA" className="h-5 w-5 object-scale-down" />
         ) : (
-          <img src={logoFull} alt="SoMA" className="h-8" />
+          <img src={logoFull} alt="SoMA" className="h-8 md:h-10 w-auto" />
         )}
       </SidebarHeader>
 
