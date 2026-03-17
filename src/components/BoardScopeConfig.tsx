@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Save, Loader2, Plus, Trash2, Package, AlertCircle, Infinity } from "lucide-react";
+import { Save, Loader2, Plus, Trash2, Package, AlertCircle, Infinity, ListPlus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,6 +63,20 @@ export function BoardScopeConfig({ boardId, canEdit = false }: BoardScopeConfigP
       toast.success("Serviço adicionado ao quadro");
     } catch (error) {
       toast.error("Erro ao adicionar serviço");
+    }
+  };
+
+  const handleAddAllServices = async () => {
+    if (availableServices.length === 0) return;
+    
+    try {
+      await addBoardServices.mutateAsync({
+        boardId,
+        services: availableServices.map(s => ({ serviceId: s.id, monthlyLimit: 0 })),
+      });
+      toast.success(`${availableServices.length} serviços adicionados ao quadro`);
+    } catch (error) {
+      toast.error("Erro ao adicionar serviços");
     }
   };
 
@@ -221,7 +235,25 @@ export function BoardScopeConfig({ boardId, canEdit = false }: BoardScopeConfigP
               <>
                 <Separator />
                 <div className="space-y-2">
-                  <Label>Adicionar Serviço</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Adicionar Serviço</Label>
+                    {availableServices.length > 1 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddAllServices}
+                        disabled={addBoardServices.isPending}
+                        className="text-xs gap-1.5"
+                      >
+                        {addBoardServices.isPending ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <ListPlus className="h-3.5 w-3.5" />
+                        )}
+                        Adicionar Todos ({availableServices.length})
+                      </Button>
+                    )}
+                  </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Select value={selectedNewService} onValueChange={setSelectedNewService}>
                       <SelectTrigger className="flex-1 min-w-[200px]">
