@@ -235,7 +235,25 @@ export function BoardScopeConfig({ boardId, canEdit = false }: BoardScopeConfigP
               <>
                 <Separator />
                 <div className="space-y-2">
-                  <Label>Adicionar Serviço</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Adicionar Serviço</Label>
+                    {availableServices.length > 1 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddAllServices}
+                        disabled={addBoardServices.isPending}
+                        className="text-xs gap-1.5"
+                      >
+                        {addBoardServices.isPending ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <ListPlus className="h-3.5 w-3.5" />
+                        )}
+                        Adicionar Todos ({availableServices.length})
+                      </Button>
+                    )}
+                  </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Select value={selectedNewService} onValueChange={setSelectedNewService}>
                       <SelectTrigger className="flex-1 min-w-[200px]">
