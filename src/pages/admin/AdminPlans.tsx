@@ -486,8 +486,20 @@ export default function AdminPlans() {
               <Label className="text-base font-semibold">Funcionalidades</Label>
               <div className="mt-3 space-y-3">
                 {featureOptions.map((feat) => (
-                  <div key={feat.key} className="flex items-center justify-between">
-                    <Label className="text-sm">{feat.label}</Label>
+                  <div key={feat.key} className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-1.5">
+                      <Label className="text-sm">{feat.label}</Label>
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help shrink-0" />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs text-xs">
+                            {feat.description}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     {feat.type === "boolean" ? (
                       <Switch
                         checked={!!form.features[feat.key]}
@@ -498,12 +510,12 @@ export default function AdminPlans() {
                         value={form.features[feat.key] || ""}
                         onValueChange={(v) => updateFeature(feat.key, v)}
                       >
-                        <SelectTrigger className="w-40"><SelectValue placeholder="Desabilitado" /></SelectTrigger>
+                        <SelectTrigger className="w-44"><SelectValue placeholder="Desabilitado" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="disabled">Desabilitado</SelectItem>
                           {feat.options?.map((opt) => (
-                            <SelectItem key={opt} value={opt}>
-                              {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
