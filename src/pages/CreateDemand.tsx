@@ -84,7 +84,11 @@ export default function CreateDemand() {
     }
   };
 
-  const isServiceValid = () => {
+  if (role === "requester") {
+    return <Navigate to="/demands/request" replace />;
+  }
+
+
     if (!hasBoardServices) return true;
     if (!serviceId || serviceId === "none") return false;
     if (canCreateWithService === false) return false;
