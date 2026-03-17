@@ -26,6 +26,8 @@ export default function AdminProfile() {
 
   // Password fields
   const [currentPassword, setCurrentPassword] = useState("");
+  const [currentPasswordVerified, setCurrentPasswordVerified] = useState(false);
+  const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -151,9 +153,34 @@ export default function AdminProfile() {
     }
   };
 
-  const handleChangePassword = async () => {
+  const handleVerifyCurrentPassword = async () => {
     if (!currentPassword) {
       toast.error("Informe a senha atual");
+      return;
+    }
+    setIsVerifyingPassword(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: user?.email || "",
+        password: currentPassword,
+      });
+      if (error) {
+        toast.error("Senha atual incorreta");
+        setCurrentPasswordVerified(false);
+        return;
+      }
+      setCurrentPasswordVerified(true);
+      toast.success("Senha verificada! Agora defina a nova senha.");
+    } catch {
+      toast.error("Erro ao verificar senha");
+    } finally {
+      setIsVerifyingPassword(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPasswordVerified) {
+      toast.error("Verifique a senha atual primeiro");
       return;
     }
     if (!newPassword || newPassword.length < 6) {
@@ -167,22 +194,13 @@ export default function AdminProfile() {
 
     setIsChangingPassword(true);
     try {
-      // Verify current password by re-authenticating
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user?.email || "",
-        password: currentPassword,
-      });
-      if (signInError) {
-        toast.error("Senha atual incorreta");
-        return;
-      }
-
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
       toast.success("Senha alterada com sucesso!");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      setCurrentPasswordVerified(false);
     } catch (error: any) {
       toast.error(error.message || "Erro ao alterar senha");
     } finally {
@@ -389,71 +407,99 @@ export default function AdminProfile() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2 md:col-span-2">
+          <div className="space-y-4">
+            {/* Current password + verify */}
+            <div className="space-y-2">
               <Label className="text-sm">Senha Atual *</Label>
-              <div className="relative">
-                <Input
-                  type={showCurrentPassword ? "text" : "password"}
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Digite sua senha atual"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm">Nova Senha</Label>
-              <div className="relative">
-                <Input
-                  type={showNewPassword ? "text" : "password"}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Mínimo 6 caracteres"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm">Confirmar Nova Senha</Label>
-              <div className="relative">
-                <Input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Repita a senha"
-                />
-                {passwordsMatch && (
-                  <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    type={showCurrentPassword ? "text" : "password"}
+                    value={currentPassword}
+                    onChange={(e) => {
+                      setCurrentPassword(e.target.value);
+                      if (currentPasswordVerified) setCurrentPasswordVerified(false);
+                    }}
+                    placeholder="Digite sua senha atual"
+                    disabled={currentPasswordVerified}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {!currentPasswordVerified ? (
+                  <Button
+                    variant="outline"
+                    onClick={handleVerifyCurrentPassword}
+                    disabled={isVerifyingPassword || !currentPassword}
+                    className="gap-2 shrink-0"
+                  >
+                    {isVerifyingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
+                    Verificar
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400 shrink-0 px-3">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Verificada
+                  </div>
                 )}
+              </div>
+            </div>
+
+            {/* New password fields - only enabled after verification */}
+            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 transition-opacity ${currentPasswordVerified ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
+              <div className="space-y-2">
+                <Label className="text-sm">Nova Senha</Label>
+                <div className="relative">
+                  <Input
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Mínimo 6 caracteres"
+                    disabled={!currentPasswordVerified}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm">Confirmar Nova Senha</Label>
+                <div className="relative">
+                  <Input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Repita a senha"
+                    disabled={!currentPasswordVerified}
+                  />
+                  {passwordsMatch && (
+                    <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                  )}
+                  {passwordsMismatch && (
+                    <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />
+                  )}
+                </div>
                 {passwordsMismatch && (
-                  <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />
+                  <p className="text-xs text-destructive">As senhas não coincidem</p>
                 )}
               </div>
-              {passwordsMismatch && (
-                <p className="text-xs text-destructive">As senhas não coincidem</p>
-              )}
             </div>
           </div>
 
           <Button
             variant="outline"
             onClick={handleChangePassword}
-            disabled={isChangingPassword || !currentPassword || !newPassword || !passwordsMatch}
+            disabled={isChangingPassword || !currentPasswordVerified || !newPassword || !passwordsMatch}
             className="gap-2"
           >
             {isChangingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
