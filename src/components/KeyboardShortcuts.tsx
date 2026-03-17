@@ -20,7 +20,7 @@ export function KeyboardShortcutsProvider({ children }: { children: React.ReactN
 
   const shortcuts: Shortcut[] = [
     { keys: ["Ctrl", "K"], description: "Busca global" },
-    { keys: ["Ctrl", "N"], description: "Nova demanda", action: () => navigate("/demands/create") },
+    { keys: ["Ctrl", "N"], description: "Nova demanda", action: () => { window.dispatchEvent(new CustomEvent("open-create-demand")); } },
     { keys: ["?"], description: "Mostrar atalhos" },
     { keys: ["G", "D"], description: "Ir para Dashboard", action: () => navigate("/") },
     { keys: ["G", "K"], description: "Ir para Kanban", action: () => navigate("/kanban") },
