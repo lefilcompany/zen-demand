@@ -162,10 +162,22 @@ export default function CreateDemand() {
       return;
     }
 
+    // Upload inline base64 images in description before saving
+    let finalDescription = description.trim() || undefined;
+    if (finalDescription && finalDescription.includes('data:image')) {
+      try {
+        const { uploadInlineImages } = await import("@/lib/imageUploadUtils");
+        finalDescription = await uploadInlineImages(finalDescription);
+      } catch (err) {
+        console.error("Error uploading inline images in description:", err);
+        finalDescription = finalDescription.replace(/<img\s+[^>]*src="data:[^"]*"[^>]*\/?>/g, '[imagem não enviada]');
+      }
+    }
+
     createDemand.mutate(
       {
         title: title.trim(),
-        description: description.trim() || undefined,
+        description: finalDescription,
         team_id: selectedTeamId,
         board_id: selectedBoardId,
         status_id: statusId,
