@@ -66,7 +66,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPlans from "./pages/admin/AdminPlans";
 import AdminProfile from "./pages/admin/AdminProfile";
 import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 function CreateDemandGlobal() {
   return <CreateDemand />;
