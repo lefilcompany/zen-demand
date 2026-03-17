@@ -6,6 +6,7 @@ import { AuthProvider } from "@/lib/auth";
 import { TeamProvider } from "@/contexts/TeamContext";
 import { BoardProvider } from "@/contexts/BoardContext";
 import { PresenceProvider } from "@/contexts/PresenceContext";
+import { CreateDemandProvider, useCreateDemandModal } from "@/contexts/CreateDemandContext";
 import { RequireAuth } from "@/components/RequireAuth";
 import { RequireTeam } from "@/components/RequireTeam";
 import { ProtectedLayout } from "@/components/ProtectedLayout";
