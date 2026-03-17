@@ -487,18 +487,18 @@ export default function AdminPlans() {
               <div className="mt-3 space-y-3">
                 {featureOptions.map((feat) => (
                   <div key={feat.key} className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-1.5">
-                      <Label className="text-sm">{feat.label}</Label>
-                      <TooltipProvider delayDuration={200}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help shrink-0" />
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-xs text-xs">
-                            {feat.description}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Label className="text-sm shrink-0">{feat.label}</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button type="button" className="shrink-0 rounded-full p-0.5 hover:bg-muted transition-colors">
+                            <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent side="top" align="start" className="max-w-xs text-xs text-muted-foreground z-[9999]">
+                          {feat.description}
+                        </PopoverContent>
+                      </Popover>
                     </div>
                     {feat.type === "boolean" ? (
                       <Switch
