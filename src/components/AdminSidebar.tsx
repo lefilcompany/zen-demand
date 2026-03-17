@@ -15,8 +15,7 @@ import {
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
-import logoFull from "@/assets/logo-soma.png";
-import logoIcon from "@/assets/logo-soma-icon.png";
+import logoFull from "@/assets/logo-soma-dark.png";
 
 const navItems = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
