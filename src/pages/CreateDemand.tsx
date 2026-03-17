@@ -30,9 +30,17 @@ import { getErrorMessage } from "@/lib/errorUtils";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 import { useTranslation } from "react-i18next";
 
-export default function CreateDemand() {
+export default function CreateDemand({ open, onClose }: { open?: boolean; onClose?: () => void }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { isOpen: contextOpen, closeCreateDemand } = useCreateDemandModal();
+  
+  const isOpen = open ?? contextOpen;
+  const handleClose = () => {
+    onClose?.();
+    closeCreateDemand();
+  };
+  
   const { isOffline } = useOfflineStatus();
   const createDemand = useCreateDemand();
   const { selectedTeamId, teams } = useSelectedTeam();
