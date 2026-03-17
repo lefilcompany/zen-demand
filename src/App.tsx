@@ -121,7 +121,7 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
                           <Route path="/boards/:boardId/members" element={<BoardMembers />} />
                           <Route path="/team-config" element={<TeamConfig />} />
                           <Route path="/demands" element={<Demands />} />
-                          <Route path="/demands/create" element={<CreateDemand />} />
+                          <Route path="/demands/create" element={<CreateDemandRoute />} />
                           <Route path="/demands/request" element={<CreateDemandRequest />} />
                           <Route path="/demands/:id" element={<DemandDetail />} />
                           <Route path="/my-requests" element={<MyDemandRequests />} />
