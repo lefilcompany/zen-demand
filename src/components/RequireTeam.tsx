@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useAuth } from "@/lib/auth";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import { Users, LogOut } from "lucide-react";
 import { TeamSelector } from "@/components/TeamSelector";
