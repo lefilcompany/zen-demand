@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Briefcase, Users, CheckCircle2, Clock, Timer, RefreshCw, FileText, PlusCircle, ArrowRight } from "lucide-react";
+import { Briefcase, Users, CheckCircle2, Clock, Timer, RefreshCw, FileText, Plus, PlusCircle, ArrowRight } from "lucide-react";
 import { useDemands } from "@/hooks/useDemands";
 import { useTeams } from "@/hooks/useTeams";
 import { useSelectedTeam } from "@/contexts/TeamContext";
@@ -160,7 +160,7 @@ const Index = () => {
               className="gap-2"
               data-tour="new-demand-btn"
             >
-              <PlusCircle className="h-4 w-4" />
+              <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">{t("demands.newDemand")}</span>
               <span className="sm:hidden">{t("demands.newDemand").split(" ")[0]}</span>
             </Button>
@@ -344,7 +344,7 @@ const Index = () => {
             className="gap-2 bg-[hsl(32,95%,50%)] hover:bg-[hsl(32,95%,45%)] text-white rounded-lg px-5 h-10 shadow-md"
             data-tour="new-demand-btn"
           >
-            <PlusCircle className="h-4 w-4" />
+            <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">{t("demands.newDemand")}</span>
             <span className="sm:hidden">Nova</span>
           </Button>
