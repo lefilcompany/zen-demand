@@ -16,7 +16,7 @@ import {
   Check, Star, Zap, GripVertical, Info,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface PlanFormData {
   name: string;
