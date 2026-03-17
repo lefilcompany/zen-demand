@@ -78,24 +78,27 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     serviceId && serviceId !== "none" ? serviceId : null
   );
 
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setTitle("");
+      setDescription("");
+      setStatusId("");
+      setPriority("média");
+      setDueDate("");
+      setServiceId("");
+      setAssigneeIds([]);
+      setPendingFiles([]);
+      setRecurrence(defaultRecurrenceData);
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     if (statuses && statuses.length > 0 && !statusId) {
       const defaultStatus = statuses.find(s => s.name === "A Iniciar") || statuses[0];
       setStatusId(defaultStatus.id);
     }
   }, [statuses, statusId]);
-
-  const handleServiceChange = (newServiceId: string, estimatedHours?: number) => {
-    setServiceId(newServiceId);
-    if (newServiceId !== "none" && estimatedHours) {
-      const calculatedDate = calculateBusinessDueDate(estimatedHours);
-      setDueDate(formatDueDateForInput(calculatedDate));
-    }
-  };
-
-  if (role === "requester") {
-    return <Navigate to="/demands/request" replace />;
-  }
 
 
     const isServiceValid = () => {
