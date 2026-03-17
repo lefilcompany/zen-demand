@@ -8,6 +8,11 @@ export interface Plan {
   description: string | null;
   price_cents: number;
   billing_period: string;
+  currency: string;
+  price_cents_monthly: number;
+  price_cents_yearly: number;
+  promo_price_cents_monthly: number | null;
+  promo_price_cents_yearly: number | null;
   max_teams: number;
   max_boards: number;
   max_members: number;
