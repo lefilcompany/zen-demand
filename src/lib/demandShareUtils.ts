@@ -12,18 +12,14 @@ function generateToken(): string {
 
 /**
  * Gets or creates a public share token for a demand.
- * This is used to generate public links for email notifications.
- * 
- * @param demandId - The ID of the demand
- * @param userId - The ID of the user creating/retrieving the token
- * @returns The share token string, or null if failed
+ * Only returns tokens that are active AND not expired.
  */
 export async function getOrCreateShareToken(demandId: string, userId: string): Promise<string | null> {
   try {
-    // First, try to get an existing active token
+    // Fetch active token, filtering expiration in JS since RLS already filters on DB side
     const { data: existingToken, error: fetchError } = await supabase
       .from("demand_share_tokens" as any)
-      .select("token")
+      .select("id, token, expires_at")
       .eq("demand_id", demandId)
       .eq("is_active", true)
       .order("created_at", { ascending: false })
@@ -35,12 +31,24 @@ export async function getOrCreateShareToken(demandId: string, userId: string): P
       return null;
     }
 
-    const tokenData = existingToken as unknown as { token: string } | null;
-    if (tokenData?.token) {
-      return tokenData.token;
+    const tokenData = existingToken as unknown as { id: string; token: string; expires_at: string | null } | null;
+    
+    if (tokenData) {
+      // Check if token is still valid (not expired)
+      const isExpired = tokenData.expires_at && new Date(tokenData.expires_at) <= new Date();
+      
+      if (!isExpired) {
+        return tokenData.token;
+      }
+      
+      // Token is expired — deactivate it
+      await supabase
+        .from("demand_share_tokens" as any)
+        .update({ is_active: false })
+        .eq("id", tokenData.id);
     }
 
-    // No active token exists, create a new one
+    // No valid token exists, create a new one
     const newToken = generateToken();
     const { error: insertError } = await supabase
       .from("demand_share_tokens" as any)
@@ -48,7 +56,7 @@ export async function getOrCreateShareToken(demandId: string, userId: string): P
         demand_id: demandId,
         token: newToken,
         created_by: userId,
-        expires_at: null, // No expiration for email notification tokens
+        expires_at: null,
       });
 
     if (insertError) {
@@ -65,18 +73,13 @@ export async function getOrCreateShareToken(demandId: string, userId: string): P
 
 /**
  * Builds a public share URL for a demand.
- * Falls back to authenticated URL if token creation fails.
- * 
- * @param demandId - The ID of the demand
- * @param userId - The ID of the user (for token creation)
- * @param baseUrl - The base URL of the application (defaults to window.location.origin)
- * @returns A public share URL or fallback authenticated URL
+ * Returns null if token creation fails (caller should handle).
  */
 export async function buildPublicDemandUrl(
   demandId: string, 
   userId: string, 
   baseUrl?: string
-): Promise<string> {
+): Promise<string | null> {
   const origin = baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://pla.soma.lefil.com.br');
   
   try {
@@ -88,6 +91,5 @@ export async function buildPublicDemandUrl(
     console.error("Error building public demand URL:", error);
   }
   
-  // Fallback to authenticated URL if token creation fails
-  return `${origin}/demands/${demandId}`;
+  return null;
 }
