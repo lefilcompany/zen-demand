@@ -24,6 +24,11 @@ interface PlanFormData {
   description: string;
   price_cents: number;
   billing_period: string;
+  currency: string;
+  price_cents_monthly: number;
+  price_cents_yearly: number;
+  promo_price_cents_monthly: number | null;
+  promo_price_cents_yearly: number | null;
   max_teams: number;
   max_boards: number;
   max_members: number;
@@ -41,6 +46,11 @@ const defaultForm: PlanFormData = {
   description: "",
   price_cents: 0,
   billing_period: "monthly",
+  currency: "BRL",
+  price_cents_monthly: 0,
+  price_cents_yearly: 0,
+  promo_price_cents_monthly: null,
+  promo_price_cents_yearly: null,
   max_teams: 1,
   max_boards: 1,
   max_members: 3,
@@ -51,6 +61,12 @@ const defaultForm: PlanFormData = {
   sort_order: 0,
   features: {},
 };
+
+const currencyOptions = [
+  { value: "BRL", label: "R$ (Real)", locale: "pt-BR" },
+  { value: "USD", label: "$ (Dólar)", locale: "en-US" },
+  { value: "EUR", label: "€ (Euro)", locale: "de-DE" },
+];
 
 const featureOptions: {
   key: string;
