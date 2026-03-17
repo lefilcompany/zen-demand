@@ -13,9 +13,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Plus, Pencil, CreditCard, Crown, Users, Trash2,
-  Check, Star, Zap, GripVertical,
+  Check, Star, Zap, GripVertical, Info,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PlanFormData {
   name: string;
@@ -51,16 +52,82 @@ const defaultForm: PlanFormData = {
   features: {},
 };
 
-const featureOptions = [
-  { key: "time_tracking", label: "Time Tracking", options: ["basic", "advanced"] },
-  { key: "notifications", label: "Notificações", options: ["in_app", "email", "push"] },
-  { key: "support", label: "Suporte", options: ["docs", "email", "priority", "dedicated"] },
-  { key: "reports", label: "Relatórios", options: ["basic", "advanced"] },
-  { key: "share_external", label: "Compartilhamento Externo", type: "boolean" },
-  { key: "ai_summary", label: "Resumo IA", type: "boolean" },
-  { key: "contracts", label: "Contratos", type: "boolean" },
-  { key: "api", label: "API", type: "boolean" },
-  { key: "sla", label: "SLA", type: "boolean" },
+const featureOptions: {
+  key: string;
+  label: string;
+  description: string;
+  type?: string;
+  options?: { value: string; label: string }[];
+}[] = [
+  {
+    key: "time_tracking",
+    label: "Controle de Tempo",
+    description: "Permite cronometrar o tempo gasto em cada demanda. Básico: apenas registro manual. Avançado: timer automático, relatórios e ranking.",
+    options: [
+      { value: "basic", label: "Básico" },
+      { value: "advanced", label: "Avançado" },
+    ],
+  },
+  {
+    key: "notifications",
+    label: "Canais de Notificação",
+    description: "Define por quais canais os membros recebem alertas. No App: apenas dentro da plataforma. E-mail: recebe por e-mail. Push: notificações no navegador/celular.",
+    options: [
+      { value: "in_app", label: "No App" },
+      { value: "email", label: "E-mail" },
+      { value: "push", label: "Push (navegador)" },
+    ],
+  },
+  {
+    key: "support",
+    label: "Nível de Suporte",
+    description: "Tipo de atendimento disponível para a equipe. Documentação: apenas artigos de ajuda. E-mail: suporte por e-mail. Prioritário: resposta em até 24h. Dedicado: atendimento exclusivo.",
+    options: [
+      { value: "docs", label: "Documentação" },
+      { value: "email", label: "E-mail" },
+      { value: "priority", label: "Prioritário" },
+      { value: "dedicated", label: "Dedicado" },
+    ],
+  },
+  {
+    key: "reports",
+    label: "Relatórios e Métricas",
+    description: "Acesso a dashboards e exportação de dados. Básico: visão geral simples. Avançado: gráficos detalhados, exportação PDF e filtros avançados.",
+    options: [
+      { value: "basic", label: "Básico" },
+      { value: "advanced", label: "Avançado" },
+    ],
+  },
+  {
+    key: "share_external",
+    label: "Compartilhamento Externo",
+    description: "Permite gerar links públicos para compartilhar demandas e resumos com pessoas de fora da equipe.",
+    type: "boolean",
+  },
+  {
+    key: "ai_summary",
+    label: "Resumo por IA",
+    description: "Gera automaticamente resumos inteligentes do quadro usando inteligência artificial.",
+    type: "boolean",
+  },
+  {
+    key: "contracts",
+    label: "Gestão de Contratos",
+    description: "Permite fazer upload e processamento de contratos vinculados à equipe.",
+    type: "boolean",
+  },
+  {
+    key: "api",
+    label: "Acesso à API",
+    description: "Permite integrar sistemas externos via API REST com chaves de acesso.",
+    type: "boolean",
+  },
+  {
+    key: "sla",
+    label: "Acordo de Nível de Serviço (SLA)",
+    description: "Define prazos máximos de atendimento com alertas automáticos de violação.",
+    type: "boolean",
+  },
 ];
 
 function formatCurrency(cents: number) {
@@ -419,8 +486,20 @@ export default function AdminPlans() {
               <Label className="text-base font-semibold">Funcionalidades</Label>
               <div className="mt-3 space-y-3">
                 {featureOptions.map((feat) => (
-                  <div key={feat.key} className="flex items-center justify-between">
-                    <Label className="text-sm">{feat.label}</Label>
+                  <div key={feat.key} className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-1.5">
+                      <Label className="text-sm">{feat.label}</Label>
+                      <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help shrink-0" />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs text-xs">
+                            {feat.description}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     {feat.type === "boolean" ? (
                       <Switch
                         checked={!!form.features[feat.key]}
@@ -431,12 +510,12 @@ export default function AdminPlans() {
                         value={form.features[feat.key] || ""}
                         onValueChange={(v) => updateFeature(feat.key, v)}
                       >
-                        <SelectTrigger className="w-40"><SelectValue placeholder="Desabilitado" /></SelectTrigger>
+                        <SelectTrigger className="w-44"><SelectValue placeholder="Desabilitado" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="disabled">Desabilitado</SelectItem>
                           {feat.options?.map((opt) => (
-                            <SelectItem key={opt} value={opt}>
-                              {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
