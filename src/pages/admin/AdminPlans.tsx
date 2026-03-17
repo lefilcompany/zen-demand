@@ -270,9 +270,6 @@ export default function AdminPlans() {
                     <h3 className="text-lg font-extrabold uppercase leading-tight tracking-tight">
                       {plan.name}
                     </h3>
-                    <span className={`text-[10px] font-bold tracking-widest uppercase ${tier.badgeText}`}>
-                      {tier.label}
-                    </span>
                   </div>
 
                   {/* Description */}
