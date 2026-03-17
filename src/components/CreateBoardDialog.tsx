@@ -190,6 +190,31 @@ export function CreateBoardDialog({ trigger }: CreateBoardDialogProps) {
               ) : (
                 <div className="border rounded-md flex-1 min-h-[120px] max-h-[250px] overflow-y-auto overscroll-contain">
                   <div className="space-y-3 p-3">
+                    {/* Select All */}
+                    {teamServices && teamServices.length > 0 && (
+                      <div className="flex items-center gap-3 pb-2 border-b border-border">
+                        <Checkbox
+                          id="select-all-services"
+                          checked={selectedServices.length === teamServices.length}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedServices(
+                                teamServices.map(s => ({ serviceId: s.id, serviceName: s.name, monthlyLimit: 0 }))
+                              );
+                            } else {
+                              setSelectedServices([]);
+                            }
+                          }}
+                          disabled={isSubmitting}
+                        />
+                        <label
+                          htmlFor="select-all-services"
+                          className="text-sm font-semibold cursor-pointer text-muted-foreground"
+                        >
+                          Selecionar todos
+                        </label>
+                      </div>
+                    )}
                     {teamServices?.map((service) => {
                       const isSelected = selectedServices.some(s => s.serviceId === service.id);
                       const selectedService = selectedServices.find(s => s.serviceId === service.id);
