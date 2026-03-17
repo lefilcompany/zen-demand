@@ -2388,6 +2388,10 @@ export type Database = {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
+      promote_to_admin_by_email: {
+        Args: { p_email: string }
+        Returns: undefined
+      }
       redeem_trial_coupon: {
         Args: { p_code: string; p_team_id: string }
         Returns: Json
