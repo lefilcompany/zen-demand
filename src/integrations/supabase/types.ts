@@ -2416,6 +2416,18 @@ export type Database = {
         Args: { p_code: string; p_team_id: string }
         Returns: Json
       }
+      update_trial_coupon: {
+        Args: {
+          p_coupon_id: string
+          p_description?: string
+          p_expires_at?: string
+          p_max_uses: number
+          p_plan_id: string
+          p_propagate?: boolean
+          p_trial_days: number
+        }
+        Returns: Json
+      }
     }
     Enums: {
       adjustment_type: "none" | "internal" | "external"

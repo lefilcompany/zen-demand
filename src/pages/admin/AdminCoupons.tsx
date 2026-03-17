@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { useAdminCoupons, useCreateCoupon, useToggleCoupon, useCouponRedemptions } from "@/hooks/admin/useAdminCoupons";
+import { useAdminCoupons, useCreateCoupon, useToggleCoupon, useUpdateCoupon, useCouponRedemptions } from "@/hooks/admin/useAdminCoupons";
 import { usePlans } from "@/hooks/usePlans";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Eye, Ticket, Copy, Check, LayoutGrid, List, Calendar, Users, Zap, ZapOff } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Eye, Ticket, Copy, Check, LayoutGrid, List, Calendar, Pencil, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -19,24 +21,40 @@ function generateCode() {
   return "SOMA-" + Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
+type CouponForm = {
+  code: string;
+  plan_id: string;
+  trial_days: number;
+  max_uses: number;
+  description: string;
+  expires_at: string;
+};
+
+const emptyForm = (): CouponForm => ({
+  code: generateCode(),
+  plan_id: "",
+  trial_days: 15,
+  max_uses: 1,
+  description: "",
+  expires_at: "",
+});
+
 export default function AdminCoupons() {
   const { data: coupons, isLoading } = useAdminCoupons();
   const { data: plans } = usePlans();
   const createCoupon = useCreateCoupon();
   const toggleCoupon = useToggleCoupon();
+  const updateCoupon = useUpdateCoupon();
 
   const [view, setView] = useState<"cards" | "list">("cards");
   const [showCreate, setShowCreate] = useState(false);
   const [showRedemptions, setShowRedemptions] = useState<string | null>(null);
+  const [editingCoupon, setEditingCoupon] = useState<TrialCoupon | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [propagate, setPropagate] = useState(false);
 
-  const [form, setForm] = useState({
-    code: generateCode(),
-    plan_id: "",
-    trial_days: 15,
-    max_uses: 1,
-    description: "",
-    expires_at: "",
-  });
+  const [form, setForm] = useState<CouponForm>(emptyForm());
+  const [editForm, setEditForm] = useState<CouponForm>(emptyForm());
 
   const handleCreate = async () => {
     if (!form.code || !form.plan_id) {
@@ -54,9 +72,56 @@ export default function AdminCoupons() {
       });
       toast.success("Cupom criado com sucesso!");
       setShowCreate(false);
-      setForm({ code: generateCode(), plan_id: "", trial_days: 15, max_uses: 1, description: "", expires_at: "" });
+      setForm(emptyForm());
     } catch (e: any) {
       toast.error(e.message || "Erro ao criar cupom");
+    }
+  };
+
+  const openEdit = (coupon: TrialCoupon) => {
+    setEditingCoupon(coupon);
+    setEditForm({
+      code: coupon.code,
+      plan_id: coupon.plan_id,
+      trial_days: coupon.trial_days,
+      max_uses: coupon.max_uses,
+      description: coupon.description || "",
+      expires_at: coupon.expires_at ? coupon.expires_at.split("T")[0] : "",
+    });
+    setPropagate(false);
+  };
+
+  const handleEditSubmit = () => {
+    if (!editForm.plan_id) {
+      toast.error("Selecione um plano");
+      return;
+    }
+    // Show confirmation dialog
+    setShowConfirm(true);
+  };
+
+  const confirmEdit = async () => {
+    if (!editingCoupon) return;
+    setShowConfirm(false);
+    try {
+      const result = await updateCoupon.mutateAsync({
+        coupon_id: editingCoupon.id,
+        plan_id: editForm.plan_id,
+        trial_days: editForm.trial_days,
+        max_uses: editForm.max_uses,
+        description: editForm.description || null,
+        expires_at: editForm.expires_at || null,
+        propagate,
+      });
+      const affected = result?.affected_teams ?? 0;
+      if (propagate && affected > 0) {
+        toast.success(`Cupom atualizado! ${affected} equipe(s) afetada(s) com as novas configurações.`);
+      } else {
+        toast.success("Cupom atualizado com sucesso!");
+      }
+      setEditingCoupon(null);
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao atualizar cupom");
     }
   };
 
@@ -69,20 +134,10 @@ export default function AdminCoupons() {
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center bg-muted rounded-lg p-0.5">
-            <Button
-              variant={view === "cards" ? "secondary" : "ghost"}
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setView("cards")}
-            >
+            <Button variant={view === "cards" ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onClick={() => setView("cards")}>
               <LayoutGrid className="h-4 w-4" />
             </Button>
-            <Button
-              variant={view === "list" ? "secondary" : "ghost"}
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setView("list")}
-            >
+            <Button variant={view === "list" ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onClick={() => setView("list")}>
               <List className="h-4 w-4" />
             </Button>
           </div>
@@ -111,6 +166,7 @@ export default function AdminCoupons() {
               coupon={c}
               onToggle={(checked) => toggleCoupon.mutate({ id: c.id, is_active: checked })}
               onViewRedemptions={() => setShowRedemptions(c.id)}
+              onEdit={() => openEdit(c)}
             />
           ))}
         </div>
@@ -119,93 +175,194 @@ export default function AdminCoupons() {
           coupons={coupons}
           onToggle={(id, checked) => toggleCoupon.mutate({ id, is_active: checked })}
           onViewRedemptions={(id) => setShowRedemptions(id)}
+          onEdit={(c) => openEdit(c)}
         />
       )}
 
       {/* Create Dialog */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Criar Cupom</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
+      <CouponFormDialog
+        open={showCreate}
+        onOpenChange={setShowCreate}
+        title="Criar Cupom"
+        form={form}
+        setForm={setForm}
+        plans={plans}
+        onSubmit={handleCreate}
+        isPending={createCoupon.isPending}
+        submitLabel="Criar Cupom"
+        showCodeField
+      />
+
+      {/* Edit Dialog */}
+      <CouponFormDialog
+        open={!!editingCoupon}
+        onOpenChange={(open) => { if (!open) setEditingCoupon(null); }}
+        title="Editar Cupom"
+        form={editForm}
+        setForm={setEditForm}
+        plans={plans}
+        onSubmit={handleEditSubmit}
+        isPending={updateCoupon.isPending}
+        submitLabel="Salvar Alterações"
+        showCodeField={false}
+        extraContent={
+          editingCoupon && editingCoupon.times_used > 0 ? (
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-accent/50 border border-accent">
+              <AlertTriangle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+              <div className="space-y-2">
+                <p className="text-sm font-medium">
+                  Este cupom já foi resgatado {editingCoupon.times_used} vez(es).
+                </p>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="propagate"
+                    checked={propagate}
+                    onCheckedChange={(c) => setPropagate(!!c)}
+                  />
+                  <label htmlFor="propagate" className="text-sm cursor-pointer">
+                    Propagar alterações para equipes que já resgataram
+                  </label>
+                </div>
+              </div>
+            </div>
+          ) : null
+        }
+      />
+
+      {/* Confirm Dialog */}
+      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar alteração</AlertDialogTitle>
+            <AlertDialogDescription>
+              {propagate
+                ? "As alterações serão aplicadas ao cupom e também atualizarão as assinaturas das equipes que já resgataram este cupom (plano e dias de teste). Deseja continuar?"
+                : "As alterações serão aplicadas apenas ao cupom. Equipes que já resgataram não serão afetadas. Deseja continuar?"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmEdit}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Redemptions Dialog */}
+      <RedemptionsDialog couponId={showRedemptions} onClose={() => setShowRedemptions(null)} />
+    </div>
+  );
+}
+
+/* ─── Shared Form Dialog ─── */
+
+function CouponFormDialog({
+  open,
+  onOpenChange,
+  title,
+  form,
+  setForm,
+  plans,
+  onSubmit,
+  isPending,
+  submitLabel,
+  showCodeField,
+  extraContent,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  form: CouponForm;
+  setForm: React.Dispatch<React.SetStateAction<CouponForm>>;
+  plans: any[] | undefined;
+  onSubmit: () => void;
+  isPending: boolean;
+  submitLabel: string;
+  showCodeField: boolean;
+  extraContent?: React.ReactNode;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          {showCodeField && (
             <div className="space-y-2">
               <Label>Código</Label>
               <div className="flex gap-2">
                 <Input
                   value={form.code}
-                  onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+                  onChange={(e) => setForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))}
                   className="font-mono"
                 />
-                <Button variant="outline" size="sm" onClick={() => setForm({ ...form, code: generateCode() })}>
+                <Button variant="outline" size="sm" onClick={() => setForm((f) => ({ ...f, code: generateCode() }))}>
                   Gerar
                 </Button>
               </div>
             </div>
+          )}
+          <div className="space-y-2">
+            <Label>Plano</Label>
+            <Select value={form.plan_id} onValueChange={(v) => setForm((f) => ({ ...f, plan_id: v }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o plano" />
+              </SelectTrigger>
+              <SelectContent>
+                {plans?.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Plano</Label>
-              <Select value={form.plan_id} onValueChange={(v) => setForm({ ...form, plan_id: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o plano" />
-                </SelectTrigger>
-                <SelectContent>
-                  {plans?.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Dias de teste</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={form.trial_days}
-                  onChange={(e) => setForm({ ...form, trial_days: parseInt(e.target.value) || 1 })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Máx. usos</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={form.max_uses}
-                  onChange={(e) => setForm({ ...form, max_uses: parseInt(e.target.value) || 1 })}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Data de expiração (opcional)</Label>
+              <Label>Dias de teste</Label>
               <Input
-                type="date"
-                value={form.expires_at}
-                onChange={(e) => setForm({ ...form, expires_at: e.target.value })}
+                type="number"
+                min={1}
+                value={form.trial_days}
+                onChange={(e) => setForm((f) => ({ ...f, trial_days: parseInt(e.target.value) || 1 }))}
               />
             </div>
             <div className="space-y-2">
-              <Label>Descrição interna (opcional)</Label>
+              <Label>Máx. usos</Label>
               <Input
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Ex: Campanha Black Friday"
+                type="number"
+                min={1}
+                value={form.max_uses}
+                onChange={(e) => setForm((f) => ({ ...f, max_uses: parseInt(e.target.value) || 1 }))}
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancelar</Button>
-            <Button onClick={handleCreate} disabled={createCoupon.isPending}>
-              {createCoupon.isPending ? "Criando..." : "Criar Cupom"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Redemptions Dialog */}
-      <RedemptionsDialog couponId={showRedemptions} onClose={() => setShowRedemptions(null)} />
-    </div>
+          <div className="space-y-2">
+            <Label>Data de expiração (opcional)</Label>
+            <Input
+              type="date"
+              value={form.expires_at}
+              onChange={(e) => setForm((f) => ({ ...f, expires_at: e.target.value }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Descrição interna (opcional)</Label>
+            <Input
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              placeholder="Ex: Campanha Black Friday"
+            />
+          </div>
+          {extraContent}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button onClick={onSubmit} disabled={isPending}>
+            {isPending ? "Salvando..." : submitLabel}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -215,10 +372,12 @@ function CouponCard({
   coupon,
   onToggle,
   onViewRedemptions,
+  onEdit,
 }: {
   coupon: TrialCoupon;
   onToggle: (checked: boolean) => void;
   onViewRedemptions: () => void;
+  onEdit: () => void;
 }) {
   const [copied, setCopied] = useState(false);
   const isExpired = coupon.expires_at && new Date(coupon.expires_at) < new Date();
@@ -234,7 +393,6 @@ function CouponCard({
 
   return (
     <div className="relative group">
-      {/* Main coupon body */}
       <div
         className={`relative overflow-hidden rounded-2xl border-2 transition-all duration-300 ${
           isUsable
@@ -242,23 +400,25 @@ function CouponCard({
             : "border-border bg-muted/40 opacity-75"
         }`}
       >
-        {/* Top decorative bar */}
         <div className={`h-2 w-full ${isUsable ? "bg-gradient-to-r from-primary via-accent to-primary" : "bg-muted-foreground/20"}`} />
 
-        {/* Perforated edge effect */}
         <div className="absolute left-0 top-[4.5rem] -translate-x-1/2 w-6 h-6 rounded-full bg-background border-2 border-r-0 border-border z-10" />
         <div className="absolute right-0 top-[4.5rem] translate-x-1/2 w-6 h-6 rounded-full bg-background border-2 border-l-0 border-border z-10" />
 
         <div className="p-5">
-          {/* Header: Code + Status */}
           <div className="flex items-start justify-between mb-1">
             <div className="flex items-center gap-2">
               <Ticket className={`h-5 w-5 shrink-0 ${isUsable ? "text-primary" : "text-muted-foreground"}`} />
               <span className="font-bold text-lg tracking-wide font-mono text-foreground">{coupon.code}</span>
             </div>
-            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={copyCode}>
-              {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
-            </Button>
+            <div className="flex items-center gap-0.5">
+              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={copyCode}>
+                {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={onEdit}>
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           </div>
 
           {coupon.description && (
@@ -266,10 +426,8 @@ function CouponCard({
           )}
           {!coupon.description && <div className="mb-3" />}
 
-          {/* Dashed separator to mimic perforation */}
           <div className="border-t-2 border-dashed border-border my-3 mx-[-1.25rem] px-5" />
 
-          {/* Info grid */}
           <div className="grid grid-cols-3 gap-3 text-center mb-4">
             <div>
               <p className="text-2xl font-black text-foreground">{coupon.trial_days}</p>
@@ -287,7 +445,6 @@ function CouponCard({
             </div>
           </div>
 
-          {/* Footer */}
           <div className="flex items-center justify-between pt-2 border-t border-border/50">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -321,10 +478,12 @@ function CouponListView({
   coupons,
   onToggle,
   onViewRedemptions,
+  onEdit,
 }: {
   coupons: TrialCoupon[];
   onToggle: (id: string, checked: boolean) => void;
   onViewRedemptions: (id: string) => void;
+  onEdit: (coupon: TrialCoupon) => void;
 }) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -354,12 +513,7 @@ function CouponListView({
               <TableCell>
                 <div className="flex items-center gap-2">
                   <code className="font-mono text-sm bg-muted px-2 py-0.5 rounded">{c.code}</code>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => copyCode(c.code, c.id)}
-                  >
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyCode(c.code, c.id)}>
                     {copiedId === c.id ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
                   </Button>
                 </div>
@@ -373,16 +527,19 @@ function CouponListView({
                   : "Sem expiração"}
               </TableCell>
               <TableCell>
-                <Switch
-                  checked={c.is_active}
-                  onCheckedChange={(checked) => onToggle(c.id, checked)}
-                />
+                <Switch checked={c.is_active} onCheckedChange={(checked) => onToggle(c.id, checked)} />
               </TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="sm" onClick={() => onViewRedemptions(c.id)}>
-                  <Eye className="h-4 w-4 mr-1" />
-                  Resgates
-                </Button>
+                <div className="flex items-center justify-end gap-1">
+                  <Button variant="ghost" size="sm" onClick={() => onEdit(c)}>
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Editar
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => onViewRedemptions(c.id)}>
+                    <Eye className="h-4 w-4 mr-1" />
+                    Resgates
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
