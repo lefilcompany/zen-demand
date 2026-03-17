@@ -68,6 +68,34 @@ export function useToggleCoupon() {
   });
 }
 
+export function useUpdateCoupon() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      coupon_id: string;
+      plan_id: string;
+      trial_days: number;
+      max_uses: number;
+      description?: string | null;
+      expires_at?: string | null;
+      propagate: boolean;
+    }) => {
+      const { data, error } = await supabase.rpc("update_trial_coupon", {
+        p_coupon_id: params.coupon_id,
+        p_plan_id: params.plan_id,
+        p_trial_days: params.trial_days,
+        p_max_uses: params.max_uses,
+        p_description: params.description ?? null,
+        p_expires_at: params.expires_at ?? null,
+        p_propagate: params.propagate,
+      } as any);
+      if (error) throw error;
+      return data as any;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-coupons"] }),
+  });
+}
+
 export function useCouponRedemptions(couponId: string | null) {
   return useQuery({
     queryKey: ["admin-coupon-redemptions", couponId],
