@@ -93,6 +93,11 @@ export default function AdminLayout() {
                     </div>
                   </div>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/admin/profile")}>
+                    <User className="h-4 w-4 mr-2" />
+                    Meu Perfil
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={async () => {
                       await supabase.auth.signOut();
