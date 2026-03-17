@@ -273,7 +273,7 @@ export function BoardScopeConfig({ boardId, canEdit = false }: BoardScopeConfigP
               </p>
             )}
 
-            {!teamServices || teamServices.length === 0 && (
+            {(!teamServices || teamServices.length === 0) && (
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
