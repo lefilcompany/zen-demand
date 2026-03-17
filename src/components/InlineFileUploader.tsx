@@ -29,7 +29,7 @@ const MAX_DEFAULT_SIZE = 10 * 1024 * 1024; // 10MB
 export function InlineFileUploader({
   pendingFiles,
   onFilesChange,
-  maxFiles = 20,
+  maxFiles = 999,
   maxSizeMB = 10,
   accept = "image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.json,.xml",
   disabled = false,
