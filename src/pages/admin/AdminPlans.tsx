@@ -151,15 +151,23 @@ function formatCurrency(cents: number, currency = "BRL") {
   return new Intl.NumberFormat(opt.locale, { style: "currency", currency }).format(cents / 100);
 }
 
-/** Converts a decimal string like "59.90" to cents integer 5990 */
-function decimalToCents(val: string): number {
-  const num = parseFloat(val.replace(",", "."));
-  return isNaN(num) ? 0 : Math.round(num * 100);
+/** 
+ * Format cents as a display string with 2 decimal places using locale separator.
+ * E.g. 5990 → "59,90" for BRL or "59.90" for USD
+ */
+function centsToDisplay(cents: number, currency = "BRL"): string {
+  const sep = currency === "BRL" ? "," : ".";
+  const val = (cents / 100).toFixed(2);
+  return currency === "BRL" ? val.replace(".", ",") : val;
 }
 
-/** Converts cents to a decimal string "59.90" */
-function centsToDecimal(cents: number): string {
-  return (cents / 100).toFixed(2);
+/**
+ * ATM-style currency input handler.
+ * Strips non-digits, treats the raw number as cents, returns cents integer.
+ */
+function parseCurrencyInput(raw: string): number {
+  const digits = raw.replace(/\D/g, "");
+  return parseInt(digits, 10) || 0;
 }
 
 const tierConfig: Record<string, { icon: React.ElementType; borderColor: string; badgeBg: string; badgeText: string; label: string }> = {
