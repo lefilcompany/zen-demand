@@ -219,7 +219,7 @@ export default function Demands() {
             {isReadOnly ? t("common.noResults") : t("demands.createFirst")}
           </p>
           {!isReadOnly && <div className="mt-6">
-              <Button onClick={() => navigate("/demands/create")}>
+              <Button onClick={() => openCreateDemand()}>
                 <Plus className="mr-2 h-4 w-4" />
                 {t("demands.createFirst")}
               </Button>
