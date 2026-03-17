@@ -1,29 +1,60 @@
 
-## Problem Analysis
+Objetivo: fazer o link público de demanda funcionar de forma estável para qualquer pessoa (logada ou não), em modo leitura, sem cair em “link expirado” indevidamente.
 
-When a user opens the app in a new tab, the "remember me" logic in `src/lib/auth.tsx` (lines 92-158) calls `supabase.auth.signOut()` **globally** — this invalidates the session in localStorage, which triggers a `SIGNED_OUT` event on ALL other open tabs, logging the user out everywhere.
+1) Diagnóstico confirmado no código atual
+- O fluxo público está em `useSharedDemand` + `SharedDemand`.
+- Há um problema real de ciclo de token:
+  - `src/lib/demandShareUtils.ts` busca token apenas por `is_active = true` e pode reutilizar token já vencido.
+  - `src/hooks/useShareDemand.ts` também não filtra expiração em algumas consultas.
+- O “carregando por muito tempo” é agravado por retry padrão do React Query em erro de token inválido.
+- `src/pages/SharedDemand.tsx` redireciona usuário logado para a tela interna (`/demands/:id`), o que conflita com comportamento de link público em modo leitor.
+- Anexos públicos hoje usam `getPublicUrl` em bucket privado (`demand-attachments`), então o link da demanda pode abrir, mas anexos podem falhar para visitante anônimo.
 
-The root cause is two-fold:
-1. `sessionStorage` is per-tab, so each new tab sees `sessionChecked` as missing and treats itself as a "fresh browser session"
-2. `supabase.auth.signOut()` defaults to `scope: 'global'`, which revokes the session server-side and clears localStorage, affecting all tabs
+2) Plano de correção (implementação)
+A. Corrigir validade de token em toda a cadeia
+- Ajustar consultas de token para considerar válido apenas:
+  - `is_active = true`
+  - `expires_at IS NULL OR expires_at > now()`
+- Aplicar em:
+  - `getOrCreateShareToken` (`src/lib/demandShareUtils.ts`)
+  - `useShareToken` e `useSharedDemand` (`src/hooks/useShareDemand.ts`)
+- Se existir token ativo porém expirado, desativar e gerar novo automaticamente no fluxo de criação/obtenção.
 
-## Solution
+B. Remover fallback para URL privada (evitar forçar login)
+- Em `buildPublicDemandUrl`, remover fallback para `/demands/:id`.
+- Se não conseguir gerar token público, retornar erro explícito para o chamador tratar (toast/log), em vez de enviar link privado para email.
 
-### 1. Fix the "remember me" session check (src/lib/auth.tsx)
+C. Modo leitor consistente (sem redirecionamento inesperado)
+- Em `src/pages/SharedDemand.tsx`, remover o redirect automático de usuário logado para demanda interna.
+- O link compartilhado deve sempre abrir a visualização pública em leitura.
 
-- Change `supabase.auth.signOut()` on line 152 to use `scope: 'local'` — this only clears the session from the current tab's perspective without invalidating the refresh token server-side or affecting other tabs
-- Add cross-tab synchronization via the `storage` event listener so that if one tab signs in/out intentionally, other tabs react properly
-- Ensure the `onAuthStateChange` handler properly syncs state when receiving cross-tab events
+D. Melhorar UX do carregamento/erro
+- Em `useSharedDemand`, desabilitar retry automático para erro de token inválido (`retry: false`) e exibir erro rapidamente.
+- Mensagem de erro diferenciada:
+  - “Link inválido”
+  - “Link expirado”
+  - “Acesso temporariamente indisponível”
 
-### 2. Ensure intentional logout remains global (src/lib/auth.tsx)
+E. Corrigir acesso a anexos para público
+- Implementar endpoint/função de backend para gerar URL assinada de anexo após validar token de compartilhamento da demanda.
+- No `SharedDemand`, trocar `getPublicUrl` por URL assinada sob demanda.
+- Resultado: visitante anônimo consegue abrir anexos sem autenticação, mantendo bucket privado.
 
-- The explicit `signOut()` function (user clicks "Sair da Conta") should keep using the default `scope: 'global'` so it properly logs out everywhere — this is the desired behavior for intentional logout
+F. Higienização de dados existentes
+- Migration simples para desativar tokens ativos já vencidos:
+  - `update demand_share_tokens set is_active=false where is_active=true and expires_at is not null and expires_at <= now();`
+- Mantém base consistente para os novos fluxos.
 
-### Changes Summary
+3) Arquivos que serão ajustados
+- `src/lib/demandShareUtils.ts`
+- `src/hooks/useShareDemand.ts`
+- `src/pages/SharedDemand.tsx`
+- Novo ajuste de backend (migration + função/endpoint para URL assinada de anexos)
+- Pontos que chamam `buildPublicDemandUrl` (tratamento de erro para não enviar link privado)
 
-**File: `src/lib/auth.tsx`**
-- Line 152: Change `supabase.auth.signOut()` → `supabase.auth.signOut({ scope: 'local' })` so the "remember me" check doesn't kill sessions in other tabs
-- Add a `window.addEventListener('storage', ...)` listener that detects when the Supabase auth key changes in localStorage (from another tab signing in) and re-syncs the session via `getSession()` — this ensures new logins in other tabs are reflected without causing logout
-- On the `SIGNED_OUT` event from `onAuthStateChange`, only navigate to `/auth` if the event originated from the current tab (not a cross-tab storage sync)
-
-This is a minimal, targeted fix that preserves the existing "remember me" behavior while allowing multiple tabs to coexist with the same authenticated session.
+4) Validação (fim a fim)
+- Criar link novo e abrir em janela anônima: deve abrir rápido em modo leitor.
+- Abrir o mesmo link estando logado com usuário sem vínculo ao quadro: deve continuar em modo leitor (sem redirect interno).
+- Testar link com expiração curta após vencimento: deve mostrar erro de expirado imediatamente (sem loading longo).
+- Testar anexos no link público: abrir/baixar sem login.
+- Testar envio de email com ação da demanda: confirmar que sempre envia URL pública válida.
