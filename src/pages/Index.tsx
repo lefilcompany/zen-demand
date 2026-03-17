@@ -30,10 +30,12 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { ptBR, enUS, es } from "date-fns/locale";
+import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
 
 const Index = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { openCreateDemand } = useCreateDemandModal();
   const [period, setPeriod] = useState<PeriodType>("month");
   const { selectedTeamId } = useSelectedTeam();
   const { selectedBoardId, currentTeamId } = useSelectedBoard();
@@ -153,7 +155,7 @@ const Index = () => {
               }}
             />
             <Button 
-              onClick={() => navigate("/demands/create")}
+              onClick={() => openCreateDemand()}
               disabled={!canCreate || !isTeamActive}
               className="gap-2"
               data-tour="new-demand-btn"
@@ -301,7 +303,7 @@ const Index = () => {
                     <Button 
                       variant="link" 
                       className="mt-2 text-sm"
-                      onClick={() => navigate("/demands/create")}
+                      onClick={() => openCreateDemand()}
                     >
                       {t("demands.createFirst")}
                     </Button>
@@ -338,7 +340,7 @@ const Index = () => {
         </div>
         <div className="flex items-center gap-2">
           <Button 
-            onClick={() => navigate("/demands/create")}
+            onClick={() => openCreateDemand()}
             className="gap-2"
             data-tour="new-demand-btn"
           >

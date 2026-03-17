@@ -6,6 +6,7 @@ import { AuthProvider } from "@/lib/auth";
 import { TeamProvider } from "@/contexts/TeamContext";
 import { BoardProvider } from "@/contexts/BoardContext";
 import { PresenceProvider } from "@/contexts/PresenceContext";
+import { CreateDemandProvider, useCreateDemandModal } from "@/contexts/CreateDemandContext";
 import { RequireAuth } from "@/components/RequireAuth";
 import { RequireTeam } from "@/components/RequireTeam";
 import { ProtectedLayout } from "@/components/ProtectedLayout";
@@ -64,6 +65,23 @@ import AdminTeams from "./pages/admin/AdminTeams";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPlans from "./pages/admin/AdminPlans";
 import AdminProfile from "./pages/admin/AdminProfile";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
+function CreateDemandGlobal() {
+  return <CreateDemand />;
+}
+
+function CreateDemandRoute() {
+  const { openCreateDemand } = useCreateDemandModal();
+  const navigate = useNavigate();
+  useEffect(() => {
+    openCreateDemand();
+    navigate(-1);
+  }, []);
+  return null;
+}
+
 const queryClient = new QueryClient();
 const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
     <QueryClientProvider client={queryClient}>
@@ -73,11 +91,13 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
             <PresenceProvider>
               <TeamProvider>
                 <BoardProvider>
-                  <KeyboardShortcutsProvider>
-                    <SwipeNavigationProvider>
-                      <Toaster position="top-right" richColors />
-                      <CommandMenu />
-                      <PWAInstallPrompt />
+                  <CreateDemandProvider>
+                    <KeyboardShortcutsProvider>
+                      <SwipeNavigationProvider>
+                        <Toaster position="top-right" richColors />
+                        <CommandMenu />
+                        <PWAInstallPrompt />
+                        <CreateDemandGlobal />
                       <Routes>
                         {/* Public routes */}
                         <Route path="/auth" element={<Auth />} />
@@ -118,7 +138,7 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
                           <Route path="/boards/:boardId/members" element={<BoardMembers />} />
                           <Route path="/team-config" element={<TeamConfig />} />
                           <Route path="/demands" element={<Demands />} />
-                          <Route path="/demands/create" element={<CreateDemand />} />
+                          <Route path="/demands/create" element={<CreateDemandRoute />} />
                           <Route path="/demands/request" element={<CreateDemandRequest />} />
                           <Route path="/demands/:id" element={<DemandDetail />} />
                           <Route path="/my-requests" element={<MyDemandRequests />} />
@@ -146,8 +166,9 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
                         {/* Catch-all */}
                         <Route path="*" element={<NotFound />} />
                       </Routes>
-                    </SwipeNavigationProvider>
-                  </KeyboardShortcutsProvider>
+                      </SwipeNavigationProvider>
+                    </KeyboardShortcutsProvider>
+                  </CreateDemandProvider>
                 </BoardProvider>
               </TeamProvider>
             </PresenceProvider>

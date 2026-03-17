@@ -22,6 +22,7 @@ import { CreateDemandQuickDialog } from "@/components/CreateDemandQuickDialog";
 import { CreateRequestQuickDialog } from "@/components/CreateRequestQuickDialog";
 import { useDemandAssignees } from "@/hooks/useDemandAssignees";
 import { ScheduledDemandsModal } from "@/components/ScheduledDemandsModal";
+import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
 type ViewMode = "table" | "grid" | "calendar";
 const TABLET_BREAKPOINT = 1024;
 export default function Demands() {
@@ -29,6 +30,7 @@ export default function Demands() {
     t
   } = useTranslation();
   const navigate = useNavigate();
+  const { openCreateDemand } = useCreateDemandModal();
   const location = useLocation();
   const {
     user
@@ -219,7 +221,7 @@ export default function Demands() {
             {isReadOnly ? t("common.noResults") : t("demands.createFirst")}
           </p>
           {!isReadOnly && <div className="mt-6">
-              <Button onClick={() => navigate("/demands/create")}>
+              <Button onClick={() => openCreateDemand()}>
                 <Plus className="mr-2 h-4 w-4" />
                 {t("demands.createFirst")}
               </Button>
@@ -274,7 +276,7 @@ export default function Demands() {
           
           {/* Create Button - Desktop */}
           <Button 
-            onClick={() => navigate("/demands/create")} 
+            onClick={() => openCreateDemand()} 
             className="hidden sm:flex shadow-sm"
             size="default"
           >
@@ -410,7 +412,7 @@ export default function Demands() {
               
               {/* Create Button - Mobile (Floating style) */}
               <Button 
-                onClick={() => navigate("/demands/create")} 
+                onClick={() => openCreateDemand()} 
                 size="icon"
                 className="sm:hidden h-8 w-8 rounded-full shadow-sm"
               >

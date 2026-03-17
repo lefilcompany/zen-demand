@@ -21,7 +21,8 @@ import { RecurrenceConfig, RecurrenceData, defaultRecurrenceData } from "@/compo
 import { useCreateRecurringDemand } from "@/hooks/useRecurringDemands";
 import { AlertTriangle, Ban, CloudOff, WifiOff, Package } from "lucide-react";
 import { useNavigate, Navigate } from "react-router-dom";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
 import { calculateBusinessDueDate, formatDueDateForInput } from "@/lib/dateUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -29,9 +30,17 @@ import { getErrorMessage } from "@/lib/errorUtils";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 import { useTranslation } from "react-i18next";
 
-export default function CreateDemand() {
+export default function CreateDemand({ open, onClose }: { open?: boolean; onClose?: () => void }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { isOpen: contextOpen, closeCreateDemand } = useCreateDemandModal();
+  
+  const isOpen = open ?? contextOpen;
+  const handleClose = () => {
+    onClose?.();
+    closeCreateDemand();
+  };
+  
   const { isOffline } = useOfflineStatus();
   const createDemand = useCreateDemand();
   const { selectedTeamId, teams } = useSelectedTeam();
@@ -69,6 +78,21 @@ export default function CreateDemand() {
     serviceId && serviceId !== "none" ? serviceId : null
   );
 
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setTitle("");
+      setDescription("");
+      setStatusId("");
+      setPriority("média");
+      setDueDate("");
+      setServiceId("");
+      setAssigneeIds([]);
+      setPendingFiles([]);
+      setRecurrence(defaultRecurrenceData);
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     if (statuses && statuses.length > 0 && !statusId) {
       const defaultStatus = statuses.find(s => s.name === "A Iniciar") || statuses[0];
@@ -88,16 +112,12 @@ export default function CreateDemand() {
     return <Navigate to="/demands/request" replace />;
   }
 
-
-    const isServiceValid = () => {
+  const isServiceValid = () => {
     if (!serviceId || serviceId === "none") return false;
     if (canCreateWithService === false) return false;
     return true;
   };
 
-  const handleClose = () => {
-    navigate(-1);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -196,7 +216,7 @@ export default function CreateDemand() {
           } else {
             toast.success("Demanda criada com sucesso!");
           }
-          navigate("/kanban");
+          handleClose();
         },
         onError: (error: any) => {
           toast.error("Erro ao criar demanda", {
@@ -215,7 +235,7 @@ export default function CreateDemand() {
     !isServiceValid();
 
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) handleClose(); }}>
+    <Dialog open={isOpen} onOpenChange={(o) => { if (!o) handleClose(); }}>
       <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
           <DialogTitle className="text-xl font-bold">Nova Demanda</DialogTitle>

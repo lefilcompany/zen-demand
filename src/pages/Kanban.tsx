@@ -30,10 +30,12 @@ import { useNavigate } from "react-router-dom";
 import { useRealtimeDemands, useKanbanRealtimeNotifications } from "@/hooks/useRealtimeDemands";
 import { isToday, isThisWeek, isPast } from "date-fns";
 import { ScheduledDemandsModal } from "@/components/ScheduledDemandsModal";
+import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
 
 export default function Kanban() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { openCreateDemand } = useCreateDemandModal();
   const { user } = useAuth();
   const { selectedBoardId, currentTeamId } = useSelectedBoard();
   const { data: demands, isLoading } = useDemands(selectedBoardId || undefined);
@@ -210,7 +212,7 @@ export default function Kanban() {
           {/* Scheduled demands */}
           <ScheduledDemandsModal boardId={selectedBoardId} teamId={currentTeamId} buttonStyle="standard" />
 
-          <Button onClick={() => navigate("/demands/create")} size="sm" className="shadow-primary shrink-0 sm:size-default">
+          <Button onClick={() => openCreateDemand()} size="sm" className="shadow-primary shrink-0 sm:size-default">
             <Plus className="h-4 w-4 sm:mr-2" />
             <span className="hidden sm:inline">{t("demands.newDemand")}</span>
           </Button>
@@ -255,7 +257,7 @@ export default function Kanban() {
             </p>
             {!filters.myTasks && (
               <div className="mt-6">
-                <Button onClick={() => navigate("/demands/create")}>
+                <Button onClick={() => openCreateDemand()}>
                   <Plus className="mr-2 h-4 w-4" />
                   {t("demands.createFirst")}
                 </Button>

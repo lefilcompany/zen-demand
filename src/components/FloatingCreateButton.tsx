@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Plus, LayoutGrid } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
 import { Button } from "@/components/ui/button";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeamRole } from "@/hooks/useTeamRole";
@@ -10,6 +11,7 @@ import { CreateBoardDialog } from "@/components/CreateBoardDialog";
 export function FloatingCreateButton() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { openCreateDemand } = useCreateDemandModal();
   const location = useLocation();
   const { selectedTeamId } = useSelectedTeam();
   const { data: role } = useTeamRole(selectedTeamId);
@@ -40,11 +42,11 @@ export function FloatingCreateButton() {
   // On other pages, show create demand button (but not on boards page)
   if (isOnBoardsPage) return null;
 
-  const targetUrl = role === "requester" ? "/demands/request" : "/demands/create";
+  const handleClick = role === "requester" ? () => navigate("/demands/request") : openCreateDemand;
 
   return (
     <Button
-      onClick={() => navigate(targetUrl)}
+      onClick={handleClick}
       className="fixed z-40 h-12 w-12 rounded-full shadow-lg animate-scale-in pointer-events-auto right-4 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))]"
       size="icon"
       data-tour="new-demand-btn"
