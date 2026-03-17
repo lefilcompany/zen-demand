@@ -30,10 +30,12 @@ import { useNavigate } from "react-router-dom";
 import { useRealtimeDemands, useKanbanRealtimeNotifications } from "@/hooks/useRealtimeDemands";
 import { isToday, isThisWeek, isPast } from "date-fns";
 import { ScheduledDemandsModal } from "@/components/ScheduledDemandsModal";
+import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
 
 export default function Kanban() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { openCreateDemand } = useCreateDemandModal();
   const { user } = useAuth();
   const { selectedBoardId, currentTeamId } = useSelectedBoard();
   const { data: demands, isLoading } = useDemands(selectedBoardId || undefined);

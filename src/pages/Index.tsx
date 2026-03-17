@@ -30,10 +30,12 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { ptBR, enUS, es } from "date-fns/locale";
+import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
 
 const Index = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { openCreateDemand } = useCreateDemandModal();
   const [period, setPeriod] = useState<PeriodType>("month");
   const { selectedTeamId } = useSelectedTeam();
   const { selectedBoardId, currentTeamId } = useSelectedBoard();

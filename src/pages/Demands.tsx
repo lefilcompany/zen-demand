@@ -22,6 +22,7 @@ import { CreateDemandQuickDialog } from "@/components/CreateDemandQuickDialog";
 import { CreateRequestQuickDialog } from "@/components/CreateRequestQuickDialog";
 import { useDemandAssignees } from "@/hooks/useDemandAssignees";
 import { ScheduledDemandsModal } from "@/components/ScheduledDemandsModal";
+import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
 type ViewMode = "table" | "grid" | "calendar";
 const TABLET_BREAKPOINT = 1024;
 export default function Demands() {
@@ -29,6 +30,7 @@ export default function Demands() {
     t
   } = useTranslation();
   const navigate = useNavigate();
+  const { openCreateDemand } = useCreateDemandModal();
   const location = useLocation();
   const {
     user
