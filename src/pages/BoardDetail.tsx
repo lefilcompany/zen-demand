@@ -16,6 +16,7 @@ import { useBoardMembers, useBoardRole, useRemoveBoardMember, useUpdateBoardMemb
 import { BoardScopeConfig } from "@/components/BoardScopeConfig";
 import { AddBoardMemberDialog } from "@/components/AddBoardMemberDialog";
 import { useAuth } from "@/lib/auth";
+import { useTeamRole } from "@/hooks/useTeamRole";
 import { toast } from "sonner";
 
 const roleLabels: Record<string, string> = {
@@ -183,7 +184,8 @@ export default function BoardDetail() {
   
   const { data: board, isLoading: boardLoading } = useBoard(boardId || null);
   const { data: members, isLoading: membersLoading } = useBoardMembers(boardId || null);
-  const { data: myRole } = useBoardRole(boardId || null);
+  const { data: myBoardRole } = useBoardRole(boardId || null);
+  const { data: myTeamRole } = useTeamRole(board?.team_id || null);
   const deleteBoard = useDeleteBoard();
   const updateBoard = useUpdateBoard();
   const removeMember = useRemoveBoardMember();
@@ -195,9 +197,13 @@ export default function BoardDetail() {
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
 
-  const canManage = myRole === "admin" || myRole === "moderator";
-  const isAdmin = myRole === "admin";
-  const isRequester = myRole === "requester";
+  // Team admin/moderator always has management access, board role is secondary
+  const effectiveRole = myTeamRole === "admin" ? "admin" 
+    : myTeamRole === "moderator" ? "moderator" 
+    : myBoardRole;
+  const canManage = effectiveRole === "admin" || effectiveRole === "moderator";
+  const isAdmin = effectiveRole === "admin";
+  const isRequester = effectiveRole === "requester";
 
   // Initialize edit values when board loads
   useEffect(() => {
