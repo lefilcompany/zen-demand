@@ -532,56 +532,54 @@ export default function BoardDetail() {
       {/* Members - Full width below */}
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              {memberSearchOpen ? (
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    ref={memberSearchRef}
-                    placeholder="Buscar por nome ou cargo..."
-                    value={memberSearch}
-                    onChange={(e) => setMemberSearch(e.target.value)}
-                    className="pl-9 h-9 pr-9"
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") {
-                        setMemberSearchOpen(false);
-                        setMemberSearch("");
-                      }
-                    }}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0.5 top-1/2 -translate-y-1/2 h-8 w-8"
-                    onClick={() => { setMemberSearchOpen(false); setMemberSearch(""); }}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                    <Users className="h-5 w-5 shrink-0" />
-                    <span className="truncate">Membros do Quadro</span>
-                  </CardTitle>
-                  <CardDescription className="text-sm">
-                    {members?.length || 0} membros neste quadro
-                  </CardDescription>
-                </>
-              )}
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Users className="h-5 w-5 shrink-0" />
+                <span className="truncate">Membros do Quadro</span>
+              </CardTitle>
+              <CardDescription className="text-sm">
+                {members?.length || 0} membros neste quadro
+              </CardDescription>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              {!memberSearchOpen && members && members.length > 3 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => { setMemberSearchOpen(true); setTimeout(() => memberSearchRef.current?.focus(), 50); }}
-                >
-                  <Search className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Buscar</span>
-                </Button>
+              {members && members.length > 3 && (
+                memberSearchOpen ? (
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      ref={memberSearchRef}
+                      placeholder="Buscar por nome ou cargo..."
+                      value={memberSearch}
+                      onChange={(e) => setMemberSearch(e.target.value)}
+                      className="pl-9 h-9 pr-8 w-[200px] sm:w-[260px]"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setMemberSearchOpen(false);
+                          setMemberSearch("");
+                        }
+                      }}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8"
+                      onClick={() => { setMemberSearchOpen(false); setMemberSearch(""); }}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setMemberSearchOpen(true); setTimeout(() => memberSearchRef.current?.focus(), 50); }}
+                  >
+                    <Search className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Buscar</span>
+                  </Button>
+                )
               )}
               {canManage && (
                 <AddBoardMemberDialog 
