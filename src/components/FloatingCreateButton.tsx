@@ -20,7 +20,7 @@ export function FloatingCreateButton() {
   if (!isMobile || !selectedTeamId) return null;
 
   const isOnBoardsPage = location.pathname === "/boards";
-  const canCreateBoard = role === "admin" || role === "moderator";
+  const canCreateBoard = role === "owner";
 
   // On boards page, show create board button
   if (isOnBoardsPage && canCreateBoard) {
