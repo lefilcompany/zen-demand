@@ -6,6 +6,7 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Crown, Sparkles, ArrowRight, Clock, Zap, Star, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 export function SidebarSubscriptionCard() {
   const {
     t
@@ -41,10 +42,18 @@ export function SidebarSubscriptionCard() {
   // Has active subscription - show current plan
   if (subscription?.status === "active" && subscription.plan) {
     if (!showText) {
-      return <button onClick={handleClick} className="group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/70 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300" title={subscription.plan.name}>
-          <Crown className="h-5 w-5 text-primary-foreground" />
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-white/0 via-white/10 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-        </button>;
+      return <Tooltip>
+          <TooltipTrigger asChild>
+            <button onClick={handleClick} className="group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/70 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300">
+              <Crown className="h-5 w-5 text-primary-foreground" />
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-white/0 via-white/10 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p className="font-medium">{subscription.plan.name}</p>
+            <p className="text-xs text-muted-foreground">Plano ativo</p>
+          </TooltipContent>
+        </Tooltip>;
     }
     return <button onClick={handleClick} className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary/95 to-primary/80 p-[1px] shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
@@ -119,11 +128,19 @@ export function SidebarSubscriptionCard() {
     };
     const config = urgencyConfig[urgency];
     if (!showText) {
-      return <button onClick={handleClick} className={cn("group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br shadow-lg transition-all duration-300 hover:scale-105", config.iconBg, urgency === "critical" ? "shadow-red-500/30 hover:shadow-red-500/50" : "shadow-primary/20")} title={`${daysRemaining} dias restantes`}>
-          <ShoppingBag className="h-5 w-5 text-white" />
-          {config.pulse && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white animate-ping" />}
-          {config.pulse && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white" />}
-        </button>;
+      return <Tooltip>
+          <TooltipTrigger asChild>
+            <button onClick={handleClick} className={cn("group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br shadow-lg transition-all duration-300 hover:scale-105", config.iconBg, urgency === "critical" ? "shadow-red-500/30 hover:shadow-red-500/50" : "shadow-primary/20")}>
+              <ShoppingBag className="h-5 w-5 text-white" />
+              {config.pulse && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white animate-ping" />}
+              {config.pulse && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white" />}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p className="font-medium">Período de Teste</p>
+            <p className="text-xs text-muted-foreground">{daysRemaining === 0 ? "Último dia!" : daysRemaining === 1 ? "1 dia restante" : `${daysRemaining} dias restantes`}</p>
+          </TooltipContent>
+        </Tooltip>;
     }
     return <button onClick={handleClick} className={cn("group relative w-full overflow-hidden rounded-xl p-[1px] transition-all duration-300", urgency === "critical" && "animate-pulse")}>
         {/* Border gradient */}
@@ -174,9 +191,17 @@ export function SidebarSubscriptionCard() {
 
   // No subscription and no trial - show upgrade prompt
   if (!showText) {
-    return <button onClick={handleClick} className="group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-accent shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300 animate-pulse" title="Escolher um plano">
-        <Crown className="h-5 w-5 text-primary-foreground" />
-      </button>;
+    return <Tooltip>
+        <TooltipTrigger asChild>
+          <button onClick={handleClick} className="group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-accent shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300 animate-pulse">
+            <Crown className="h-5 w-5 text-primary-foreground" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          <p className="font-medium">Escolha um plano</p>
+          <p className="text-xs text-muted-foreground">Desbloqueie todo o potencial</p>
+        </TooltipContent>
+      </Tooltip>;
   }
   return <button onClick={handleClick} className="group relative w-full overflow-hidden rounded-xl p-[1px] transition-all duration-300">
       {/* Animated gradient border */}
