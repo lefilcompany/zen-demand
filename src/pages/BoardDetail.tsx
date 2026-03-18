@@ -196,6 +196,7 @@ export default function BoardDetail() {
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [memberSearch, setMemberSearch] = useState("");
 
   // Team admin/moderator always has management access, board role is secondary
   const effectiveRole = myTeamRole === "admin" ? "admin" 
