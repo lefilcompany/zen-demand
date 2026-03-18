@@ -105,15 +105,15 @@ export function MemberCard({
       <div className={`h-14 bg-gradient-to-r ${config.bannerColor}`} />
       
       {canModify && (
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+        <div className="absolute top-2 right-2 z-10">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="secondary"
+                variant="ghost"
                 size="icon"
-                className="h-7 w-7 bg-background/80 hover:bg-background"
+                className="h-7 w-7 rounded-lg bg-white/90 dark:bg-background/90 shadow-sm backdrop-blur-sm hover:bg-white dark:hover:bg-background text-foreground"
               >
-                <MoreVertical className="h-3.5 w-3.5" />
+                <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
