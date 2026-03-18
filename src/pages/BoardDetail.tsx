@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useState, useRef, useEffect } from "react";
-import { LayoutGrid, Users, Trash2, UserPlus, UserMinus, ArrowLeft, Shield, UserCog, Briefcase, User, ChevronDown, Loader2, Pencil, Check, X } from "lucide-react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { LayoutGrid, Users, Trash2, UserPlus, UserMinus, ArrowLeft, Shield, UserCog, Briefcase, User, ChevronDown, Loader2, Pencil, Check, X, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -196,6 +196,7 @@ export default function BoardDetail() {
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [memberSearch, setMemberSearch] = useState("");
 
   // Team admin/moderator always has management access, board role is secondary
   const effectiveRole = myTeamRole === "admin" ? "admin" 
@@ -551,6 +552,17 @@ export default function BoardDetail() {
               />
             )}
           </div>
+          {members && members.length > 3 && (
+            <div className="relative mt-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome ou cargo..."
+                value={memberSearch}
+                onChange={(e) => setMemberSearch(e.target.value)}
+                className="pl-9 h-9"
+              />
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {membersLoading ? (
@@ -561,7 +573,13 @@ export default function BoardDetail() {
             </div>
           ) : members && members.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              {members.map((member) => {
+              {members.filter((member) => {
+                if (!memberSearch.trim()) return true;
+                const q = memberSearch.toLowerCase();
+                const name = member.profile?.full_name?.toLowerCase() || "";
+                const roleLabel = roleLabels[member.role]?.toLowerCase() || "";
+                return name.includes(q) || roleLabel.includes(q);
+              }).map((member) => {
                 const isCurrentUser = member.user_id === user?.id;
                 // Only admins can change roles, and they can't change their own
                 const canChangeRole = isAdmin && !isCurrentUser;
