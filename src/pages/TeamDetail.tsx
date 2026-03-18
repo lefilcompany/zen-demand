@@ -14,7 +14,7 @@ import { ptBR } from "date-fns/locale";
 import { useState, useRef } from "react";
 import { useAuth } from "@/lib/auth";
 import { useTeams, useDeleteTeam } from "@/hooks/useTeams";
-import { useTeamMembers, useRemoveMember } from "@/hooks/useTeamMembers";
+import { useTeamMembers, useRemoveMember, useUpdateMemberRole } from "@/hooks/useTeamMembers";
 import { useIsTeamAdmin, useTeamRole } from "@/hooks/useTeamRole";
 import { useTeamScope } from "@/hooks/useTeamScope";
 import { useTeamPositions, useAssignPosition } from "@/hooks/useTeamPositions";
@@ -55,6 +55,7 @@ export default function TeamDetail() {
   } = useTeamScope(id || undefined);
   const { data: positions } = useTeamPositions(id);
   const removeMember = useRemoveMember();
+  const updateMemberRole = useUpdateMemberRole();
   const assignPosition = useAssignPosition();
   const deleteTeam = useDeleteTeam();
   const team = teams?.find(t => t.id === id);
@@ -73,6 +74,16 @@ export default function TeamDetail() {
       {
         onSuccess: () => toast.success("Cargo atribuído!"),
         onError: () => toast.error("Erro ao atribuir cargo"),
+      }
+    );
+  };
+
+  const handleRoleChange = (memberId: string, newRole: "owner" | "member") => {
+    updateMemberRole.mutate(
+      { memberId, newRole },
+      {
+        onSuccess: () => toast.success(newRole === "owner" ? "Membro promovido a Dono!" : "Membro rebaixado!"),
+        onError: (error: any) => toast.error(getErrorMessage(error)),
       }
     );
   };
@@ -249,6 +260,8 @@ export default function TeamDetail() {
                   positions={positions || []}
                   onPositionChange={handlePositionChange}
                   isChangingPosition={assignPosition.isPending}
+                  onRoleChange={canManage ? handleRoleChange : undefined}
+                  isChangingRole={updateMemberRole.isPending}
                 />
               ))}
             </div> : <p className="text-center text-muted-foreground py-8">
