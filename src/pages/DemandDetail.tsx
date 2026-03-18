@@ -803,7 +803,7 @@ export default function DemandDetail() {
               {/* Share Button */}
               <ShareDemandButton demandId={demand.id} />
               
-              {canRequestAdjustment && <Button variant="outline" size="sm" onClick={() => setIsAdjustmentDialogOpen(true)} className={cn("flex-1 sm:flex-none", role === 'requester' ? "border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950" : "border-blue-500/30 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950")}>
+              {canRequestAdjustment && <Button variant="outline" size="sm" onClick={() => setIsAdjustmentDialogOpen(true)} className={cn("flex-1 sm:flex-none", boardRole === 'requester' ? "border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950" : "border-blue-500/30 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950")}>
                   <Wrench className="mr-2 h-4 w-4" />
                   Solicitar Ajuste
                 </Button>}
