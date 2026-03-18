@@ -44,7 +44,6 @@ export function useBoards(teamId: string | null) {
         .select("*")
         .eq("team_id", teamId)
         .order("name", { ascending: true });
-        .order("name", { ascending: true });
 
       if (error) {
         console.error("Erro ao buscar quadros:", error);
