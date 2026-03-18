@@ -1,0 +1,143 @@
+import { useAuth } from "@/lib/auth";
+import { useSelectedTeam } from "@/contexts/TeamContext";
+import { useIsTeamAdmin } from "@/hooks/useTeamRole";
+import { Bell, LogOut, LayoutGrid } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import logoSomaIcon from "@/assets/logo-soma-icon.png";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+export function NoBoardsScreen() {
+  const { user, signOut } = useAuth();
+  const { currentTeam } = useSelectedTeam();
+  const { isAdmin } = useIsTeamAdmin(currentTeam?.id ?? null);
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const [logoutOpen, setLogoutOpen] = useState(false);
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("id", user.id)
+        .single();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const initials =
+    profile?.full_name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "U";
+
+  return (
+    <div className="flex h-[100dvh] w-full bg-sidebar p-2 md:p-3 overflow-hidden">
+      <main className="flex-1 flex flex-col bg-background rounded-xl shadow-xl overflow-hidden">
+        {/* Minimal header */}
+        <header className="flex h-11 shrink-0 items-center justify-between px-4 border-b border-border rounded-t-xl">
+          <div className="flex items-center gap-2">
+            <img src={logoSomaIcon} alt="SoMA" className="h-5 w-5 object-contain" />
+            <span className="text-sm font-medium text-foreground hidden sm:inline">
+              {currentTeam?.name}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Avatar className="h-7 w-7 cursor-pointer" onClick={() => setLogoutOpen(true)}>
+              <AvatarImage src={profile?.avatar_url || undefined} />
+              <AvatarFallback className="bg-primary text-primary-foreground text-[10px]">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+        </header>
+
+        {/* Centered content */}
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="max-w-md text-center space-y-6 animate-fade-in">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-muted">
+              <Bell className="h-9 w-9 text-muted-foreground" />
+            </div>
+
+            <div className="space-y-2">
+              <h1 className="text-2xl font-bold text-foreground">
+                Aguardando alocação
+              </h1>
+              <p className="text-muted-foreground leading-relaxed">
+                Você ainda não foi adicionado a nenhum quadro.
+                Quando um administrador alocar você a um quadro, ele aparecerá automaticamente aqui.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground/70 pt-2">
+              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+              Verificando em tempo real
+            </div>
+
+            {isAdmin && (
+              <div className="pt-4 border-t border-border">
+                <p className="text-sm text-muted-foreground mb-3">
+                  Como administrador, você pode criar um quadro:
+                </p>
+                <Button onClick={() => navigate("/boards")} className="gap-2">
+                  <LayoutGrid className="h-4 w-4" />
+                  Criar Quadro
+                </Button>
+              </div>
+            )}
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLogoutOpen(true)}
+              className="text-muted-foreground hover:text-foreground gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              {t("auth.logout")}
+            </Button>
+          </div>
+        </div>
+      </main>
+
+      <AlertDialog open={logoutOpen} onOpenChange={setLogoutOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("auth.logoutConfirm")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("auth.logoutDescription")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                setLogoutOpen(false);
+                await signOut();
+              }}
+            >
+              {t("auth.logout")}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

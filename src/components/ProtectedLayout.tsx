@@ -24,8 +24,9 @@ import { OnboardingTour } from "@/components/OnboardingTour";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useDataPrecache } from "@/hooks/useDataPrecache";
-import { FirstBoardModal } from "@/components/FirstBoardModal";
 import { TrialExpiredBlock } from "@/components/TrialExpiredBlock";
+import { NoBoardsScreen } from "@/components/NoBoardsScreen";
+import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useTrialStatus } from "@/hooks/useTrialStatus";
 import { useTeamSubscription } from "@/hooks/useSubscription";
 import {
