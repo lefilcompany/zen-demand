@@ -104,8 +104,8 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const [newStatusAdjustmentType, setNewStatusAdjustmentType] = useState<AdjustmentType>("none");
   const [localStatuses, setLocalStatuses] = useState<BoardStatus[]>([]);
   const [isMoving, setIsMoving] = useState(false);
-  const [movingIndex, setMovingIndex] = useState<number | null>(null);
-  const [movingDirection, setMovingDirection] = useState<"up" | "down" | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const { data: boardStatuses, isLoading } = useAllBoardStatuses(boardId);
   const { data: availableStatuses } = useAvailableStatuses();
