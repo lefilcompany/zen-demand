@@ -116,7 +116,6 @@ export function ProtectedLayout() {
   }
 
   // Show no-boards screen when user has no boards
-  const { hasBoards, isLoading: boardsLoading } = useSelectedBoard();
   if (!boardsLoading && !hasBoards) {
     return <NoBoardsScreen />;
   }
