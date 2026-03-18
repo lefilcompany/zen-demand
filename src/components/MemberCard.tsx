@@ -111,7 +111,7 @@ export function MemberCard({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 rounded-full p-0 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] hover:bg-white/20 hover:text-white"
+                className="h-7 w-7 rounded-full p-0 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] hover:bg-white/20 hover:text-white focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
               >
                 <MoreVertical className="h-4 w-4" />
               </Button>
