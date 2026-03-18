@@ -130,6 +130,8 @@ export function ProtectedLayout() {
                 <ThemeToggle />
               </div>
 
+              <GlobalSearchBar />
+
               <div data-tour="notifications-btn">
                 <NotificationDropdown />
               </div>
