@@ -151,109 +151,78 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
     }
   };
 
-  const handleMoveUp = useCallback(async (index: number) => {
-    // Cannot move first item, fixed boundary statuses, or if already moving
-    if (index === 0 || isMoving) return;
+  const handleDragStart = (index: number) => {
+    const status = localStatuses[index];
+    if (isFixedBoundaryStatus(status.status.name)) return;
+    setDragIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    const targetStatus = localStatuses[index];
+    if (isFixedBoundaryStatus(targetStatus.status.name) && targetStatus.status.name === FIXED_END_STATUS) return;
+    setDragOverIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = useCallback(async (targetIndex: number) => {
+    if (dragIndex === null || dragIndex === targetIndex || isMoving) return;
     
-    const currentStatus = localStatuses[index];
-    const targetStatus = localStatuses[index - 1];
+    const draggedStatus = localStatuses[dragIndex];
+    const targetStatus = localStatuses[targetIndex];
     
-    // Prevent moving into or out of fixed positions
-    if (isFixedBoundaryStatus(currentStatus.status.name) || isFixedBoundaryStatus(targetStatus.status.name)) {
-      toast.error("Esta etapa não pode ser movida");
+    if (isFixedBoundaryStatus(draggedStatus.status.name) || 
+        (isFixedBoundaryStatus(targetStatus.status.name) && targetStatus.status.name === FIXED_END_STATUS)) {
+      setDragIndex(null);
+      setDragOverIndex(null);
       return;
     }
-    
-    setIsMoving(true);
-    setMovingIndex(index);
-    setMovingDirection("up");
-    
-    try {
-      // Call backend FIRST (pessimistic update)
-      await updatePositions.mutateAsync({
-        swapPair: {
-          fromId: currentStatus.id,
-          fromPosition: currentStatus.position,
-          toId: targetStatus.id,
-          toPosition: targetStatus.position,
-        },
-        boardId,
-      });
 
-      // Force immediate refetch so the Kanban columns update even while this sheet is open
+    setIsMoving(true);
+
+    // Reorder locally
+    const newStatuses = [...localStatuses];
+    const [removed] = newStatuses.splice(dragIndex, 1);
+    newStatuses.splice(targetIndex, 0, removed);
+
+    // Reassign positions (skip the fixed end status at the last position)
+    const updatedStatuses = newStatuses.map((s, i) => ({ ...s, position: i }));
+    setLocalStatuses(updatedStatuses);
+
+    try {
+      // Persist all position changes
+      const updates = updatedStatuses.map((s) =>
+        supabase.from("board_statuses").update({ position: s.position }).eq("id", s.id)
+      );
+      const results = await Promise.all(updates);
+      const failed = results.find((r) => r.error);
+      if (failed?.error) throw failed.error;
+
       await Promise.all([
         queryClient.refetchQueries({ queryKey: ["board-statuses", boardId] }),
         queryClient.refetchQueries({ queryKey: ["board-statuses-all", boardId] }),
       ]);
-      
-      // Only update UI after backend confirms (and keep local position fields in sync)
-      const newStatuses = [...localStatuses];
-      const current = newStatuses[index];
-      const target = newStatuses[index - 1];
-      newStatuses[index - 1] = { ...current, position: target.position };
-      newStatuses[index] = { ...target, position: current.position };
-      setLocalStatuses(newStatuses);
     } catch (error) {
       toast.error("Erro ao reordenar etapas");
-      // UI was never changed, no rollback needed
+      // Revert
+      if (boardStatuses) {
+        const sorted = [...boardStatuses].sort((a, b) => {
+          if (a.status.name === FIXED_END_STATUS) return 1;
+          if (b.status.name === FIXED_END_STATUS) return -1;
+          return a.position - b.position;
+        });
+        setLocalStatuses(sorted);
+      }
     } finally {
       setIsMoving(false);
-      setMovingIndex(null);
-      setMovingDirection(null);
+      setDragIndex(null);
+      setDragOverIndex(null);
     }
-  }, [localStatuses, isMoving, boardId, updatePositions]);
-
-  const handleMoveDown = useCallback(async (index: number) => {
-    // Cannot move last item, fixed boundary statuses, or if already moving
-    if (index === localStatuses.length - 1 || isMoving) return;
-    
-    const currentStatus = localStatuses[index];
-    const targetStatus = localStatuses[index + 1];
-    
-    // Prevent moving into or out of fixed positions
-    if (isFixedBoundaryStatus(currentStatus.status.name) || isFixedBoundaryStatus(targetStatus.status.name)) {
-      toast.error("Esta etapa não pode ser movida");
-      return;
-    }
-    
-    setIsMoving(true);
-    setMovingIndex(index);
-    setMovingDirection("down");
-    
-    try {
-      // Call backend FIRST (pessimistic update)
-      await updatePositions.mutateAsync({
-        swapPair: {
-          fromId: currentStatus.id,
-          fromPosition: currentStatus.position,
-          toId: targetStatus.id,
-          toPosition: targetStatus.position,
-        },
-        boardId,
-      });
-
-      // Force immediate refetch so the Kanban columns update even while this sheet is open
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: ["board-statuses", boardId] }),
-        queryClient.refetchQueries({ queryKey: ["board-statuses-all", boardId] }),
-      ]);
-      
-      // Only update UI after backend confirms (and keep local position fields in sync)
-      const newStatuses = [...localStatuses];
-      const current = newStatuses[index];
-      const target = newStatuses[index + 1];
-      newStatuses[index] = { ...target, position: current.position };
-      newStatuses[index + 1] = { ...current, position: target.position };
-      setLocalStatuses(newStatuses);
-    } catch (error) {
-      toast.error("Erro ao reordenar etapas");
-      // UI was never changed, no rollback needed
-    } finally {
-      setIsMoving(false);
-      setMovingIndex(null);
-      setMovingDirection(null);
-    }
-  }, [localStatuses, isMoving, boardId, updatePositions]);
+  }, [dragIndex, localStatuses, isMoving, boardId, boardStatuses, queryClient]);
 
   const handleAddStatus = async (statusId: string) => {
     const maxPosition = localStatuses.reduce((max, s) => Math.max(max, s.position), -1);
