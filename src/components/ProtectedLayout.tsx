@@ -205,9 +205,6 @@ export function ProtectedLayout() {
       {/* Onboarding Tour */}
       <OnboardingTour steps={steps} isOpen={isOpen} onClose={closeTour} onComplete={completeOnboarding} />
 
-      {/* First Board Modal - shown when user has no boards */}
-      <FirstBoardModal />
-
       {/* Logout confirmation dialog */}
       <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
         <AlertDialogContent>
