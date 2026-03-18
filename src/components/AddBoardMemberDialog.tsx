@@ -53,7 +53,7 @@ const teamRoleConfig: Record<TeamRole, { label: string; badgeColor: string; bann
   },
 };
 
-const boardRoleOptions: { value: BoardRole; label: string; shortLabel: string; icon: React.ElementType }[] = [
+const boardRoleOptions: { value: BoardRole; label: string; shortLabel: string; description: string; icon: React.ElementType }[] = [
   { value: "admin", label: "Administrador", shortLabel: "Admin", description: "Acesso total ao quadro", icon: Shield },
   { value: "moderator", label: "Coordenador", shortLabel: "Coord", description: "Gerenciar demandas e membros", icon: Users },
   { value: "executor", label: "Agente", shortLabel: "Agente", description: "Executar e atualizar demandas", icon: Wrench },
