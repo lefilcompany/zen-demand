@@ -52,13 +52,15 @@ export function useBoardServicesWithUsage(boardId: string | null | undefined) {
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
   
+  // Use service IDs as part of the query key so it refetches when services change
+  const serviceIds = boardServices?.map(bs => bs.service_id).sort().join(",") || "";
+  
   return useQuery({
-    queryKey: ["board-services-usage", boardId, month, year],
+    queryKey: ["board-services-usage", boardId, month, year, serviceIds],
     queryFn: async () => {
       if (!boardServices || boardServices.length === 0) return [];
       
-      // Get demand counts for each service
-      const serviceIds = boardServices.map(bs => bs.service_id);
+      const ids = boardServices.map(bs => bs.service_id);
       
       const startOfMonth = new Date(year, month - 1, 1).toISOString();
       const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999).toISOString();
@@ -67,14 +69,13 @@ export function useBoardServicesWithUsage(boardId: string | null | undefined) {
         .from("demands")
         .select("service_id")
         .eq("board_id", boardId!)
-        .in("service_id", serviceIds)
+        .in("service_id", ids)
         .gte("created_at", startOfMonth)
         .lte("created_at", endOfMonth)
         .eq("archived", false);
       
       if (error) throw error;
       
-      // Count demands per service
       const countByService = demands?.reduce((acc, d) => {
         if (d.service_id) {
           acc[d.service_id] = (acc[d.service_id] || 0) + 1;
@@ -121,9 +122,9 @@ export function useAddBoardServices() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, { boardId }) => {
-      queryClient.invalidateQueries({ queryKey: ["board-services", boardId] });
-      queryClient.invalidateQueries({ queryKey: ["board-services-usage", boardId] });
+    onSuccess: async (_, { boardId }) => {
+      await queryClient.invalidateQueries({ queryKey: ["board-services", boardId] });
+      await queryClient.invalidateQueries({ queryKey: ["board-services-usage", boardId] });
     },
   });
 }
@@ -151,9 +152,9 @@ export function useUpdateBoardServiceLimit() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, { boardId }) => {
-      queryClient.invalidateQueries({ queryKey: ["board-services", boardId] });
-      queryClient.invalidateQueries({ queryKey: ["board-services-usage", boardId] });
+    onSuccess: async (_, { boardId }) => {
+      await queryClient.invalidateQueries({ queryKey: ["board-services", boardId] });
+      await queryClient.invalidateQueries({ queryKey: ["board-services-usage", boardId] });
       toast.success("Limite atualizado");
     },
     onError: () => {
@@ -180,9 +181,9 @@ export function useRemoveBoardService() {
       
       if (error) throw error;
     },
-    onSuccess: (_, { boardId }) => {
-      queryClient.invalidateQueries({ queryKey: ["board-services", boardId] });
-      queryClient.invalidateQueries({ queryKey: ["board-services-usage", boardId] });
+    onSuccess: async (_, { boardId }) => {
+      await queryClient.invalidateQueries({ queryKey: ["board-services", boardId] });
+      await queryClient.invalidateQueries({ queryKey: ["board-services-usage", boardId] });
       toast.success("Serviço removido do quadro");
     },
     onError: () => {
