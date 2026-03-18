@@ -191,9 +191,17 @@ export function SidebarSubscriptionCard() {
 
   // No subscription and no trial - show upgrade prompt
   if (!showText) {
-    return <button onClick={handleClick} className="group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-accent shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300 animate-pulse" title="Escolher um plano">
-        <Crown className="h-5 w-5 text-primary-foreground" />
-      </button>;
+    return <Tooltip>
+        <TooltipTrigger asChild>
+          <button onClick={handleClick} className="group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-accent shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300 animate-pulse">
+            <Crown className="h-5 w-5 text-primary-foreground" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          <p className="font-medium">Escolha um plano</p>
+          <p className="text-xs text-muted-foreground">Desbloqueie todo o potencial</p>
+        </TooltipContent>
+      </Tooltip>;
   }
   return <button onClick={handleClick} className="group relative w-full overflow-hidden rounded-xl p-[1px] transition-all duration-300">
       {/* Animated gradient border */}
