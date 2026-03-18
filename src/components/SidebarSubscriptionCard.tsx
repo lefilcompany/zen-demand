@@ -128,11 +128,19 @@ export function SidebarSubscriptionCard() {
     };
     const config = urgencyConfig[urgency];
     if (!showText) {
-      return <button onClick={handleClick} className={cn("group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br shadow-lg transition-all duration-300 hover:scale-105", config.iconBg, urgency === "critical" ? "shadow-red-500/30 hover:shadow-red-500/50" : "shadow-primary/20")} title={`${daysRemaining} dias restantes`}>
-          <ShoppingBag className="h-5 w-5 text-white" />
-          {config.pulse && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white animate-ping" />}
-          {config.pulse && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white" />}
-        </button>;
+      return <Tooltip>
+          <TooltipTrigger asChild>
+            <button onClick={handleClick} className={cn("group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br shadow-lg transition-all duration-300 hover:scale-105", config.iconBg, urgency === "critical" ? "shadow-red-500/30 hover:shadow-red-500/50" : "shadow-primary/20")}>
+              <ShoppingBag className="h-5 w-5 text-white" />
+              {config.pulse && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white animate-ping" />}
+              {config.pulse && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white" />}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p className="font-medium">Período de Teste</p>
+            <p className="text-xs text-muted-foreground">{daysRemaining === 0 ? "Último dia!" : daysRemaining === 1 ? "1 dia restante" : `${daysRemaining} dias restantes`}</p>
+          </TooltipContent>
+        </Tooltip>;
     }
     return <button onClick={handleClick} className={cn("group relative w-full overflow-hidden rounded-xl p-[1px] transition-all duration-300", urgency === "critical" && "animate-pulse")}>
         {/* Border gradient */}
