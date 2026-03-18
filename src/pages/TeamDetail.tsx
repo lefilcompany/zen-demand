@@ -14,7 +14,7 @@ import { ptBR } from "date-fns/locale";
 import { useState, useRef } from "react";
 import { useAuth } from "@/lib/auth";
 import { useTeams, useDeleteTeam } from "@/hooks/useTeams";
-import { useTeamMembers, useRemoveMember } from "@/hooks/useTeamMembers";
+import { useTeamMembers, useRemoveMember, useUpdateMemberRole } from "@/hooks/useTeamMembers";
 import { useIsTeamAdmin, useTeamRole } from "@/hooks/useTeamRole";
 import { useTeamScope } from "@/hooks/useTeamScope";
 import { useTeamPositions, useAssignPosition } from "@/hooks/useTeamPositions";
