@@ -254,7 +254,7 @@ export function AppSidebar() {
                         <Users className="h-5 w-5 text-primary" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">Equipe</span>
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">{currentTeam?.name || "Equipe"}</span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">Gerenciamento</span>
                       </div>
                     </div>
