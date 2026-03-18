@@ -78,7 +78,7 @@ export function useUpdateMemberRole() {
       newRole,
     }: {
       memberId: string;
-      newRole: TeamRole;
+      newRole: "owner" | "member";
     }) => {
       const { data, error } = await supabase
         .from("team_members")

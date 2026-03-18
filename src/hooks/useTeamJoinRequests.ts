@@ -189,7 +189,6 @@ export function useRespondToRequest() {
       teamId: string;
       userId: string;
       status: "approved" | "rejected";
-      role?: ExtendedTeamRole;
     }) => {
       if (!user) throw new Error("Not authenticated");
 
@@ -205,14 +204,14 @@ export function useRespondToRequest() {
 
       if (updateError) throw updateError;
 
-      // If approved, add user to team
-      if (status === "approved" && role) {
+      // If approved, add user to team as member
+      if (status === "approved") {
         const { error: memberError } = await supabase
           .from("team_members")
           .insert({
             team_id: teamId,
             user_id: userId,
-            role,
+            role: "member" as const,
           });
 
         if (memberError) throw memberError;
