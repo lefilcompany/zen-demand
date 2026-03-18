@@ -103,13 +103,13 @@ export function useCreateTeam() {
 
       if (teamError) throw teamError;
 
-      // Add creator as team member with admin role
+      // Add creator as team member with owner role
       const { error: memberError } = await supabase
         .from("team_members")
         .insert({
           team_id: team.id,
           user_id: userId,
-          role: "admin" as const,
+          role: "owner" as const,
         });
 
       if (memberError) throw memberError;
@@ -139,7 +139,7 @@ export function useJoinTeam() {
 
       if (teamError) throw new Error("Código de acesso inválido");
 
-      // Add user as team member with requester role
+      // Add user as team member with member role
       const { data: authData } = await supabase.auth.getUser();
       if (!authData.user) {
         throw new Error("Você precisa estar logado para entrar em uma equipe");
@@ -150,7 +150,7 @@ export function useJoinTeam() {
         .insert({
           team_id: team.id,
           user_id: authData.user.id,
-          role: "requester" as const,
+          role: "member" as const,
         });
 
       if (memberError) {

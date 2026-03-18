@@ -236,22 +236,22 @@ export default function DemandDetail() {
 
   // Demandas entregues são apenas visualizáveis
   const isDeliveredStatus = demand?.status_id === deliveredStatusId;
-  const canManageAssignees = !isDeliveredStatus && (role === "admin" || role === "moderator");
-  const canEdit = !isDeliveredStatus; // Todas as roles podem editar demandas
-  const canArchive = !isDeliveredStatus; // Qualquer usuário pode arquivar demandas, exceto as entregues
-  const canChangeBoard = !isDeliveredStatus && (role === "admin" || role === "moderator");
+  const canManageAssignees = !isDeliveredStatus && (boardRole === "admin" || boardRole === "moderator");
+  const canEdit = !isDeliveredStatus;
+  const canArchive = !isDeliveredStatus;
+  const canChangeBoard = !isDeliveredStatus && (boardRole === "admin" || boardRole === "moderator");
   const isCreator = demand?.created_by === user?.id;
 
-  // Permissões de ajuste baseadas no role
-  const canRequestInternalAdjustment = demand?.status_id === approvalStatusId && (role === "admin" || role === "moderator");
-  const canRequestExternalAdjustment = demand?.status_id === approvalStatusId && role === "requester";
+  // Permissões de ajuste baseadas no boardRole
+  const canRequestInternalAdjustment = demand?.status_id === approvalStatusId && (boardRole === "admin" || boardRole === "moderator");
+  const canRequestExternalAdjustment = demand?.status_id === approvalStatusId && boardRole === "requester";
   const canRequestAdjustment = canRequestInternalAdjustment || canRequestExternalAdjustment;
   const isInProgress = demand?.status_id === fazendoStatusId;
   const isInAdjustment = demand?.status_id === adjustmentStatusId;
   const isDelivered = demand?.status_id === deliveredStatusId || demand?.status_id === approvalStatusId;
 
   // Timer control permissions (same as Kanban)
-  const canControlTimer = !isDeliveredStatus && (role === "admin" || role === "moderator" || role === "executor") && (isInProgress || isInAdjustment);
+  const canControlTimer = !isDeliveredStatus && (boardRole === "admin" || boardRole === "moderator" || boardRole === "executor") && (isInProgress || isInAdjustment);
   const filteredInteractions = useMemo(() => {
     if (!interactions) return [];
     if (interactionFilter === "all") return interactions;
@@ -301,7 +301,7 @@ export default function DemandDetail() {
 
     // Auto-determine adjustment type based on user role
     // Requesters = external, everyone else (admin, moderator, executor) = internal
-    const determinedAdjustmentType: "internal" | "external" = role === 'requester' ? 'external' : 'internal';
+    const determinedAdjustmentType: "internal" | "external" = boardRole === 'requester' ? 'external' : 'internal';
     const isInternal = determinedAdjustmentType === "internal";
     const typeLabel = isInternal ? "Ajuste Interno" : "Ajuste Externo";
     try {
@@ -447,7 +447,7 @@ export default function DemandDetail() {
     
     const isAdjustmentMode = interactionFilter === "adjustment_request";
     const interactionType = isAdjustmentMode ? "adjustment_request" : "comment";
-    const determinedAdjustmentType: "internal" | "external" = role === 'requester' ? 'external' : 'internal';
+    const determinedAdjustmentType: "internal" | "external" = boardRole === 'requester' ? 'external' : 'internal';
     
     createInteraction.mutate({
       demand_id: id,
@@ -803,7 +803,7 @@ export default function DemandDetail() {
               {/* Share Button */}
               <ShareDemandButton demandId={demand.id} />
               
-              {canRequestAdjustment && <Button variant="outline" size="sm" onClick={() => setIsAdjustmentDialogOpen(true)} className={cn("flex-1 sm:flex-none", role === 'requester' ? "border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950" : "border-blue-500/30 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950")}>
+              {canRequestAdjustment && <Button variant="outline" size="sm" onClick={() => setIsAdjustmentDialogOpen(true)} className={cn("flex-1 sm:flex-none", boardRole === 'requester' ? "border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950" : "border-blue-500/30 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950")}>
                   <Wrench className="mr-2 h-4 w-4" />
                   Solicitar Ajuste
                 </Button>}
@@ -819,7 +819,7 @@ export default function DemandDetail() {
                         Solicitar Ajuste
                       </DialogTitle>
                       <DialogDescription>
-                        {role === 'requester' ? "Descreva o que precisa ser ajustado nesta demanda. A equipe receberá sua solicitação." : "Descreva o ajuste necessário nesta demanda."}
+                        {boardRole === 'requester' ? "Descreva o que precisa ser ajustado nesta demanda. A equipe receberá sua solicitação." : "Descreva o ajuste necessário nesta demanda."}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
@@ -842,7 +842,7 @@ export default function DemandDetail() {
                     }}>
                         Cancelar
                       </Button>
-                      <Button onClick={handleRequestAdjustment} disabled={!adjustmentReason.trim() || updateDemand.isPending} className={role === 'requester' ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"}>
+                      <Button onClick={handleRequestAdjustment} disabled={!adjustmentReason.trim() || updateDemand.isPending} className={boardRole === 'requester' ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"}>
                         {updateDemand.isPending ? "Enviando..." : "Solicitar Ajuste"}
                       </Button>
                     </div>
@@ -916,7 +916,7 @@ export default function DemandDetail() {
         <CardContent className="space-y-4 md:space-y-6 p-3 sm:p-4 md:p-6 pt-0 md:pt-0">
           {/* Time tracking display - prominent position (hidden for board requesters) */}
           {(isInProgress || isInAdjustment || isDelivered) && boardRole !== "requester" && (
-            <UserTimeTrackingDisplay demandId={demand.id} variant="detail" showControls={canControlTimer} canControl={canControlTimer} canEdit={role === "admin" || role === "moderator" || role === "executor"} />
+            <UserTimeTrackingDisplay demandId={demand.id} variant="detail" showControls={canControlTimer} canControl={canControlTimer} canEdit={boardRole === "admin" || boardRole === "moderator" || boardRole === "executor"} />
           )}
 
           {demand.description && <div className="w-full overflow-hidden">
@@ -978,7 +978,7 @@ export default function DemandDetail() {
           {/* Attachments section - result/deliverables - only agents/admins can upload */}
           <div>
             
-            <AttachmentUploader demandId={demand.id} readOnly={!(role === "admin" || role === "moderator" || role === "executor")} demandTitle={demand.title} demandCreatedBy={demand.created_by} />
+            <AttachmentUploader demandId={demand.id} readOnly={!(boardRole === "admin" || boardRole === "moderator" || boardRole === "executor")} demandTitle={demand.title} demandCreatedBy={demand.created_by} />
           </div>
         </CardContent>
       </Card>

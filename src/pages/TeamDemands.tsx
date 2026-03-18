@@ -47,7 +47,7 @@ export default function TeamDemands() {
   const location = useLocation();
   const { selectedTeamId, currentTeam } = useSelectedTeam();
   const { data: role, isLoading: isRoleLoading } = useTeamRole(selectedTeamId);
-  const isTeamAdminOrModerator = role === "admin" || role === "moderator";
+  const isTeamAdminOrModerator = role === "owner";
   const { data: demands, isLoading } = useAllTeamDemands(isTeamAdminOrModerator ? selectedTeamId : null);
   const { data: boards } = useBoards(selectedTeamId);
   

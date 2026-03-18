@@ -182,18 +182,9 @@ export function useOnboarding() {
 
   // Get tour steps based on role
   const getTourSteps = useCallback((): TourStep[] => {
-    switch (role) {
-      case "admin":
-        return ADMIN_TOUR_STEPS;
-      case "moderator":
-        return MODERATOR_TOUR_STEPS;
-      case "executor":
-        return EXECUTOR_TOUR_STEPS;
-      case "requester":
-        return REQUESTER_TOUR_STEPS;
-      default:
-        return ADMIN_TOUR_STEPS;
-    }
+    // With the new model, tour is generic since team role is just owner/member
+    // Board-level roles determine specific features
+    return ADMIN_TOUR_STEPS;
   }, [role]);
 
   // Check if user has completed onboarding

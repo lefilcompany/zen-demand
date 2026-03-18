@@ -73,8 +73,8 @@ export default function TeamConfig() {
   const [codeSuggestions, setCodeSuggestions] = useState<string[]>([]);
 
   const team = teams?.find(t => t.id === selectedTeamId);
-  const isAdmin = myRole === "admin";
-  const isAdminOrModerator = myRole === "admin" || myRole === "moderator";
+  const isAdmin = myRole === "owner";
+  const isAdminOrModerator = myRole === "owner";
 
   // Redirect non-admins/moderators
   if (!roleLoading && !isAdminOrModerator && selectedTeamId) {

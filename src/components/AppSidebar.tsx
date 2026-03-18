@@ -49,7 +49,7 @@ export function AppSidebar() {
   const { data: returnedRequestsCount } = useReturnedRequestsCount();
   const { data: subscription } = useTeamSubscription(currentTeam?.id);
   
-  const isTeamAdminOrModerator = role === "admin" || role === "moderator";
+  const isTeamAdminOrModerator = role === "owner";
   const isBoardAdminOrModerator = boardRole === "admin" || boardRole === "moderator";
   const isBoardAdminModeratorOrExecutor = boardRole === "admin" || boardRole === "moderator" || boardRole === "executor";
   const isRequester = boardRole === "requester";

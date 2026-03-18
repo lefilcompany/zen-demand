@@ -7,7 +7,7 @@ import { useDemandStatuses, useUpdateDemand } from "@/hooks/useDemands";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
-import { useTeamRole } from "@/hooks/useTeamRole";
+import { useBoardRole } from "@/hooks/useBoardMembers";
 import { UnsavedChangesDialog } from "@/components/UnsavedChangesDialog";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { useNavigationBlock } from "@/hooks/useNavigationBlock";
@@ -39,7 +39,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
   const setAssignees = useSetAssignees();
   const { data: statuses } = useDemandStatuses();
   const { data: currentAssignees } = useDemandAssignees(demand.id);
-  const { data: role } = useTeamRole(demand.team_id);
+  const { data: boardRole } = useBoardRole(demand.board_id);
 
   // Recurring demands
   const { data: recurringDemands } = useRecurringDemands(demand.board_id);
@@ -47,7 +47,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
   const updateRecurring = useUpdateRecurringDemand();
   const deleteRecurring = useDeleteRecurringDemand();
 
-  const canAssignResponsibles = role !== "requester";
+  const canAssignResponsibles = boardRole !== "requester";
 
   const [title, setTitle] = useState(demand.title);
   const [description, setDescription] = useState(demand.description || "");

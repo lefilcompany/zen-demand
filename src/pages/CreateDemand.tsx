@@ -58,7 +58,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const { data: boardRole } = useBoardRole(selectedBoardId);
   const { hasBoardServices } = useHasBoardServices(selectedBoardId);
 
-  const canAssignResponsibles = role !== "requester";
+  const canAssignResponsibles = boardRole !== "requester";
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -108,7 +108,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     }
   };
 
-  if (role === "requester") {
+  if (boardRole === "requester") {
     return <Navigate to="/demands/request" replace />;
   }
 

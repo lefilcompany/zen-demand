@@ -2,8 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
-// Extended TeamRole to include executor (added via migration)
-export type ExtendedTeamRole = "admin" | "moderator" | "requester" | "executor";
+// Team membership roles (simplified)
+export type TeamMembershipRole = "owner" | "member";
 
 export interface TeamJoinRequest {
   id: string;
@@ -183,13 +183,11 @@ export function useRespondToRequest() {
       teamId,
       userId,
       status,
-      role,
     }: {
       requestId: string;
       teamId: string;
       userId: string;
       status: "approved" | "rejected";
-      role?: ExtendedTeamRole;
     }) => {
       if (!user) throw new Error("Not authenticated");
 
@@ -205,14 +203,14 @@ export function useRespondToRequest() {
 
       if (updateError) throw updateError;
 
-      // If approved, add user to team
-      if (status === "approved" && role) {
+      // If approved, add user to team as member
+      if (status === "approved") {
         const { error: memberError } = await supabase
           .from("team_members")
           .insert({
             team_id: teamId,
             user_id: userId,
-            role,
+            role: "member" as const,
           });
 
         if (memberError) throw memberError;

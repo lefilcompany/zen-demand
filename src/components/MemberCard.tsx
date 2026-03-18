@@ -13,7 +13,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2, Shield, ShieldCheck, User, Zap } from "lucide-react";
+import { Trash2, Crown, User } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { TeamMember } from "@/hooks/useTeamMembers";
@@ -35,28 +35,16 @@ interface MemberCardProps {
 }
 
 const roleConfig: Record<TeamRole, { label: string; badgeColor: string; bannerColor: string; icon: React.ReactNode }> = {
-  admin: {
-    label: "Administrador",
+  owner: {
+    label: "Dono",
     badgeColor: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
     bannerColor: "from-red-500/80 via-red-600 to-red-500/60",
-    icon: <ShieldCheck className="h-3 w-3" />,
+    icon: <Crown className="h-3 w-3" />,
   },
-  moderator: {
-    label: "Coordenador",
+  member: {
+    label: "Membro",
     badgeColor: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
     bannerColor: "from-blue-500/80 via-blue-600 to-blue-500/60",
-    icon: <Shield className="h-3 w-3" />,
-  },
-  executor: {
-    label: "Agente",
-    badgeColor: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-    bannerColor: "from-green-500/80 via-green-600 to-green-500/60",
-    icon: <Zap className="h-3 w-3" />,
-  },
-  requester: {
-    label: "Solicitante",
-    badgeColor: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-    bannerColor: "from-purple-500/80 via-purple-600 to-purple-500/60",
     icon: <User className="h-3 w-3" />,
   },
 };
@@ -83,8 +71,8 @@ export function MemberCard({
 }: MemberCardProps) {
   const navigate = useNavigate();
   const isCurrentUser = member.user_id === currentUserId;
-  const canModify = isAdmin && !isCurrentUser;
-  const config = roleConfig[member.role];
+  const canModify = isAdmin && !isCurrentUser && member.role !== "owner";
+  const config = roleConfig[member.role] || roleConfig.member;
 
   const handleNameClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -99,10 +87,8 @@ export function MemberCard({
 
   return (
     <div className="rounded-xl border bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow relative group">
-      {/* Colored Banner */}
       <div className={`h-14 bg-gradient-to-r ${config.bannerColor}`} />
       
-      {/* Remove Button - positioned on banner */}
       {canModify && (
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <AlertDialog>
@@ -138,7 +124,6 @@ export function MemberCard({
         </div>
       )}
       
-      {/* "You" badge positioned on top right */}
       {isCurrentUser && (
         <div className="absolute top-2 right-2 z-10">
           <Badge className="text-xs bg-emerald-500 text-white shadow-md px-2.5 py-0.5 font-medium">
@@ -147,7 +132,6 @@ export function MemberCard({
         </div>
       )}
       
-      {/* Avatar positioned over banner */}
       <div className="relative px-4 pb-4">
         <div className="absolute -top-8 left-1/2 -translate-x-1/2">
           <Avatar className="h-16 w-16 border-4 border-background shadow-lg">
@@ -158,7 +142,6 @@ export function MemberCard({
           </Avatar>
         </div>
         
-        {/* Member Info */}
         <div className="pt-10 text-center space-y-2">
           <button
             type="button"
@@ -172,14 +155,12 @@ export function MemberCard({
             Entrou em {format(new Date(member.joined_at), "dd/MM/yyyy", { locale: ptBR })}
           </p>
           
-          {/* Role Badge - Fixed (not editable in team context) */}
           <div className="pt-1 space-y-2">
             <Badge className={`${config.badgeColor} flex items-center gap-1 justify-center`}>
               {config.icon}
               {config.label}
             </Badge>
             
-            {/* Position Badge or Selector */}
             {canManage && positions.length > 0 ? (
               <PositionSelector
                 positions={positions}

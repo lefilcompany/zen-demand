@@ -75,7 +75,7 @@ export default function Settings() {
     disablePushNotifications 
   } = usePushNotifications();
   
-  const isAdmin = myRole === "admin";
+  const isAdmin = myRole === "owner";
   const isOnlyMember = teamMembers?.length === 1;
   const otherMembers = teamMembers?.filter(m => m.user_id !== user?.id) || [];
 
@@ -87,7 +87,7 @@ export default function Settings() {
       // Transfer admin role to selected member
       const { error: updateError } = await supabase
         .from("team_members")
-        .update({ role: "admin" })
+        .update({ role: "owner" })
         .eq("team_id", selectedTeamId)
         .eq("user_id", selectedNewAdmin);
 

@@ -200,10 +200,8 @@ export default function BoardDetail() {
   const [memberSearchOpen, setMemberSearchOpen] = useState(false);
   const memberSearchRef = useRef<HTMLInputElement>(null);
 
-  // Team admin/moderator always has management access, board role is secondary
-  const effectiveRole = myTeamRole === "admin" ? "admin" 
-    : myTeamRole === "moderator" ? "moderator" 
-    : myBoardRole;
+  // Team owner always has management access, board role is secondary
+  const effectiveRole = myTeamRole === "owner" ? "admin" : myBoardRole;
   const canManage = effectiveRole === "admin" || effectiveRole === "moderator";
   const isAdmin = effectiveRole === "admin";
   const isRequester = effectiveRole === "requester";
