@@ -87,6 +87,7 @@ export function MemberCard({
   const config = roleConfig[member.role] || roleConfig.member;
   const [promoteDialogOpen, setPromoteDialogOpen] = useState(false);
   const [demoteDialogOpen, setDemoteDialogOpen] = useState(false);
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
 
   const handleNameClick = (e: React.MouseEvent) => {
     e.stopPropagation();
