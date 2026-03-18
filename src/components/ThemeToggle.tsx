@@ -14,8 +14,8 @@ export function ThemeToggle() {
   // Prevent hydration mismatch by not rendering until mounted
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" className="relative">
-        <Sun className="h-5 w-5" />
+      <Button variant="ghost" size="icon" className="relative h-7 w-7">
+        <Sun className="h-3.5 w-3.5" />
         <span className="sr-only">Alternar tema</span>
       </Button>
     );
