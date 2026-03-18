@@ -25,7 +25,7 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { CreateBoardDialog } from "@/components/CreateBoardDialog";
 
-function BoardCard({ board }: { board: { id: string; name: string; description: string | null; is_default: boolean; monthly_demand_limit: number; team_id: string } }) {
+function BoardCard({ board }: { board: { id: string; name: string; description: string | null; monthly_demand_limit: number; team_id: string } }) {
   const navigate = useNavigate();
   const { data: members, isLoading: membersLoading } = useBoardMembers(board.id);
   const { data: role } = useBoardRole(board.id);
