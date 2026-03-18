@@ -524,10 +524,7 @@ export default function BoardDetail() {
         )}
       </div>
 
-      {/* Services - Full width */}
-      <BoardScopeConfig boardId={board.id} canEdit={canManage} />
-
-      {/* Members - Full width below */}
+      {/* Members - Full width */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between gap-3">
@@ -699,6 +696,9 @@ export default function BoardDetail() {
           )}
         </CardContent>
       </Card>
+
+      {/* Services */}
+      <BoardScopeConfig boardId={board.id} canEdit={canManage} />
     </div>
   );
 }
