@@ -448,74 +448,37 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                   <TooltipProvider>
                     {localStatuses.map((bs, index) => {
                       const isFixedStatus = isFixedBoundaryStatus(bs.status.name);
-                      const isFirstItem = index === 0;
-                      const isLastItem = index === localStatuses.length - 1;
-                      
-                      // Determine if move buttons should be disabled
-                      const canMoveUp = !isFirstItem && !isFixedStatus && !isFixedBoundaryStatus(localStatuses[index - 1]?.status.name) && !isMoving;
-                      const canMoveDown = !isLastItem && !isFixedStatus && !isFixedBoundaryStatus(localStatuses[index + 1]?.status.name) && !isMoving;
-                      
-                      // Is this item currently being moved?
-                      const isCurrentlyMoving = movingIndex === index;
-                      // Is this item the target of the move?
-                      const isTargetOfMove = (movingDirection === "up" && movingIndex === index + 1) ||
-                                             (movingDirection === "down" && movingIndex === index - 1);
+                      const isEndStatus = bs.status.name === FIXED_END_STATUS;
+                      const isDragging = dragIndex === index;
+                      const isDragOver = dragOverIndex === index && dragIndex !== index;
+                      const canDrag = !isFixedStatus && !isMoving;
                       
                       return (
                         <div
                           key={bs.id}
+                          draggable={canDrag}
+                          onDragStart={() => handleDragStart(index)}
+                          onDragOver={(e) => handleDragOver(e, index)}
+                          onDragEnd={handleDragEnd}
+                          onDrop={() => handleDrop(index)}
                           className={cn(
                             "flex items-center gap-2 p-3 rounded-lg border transition-all duration-200",
                             bs.is_active 
                               ? "bg-background" 
                               : "bg-muted/50 opacity-60",
                             isFixedStatus && "border-primary/30 bg-primary/5",
-                            isCurrentlyMoving && "scale-95 opacity-70 border-primary shadow-md",
-                            isTargetOfMove && "scale-105 opacity-90"
+                            isDragging && "opacity-40 scale-95 border-dashed",
+                            isDragOver && !isEndStatus && "border-primary shadow-md scale-[1.02]",
+                            canDrag && "cursor-grab active:cursor-grabbing"
                           )}
                         >
-                          {/* Move buttons */}
-                          <div className="flex flex-col gap-0.5">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-5 w-5"
-                                  disabled={!canMoveUp}
-                                  onClick={() => handleMoveUp(index)}
-                                >
-                                  {isCurrentlyMoving && movingDirection === "up" ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                  ) : (
-                                    <ChevronUp className="h-3 w-3" />
-                                  )}
-                                </Button>
-                              </TooltipTrigger>
-                              {isFixedStatus && (
-                                <TooltipContent>Etapa fixa</TooltipContent>
-                              )}
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-5 w-5"
-                                  disabled={!canMoveDown}
-                                  onClick={() => handleMoveDown(index)}
-                                >
-                                  {isCurrentlyMoving && movingDirection === "down" ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                  ) : (
-                                    <ChevronDown className="h-3 w-3" />
-                                  )}
-                                </Button>
-                              </TooltipTrigger>
-                              {isFixedStatus && (
-                                <TooltipContent>Etapa fixa</TooltipContent>
-                              )}
-                            </Tooltip>
+                          {/* Drag handle */}
+                          <div className={cn(
+                            "shrink-0 text-muted-foreground",
+                            isFixedStatus && "opacity-30",
+                            canDrag && "hover:text-foreground"
+                          )}>
+                            <GripVertical className="h-4 w-4" />
                           </div>
 
                           {/* Color indicator */}
