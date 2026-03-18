@@ -447,9 +447,6 @@ export default function BoardDetail() {
                 )}
               </div>
             )}
-            {board.is_default && (
-              <Badge variant="secondary" className="text-xs shrink-0">Padrão</Badge>
-            )}
           </div>
 
           {/* Editable Description */}
