@@ -103,13 +103,13 @@ export function useCreateTeam() {
 
       if (teamError) throw teamError;
 
-      // Add creator as team member with admin role
+      // Add creator as team member with owner role
       const { error: memberError } = await supabase
         .from("team_members")
         .insert({
           team_id: team.id,
           user_id: userId,
-          role: "admin" as const,
+          role: "owner" as const,
         });
 
       if (memberError) throw memberError;
