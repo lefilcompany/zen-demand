@@ -248,6 +248,16 @@ export default function TeamDetail() {
                 const positionName = member.position?.name?.toLowerCase() || "";
                 const roleLabel = roleLabels[member.role]?.toLowerCase() || "";
                 return name.includes(q) || positionName.includes(q) || roleLabel.includes(q);
+              }).sort((a, b) => {
+                // Owners first, then members
+                if (a.role === "owner" && b.role !== "owner") return -1;
+                if (a.role !== "owner" && b.role === "owner") return 1;
+                // Among non-owners, sort alphabetically by position name
+                const posA = a.position?.name?.toLowerCase() || "zzz";
+                const posB = b.position?.name?.toLowerCase() || "zzz";
+                if (posA !== posB) return posA.localeCompare(posB, "pt-BR");
+                // Same position: sort by name
+                return (a.profile?.full_name || "").localeCompare(b.profile?.full_name || "", "pt-BR");
               }).map(member => (
                 <MemberCard 
                   key={member.id} 
