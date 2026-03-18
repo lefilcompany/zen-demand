@@ -197,6 +197,8 @@ export default function BoardDetail() {
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [memberSearch, setMemberSearch] = useState("");
+  const [memberSearchOpen, setMemberSearchOpen] = useState(false);
+  const memberSearchRef = useRef<HTMLInputElement>(null);
 
   // Team admin/moderator always has management access, board role is secondary
   const effectiveRole = myTeamRole === "admin" ? "admin" 
@@ -531,38 +533,69 @@ export default function BoardDetail() {
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <Users className="h-5 w-5 shrink-0" />
-                <span className="truncate">Membros do Quadro</span>
-              </CardTitle>
-              <CardDescription className="text-sm">
-                {members?.length || 0} membros neste quadro
-              </CardDescription>
-            </div>
-            {canManage && (
-              <AddBoardMemberDialog 
-                boardId={board.id}
-                trigger={
-                  <Button size="sm" className="shrink-0">
-                    <UserPlus className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Adicionar</span>
+            <div className="min-w-0 flex-1">
+              {memberSearchOpen ? (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    ref={memberSearchRef}
+                    placeholder="Buscar por nome ou cargo..."
+                    value={memberSearch}
+                    onChange={(e) => setMemberSearch(e.target.value)}
+                    className="pl-9 h-9 pr-9"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        setMemberSearchOpen(false);
+                        setMemberSearch("");
+                      }
+                    }}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0.5 top-1/2 -translate-y-1/2 h-8 w-8"
+                    onClick={() => { setMemberSearchOpen(false); setMemberSearch(""); }}
+                  >
+                    <X className="h-4 w-4" />
                   </Button>
-                }
-              />
-            )}
-          </div>
-          {members && members.length > 3 && (
-            <div className="relative mt-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nome ou cargo..."
-                value={memberSearch}
-                onChange={(e) => setMemberSearch(e.target.value)}
-                className="pl-9 h-9"
-              />
+                </div>
+              ) : (
+                <>
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <Users className="h-5 w-5 shrink-0" />
+                    <span className="truncate">Membros do Quadro</span>
+                  </CardTitle>
+                  <CardDescription className="text-sm">
+                    {members?.length || 0} membros neste quadro
+                  </CardDescription>
+                </>
+              )}
             </div>
-          )}
+            <div className="flex items-center gap-2 shrink-0">
+              {!memberSearchOpen && members && members.length > 3 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { setMemberSearchOpen(true); setTimeout(() => memberSearchRef.current?.focus(), 50); }}
+                >
+                  <Search className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Buscar</span>
+                </Button>
+              )}
+              {canManage && (
+                <AddBoardMemberDialog 
+                  boardId={board.id}
+                  trigger={
+                    <Button size="sm" className="shrink-0">
+                      <UserPlus className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Adicionar</span>
+                    </Button>
+                  }
+                />
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {membersLoading ? (
