@@ -130,14 +130,15 @@ export function MemberCard({
                 </DropdownMenuItem>
               )}
               {onRoleChange && <DropdownMenuSeparator />}
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={() => {}}
-                disabled
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Remover da equipe
-              </DropdownMenuItem>
+              {member.role !== "owner" && (
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={() => setRemoveDialogOpen(true)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Remover da equipe
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
