@@ -317,9 +317,6 @@ export default function BoardDetail() {
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{board.name}</h1>
-            {board.is_default && (
-              <Badge variant="secondary" className="text-xs shrink-0">Padrão</Badge>
-            )}
           </div>
         </div>
 
