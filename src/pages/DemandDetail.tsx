@@ -236,22 +236,22 @@ export default function DemandDetail() {
 
   // Demandas entregues são apenas visualizáveis
   const isDeliveredStatus = demand?.status_id === deliveredStatusId;
-  const canManageAssignees = !isDeliveredStatus && (role === "admin" || role === "moderator");
-  const canEdit = !isDeliveredStatus; // Todas as roles podem editar demandas
-  const canArchive = !isDeliveredStatus; // Qualquer usuário pode arquivar demandas, exceto as entregues
-  const canChangeBoard = !isDeliveredStatus && (role === "admin" || role === "moderator");
+  const canManageAssignees = !isDeliveredStatus && (boardRole === "admin" || boardRole === "moderator");
+  const canEdit = !isDeliveredStatus;
+  const canArchive = !isDeliveredStatus;
+  const canChangeBoard = !isDeliveredStatus && (boardRole === "admin" || boardRole === "moderator");
   const isCreator = demand?.created_by === user?.id;
 
-  // Permissões de ajuste baseadas no role
-  const canRequestInternalAdjustment = demand?.status_id === approvalStatusId && (role === "admin" || role === "moderator");
-  const canRequestExternalAdjustment = demand?.status_id === approvalStatusId && role === "requester";
+  // Permissões de ajuste baseadas no boardRole
+  const canRequestInternalAdjustment = demand?.status_id === approvalStatusId && (boardRole === "admin" || boardRole === "moderator");
+  const canRequestExternalAdjustment = demand?.status_id === approvalStatusId && boardRole === "requester";
   const canRequestAdjustment = canRequestInternalAdjustment || canRequestExternalAdjustment;
   const isInProgress = demand?.status_id === fazendoStatusId;
   const isInAdjustment = demand?.status_id === adjustmentStatusId;
   const isDelivered = demand?.status_id === deliveredStatusId || demand?.status_id === approvalStatusId;
 
   // Timer control permissions (same as Kanban)
-  const canControlTimer = !isDeliveredStatus && (role === "admin" || role === "moderator" || role === "executor") && (isInProgress || isInAdjustment);
+  const canControlTimer = !isDeliveredStatus && (boardRole === "admin" || boardRole === "moderator" || boardRole === "executor") && (isInProgress || isInAdjustment);
   const filteredInteractions = useMemo(() => {
     if (!interactions) return [];
     if (interactionFilter === "all") return interactions;
