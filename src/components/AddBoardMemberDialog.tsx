@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   UserPlus, Loader2, Shield, Users, Wrench, MessageSquare, Check, Search, ShieldCheck, Zap, User, ChevronRight, ArrowLeft, CheckCheck,
@@ -52,11 +53,11 @@ const teamRoleConfig: Record<TeamRole, { label: string; badgeColor: string; bann
   },
 };
 
-const boardRoleOptions: { value: BoardRole; label: string; shortLabel: string; icon: React.ElementType }[] = [
-  { value: "admin", label: "Administrador", shortLabel: "Admin", icon: Shield },
-  { value: "moderator", label: "Coordenador", shortLabel: "Coord", icon: Users },
-  { value: "executor", label: "Agente", shortLabel: "Agente", icon: Wrench },
-  { value: "requester", label: "Solicitante", shortLabel: "Solic", icon: MessageSquare },
+const boardRoleOptions: { value: BoardRole; label: string; shortLabel: string; description: string; icon: React.ElementType }[] = [
+  { value: "admin", label: "Administrador", shortLabel: "Admin", description: "Acesso total ao quadro", icon: Shield },
+  { value: "moderator", label: "Coordenador", shortLabel: "Coord", description: "Gerenciar demandas e membros", icon: Users },
+  { value: "executor", label: "Agente", shortLabel: "Agente", description: "Executar e atualizar demandas", icon: Wrench },
+  { value: "requester", label: "Solicitante", shortLabel: "Solic", description: "Apenas visualizar e solicitar", icon: MessageSquare },
 ];
 
 interface SelectedMember {
@@ -361,29 +362,37 @@ export function AddBoardMemberDialog({ trigger, boardId: propBoardId }: AddBoard
                             </Badge>
                           </div>
                         </div>
-                        <div className="flex gap-1 shrink-0">
-                          {boardRoleOptions.map((opt) => {
-                            const Icon = opt.icon;
-                            const isActive = currentRole === opt.value;
-                            return (
-                              <button
-                                key={opt.value}
-                                type="button"
-                                onClick={() => setMemberRole(member.user_id, opt.value)}
-                                title={opt.label}
-                                className={cn(
-                                  "flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors border",
-                                  isActive
-                                    ? "border-primary bg-primary/10 text-primary"
-                                    : "border-transparent hover:bg-muted text-muted-foreground"
-                                )}
-                              >
-                                <Icon className="h-3 w-3" />
-                                <span className="hidden sm:inline">{opt.shortLabel}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
+                        <TooltipProvider delayDuration={200}>
+                          <div className="flex gap-1 shrink-0">
+                            {boardRoleOptions.map((opt) => {
+                              const Icon = opt.icon;
+                              const isActive = currentRole === opt.value;
+                              return (
+                                <Tooltip key={opt.value}>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      onClick={() => setMemberRole(member.user_id, opt.value)}
+                                      className={cn(
+                                        "flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors border",
+                                        isActive
+                                          ? "border-primary bg-primary/10 text-primary"
+                                          : "border-transparent hover:bg-muted text-muted-foreground"
+                                      )}
+                                    >
+                                      <Icon className="h-3.5 w-3.5" />
+                                      <span className="hidden sm:inline">{opt.shortLabel}</span>
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="bottom" className="max-w-[180px]">
+                                    <p className="font-semibold text-xs">{opt.label}</p>
+                                    <p className="text-[11px] text-muted-foreground">{opt.description}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              );
+                            })}
+                          </div>
+                        </TooltipProvider>
                       </div>
                     );
                   })}
@@ -395,31 +404,39 @@ export function AddBoardMemberDialog({ trigger, boardId: propBoardId }: AddBoard
             <div className="px-5 py-2 border-t bg-muted/30">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground shrink-0">Aplicar a todos:</span>
+              <TooltipProvider delayDuration={200}>
                 <div className="flex gap-1">
                   {boardRoleOptions.map((opt) => {
                     const Icon = opt.icon;
                     return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => {
-                          setSelectedMembers((prev) => {
-                            const next = new Map(prev);
-                            for (const key of next.keys()) {
-                              next.set(key, opt.value);
-                            }
-                            return next;
-                          });
-                        }}
-                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors border border-transparent hover:bg-muted text-muted-foreground hover:text-foreground"
-                        title={opt.label}
-                      >
-                        <Icon className="h-3 w-3" />
-                        {opt.shortLabel}
-                      </button>
+                      <Tooltip key={opt.value}>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedMembers((prev) => {
+                                const next = new Map(prev);
+                                for (const key of next.keys()) {
+                                  next.set(key, opt.value);
+                                }
+                                return next;
+                              });
+                            }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors border border-transparent hover:bg-muted text-muted-foreground hover:text-foreground"
+                          >
+                            <Icon className="h-3.5 w-3.5" />
+                            {opt.shortLabel}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[180px]">
+                          <p className="font-semibold text-xs">{opt.label}</p>
+                          <p className="text-[11px] text-muted-foreground">{opt.description}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     );
                   })}
                 </div>
+              </TooltipProvider>
               </div>
             </div>
 
