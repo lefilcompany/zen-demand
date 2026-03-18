@@ -117,7 +117,7 @@ export function ProtectedLayout() {
   }
 
   // Show no-boards screen when user has no boards (except profile/settings)
-  const allowedWithoutBoards = ["/profile", "/settings"];
+  const allowedWithoutBoards = ["/profile", "/settings", "/teams"];
   const isAllowedRoute = allowedWithoutBoards.some(r => location.pathname.startsWith(r));
   if (!boardsLoading && !hasBoards && !isAllowedRoute) {
     return <NoBoardsScreen />;
