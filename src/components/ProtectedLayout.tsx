@@ -3,7 +3,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { BoardSelector } from "@/components/BoardSelector";
 import { GlobalSearchBar } from "@/components/GlobalSearchBar";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { RotateCcw, LogOut, User, Users, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -44,6 +44,7 @@ import { useTranslation } from "react-i18next";
 export function ProtectedLayout() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const { isOpen, steps, closeTour, completeOnboarding, resetOnboarding, hasCompleted } = useOnboarding();
@@ -115,8 +116,10 @@ export function ProtectedLayout() {
     return <TrialExpiredBlock />;
   }
 
-  // Show no-boards screen when user has no boards
-  if (!boardsLoading && !hasBoards) {
+  // Show no-boards screen when user has no boards (except profile/settings)
+  const allowedWithoutBoards = ["/profile", "/settings"];
+  const isAllowedRoute = allowedWithoutBoards.some(r => location.pathname.startsWith(r));
+  if (!boardsLoading && !hasBoards && !isAllowedRoute) {
     return <NoBoardsScreen />;
   }
 
