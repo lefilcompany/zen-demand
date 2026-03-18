@@ -33,6 +33,9 @@ export default function TeamDetail() {
     user
   } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [memberSearch, setMemberSearch] = useState("");
+  const [memberSearchOpen, setMemberSearchOpen] = useState(false);
+  const memberSearchRef = useRef<HTMLInputElement>(null);
   const {
     data: teams,
     isLoading: teamsLoading
