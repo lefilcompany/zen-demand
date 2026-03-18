@@ -205,15 +205,17 @@ export function useAvailableTeamMembers(teamId: string | null, boardId: string |
     queryFn: async () => {
       if (!teamId || !boardId) return [];
 
-      // Get team members with their profiles
+      // Get team members with their profiles and role
       const { data: teamMembers, error: teamError } = await supabase
         .from("team_members")
         .select(`
           user_id,
+          role,
           profiles:user_id (
             id,
             full_name,
-            avatar_url
+            avatar_url,
+            job_title
           )
         `)
         .eq("team_id", teamId);
@@ -235,7 +237,10 @@ export function useAvailableTeamMembers(teamId: string | null, boardId: string |
         .filter((tm: any) => !boardMemberIds.has(tm.user_id))
         .map((tm: any) => ({
           user_id: tm.user_id,
-          ...tm.profiles,
+          full_name: tm.profiles?.full_name || "Usuário",
+          avatar_url: tm.profiles?.avatar_url || null,
+          job_title: tm.profiles?.job_title || null,
+          team_role: tm.role as string,
         }));
     },
     enabled: !!user && !!teamId && !!boardId,
