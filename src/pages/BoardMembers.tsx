@@ -125,11 +125,6 @@ export default function BoardMembers() {
           </h1>
           <p className="text-muted-foreground">
             {board.name}
-            {board.is_default && (
-              <Badge variant="outline" className="ml-2">
-                Padrão
-              </Badge>
-            )}
           </p>
         </div>
         {canManage && <AddBoardMemberDialog boardId={boardId} />}

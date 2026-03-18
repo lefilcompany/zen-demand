@@ -25,7 +25,7 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { CreateBoardDialog } from "@/components/CreateBoardDialog";
 
-function BoardCard({ board }: { board: { id: string; name: string; description: string | null; is_default: boolean; monthly_demand_limit: number; team_id: string } }) {
+function BoardCard({ board }: { board: { id: string; name: string; description: string | null; monthly_demand_limit: number; team_id: string } }) {
   const navigate = useNavigate();
   const { data: members, isLoading: membersLoading } = useBoardMembers(board.id);
   const { data: role } = useBoardRole(board.id);
@@ -34,7 +34,7 @@ function BoardCard({ board }: { board: { id: string; name: string; description: 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [confirmInput, setConfirmInput] = useState("");
 
-  const canDelete = role === "admin" && !board.is_default;
+  const canDelete = role === "admin";
   const confirmText = board.name.toUpperCase();
   const isConfirmed = confirmInput.toUpperCase() === confirmText;
 
@@ -90,9 +90,6 @@ function BoardCard({ board }: { board: { id: string; name: string; description: 
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
-            {board.is_default && (
-              <Badge variant="secondary" className="text-xs shrink-0">Padrão</Badge>
-            )}
             {role && (
               <Badge className={`text-xs shrink-0 pointer-events-none ${roleColors[role] || ""}`}>
                 {roleLabels[role] || role}

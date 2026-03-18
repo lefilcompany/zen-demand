@@ -67,11 +67,6 @@ export function BoardSelector() {
             <SelectItem key={board.id} value={board.id}>
               <div className="flex items-center gap-2">
                 <span>{board.name}</span>
-                {board.is_default && (
-                  <Badge variant="outline" className="text-xs px-1 py-0">
-                    Padrão
-                  </Badge>
-                )}
               </div>
             </SelectItem>
           ))}

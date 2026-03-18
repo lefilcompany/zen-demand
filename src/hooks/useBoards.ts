@@ -43,7 +43,6 @@ export function useBoards(teamId: string | null) {
         .from("boards")
         .select("*")
         .eq("team_id", teamId)
-        .order("is_default", { ascending: false })
         .order("name", { ascending: true });
 
       if (error) {

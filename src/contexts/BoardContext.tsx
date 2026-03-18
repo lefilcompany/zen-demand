@@ -41,8 +41,7 @@ export function BoardProvider({ children }: { children: ReactNode }) {
       const currentBoardInTeam = boards.find((b) => b.id === selectedBoardId);
 
       if (!currentBoardInTeam) {
-        // Select default board or first board
-        const defaultBoard = boards.find((b) => b.is_default) || boards[0];
+        const defaultBoard = boards[0];
         setSelectedBoardId(defaultBoard.id);
       }
     }

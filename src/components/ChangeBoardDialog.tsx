@@ -108,11 +108,6 @@ export function ChangeBoardDialog({
                       <div className="flex items-center gap-2">
                         <Kanban className="h-3.5 w-3.5 text-muted-foreground" />
                         {board.name}
-                        {board.is_default && (
-                          <Badge variant="outline" className="text-xs px-1 py-0">
-                            Padrão
-                          </Badge>
-                        )}
                       </div>
                     </SelectItem>
                   ))}
