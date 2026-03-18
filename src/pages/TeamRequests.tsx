@@ -139,6 +139,11 @@ export default function TeamRequests() {
                         </span>
                       </div>
                     </div>
+                    {request.profiles?.email && (
+                      <p className="text-sm text-muted-foreground">
+                        {request.profiles.email}
+                      </p>
+                    )}
 
                     {request.message && (
                       <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
