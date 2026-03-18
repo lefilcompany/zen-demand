@@ -18,6 +18,7 @@ export interface TeamJoinRequest {
     id: string;
     full_name: string;
     avatar_url: string | null;
+    email: string | null;
   };
   teams?: {
     id: string;
@@ -135,7 +136,7 @@ export function useTeamJoinRequests(teamId: string | null) {
         const userIds = requests.map((r) => r.user_id);
         const { data: profiles } = await supabase
           .from("profiles")
-          .select("id, full_name, avatar_url")
+          .select("id, full_name, avatar_url, email")
           .in("id", userIds);
 
         const profileMap = new Map(profiles?.map((p) => [p.id, p]) || []);

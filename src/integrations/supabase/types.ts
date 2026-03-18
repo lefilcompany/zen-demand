@@ -1522,6 +1522,7 @@ export type Database = {
           bio: string | null
           city: string | null
           created_at: string
+          email: string | null
           full_name: string
           github_url: string | null
           id: string
@@ -1540,6 +1541,7 @@ export type Database = {
           bio?: string | null
           city?: string | null
           created_at?: string
+          email?: string | null
           full_name: string
           github_url?: string | null
           id: string
@@ -1558,6 +1560,7 @@ export type Database = {
           bio?: string | null
           city?: string | null
           created_at?: string
+          email?: string | null
           full_name?: string
           github_url?: string | null
           id?: string
