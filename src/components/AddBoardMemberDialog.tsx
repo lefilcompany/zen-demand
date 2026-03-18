@@ -404,31 +404,39 @@ export function AddBoardMemberDialog({ trigger, boardId: propBoardId }: AddBoard
             <div className="px-5 py-2 border-t bg-muted/30">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground shrink-0">Aplicar a todos:</span>
+              <TooltipProvider delayDuration={200}>
                 <div className="flex gap-1">
                   {boardRoleOptions.map((opt) => {
                     const Icon = opt.icon;
                     return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => {
-                          setSelectedMembers((prev) => {
-                            const next = new Map(prev);
-                            for (const key of next.keys()) {
-                              next.set(key, opt.value);
-                            }
-                            return next;
-                          });
-                        }}
-                        className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors border border-transparent hover:bg-muted text-muted-foreground hover:text-foreground"
-                        title={opt.label}
-                      >
-                        <Icon className="h-3 w-3" />
-                        {opt.shortLabel}
-                      </button>
+                      <Tooltip key={opt.value}>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedMembers((prev) => {
+                                const next = new Map(prev);
+                                for (const key of next.keys()) {
+                                  next.set(key, opt.value);
+                                }
+                                return next;
+                              });
+                            }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors border border-transparent hover:bg-muted text-muted-foreground hover:text-foreground"
+                          >
+                            <Icon className="h-3.5 w-3.5" />
+                            {opt.shortLabel}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[180px]">
+                          <p className="font-semibold text-xs">{opt.label}</p>
+                          <p className="text-[11px] text-muted-foreground">{opt.description}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     );
                   })}
                 </div>
+              </TooltipProvider>
               </div>
             </div>
 
