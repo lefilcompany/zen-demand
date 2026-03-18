@@ -121,9 +121,9 @@ export function useAddBoardServices() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, { boardId }) => {
-      queryClient.invalidateQueries({ queryKey: ["board-services", boardId] });
-      queryClient.invalidateQueries({ queryKey: ["board-services-usage", boardId] });
+    onSuccess: async (_, { boardId }) => {
+      await queryClient.invalidateQueries({ queryKey: ["board-services", boardId] });
+      await queryClient.invalidateQueries({ queryKey: ["board-services-usage", boardId] });
     },
   });
 }
