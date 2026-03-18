@@ -232,7 +232,7 @@ export function AppSidebar() {
                       {(!isCollapsed || isMobile) && (
                         <>
                           <div className="flex-1 text-left min-w-0">
-                            <span className="text-sm font-medium text-sidebar-foreground block">Equipe</span>
+                            <span className="text-sm font-medium text-sidebar-foreground block truncate">{currentTeam?.name || "Equipe"}</span>
                             {subscription?.plan?.name && (
                               <span className="text-[11px] text-muted-foreground truncate block">{subscription.plan.name}</span>
                             )}
