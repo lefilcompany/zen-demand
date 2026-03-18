@@ -1,29 +1,50 @@
 
-## Problem Analysis
 
-When a user opens the app in a new tab, the "remember me" logic in `src/lib/auth.tsx` (lines 92-158) calls `supabase.auth.signOut()` **globally** — this invalidates the session in localStorage, which triggers a `SIGNED_OUT` event on ALL other open tabs, logging the user out everywhere.
+## Plan: Redesign AddBoardMemberDialog
 
-The root cause is two-fold:
-1. `sessionStorage` is per-tab, so each new tab sees `sessionChecked` as missing and treats itself as a "fresh browser session"
-2. `supabase.auth.signOut()` defaults to `scope: 'global'`, which revokes the session server-side and clears localStorage, affecting all tabs
+### What changes
 
-## Solution
+**1. Update `useAvailableTeamMembers` hook** (`src/hooks/useBoardMembers.ts`)
+- Expand the `profiles` select to include `job_title`
+- Also select `role` from `team_members` to show the team role
+- Return `job_title` and `role` alongside existing fields
 
-### 1. Fix the "remember me" session check (src/lib/auth.tsx)
+**2. Rewrite `AddBoardMemberDialog`** (`src/components/AddBoardMemberDialog.tsx`)
+- Make dialog wider: `max-w-2xl` (matching AssigneeSelector style)
+- Add search input with Search icon to filter by name or job_title
+- Replace simple list items with card-style layout matching AssigneeSelector:
+  - Colored gradient banner based on team role
+  - Centered avatar overlapping the banner
+  - Name, job title, and role badge
+  - Selection checkmark indicator
+- Use `useMemo` for filtered members
+- Grid layout: `grid-cols-2 sm:grid-cols-3`
+- Keep the role selector (RadioGroup) at the bottom when a member is selected, inside a collapsible border-t section
+- Keep existing submit logic unchanged
 
-- Change `supabase.auth.signOut()` on line 152 to use `scope: 'local'` — this only clears the session from the current tab's perspective without invalidating the refresh token server-side or affecting other tabs
-- Add cross-tab synchronization via the `storage` event listener so that if one tab signs in/out intentionally, other tabs react properly
-- Ensure the `onAuthStateChange` handler properly syncs state when receiving cross-tab events
+### Visual structure
 
-### 2. Ensure intentional logout remains global (src/lib/auth.tsx)
+```text
+┌─────────────────────────────────────────┐
+│ Adicionar Membro ao Quadro              │
+│ Selecione um membro...                  │
+│ ┌─────────────────────────────────────┐ │
+│ │ 🔍 Buscar por nome ou cargo...      │ │
+│ └─────────────────────────────────────┘ │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐ │
+│ │▓▓banner▓▓│ │▓▓banner▓▓│ │▓▓banner▓▓│ │
+│ │  (avatar) │ │  (avatar) │ │  (avatar) │ │
+│ │   Name    │ │   Name    │ │   Name    │ │
+│ │  job_title│ │  job_title│ │  job_title│ │
+│ │ [badge]   │ │ [badge]   │ │ [badge]   │ │
+│ └──────────┘ └──────────┘ └──────────┘ │
+│ ─────────────────────────────────────── │
+│ Cargo no Quadro: [admin][coord][ag][sol]│
+│ ─────────────────────────────────────── │
+│              [Cancelar] [Adicionar]     │
+└─────────────────────────────────────────┘
+```
 
-- The explicit `signOut()` function (user clicks "Sair da Conta") should keep using the default `scope: 'global'` so it properly logs out everywhere — this is the desired behavior for intentional logout
+### Styling reference
+Reuse the same `roleConfig` pattern from `AssigneeSelector.tsx` with gradient banners, badge colors, and icons per role.
 
-### Changes Summary
-
-**File: `src/lib/auth.tsx`**
-- Line 152: Change `supabase.auth.signOut()` → `supabase.auth.signOut({ scope: 'local' })` so the "remember me" check doesn't kill sessions in other tabs
-- Add a `window.addEventListener('storage', ...)` listener that detects when the Supabase auth key changes in localStorage (from another tab signing in) and re-syncs the session via `getSession()` — this ensures new logins in other tabs are reflected without causing logout
-- On the `SIGNED_OUT` event from `onAuthStateChange`, only navigate to `/auth` if the event originated from the current tab (not a cross-tab storage sync)
-
-This is a minimal, targeted fix that preserves the existing "remember me" behavior while allowing multiple tabs to coexist with the same authenticated session.
