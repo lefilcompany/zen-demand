@@ -114,6 +114,12 @@ export function ProtectedLayout() {
     return <TrialExpiredBlock />;
   }
 
+  // Show no-boards screen when user has no boards
+  const { hasBoards, isLoading: boardsLoading } = useSelectedBoard();
+  if (!boardsLoading && !hasBoards) {
+    return <NoBoardsScreen />;
+  }
+
   return (
     <SidebarProvider defaultOpen={defaultSidebarOpen} key={isTablet ? "tablet" : "desktop"}>
       <div className="flex h-[100dvh] w-full bg-sidebar p-2 md:p-3 overflow-hidden">
