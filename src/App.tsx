@@ -87,6 +87,7 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <AuthProvider>
             <PresenceProvider>
               <TeamProvider>
