@@ -819,7 +819,7 @@ export default function DemandDetail() {
                         Solicitar Ajuste
                       </DialogTitle>
                       <DialogDescription>
-                        {role === 'requester' ? "Descreva o que precisa ser ajustado nesta demanda. A equipe receberá sua solicitação." : "Descreva o ajuste necessário nesta demanda."}
+                        {boardRole === 'requester' ? "Descreva o que precisa ser ajustado nesta demanda. A equipe receberá sua solicitação." : "Descreva o ajuste necessário nesta demanda."}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
