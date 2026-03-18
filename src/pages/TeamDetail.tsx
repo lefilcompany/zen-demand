@@ -260,6 +260,8 @@ export default function TeamDetail() {
                   positions={positions || []}
                   onPositionChange={handlePositionChange}
                   isChangingPosition={assignPosition.isPending}
+                  onRoleChange={canManage ? handleRoleChange : undefined}
+                  isChangingRole={updateMemberRole.isPending}
                 />
               ))}
             </div> : <p className="text-center text-muted-foreground py-8">
