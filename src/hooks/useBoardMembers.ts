@@ -79,7 +79,7 @@ export function useBoardRole(boardId: string | null) {
         .maybeSingle();
 
       if (error) throw error;
-      return data?.role as BoardRole | null;
+      return (data?.role as BoardRole) ?? null;
     },
     enabled: !!user && !!boardId,
   });
