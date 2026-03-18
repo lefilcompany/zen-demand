@@ -1,7 +1,7 @@
 import { useAuth } from "@/lib/auth";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useIsTeamAdmin } from "@/hooks/useTeamRole";
-import { Bell, LogOut, LayoutGrid } from "lucide-react";
+import { Bell, LogOut, LayoutGrid, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
