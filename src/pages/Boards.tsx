@@ -34,7 +34,7 @@ function BoardCard({ board }: { board: { id: string; name: string; description: 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [confirmInput, setConfirmInput] = useState("");
 
-  const canDelete = role === "admin" && !board.is_default;
+  const canDelete = role === "admin";
   const confirmText = board.name.toUpperCase();
   const isConfirmed = confirmInput.toUpperCase() === confirmText;
 
