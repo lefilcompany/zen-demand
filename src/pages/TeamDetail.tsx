@@ -77,6 +77,16 @@ export default function TeamDetail() {
       }
     );
   };
+
+  const handleRoleChange = (memberId: string, newRole: "owner" | "member") => {
+    updateMemberRole.mutate(
+      { memberId, newRole },
+      {
+        onSuccess: () => toast.success(newRole === "owner" ? "Membro promovido a Dono!" : "Membro rebaixado!"),
+        onError: (error: any) => toast.error(getErrorMessage(error)),
+      }
+    );
+  };
   const handleCopyCode = () => {
     if (team?.access_code) {
       navigator.clipboard.writeText(team.access_code);
