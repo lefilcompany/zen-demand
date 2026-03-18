@@ -112,7 +112,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const { data: demandCounts } = useBoardDemandCounts(boardId);
   
   const toggleStatus = useToggleBoardStatus();
-  const updatePositions = useUpdateBoardStatusPositions();
+  const updatePositions = useUpdateBoardStatusPositions(); // kept for type imports
   const addStatus = useAddBoardStatus();
   const deleteStatus = useDeleteBoardStatus();
   const createCustomStatus = useCreateCustomStatus();
