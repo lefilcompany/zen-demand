@@ -5,6 +5,7 @@ import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { usePendingRequestsCount as usePendingDemandRequestsCount, useReturnedRequestsCount } from "@/hooks/useDemandRequests";
 import { usePendingRequestsCount as usePendingJoinRequestsCount } from "@/hooks/useTeamJoinRequests";
 import { useTeamRole } from "@/hooks/useTeamRole";
@@ -208,39 +209,53 @@ export function AppSidebar() {
 {/* Equipe - Dropdown style like reference image */}
               <SidebarMenuItem data-tour="teams-link">
                 <DropdownMenu open={popoverOpen} onOpenChange={setPopoverOpen}>
-<DropdownMenuTrigger asChild>
-                    <button 
-                      className={`
-                        flex items-center transition-all duration-200
-                        focus:outline-none focus:ring-2 focus:ring-primary/20
-                        ${isCollapsed && !isMobile 
-                          ? `w-10 h-10 justify-center rounded-full border border-sidebar-border/50 hover:border-primary/40 hover:bg-primary/10 ${popoverOpen ? 'bg-primary/15 border-primary/40 ring-2 ring-primary/20' : ''}`
-                          : `w-full gap-3 p-2.5 rounded-xl border border-sidebar-border/50 hover:border-primary/30 hover:bg-sidebar-accent/50 ${popoverOpen ? 'bg-sidebar-accent/50 border-primary/30' : ''}`
-                        }
-                      `}
-                    >
-                      <div className={`
-                        flex items-center justify-center bg-gradient-to-br from-primary/25 to-primary/10 
-                        ${isCollapsed && !isMobile 
-                          ? 'h-7 w-7 rounded-full' 
-                          : 'h-8 w-8 rounded-full ring-1 ring-primary/20'
-                        }
-                      `}>
-                        <Users className={`text-primary ${isCollapsed && !isMobile ? 'h-3.5 w-3.5' : 'h-4 w-4'}`} />
-                      </div>
-                      {(!isCollapsed || isMobile) && (
-                        <>
-                          <div className="flex-1 text-left min-w-0">
-                            <span className="text-sm font-medium text-sidebar-foreground block">Equipe</span>
-                            {subscription?.plan?.name && (
-                              <span className="text-[11px] text-muted-foreground truncate block">{subscription.plan.name}</span>
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                          <button 
+                            className={`
+                              flex items-center transition-all duration-200
+                              focus:outline-none focus:ring-2 focus:ring-primary/20
+                              ${isCollapsed && !isMobile 
+                                ? `w-10 h-10 justify-center rounded-full border border-sidebar-border/50 hover:border-primary/40 hover:bg-primary/10 ${popoverOpen ? 'bg-primary/15 border-primary/40 ring-2 ring-primary/20' : ''}`
+                                : `w-full gap-3 p-2.5 rounded-xl border border-sidebar-border/50 hover:border-primary/30 hover:bg-sidebar-accent/50 ${popoverOpen ? 'bg-sidebar-accent/50 border-primary/30' : ''}`
+                              }
+                            `}
+                          >
+                            <div className={`
+                              flex items-center justify-center bg-gradient-to-br from-primary/25 to-primary/10 
+                              ${isCollapsed && !isMobile 
+                                ? 'h-7 w-7 rounded-full' 
+                                : 'h-8 w-8 rounded-full ring-1 ring-primary/20'
+                              }
+                            `}>
+                              <Users className={`text-primary ${isCollapsed && !isMobile ? 'h-3.5 w-3.5' : 'h-4 w-4'}`} />
+                            </div>
+                            {(!isCollapsed || isMobile) && (
+                              <>
+                                <div className="flex-1 text-left min-w-0">
+                                  <span className="text-sm font-medium text-sidebar-foreground block truncate">{currentTeam?.name || "Equipe"}</span>
+                                  {subscription?.plan?.name && (
+                                    <span className="text-[11px] text-muted-foreground truncate block">{subscription.plan.name}</span>
+                                  )}
+                                </div>
+                                <ChevronUp className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${popoverOpen ? '' : 'rotate-180'}`} />
+                              </>
                             )}
-                          </div>
-                          <ChevronUp className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${popoverOpen ? '' : 'rotate-180'}`} />
-                        </>
+                          </button>
+                        </DropdownMenuTrigger>
+                      </TooltipTrigger>
+                      {isCollapsed && !isMobile && !popoverOpen && (
+                        <TooltipContent side="right">
+                          <p className="font-medium">{currentTeam?.name || "Equipe"}</p>
+                          {subscription?.plan?.name && (
+                            <p className="text-xs text-muted-foreground">{subscription.plan.name}</p>
+                          )}
+                        </TooltipContent>
                       )}
-                    </button>
-                  </DropdownMenuTrigger>
+                    </Tooltip>
+                  </TooltipProvider>
                   <DropdownMenuContent 
                     side="top" 
                     align={isCollapsed && !isMobile ? "center" : "start"}
@@ -253,7 +268,7 @@ export function AppSidebar() {
                         <Users className="h-5 w-5 text-primary" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">Equipe</span>
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">{currentTeam?.name || "Equipe"}</span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">Gerenciamento</span>
                       </div>
                     </div>
