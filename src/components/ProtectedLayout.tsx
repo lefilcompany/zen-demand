@@ -44,6 +44,7 @@ import { useTranslation } from "react-i18next";
 export function ProtectedLayout() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const { isOpen, steps, closeTour, completeOnboarding, resetOnboarding, hasCompleted } = useOnboarding();
