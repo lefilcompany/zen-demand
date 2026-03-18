@@ -12,8 +12,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Trash2, Crown, User } from "lucide-react";
+import { Trash2, Crown, User, MoreVertical, ShieldCheck } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { TeamMember } from "@/hooks/useTeamMembers";
@@ -21,6 +28,7 @@ import { TeamRole } from "@/hooks/useTeamRole";
 import { PositionBadge } from "@/components/PositionBadge";
 import { PositionSelector } from "@/components/PositionSelector";
 import { TeamPosition } from "@/hooks/useTeamPositions";
+import { useState } from "react";
 
 interface MemberCardProps {
   member: TeamMember;
@@ -32,6 +40,8 @@ interface MemberCardProps {
   positions?: TeamPosition[];
   onPositionChange?: (memberId: string, positionId: string | null) => void;
   isChangingPosition?: boolean;
+  onRoleChange?: (memberId: string, newRole: "owner" | "member") => void;
+  isChangingRole?: boolean;
 }
 
 const roleConfig: Record<TeamRole, { label: string; badgeColor: string; bannerColor: string; icon: React.ReactNode }> = {
@@ -68,11 +78,15 @@ export function MemberCard({
   positions = [],
   onPositionChange,
   isChangingPosition = false,
+  onRoleChange,
+  isChangingRole = false,
 }: MemberCardProps) {
   const navigate = useNavigate();
   const isCurrentUser = member.user_id === currentUserId;
-  const canModify = isAdmin && !isCurrentUser && member.role !== "owner";
+  const canModify = isAdmin && !isCurrentUser;
   const config = roleConfig[member.role] || roleConfig.member;
+  const [promoteDialogOpen, setPromoteDialogOpen] = useState(false);
+  const [demoteDialogOpen, setDemoteDialogOpen] = useState(false);
 
   const handleNameClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -90,38 +104,90 @@ export function MemberCard({
       <div className={`h-14 bg-gradient-to-r ${config.bannerColor}`} />
       
       {canModify && (
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button
                 variant="secondary"
                 size="icon"
-                className="h-7 w-7 bg-background/80 hover:bg-background text-destructive hover:text-destructive"
-                disabled={isRemoving}
+                className="h-7 w-7 bg-background/80 hover:bg-background"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <MoreVertical className="h-3.5 w-3.5" />
               </Button>
-            </AlertDialogTrigger>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {onRoleChange && member.role === "member" && (
+                <DropdownMenuItem onClick={() => setPromoteDialogOpen(true)}>
+                  <Crown className="h-4 w-4 mr-2 text-amber-500" />
+                  Promover a Dono
+                </DropdownMenuItem>
+              )}
+              {onRoleChange && member.role === "owner" && (
+                <DropdownMenuItem onClick={() => setDemoteDialogOpen(true)}>
+                  <User className="h-4 w-4 mr-2" />
+                  Rebaixar a Membro
+                </DropdownMenuItem>
+              )}
+              {onRoleChange && <DropdownMenuSeparator />}
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => {}}
+                disabled
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Remover da equipe
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
+
+      {/* Remove confirmation - triggered from dropdown */}
+      {canModify && (
+        <>
+          <AlertDialog open={promoteDialogOpen} onOpenChange={setPromoteDialogOpen}>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Remover membro</AlertDialogTitle>
+                <AlertDialogTitle>Promover a Dono</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Tem certeza que deseja remover <strong>{member.profile.full_name}</strong> da equipe? 
-                  Esta ação não pode ser desfeita.
+                  Tem certeza que deseja promover <strong>{member.profile.full_name}</strong> a Dono da equipe?
+                  Donos podem gerenciar membros, quadros, cargos e aceitar solicitações.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => onRemove(member.id)}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={() => onRoleChange?.(member.id, "owner")}
+                  disabled={isChangingRole}
                 >
-                  Remover
+                  Promover
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        </div>
+
+          <AlertDialog open={demoteDialogOpen} onOpenChange={setDemoteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Rebaixar a Membro</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tem certeza que deseja rebaixar <strong>{member.profile.full_name}</strong> a Membro?
+                  Membros não podem gerenciar a equipe ou aceitar solicitações.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => onRoleChange?.(member.id, "member")}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  disabled={isChangingRole}
+                >
+                  Rebaixar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
       )}
       
       {isCurrentUser && (
