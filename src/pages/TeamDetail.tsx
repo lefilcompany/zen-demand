@@ -60,6 +60,13 @@ export default function TeamDetail() {
   const team = teams?.find(t => t.id === id);
   const canManage = role === "admin" || role === "moderator";
 
+  const roleLabels: Record<string, string> = {
+    admin: "Administrador",
+    moderator: "Coordenador",
+    executor: "Agente",
+    requester: "Solicitante",
+  };
+
   const handlePositionChange = (memberId: string, positionId: string | null) => {
     assignPosition.mutate(
       { memberId, positionId },
