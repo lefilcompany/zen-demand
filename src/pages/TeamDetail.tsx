@@ -174,19 +174,70 @@ export default function TeamDetail() {
       {/* Members List */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Membros da Equipe
-          </CardTitle>
-          <CardDescription>
-            {isAdmin ? "Como administrador, você pode alterar papéis e remover membros." : "Visualize os membros da equipe e seus papéis."}
-          </CardDescription>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Membros da Equipe
+              </CardTitle>
+              <CardDescription>
+                {isAdmin ? "Como administrador, você pode alterar papéis e remover membros." : "Visualize os membros da equipe e seus papéis."}
+              </CardDescription>
+            </div>
+            {members && members.length > 3 && (
+              <div className="shrink-0">
+                {memberSearchOpen ? (
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      ref={memberSearchRef}
+                      placeholder="Buscar por nome ou cargo..."
+                      value={memberSearch}
+                      onChange={(e) => setMemberSearch(e.target.value)}
+                      className="pl-9 h-9 pr-8 w-[200px] sm:w-[260px]"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setMemberSearchOpen(false);
+                          setMemberSearch("");
+                        }
+                      }}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8"
+                      onClick={() => { setMemberSearchOpen(false); setMemberSearch(""); }}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setMemberSearchOpen(true); setTimeout(() => memberSearchRef.current?.focus(), 50); }}
+                  >
+                    <Search className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Buscar</span>
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {membersLoading ? <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-40 rounded-xl" />)}
             </div> : members && members.length > 0 ? <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {members.map(member => (
+              {members.filter((member) => {
+                if (!memberSearch.trim()) return true;
+                const q = memberSearch.toLowerCase();
+                const name = member.profile?.full_name?.toLowerCase() || "";
+                const positionName = member.position?.name?.toLowerCase() || "";
+                const roleLabel = roleLabels[member.role]?.toLowerCase() || "";
+                return name.includes(q) || positionName.includes(q) || roleLabel.includes(q);
+              }).map(member => (
                 <MemberCard 
                   key={member.id} 
                   member={member} 
