@@ -301,7 +301,7 @@ export default function DemandDetail() {
 
     // Auto-determine adjustment type based on user role
     // Requesters = external, everyone else (admin, moderator, executor) = internal
-    const determinedAdjustmentType: "internal" | "external" = role === 'requester' ? 'external' : 'internal';
+    const determinedAdjustmentType: "internal" | "external" = boardRole === 'requester' ? 'external' : 'internal';
     const isInternal = determinedAdjustmentType === "internal";
     const typeLabel = isInternal ? "Ajuste Interno" : "Ajuste Externo";
     try {
