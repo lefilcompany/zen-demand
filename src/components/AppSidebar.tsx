@@ -276,7 +276,7 @@ export function AppSidebar() {
                     <DropdownMenuSeparator className="my-2" />
                     
                     {/* Menu items with icons */}
-                    {(isTeamAdminOrModerator || isBoardAdminOrModerator) && (
+                    {isTeamAdminOrModerator && (
                       <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
                         <NavLink 
                           to="/team-demands" 
@@ -317,7 +317,7 @@ export function AppSidebar() {
                       </DropdownMenuItem>
                     )}
                     
-                    {(isTeamAdminOrModerator || isBoardAdminOrModerator) && selectedTeamId && (
+                    {isTeamAdminOrModerator && selectedTeamId && (
                       <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
                         <NavLink 
                           to={`/teams/${selectedTeamId}/services`} 
@@ -331,7 +331,7 @@ export function AppSidebar() {
                       </DropdownMenuItem>
                     )}
                     
-                    {(isTeamAdminOrModerator || isBoardAdminOrModerator) && selectedTeamId && (
+                    {isTeamAdminOrModerator && selectedTeamId && (
                       <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
                         <NavLink 
                           to={`/teams/${selectedTeamId}/requests`} 
