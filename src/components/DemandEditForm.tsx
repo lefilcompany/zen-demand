@@ -39,7 +39,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
   const setAssignees = useSetAssignees();
   const { data: statuses } = useDemandStatuses();
   const { data: currentAssignees } = useDemandAssignees(demand.id);
-  const { data: role } = useTeamRole(demand.team_id);
+  const { data: boardRole } = useBoardRole(demand.board_id);
 
   // Recurring demands
   const { data: recurringDemands } = useRecurringDemands(demand.board_id);
