@@ -331,7 +331,7 @@ export function AppSidebar() {
                       </DropdownMenuItem>
                     )}
                     
-                    {isTeamAdminOrModerator && selectedTeamId && (
+                    {(isTeamAdminOrModerator || isBoardAdminOrModerator) && selectedTeamId && (
                       <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
                         <NavLink 
                           to={`/teams/${selectedTeamId}/requests`} 
