@@ -42,10 +42,18 @@ export function SidebarSubscriptionCard() {
   // Has active subscription - show current plan
   if (subscription?.status === "active" && subscription.plan) {
     if (!showText) {
-      return <button onClick={handleClick} className="group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/70 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300" title={subscription.plan.name}>
-          <Crown className="h-5 w-5 text-primary-foreground" />
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-white/0 via-white/10 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-        </button>;
+      return <Tooltip>
+          <TooltipTrigger asChild>
+            <button onClick={handleClick} className="group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/70 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300">
+              <Crown className="h-5 w-5 text-primary-foreground" />
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-white/0 via-white/10 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p className="font-medium">{subscription.plan.name}</p>
+            <p className="text-xs text-muted-foreground">Plano ativo</p>
+          </TooltipContent>
+        </Tooltip>;
     }
     return <button onClick={handleClick} className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary/95 to-primary/80 p-[1px] shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
