@@ -276,7 +276,7 @@ export function AppSidebar() {
                     <DropdownMenuSeparator className="my-2" />
                     
                     {/* Menu items with icons */}
-                    {isTeamAdminOrModerator && (
+                    {(isTeamAdminOrModerator || isBoardAdminOrModerator) && (
                       <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
                         <NavLink 
                           to="/team-demands" 
