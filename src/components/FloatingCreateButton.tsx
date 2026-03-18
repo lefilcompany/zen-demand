@@ -5,6 +5,8 @@ import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
 import { Button } from "@/components/ui/button";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeamRole } from "@/hooks/useTeamRole";
+import { useSelectedBoardSafe } from "@/contexts/BoardContext";
+import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CreateBoardDialog } from "@/components/CreateBoardDialog";
 
@@ -15,6 +17,8 @@ export function FloatingCreateButton() {
   const location = useLocation();
   const { selectedTeamId } = useSelectedTeam();
   const { data: role } = useTeamRole(selectedTeamId);
+  const { selectedBoardId } = useSelectedBoardSafe();
+  const { data: bRole } = useBoardRole(selectedBoardId);
   const isMobile = useIsMobile();
 
   if (!isMobile || !selectedTeamId) return null;
