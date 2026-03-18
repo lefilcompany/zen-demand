@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Settings, ChevronUp, ChevronDown, Trash2, Plus, Loader2 } from "lucide-react";
+import { Settings, GripVertical, Trash2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -104,15 +104,15 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const [newStatusAdjustmentType, setNewStatusAdjustmentType] = useState<AdjustmentType>("none");
   const [localStatuses, setLocalStatuses] = useState<BoardStatus[]>([]);
   const [isMoving, setIsMoving] = useState(false);
-  const [movingIndex, setMovingIndex] = useState<number | null>(null);
-  const [movingDirection, setMovingDirection] = useState<"up" | "down" | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const { data: boardStatuses, isLoading } = useAllBoardStatuses(boardId);
   const { data: availableStatuses } = useAvailableStatuses();
   const { data: demandCounts } = useBoardDemandCounts(boardId);
   
   const toggleStatus = useToggleBoardStatus();
-  const updatePositions = useUpdateBoardStatusPositions();
+  const updatePositions = useUpdateBoardStatusPositions(); // kept for type imports
   const addStatus = useAddBoardStatus();
   const deleteStatus = useDeleteBoardStatus();
   const createCustomStatus = useCreateCustomStatus();
@@ -151,109 +151,78 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
     }
   };
 
-  const handleMoveUp = useCallback(async (index: number) => {
-    // Cannot move first item, fixed boundary statuses, or if already moving
-    if (index === 0 || isMoving) return;
+  const handleDragStart = (index: number) => {
+    const status = localStatuses[index];
+    if (isFixedBoundaryStatus(status.status.name)) return;
+    setDragIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    const targetStatus = localStatuses[index];
+    if (isFixedBoundaryStatus(targetStatus.status.name) && targetStatus.status.name === FIXED_END_STATUS) return;
+    setDragOverIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = useCallback(async (targetIndex: number) => {
+    if (dragIndex === null || dragIndex === targetIndex || isMoving) return;
     
-    const currentStatus = localStatuses[index];
-    const targetStatus = localStatuses[index - 1];
+    const draggedStatus = localStatuses[dragIndex];
+    const targetStatus = localStatuses[targetIndex];
     
-    // Prevent moving into or out of fixed positions
-    if (isFixedBoundaryStatus(currentStatus.status.name) || isFixedBoundaryStatus(targetStatus.status.name)) {
-      toast.error("Esta etapa não pode ser movida");
+    if (isFixedBoundaryStatus(draggedStatus.status.name) || 
+        (isFixedBoundaryStatus(targetStatus.status.name) && targetStatus.status.name === FIXED_END_STATUS)) {
+      setDragIndex(null);
+      setDragOverIndex(null);
       return;
     }
-    
-    setIsMoving(true);
-    setMovingIndex(index);
-    setMovingDirection("up");
-    
-    try {
-      // Call backend FIRST (pessimistic update)
-      await updatePositions.mutateAsync({
-        swapPair: {
-          fromId: currentStatus.id,
-          fromPosition: currentStatus.position,
-          toId: targetStatus.id,
-          toPosition: targetStatus.position,
-        },
-        boardId,
-      });
 
-      // Force immediate refetch so the Kanban columns update even while this sheet is open
+    setIsMoving(true);
+
+    // Reorder locally
+    const newStatuses = [...localStatuses];
+    const [removed] = newStatuses.splice(dragIndex, 1);
+    newStatuses.splice(targetIndex, 0, removed);
+
+    // Reassign positions (skip the fixed end status at the last position)
+    const updatedStatuses = newStatuses.map((s, i) => ({ ...s, position: i }));
+    setLocalStatuses(updatedStatuses);
+
+    try {
+      // Persist all position changes
+      const updates = updatedStatuses.map((s) =>
+        supabase.from("board_statuses").update({ position: s.position }).eq("id", s.id)
+      );
+      const results = await Promise.all(updates);
+      const failed = results.find((r) => r.error);
+      if (failed?.error) throw failed.error;
+
       await Promise.all([
         queryClient.refetchQueries({ queryKey: ["board-statuses", boardId] }),
         queryClient.refetchQueries({ queryKey: ["board-statuses-all", boardId] }),
       ]);
-      
-      // Only update UI after backend confirms (and keep local position fields in sync)
-      const newStatuses = [...localStatuses];
-      const current = newStatuses[index];
-      const target = newStatuses[index - 1];
-      newStatuses[index - 1] = { ...current, position: target.position };
-      newStatuses[index] = { ...target, position: current.position };
-      setLocalStatuses(newStatuses);
     } catch (error) {
       toast.error("Erro ao reordenar etapas");
-      // UI was never changed, no rollback needed
+      // Revert
+      if (boardStatuses) {
+        const sorted = [...boardStatuses].sort((a, b) => {
+          if (a.status.name === FIXED_END_STATUS) return 1;
+          if (b.status.name === FIXED_END_STATUS) return -1;
+          return a.position - b.position;
+        });
+        setLocalStatuses(sorted);
+      }
     } finally {
       setIsMoving(false);
-      setMovingIndex(null);
-      setMovingDirection(null);
+      setDragIndex(null);
+      setDragOverIndex(null);
     }
-  }, [localStatuses, isMoving, boardId, updatePositions]);
-
-  const handleMoveDown = useCallback(async (index: number) => {
-    // Cannot move last item, fixed boundary statuses, or if already moving
-    if (index === localStatuses.length - 1 || isMoving) return;
-    
-    const currentStatus = localStatuses[index];
-    const targetStatus = localStatuses[index + 1];
-    
-    // Prevent moving into or out of fixed positions
-    if (isFixedBoundaryStatus(currentStatus.status.name) || isFixedBoundaryStatus(targetStatus.status.name)) {
-      toast.error("Esta etapa não pode ser movida");
-      return;
-    }
-    
-    setIsMoving(true);
-    setMovingIndex(index);
-    setMovingDirection("down");
-    
-    try {
-      // Call backend FIRST (pessimistic update)
-      await updatePositions.mutateAsync({
-        swapPair: {
-          fromId: currentStatus.id,
-          fromPosition: currentStatus.position,
-          toId: targetStatus.id,
-          toPosition: targetStatus.position,
-        },
-        boardId,
-      });
-
-      // Force immediate refetch so the Kanban columns update even while this sheet is open
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: ["board-statuses", boardId] }),
-        queryClient.refetchQueries({ queryKey: ["board-statuses-all", boardId] }),
-      ]);
-      
-      // Only update UI after backend confirms (and keep local position fields in sync)
-      const newStatuses = [...localStatuses];
-      const current = newStatuses[index];
-      const target = newStatuses[index + 1];
-      newStatuses[index] = { ...target, position: current.position };
-      newStatuses[index + 1] = { ...current, position: target.position };
-      setLocalStatuses(newStatuses);
-    } catch (error) {
-      toast.error("Erro ao reordenar etapas");
-      // UI was never changed, no rollback needed
-    } finally {
-      setIsMoving(false);
-      setMovingIndex(null);
-      setMovingDirection(null);
-    }
-  }, [localStatuses, isMoving, boardId, updatePositions]);
+  }, [dragIndex, localStatuses, isMoving, boardId, boardStatuses, queryClient]);
 
   const handleAddStatus = async (statusId: string) => {
     const maxPosition = localStatuses.reduce((max, s) => Math.max(max, s.position), -1);
@@ -352,7 +321,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
           <SheetHeader>
             <SheetTitle>Gerenciar Etapas do Kanban</SheetTitle>
             <SheetDescription>
-              Configure as etapas visíveis neste quadro. Reordene, ative/desative ou adicione novas etapas.
+              Configure as etapas visíveis neste quadro. Arraste para reordenar, ative/desative ou adicione novas etapas.
             </SheetDescription>
           </SheetHeader>
 
@@ -479,74 +448,37 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                   <TooltipProvider>
                     {localStatuses.map((bs, index) => {
                       const isFixedStatus = isFixedBoundaryStatus(bs.status.name);
-                      const isFirstItem = index === 0;
-                      const isLastItem = index === localStatuses.length - 1;
-                      
-                      // Determine if move buttons should be disabled
-                      const canMoveUp = !isFirstItem && !isFixedStatus && !isFixedBoundaryStatus(localStatuses[index - 1]?.status.name) && !isMoving;
-                      const canMoveDown = !isLastItem && !isFixedStatus && !isFixedBoundaryStatus(localStatuses[index + 1]?.status.name) && !isMoving;
-                      
-                      // Is this item currently being moved?
-                      const isCurrentlyMoving = movingIndex === index;
-                      // Is this item the target of the move?
-                      const isTargetOfMove = (movingDirection === "up" && movingIndex === index + 1) ||
-                                             (movingDirection === "down" && movingIndex === index - 1);
+                      const isEndStatus = bs.status.name === FIXED_END_STATUS;
+                      const isDragging = dragIndex === index;
+                      const isDragOver = dragOverIndex === index && dragIndex !== index;
+                      const canDrag = !isFixedStatus && !isMoving;
                       
                       return (
                         <div
                           key={bs.id}
+                          draggable={canDrag}
+                          onDragStart={() => handleDragStart(index)}
+                          onDragOver={(e) => handleDragOver(e, index)}
+                          onDragEnd={handleDragEnd}
+                          onDrop={() => handleDrop(index)}
                           className={cn(
                             "flex items-center gap-2 p-3 rounded-lg border transition-all duration-200",
                             bs.is_active 
                               ? "bg-background" 
                               : "bg-muted/50 opacity-60",
                             isFixedStatus && "border-primary/30 bg-primary/5",
-                            isCurrentlyMoving && "scale-95 opacity-70 border-primary shadow-md",
-                            isTargetOfMove && "scale-105 opacity-90"
+                            isDragging && "opacity-40 scale-95 border-dashed",
+                            isDragOver && !isEndStatus && "border-primary shadow-md scale-[1.02]",
+                            canDrag && "cursor-grab active:cursor-grabbing"
                           )}
                         >
-                          {/* Move buttons */}
-                          <div className="flex flex-col gap-0.5">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-5 w-5"
-                                  disabled={!canMoveUp}
-                                  onClick={() => handleMoveUp(index)}
-                                >
-                                  {isCurrentlyMoving && movingDirection === "up" ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                  ) : (
-                                    <ChevronUp className="h-3 w-3" />
-                                  )}
-                                </Button>
-                              </TooltipTrigger>
-                              {isFixedStatus && (
-                                <TooltipContent>Etapa fixa</TooltipContent>
-                              )}
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-5 w-5"
-                                  disabled={!canMoveDown}
-                                  onClick={() => handleMoveDown(index)}
-                                >
-                                  {isCurrentlyMoving && movingDirection === "down" ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                  ) : (
-                                    <ChevronDown className="h-3 w-3" />
-                                  )}
-                                </Button>
-                              </TooltipTrigger>
-                              {isFixedStatus && (
-                                <TooltipContent>Etapa fixa</TooltipContent>
-                              )}
-                            </Tooltip>
+                          {/* Drag handle */}
+                          <div className={cn(
+                            "shrink-0 text-muted-foreground",
+                            isFixedStatus && "opacity-30",
+                            canDrag && "hover:text-foreground"
+                          )}>
+                            <GripVertical className="h-4 w-4" />
                           </div>
 
                           {/* Color indicator */}
@@ -621,7 +553,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
 
             <p className="text-xs text-muted-foreground mt-4">
               A etapa "Entregue" é fixa e essencial para o fluxo de demandas. 
-              As demais etapas podem ser reordenadas livremente. Desativar uma etapa apenas a oculta no Kanban.
+              Arraste as demais etapas pelo ícone ⠿ para reordená-las. Desativar uma etapa apenas a oculta no Kanban.
             </p>
           </div>
         </SheetContent>
