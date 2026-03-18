@@ -573,7 +573,13 @@ export default function BoardDetail() {
             </div>
           ) : members && members.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              {members.map((member) => {
+              {members.filter((member) => {
+                if (!memberSearch.trim()) return true;
+                const q = memberSearch.toLowerCase();
+                const name = member.profile?.full_name?.toLowerCase() || "";
+                const roleLabel = roleLabels[member.role]?.toLowerCase() || "";
+                return name.includes(q) || roleLabel.includes(q);
+              }).map((member) => {
                 const isCurrentUser = member.user_id === user?.id;
                 // Only admins can change roles, and they can't change their own
                 const canChangeRole = isAdmin && !isCurrentUser;
