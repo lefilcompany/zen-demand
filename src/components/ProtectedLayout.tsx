@@ -125,11 +125,7 @@ export function ProtectedLayout() {
               <BoardSelector />
             </div>
 
-            <div className="flex items-center gap-1.5 sm:gap-1.5 md:gap-2 flex-1 justify-end">
-              <div className="flex-1 min-w-0 max-w-md hidden sm:block">
-                <GlobalSearchBar />
-              </div>
-              <div className="h-4 w-px bg-border hidden sm:block" />
+            <div className="flex items-center gap-1 sm:gap-1.5">
               <div className="hidden xs:block">
                 <ThemeToggle />
               </div>
