@@ -116,8 +116,10 @@ export function ProtectedLayout() {
     return <TrialExpiredBlock />;
   }
 
-  // Show no-boards screen when user has no boards
-  if (!boardsLoading && !hasBoards) {
+  // Show no-boards screen when user has no boards (except profile/settings)
+  const allowedWithoutBoards = ["/profile", "/settings"];
+  const isAllowedRoute = allowedWithoutBoards.some(r => location.pathname.startsWith(r));
+  if (!boardsLoading && !hasBoards && !isAllowedRoute) {
     return <NoBoardsScreen />;
   }
 
