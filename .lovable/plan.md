@@ -1,29 +1,14 @@
 
-## Problem Analysis
 
-When a user opens the app in a new tab, the "remember me" logic in `src/lib/auth.tsx` (lines 92-158) calls `supabase.auth.signOut()` **globally** — this invalidates the session in localStorage, which triggers a `SIGNED_OUT` event on ALL other open tabs, logging the user out everywhere.
+## Plano: Scroll automático ao topo ao mudar de página
 
-The root cause is two-fold:
-1. `sessionStorage` is per-tab, so each new tab sees `sessionChecked` as missing and treats itself as a "fresh browser session"
-2. `supabase.auth.signOut()` defaults to `scope: 'global'`, which revokes the session server-side and clears localStorage, affecting all tabs
+### O que será feito
+Criar um componente `ScrollToTop` que escuta mudanças de rota via `useLocation` e executa `window.scrollTo(0, 0)` a cada navegação. Colocá-lo dentro do `BrowserRouter` no `App.tsx`.
 
-## Solution
+### Implementação
 
-### 1. Fix the "remember me" session check (src/lib/auth.tsx)
+1. **Criar `src/components/ScrollToTop.tsx`** — componente simples com `useEffect` + `useLocation` que faz scroll to top
+2. **Editar `src/App.tsx`** — adicionar `<ScrollToTop />` logo após o `<BrowserRouter>`
 
-- Change `supabase.auth.signOut()` on line 152 to use `scope: 'local'` — this only clears the session from the current tab's perspective without invalidating the refresh token server-side or affecting other tabs
-- Add cross-tab synchronization via the `storage` event listener so that if one tab signs in/out intentionally, other tabs react properly
-- Ensure the `onAuthStateChange` handler properly syncs state when receiving cross-tab events
+Além disso, como o layout usa `overflow-y-auto` no container principal (o `div.flex-1` dentro de `ProtectedLayout` e `AdminLayout`), será necessário também resetar o scroll desse container. Isso será feito adicionando um `useEffect` com `useLocation` no `ProtectedLayout.tsx` e `AdminLayout.tsx` que faz scroll do container interno para o topo.
 
-### 2. Ensure intentional logout remains global (src/lib/auth.tsx)
-
-- The explicit `signOut()` function (user clicks "Sair da Conta") should keep using the default `scope: 'global'` so it properly logs out everywhere — this is the desired behavior for intentional logout
-
-### Changes Summary
-
-**File: `src/lib/auth.tsx`**
-- Line 152: Change `supabase.auth.signOut()` → `supabase.auth.signOut({ scope: 'local' })` so the "remember me" check doesn't kill sessions in other tabs
-- Add a `window.addEventListener('storage', ...)` listener that detects when the Supabase auth key changes in localStorage (from another tab signing in) and re-syncs the session via `getSession()` — this ensures new logins in other tabs are reflected without causing logout
-- On the `SIGNED_OUT` event from `onAuthStateChange`, only navigate to `/auth` if the event originated from the current tab (not a cross-tab storage sync)
-
-This is a minimal, targeted fix that preserves the existing "remember me" behavior while allowing multiple tabs to coexist with the same authenticated session.
