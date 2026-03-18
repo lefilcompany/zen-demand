@@ -147,15 +147,6 @@ export function NoBoardsScreen() {
               </div>
             )}
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setLogoutOpen(true)}
-              className="text-muted-foreground hover:text-foreground gap-2"
-            >
-              <LogOut className="h-4 w-4" />
-              {t("auth.logout")}
-            </Button>
           </div>
         </div>
       </main>
