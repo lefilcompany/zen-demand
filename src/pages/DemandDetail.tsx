@@ -447,7 +447,7 @@ export default function DemandDetail() {
     
     const isAdjustmentMode = interactionFilter === "adjustment_request";
     const interactionType = isAdjustmentMode ? "adjustment_request" : "comment";
-    const determinedAdjustmentType: "internal" | "external" = role === 'requester' ? 'external' : 'internal';
+    const determinedAdjustmentType: "internal" | "external" = boardRole === 'requester' ? 'external' : 'internal';
     
     createInteraction.mutate({
       demand_id: id,
