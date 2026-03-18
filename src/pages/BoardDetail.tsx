@@ -696,6 +696,9 @@ export default function BoardDetail() {
           )}
         </CardContent>
       </Card>
+
+      {/* Services */}
+      <BoardScopeConfig boardId={board.id} canEdit={canManage} />
     </div>
   );
 }
