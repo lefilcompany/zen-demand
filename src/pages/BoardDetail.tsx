@@ -492,7 +492,7 @@ export default function BoardDetail() {
           )}
         </div>
         
-        {isAdmin && !board.is_default && (
+        {isAdmin && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" size="sm" className="shrink-0">

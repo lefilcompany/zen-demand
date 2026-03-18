@@ -90,9 +90,6 @@ function BoardCard({ board }: { board: { id: string; name: string; description: 
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
-            {board.is_default && (
-              <Badge variant="secondary" className="text-xs shrink-0">Padrão</Badge>
-            )}
             {role && (
               <Badge className={`text-xs shrink-0 pointer-events-none ${roleColors[role] || ""}`}>
                 {roleLabels[role] || role}
