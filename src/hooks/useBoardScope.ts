@@ -41,7 +41,7 @@ export function useBoardLimit(boardId?: string) {
         .from("boards")
         .select("monthly_demand_limit, team_id")
         .eq("id", id!)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
