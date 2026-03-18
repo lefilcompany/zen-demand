@@ -70,17 +70,11 @@ export function GlobalSearchBar() {
     }
   };
 
-  // Global Ctrl+K shortcut
+  // Global Escape to collapse
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        if (expanded) {
-          collapse();
-        } else {
-          setExpanded(true);
-          setTimeout(() => inputRef.current?.focus(), 50);
-        }
+      if (e.key === "Escape" && expanded) {
+        collapse();
       }
     };
     document.addEventListener("keydown", handleGlobalKeyDown);
