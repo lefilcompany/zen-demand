@@ -916,7 +916,7 @@ export default function DemandDetail() {
         <CardContent className="space-y-4 md:space-y-6 p-3 sm:p-4 md:p-6 pt-0 md:pt-0">
           {/* Time tracking display - prominent position (hidden for board requesters) */}
           {(isInProgress || isInAdjustment || isDelivered) && boardRole !== "requester" && (
-            <UserTimeTrackingDisplay demandId={demand.id} variant="detail" showControls={canControlTimer} canControl={canControlTimer} canEdit={role === "admin" || role === "moderator" || role === "executor"} />
+            <UserTimeTrackingDisplay demandId={demand.id} variant="detail" showControls={canControlTimer} canControl={canControlTimer} canEdit={boardRole === "admin" || boardRole === "moderator" || boardRole === "executor"} />
           )}
 
           {demand.description && <div className="w-full overflow-hidden">
