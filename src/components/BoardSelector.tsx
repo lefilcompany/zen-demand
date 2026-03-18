@@ -56,9 +56,9 @@ export function BoardSelector() {
   return (
     <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
       <Select value={selectedBoardId || ""} onValueChange={handleBoardChange}>
-        <SelectTrigger className="max-w-[180px] sm:max-w-[260px] md:max-w-[320px] h-8 sm:h-9 text-xs sm:text-sm">
-          <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
-            <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+        <SelectTrigger className="max-w-[160px] sm:max-w-[240px] md:max-w-[300px] h-7 text-[11px] sm:text-xs">
+          <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+            <LayoutGrid className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground shrink-0" />
             <span className="truncate block">{currentBoard?.name || "Quadro"}</span>
           </div>
         </SelectTrigger>

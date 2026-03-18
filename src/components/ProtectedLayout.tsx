@@ -118,35 +118,32 @@ export function ProtectedLayout() {
       <div className="flex h-[100dvh] w-full bg-sidebar p-2 md:p-3 overflow-hidden">
         <AppSidebar />
         <main className="flex-1 flex flex-col bg-background rounded-xl shadow-xl overflow-hidden min-h-0">
-          <header className="flex h-12 sm:h-14 md:h-16 shrink-0 items-center justify-between gap-1 sm:gap-2 bg-background px-2 sm:px-3 md:px-6 border-b border-border rounded-t-xl overflow-visible">
-            <div className="flex items-center gap-1 sm:gap-2 md:gap-4 min-w-0">
-              <SidebarTrigger className="text-foreground hover:bg-muted shrink-0 h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9" />
-              <div className="h-5 w-px bg-border hidden lg:block" />
+          <header className="flex h-10 sm:h-11 shrink-0 items-center justify-between gap-1 sm:gap-2 bg-background px-2 sm:px-3 md:px-5 border-b border-border rounded-t-xl overflow-visible">
+            <div className="flex items-center gap-1 sm:gap-1.5 md:gap-3 min-w-0">
+              <SidebarTrigger className="text-foreground hover:bg-muted shrink-0 h-6 w-6 sm:h-7 sm:w-7" />
+              <div className="h-4 w-px bg-border hidden lg:block" />
               <BoardSelector />
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-1.5 md:gap-2 flex-1 justify-end">
+            <div className="flex items-center gap-1.5 sm:gap-1.5 md:gap-2 flex-1 justify-end">
               <div className="flex-1 min-w-0 max-w-md hidden sm:block">
                 <GlobalSearchBar />
               </div>
-              <div className="h-5 w-px bg-border hidden sm:block" />
-              {/* Theme Toggle - Hidden on very small screens */}
+              <div className="h-4 w-px bg-border hidden sm:block" />
               <div className="hidden xs:block">
                 <ThemeToggle />
               </div>
 
-              {/* Notifications */}
               <div data-tour="notifications-btn">
                 <NotificationDropdown />
               </div>
 
-              {/* Profile */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 md:h-9 md:w-9 rounded-full">
-                    <Avatar className="h-8 w-8 md:h-9 md:w-9">
+                  <Button variant="ghost" className="relative h-7 w-7 rounded-full p-0">
+                    <Avatar className="h-7 w-7">
                       <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || "Perfil"} />
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xs md:text-sm">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-[10px]">
                         {initials}
                       </AvatarFallback>
                     </Avatar>

@@ -53,10 +53,10 @@ export function NotificationDropdown() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-8 w-8 sm:h-9 sm:w-9">
-          <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
+        <Button variant="ghost" size="icon" className="relative h-7 w-7">
+          <Bell className="h-3.5 w-3.5" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
+            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-0.5 bg-primary text-primary-foreground text-[9px] font-bold rounded-full flex items-center justify-center shadow-md">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}
