@@ -321,7 +321,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
           <SheetHeader>
             <SheetTitle>Gerenciar Etapas do Kanban</SheetTitle>
             <SheetDescription>
-              Configure as etapas visíveis neste quadro. Reordene, ative/desative ou adicione novas etapas.
+              Configure as etapas visíveis neste quadro. Arraste para reordenar, ative/desative ou adicione novas etapas.
             </SheetDescription>
           </SheetHeader>
 
