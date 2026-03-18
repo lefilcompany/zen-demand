@@ -46,7 +46,7 @@ export function FloatingCreateButton() {
   // On other pages, show create demand button (but not on boards page)
   if (isOnBoardsPage) return null;
 
-  const handleClick = boardRole === "requester" ? () => navigate("/demands/request") : openCreateDemand;
+  const handleClick = bRole === "requester" ? () => navigate("/demands/request") : openCreateDemand;
 
   return (
     <Button

@@ -1,71 +1,41 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useTeamJoinRequests, useRespondToRequest, ExtendedTeamRole } from "@/hooks/useTeamJoinRequests";
-import { useIsTeamAdmin } from "@/hooks/useTeamRole";
+import { useTeamJoinRequests, useRespondToRequest } from "@/hooks/useTeamJoinRequests";
+import { useIsTeamOwner } from "@/hooks/useTeamRole";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Clock, CheckCircle, XCircle, UserPlus, Loader2, Users } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const roleOptions: { value: ExtendedTeamRole; label: string; description: string }[] = [
-  {
-    value: "moderator",
-    label: "Coordenador",
-    description: "Gerencia demandas, serviços e aprova solicitações",
-  },
-  {
-    value: "executor",
-    label: "Agente",
-    description: "Visualiza, executa demandas e atualiza o Kanban",
-  },
-  {
-    value: "requester",
-    label: "Solicitante",
-    description: "Apenas cria demandas e acompanha o progresso (Kanban somente leitura)",
-  },
-];
-
 export default function TeamRequests() {
-  const navigate = useNavigate();
   const { id: teamId } = useParams<{ id: string }>();
   const { selectedTeamId } = useSelectedTeam();
   const effectiveTeamId = teamId || selectedTeamId;
 
   const { data: requests, isLoading } = useTeamJoinRequests(effectiveTeamId);
-  const { isAdmin, isLoading: isLoadingRole } = useIsTeamAdmin(effectiveTeamId);
+  const { isOwner, isLoading: isLoadingRole } = useIsTeamOwner(effectiveTeamId);
   const respondToRequest = useRespondToRequest();
 
-  const [selectedRequest, setSelectedRequest] = useState<NonNullable<typeof requests>[number] | null>(null);
-  const [selectedRole, setSelectedRole] = useState<ExtendedTeamRole>("requester");
-  const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
-
-  const handleApprove = () => {
-    if (!selectedRequest || !effectiveTeamId) return;
+  const handleApprove = (request: NonNullable<typeof requests>[number]) => {
+    if (!effectiveTeamId) return;
 
     respondToRequest.mutate(
       {
-        requestId: selectedRequest.id,
+        requestId: request.id,
         teamId: effectiveTeamId,
-        userId: selectedRequest.user_id,
+        userId: request.user_id,
         status: "approved",
-        role: selectedRole,
       },
       {
         onSuccess: () => {
           toast.success("Solicitação aprovada!", {
-            description: `Novo membro adicionado como ${roleOptions.find((r) => r.value === selectedRole)?.label}.`,
+            description: "Novo membro adicionado à equipe.",
           });
-          setIsApproveDialogOpen(false);
-          setSelectedRequest(null);
         },
         onError: (error: any) => {
           toast.error("Erro ao aprovar solicitação", {
@@ -99,12 +69,6 @@ export default function TeamRequests() {
     );
   };
 
-  const openApproveDialog = (request: NonNullable<typeof requests>[number]) => {
-    setSelectedRequest(request);
-    setSelectedRole("requester");
-    setIsApproveDialogOpen(true);
-  };
-
   if (isLoadingRole) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -113,14 +77,14 @@ export default function TeamRequests() {
     );
   }
 
-  if (!isAdmin) {
+  if (!isOwner) {
     return (
       <div className="max-w-2xl mx-auto">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center text-muted-foreground">
               <p>Você não tem permissão para acessar esta página.</p>
-              <p className="text-sm mt-2">Apenas administradores podem gerenciar solicitações.</p>
+              <p className="text-sm mt-2">Apenas o dono da equipe pode gerenciar solicitações.</p>
             </div>
           </CardContent>
         </Card>
@@ -195,7 +159,7 @@ export default function TeamRequests() {
                     </Button>
                     <Button
                       size="sm"
-                      onClick={() => openApproveDialog(request)}
+                      onClick={() => handleApprove(request)}
                       disabled={respondToRequest.isPending}
                     >
                       <CheckCircle className="h-4 w-4 mr-1" />
@@ -220,54 +184,6 @@ export default function TeamRequests() {
           </CardContent>
         </Card>
       )}
-
-      {/* Approve Dialog */}
-      <Dialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Aprovar Solicitação</DialogTitle>
-            <DialogDescription>
-              Selecione o papel que {selectedRequest?.profiles?.full_name || "o usuário"} terá na equipe.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-4">
-            <Label className="text-base">Papel na Equipe</Label>
-            <RadioGroup
-              value={selectedRole}
-              onValueChange={(value) => setSelectedRole(value as ExtendedTeamRole)}
-              className="mt-3 space-y-3"
-            >
-              {roleOptions.map((option) => (
-                <div
-                  key={option.value}
-                  className="flex items-start space-x-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50"
-                  onClick={() => setSelectedRole(option.value)}
-                >
-                  <RadioGroupItem value={option.value} id={option.value} className="mt-1" />
-                  <div className="flex-1">
-                    <Label htmlFor={option.value} className="font-medium cursor-pointer">
-                      {option.label}
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      {option.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsApproveDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleApprove} disabled={respondToRequest.isPending}>
-              {respondToRequest.isPending ? "Aprovando..." : "Confirmar Aprovação"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

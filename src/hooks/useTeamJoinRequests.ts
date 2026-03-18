@@ -183,7 +183,6 @@ export function useRespondToRequest() {
       teamId,
       userId,
       status,
-      role,
     }: {
       requestId: string;
       teamId: string;

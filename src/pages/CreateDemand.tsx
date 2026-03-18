@@ -108,7 +108,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     }
   };
 
-  if (role === "requester") {
+  if (boardRole === "requester") {
     return <Navigate to="/demands/request" replace />;
   }
 

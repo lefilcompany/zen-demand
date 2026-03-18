@@ -842,7 +842,7 @@ export default function DemandDetail() {
                     }}>
                         Cancelar
                       </Button>
-                      <Button onClick={handleRequestAdjustment} disabled={!adjustmentReason.trim() || updateDemand.isPending} className={role === 'requester' ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"}>
+                      <Button onClick={handleRequestAdjustment} disabled={!adjustmentReason.trim() || updateDemand.isPending} className={boardRole === 'requester' ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"}>
                         {updateDemand.isPending ? "Enviando..." : "Solicitar Ajuste"}
                       </Button>
                     </div>

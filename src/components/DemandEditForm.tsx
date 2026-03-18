@@ -47,7 +47,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
   const updateRecurring = useUpdateRecurringDemand();
   const deleteRecurring = useDeleteRecurringDemand();
 
-  const canAssignResponsibles = role !== "requester";
+  const canAssignResponsibles = boardRole !== "requester";
 
   const [title, setTitle] = useState(demand.title);
   const [description, setDescription] = useState(demand.description || "");

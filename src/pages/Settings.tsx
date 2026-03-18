@@ -75,7 +75,7 @@ export default function Settings() {
     disablePushNotifications 
   } = usePushNotifications();
   
-  const isAdmin = myRole === "admin";
+  const isAdmin = myRole === "owner";
   const isOnlyMember = teamMembers?.length === 1;
   const otherMembers = teamMembers?.filter(m => m.user_id !== user?.id) || [];
 
