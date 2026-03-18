@@ -32,7 +32,7 @@ export default function Contract() {
 
   const [originalText, setOriginalText] = useState("");
 
-  const canManage = role === "admin" || role === "moderator";
+  const canManage = role === "owner";
   const isLoading = roleLoading || contractLoading;
 
   const handleSubmit = async () => {

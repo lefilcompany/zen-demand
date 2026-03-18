@@ -58,7 +58,7 @@ export default function TeamDetail() {
   const assignPosition = useAssignPosition();
   const deleteTeam = useDeleteTeam();
   const team = teams?.find(t => t.id === id);
-  const canManage = role === "admin" || role === "moderator";
+  const canManage = role === "owner";
 
   const roleLabels: Record<string, string> = {
     admin: "Administrador",
