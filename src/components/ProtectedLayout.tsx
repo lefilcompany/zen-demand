@@ -48,6 +48,7 @@ export function ProtectedLayout() {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const { isOpen, steps, closeTour, completeOnboarding, resetOnboarding, hasCompleted } = useOnboarding();
   const { currentTeam } = useSelectedTeam();
+  const { hasBoards, isLoading: boardsLoading } = useSelectedBoard();
 
   // Trial and subscription status
   const { isTrialExpired, isLoading: trialLoading } = useTrialStatus();
