@@ -15,6 +15,7 @@ import { CommandMenu } from "@/components/CommandMenu";
 import { KeyboardShortcutsProvider } from "@/components/KeyboardShortcuts";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { SwipeNavigationProvider } from "@/components/SwipeNavigationProvider";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Welcome from "./pages/Welcome";
