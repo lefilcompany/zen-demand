@@ -553,7 +553,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
 
             <p className="text-xs text-muted-foreground mt-4">
               A etapa "Entregue" é fixa e essencial para o fluxo de demandas. 
-              As demais etapas podem ser reordenadas livremente. Desativar uma etapa apenas a oculta no Kanban.
+              Arraste as demais etapas pelo ícone ⠿ para reordená-las. Desativar uma etapa apenas a oculta no Kanban.
             </p>
           </div>
         </SheetContent>
