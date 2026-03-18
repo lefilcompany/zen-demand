@@ -2,8 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
-// Extended TeamRole to include executor (added via migration)
-export type ExtendedTeamRole = "admin" | "moderator" | "requester" | "executor";
+// Team membership roles (simplified)
+export type TeamMembershipRole = "owner" | "member";
 
 export interface TeamJoinRequest {
   id: string;
