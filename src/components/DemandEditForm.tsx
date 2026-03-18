@@ -7,7 +7,7 @@ import { useDemandStatuses, useUpdateDemand } from "@/hooks/useDemands";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
-import { useTeamRole } from "@/hooks/useTeamRole";
+import { useBoardRole } from "@/hooks/useBoardMembers";
 import { UnsavedChangesDialog } from "@/components/UnsavedChangesDialog";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { useNavigationBlock } from "@/hooks/useNavigationBlock";
