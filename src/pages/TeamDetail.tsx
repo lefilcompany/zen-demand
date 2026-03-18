@@ -55,6 +55,7 @@ export default function TeamDetail() {
   } = useTeamScope(id || undefined);
   const { data: positions } = useTeamPositions(id);
   const removeMember = useRemoveMember();
+  const updateMemberRole = useUpdateMemberRole();
   const assignPosition = useAssignPosition();
   const deleteTeam = useDeleteTeam();
   const team = teams?.find(t => t.id === id);
