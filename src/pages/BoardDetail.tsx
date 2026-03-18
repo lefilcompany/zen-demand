@@ -552,6 +552,17 @@ export default function BoardDetail() {
               />
             )}
           </div>
+          {members && members.length > 3 && (
+            <div className="relative mt-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome ou cargo..."
+                value={memberSearch}
+                onChange={(e) => setMemberSearch(e.target.value)}
+                className="pl-9 h-9"
+              />
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {membersLoading ? (
