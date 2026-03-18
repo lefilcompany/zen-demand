@@ -180,9 +180,9 @@ export function useRemoveBoardService() {
       
       if (error) throw error;
     },
-    onSuccess: (_, { boardId }) => {
-      queryClient.invalidateQueries({ queryKey: ["board-services", boardId] });
-      queryClient.invalidateQueries({ queryKey: ["board-services-usage", boardId] });
+    onSuccess: async (_, { boardId }) => {
+      await queryClient.invalidateQueries({ queryKey: ["board-services", boardId] });
+      await queryClient.invalidateQueries({ queryKey: ["board-services-usage", boardId] });
       toast.success("Serviço removido do quadro");
     },
     onError: () => {
