@@ -197,6 +197,7 @@ export function useAllBoardStatuses(boardId: string | null) {
           is_active,
           created_at,
           adjustment_type,
+          visible_to_roles,
           status:demand_statuses(id, name, color, is_system)
         `)
         .eq("board_id", boardId)
@@ -206,7 +207,8 @@ export function useAllBoardStatuses(boardId: string | null) {
       
       return (data || []).filter(d => d.status !== null).map(d => ({
         ...d,
-        adjustment_type: (d.adjustment_type as AdjustmentType) || 'none'
+        adjustment_type: (d.adjustment_type as AdjustmentType) || 'none',
+        visible_to_roles: d.visible_to_roles || null,
       })) as BoardStatus[];
     },
     enabled: !!boardId,
