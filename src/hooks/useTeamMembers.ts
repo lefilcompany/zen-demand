@@ -2,6 +2,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamRole } from "./useTeamRole";
 
+// Map DB team_role to UI TeamRole
+function mapDbRole(dbRole: string): TeamRole {
+  return dbRole === "admin" ? "owner" : "member";
+}
+
 // Board-level roles for display purposes
 export type BoardRole = "admin" | "moderator" | "executor" | "requester";
 
