@@ -406,30 +406,6 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
               </DialogContent>
             </Dialog>
 
-            {/* Add existing system status */}
-            {addableStatuses.length > 0 && (
-              <div className="space-y-2">
-                <Label>Adicionar Etapa do Sistema</Label>
-                <Select onValueChange={handleAddStatus}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar etapa..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background">
-                    {addableStatuses.map((status) => (
-                      <SelectItem key={status.id} value={status.id}>
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-3 h-3 rounded-full border"
-                            style={{ backgroundColor: status.color }}
-                          />
-                          {status.name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
 
             {/* Current stages list */}
             <div className="space-y-2">
