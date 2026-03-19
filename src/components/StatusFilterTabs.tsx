@@ -1,11 +1,13 @@
 import { useMemo } from "react";
 import { useBoardStatuses } from "@/hooks/useBoardStatuses";
 import { useSelectedBoard } from "@/contexts/BoardContext";
+import { useBoardRole } from "@/hooks/useBoardMembers";
 import { cn } from "@/lib/utils";
 
 // Ordem fixa dos status do sistema
 const STATUS_ORDER = [
   "A Iniciar",
+  "Tarefas Internas",
   "Fazendo",
   "Em Ajuste",
   "Aprovação Interna",
@@ -13,6 +15,9 @@ const STATUS_ORDER = [
   "Entregue",
   "Atrasado",
 ];
+
+// Status hidden from requesters
+const REQUESTER_HIDDEN_STATUSES = ["Tarefas Internas"];
 
 interface StatusFilterTabsProps {
   value: string | null;
@@ -22,17 +27,23 @@ interface StatusFilterTabsProps {
 export function StatusFilterTabs({ value, onChange }: StatusFilterTabsProps) {
   const { selectedBoardId } = useSelectedBoard();
   const { data: boardStatuses } = useBoardStatuses(selectedBoardId);
+  const { data: boardRole } = useBoardRole(selectedBoardId);
 
   // Ordenar status conforme ordem definida, usando os status do quadro atual
   const orderedStatuses = useMemo(() => {
     if (!boardStatuses) return [];
     
     // Converter para formato esperado (id, name, color)
-    const statuses = boardStatuses.map(bs => ({
+    let statuses = boardStatuses.map(bs => ({
       id: bs.status.id,
       name: bs.status.name,
       color: bs.status.color,
     }));
+    
+    // Hide statuses from requesters
+    if (boardRole === "requester") {
+      statuses = statuses.filter(s => !REQUESTER_HIDDEN_STATUSES.includes(s.name));
+    }
     
     return statuses.sort((a, b) => {
       const indexA = STATUS_ORDER.indexOf(a.name);
@@ -42,7 +53,7 @@ export function StatusFilterTabs({ value, onChange }: StatusFilterTabsProps) {
       const orderB = indexB === -1 ? 999 : indexB;
       return orderA - orderB;
     });
-  }, [boardStatuses]);
+  }, [boardStatuses, boardRole]);
 
   return (
     <div className="flex items-center gap-1 sm:gap-1.5">
