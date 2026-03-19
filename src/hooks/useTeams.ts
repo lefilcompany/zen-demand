@@ -127,37 +127,21 @@ export function useJoinTeam() {
       // Validate access code format
       const validatedCode = validateData(AccessCodeSchema, accessCode.toUpperCase());
       
-      // Find team by access code
-      const { data: team, error: teamError } = await supabase
-        .from("teams")
-        .select("id")
-        .eq("access_code", validatedCode)
-        .single();
+      // Use secure RPC that validates access code server-side
+      const { data: teamId, error } = await supabase
+        .rpc("join_team_with_code", { p_code: validatedCode });
 
-      if (teamError) throw new Error("Código de acesso inválido");
-
-      // Add user as team member with member role
-      const { data: authData } = await supabase.auth.getUser();
-      if (!authData.user) {
-        throw new Error("Você precisa estar logado para entrar em uma equipe");
-      }
-      
-      const { error: memberError } = await supabase
-        .from("team_members")
-        .insert({
-          team_id: team.id,
-          user_id: authData.user.id,
-          role: "member" as const,
-        });
-
-      if (memberError) {
-        if (memberError.code === "23505") {
+      if (error) {
+        if (error.code === "23505") {
           throw new Error("Você já é membro desta equipe");
         }
-        throw memberError;
+        if (error.message?.includes("Invalid access code")) {
+          throw new Error("Código de acesso inválido");
+        }
+        throw new Error("Erro ao entrar na equipe");
       }
 
-      return team;
+      return { id: teamId };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teams"] });
