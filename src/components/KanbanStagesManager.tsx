@@ -813,9 +813,9 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
             {/* Floating side panel — positioned to the right of center on desktop */}
             <div
               className={cn(
-                "hidden sm:block fixed top-1/2 -translate-y-1/2 pointer-events-auto",
-                "bg-background border border-border rounded-xl shadow-2xl overflow-hidden",
-                "w-[300px] max-h-[85vh] overflow-y-auto",
+                "hidden sm:flex sm:flex-col fixed top-1/2 -translate-y-1/2 pointer-events-auto",
+                "bg-background border border-border rounded-xl shadow-2xl",
+                "w-[300px] max-h-[85vh]",
                 "transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
                 sidePanelVisible
                   ? "opacity-100 translate-x-0 scale-100"
@@ -826,7 +826,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                 visibility: sidePanel ? 'visible' : 'hidden',
               }}
             >
-              <div className="p-5">
+              <div className="p-5 flex flex-col flex-1 min-h-0 max-h-[85vh]">
                 {(sidePanel === 'create' || (!sidePanel && sidePanelVisible)) && (
                   <StageForm
                     mode="create"
