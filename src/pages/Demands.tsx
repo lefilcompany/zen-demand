@@ -105,18 +105,18 @@ export default function Demands() {
 
   // Count delivered demands
   const deliveredCount = useMemo(() => {
-    if (!demands) return 0;
-    return demands.filter(d => d.demand_statuses?.name === "Entregue").length;
-  }, [demands]);
+    if (!activeDemands) return 0;
+    return activeDemands.filter((d: any) => d.demand_statuses?.name === "Entregue").length;
+  }, [activeDemands]);
 
   // Count demands assigned to the current user
   const myDemandsCount = useMemo(() => {
-    if (!demands || !user?.id) return 0;
-    return demands.filter(d => {
-      const isAssigned = d.demand_assignees?.some(a => a.user_id === user.id) || d.assigned_to === user.id;
+    if (!activeDemands || !user?.id) return 0;
+    return activeDemands.filter((d: any) => {
+      const isAssigned = d.demand_assignees?.some((a: any) => a.user_id === user.id) || d.assigned_to === user.id;
       return isAssigned;
     }).length;
-  }, [demands, user?.id]);
+  }, [activeDemands, user?.id]);
   const filteredDemands = useMemo(() => {
     if (!demands) return [];
     const filtered = demands.filter(d => {
