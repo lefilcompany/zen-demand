@@ -307,8 +307,8 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
     setNewStatusName("");
     setNewStatusColor("#3B82F6");
     setNewStatusAdjustmentType("none");
+    setNewStatusVisibleRoles([]);
     setSidePanel('create');
-    // Small delay so the panel DOM is ready before animating in
     requestAnimationFrame(() => setSidePanelVisible(true));
   };
 
