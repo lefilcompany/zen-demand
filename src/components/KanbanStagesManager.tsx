@@ -518,14 +518,25 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
 
   // Keep panel mounted during exit animation
   const [panelMounted, setPanelMounted] = useState(false);
+  const [panelVisible, setPanelVisible] = useState(false);
   const panelTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     if (showForm) {
+      // Mount first, then trigger visible on next frame for enter animation
       setPanelMounted(true);
       if (panelTimerRef.current) clearTimeout(panelTimerRef.current);
-    } else if (panelMounted) {
-      panelTimerRef.current = setTimeout(() => setPanelMounted(false), 500);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setPanelVisible(true);
+        });
+      });
+    } else {
+      // Trigger exit animation first, then unmount after duration
+      setPanelVisible(false);
+      if (panelMounted) {
+        panelTimerRef.current = setTimeout(() => setPanelMounted(false), 500);
+      }
     }
     return () => { if (panelTimerRef.current) clearTimeout(panelTimerRef.current); };
   }, [showForm]);
@@ -796,7 +807,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                   "h-[85vh] max-h-[85vh]",
                   "hidden sm:flex w-[380px] lg:w-[420px]",
                   "transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                  showForm
+                  panelVisible
                     ? "opacity-100 translate-x-0 scale-100 shadow-2xl"
                     : "opacity-0 -translate-x-16 scale-95 shadow-none pointer-events-none"
                 )}
