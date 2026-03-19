@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { Settings, GripVertical, Trash2, Plus } from "lucide-react";
+import { Settings, GripVertical, Trash2, Plus, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Sheet,
   SheetContent,
