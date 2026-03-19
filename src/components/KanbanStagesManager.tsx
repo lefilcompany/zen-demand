@@ -829,9 +829,11 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                     name={editName}
                     color={editColor}
                     adjustmentType={editAdjustmentType}
+                    visibleToRoles={editVisibleRoles}
                     onNameChange={setEditName}
                     onColorChange={setEditColor}
                     onAdjustmentTypeChange={setEditAdjustmentType}
+                    onVisibleToRolesChange={setEditVisibleRoles}
                     onSubmit={handleEditStatus}
                     onBack={closeSidePanel}
                   />
