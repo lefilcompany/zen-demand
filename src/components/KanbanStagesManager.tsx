@@ -393,20 +393,20 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
 
   return (
     <>
-      <Sheet open={open} onOpenChange={handleOpenChange}>
-        <SheetTrigger asChild>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>
           <Button variant="outline" size="sm" className="gap-2">
             <Settings className="h-4 w-4" />
             <span className="hidden sm:inline">Etapas</span>
           </Button>
-        </SheetTrigger>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Gerenciar Etapas do Kanban</SheetTitle>
-            <SheetDescription>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Gerenciar Etapas do Kanban</DialogTitle>
+            <DialogDescription>
               Configure as etapas visíveis neste quadro. Arraste para reordenar, ative/desative ou adicione novas etapas.
-            </SheetDescription>
-          </SheetHeader>
+            </DialogDescription>
+          </DialogHeader>
 
           <div className="mt-6 space-y-4">
             {/* Create new status button */}
