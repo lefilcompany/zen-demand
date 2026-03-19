@@ -572,7 +572,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
         <DialogPortal>
           <DialogOverlay />
           {/* Centered main modal */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ pointerEvents: 'none' }}>
             <DialogPrimitive.Content
               onPointerDownOutside={(e) => {
                 // Prevent closing when clicking on side panel, portaled selects, popovers, etc.
