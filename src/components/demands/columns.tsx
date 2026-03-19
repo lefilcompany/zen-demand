@@ -371,16 +371,17 @@ export const demandColumns: ColumnDef<DemandTableRow>[] = [{
     return dateA - dateB;
   }
 }, {
-  accessorKey: "delivered_at",
-  header: "Data de Entrega",
+  id: "board",
+  header: "Quadro",
   cell: ({
     row
-  }) => <DeliveredDateCell row={row} />,
+  }) => <BoardCell row={row} />,
   enableSorting: true,
+  accessorFn: row => row.boards?.name || "",
   sortingFn: (rowA, rowB) => {
-    const dateA = rowA.original.delivered_at ? new Date(rowA.original.delivered_at).getTime() : Infinity;
-    const dateB = rowB.original.delivered_at ? new Date(rowB.original.delivered_at).getTime() : Infinity;
-    return dateA - dateB;
+    const boardA = rowA.original.boards?.name || "";
+    const boardB = rowB.original.boards?.name || "";
+    return boardA.localeCompare(boardB);
   }
 }, {
   accessorKey: "priority",
