@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useSelectedBoard } from "@/contexts/BoardContext";
+import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { useTeamScope } from "./useTeamScope";
 
 export function useBoardMonthlyDemandCount(boardId?: string) {
-  const { selectedBoardId } = useSelectedBoard();
+  const { selectedBoardId } = useSelectedBoardSafe();
   const id = boardId || selectedBoardId;
   const now = new Date();
   const month = now.getMonth() + 1;
@@ -31,7 +31,7 @@ export function useBoardMonthlyDemandCount(boardId?: string) {
 }
 
 export function useBoardLimit(boardId?: string) {
-  const { selectedBoardId } = useSelectedBoard();
+  const { selectedBoardId } = useSelectedBoardSafe();
   const id = boardId || selectedBoardId;
 
   return useQuery({
