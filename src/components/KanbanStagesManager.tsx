@@ -575,15 +575,12 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
           <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
             <DialogPrimitive.Content
               onPointerDownOutside={(e) => {
-                // If side panel is open, check if the click is inside it
-                const target = e.target as HTMLElement;
-                if (sidePanel && target.closest('[data-stage-side-panel]')) {
+                if (sidePanel) {
                   e.preventDefault();
                 }
               }}
               onInteractOutside={(e) => {
-                const target = e.target as HTMLElement;
-                if (sidePanel && target.closest('[data-stage-side-panel]')) {
+                if (sidePanel) {
                   e.preventDefault();
                 }
               }}
