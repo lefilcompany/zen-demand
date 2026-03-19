@@ -807,7 +807,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                   "h-[85vh] max-h-[85vh]",
                   "hidden sm:flex w-[380px] lg:w-[420px]",
                   "transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                  showForm
+                  panelVisible
                     ? "opacity-100 translate-x-0 scale-100 shadow-2xl"
                     : "opacity-0 -translate-x-16 scale-95 shadow-none pointer-events-none"
                 )}
