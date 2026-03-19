@@ -575,12 +575,19 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
           <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
             <DialogPrimitive.Content
               onPointerDownOutside={(e) => {
-                if (sidePanel) {
+                // Prevent closing when clicking on side panel, portaled selects, popovers, etc.
+                const target = e.target as HTMLElement;
+                const isSidePanel = target?.closest?.('[data-stage-side-panel]');
+                const isRadixPortal = target?.closest?.('[data-radix-popper-content-wrapper]') || target?.closest?.('[role="listbox"]') || target?.closest?.('[data-radix-select-viewport]');
+                if (sidePanel || isSidePanel || isRadixPortal) {
                   e.preventDefault();
                 }
               }}
               onInteractOutside={(e) => {
-                if (sidePanel) {
+                const target = e.target as HTMLElement;
+                const isSidePanel = target?.closest?.('[data-stage-side-panel]');
+                const isRadixPortal = target?.closest?.('[data-radix-popper-content-wrapper]') || target?.closest?.('[role="listbox"]') || target?.closest?.('[data-radix-select-viewport]');
+                if (sidePanel || isSidePanel || isRadixPortal) {
                   e.preventDefault();
                 }
               }}
