@@ -596,6 +596,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                 "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
                 "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
                 "duration-200",
+                "transition-[transform,margin] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
                 // Hide on mobile when form is open
                 showForm ? "hidden sm:flex" : "flex"
               )}
