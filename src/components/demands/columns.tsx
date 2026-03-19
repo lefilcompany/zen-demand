@@ -49,6 +49,10 @@ export interface DemandTableRow {
     full_name: string;
     avatar_url: string | null;
   } | null;
+  boards?: {
+    id: string;
+    name: string;
+  } | null;
 }
 const priorityConfig: Record<string, {
   label: string;
