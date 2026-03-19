@@ -572,7 +572,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
         <DialogPortal>
           <DialogOverlay />
           {/* Centered main modal */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ pointerEvents: 'none' }}>
             <DialogPrimitive.Content
               onPointerDownOutside={(e) => {
                 // Prevent closing when clicking on side panel, portaled selects, popovers, etc.
@@ -833,7 +833,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
               data-stage-side-panel
               className={cn(
                 "hidden sm:flex sm:flex-col fixed top-1/2 -translate-y-1/2 pointer-events-auto",
-                "bg-background border border-border rounded-xl shadow-2xl overflow-hidden",
+                "bg-background border border-border rounded-xl shadow-2xl",
                 "w-[300px] max-h-[85vh]",
                 "transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
                 sidePanelVisible
@@ -845,7 +845,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                 visibility: sidePanel ? 'visible' : 'hidden',
               }}
             >
-              <div className="p-5 flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="p-5 flex flex-col flex-1 min-h-0 overflow-y-auto">
                 {(sidePanel === 'create' || (!sidePanel && sidePanelVisible)) && (
                   <StageForm
                     mode="create"
