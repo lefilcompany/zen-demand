@@ -186,24 +186,23 @@ function DueDateCell({
     </span>;
 }
 
-// Cell component for delivered date
-function DeliveredDateCell({
+// Cell component for board name
+function BoardCell({
   row
 }: {
   row: {
     original: DemandTableRow;
   };
 }) {
-  const deliveredAt = row.original.delivered_at;
-  if (!deliveredAt) {
+  const board = row.original.boards;
+  if (!board) {
     return <span className="text-muted-foreground text-sm">—</span>;
   }
-  const date = new Date(deliveredAt);
-  return <span className="text-foreground">
-      {format(date, "dd/MM/yyyy", {
-      locale: ptBR
-    })}
-    </span>;
+  return (
+    <Badge variant="outline" className="text-xs bg-muted/50 border-border text-foreground font-medium">
+      {board.name}
+    </Badge>
+  );
 }
 
 // Cell component for priority
