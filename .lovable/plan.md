@@ -1,29 +1,97 @@
 
-## Problem Analysis
+Objetivo: corrigir de forma completa o fluxo de **Criar/Editar Etapa** no Kanban, garantindo que todas as funcionalidades funcionem (nome, cor, tipo de aprovação, visibilidade por papel) e que o formulário seja sempre navegável com scroll em qualquer tela.
 
-When a user opens the app in a new tab, the "remember me" logic in `src/lib/auth.tsx` (lines 92-158) calls `supabase.auth.signOut()` **globally** — this invalidates the session in localStorage, which triggers a `SIGNED_OUT` event on ALL other open tabs, logging the user out everywhere.
+### 1) Diagnóstico consolidado (o que está quebrando hoje)
+- **Backend (RLS) bloqueando criação/edição** de `demand_statuses` para admins de quadro:
+  - A policy atual de `demand_statuses` usa `is_board_admin_or_moderator(board_id, auth.uid())` com ordem invertida.
+  - Não existe policy de **UPDATE** para admins de quadro em `demand_statuses`.
+- **Fluxo de edição no frontend** atualiza `demand_statuses` antes de `board_statuses`; quando a primeira falha, o update todo “parece quebrado”.
+- **Layout do painel de criação/edição** usa `max-h` sem altura fixa em toda a cadeia flex em alguns cenários, causando perda de scroll e botão fora da área visível.
+- Em larguras intermediárias (ex.: ~1180), o painel lateral flutuante pode ficar apertado/ruim de usar.
 
-The root cause is two-fold:
-1. `sessionStorage` is per-tab, so each new tab sees `sessionChecked` as missing and treats itself as a "fresh browser session"
-2. `supabase.auth.signOut()` defaults to `scope: 'global'`, which revokes the session server-side and clears localStorage, affecting all tabs
+---
 
-## Solution
+### 2) Correção de backend (migração)
+Vou aplicar uma migração para `demand_statuses`:
+1. Recriar policy de INSERT com ordem correta:
+   - `is_board_admin_or_moderator(auth.uid(), board_id)`
+2. Recriar policy de DELETE com ordem correta.
+3. Criar policy de UPDATE para admins/moderadores do quadro:
+   - `USING` e `WITH CHECK` com `board_id IS NOT NULL AND is_board_admin_or_moderator(auth.uid(), board_id)`
 
-### 1. Fix the "remember me" session check (src/lib/auth.tsx)
+Resultado esperado:
+- Admin/moderador de quadro consegue criar/editar status do próprio quadro.
+- Status globais continuam protegidos (sem liberar edição indevida para não-admin global).
 
-- Change `supabase.auth.signOut()` on line 152 to use `scope: 'local'` — this only clears the session from the current tab's perspective without invalidating the refresh token server-side or affecting other tabs
-- Add cross-tab synchronization via the `storage` event listener so that if one tab signs in/out intentionally, other tabs react properly
-- Ensure the `onAuthStateChange` handler properly syncs state when receiving cross-tab events
+---
 
-### 2. Ensure intentional logout remains global (src/lib/auth.tsx)
+### 3) Ajuste do fluxo “Criar Etapa” (frontend)
+No `KanbanStagesManager` + hook `useCreateCustomStatus`:
+- Passar `visible_to_roles` já no insert de `board_statuses` (sem query “pegar último criado”, que hoje é frágil).
+- Retornar `board_status` criado no mutation para atualização local mais confiável.
+- Manter campos:
+  - nome
+  - cor
+  - tipo de aprovação
+  - visibilidade por papel
+- Garantir invalidação/refetch consistente após criar.
 
-- The explicit `signOut()` function (user clicks "Sair da Conta") should keep using the default `scope: 'global'` so it properly logs out everywhere — this is the desired behavior for intentional logout
+Resultado esperado:
+- “Criar Etapa” salva tudo de uma vez e reflete corretamente no modal e no board.
 
-### Changes Summary
+---
 
-**File: `src/lib/auth.tsx`**
-- Line 152: Change `supabase.auth.signOut()` → `supabase.auth.signOut({ scope: 'local' })` so the "remember me" check doesn't kill sessions in other tabs
-- Add a `window.addEventListener('storage', ...)` listener that detects when the Supabase auth key changes in localStorage (from another tab signing in) and re-syncs the session via `getSession()` — this ensures new logins in other tabs are reflected without causing logout
-- On the `SIGNED_OUT` event from `onAuthStateChange`, only navigate to `/auth` if the event originated from the current tab (not a cross-tab storage sync)
+### 4) Ajuste do fluxo “Editar Etapa” (frontend)
+No `handleEditStatus`:
+- Separar updates:
+  - `board_statuses`: sempre atualizar `adjustment_type` e `visible_to_roles`.
+  - `demand_statuses`: atualizar `name/color` apenas quando permitido (status do quadro).
+- Evitar que falha em nome/cor impeça salvar visibilidade/aprovação.
+- Melhorar mensagens de erro/sucesso para indicar exatamente o que foi salvo.
 
-This is a minimal, targeted fix that preserves the existing "remember me" behavior while allowing multiple tabs to coexist with the same authenticated session.
+Resultado esperado:
+- O botão “Salvar” funciona de forma previsível.
+- “Update não funciona” deixa de ocorrer por bloqueio de fluxo único.
+
+---
+
+### 5) Correção de responsividade + scroll (principal dor atual)
+No `KanbanStagesManager.tsx`:
+- Tornar o container de formulário uma estrutura estável:
+  - wrapper com `h-[85vh]`, `overflow-hidden`, `flex flex-col`
+  - conteúdo com `flex-1 min-h-0 overflow-y-auto`
+  - rodapé de ações com `shrink-0` e sempre visível
+- Ajustar breakpoint do painel lateral:
+  - painel flutuante só em telas largas (`xl`)
+  - em telas menores, o editor abre como painel principal (não comprimido)
+- Garantir largura responsiva segura para editor (`w-[92vw]`, `sm:w-[...]`, `max-w-[...]`).
+
+Resultado esperado:
+- Sempre dá para rolar até o final.
+- Botão “Criar Etapa/Salvar” sempre aparece.
+- UX consistente em desktop, notebook menor, tablet e mobile.
+
+---
+
+### 6) Hardening e validação final
+- Corrigir acesso defensivo em contadores para evitar erro intermitente (`demandCounts?.[id]`).
+- Testar cenários:
+  1. Criar etapa com todos os campos
+  2. Editar etapa custom
+  3. Editar visibilidade/tipo em etapa padrão
+  4. Scroll e botão visível em 1180x718, 1024x768 e mobile
+  5. Persistência após fechar/reabrir modal
+
+---
+
+### Arquivos que serão ajustados
+- `supabase/migrations/<nova_migracao>.sql` (RLS de `demand_statuses`)
+- `src/components/KanbanStagesManager.tsx`
+- `src/hooks/useBoardStatuses.ts`
+
+---
+
+### Detalhes técnicos (resumo)
+- Causa-raiz principal: policy RLS incorreta + ausência de UPDATE policy em `demand_statuses`.
+- Causa-raiz de UI: cadeia flex/altura sem travamento total em alguns breakpoints.
+- Estratégia: corrigir permissões, tornar create/edit transacionalmente mais robusto, e padronizar layout com área rolável + rodapé fixo.
