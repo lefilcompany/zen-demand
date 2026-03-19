@@ -208,11 +208,13 @@ export function useRespondToRequest() {
       if (status === "approved") {
         const { error: memberError } = await supabase
           .from("team_members")
-          .insert({
-            team_id: teamId,
-            user_id: userId,
-            role: "member" as const,
-          });
+          .insert([
+            {
+              team_id: teamId,
+              user_id: userId,
+              role: "requester" as const,
+            },
+          ]);
 
         if (memberError) throw memberError;
       }
