@@ -486,13 +486,22 @@ function sortWithFixedBoundaries(statuses: BoardStatus[]): BoardStatus[] {
 }
 
 // Convert board statuses to kanban columns
-export function useKanbanColumns(boardId: string | null) {
+export function useKanbanColumns(boardId: string | null, userRole?: string | null) {
   const { data: boardStatuses, isLoading, error } = useBoardStatuses(boardId);
 
   const sortedStatuses = boardStatuses ? sortWithFixedBoundaries(boardStatuses) : [];
   
-  const columns = sortedStatuses.length > 0
-    ? sortedStatuses.map(boardStatusToColumn)
+  // Filter by visible_to_roles if user has a role
+  const visibleStatuses = userRole
+    ? sortedStatuses.filter(bs => {
+        // null means visible to all
+        if (!bs.visible_to_roles || bs.visible_to_roles.length === 0) return true;
+        return bs.visible_to_roles.includes(userRole);
+      })
+    : sortedStatuses;
+  
+  const columns = visibleStatuses.length > 0
+    ? visibleStatuses.map(boardStatusToColumn)
     : DEFAULT_COLUMNS;
 
   return {
