@@ -241,8 +241,8 @@ export function AddBoardMemberDialog({ trigger, boardId: propBoardId }: AddBoard
                   <div className="px-5 pb-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {filteredMembers.map((member: any) => {
                       const isSelected = selectedMembers.has(member.user_id);
-                      const role = (member.team_role || "requester") as TeamRole;
-                      const config = teamRoleConfig[role] || teamRoleConfig.requester;
+                      const role = (member.team_role || "member") as string;
+                      const config = teamRoleConfig[role] || teamRoleConfig.member;
 
                       return (
                         <button
