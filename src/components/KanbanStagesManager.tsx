@@ -564,6 +564,23 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                               {demandCounts?.[bs.status_id] || 0} {(demandCounts?.[bs.status_id] || 0) === 1 ? "demanda" : "demandas"}
                             </Badge>
 
+                            {/* Edit button - not for fixed statuses */}
+                            {!isFixedStatus && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                                    onClick={() => openEditDialog(bs)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Editar etapa</TooltipContent>
+                              </Tooltip>
+                            )}
+
                             {/* Role visibility toggle */}
                             <Tooltip>
                               <TooltipTrigger asChild>
