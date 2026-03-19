@@ -26,7 +26,7 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useDataPrecache } from "@/hooks/useDataPrecache";
 import { TrialExpiredBlock } from "@/components/TrialExpiredBlock";
 import { NoBoardsScreen } from "@/components/NoBoardsScreen";
-import { useSelectedBoard } from "@/contexts/BoardContext";
+import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { useTrialStatus } from "@/hooks/useTrialStatus";
 import { useTeamSubscription } from "@/hooks/useSubscription";
 import {
