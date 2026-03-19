@@ -60,6 +60,8 @@ import {
   isFixedBoundaryStatus,
   FIXED_END_STATUS,
   AdjustmentType,
+  BOARD_ROLES,
+  BoardRoleType,
 } from "@/hooks/useBoardStatuses";
 import { ColorPicker } from "@/components/ColorPicker";
 import { supabase } from "@/integrations/supabase/client";
