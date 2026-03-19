@@ -337,12 +337,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
       return;
     }
     try {
-      const { error: statusError } = await supabase
-        .from("demand_statuses")
-        .update({ name: editName.trim(), color: editColor })
-        .eq("id", editingStatus.status_id);
-      if (statusError) throw statusError;
-
+      // 1. Always update board_statuses (adjustment_type + visible_to_roles)
       const visibleValue = editVisibleRoles.length === 0 || editVisibleRoles.length === BOARD_ROLES.length ? null : editVisibleRoles;
       const { error: boardError } = await supabase
         .from("board_statuses")
@@ -350,13 +345,32 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
         .eq("id", editingStatus.id);
       if (boardError) throw boardError;
 
+      // 2. Try updating demand_statuses name/color (may fail for system statuses, that's ok)
+      let nameColorUpdated = true;
+      const nameChanged = editName.trim() !== editingStatus.status.name;
+      const colorChanged = editColor !== editingStatus.status.color;
+      if (nameChanged || colorChanged) {
+        const { error: statusError } = await supabase
+          .from("demand_statuses")
+          .update({ name: editName.trim(), color: editColor })
+          .eq("id", editingStatus.status_id);
+        if (statusError) {
+          nameColorUpdated = false;
+          console.warn("Could not update status name/color:", statusError.message);
+        }
+      }
+
       setLocalStatuses(prev => prev.map(s => 
         s.id === editingStatus.id 
           ? { 
               ...s, 
               adjustment_type: editAdjustmentType,
               visible_to_roles: visibleValue,
-              status: { ...s.status, name: editName.trim(), color: editColor }
+              status: { 
+                ...s.status, 
+                name: nameColorUpdated ? editName.trim() : s.status.name, 
+                color: nameColorUpdated ? editColor : s.status.color 
+              }
             } 
           : s
       ));
@@ -365,7 +379,11 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
       queryClient.invalidateQueries({ queryKey: ["board-statuses-all", boardId] });
       queryClient.invalidateQueries({ queryKey: ["demand-statuses"] });
 
-      toast.success("Etapa atualizada");
+      if (!nameColorUpdated && (nameChanged || colorChanged)) {
+        toast.success("Configurações salvas (nome/cor não alterados — etapa do sistema)");
+      } else {
+        toast.success("Etapa atualizada");
+      }
       closeSidePanel();
     } catch (error: any) {
       if (error.message?.includes("duplicate") || error.code === "23505") {
@@ -524,25 +542,8 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
         color: newStatusColor,
         boardId,
         adjustmentType: newStatusAdjustmentType,
+        visibleToRoles: newStatusVisibleRoles,
       });
-
-      // After creating, update visible_to_roles if configured
-      if (newStatusVisibleRoles.length > 0 && newStatusVisibleRoles.length < BOARD_ROLES.length) {
-        // Find the newly created board_status
-        const { data: newBoardStatuses } = await supabase
-          .from("board_statuses")
-          .select("id, status_id, status:demand_statuses(name)")
-          .eq("board_id", boardId)
-          .order("created_at", { ascending: false })
-          .limit(1);
-
-        if (newBoardStatuses?.[0]) {
-          await supabase
-            .from("board_statuses")
-            .update({ visible_to_roles: newStatusVisibleRoles })
-            .eq("id", newBoardStatuses[0].id);
-        }
-      }
 
       toast.success("Etapa personalizada criada");
       closeSidePanel();
@@ -669,7 +670,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                                   )}
 
                                   <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0 whitespace-nowrap">
-                                    {demandCounts[bs.status_id] || 0} demandas
+                                    {demandCounts?.[bs.status_id] || 0} demandas
                                   </Badge>
                                 </div>
 
