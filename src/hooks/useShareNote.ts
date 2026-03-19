@@ -95,14 +95,11 @@ export function useSharedNote(token: string | null) {
     queryFn: async () => {
       if (!token) return null;
 
-      // First verify the token
-      const { data: tokenData, error: tokenError } = await supabase
-        .from("note_share_tokens")
-        .select("note_id")
-        .eq("token", token)
-        .eq("is_active", true)
-        .maybeSingle();
+      // Verify the token via secure RPC (avoids exposing all tokens)
+      const { data: tokenRows, error: tokenError } = await supabase
+        .rpc("verify_note_share_token", { p_token: token });
 
+      const tokenData = tokenRows?.[0] ?? null;
       if (tokenError || !tokenData) return null;
 
       // Then get the note
