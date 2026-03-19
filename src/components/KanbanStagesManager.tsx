@@ -343,9 +343,10 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
         .eq("id", editingStatus.status_id);
       if (statusError) throw statusError;
 
+      const visibleValue = editVisibleRoles.length === 0 || editVisibleRoles.length === BOARD_ROLES.length ? null : editVisibleRoles;
       const { error: boardError } = await supabase
         .from("board_statuses")
-        .update({ adjustment_type: editAdjustmentType })
+        .update({ adjustment_type: editAdjustmentType, visible_to_roles: visibleValue })
         .eq("id", editingStatus.id);
       if (boardError) throw boardError;
 
