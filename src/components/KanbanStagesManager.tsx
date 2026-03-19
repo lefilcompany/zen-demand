@@ -7,14 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -393,20 +385,20 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
 
   return (
     <>
-      <Sheet open={open} onOpenChange={handleOpenChange}>
-        <SheetTrigger asChild>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>
           <Button variant="outline" size="sm" className="gap-2">
             <Settings className="h-4 w-4" />
             <span className="hidden sm:inline">Etapas</span>
           </Button>
-        </SheetTrigger>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Gerenciar Etapas do Kanban</SheetTitle>
-            <SheetDescription>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Gerenciar Etapas do Kanban</DialogTitle>
+            <DialogDescription>
               Configure as etapas visíveis neste quadro. Arraste para reordenar, ative/desative ou adicione novas etapas.
-            </SheetDescription>
-          </SheetHeader>
+            </DialogDescription>
+          </DialogHeader>
 
           <div className="mt-6 space-y-4">
             {/* Create new status button */}
@@ -700,8 +692,8 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
               Arraste as demais etapas pelo ícone ⠿ para reordená-las. Desativar uma etapa apenas a oculta no Kanban.
             </p>
           </div>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
