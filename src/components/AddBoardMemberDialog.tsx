@@ -125,7 +125,7 @@ export function AddBoardMemberDialog({ trigger, boardId: propBoardId }: AddBoard
       if (next.has(userId)) {
         next.delete(userId);
       } else {
-        next.set(userId, "requester");
+        next.set(userId, "executor");
       }
       return next;
     });
