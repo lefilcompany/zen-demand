@@ -670,7 +670,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                                   )}
 
                                   <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0 whitespace-nowrap">
-                                    {demandCounts[bs.status_id] || 0} demandas
+                                    {demandCounts?.[bs.status_id] || 0} demandas
                                   </Badge>
                                 </div>
 
