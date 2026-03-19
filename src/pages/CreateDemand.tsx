@@ -44,7 +44,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const { isOffline } = useOfflineStatus();
   const createDemand = useCreateDemand();
   const { selectedTeamId, teams } = useSelectedTeam();
-  const { selectedBoardId, currentBoard } = useSelectedBoard();
+  const { selectedBoardId, currentBoard } = useSelectedBoardSafe();
   const { data: statuses } = useDemandStatuses();
   const { 
     canCreate, 
