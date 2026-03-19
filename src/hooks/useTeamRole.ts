@@ -4,6 +4,13 @@ import { useAuth } from "@/lib/auth";
 
 export type TeamRole = "owner" | "member";
 
+type DbTeamRole = "admin" | "moderator" | "executor" | "requester";
+
+const toAppRole = (role: DbTeamRole | null | undefined): TeamRole | null => {
+  if (!role) return null;
+  return role === "admin" || role === "moderator" ? "owner" : "member";
+};
+
 export function useTeamRole(teamId: string | null) {
   const { user } = useAuth();
 
@@ -23,7 +30,7 @@ export function useTeamRole(teamId: string | null) {
         if (error.code === "PGRST116") return null;
         throw error;
       }
-      return data?.role as TeamRole;
+      return toAppRole(data?.role as DbTeamRole);
     },
     enabled: !!user && !!teamId,
   });
@@ -42,11 +49,11 @@ export function useIsTeamOwner(teamId: string | null) {
 // Keep for backward compat - maps to owner check
 export function useIsTeamAdminOrModerator(teamId: string | null) {
   const { data: role, isLoading } = useTeamRole(teamId);
-  return { 
-    canManage: role === "owner", 
+  return {
+    canManage: role === "owner",
     isAdmin: role === "owner",
     isModerator: false,
-    isLoading 
+    isLoading,
   };
 }
 

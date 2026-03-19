@@ -48,7 +48,6 @@ import TimeManagement from "./pages/TimeManagement";
 import UserProfile from "./pages/UserProfile";
 import BoardSummary from "./pages/BoardSummary";
 import Store from "./pages/Store";
-import Contract from "./pages/Contract";
 import TeamDemands from "./pages/TeamDemands";
 import Notes from "./pages/Notes";
 import NoteDetail from "./pages/NoteDetail";
@@ -146,8 +145,6 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
                           <Route path="/my-requests" element={<MyDemandRequests />} />
                           <Route path="/demand-requests" element={<DemandRequests />} />
                           <Route path="/store" element={<Store />} />
-                          {/* Contract hidden for now */}
-                          {/* <Route path="/contract" element={<Contract />} /> */}
                           <Route path="/kanban" element={<Kanban />} />
                           <Route path="/archived" element={<ArchivedDemands />} />
                           
