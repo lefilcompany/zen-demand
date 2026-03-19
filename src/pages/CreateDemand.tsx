@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCreateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { useSelectedTeam } from "@/contexts/TeamContext";
-import { useSelectedBoard } from "@/contexts/BoardContext";
+import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { useCanCreateDemandOnBoard } from "@/hooks/useBoardScope";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useBoardRole } from "@/hooks/useBoardMembers";
