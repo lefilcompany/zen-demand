@@ -1,12 +1,20 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, FileText, Loader2, X } from "lucide-react";
+import { Search, FileText, Loader2, X, Hash } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { useGlobalSearch } from "@/hooks/useGlobalSearch";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { cn } from "@/lib/utils";
+
+const priorityColors: Record<string, string> = {
+  alta: "text-destructive",
+  urgente: "text-destructive",
+  média: "text-amber-500",
+  baixa: "text-muted-foreground",
+};
 
 export function GlobalSearchBar() {
   const [query, setQuery] = useState("");
@@ -105,7 +113,7 @@ export function GlobalSearchBar() {
     }
   };
 
-  const getIcon = (result: { type: string; avatarUrl?: string; title?: string }) => {
+  const getIcon = (result: { type: string; avatarUrl?: string; title?: string; statusColor?: string }) => {
     if (result.type === "member" || result.type === "user") {
       const initials = result.title
         ?.split(" ")
@@ -122,12 +130,22 @@ export function GlobalSearchBar() {
         </Avatar>
       );
     }
-    switch (result.type) {
-      case "demand":
-        return <FileText className="h-4 w-4 text-primary" />;
-      default:
-        return <Search className="h-4 w-4" />;
+    if (result.type === "demand") {
+      return (
+        <div
+          className="h-7 w-7 rounded-md flex items-center justify-center shrink-0"
+          style={{
+            backgroundColor: result.statusColor ? `${result.statusColor}20` : undefined,
+          }}
+        >
+          <FileText
+            className="h-3.5 w-3.5"
+            style={{ color: result.statusColor || undefined }}
+          />
+        </div>
+      );
     }
+    return <Search className="h-4 w-4" />;
   };
 
   const getTypeLabel = (type: string) => {
@@ -142,6 +160,39 @@ export function GlobalSearchBar() {
         return type;
     }
   };
+
+  // Group results by type for a cleaner display
+  const demandResults = results?.filter(r => r.type === "demand") || [];
+  const peopleResults = results?.filter(r => r.type === "member" || r.type === "user") || [];
+
+  const renderResultItem = (result: typeof results extends (infer T)[] | undefined ? T : never, globalIndex: number) => (
+    <button
+      key={`${result.type}-${result.id}`}
+      data-result-item
+      onClick={() => handleSelect(result.link)}
+      onMouseEnter={() => setSelectedIndex(globalIndex)}
+      className={cn(
+        "w-full flex items-center gap-2.5 px-3 py-2 transition-colors text-left",
+        selectedIndex === globalIndex ? "bg-muted" : "hover:bg-muted/50"
+      )}
+    >
+      <div className="shrink-0">{getIcon(result)}</div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{result.title}</p>
+        {result.subtitle && (
+          <p className="text-xs text-muted-foreground truncate">{result.subtitle}</p>
+        )}
+        {result.extra && (
+          <p className="text-[10px] text-muted-foreground/70 truncate">{result.extra}</p>
+        )}
+      </div>
+      {result.priority && (
+        <span className={cn("text-[10px] font-medium capitalize shrink-0", priorityColors[result.priority] || "text-muted-foreground")}>
+          {result.priority}
+        </span>
+      )}
+    </button>
+  );
 
   return (
     <div ref={containerRef} className="relative flex items-center">
@@ -165,14 +216,14 @@ export function GlobalSearchBar() {
           <Input
             ref={inputRef}
             type="text"
-            placeholder="Pesquisar..."
+            placeholder="Buscar demandas, membros..."
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
               setIsOpen(true);
             }}
             onKeyDown={handleKeyDown}
-            className="pl-8 pr-8 h-7 w-[200px] sm:w-[240px] text-xs bg-muted/50 border-border focus:border-primary focus:bg-background transition-all"
+            className="pl-8 pr-8 h-7 w-[200px] sm:w-[260px] text-xs bg-muted/50 border-border focus:border-primary focus:bg-background transition-all"
           />
           <Button
             variant="ghost"
@@ -187,42 +238,47 @@ export function GlobalSearchBar() {
 
       {/* Results dropdown */}
       {expanded && isOpen && query.length >= 2 && (
-        <div className="absolute top-full right-0 mt-2 w-[280px] sm:w-[320px] bg-popover border border-border rounded-lg shadow-xl z-[9999] overflow-hidden">
+        <div className="absolute top-full right-0 mt-2 w-[300px] sm:w-[360px] bg-popover border border-border rounded-lg shadow-xl z-[9999] overflow-hidden">
           {isLoading ? (
             <div className="flex items-center justify-center py-6">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           ) : results && results.length > 0 ? (
-            <div ref={resultsRef} className="max-h-[300px] overflow-y-auto">
-              {results.map((result, index) => (
-                <button
-                  key={`${result.type}-${result.id}`}
-                  data-result-item
-                  onClick={() => handleSelect(result.link)}
-                  onMouseEnter={() => setSelectedIndex(index)}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2.5 transition-colors text-left",
-                    selectedIndex === index ? "bg-muted" : "hover:bg-muted/50"
-                  )}
-                >
-                  <div className="shrink-0">{getIcon(result)}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{result.title}</p>
-                    {result.subtitle && (
-                      <p className="text-xs text-muted-foreground truncate">{result.subtitle}</p>
-                    )}
+            <div ref={resultsRef} className="max-h-[380px] overflow-y-auto">
+              {/* Demands section */}
+              {demandResults.length > 0 && (
+                <>
+                  <div className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30 border-b border-border/50 flex items-center gap-1.5">
+                    <FileText className="h-3 w-3" />
+                    Demandas ({demandResults.length})
                   </div>
-                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded shrink-0">
-                    {getTypeLabel(result.type)}
-                  </span>
-                </button>
-              ))}
+                  {demandResults.map((result, i) => renderResultItem(result, i))}
+                </>
+              )}
+              
+              {/* People section */}
+              {peopleResults.length > 0 && (
+                <>
+                  <div className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30 border-b border-border/50 border-t flex items-center gap-1.5">
+                    <Search className="h-3 w-3" />
+                    Pessoas ({peopleResults.length})
+                  </div>
+                  {peopleResults.map((result, i) => renderResultItem(result, demandResults.length + i))}
+                </>
+              )}
             </div>
           ) : (
             <div className="py-6 text-center text-sm text-muted-foreground">
-              Nenhum resultado encontrado para "{query}"
+              Nenhum resultado para "{query}"
             </div>
           )}
+          
+          {/* Search tip */}
+          <div className="px-3 py-1.5 border-t border-border/50 bg-muted/20">
+            <p className="text-[10px] text-muted-foreground">
+              <kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">↑↓</kbd> navegar · <kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">Enter</kbd> abrir · <kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">Esc</kbd> fechar
+            </p>
+          </div>
         </div>
       )}
     </div>
