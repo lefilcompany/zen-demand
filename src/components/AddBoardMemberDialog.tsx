@@ -148,7 +148,7 @@ export function AddBoardMemberDialog({ trigger, boardId: propBoardId }: AddBoard
         filteredMembers.forEach((m: any) => next.delete(m.user_id));
       } else {
         filteredMembers.forEach((m: any) => {
-          if (!next.has(m.user_id)) next.set(m.user_id, "requester");
+          if (!next.has(m.user_id)) next.set(m.user_id, "executor");
         });
       }
       return next;
