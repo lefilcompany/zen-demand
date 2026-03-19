@@ -317,6 +317,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
     setEditName(bs.status.name);
     setEditColor(bs.status.color);
     setEditAdjustmentType(bs.adjustment_type || "none");
+    setEditVisibleRoles(bs.visible_to_roles || []);
     setSidePanel('edit');
     requestAnimationFrame(() => setSidePanelVisible(true));
   };
