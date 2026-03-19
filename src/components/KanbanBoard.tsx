@@ -169,7 +169,15 @@ function useIsLargeDesktop() {
 
 export function KanbanBoard({ demands, columns: propColumns, onDemandClick, readOnly = false, userRole, boardName, boardId, initialColumnsOpen = false }: KanbanBoardProps) {
   // Use provided columns or fallback to default
-  const columns = propColumns && propColumns.length > 0 ? propColumns : DEFAULT_COLUMNS;
+  const allColumns = propColumns && propColumns.length > 0 ? propColumns : DEFAULT_COLUMNS;
+  
+  // Hide "Tarefas Internas" from requesters
+  const columns = useMemo(() => {
+    if (userRole === "requester") {
+      return allColumns.filter(col => col.key !== "Tarefas Internas");
+    }
+    return allColumns;
+  }, [allColumns, userRole]);
   const { t } = useTranslation();
   const { user } = useAuth();
   const isMobile = useIsMobile();

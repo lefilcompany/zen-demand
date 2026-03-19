@@ -39,6 +39,7 @@ export function isFixedBoundaryStatus(statusName: string): boolean {
 // Default columns fallback (matches current static columns)
 export const DEFAULT_COLUMNS: KanbanColumn[] = [
   { key: "A Iniciar", label: "A Iniciar", color: "bg-muted", shortLabel: "Iniciar", statusId: "", adjustmentType: "none" },
+  { key: "Tarefas Internas", label: "Tarefas Internas", color: "bg-violet-500/10", shortLabel: "Internas", statusId: "", adjustmentType: "none" },
   { key: "Fazendo", label: "Fazendo", color: "bg-blue-500/10", shortLabel: "Fazendo", statusId: "", adjustmentType: "none" },
   { key: "Em Ajuste", label: "Em Ajuste", color: "bg-purple-500/10", shortLabel: "Ajuste", statusId: "", adjustmentType: "none" },
   { key: "Aprovação Interna", label: "Aprovação Interna", color: "bg-blue-500/10", shortLabel: "APROVAÇÃO INTERNA", statusId: "", adjustmentType: "internal" },
@@ -49,6 +50,7 @@ export const DEFAULT_COLUMNS: KanbanColumn[] = [
 // Map status names to colors
 const statusColorMap: Record<string, string> = {
   "A Iniciar": "bg-muted",
+  "Tarefas Internas": "bg-violet-500/10",
   "Fazendo": "bg-blue-500/10",
   "Em Ajuste": "bg-purple-500/10",
   "Aprovação Interna": "bg-blue-500/10",
@@ -59,6 +61,7 @@ const statusColorMap: Record<string, string> = {
 // Map status names to short labels
 const statusShortLabelMap: Record<string, string> = {
   "A Iniciar": "Iniciar",
+  "Tarefas Internas": "Internas",
   "Fazendo": "Fazendo",
   "Em Ajuste": "Ajuste",
   "Aprovação Interna": "APROVAÇÃO INTERNA",
