@@ -488,256 +488,305 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
         </DialogTrigger>
         <DialogPortal>
           <DialogOverlay />
-          {/* Custom centered layout: main modal + floating side panel */}
+          {/* Centered main modal */}
           <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-            <div className="flex items-start gap-3 pointer-events-auto max-w-[95vw]">
-              {/* Main modal card */}
-              <DialogPrimitive.Content
-                className={cn(
-                  "relative bg-background border border-border rounded-xl shadow-2xl p-0 overflow-hidden",
-                  "w-[90vw] sm:w-[52vw] lg:w-[45vw] max-h-[85vh]",
-                  "data-[state=open]:animate-in data-[state=closed]:animate-out",
-                  "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-                  "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-                  "duration-200",
-                  // On mobile when side panel is open, hide main
-                  sidePanel ? "hidden sm:flex sm:flex-col" : "flex flex-col"
-                )}
-              >
-                {/* Close button */}
-                <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-10">
-                  <X className="h-4 w-4" />
-                  <span className="sr-only">Close</span>
-                </DialogPrimitive.Close>
+            <DialogPrimitive.Content
+              className={cn(
+                "relative bg-background border border-border rounded-xl shadow-2xl p-0 overflow-hidden pointer-events-auto",
+                "w-[90vw] sm:w-[52vw] lg:w-[45vw] max-h-[85vh]",
+                "data-[state=open]:animate-in data-[state=closed]:animate-out",
+                "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+                "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+                "duration-200",
+                sidePanel ? "hidden sm:flex sm:flex-col" : "flex flex-col"
+              )}
+            >
+              <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-10">
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </DialogPrimitive.Close>
 
-                <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
-                  <DialogTitle>Gerenciar Etapas do Kanban</DialogTitle>
-                  <DialogDescription>
-                    Configure as etapas visíveis neste quadro. Arraste para reordenar, ative/desative ou adicione novas etapas.
-                  </DialogDescription>
-                </DialogHeader>
+              <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
+                <DialogTitle>Gerenciar Etapas do Kanban</DialogTitle>
+                <DialogDescription>
+                  Configure as etapas visíveis neste quadro. Arraste para reordenar, ative/desative ou adicione novas etapas.
+                </DialogDescription>
+              </DialogHeader>
 
-                <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-4">
-                  <Button variant="outline" className="w-full gap-2" onClick={openCreatePanel}>
-                    <Plus className="h-4 w-4" />
-                    Criar Nova Etapa
-                  </Button>
+              <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-4">
+                <Button variant="outline" className="w-full gap-2" onClick={openCreatePanel}>
+                  <Plus className="h-4 w-4" />
+                  Criar Nova Etapa
+                </Button>
 
-                  <div className="space-y-2">
-                    <Label>Etapas do Quadro ({localStatuses.length})</Label>
-                    
-                    {isLoading ? (
-                      <div className="text-center py-4 text-muted-foreground">
-                        Carregando...
-                      </div>
-                    ) : localStatuses.length === 0 ? (
-                      <div className="text-center py-4 text-muted-foreground border-2 border-dashed rounded-lg">
-                        Nenhuma etapa configurada
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <TooltipProvider>
-                          {localStatuses.map((bs, index) => {
-                            const isFixedStatus = isFixedBoundaryStatus(bs.status.name);
-                            const isEndStatus = bs.status.name === FIXED_END_STATUS;
-                            const isDragging = dragIndex === index;
-                            const isDragOver = dragOverIndex === index && dragIndex !== index;
-                            const canDrag = !isFixedStatus && !isMoving;
-                            
-                            return (
-                              <div
-                                key={bs.id}
-                                draggable={canDrag}
-                                onDragStart={() => handleDragStart(index)}
-                                onDragOver={(e) => handleDragOver(e, index)}
-                                onDragEnd={handleDragEnd}
-                                onDrop={() => handleDrop(index)}
-                                className={cn(
-                                  "rounded-lg border transition-all duration-200",
-                                  isEndStatus && "bg-primary/5 border-primary/20",
-                                  isDragging && "opacity-50 scale-95 border-dashed",
-                                  isDragOver && "border-primary border-2 bg-primary/5",
-                                  !isDragging && !isDragOver && !isEndStatus && "bg-card hover:shadow-sm"
-                                )}
-                              >
-                                <div className="flex items-center gap-2 p-3">
-                                  <div className={cn(
-                                    "cursor-grab active:cursor-grabbing shrink-0",
-                                    !canDrag && "opacity-30 cursor-not-allowed"
-                                  )}>
-                                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                                  </div>
-
-                                  <div
-                                    className="h-3 w-3 rounded-full shrink-0 ring-2 ring-background shadow-sm"
-                                    style={{ backgroundColor: bs.status.color }}
-                                  />
-                                  <span className={cn(
-                                    "font-medium text-sm truncate flex-1",
-                                    !bs.is_active && "text-muted-foreground line-through"
-                                  )}>
-                                    {bs.status.name}
-                                  </span>
-
-                                  {isFixedStatus && (
-                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary shrink-0">
-                                      Fixa
-                                    </Badge>
-                                  )}
-
-                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
-                                    {demandCounts[bs.status_id] || 0} demandas
-                                  </Badge>
-
-                                  {!isFixedStatus && (
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-                                          onClick={() => openEditPanel(bs)}
-                                        >
-                                          <Pencil className="h-4 w-4" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>Editar etapa</TooltipContent>
-                                    </Tooltip>
-                                  )}
-
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className={cn(
-                                          "h-8 w-8 shrink-0",
-                                          bs.visible_to_roles && bs.visible_to_roles.length > 0
-                                            ? "text-primary"
-                                            : "text-muted-foreground"
-                                        )}
-                                        onClick={() => setExpandedRolesId(expandedRolesId === bs.id ? null : bs.id)}
-                                      >
-                                        <Eye className="h-4 w-4" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      {bs.visible_to_roles && bs.visible_to_roles.length > 0
-                                        ? `Visível para: ${bs.visible_to_roles.map(r => BOARD_ROLES.find(br => br.value === r)?.label).join(', ')}`
-                                        : "Visível para todos"
-                                      }
-                                    </TooltipContent>
-                                  </Tooltip>
-
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <span>
-                                        <Switch
-                                          checked={bs.is_active}
-                                          onCheckedChange={(checked) => handleToggleStatus(bs.id, checked)}
-                                          disabled={toggleStatus.isPending || isFixedStatus}
-                                        />
-                                      </span>
-                                    </TooltipTrigger>
-                                    {isFixedStatus && (
-                                      <TooltipContent>Etapas fixas não podem ser desativadas</TooltipContent>
-                                    )}
-                                  </Tooltip>
-
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className={cn(
-                                          "h-8 w-8 shrink-0",
-                                          isFixedStatus 
-                                            ? "text-muted-foreground/30 cursor-not-allowed" 
-                                            : "text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                        )}
-                                        onClick={() => !isFixedStatus && handleDeleteClick(bs)}
-                                        disabled={isFixedStatus}
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      {isFixedStatus 
-                                        ? "Etapas fixas não podem ser removidas" 
-                                        : "Remover etapa do quadro"
-                                    }
-                                    </TooltipContent>
-                                  </Tooltip>
+                <div className="space-y-2">
+                  <Label>Etapas do Quadro ({localStatuses.length})</Label>
+                  
+                  {isLoading ? (
+                    <div className="text-center py-4 text-muted-foreground">
+                      Carregando...
+                    </div>
+                  ) : localStatuses.length === 0 ? (
+                    <div className="text-center py-4 text-muted-foreground border-2 border-dashed rounded-lg">
+                      Nenhuma etapa configurada
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <TooltipProvider>
+                        {localStatuses.map((bs, index) => {
+                          const isFixedStatus = isFixedBoundaryStatus(bs.status.name);
+                          const isEndStatus = bs.status.name === FIXED_END_STATUS;
+                          const isDragging = dragIndex === index;
+                          const isDragOver = dragOverIndex === index && dragIndex !== index;
+                          const canDrag = !isFixedStatus && !isMoving;
+                          
+                          return (
+                            <div
+                              key={bs.id}
+                              draggable={canDrag}
+                              onDragStart={() => handleDragStart(index)}
+                              onDragOver={(e) => handleDragOver(e, index)}
+                              onDragEnd={handleDragEnd}
+                              onDrop={() => handleDrop(index)}
+                              className={cn(
+                                "rounded-lg border transition-all duration-200",
+                                isEndStatus && "bg-primary/5 border-primary/20",
+                                isDragging && "opacity-50 scale-95 border-dashed",
+                                isDragOver && "border-primary border-2 bg-primary/5",
+                                !isDragging && !isDragOver && !isEndStatus && "bg-card hover:shadow-sm"
+                              )}
+                            >
+                              <div className="flex items-center gap-2 p-3">
+                                <div className={cn(
+                                  "cursor-grab active:cursor-grabbing shrink-0",
+                                  !canDrag && "opacity-30 cursor-not-allowed"
+                                )}>
+                                  <GripVertical className="h-4 w-4 text-muted-foreground" />
                                 </div>
 
-                                {expandedRolesId === bs.id && (
-                                  <div className="px-3 pb-3 pt-1 border-t border-border/50 space-y-2">
-                                    <p className="text-xs text-muted-foreground font-medium">Visível para:</p>
-                                    <div className="grid grid-cols-2 gap-2">
-                                      {BOARD_ROLES.map(role => {
-                                        const currentRoles = bs.visible_to_roles || [];
-                                        const isAll = currentRoles.length === 0;
-                                        const isChecked = isAll || currentRoles.includes(role.value);
-                                        
-                                        return (
-                                          <label key={role.value} className="flex items-center gap-2 text-sm cursor-pointer">
-                                            <Checkbox
-                                              checked={isChecked}
-                                              onCheckedChange={(checked) => {
-                                                let newRoles: string[];
-                                                if (isAll) {
-                                                  newRoles = BOARD_ROLES.filter(r => r.value !== role.value).map(r => r.value);
-                                                } else if (checked) {
-                                                  newRoles = [...currentRoles, role.value];
-                                                } else {
-                                                  newRoles = currentRoles.filter(r => r !== role.value);
-                                                  if (newRoles.length === 0) {
-                                                    toast.error("Pelo menos um papel deve ter acesso");
-                                                    return;
-                                                  }
-                                                }
-                                                handleUpdateVisibleRoles(bs.id, newRoles);
-                                              }}
-                                            />
-                                            {role.label}
-                                          </label>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
+                                <div
+                                  className="h-3 w-3 rounded-full shrink-0 ring-2 ring-background shadow-sm"
+                                  style={{ backgroundColor: bs.status.color }}
+                                />
+                                <span className={cn(
+                                  "font-medium text-sm truncate flex-1",
+                                  !bs.is_active && "text-muted-foreground line-through"
+                                )}>
+                                  {bs.status.name}
+                                </span>
+
+                                {isFixedStatus && (
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary shrink-0">
+                                    Fixa
+                                  </Badge>
                                 )}
+
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
+                                  {demandCounts[bs.status_id] || 0} demandas
+                                </Badge>
+
+                                {!isFixedStatus && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                                        onClick={() => openEditPanel(bs)}
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Editar etapa</TooltipContent>
+                                  </Tooltip>
+                                )}
+
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className={cn(
+                                        "h-8 w-8 shrink-0",
+                                        bs.visible_to_roles && bs.visible_to_roles.length > 0
+                                          ? "text-primary"
+                                          : "text-muted-foreground"
+                                      )}
+                                      onClick={() => setExpandedRolesId(expandedRolesId === bs.id ? null : bs.id)}
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {bs.visible_to_roles && bs.visible_to_roles.length > 0
+                                      ? `Visível para: ${bs.visible_to_roles.map(r => BOARD_ROLES.find(br => br.value === r)?.label).join(', ')}`
+                                      : "Visível para todos"
+                                    }
+                                  </TooltipContent>
+                                </Tooltip>
+
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span>
+                                      <Switch
+                                        checked={bs.is_active}
+                                        onCheckedChange={(checked) => handleToggleStatus(bs.id, checked)}
+                                        disabled={toggleStatus.isPending || isFixedStatus}
+                                      />
+                                    </span>
+                                  </TooltipTrigger>
+                                  {isFixedStatus && (
+                                    <TooltipContent>Etapas fixas não podem ser desativadas</TooltipContent>
+                                  )}
+                                </Tooltip>
+
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className={cn(
+                                        "h-8 w-8 shrink-0",
+                                        isFixedStatus 
+                                          ? "text-muted-foreground/30 cursor-not-allowed" 
+                                          : "text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                      )}
+                                      onClick={() => !isFixedStatus && handleDeleteClick(bs)}
+                                      disabled={isFixedStatus}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {isFixedStatus 
+                                      ? "Etapas fixas não podem ser removidas" 
+                                      : "Remover etapa do quadro"
+                                  }
+                                  </TooltipContent>
+                                </Tooltip>
                               </div>
-                            );
-                          })}
-                        </TooltipProvider>
-                      </div>
-                    )}
-                  </div>
 
-                  <p className="text-xs text-muted-foreground mt-4">
-                    A etapa "Entregue" é fixa e essencial para o fluxo de demandas. 
-                    Arraste as demais etapas pelo ícone ⠿ para reordená-las.
-                    Desativar uma etapa apenas a oculta no Kanban.
-                  </p>
+                              {expandedRolesId === bs.id && (
+                                <div className="px-3 pb-3 pt-1 border-t border-border/50 space-y-2">
+                                  <p className="text-xs text-muted-foreground font-medium">Visível para:</p>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {BOARD_ROLES.map(role => {
+                                      const currentRoles = bs.visible_to_roles || [];
+                                      const isAll = currentRoles.length === 0;
+                                      const isChecked = isAll || currentRoles.includes(role.value);
+                                      
+                                      return (
+                                        <label key={role.value} className="flex items-center gap-2 text-sm cursor-pointer">
+                                          <Checkbox
+                                            checked={isChecked}
+                                            onCheckedChange={(checked) => {
+                                              let newRoles: string[];
+                                              if (isAll) {
+                                                newRoles = BOARD_ROLES.filter(r => r.value !== role.value).map(r => r.value);
+                                              } else if (checked) {
+                                                newRoles = [...currentRoles, role.value];
+                                              } else {
+                                                newRoles = currentRoles.filter(r => r !== role.value);
+                                                if (newRoles.length === 0) {
+                                                  toast.error("Pelo menos um papel deve ter acesso");
+                                                  return;
+                                                }
+                                              }
+                                              handleUpdateVisibleRoles(bs.id, newRoles);
+                                            }}
+                                          />
+                                          {role.label}
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </TooltipProvider>
+                    </div>
+                  )}
                 </div>
-              </DialogPrimitive.Content>
 
-              {/* Floating side panel — always mounted, animated via CSS */}
-              <div
-                className={cn(
-                  "hidden sm:block bg-background border border-border rounded-xl shadow-2xl overflow-hidden",
-                  "sm:w-[280px] max-h-[85vh] overflow-y-auto",
-                  "transition-all duration-300 ease-out origin-left",
-                  sidePanelVisible
-                    ? "opacity-100 translate-x-0 scale-100"
-                    : "opacity-0 -translate-x-3 scale-95 pointer-events-none"
+                <p className="text-xs text-muted-foreground mt-4">
+                  A etapa "Entregue" é fixa e essencial para o fluxo de demandas. 
+                  Arraste as demais etapas pelo ícone ⠿ para reordená-las.
+                  Desativar uma etapa apenas a oculta no Kanban.
+                </p>
+              </div>
+            </DialogPrimitive.Content>
+
+            {/* Floating side panel — absolutely positioned to the right of center */}
+            <div
+              className={cn(
+                "hidden sm:block fixed top-1/2 -translate-y-1/2 pointer-events-auto",
+                "bg-background border border-border rounded-xl shadow-2xl overflow-hidden",
+                "w-[280px] max-h-[85vh] overflow-y-auto",
+                "transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+                sidePanelVisible
+                  ? "opacity-100 translate-x-0 scale-100"
+                  : "opacity-0 -translate-x-4 scale-95 pointer-events-none"
+              )}
+              style={{
+                left: 'calc(50% + min(26vw, 22.5vw) + 12px)',
+                visibility: sidePanel ? 'visible' : 'hidden',
+              }}
+            >
+              <div className="p-6">
+                {(sidePanel === 'create' || (!sidePanel && sidePanelVisible)) && (
+                  <StageForm
+                    mode="create"
+                    name={newStatusName}
+                    color={newStatusColor}
+                    adjustmentType={newStatusAdjustmentType}
+                    onNameChange={setNewStatusName}
+                    onColorChange={setNewStatusColor}
+                    onAdjustmentTypeChange={setNewStatusAdjustmentType}
+                    onSubmit={handleCreateStatus}
+                    onBack={closeSidePanel}
+                    isPending={createCustomStatus.isPending}
+                  />
                 )}
-                style={{ 
-                  visibility: sidePanel ? 'visible' : 'hidden',
+                {sidePanel === 'edit' && (
+                  <StageForm
+                    mode="edit"
+                    name={editName}
+                    color={editColor}
+                    adjustmentType={editAdjustmentType}
+                    onNameChange={setEditName}
+                    onColorChange={setEditColor}
+                    onAdjustmentTypeChange={setEditAdjustmentType}
+                    onSubmit={handleEditStatus}
+                    onBack={closeSidePanel}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Mobile: side panel replaces main card */}
+            {sidePanel && (
+              <DialogPrimitive.Content
+                className={cn(
+                  "sm:hidden bg-background border border-border rounded-xl shadow-2xl overflow-hidden pointer-events-auto",
+                  "w-[90vw] max-h-[85vh] overflow-y-auto",
+                  "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 duration-200"
+                )}
+                onInteractOutside={(e) => {
+                  e.preventDefault();
+                  closeSidePanel();
                 }}
               >
+                <button
+                  onClick={closeSidePanel}
+                  className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 z-10"
+                >
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Voltar</span>
+                </button>
                 <div className="p-6">
-                  {(sidePanel === 'create' || (!sidePanel && sidePanelVisible)) && (
+                  {sidePanel === 'create' && (
                     <StageForm
                       mode="create"
                       name={newStatusName}
@@ -765,61 +814,8 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                     />
                   )}
                 </div>
-              </div>
-
-              {/* Mobile: side panel replaces main card */}
-              {sidePanel && (
-                <DialogPrimitive.Content
-                  className={cn(
-                    "sm:hidden bg-background border border-border rounded-xl shadow-2xl overflow-hidden",
-                    "w-[90vw] max-h-[85vh] overflow-y-auto",
-                    "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 duration-200"
-                  )}
-                  onInteractOutside={(e) => {
-                    // Prevent closing the dialog when clicking outside the mobile panel
-                    e.preventDefault();
-                    closeSidePanel();
-                  }}
-                >
-                  <button
-                    onClick={closeSidePanel}
-                    className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 z-10"
-                  >
-                    <X className="h-4 w-4" />
-                    <span className="sr-only">Voltar</span>
-                  </button>
-                  <div className="p-6">
-                    {sidePanel === 'create' && (
-                      <StageForm
-                        mode="create"
-                        name={newStatusName}
-                        color={newStatusColor}
-                        adjustmentType={newStatusAdjustmentType}
-                        onNameChange={setNewStatusName}
-                        onColorChange={setNewStatusColor}
-                        onAdjustmentTypeChange={setNewStatusAdjustmentType}
-                        onSubmit={handleCreateStatus}
-                        onBack={closeSidePanel}
-                        isPending={createCustomStatus.isPending}
-                      />
-                    )}
-                    {sidePanel === 'edit' && (
-                      <StageForm
-                        mode="edit"
-                        name={editName}
-                        color={editColor}
-                        adjustmentType={editAdjustmentType}
-                        onNameChange={setEditName}
-                        onColorChange={setEditColor}
-                        onAdjustmentTypeChange={setEditAdjustmentType}
-                        onSubmit={handleEditStatus}
-                        onBack={closeSidePanel}
-                      />
-                    )}
-                  </div>
-                </DialogPrimitive.Content>
-              )}
-            </div>
+              </DialogPrimitive.Content>
+            )}
           </div>
         </DialogPortal>
       </Dialog>
