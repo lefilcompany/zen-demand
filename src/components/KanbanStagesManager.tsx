@@ -475,7 +475,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
             <span className="hidden sm:inline">Etapas</span>
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-3xl max-h-[90vh] p-0 overflow-hidden">
+        <DialogContent className="sm:max-w-[60vw] max-h-[90vh] p-0 overflow-hidden">
           <div className="flex h-full max-h-[85vh]">
             {/* Main panel - stages list */}
             <div className={cn(
