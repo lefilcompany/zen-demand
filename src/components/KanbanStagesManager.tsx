@@ -805,7 +805,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
             {showForm && (
               <div
                 data-stage-form-panel
-                className="sm:hidden pointer-events-auto bg-background border border-border rounded-xl shadow-2xl flex flex-col w-[92vw] h-[85vh] max-h-[85vh] animate-fade-in"
+                className="lg:hidden pointer-events-auto bg-background border border-border rounded-xl shadow-2xl flex flex-col w-[92vw] sm:w-[480px] h-[85vh] max-h-[85vh] animate-fade-in"
               >
                 {renderFormPanel(true)}
               </div>
