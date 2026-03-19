@@ -574,6 +574,19 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
           {/* Centered main modal */}
           <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
             <DialogPrimitive.Content
+              onPointerDownOutside={(e) => {
+                // If side panel is open, check if the click is inside it
+                const target = e.target as HTMLElement;
+                if (sidePanel && target.closest('[data-stage-side-panel]')) {
+                  e.preventDefault();
+                }
+              }}
+              onInteractOutside={(e) => {
+                const target = e.target as HTMLElement;
+                if (sidePanel && target.closest('[data-stage-side-panel]')) {
+                  e.preventDefault();
+                }
+              }}
               className={cn(
                 "relative bg-background border border-border rounded-xl shadow-2xl p-0 overflow-hidden pointer-events-auto",
                 "w-[92vw] sm:w-[480px] lg:w-[520px] max-h-[85vh]",
