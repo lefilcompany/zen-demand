@@ -318,6 +318,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
     setOpen(isOpen);
     if (!isOpen) {
       setSidePanel(null);
+      setSidePanelVisible(false);
       setEditingStatus(null);
       queryClient.refetchQueries({ queryKey: ["board-statuses", boardId] });
       queryClient.refetchQueries({ queryKey: ["board-statuses-all", boardId] });
