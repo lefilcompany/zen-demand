@@ -833,7 +833,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
               data-stage-side-panel
               className={cn(
                 "hidden sm:flex sm:flex-col fixed top-1/2 -translate-y-1/2 pointer-events-auto",
-                "bg-background border border-border rounded-xl shadow-2xl",
+                "bg-background border border-border rounded-xl shadow-2xl overflow-hidden",
                 "w-[300px] max-h-[85vh]",
                 "transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
                 sidePanelVisible
