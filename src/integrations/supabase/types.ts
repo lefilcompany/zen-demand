@@ -203,6 +203,7 @@ export type Database = {
           is_active: boolean
           position: number
           status_id: string
+          visible_to_roles: string[] | null
         }
         Insert: {
           adjustment_type?:
@@ -214,6 +215,7 @@ export type Database = {
           is_active?: boolean
           position?: number
           status_id: string
+          visible_to_roles?: string[] | null
         }
         Update: {
           adjustment_type?:
@@ -225,6 +227,7 @@ export type Database = {
           is_active?: boolean
           position?: number
           status_id?: string
+          visible_to_roles?: string[] | null
         }
         Relationships: [
           {
