@@ -498,6 +498,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const showForm = panelMode !== null;
 
   // Keep panel mounted during exit animation
+  // Keep panel mounted longer for smooth re-centering
   const [panelMounted, setPanelMounted] = useState(false);
   const [panelVisible, setPanelVisible] = useState(false);
   const panelTimerRef = useRef<ReturnType<typeof setTimeout>>();
