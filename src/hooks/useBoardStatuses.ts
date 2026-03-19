@@ -424,12 +424,14 @@ export function useCreateCustomStatus() {
       name, 
       color, 
       boardId,
-      adjustmentType = 'none'
+      adjustmentType = 'none',
+      visibleToRoles,
     }: { 
       name: string; 
       color: string;
       boardId: string;
       adjustmentType?: AdjustmentType;
+      visibleToRoles?: string[];
     }) => {
       // 1. Create the status in demand_statuses (linked to the board)
       const { data: newStatus, error: statusError } = await supabase
@@ -450,8 +452,13 @@ export function useCreateCustomStatus() {
 
       const maxPos = existing?.[0]?.position ?? -1;
 
-      // 3. Add to board_statuses with adjustment_type
-      const { error: boardError } = await supabase
+      // 3. Compute visible_to_roles value
+      const rolesValue = visibleToRoles && visibleToRoles.length > 0 && visibleToRoles.length < BOARD_ROLES.length
+        ? visibleToRoles
+        : null;
+
+      // 4. Add to board_statuses with adjustment_type and visible_to_roles
+      const { data: boardStatus, error: boardError } = await supabase
         .from("board_statuses")
         .insert({
           board_id: boardId,
@@ -459,11 +466,14 @@ export function useCreateCustomStatus() {
           position: maxPos + 1,
           is_active: true,
           adjustment_type: adjustmentType,
-        });
+          visible_to_roles: rolesValue,
+        })
+        .select()
+        .single();
 
       if (boardError) throw boardError;
 
-      return newStatus;
+      return { ...newStatus, boardStatusId: boardStatus.id };
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["board-statuses", variables.boardId] });
