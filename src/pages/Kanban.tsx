@@ -42,7 +42,7 @@ export default function Kanban() {
   const { data: role } = useBoardRole(selectedBoardId);
   const { data: currentBoard } = useBoard(selectedBoardId);
   const { canManage } = useIsTeamAdminOrModerator(currentTeamId);
-  const { columns: kanbanColumns } = useKanbanColumns(selectedBoardId);
+  const { columns: kanbanColumns } = useKanbanColumns(selectedBoardId, role);
   const { preferences, toggleDefaultColumnsOpen, isSaving, isLoading: isLoadingPrefs } = useKanbanPreferences();
   
   const [filters, setFilters] = useState<KanbanFiltersState>({

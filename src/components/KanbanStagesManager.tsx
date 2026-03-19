@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { Settings, GripVertical, Trash2, Plus } from "lucide-react";
+import { Settings, GripVertical, Trash2, Plus, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Sheet,
   SheetContent,
@@ -59,6 +60,8 @@ import {
   isFixedBoundaryStatus,
   FIXED_END_STATUS,
   AdjustmentType,
+  BOARD_ROLES,
+  BoardRoleType,
 } from "@/hooks/useBoardStatuses";
 import { ColorPicker } from "@/components/ColorPicker";
 import { supabase } from "@/integrations/supabase/client";
@@ -116,6 +119,26 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const addStatus = useAddBoardStatus();
   const deleteStatus = useDeleteBoardStatus();
   const createCustomStatus = useCreateCustomStatus();
+
+  const [expandedRolesId, setExpandedRolesId] = useState<string | null>(null);
+
+  const handleUpdateVisibleRoles = async (boardStatusId: string, roles: string[]) => {
+    try {
+      const value = roles.length === 0 || roles.length === BOARD_ROLES.length ? null : roles;
+      const { error } = await supabase
+        .from("board_statuses")
+        .update({ visible_to_roles: value })
+        .eq("id", boardStatusId);
+      if (error) throw error;
+      
+      setLocalStatuses(prev => prev.map(s => 
+        s.id === boardStatusId ? { ...s, visible_to_roles: value } : s
+      ));
+      toast.success("Visibilidade atualizada");
+    } catch {
+      toast.error("Erro ao atualizar visibilidade");
+    }
+  };
 
   // Handle sheet open/close and force refetch on close
   const handleOpenChange = useCallback((isOpen: boolean) => {
@@ -438,87 +461,155 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                           onDragEnd={handleDragEnd}
                           onDrop={() => handleDrop(index)}
                           className={cn(
-                            "flex items-center gap-2 p-3 rounded-lg border transition-all duration-200",
+                            "rounded-lg border transition-all duration-200",
                             bs.is_active 
                               ? "bg-background" 
                               : "bg-muted/50 opacity-60",
                             isFixedStatus && "border-primary/30 bg-primary/5",
                             isDragging && "opacity-40 scale-95 border-dashed",
                             isDragOver && !isEndStatus && "border-primary shadow-md scale-[1.02]",
-                            canDrag && "cursor-grab active:cursor-grabbing"
                           )}
                         >
-                          {/* Drag handle */}
                           <div className={cn(
-                            "shrink-0 text-muted-foreground",
-                            isFixedStatus && "opacity-30",
-                            canDrag && "hover:text-foreground"
+                            "flex items-center gap-2 p-3",
+                            canDrag && "cursor-grab active:cursor-grabbing"
                           )}>
-                            <GripVertical className="h-4 w-4" />
+                            {/* Drag handle */}
+                            <div className={cn(
+                              "shrink-0 text-muted-foreground",
+                              isFixedStatus && "opacity-30",
+                              canDrag && "hover:text-foreground"
+                            )}>
+                              <GripVertical className="h-4 w-4" />
+                            </div>
+
+                            {/* Color indicator */}
+                            <div
+                              className="w-4 h-4 rounded-full shrink-0 border"
+                              style={{ backgroundColor: bs.status.color }}
+                            />
+
+                            {/* Name with fixed indicator */}
+                            <span className="flex-1 font-medium text-sm truncate flex items-center gap-2">
+                              {bs.status.name}
+                              {isFixedStatus && (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                  Fixa
+                                </Badge>
+                              )}
+                            </span>
+
+                            {/* Demand count badge */}
+                            <Badge variant="outline" className="text-xs shrink-0">
+                              {demandCounts?.[bs.status_id] || 0} {(demandCounts?.[bs.status_id] || 0) === 1 ? "demanda" : "demandas"}
+                            </Badge>
+
+                            {/* Role visibility toggle */}
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className={cn(
+                                    "h-8 w-8 shrink-0",
+                                    bs.visible_to_roles && bs.visible_to_roles.length > 0
+                                      ? "text-primary"
+                                      : "text-muted-foreground"
+                                  )}
+                                  onClick={() => setExpandedRolesId(expandedRolesId === bs.id ? null : bs.id)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {bs.visible_to_roles && bs.visible_to_roles.length > 0
+                                  ? `Visível para: ${bs.visible_to_roles.map(r => BOARD_ROLES.find(br => br.value === r)?.label).join(', ')}`
+                                  : "Visível para todos"
+                                }
+                              </TooltipContent>
+                            </Tooltip>
+
+                            {/* Active toggle - fixed statuses cannot be deactivated */}
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span>
+                                  <Switch
+                                    checked={bs.is_active}
+                                    onCheckedChange={(checked) => handleToggleStatus(bs.id, checked)}
+                                    disabled={toggleStatus.isPending || isFixedStatus}
+                                  />
+                                </span>
+                              </TooltipTrigger>
+                              {isFixedStatus && (
+                                <TooltipContent>Etapas fixas não podem ser desativadas</TooltipContent>
+                              )}
+                            </Tooltip>
+
+                            {/* Delete button */}
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className={cn(
+                                    "h-8 w-8 shrink-0",
+                                    isFixedStatus 
+                                      ? "text-muted-foreground/30 cursor-not-allowed" 
+                                      : "text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  )}
+                                  onClick={() => !isFixedStatus && handleDeleteClick(bs)}
+                                  disabled={isFixedStatus}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {isFixedStatus 
+                                  ? "Etapas fixas não podem ser removidas" 
+                                  : "Remover etapa do quadro"
+                                }
+                              </TooltipContent>
+                            </Tooltip>
                           </div>
 
-                          {/* Color indicator */}
-                          <div
-                            className="w-4 h-4 rounded-full shrink-0 border"
-                            style={{ backgroundColor: bs.status.color }}
-                          />
-
-                          {/* Name with fixed indicator */}
-                          <span className="flex-1 font-medium text-sm truncate flex items-center gap-2">
-                            {bs.status.name}
-                            {isFixedStatus && (
-                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                                Fixa
-                              </Badge>
-                            )}
-                          </span>
-
-                          {/* Demand count badge */}
-                          <Badge variant="outline" className="text-xs shrink-0">
-                            {demandCounts?.[bs.status_id] || 0} {(demandCounts?.[bs.status_id] || 0) === 1 ? "demanda" : "demandas"}
-                          </Badge>
-
-                          {/* Active toggle - fixed statuses cannot be deactivated */}
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span>
-                                <Switch
-                                  checked={bs.is_active}
-                                  onCheckedChange={(checked) => handleToggleStatus(bs.id, checked)}
-                                  disabled={toggleStatus.isPending || isFixedStatus}
-                                />
-                              </span>
-                            </TooltipTrigger>
-                            {isFixedStatus && (
-                              <TooltipContent>Etapas fixas não podem ser desativadas</TooltipContent>
-                            )}
-                          </Tooltip>
-
-                          {/* Delete button */}
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className={cn(
-                                  "h-8 w-8 shrink-0",
-                                  isFixedStatus 
-                                    ? "text-muted-foreground/30 cursor-not-allowed" 
-                                    : "text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                )}
-                                onClick={() => !isFixedStatus && handleDeleteClick(bs)}
-                                disabled={isFixedStatus}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {isFixedStatus 
-                                ? "Etapas fixas não podem ser removidas" 
-                                : "Remover etapa do quadro"
-                              }
-                            </TooltipContent>
-                          </Tooltip>
+                          {/* Expanded role visibility section */}
+                          {expandedRolesId === bs.id && (
+                            <div className="px-3 pb-3 pt-1 border-t border-border/50 space-y-2">
+                              <p className="text-xs text-muted-foreground font-medium">Visível para:</p>
+                              <div className="grid grid-cols-2 gap-2">
+                                {BOARD_ROLES.map(role => {
+                                  const currentRoles = bs.visible_to_roles || [];
+                                  const isAll = currentRoles.length === 0;
+                                  const isChecked = isAll || currentRoles.includes(role.value);
+                                  
+                                  return (
+                                    <label key={role.value} className="flex items-center gap-2 text-sm cursor-pointer">
+                                      <Checkbox
+                                        checked={isChecked}
+                                        onCheckedChange={(checked) => {
+                                          let newRoles: string[];
+                                          if (isAll) {
+                                            // Currently "all" - unchecking one means select all except this
+                                            newRoles = BOARD_ROLES.filter(r => r.value !== role.value).map(r => r.value);
+                                          } else if (checked) {
+                                            newRoles = [...currentRoles, role.value];
+                                          } else {
+                                            newRoles = currentRoles.filter(r => r !== role.value);
+                                            if (newRoles.length === 0) {
+                                              toast.error("Pelo menos um papel deve ter acesso");
+                                              return;
+                                            }
+                                          }
+                                          handleUpdateVisibleRoles(bs.id, newRoles);
+                                        }}
+                                      />
+                                      {role.label}
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
