@@ -792,13 +792,13 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
               <div
                 data-stage-form-panel
                 className={cn(
-                  "pointer-events-auto bg-background border border-border rounded-xl shadow-2xl flex flex-col",
+                  "pointer-events-auto bg-background border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden",
                   "h-[85vh] max-h-[85vh]",
                   "hidden sm:flex w-[380px] lg:w-[420px]",
-                  "transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+                  "transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
                   showForm
                     ? "opacity-100 translate-x-0 scale-100"
-                    : "opacity-0 -translate-x-4 scale-95 pointer-events-none"
+                    : "opacity-0 -translate-x-8 scale-[0.97] pointer-events-none"
                 )}
               >
                 {renderFormPanel()}
