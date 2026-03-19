@@ -5,8 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
-import { Wrench, LayoutGrid } from "lucide-react";
-import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { Wrench } from "lucide-react";
 import { formatDateOnlyBR, isDateOverdue, toDateOnly, parseDateOnly } from "@/lib/dateUtils";
 import { truncateText } from "@/lib/utils";
