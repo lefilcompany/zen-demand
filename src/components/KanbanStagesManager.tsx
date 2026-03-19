@@ -722,60 +722,72 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                 </div>
               </DialogPrimitive.Content>
 
-              {/* Floating side panel — separate card with gap */}
-              {sidePanel && (
-                <div
-                  className={cn(
-                    "bg-background border border-border rounded-xl shadow-2xl overflow-hidden",
-                    "w-[90vw] sm:w-[280px] max-h-[85vh] overflow-y-auto",
-                    "animate-in fade-in-0 slide-in-from-left-4 zoom-in-95 duration-300"
+              {/* Floating side panel — always mounted, animated via CSS */}
+              <div
+                className={cn(
+                  "hidden sm:block bg-background border border-border rounded-xl shadow-2xl overflow-hidden",
+                  "sm:w-[280px] max-h-[85vh] overflow-y-auto",
+                  "transition-all duration-300 ease-out origin-left",
+                  sidePanelVisible
+                    ? "opacity-100 translate-x-0 scale-100"
+                    : "opacity-0 -translate-x-3 scale-95 pointer-events-none"
+                )}
+                style={{ 
+                  visibility: sidePanel ? 'visible' : 'hidden',
+                }}
+              >
+                <div className="p-6">
+                  {(sidePanel === 'create' || (!sidePanel && sidePanelVisible)) && (
+                    <StageForm
+                      mode="create"
+                      name={newStatusName}
+                      color={newStatusColor}
+                      adjustmentType={newStatusAdjustmentType}
+                      onNameChange={setNewStatusName}
+                      onColorChange={setNewStatusColor}
+                      onAdjustmentTypeChange={setNewStatusAdjustmentType}
+                      onSubmit={handleCreateStatus}
+                      onBack={closeSidePanel}
+                      isPending={createCustomStatus.isPending}
+                    />
                   )}
-                >
-                  <div className="p-6">
-                    {sidePanel === 'create' && (
-                      <StageForm
-                        mode="create"
-                        name={newStatusName}
-                        color={newStatusColor}
-                        adjustmentType={newStatusAdjustmentType}
-                        onNameChange={setNewStatusName}
-                        onColorChange={setNewStatusColor}
-                        onAdjustmentTypeChange={setNewStatusAdjustmentType}
-                        onSubmit={handleCreateStatus}
-                        onBack={closeSidePanel}
-                        isPending={createCustomStatus.isPending}
-                      />
-                    )}
-                    {sidePanel === 'edit' && (
-                      <StageForm
-                        mode="edit"
-                        name={editName}
-                        color={editColor}
-                        adjustmentType={editAdjustmentType}
-                        onNameChange={setEditName}
-                        onColorChange={setEditColor}
-                        onAdjustmentTypeChange={setEditAdjustmentType}
-                        onSubmit={handleEditStatus}
-                        onBack={closeSidePanel}
-                      />
-                    )}
-                  </div>
+                  {sidePanel === 'edit' && (
+                    <StageForm
+                      mode="edit"
+                      name={editName}
+                      color={editColor}
+                      adjustmentType={editAdjustmentType}
+                      onNameChange={setEditName}
+                      onColorChange={setEditColor}
+                      onAdjustmentTypeChange={setEditAdjustmentType}
+                      onSubmit={handleEditStatus}
+                      onBack={closeSidePanel}
+                    />
+                  )}
                 </div>
-              )}
+              </div>
 
-              {/* Mobile: show side panel as full card when main is hidden */}
+              {/* Mobile: side panel replaces main card */}
               {sidePanel && (
                 <DialogPrimitive.Content
                   className={cn(
                     "sm:hidden bg-background border border-border rounded-xl shadow-2xl overflow-hidden",
                     "w-[90vw] max-h-[85vh] overflow-y-auto",
-                    "animate-in fade-in-0 zoom-in-95 duration-200"
+                    "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 duration-200"
                   )}
+                  onInteractOutside={(e) => {
+                    // Prevent closing the dialog when clicking outside the mobile panel
+                    e.preventDefault();
+                    closeSidePanel();
+                  }}
                 >
-                  <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 z-10">
+                  <button
+                    onClick={closeSidePanel}
+                    className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 z-10"
+                  >
                     <X className="h-4 w-4" />
-                    <span className="sr-only">Close</span>
-                  </DialogPrimitive.Close>
+                    <span className="sr-only">Voltar</span>
+                  </button>
                   <div className="p-6">
                     {sidePanel === 'create' && (
                       <StageForm
