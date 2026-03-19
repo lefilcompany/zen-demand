@@ -84,10 +84,10 @@ export default function Settings() {
     
     setIsTransferringAdmin(true);
     try {
-      // Transfer admin role to selected member (admin in DB maps to "owner" in app)
+      // Transfer admin role to selected member
       const { error: updateError } = await supabase
         .from("team_members")
-        .update({ role: "admin" })
+        .update({ role: "owner" })
         .eq("team_id", selectedTeamId)
         .eq("user_id", selectedNewAdmin);
 

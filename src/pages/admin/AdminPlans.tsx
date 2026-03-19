@@ -127,6 +127,12 @@ const featureOptions: {
     type: "boolean",
   },
   {
+    key: "contracts",
+    label: "Gestão de Contratos",
+    description: "Permite fazer upload e processamento de contratos vinculados à equipe.",
+    type: "boolean",
+  },
+  {
     key: "api",
     label: "Acesso à API",
     description: "Permite integrar sistemas externos via API REST com chaves de acesso.",

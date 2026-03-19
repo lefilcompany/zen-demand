@@ -4,13 +4,6 @@ import { TeamRole } from "./useTeamRole";
 
 // Board-level roles for display purposes
 export type BoardRole = "admin" | "moderator" | "executor" | "requester";
-type DbTeamRole = "admin" | "moderator" | "executor" | "requester";
-
-const toAppRole = (role: DbTeamRole): TeamRole =>
-  role === "admin" || role === "moderator" ? "owner" : "member";
-
-const toDbRole = (role: TeamRole): DbTeamRole =>
-  role === "owner" ? "admin" : "requester";
 
 export interface TeamMemberPosition {
   id: string;
@@ -57,17 +50,15 @@ export function useTeamMembers(teamId: string | null) {
       return data.map((member) => ({
         id: member.id,
         user_id: member.user_id,
-        role: toAppRole(member.role as DbTeamRole),
+        role: member.role as TeamRole,
         joined_at: member.joined_at,
         position_id: member.position_id,
-        position: member.team_positions
-          ? {
-              id: (member.team_positions as any).id,
-              name: (member.team_positions as any).name,
-              color: (member.team_positions as any).color,
-              text_color: (member.team_positions as any).text_color || "auto",
-            }
-          : null,
+        position: member.team_positions ? {
+          id: (member.team_positions as any).id,
+          name: (member.team_positions as any).name,
+          color: (member.team_positions as any).color,
+          text_color: (member.team_positions as any).text_color || "auto",
+        } : null,
         profile: {
           full_name: (member.profiles as any)?.full_name || "Usuário",
           avatar_url: (member.profiles as any)?.avatar_url || null,
@@ -91,16 +82,17 @@ export function useUpdateMemberRole() {
     }) => {
       const { data, error } = await supabase
         .from("team_members")
-        .update({ role: toDbRole(newRole) })
+        .update({ role: newRole })
         .eq("id", memberId)
         .select();
 
       if (error) throw error;
-
+      
+      // Check if any rows were actually updated
       if (!data || data.length === 0) {
         throw new Error("Nenhuma alteração foi feita. Você pode não ter permissão para alterar este cargo.");
       }
-
+      
       return data;
     },
     onSuccess: () => {
@@ -115,7 +107,10 @@ export function useRemoveMember() {
 
   return useMutation({
     mutationFn: async (memberId: string) => {
-      const { error } = await supabase.from("team_members").delete().eq("id", memberId);
+      const { error } = await supabase
+        .from("team_members")
+        .delete()
+        .eq("id", memberId);
 
       if (error) throw error;
     },
