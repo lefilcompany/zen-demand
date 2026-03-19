@@ -2438,6 +2438,15 @@ export type Database = {
         }
         Returns: Json
       }
+      verify_demand_share_token: {
+        Args: { p_token: string }
+        Returns: {
+          demand_id: string
+          expires_at: string
+          id: string
+          is_active: boolean
+        }[]
+      }
       verify_note_share_token: {
         Args: { p_token: string }
         Returns: {
