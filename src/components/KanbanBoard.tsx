@@ -1256,7 +1256,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                         )}
                         style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', transform: 'rotate(180deg)' }}
                       >
-                        {column.shortLabel}
+                        {column.label}
                       </span>
                     </div>
                     <ChevronRight 
