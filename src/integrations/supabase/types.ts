@@ -1860,7 +1860,7 @@ export type Database = {
           id: string
           joined_at: string
           position_id: string | null
-          role: Database["public"]["Enums"]["team_membership_role"]
+          role: Database["public"]["Enums"]["team_role"]
           team_id: string
           user_id: string
         }
@@ -1868,7 +1868,7 @@ export type Database = {
           id?: string
           joined_at?: string
           position_id?: string | null
-          role?: Database["public"]["Enums"]["team_membership_role"]
+          role?: Database["public"]["Enums"]["team_role"]
           team_id: string
           user_id: string
         }
@@ -1876,7 +1876,7 @@ export type Database = {
           id?: string
           joined_at?: string
           position_id?: string | null
-          role?: Database["public"]["Enums"]["team_membership_role"]
+          role?: Database["public"]["Enums"]["team_role"]
           team_id?: string
           user_id?: string
         }
@@ -2462,7 +2462,6 @@ export type Database = {
       adjustment_type: "none" | "internal" | "external"
       app_role: "admin" | "member"
       note_share_permission: "viewer" | "editor"
-      team_membership_role: "owner" | "member"
       team_role: "admin" | "moderator" | "requester" | "executor"
     }
     CompositeTypes: {
@@ -2594,7 +2593,6 @@ export const Constants = {
       adjustment_type: ["none", "internal", "external"],
       app_role: ["admin", "member"],
       note_share_permission: ["viewer", "editor"],
-      team_membership_role: ["owner", "member"],
       team_role: ["admin", "moderator", "requester", "executor"],
     },
   },

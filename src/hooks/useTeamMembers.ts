@@ -2,6 +2,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamRole } from "./useTeamRole";
 
+// Map DB team_role to UI TeamRole
+function mapDbRole(dbRole: string): TeamRole {
+  return dbRole === "admin" ? "owner" : "member";
+}
+
 // Board-level roles for display purposes
 export type BoardRole = "admin" | "moderator" | "executor" | "requester";
 
@@ -50,7 +55,7 @@ export function useTeamMembers(teamId: string | null) {
       return data.map((member) => ({
         id: member.id,
         user_id: member.user_id,
-        role: member.role as TeamRole,
+        role: mapDbRole(member.role as string),
         joined_at: member.joined_at,
         position_id: member.position_id,
         position: member.team_positions ? {
@@ -78,7 +83,7 @@ export function useUpdateMemberRole() {
       newRole,
     }: {
       memberId: string;
-      newRole: "owner" | "member";
+      newRole: "admin" | "requester";
     }) => {
       const { data, error } = await supabase
         .from("team_members")

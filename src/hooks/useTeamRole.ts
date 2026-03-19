@@ -4,6 +4,12 @@ import { useAuth } from "@/lib/auth";
 
 export type TeamRole = "owner" | "member";
 
+// Map DB team_role enum to simplified UI roles
+function mapDbRoleToTeamRole(dbRole: string | null): TeamRole | null {
+  if (!dbRole) return null;
+  return dbRole === "admin" ? "owner" : "member";
+}
+
 export function useTeamRole(teamId: string | null) {
   const { user } = useAuth();
 
@@ -23,7 +29,7 @@ export function useTeamRole(teamId: string | null) {
         if (error.code === "PGRST116") return null;
         throw error;
       }
-      return data?.role as TeamRole;
+      return mapDbRoleToTeamRole(data?.role ?? null);
     },
     enabled: !!user && !!teamId,
   });
