@@ -145,6 +145,61 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
     }
   };
 
+  const openEditDialog = (bs: BoardStatus) => {
+    setEditingStatus(bs);
+    setEditName(bs.status.name);
+    setEditColor(bs.status.color);
+    setEditAdjustmentType(bs.adjustment_type || "none");
+    setEditDialogOpen(true);
+  };
+
+  const handleEditStatus = async () => {
+    if (!editingStatus || !editName.trim()) {
+      toast.error("Digite um nome para a etapa");
+      return;
+    }
+    try {
+      // Update the status name and color in demand_statuses
+      const { error: statusError } = await supabase
+        .from("demand_statuses")
+        .update({ name: editName.trim(), color: editColor })
+        .eq("id", editingStatus.status_id);
+      if (statusError) throw statusError;
+
+      // Update adjustment_type in board_statuses
+      const { error: boardError } = await supabase
+        .from("board_statuses")
+        .update({ adjustment_type: editAdjustmentType })
+        .eq("id", editingStatus.id);
+      if (boardError) throw boardError;
+
+      // Update local state
+      setLocalStatuses(prev => prev.map(s => 
+        s.id === editingStatus.id 
+          ? { 
+              ...s, 
+              adjustment_type: editAdjustmentType,
+              status: { ...s.status, name: editName.trim(), color: editColor }
+            } 
+          : s
+      ));
+
+      queryClient.invalidateQueries({ queryKey: ["board-statuses", boardId] });
+      queryClient.invalidateQueries({ queryKey: ["board-statuses-all", boardId] });
+      queryClient.invalidateQueries({ queryKey: ["demand-statuses"] });
+
+      toast.success("Etapa atualizada");
+      setEditDialogOpen(false);
+      setEditingStatus(null);
+    } catch (error: any) {
+      if (error.message?.includes("duplicate") || error.code === "23505") {
+        toast.error("Já existe uma etapa com esse nome");
+      } else {
+        toast.error("Erro ao atualizar etapa");
+      }
+    }
+  };
+
   // Handle sheet open/close and force refetch on close
   const handleOpenChange = useCallback((isOpen: boolean) => {
     setOpen(isOpen);
