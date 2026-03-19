@@ -26,7 +26,7 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useDataPrecache } from "@/hooks/useDataPrecache";
 import { TrialExpiredBlock } from "@/components/TrialExpiredBlock";
 import { NoBoardsScreen } from "@/components/NoBoardsScreen";
-import { useSelectedBoard } from "@/contexts/BoardContext";
+import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { useTrialStatus } from "@/hooks/useTrialStatus";
 import { useTeamSubscription } from "@/hooks/useSubscription";
 import {
@@ -49,7 +49,7 @@ export function ProtectedLayout() {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const { isOpen, steps, closeTour, completeOnboarding, resetOnboarding, hasCompleted } = useOnboarding();
   const { currentTeam } = useSelectedTeam();
-  const { hasBoards, isLoading: boardsLoading } = useSelectedBoard();
+  const { hasBoards, isLoading: boardsLoading } = useSelectedBoardSafe();
 
   // Trial and subscription status
   const { isTrialExpired, isLoading: trialLoading } = useTrialStatus();
