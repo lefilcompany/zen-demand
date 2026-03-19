@@ -72,6 +72,7 @@ export function useDemands(boardId?: string) {
           assigned_profile:profiles!demands_assigned_to_fkey(full_name, avatar_url),
           teams(name),
           services(id, name),
+          boards(id, name),
           demand_assignees(
             user_id,
             profile:profiles(full_name, avatar_url)

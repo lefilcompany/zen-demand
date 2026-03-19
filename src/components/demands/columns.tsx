@@ -5,10 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { Wrench } from "lucide-react";
+import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { formatDateOnlyBR, isDateOverdue, toDateOnly, parseDateOnly } from "@/lib/dateUtils";
 import { truncateText } from "@/lib/utils";
 
@@ -48,6 +46,10 @@ export interface DemandTableRow {
   assigned_profile?: {
     full_name: string;
     avatar_url: string | null;
+  } | null;
+  boards?: {
+    id: string;
+    name: string;
   } | null;
 }
 const priorityConfig: Record<string, {
@@ -182,24 +184,23 @@ function DueDateCell({
     </span>;
 }
 
-// Cell component for delivered date
-function DeliveredDateCell({
+// Cell component for board name
+function BoardCell({
   row
 }: {
   row: {
     original: DemandTableRow;
   };
 }) {
-  const deliveredAt = row.original.delivered_at;
-  if (!deliveredAt) {
+  const board = row.original.boards;
+  if (!board) {
     return <span className="text-muted-foreground text-sm">—</span>;
   }
-  const date = new Date(deliveredAt);
-  return <span className="text-foreground">
-      {format(date, "dd/MM/yyyy", {
-      locale: ptBR
-    })}
-    </span>;
+  return (
+    <Badge variant="outline" className="text-xs bg-muted/50 border-border text-foreground font-medium">
+      {board.name}
+    </Badge>
+  );
 }
 
 // Cell component for priority
@@ -368,16 +369,17 @@ export const demandColumns: ColumnDef<DemandTableRow>[] = [{
     return dateA - dateB;
   }
 }, {
-  accessorKey: "delivered_at",
-  header: "Data de Entrega",
+  id: "board",
+  header: "Quadro",
   cell: ({
     row
-  }) => <DeliveredDateCell row={row} />,
+  }) => <BoardCell row={row} />,
   enableSorting: true,
+  accessorFn: row => row.boards?.name || "",
   sortingFn: (rowA, rowB) => {
-    const dateA = rowA.original.delivered_at ? new Date(rowA.original.delivered_at).getTime() : Infinity;
-    const dateB = rowB.original.delivered_at ? new Date(rowB.original.delivered_at).getTime() : Infinity;
-    return dateA - dateB;
+    const boardA = rowA.original.boards?.name || "";
+    const boardB = rowB.original.boards?.name || "";
+    return boardA.localeCompare(boardB);
   }
 }, {
   accessorKey: "priority",
