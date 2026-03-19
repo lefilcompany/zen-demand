@@ -571,7 +571,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
         <DialogPortal>
           <DialogOverlay />
           {/* Custom layout: two visually separate cards side by side */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center gap-3" style={{ pointerEvents: 'none' }}>
+          <div className={cn("fixed inset-0 z-50 flex items-center justify-center transition-[gap] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]", panelVisible ? "gap-3" : "gap-0")} style={{ pointerEvents: 'none' }}>
             {/* ===== MAIN CARD: Stage List ===== */}
             <DialogPrimitive.Content
               onPointerDownOutside={(e) => {
