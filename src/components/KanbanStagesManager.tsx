@@ -249,6 +249,8 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
     setNewStatusColor("#3B82F6");
     setNewStatusAdjustmentType("none");
     setSidePanel('create');
+    // Small delay so the panel DOM is ready before animating in
+    requestAnimationFrame(() => setSidePanelVisible(true));
   };
 
   const openEditPanel = (bs: BoardStatus) => {
@@ -257,11 +259,16 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
     setEditColor(bs.status.color);
     setEditAdjustmentType(bs.adjustment_type || "none");
     setSidePanel('edit');
+    requestAnimationFrame(() => setSidePanelVisible(true));
   };
 
   const closeSidePanel = () => {
-    setSidePanel(null);
-    setEditingStatus(null);
+    setSidePanelVisible(false);
+    // Wait for exit animation before unmounting content
+    setTimeout(() => {
+      setSidePanel(null);
+      setEditingStatus(null);
+    }, 250);
   };
 
   const handleEditStatus = async () => {
