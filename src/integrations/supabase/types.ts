@@ -2418,6 +2418,7 @@ export type Database = {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
+      join_team_with_code: { Args: { p_code: string }; Returns: string }
       promote_to_admin_by_email: {
         Args: { p_email: string }
         Returns: undefined
