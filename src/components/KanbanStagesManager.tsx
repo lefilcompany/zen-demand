@@ -94,9 +94,11 @@ function StageForm({
   name,
   color,
   adjustmentType,
+  visibleToRoles,
   onNameChange,
   onColorChange,
   onAdjustmentTypeChange,
+  onVisibleToRolesChange,
   onSubmit,
   onBack,
   isPending,
@@ -105,13 +107,40 @@ function StageForm({
   name: string;
   color: string;
   adjustmentType: AdjustmentType;
+  visibleToRoles: string[];
   onNameChange: (v: string) => void;
   onColorChange: (v: string) => void;
   onAdjustmentTypeChange: (v: AdjustmentType) => void;
+  onVisibleToRolesChange: (v: string[]) => void;
   onSubmit: () => void;
   onBack: () => void;
   isPending?: boolean;
 }) {
+  const allSelected = visibleToRoles.length === 0;
+
+  const handleRoleToggle = (roleValue: string, checked: boolean) => {
+    if (allSelected) {
+      // Currently "all" — uncheck one means select all others except this one
+      const newRoles = BOARD_ROLES.filter(r => r.value !== roleValue).map(r => r.value);
+      onVisibleToRolesChange(newRoles);
+    } else if (checked) {
+      const newRoles = [...visibleToRoles, roleValue];
+      // If all roles selected, set to empty (= all)
+      if (newRoles.length === BOARD_ROLES.length) {
+        onVisibleToRolesChange([]);
+      } else {
+        onVisibleToRolesChange(newRoles);
+      }
+    } else {
+      const newRoles = visibleToRoles.filter(r => r !== roleValue);
+      if (newRoles.length === 0) {
+        toast.error("Pelo menos um papel deve ter acesso");
+        return;
+      }
+      onVisibleToRolesChange(newRoles);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 mb-4">
@@ -123,7 +152,7 @@ function StageForm({
         </h3>
       </div>
 
-      <div className="space-y-4 flex-1">
+      <div className="space-y-4 flex-1 overflow-y-auto">
         <div className="space-y-2">
           <Label htmlFor="stage-name">Nome da Etapa</Label>
           <Input
@@ -173,6 +202,34 @@ function StageForm({
           <p className="text-xs text-muted-foreground">
             Define quem pode solicitar ajustes nesta etapa.
           </p>
+        </div>
+
+        {/* Visibility by role */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-1.5">
+            <Eye className="h-3.5 w-3.5" />
+            Visibilidade por Papel
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Selecione quais papéis podem ver esta etapa no Kanban.
+          </p>
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            {BOARD_ROLES.map(role => {
+              const isChecked = allSelected || visibleToRoles.includes(role.value);
+              return (
+                <label key={role.value} className="flex items-center gap-2 text-sm cursor-pointer py-1">
+                  <Checkbox
+                    checked={isChecked}
+                    onCheckedChange={(checked) => handleRoleToggle(role.value, !!checked)}
+                  />
+                  <span className="truncate">{role.label}</span>
+                </label>
+              );
+            })}
+          </div>
+          {allSelected && (
+            <p className="text-xs text-muted-foreground/70 italic">Todos os papéis podem ver esta etapa.</p>
+          )}
         </div>
       </div>
 
