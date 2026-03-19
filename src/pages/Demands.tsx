@@ -459,7 +459,7 @@ export default function Demands() {
         </div>
       </div>
 
-      {!selectedBoardId ? <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
+      {!selectedBoardId && !showAllBoards ? <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
           <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-lg font-semibold text-foreground">
             {t("teams.title")}
