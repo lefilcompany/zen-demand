@@ -868,9 +868,11 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                       name={newStatusName}
                       color={newStatusColor}
                       adjustmentType={newStatusAdjustmentType}
+                      visibleToRoles={newStatusVisibleRoles}
                       onNameChange={setNewStatusName}
                       onColorChange={setNewStatusColor}
                       onAdjustmentTypeChange={setNewStatusAdjustmentType}
+                      onVisibleToRolesChange={setNewStatusVisibleRoles}
                       onSubmit={handleCreateStatus}
                       onBack={closeSidePanel}
                       isPending={createCustomStatus.isPending}
