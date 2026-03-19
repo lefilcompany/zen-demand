@@ -724,6 +724,77 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit stage dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Etapa</DialogTitle>
+            <DialogDescription>
+              Altere o nome, cor ou tipo de aprovação da etapa.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-status-name">Nome da Etapa</Label>
+              <Input
+                id="edit-status-name"
+                placeholder="Ex: Em Revisão"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                maxLength={50}
+              />
+            </div>
+            <ColorPicker
+              label="Cor da Etapa"
+              value={editColor}
+              onChange={setEditColor}
+            />
+            <div className="space-y-2">
+              <Label htmlFor="edit-adjustment-type">Tipo de Aprovação</Label>
+              <Select 
+                value={editAdjustmentType} 
+                onValueChange={(value: AdjustmentType) => setEditAdjustmentType(value)}
+              >
+                <SelectTrigger id="edit-adjustment-type">
+                  <SelectValue placeholder="Selecione o tipo..." />
+                </SelectTrigger>
+                <SelectContent className="bg-background">
+                  <SelectItem value="none">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-muted-foreground" />
+                      Nenhum (etapa normal)
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="internal">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-primary" />
+                      Aprovação Interna (Admins/Moderadores)
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="external">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-accent" />
+                      Aprovação Externa (Solicitantes)
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleEditStatus} 
+              disabled={!editName.trim()}
+            >
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
