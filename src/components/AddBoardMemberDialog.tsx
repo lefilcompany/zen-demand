@@ -26,7 +26,8 @@ import { toast } from "sonner";
 
 type TeamRole = "admin" | "moderator" | "executor" | "requester";
 
-const teamRoleConfig: Record<TeamRole, { label: string; badgeColor: string; bannerColor: string; icon: React.ReactNode }> = {
+// Map for board roles (used in step 2 role selection and badge display)
+const teamRoleConfig: Record<string, { label: string; badgeColor: string; bannerColor: string; icon: React.ReactNode }> = {
   admin: {
     label: "Administrador",
     badgeColor: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
@@ -50,6 +51,19 @@ const teamRoleConfig: Record<TeamRole, { label: string; badgeColor: string; bann
     badgeColor: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
     bannerColor: "from-purple-500/80 via-purple-600 to-purple-500/60",
     icon: <User className="h-3 w-3" />,
+  },
+  // Team-level roles from team_members table
+  owner: {
+    label: "Dono",
+    badgeColor: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+    bannerColor: "from-amber-500/80 via-amber-600 to-amber-500/60",
+    icon: <ShieldCheck className="h-3 w-3" />,
+  },
+  member: {
+    label: "Membro",
+    badgeColor: "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200",
+    bannerColor: "from-slate-500/80 via-slate-600 to-slate-500/60",
+    icon: <Users className="h-3 w-3" />,
   },
 };
 
@@ -111,7 +125,7 @@ export function AddBoardMemberDialog({ trigger, boardId: propBoardId }: AddBoard
       if (next.has(userId)) {
         next.delete(userId);
       } else {
-        next.set(userId, "requester");
+        next.set(userId, "executor");
       }
       return next;
     });
@@ -134,7 +148,7 @@ export function AddBoardMemberDialog({ trigger, boardId: propBoardId }: AddBoard
         filteredMembers.forEach((m: any) => next.delete(m.user_id));
       } else {
         filteredMembers.forEach((m: any) => {
-          if (!next.has(m.user_id)) next.set(m.user_id, "requester");
+          if (!next.has(m.user_id)) next.set(m.user_id, "executor");
         });
       }
       return next;
@@ -227,8 +241,8 @@ export function AddBoardMemberDialog({ trigger, boardId: propBoardId }: AddBoard
                   <div className="px-5 pb-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {filteredMembers.map((member: any) => {
                       const isSelected = selectedMembers.has(member.user_id);
-                      const role = (member.team_role || "requester") as TeamRole;
-                      const config = teamRoleConfig[role] || teamRoleConfig.requester;
+                      const role = (member.team_role || "member") as string;
+                      const config = teamRoleConfig[role] || teamRoleConfig.member;
 
                       return (
                         <button
@@ -334,9 +348,9 @@ export function AddBoardMemberDialog({ trigger, boardId: propBoardId }: AddBoard
               <ScrollArea className="h-[50vh]">
                 <div className="px-5 pb-3 space-y-2">
                   {selectedList.map((member: any) => {
-                    const currentRole = selectedMembers.get(member.user_id) || "requester";
-                    const teamRole = (member.team_role || "requester") as TeamRole;
-                    const teamConfig = teamRoleConfig[teamRole];
+                    const currentRole = selectedMembers.get(member.user_id) || "executor";
+                    const teamRole = (member.team_role || "member") as string;
+                    const teamConfig = teamRoleConfig[teamRole] || teamRoleConfig.member;
 
                     return (
                       <div
