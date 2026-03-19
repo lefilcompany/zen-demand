@@ -498,6 +498,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const showForm = panelMode !== null;
 
   // Keep panel mounted during exit animation
+  // Keep panel mounted longer for smooth re-centering
   const [panelMounted, setPanelMounted] = useState(false);
   const [panelVisible, setPanelVisible] = useState(false);
   const panelTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -570,7 +571,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
         <DialogPortal>
           <DialogOverlay />
           {/* Custom layout: two visually separate cards side by side */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center gap-3" style={{ pointerEvents: 'none' }}>
+          <div className={cn("fixed inset-0 z-50 flex items-center justify-center transition-[gap] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]", panelVisible ? "gap-3" : "gap-0")} style={{ pointerEvents: 'none' }}>
             {/* ===== MAIN CARD: Stage List ===== */}
             <DialogPrimitive.Content
               onPointerDownOutside={(e) => {
@@ -596,6 +597,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                 "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
                 "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
                 "duration-200",
+                "transition-[transform,margin] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
                 // Hide on mobile when form is open
                 showForm ? "hidden sm:flex" : "flex"
               )}
@@ -786,11 +788,11 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                 className={cn(
                   "pointer-events-auto bg-background border border-border rounded-xl overflow-hidden min-h-0",
                   "h-[85vh] max-h-[85vh]",
-                  "hidden sm:flex sm:flex-col w-[380px] lg:w-[420px]",
+                  "hidden sm:flex sm:flex-col",
                   "transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
                   panelVisible
-                    ? "opacity-100 translate-x-0 scale-100 shadow-2xl"
-                    : "opacity-0 -translate-x-16 scale-95 shadow-none pointer-events-none"
+                    ? "opacity-100 translate-x-0 scale-100 shadow-2xl w-[380px] lg:w-[420px]"
+                    : "opacity-0 scale-95 shadow-none pointer-events-none w-0 border-0 p-0"
                 )}
               >
                 {renderFormPanel()}
