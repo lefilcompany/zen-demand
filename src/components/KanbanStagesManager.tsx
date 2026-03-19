@@ -525,11 +525,31 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
         boardId,
         adjustmentType: newStatusAdjustmentType,
       });
+
+      // After creating, update visible_to_roles if configured
+      if (newStatusVisibleRoles.length > 0 && newStatusVisibleRoles.length < BOARD_ROLES.length) {
+        // Find the newly created board_status
+        const { data: newBoardStatuses } = await supabase
+          .from("board_statuses")
+          .select("id, status_id, status:demand_statuses(name)")
+          .eq("board_id", boardId)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (newBoardStatuses?.[0]) {
+          await supabase
+            .from("board_statuses")
+            .update({ visible_to_roles: newStatusVisibleRoles })
+            .eq("id", newBoardStatuses[0].id);
+        }
+      }
+
       toast.success("Etapa personalizada criada");
       closeSidePanel();
       setNewStatusName("");
       setNewStatusColor("#3B82F6");
       setNewStatusAdjustmentType("none");
+      setNewStatusVisibleRoles([]);
     } catch (error: any) {
       if (error.message?.includes("duplicate") || error.code === "23505") {
         toast.error("Já existe uma etapa com esse nome");
