@@ -475,17 +475,14 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
             <span className="hidden sm:inline">Etapas</span>
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[60vw] max-h-[90vh] p-0 overflow-hidden">
-          <div className="flex h-full max-h-[85vh]">
+        <DialogContent className="sm:max-w-[55vw] max-h-[90vh] p-0 overflow-hidden !overflow-visible">
+          <div className="relative">
             {/* Main panel - stages list */}
-            <div className={cn(
-              "flex flex-col flex-1 min-w-0 transition-all duration-300",
-              sidePanel ? "border-r border-border" : ""
-            )}>
+            <div className="flex flex-col max-h-[85vh]">
               <DialogHeader className="px-6 pt-6 pb-4">
                 <DialogTitle>Gerenciar Etapas do Kanban</DialogTitle>
                 <DialogDescription>
-                  Configure as etapas visíveis neste quadro.
+                  Configure as etapas visíveis neste quadro. Arraste para reordenar, ative/desative ou adicione novas etapas.
                 </DialogDescription>
               </DialogHeader>
 
@@ -528,49 +525,45 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                               onDrop={() => handleDrop(index)}
                               className={cn(
                                 "rounded-lg border transition-all duration-200",
-                                bs.is_active 
-                                  ? "bg-background" 
-                                  : "bg-muted/50 opacity-60",
-                                isFixedStatus && "border-primary/30 bg-primary/5",
-                                isDragging && "opacity-40 scale-95 border-dashed",
-                                isDragOver && !isEndStatus && "border-primary shadow-md scale-[1.02]",
+                                isEndStatus && "bg-primary/5 border-primary/20",
+                                isDragging && "opacity-50 scale-95 border-dashed",
+                                isDragOver && "border-primary border-2 bg-primary/5",
+                                !isDragging && !isDragOver && !isEndStatus && "bg-card hover:shadow-sm"
                               )}
                             >
-                              <div className={cn(
-                                "flex items-center gap-2 p-3",
-                                canDrag && "cursor-grab active:cursor-grabbing"
-                              )}>
+                              <div className="flex items-center gap-2 p-3">
                                 {/* Drag handle */}
                                 <div className={cn(
-                                  "shrink-0 text-muted-foreground",
-                                  isFixedStatus && "opacity-30",
-                                  canDrag && "hover:text-foreground"
+                                  "cursor-grab active:cursor-grabbing shrink-0",
+                                  !canDrag && "opacity-30 cursor-not-allowed"
                                 )}>
-                                  <GripVertical className="h-4 w-4" />
+                                  <GripVertical className="h-4 w-4 text-muted-foreground" />
                                 </div>
 
-                                {/* Color indicator */}
+                                {/* Color dot + name */}
                                 <div
-                                  className="w-4 h-4 rounded-full shrink-0 border"
+                                  className="h-3 w-3 rounded-full shrink-0 ring-2 ring-background shadow-sm"
                                   style={{ backgroundColor: bs.status.color }}
                                 />
-
-                                {/* Name */}
-                                <span className="flex-1 font-medium text-sm truncate flex items-center gap-2">
+                                <span className={cn(
+                                  "font-medium text-sm truncate flex-1",
+                                  !bs.is_active && "text-muted-foreground line-through"
+                                )}>
                                   {bs.status.name}
-                                  {isFixedStatus && (
-                                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                                      Fixa
-                                    </Badge>
-                                  )}
                                 </span>
 
+                                {isFixedStatus && (
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary shrink-0">
+                                    Fixa
+                                  </Badge>
+                                )}
+
                                 {/* Demand count */}
-                                <Badge variant="outline" className="text-xs shrink-0">
-                                  {demandCounts?.[bs.status_id] || 0} {(demandCounts?.[bs.status_id] || 0) === 1 ? "demanda" : "demandas"}
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
+                                  {demandCounts[bs.status_id] || 0} demandas
                                 </Badge>
 
-                                {/* Edit button */}
+                                {/* Edit */}
                                 {!isFixedStatus && (
                                   <Tooltip>
                                     <TooltipTrigger asChild>
@@ -587,7 +580,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                                   </Tooltip>
                                 )}
 
-                                {/* Role visibility */}
+                                {/* Visibility */}
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <Button
@@ -703,43 +696,50 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                 <p className="text-xs text-muted-foreground mt-4">
                   A etapa "Entregue" é fixa e essencial para o fluxo de demandas. 
                   Arraste as demais etapas pelo ícone ⠿ para reordená-las.
+                  Desativar uma etapa apenas a oculta no Kanban.
                 </p>
               </div>
             </div>
 
-            {/* Side panel for create/edit */}
-            <div className={cn(
-              "transition-all duration-300 overflow-hidden",
-              sidePanel ? "w-[320px] opacity-100" : "w-0 opacity-0"
-            )}>
-              <div className="w-[320px] h-full p-6">
-                {sidePanel === 'create' && (
-                  <StageForm
-                    mode="create"
-                    name={newStatusName}
-                    color={newStatusColor}
-                    adjustmentType={newStatusAdjustmentType}
-                    onNameChange={setNewStatusName}
-                    onColorChange={setNewStatusColor}
-                    onAdjustmentTypeChange={setNewStatusAdjustmentType}
-                    onSubmit={handleCreateStatus}
-                    onBack={closeSidePanel}
-                    isPending={createCustomStatus.isPending}
-                  />
-                )}
-                {sidePanel === 'edit' && (
-                  <StageForm
-                    mode="edit"
-                    name={editName}
-                    color={editColor}
-                    adjustmentType={editAdjustmentType}
-                    onNameChange={setEditName}
-                    onColorChange={setEditColor}
-                    onAdjustmentTypeChange={setEditAdjustmentType}
-                    onSubmit={handleEditStatus}
-                    onBack={closeSidePanel}
-                  />
-                )}
+            {/* Side panel - appendix that opens outside the modal */}
+            <div
+              className={cn(
+                "absolute top-0 left-full h-full transition-all duration-300 ease-out",
+                sidePanel
+                  ? "w-[320px] opacity-100 translate-x-0"
+                  : "w-0 opacity-0 -translate-x-4 pointer-events-none"
+              )}
+            >
+              <div className="w-[320px] h-full bg-background border border-l-0 border-border rounded-r-lg shadow-lg overflow-y-auto">
+                <div className="p-6">
+                  {sidePanel === 'create' && (
+                    <StageForm
+                      mode="create"
+                      name={newStatusName}
+                      color={newStatusColor}
+                      adjustmentType={newStatusAdjustmentType}
+                      onNameChange={setNewStatusName}
+                      onColorChange={setNewStatusColor}
+                      onAdjustmentTypeChange={setNewStatusAdjustmentType}
+                      onSubmit={handleCreateStatus}
+                      onBack={closeSidePanel}
+                      isPending={createCustomStatus.isPending}
+                    />
+                  )}
+                  {sidePanel === 'edit' && (
+                    <StageForm
+                      mode="edit"
+                      name={editName}
+                      color={editColor}
+                      adjustmentType={editAdjustmentType}
+                      onNameChange={setEditName}
+                      onColorChange={setEditColor}
+                      onAdjustmentTypeChange={setEditAdjustmentType}
+                      onSubmit={handleEditStatus}
+                      onBack={closeSidePanel}
+                    />
+                  )}
+                </div>
               </div>
             </div>
           </div>
