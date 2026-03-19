@@ -118,8 +118,8 @@ export default function Demands() {
     }).length;
   }, [activeDemands, user?.id]);
   const filteredDemands = useMemo(() => {
-    if (!demands) return [];
-    const filtered = demands.filter(d => {
+    if (!activeDemands) return [];
+    const filtered = (activeDemands as any[]).filter((d: any) => {
       // Show only my demands filter
       if (showOnlyMine && user?.id) {
         const isAssigned = d.demand_assignees?.some(a => a.user_id === user.id) || d.assigned_to === user.id;
