@@ -525,7 +525,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
       setPanelMounted(true);
       if (panelTimerRef.current) clearTimeout(panelTimerRef.current);
     } else if (panelMounted) {
-      panelTimerRef.current = setTimeout(() => setPanelMounted(false), 300);
+      panelTimerRef.current = setTimeout(() => setPanelMounted(false), 500);
     }
     return () => { if (panelTimerRef.current) clearTimeout(panelTimerRef.current); };
   }, [showForm]);
