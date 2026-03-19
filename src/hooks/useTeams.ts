@@ -106,7 +106,7 @@ export function useCreateTeam() {
         .insert({
           team_id: team.id,
           user_id: userId,
-          role: "owner" as const,
+          role: "admin" as const,
         });
 
       if (memberError) throw memberError;

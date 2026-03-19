@@ -211,7 +211,7 @@ export function useRespondToRequest() {
           .insert({
             team_id: teamId,
             user_id: userId,
-            role: "member" as const,
+            role: "requester" as const,
           });
 
         if (memberError) throw memberError;
