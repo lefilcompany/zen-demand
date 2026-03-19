@@ -865,8 +865,8 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
             {sidePanel && (
               <DialogPrimitive.Content
                 className={cn(
-                  "sm:hidden bg-background border border-border rounded-xl shadow-2xl overflow-hidden pointer-events-auto",
-                  "w-[92vw] max-h-[85vh] overflow-y-auto",
+                  "sm:hidden bg-background border border-border rounded-xl shadow-2xl pointer-events-auto flex flex-col",
+                  "w-[92vw] max-h-[85vh]",
                   "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 duration-200"
                 )}
                 onInteractOutside={(e) => {
@@ -881,7 +881,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                   <X className="h-4 w-4" />
                   <span className="sr-only">Voltar</span>
                 </button>
-                <div className="p-5">
+                <div className="p-5 flex flex-col flex-1 min-h-0">
                   {sidePanel === 'create' && (
                     <StageForm
                       mode="create"
