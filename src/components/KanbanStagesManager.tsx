@@ -598,8 +598,8 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                 "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
                 "duration-200",
                 "transition-[transform,margin] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                // Hide on mobile when form is open
-                showForm ? "hidden sm:flex" : "flex"
+                // Hide on mobile/tablet when form is open, show side-by-side on lg+
+                showForm ? "hidden lg:flex" : "flex"
               )}
             >
               <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-10">
