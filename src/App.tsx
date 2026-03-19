@@ -48,7 +48,6 @@ import TimeManagement from "./pages/TimeManagement";
 import UserProfile from "./pages/UserProfile";
 import BoardSummary from "./pages/BoardSummary";
 import Store from "./pages/Store";
-import Contract from "./pages/Contract";
 import TeamDemands from "./pages/TeamDemands";
 import Notes from "./pages/Notes";
 import NoteDetail from "./pages/NoteDetail";
