@@ -152,7 +152,7 @@ function StageForm({
         </h3>
       </div>
 
-      <div className="space-y-4 flex-1 min-h-0 overflow-y-auto pr-1">
+      <div className="space-y-4 flex-1 min-h-0 overflow-y-auto pr-1 p-0.5 -m-0.5">
         <div className="space-y-2">
           <Label htmlFor="stage-name">Nome da Etapa</Label>
           <Input
