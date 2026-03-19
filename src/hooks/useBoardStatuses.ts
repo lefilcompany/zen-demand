@@ -61,6 +61,7 @@ const statusColorMap: Record<string, string> = {
 // Map status names to short labels
 const statusShortLabelMap: Record<string, string> = {
   "A Iniciar": "Iniciar",
+  "Tarefas Internas": "Internas",
   "Fazendo": "Fazendo",
   "Em Ajuste": "Ajuste",
   "Aprovação Interna": "APROVAÇÃO INTERNA",
