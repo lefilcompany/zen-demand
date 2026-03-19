@@ -787,10 +787,10 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
             {panelMounted && (
               <div
                 data-stage-form-panel
-                className={cn(
+                 className={cn(
                   "pointer-events-auto bg-background border border-border rounded-xl overflow-hidden min-h-0",
                   "h-[85vh] max-h-[85vh]",
-                  "hidden sm:flex sm:flex-col",
+                  "hidden lg:flex lg:flex-col",
                   "transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
                   panelVisible
                     ? "opacity-100 translate-x-0 scale-100 shadow-2xl w-[380px] lg:w-[420px]"
