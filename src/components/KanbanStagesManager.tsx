@@ -181,32 +181,39 @@ function StageForm({
           </p>
         </div>
 
-        <div className="space-y-2">
-          <Label className="flex items-center gap-1.5">
-            <Eye className="h-3.5 w-3.5" />
-            Visibilidade por Papel
-          </Label>
-          <p className="text-xs text-muted-foreground">
-            Selecione quais papéis podem ver esta etapa no Kanban.
-          </p>
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            {BOARD_ROLES.map(role => {
-              const isChecked = allSelected || visibleToRoles.includes(role.value);
-              return (
-                <label key={role.value} className="flex items-center gap-2 text-sm cursor-pointer py-1">
-                  <Checkbox
-                    checked={isChecked}
-                    onCheckedChange={(checked) => handleRoleToggle(role.value, !!checked)}
-                  />
-                  <span className="truncate">{role.label}</span>
-                </label>
-              );
-            })}
-          </div>
-          {allSelected && (
-            <p className="text-xs text-muted-foreground/70 italic">Todos os papéis podem ver esta etapa.</p>
-          )}
-        </div>
+        <Collapsible>
+          <CollapsibleTrigger asChild>
+            <button className="flex items-center justify-between w-full text-sm font-medium py-2 px-1 rounded-md hover:bg-muted/50 transition-colors">
+              <span className="flex items-center gap-1.5">
+                <Eye className="h-3.5 w-3.5" />
+                Visibilidade por Papel
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-2 pt-1 pb-1">
+            <p className="text-xs text-muted-foreground">
+              Selecione quais papéis podem ver esta etapa no Kanban.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {BOARD_ROLES.map(role => {
+                const isChecked = allSelected || visibleToRoles.includes(role.value);
+                return (
+                  <label key={role.value} className="flex items-center gap-2 text-sm cursor-pointer py-1">
+                    <Checkbox
+                      checked={isChecked}
+                      onCheckedChange={(checked) => handleRoleToggle(role.value, !!checked)}
+                    />
+                    <span className="truncate">{role.label}</span>
+                  </label>
+                );
+              })}
+            </div>
+            {allSelected && (
+              <p className="text-xs text-muted-foreground/70 italic">Todos os papéis podem ver esta etapa.</p>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
       </div>
 
       <div className="shrink-0 flex gap-2 border-t border-border/50 bg-background px-5 py-4">
