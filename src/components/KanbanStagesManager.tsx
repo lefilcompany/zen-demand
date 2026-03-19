@@ -120,6 +120,26 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const deleteStatus = useDeleteBoardStatus();
   const createCustomStatus = useCreateCustomStatus();
 
+  const [expandedRolesId, setExpandedRolesId] = useState<string | null>(null);
+
+  const handleUpdateVisibleRoles = async (boardStatusId: string, roles: string[]) => {
+    try {
+      const value = roles.length === 0 || roles.length === BOARD_ROLES.length ? null : roles;
+      const { error } = await supabase
+        .from("board_statuses")
+        .update({ visible_to_roles: value })
+        .eq("id", boardStatusId);
+      if (error) throw error;
+      
+      setLocalStatuses(prev => prev.map(s => 
+        s.id === boardStatusId ? { ...s, visible_to_roles: value } : s
+      ));
+      toast.success("Visibilidade atualizada");
+    } catch {
+      toast.error("Erro ao atualizar visibilidade");
+    }
+  };
+
   // Handle sheet open/close and force refetch on close
   const handleOpenChange = useCallback((isOpen: boolean) => {
     setOpen(isOpen);
