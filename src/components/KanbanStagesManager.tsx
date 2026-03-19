@@ -94,9 +94,11 @@ function StageForm({
   name,
   color,
   adjustmentType,
+  visibleToRoles,
   onNameChange,
   onColorChange,
   onAdjustmentTypeChange,
+  onVisibleToRolesChange,
   onSubmit,
   onBack,
   isPending,
@@ -105,13 +107,40 @@ function StageForm({
   name: string;
   color: string;
   adjustmentType: AdjustmentType;
+  visibleToRoles: string[];
   onNameChange: (v: string) => void;
   onColorChange: (v: string) => void;
   onAdjustmentTypeChange: (v: AdjustmentType) => void;
+  onVisibleToRolesChange: (v: string[]) => void;
   onSubmit: () => void;
   onBack: () => void;
   isPending?: boolean;
 }) {
+  const allSelected = visibleToRoles.length === 0;
+
+  const handleRoleToggle = (roleValue: string, checked: boolean) => {
+    if (allSelected) {
+      // Currently "all" — uncheck one means select all others except this one
+      const newRoles = BOARD_ROLES.filter(r => r.value !== roleValue).map(r => r.value);
+      onVisibleToRolesChange(newRoles);
+    } else if (checked) {
+      const newRoles = [...visibleToRoles, roleValue];
+      // If all roles selected, set to empty (= all)
+      if (newRoles.length === BOARD_ROLES.length) {
+        onVisibleToRolesChange([]);
+      } else {
+        onVisibleToRolesChange(newRoles);
+      }
+    } else {
+      const newRoles = visibleToRoles.filter(r => r !== roleValue);
+      if (newRoles.length === 0) {
+        toast.error("Pelo menos um papel deve ter acesso");
+        return;
+      }
+      onVisibleToRolesChange(newRoles);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 mb-4">
@@ -123,7 +152,7 @@ function StageForm({
         </h3>
       </div>
 
-      <div className="space-y-4 flex-1">
+      <div className="space-y-4 flex-1 overflow-y-auto">
         <div className="space-y-2">
           <Label htmlFor="stage-name">Nome da Etapa</Label>
           <Input
@@ -174,6 +203,34 @@ function StageForm({
             Define quem pode solicitar ajustes nesta etapa.
           </p>
         </div>
+
+        {/* Visibility by role */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-1.5">
+            <Eye className="h-3.5 w-3.5" />
+            Visibilidade por Papel
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Selecione quais papéis podem ver esta etapa no Kanban.
+          </p>
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            {BOARD_ROLES.map(role => {
+              const isChecked = allSelected || visibleToRoles.includes(role.value);
+              return (
+                <label key={role.value} className="flex items-center gap-2 text-sm cursor-pointer py-1">
+                  <Checkbox
+                    checked={isChecked}
+                    onCheckedChange={(checked) => handleRoleToggle(role.value, !!checked)}
+                  />
+                  <span className="truncate">{role.label}</span>
+                </label>
+              );
+            })}
+          </div>
+          {allSelected && (
+            <p className="text-xs text-muted-foreground/70 italic">Todos os papéis podem ver esta etapa.</p>
+          )}
+        </div>
       </div>
 
       <div className="flex gap-2 pt-4 mt-auto">
@@ -202,6 +259,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const [newStatusName, setNewStatusName] = useState("");
   const [newStatusColor, setNewStatusColor] = useState("#3B82F6");
   const [newStatusAdjustmentType, setNewStatusAdjustmentType] = useState<AdjustmentType>("none");
+  const [newStatusVisibleRoles, setNewStatusVisibleRoles] = useState<string[]>([]);
   const [localStatuses, setLocalStatuses] = useState<BoardStatus[]>([]);
   const [isMoving, setIsMoving] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -215,6 +273,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const [editName, setEditName] = useState("");
   const [editColor, setEditColor] = useState("");
   const [editAdjustmentType, setEditAdjustmentType] = useState<AdjustmentType>("none");
+  const [editVisibleRoles, setEditVisibleRoles] = useState<string[]>([]);
 
   const { data: boardStatuses, isLoading } = useAllBoardStatuses(boardId);
   const { data: availableStatuses } = useAvailableStatuses();
@@ -248,8 +307,8 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
     setNewStatusName("");
     setNewStatusColor("#3B82F6");
     setNewStatusAdjustmentType("none");
+    setNewStatusVisibleRoles([]);
     setSidePanel('create');
-    // Small delay so the panel DOM is ready before animating in
     requestAnimationFrame(() => setSidePanelVisible(true));
   };
 
@@ -258,6 +317,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
     setEditName(bs.status.name);
     setEditColor(bs.status.color);
     setEditAdjustmentType(bs.adjustment_type || "none");
+    setEditVisibleRoles(bs.visible_to_roles || []);
     setSidePanel('edit');
     requestAnimationFrame(() => setSidePanelVisible(true));
   };
@@ -283,9 +343,10 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
         .eq("id", editingStatus.status_id);
       if (statusError) throw statusError;
 
+      const visibleValue = editVisibleRoles.length === 0 || editVisibleRoles.length === BOARD_ROLES.length ? null : editVisibleRoles;
       const { error: boardError } = await supabase
         .from("board_statuses")
-        .update({ adjustment_type: editAdjustmentType })
+        .update({ adjustment_type: editAdjustmentType, visible_to_roles: visibleValue })
         .eq("id", editingStatus.id);
       if (boardError) throw boardError;
 
@@ -294,6 +355,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
           ? { 
               ...s, 
               adjustment_type: editAdjustmentType,
+              visible_to_roles: visibleValue,
               status: { ...s.status, name: editName.trim(), color: editColor }
             } 
           : s
@@ -463,11 +525,31 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
         boardId,
         adjustmentType: newStatusAdjustmentType,
       });
+
+      // After creating, update visible_to_roles if configured
+      if (newStatusVisibleRoles.length > 0 && newStatusVisibleRoles.length < BOARD_ROLES.length) {
+        // Find the newly created board_status
+        const { data: newBoardStatuses } = await supabase
+          .from("board_statuses")
+          .select("id, status_id, status:demand_statuses(name)")
+          .eq("board_id", boardId)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (newBoardStatuses?.[0]) {
+          await supabase
+            .from("board_statuses")
+            .update({ visible_to_roles: newStatusVisibleRoles })
+            .eq("id", newBoardStatuses[0].id);
+        }
+      }
+
       toast.success("Etapa personalizada criada");
       closeSidePanel();
       setNewStatusName("");
       setNewStatusColor("#3B82F6");
       setNewStatusAdjustmentType("none");
+      setNewStatusVisibleRoles([]);
     } catch (error: any) {
       if (error.message?.includes("duplicate") || error.code === "23505") {
         toast.error("Já existe uma etapa com esse nome");
@@ -733,7 +815,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
               className={cn(
                 "hidden sm:block fixed top-1/2 -translate-y-1/2 pointer-events-auto",
                 "bg-background border border-border rounded-xl shadow-2xl overflow-hidden",
-                "w-[280px] max-h-[85vh] overflow-y-auto",
+                "w-[300px] max-h-[85vh] overflow-y-auto",
                 "transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
                 sidePanelVisible
                   ? "opacity-100 translate-x-0 scale-100"
@@ -751,9 +833,11 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                     name={newStatusName}
                     color={newStatusColor}
                     adjustmentType={newStatusAdjustmentType}
+                    visibleToRoles={newStatusVisibleRoles}
                     onNameChange={setNewStatusName}
                     onColorChange={setNewStatusColor}
                     onAdjustmentTypeChange={setNewStatusAdjustmentType}
+                    onVisibleToRolesChange={setNewStatusVisibleRoles}
                     onSubmit={handleCreateStatus}
                     onBack={closeSidePanel}
                     isPending={createCustomStatus.isPending}
@@ -765,9 +849,11 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                     name={editName}
                     color={editColor}
                     adjustmentType={editAdjustmentType}
+                    visibleToRoles={editVisibleRoles}
                     onNameChange={setEditName}
                     onColorChange={setEditColor}
                     onAdjustmentTypeChange={setEditAdjustmentType}
+                    onVisibleToRolesChange={setEditVisibleRoles}
                     onSubmit={handleEditStatus}
                     onBack={closeSidePanel}
                   />
@@ -802,9 +888,11 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                       name={newStatusName}
                       color={newStatusColor}
                       adjustmentType={newStatusAdjustmentType}
+                      visibleToRoles={newStatusVisibleRoles}
                       onNameChange={setNewStatusName}
                       onColorChange={setNewStatusColor}
                       onAdjustmentTypeChange={setNewStatusAdjustmentType}
+                      onVisibleToRolesChange={setNewStatusVisibleRoles}
                       onSubmit={handleCreateStatus}
                       onBack={closeSidePanel}
                       isPending={createCustomStatus.isPending}
@@ -816,9 +904,11 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                       name={editName}
                       color={editColor}
                       adjustmentType={editAdjustmentType}
+                      visibleToRoles={editVisibleRoles}
                       onNameChange={setEditName}
                       onColorChange={setEditColor}
                       onAdjustmentTypeChange={setEditAdjustmentType}
+                      onVisibleToRolesChange={setEditVisibleRoles}
                       onSubmit={handleEditStatus}
                       onBack={closeSidePanel}
                     />
