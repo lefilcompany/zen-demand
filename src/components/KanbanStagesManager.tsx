@@ -475,11 +475,19 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
             <span className="hidden sm:inline">Etapas</span>
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[55vw] max-h-[90vh] p-0 overflow-hidden !overflow-visible">
-          <div className="relative">
-            {/* Main panel - stages list */}
-            <div className="flex flex-col max-h-[85vh]">
-              <DialogHeader className="px-6 pt-6 pb-4">
+        <DialogContent
+          className={cn(
+            "max-h-[90vh] p-0 overflow-hidden transition-[max-width] duration-300 ease-out",
+            sidePanel ? "sm:max-w-[75vw] lg:max-w-[65vw]" : "sm:max-w-[50vw] lg:max-w-[45vw]"
+          )}
+        >
+          <div className="flex h-full max-h-[85vh]">
+            {/* Left: Stages list — hidden on mobile when side panel is open */}
+            <div className={cn(
+              "flex flex-col flex-1 min-w-0 transition-all duration-300",
+              sidePanel ? "hidden sm:flex sm:border-r sm:border-border" : "flex"
+            )}>
+              <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
                 <DialogTitle>Gerenciar Etapas do Kanban</DialogTitle>
                 <DialogDescription>
                   Configure as etapas visíveis neste quadro. Arraste para reordenar, ative/desative ou adicione novas etapas.
@@ -487,13 +495,11 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
               </DialogHeader>
 
               <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-4">
-                {/* Create new status button */}
                 <Button variant="outline" className="w-full gap-2" onClick={openCreatePanel}>
                   <Plus className="h-4 w-4" />
                   Criar Nova Etapa
                 </Button>
 
-                {/* Current stages list */}
                 <div className="space-y-2">
                   <Label>Etapas do Quadro ({localStatuses.length})</Label>
                   
@@ -532,7 +538,6 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                               )}
                             >
                               <div className="flex items-center gap-2 p-3">
-                                {/* Drag handle */}
                                 <div className={cn(
                                   "cursor-grab active:cursor-grabbing shrink-0",
                                   !canDrag && "opacity-30 cursor-not-allowed"
@@ -540,7 +545,6 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                                   <GripVertical className="h-4 w-4 text-muted-foreground" />
                                 </div>
 
-                                {/* Color dot + name */}
                                 <div
                                   className="h-3 w-3 rounded-full shrink-0 ring-2 ring-background shadow-sm"
                                   style={{ backgroundColor: bs.status.color }}
@@ -558,12 +562,10 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                                   </Badge>
                                 )}
 
-                                {/* Demand count */}
                                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
                                   {demandCounts[bs.status_id] || 0} demandas
                                 </Badge>
 
-                                {/* Edit */}
                                 {!isFixedStatus && (
                                   <Tooltip>
                                     <TooltipTrigger asChild>
@@ -580,7 +582,6 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                                   </Tooltip>
                                 )}
 
-                                {/* Visibility */}
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <Button
@@ -605,7 +606,6 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                                   </TooltipContent>
                                 </Tooltip>
 
-                                {/* Active toggle */}
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <span>
@@ -621,7 +621,6 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                                   )}
                                 </Tooltip>
 
-                                {/* Delete */}
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <Button
@@ -648,7 +647,6 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                                 </Tooltip>
                               </div>
 
-                              {/* Expanded role visibility section */}
                               {expandedRolesId === bs.id && (
                                 <div className="px-3 pb-3 pt-1 border-t border-border/50 space-y-2">
                                   <p className="text-xs text-muted-foreground font-medium">Visível para:</p>
@@ -701,17 +699,17 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
               </div>
             </div>
 
-            {/* Side panel - appendix that opens outside the modal */}
+            {/* Right: Side panel form — animated width on desktop, full on mobile */}
             <div
               className={cn(
-                "absolute top-0 left-full h-full transition-all duration-300 ease-out",
+                "shrink-0 overflow-hidden transition-[width,opacity] duration-300 ease-out",
                 sidePanel
-                  ? "w-[320px] opacity-100 translate-x-0"
-                  : "w-0 opacity-0 -translate-x-4 pointer-events-none"
+                  ? "w-full sm:w-[300px] opacity-100"
+                  : "w-0 opacity-0"
               )}
             >
-              <div className="w-[320px] h-full bg-background border border-l-0 border-border rounded-r-lg shadow-lg overflow-y-auto">
-                <div className="p-6">
+              {sidePanel && (
+                <div className="w-full sm:w-[300px] h-full overflow-y-auto p-6 animate-fade-in">
                   {sidePanel === 'create' && (
                     <StageForm
                       mode="create"
@@ -740,7 +738,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                     />
                   )}
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </DialogContent>
