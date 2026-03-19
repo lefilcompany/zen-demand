@@ -79,8 +79,10 @@ export default function TeamDetail() {
   };
 
   const handleRoleChange = (memberId: string, newRole: "owner" | "member") => {
+    // Map UI roles to DB roles: owner→admin, member→requester
+    const dbRole = newRole === "owner" ? "admin" : "requester";
     updateMemberRole.mutate(
-      { memberId, newRole },
+      { memberId, newRole: dbRole as "admin" | "requester" },
       {
         onSuccess: () => toast.success(newRole === "owner" ? "Membro promovido a Dono!" : "Membro rebaixado!"),
         onError: (error: any) => toast.error(getErrorMessage(error)),
