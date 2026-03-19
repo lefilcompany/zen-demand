@@ -788,11 +788,11 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                 className={cn(
                   "pointer-events-auto bg-background border border-border rounded-xl overflow-hidden min-h-0",
                   "h-[85vh] max-h-[85vh]",
-                  "hidden sm:flex sm:flex-col w-[380px] lg:w-[420px]",
+                  "hidden sm:flex sm:flex-col",
                   "transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
                   panelVisible
-                    ? "opacity-100 translate-x-0 scale-100 shadow-2xl"
-                    : "opacity-0 -translate-x-16 scale-95 shadow-none pointer-events-none"
+                    ? "opacity-100 translate-x-0 scale-100 shadow-2xl w-[380px] lg:w-[420px]"
+                    : "opacity-0 scale-95 shadow-none pointer-events-none w-0 border-0 p-0"
                 )}
               >
                 {renderFormPanel()}
