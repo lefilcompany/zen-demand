@@ -273,6 +273,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const [editName, setEditName] = useState("");
   const [editColor, setEditColor] = useState("");
   const [editAdjustmentType, setEditAdjustmentType] = useState<AdjustmentType>("none");
+  const [editVisibleRoles, setEditVisibleRoles] = useState<string[]>([]);
 
   const { data: boardStatuses, isLoading } = useAllBoardStatuses(boardId);
   const { data: availableStatuses } = useAvailableStatuses();
