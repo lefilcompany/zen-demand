@@ -1,11 +1,29 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 
 export function useAllTeamDemands(teamId: string | null | undefined) {
+  const { user } = useAuth();
+
   return useQuery({
-    queryKey: ["all-team-demands", teamId],
+    queryKey: ["all-team-demands", teamId, user?.id],
     queryFn: async () => {
-      if (!teamId) return [];
+      if (!teamId || !user) return [];
+
+      // First get the boards the user is a member of in this team
+      const { data: userBoards, error: boardsError } = await supabase
+        .from("board_members")
+        .select("board_id, boards!inner(id, team_id)")
+        .eq("user_id", user.id);
+
+      if (boardsError) throw boardsError;
+
+      // Filter to only boards in this team
+      const boardIds = (userBoards || [])
+        .filter((b: any) => b.boards?.team_id === teamId)
+        .map((b: any) => b.board_id);
+
+      if (boardIds.length === 0) return [];
 
       const { data, error } = await supabase
         .from("demands")
@@ -21,7 +39,7 @@ export function useAllTeamDemands(teamId: string | null | undefined) {
             profile:profiles(id, full_name, avatar_url)
           )
         `)
-        .eq("team_id", teamId)
+        .in("board_id", boardIds)
         .eq("archived", false)
         .order("updated_at", { ascending: false })
         .limit(1000);
@@ -29,7 +47,7 @@ export function useAllTeamDemands(teamId: string | null | undefined) {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!teamId,
+    enabled: !!teamId && !!user,
     staleTime: 30000,
   });
 }
