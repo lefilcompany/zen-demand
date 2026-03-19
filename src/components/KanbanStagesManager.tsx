@@ -210,6 +210,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
 
   // Side panel: null = hidden, 'create' = new stage, 'edit' = edit stage
   const [sidePanel, setSidePanel] = useState<'create' | 'edit' | null>(null);
+  const [sidePanelVisible, setSidePanelVisible] = useState(false);
   const [editingStatus, setEditingStatus] = useState<BoardStatus | null>(null);
   const [editName, setEditName] = useState("");
   const [editColor, setEditColor] = useState("");
