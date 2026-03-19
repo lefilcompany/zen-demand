@@ -670,23 +670,22 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                                   style={{ backgroundColor: bs.status.color }}
                                 />
 
-                                <div className="flex-1 min-w-0 flex items-center gap-2">
-                                  <span className={cn(
-                                    "font-medium text-sm truncate",
-                                    !bs.is_active && "text-muted-foreground line-through"
-                                  )}>
-                                    {bs.status.name}
-                                  </span>
-                                  {isFixedStatus && (
-                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary shrink-0">Fixa</Badge>
-                                  )}
-                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0 whitespace-nowrap">
-                                    {demandCounts?.[bs.status_id] || 0} demandas
-                                  </Badge>
-                                </div>
+                                <span className={cn(
+                                  "font-medium text-sm truncate flex-1 min-w-0",
+                                  !bs.is_active && "text-muted-foreground line-through"
+                                )}>
+                                  {bs.status.name}
+                                </span>
+
+                                {isFixedStatus && (
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary shrink-0">Fixa</Badge>
+                                )}
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0 whitespace-nowrap tabular-nums min-w-[72px] justify-center">
+                                  {demandCounts?.[bs.status_id] || 0} demandas
+                                </Badge>
 
                                 <div className="flex items-center gap-0.5 shrink-0">
-                                  {!isFixedStatus && (
+                                  {!isFixedStatus ? (
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground" onClick={() => openEditPanel(bs)}>
@@ -695,6 +694,8 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                                       </TooltipTrigger>
                                       <TooltipContent>Editar etapa</TooltipContent>
                                     </Tooltip>
+                                  ) : (
+                                    <div className="h-7 w-7 shrink-0" />
                                   )}
 
                                   <Tooltip>
