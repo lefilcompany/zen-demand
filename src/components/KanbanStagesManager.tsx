@@ -598,8 +598,8 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                 "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
                 "duration-200",
                 "transition-[transform,margin] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                // Hide on mobile when form is open
-                showForm ? "hidden sm:flex" : "flex"
+                // Hide on mobile/tablet when form is open, show side-by-side on lg+
+                showForm ? "hidden lg:flex" : "flex"
               )}
             >
               <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-10">
@@ -787,10 +787,10 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
             {panelMounted && (
               <div
                 data-stage-form-panel
-                className={cn(
+                 className={cn(
                   "pointer-events-auto bg-background border border-border rounded-xl overflow-hidden min-h-0",
                   "h-[85vh] max-h-[85vh]",
-                  "hidden sm:flex sm:flex-col",
+                  "hidden lg:flex lg:flex-col",
                   "transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
                   panelVisible
                     ? "opacity-100 translate-x-0 scale-100 shadow-2xl w-[380px] lg:w-[420px]"
@@ -805,7 +805,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
             {showForm && (
               <div
                 data-stage-form-panel
-                className="sm:hidden pointer-events-auto bg-background border border-border rounded-xl shadow-2xl flex flex-col w-[92vw] h-[85vh] max-h-[85vh] animate-fade-in"
+                className="lg:hidden pointer-events-auto bg-background border border-border rounded-xl shadow-2xl flex flex-col w-[92vw] sm:w-[480px] h-[85vh] max-h-[85vh] animate-fade-in"
               >
                 {renderFormPanel(true)}
               </div>
