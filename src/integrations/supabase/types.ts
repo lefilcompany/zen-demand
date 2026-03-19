@@ -2438,6 +2438,15 @@ export type Database = {
         }
         Returns: Json
       }
+      verify_note_share_token: {
+        Args: { p_token: string }
+        Returns: {
+          expires_at: string
+          id: string
+          is_active: boolean
+          note_id: string
+        }[]
+      }
     }
     Enums: {
       adjustment_type: "none" | "internal" | "external"
