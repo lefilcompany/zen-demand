@@ -70,6 +70,14 @@ export default function Demands() {
   });
   const [hideDelivered, setHideDelivered] = useState(false);
   const [showOnlyMine, setShowOnlyMine] = useState(false);
+  const [showAllBoards, setShowAllBoards] = useState(false);
+
+  // Fetch all team demands when "all boards" mode is active
+  const { data: allTeamDemands, isLoading: isLoadingAllTeam } = useAllTeamDemands(showAllBoards ? currentTeamId : null);
+
+  // Active demands source based on toggle
+  const activeDemands = showAllBoards ? allTeamDemands : demands;
+  const activeIsLoading = showAllBoards ? isLoadingAllTeam : isLoading;
 
   // Fetch members with selected position for filtering
   const {
