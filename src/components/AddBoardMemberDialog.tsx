@@ -348,9 +348,9 @@ export function AddBoardMemberDialog({ trigger, boardId: propBoardId }: AddBoard
               <ScrollArea className="h-[50vh]">
                 <div className="px-5 pb-3 space-y-2">
                   {selectedList.map((member: any) => {
-                    const currentRole = selectedMembers.get(member.user_id) || "requester";
-                    const teamRole = (member.team_role || "requester") as TeamRole;
-                    const teamConfig = teamRoleConfig[teamRole];
+                    const currentRole = selectedMembers.get(member.user_id) || "executor";
+                    const teamRole = (member.team_role || "member") as string;
+                    const teamConfig = teamRoleConfig[teamRole] || teamRoleConfig.member;
 
                     return (
                       <div
