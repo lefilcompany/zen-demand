@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Settings, GripVertical, Trash2, Plus, Eye } from "lucide-react";
+import { Settings, GripVertical, Trash2, Plus, Eye, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -121,6 +121,11 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const createCustomStatus = useCreateCustomStatus();
 
   const [expandedRolesId, setExpandedRolesId] = useState<string | null>(null);
+  const [editingStatus, setEditingStatus] = useState<BoardStatus | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editColor, setEditColor] = useState("");
+  const [editAdjustmentType, setEditAdjustmentType] = useState<AdjustmentType>("none");
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const handleUpdateVisibleRoles = async (boardStatusId: string, roles: string[]) => {
     try {
@@ -137,6 +142,61 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
       toast.success("Visibilidade atualizada");
     } catch {
       toast.error("Erro ao atualizar visibilidade");
+    }
+  };
+
+  const openEditDialog = (bs: BoardStatus) => {
+    setEditingStatus(bs);
+    setEditName(bs.status.name);
+    setEditColor(bs.status.color);
+    setEditAdjustmentType(bs.adjustment_type || "none");
+    setEditDialogOpen(true);
+  };
+
+  const handleEditStatus = async () => {
+    if (!editingStatus || !editName.trim()) {
+      toast.error("Digite um nome para a etapa");
+      return;
+    }
+    try {
+      // Update the status name and color in demand_statuses
+      const { error: statusError } = await supabase
+        .from("demand_statuses")
+        .update({ name: editName.trim(), color: editColor })
+        .eq("id", editingStatus.status_id);
+      if (statusError) throw statusError;
+
+      // Update adjustment_type in board_statuses
+      const { error: boardError } = await supabase
+        .from("board_statuses")
+        .update({ adjustment_type: editAdjustmentType })
+        .eq("id", editingStatus.id);
+      if (boardError) throw boardError;
+
+      // Update local state
+      setLocalStatuses(prev => prev.map(s => 
+        s.id === editingStatus.id 
+          ? { 
+              ...s, 
+              adjustment_type: editAdjustmentType,
+              status: { ...s.status, name: editName.trim(), color: editColor }
+            } 
+          : s
+      ));
+
+      queryClient.invalidateQueries({ queryKey: ["board-statuses", boardId] });
+      queryClient.invalidateQueries({ queryKey: ["board-statuses-all", boardId] });
+      queryClient.invalidateQueries({ queryKey: ["demand-statuses"] });
+
+      toast.success("Etapa atualizada");
+      setEditDialogOpen(false);
+      setEditingStatus(null);
+    } catch (error: any) {
+      if (error.message?.includes("duplicate") || error.code === "23505") {
+        toast.error("Já existe uma etapa com esse nome");
+      } else {
+        toast.error("Erro ao atualizar etapa");
+      }
     }
   };
 
@@ -504,6 +564,23 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                               {demandCounts?.[bs.status_id] || 0} {(demandCounts?.[bs.status_id] || 0) === 1 ? "demanda" : "demandas"}
                             </Badge>
 
+                            {/* Edit button - not for fixed statuses */}
+                            {!isFixedStatus && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                                    onClick={() => openEditDialog(bs)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Editar etapa</TooltipContent>
+                              </Tooltip>
+                            )}
+
                             {/* Role visibility toggle */}
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -647,6 +724,77 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit stage dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Etapa</DialogTitle>
+            <DialogDescription>
+              Altere o nome, cor ou tipo de aprovação da etapa.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-status-name">Nome da Etapa</Label>
+              <Input
+                id="edit-status-name"
+                placeholder="Ex: Em Revisão"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                maxLength={50}
+              />
+            </div>
+            <ColorPicker
+              label="Cor da Etapa"
+              value={editColor}
+              onChange={setEditColor}
+            />
+            <div className="space-y-2">
+              <Label htmlFor="edit-adjustment-type">Tipo de Aprovação</Label>
+              <Select 
+                value={editAdjustmentType} 
+                onValueChange={(value: AdjustmentType) => setEditAdjustmentType(value)}
+              >
+                <SelectTrigger id="edit-adjustment-type">
+                  <SelectValue placeholder="Selecione o tipo..." />
+                </SelectTrigger>
+                <SelectContent className="bg-background">
+                  <SelectItem value="none">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-muted-foreground" />
+                      Nenhum (etapa normal)
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="internal">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-primary" />
+                      Aprovação Interna (Admins/Moderadores)
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="external">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-accent" />
+                      Aprovação Externa (Solicitantes)
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleEditStatus} 
+              disabled={!editName.trim()}
+            >
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
