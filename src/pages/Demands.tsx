@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DemandCard } from "@/components/DemandCard";
 import { useDemands } from "@/hooks/useDemands";
+import { useAllTeamDemands } from "@/hooks/useAllTeamDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useAuth } from "@/lib/auth";
 import { useMembersByPosition } from "@/hooks/useMembersByPosition";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
-import { Plus, Briefcase, LayoutGrid, List, Search, Eye, EyeOff, CalendarDays, User } from "lucide-react";
+import { Plus, Briefcase, LayoutGrid, List, Search, Eye, EyeOff, CalendarDays, User, Layers } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table";
 import { demandColumns, DemandTableRow } from "@/components/demands/columns";
@@ -69,6 +70,14 @@ export default function Demands() {
   });
   const [hideDelivered, setHideDelivered] = useState(false);
   const [showOnlyMine, setShowOnlyMine] = useState(false);
+  const [showAllBoards, setShowAllBoards] = useState(false);
+
+  // Fetch all team demands when "all boards" mode is active
+  const { data: allTeamDemands, isLoading: isLoadingAllTeam } = useAllTeamDemands(showAllBoards ? currentTeamId : null);
+
+  // Active demands source based on toggle
+  const activeDemands = showAllBoards ? allTeamDemands : demands;
+  const activeIsLoading = showAllBoards ? isLoadingAllTeam : isLoading;
 
   // Fetch members with selected position for filtering
   const {
@@ -96,21 +105,21 @@ export default function Demands() {
 
   // Count delivered demands
   const deliveredCount = useMemo(() => {
-    if (!demands) return 0;
-    return demands.filter(d => d.demand_statuses?.name === "Entregue").length;
-  }, [demands]);
+    if (!activeDemands) return 0;
+    return activeDemands.filter((d: any) => d.demand_statuses?.name === "Entregue").length;
+  }, [activeDemands]);
 
   // Count demands assigned to the current user
   const myDemandsCount = useMemo(() => {
-    if (!demands || !user?.id) return 0;
-    return demands.filter(d => {
-      const isAssigned = d.demand_assignees?.some(a => a.user_id === user.id) || d.assigned_to === user.id;
+    if (!activeDemands || !user?.id) return 0;
+    return activeDemands.filter((d: any) => {
+      const isAssigned = d.demand_assignees?.some((a: any) => a.user_id === user.id) || d.assigned_to === user.id;
       return isAssigned;
     }).length;
-  }, [demands, user?.id]);
+  }, [activeDemands, user?.id]);
   const filteredDemands = useMemo(() => {
-    if (!demands) return [];
-    const filtered = demands.filter(d => {
+    if (!activeDemands) return [];
+    const filtered = (activeDemands as any[]).filter((d: any) => {
       // Show only my demands filter
       if (showOnlyMine && user?.id) {
         const isAssigned = d.demand_assignees?.some(a => a.user_id === user.id) || d.assigned_to === user.id;
@@ -186,7 +195,7 @@ export default function Demands() {
       const dateB = new Date(b.due_date).getTime();
       return dateA - dateB;
     });
-  }, [demands, searchQuery, filters, hideDelivered, showOnlyMine, user?.id, membersByPosition]);
+  }, [activeDemands, searchQuery, filters, hideDelivered, showOnlyMine, user?.id, membersByPosition]);
 
   // Handle calendar day click
   const handleDayClick = (date: Date) => {
@@ -194,7 +203,7 @@ export default function Demands() {
     setIsCreateDialogOpen(true);
   };
   const renderDemandList = (demandList: typeof filteredDemands) => {
-    if (isLoading) {
+    if (activeIsLoading) {
       return <div className="text-center py-12">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
           <p className="text-muted-foreground mt-4">{t("common.loading")}</p>
@@ -305,6 +314,23 @@ export default function Demands() {
               {/* Filters Button */}
               <DemandFilters boardId={selectedBoardId} filters={filters} onChange={setFilters} />
               
+              {/* All boards toggle */}
+              <button
+                onClick={() => setShowAllBoards(!showAllBoards)}
+                className={`
+                  inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium h-8
+                  transition-all duration-200 whitespace-nowrap
+                  ${showAllBoards 
+                    ? "bg-primary text-primary-foreground shadow-sm" 
+                    : "bg-background border border-border/60 hover:border-primary/40 hover:text-primary"
+                  }
+                `}
+                title={showAllBoards ? "Ver apenas quadro atual" : "Ver demandas de todos os quadros"}
+              >
+                <Layers className="h-3.5 w-3.5" />
+                <span>Todos os quadros</span>
+              </button>
+
               {/* Scheduled demands button */}
               <ScheduledDemandsModal boardId={selectedBoardId} teamId={currentTeamId} />
               
@@ -433,7 +459,7 @@ export default function Demands() {
         </div>
       </div>
 
-      {!selectedBoardId ? <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
+      {!selectedBoardId && !showAllBoards ? <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
           <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-lg font-semibold text-foreground">
             {t("teams.title")}
