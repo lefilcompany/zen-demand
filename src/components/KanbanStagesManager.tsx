@@ -574,6 +574,16 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
           {/* Centered main modal */}
           <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
             <DialogPrimitive.Content
+              onPointerDownOutside={(e) => {
+                if (sidePanel) {
+                  e.preventDefault();
+                }
+              }}
+              onInteractOutside={(e) => {
+                if (sidePanel) {
+                  e.preventDefault();
+                }
+              }}
               className={cn(
                 "relative bg-background border border-border rounded-xl shadow-2xl p-0 overflow-hidden pointer-events-auto",
                 "w-[92vw] sm:w-[480px] lg:w-[520px] max-h-[85vh]",
@@ -813,6 +823,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
 
             {/* Floating side panel — positioned to the right of center on desktop */}
             <div
+              data-stage-side-panel
               className={cn(
                 "hidden sm:flex sm:flex-col fixed top-1/2 -translate-y-1/2 pointer-events-auto",
                 "bg-background border border-border rounded-xl shadow-2xl",
