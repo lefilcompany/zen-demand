@@ -36,20 +36,31 @@ Deno.serve(async (req: Request) => {
 
     let event: Stripe.Event;
 
-    if (webhookSecret && signature) {
-      try {
-        event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-        logStep("Webhook signature verified");
-      } catch (err) {
-        logStep("ERROR: Webhook signature verification failed", { error: String(err) });
-        return new Response(
-          JSON.stringify({ error: "Webhook signature verification failed" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    } else {
-      event = JSON.parse(body);
-      logStep("WARN: Webhook signature not verified - no secret configured");
+    if (!webhookSecret) {
+      logStep("ERROR: STRIPE_WEBHOOK_SECRET is not configured");
+      return new Response(
+        JSON.stringify({ error: "Webhook secret not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!signature) {
+      logStep("ERROR: Missing stripe-signature header");
+      return new Response(
+        JSON.stringify({ error: "Missing stripe-signature header" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    try {
+      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      logStep("Webhook signature verified");
+    } catch (err) {
+      logStep("ERROR: Webhook signature verification failed", { error: String(err) });
+      return new Response(
+        JSON.stringify({ error: "Webhook signature verification failed" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     logStep("Received event", { type: event.type });
