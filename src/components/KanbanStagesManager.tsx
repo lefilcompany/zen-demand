@@ -815,7 +815,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
               className={cn(
                 "hidden sm:block fixed top-1/2 -translate-y-1/2 pointer-events-auto",
                 "bg-background border border-border rounded-xl shadow-2xl overflow-hidden",
-                "w-[280px] max-h-[85vh] overflow-y-auto",
+                "w-[300px] max-h-[85vh] overflow-y-auto",
                 "transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
                 sidePanelVisible
                   ? "opacity-100 translate-x-0 scale-100"
