@@ -888,9 +888,11 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                   "w-[92vw] max-h-[85vh]",
                   "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 duration-200"
                 )}
+                onPointerDownOutside={(e) => {
+                  e.preventDefault();
+                }}
                 onInteractOutside={(e) => {
                   e.preventDefault();
-                  closeSidePanel();
                 }}
               >
                 <button
