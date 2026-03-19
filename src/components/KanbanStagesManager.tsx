@@ -518,14 +518,25 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
 
   // Keep panel mounted during exit animation
   const [panelMounted, setPanelMounted] = useState(false);
+  const [panelVisible, setPanelVisible] = useState(false);
   const panelTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     if (showForm) {
+      // Mount first, then trigger visible on next frame for enter animation
       setPanelMounted(true);
       if (panelTimerRef.current) clearTimeout(panelTimerRef.current);
-    } else if (panelMounted) {
-      panelTimerRef.current = setTimeout(() => setPanelMounted(false), 500);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setPanelVisible(true);
+        });
+      });
+    } else {
+      // Trigger exit animation first, then unmount after duration
+      setPanelVisible(false);
+      if (panelMounted) {
+        panelTimerRef.current = setTimeout(() => setPanelMounted(false), 500);
+      }
     }
     return () => { if (panelTimerRef.current) clearTimeout(panelTimerRef.current); };
   }, [showForm]);
