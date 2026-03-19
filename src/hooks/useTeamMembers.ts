@@ -55,7 +55,7 @@ export function useTeamMembers(teamId: string | null) {
       return data.map((member) => ({
         id: member.id,
         user_id: member.user_id,
-        role: member.role as TeamRole,
+        role: mapDbRole(member.role as string),
         joined_at: member.joined_at,
         position_id: member.position_id,
         position: member.team_positions ? {
