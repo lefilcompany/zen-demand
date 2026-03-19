@@ -145,8 +145,6 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
                           <Route path="/my-requests" element={<MyDemandRequests />} />
                           <Route path="/demand-requests" element={<DemandRequests />} />
                           <Route path="/store" element={<Store />} />
-                          {/* Contract hidden for now */}
-                          {/* <Route path="/contract" element={<Contract />} /> */}
                           <Route path="/kanban" element={<Kanban />} />
                           <Route path="/archived" element={<ArchivedDemands />} />
                           
