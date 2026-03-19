@@ -26,7 +26,8 @@ import { toast } from "sonner";
 
 type TeamRole = "admin" | "moderator" | "executor" | "requester";
 
-const teamRoleConfig: Record<TeamRole, { label: string; badgeColor: string; bannerColor: string; icon: React.ReactNode }> = {
+// Map for board roles (used in step 2 role selection and badge display)
+const teamRoleConfig: Record<string, { label: string; badgeColor: string; bannerColor: string; icon: React.ReactNode }> = {
   admin: {
     label: "Administrador",
     badgeColor: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
@@ -50,6 +51,19 @@ const teamRoleConfig: Record<TeamRole, { label: string; badgeColor: string; bann
     badgeColor: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
     bannerColor: "from-purple-500/80 via-purple-600 to-purple-500/60",
     icon: <User className="h-3 w-3" />,
+  },
+  // Team-level roles from team_members table
+  owner: {
+    label: "Dono",
+    badgeColor: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+    bannerColor: "from-amber-500/80 via-amber-600 to-amber-500/60",
+    icon: <ShieldCheck className="h-3 w-3" />,
+  },
+  member: {
+    label: "Membro",
+    badgeColor: "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200",
+    bannerColor: "from-slate-500/80 via-slate-600 to-slate-500/60",
+    icon: <Users className="h-3 w-3" />,
   },
 };
 
