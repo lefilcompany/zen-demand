@@ -355,6 +355,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
           ? { 
               ...s, 
               adjustment_type: editAdjustmentType,
+              visible_to_roles: visibleValue,
               status: { ...s.status, name: editName.trim(), color: editColor }
             } 
           : s
