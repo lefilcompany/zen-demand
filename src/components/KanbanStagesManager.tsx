@@ -121,6 +121,11 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const createCustomStatus = useCreateCustomStatus();
 
   const [expandedRolesId, setExpandedRolesId] = useState<string | null>(null);
+  const [editingStatus, setEditingStatus] = useState<BoardStatus | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editColor, setEditColor] = useState("");
+  const [editAdjustmentType, setEditAdjustmentType] = useState<AdjustmentType>("none");
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const handleUpdateVisibleRoles = async (boardStatusId: string, roles: string[]) => {
     try {
