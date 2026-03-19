@@ -3,6 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 export type AdjustmentType = 'none' | 'internal' | 'external';
 
+export type BoardRoleType = 'admin' | 'moderator' | 'executor' | 'requester';
+
+export const BOARD_ROLES: { value: BoardRoleType; label: string }[] = [
+  { value: 'admin', label: 'Administrador' },
+  { value: 'moderator', label: 'Coordenador' },
+  { value: 'executor', label: 'Agente' },
+  { value: 'requester', label: 'Solicitante' },
+];
+
 export interface BoardStatus {
   id: string;
   board_id: string;
@@ -11,6 +20,7 @@ export interface BoardStatus {
   is_active: boolean;
   created_at: string;
   adjustment_type: AdjustmentType;
+  visible_to_roles: string[] | null;
   status: {
     id: string;
     name: string;
