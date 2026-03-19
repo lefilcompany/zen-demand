@@ -50,6 +50,7 @@ export const DEFAULT_COLUMNS: KanbanColumn[] = [
 // Map status names to colors
 const statusColorMap: Record<string, string> = {
   "A Iniciar": "bg-muted",
+  "Tarefas Internas": "bg-violet-500/10",
   "Fazendo": "bg-blue-500/10",
   "Em Ajuste": "bg-purple-500/10",
   "Aprovação Interna": "bg-blue-500/10",
