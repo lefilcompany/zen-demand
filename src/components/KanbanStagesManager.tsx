@@ -127,7 +127,7 @@ function StageForm({
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full min-h-0">
       <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0 border-b border-border/50">
         <h3 className="font-semibold text-sm">
           {mode === 'create' ? 'Criar Nova Etapa' : 'Editar Etapa'}
