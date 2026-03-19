@@ -26,13 +26,10 @@ export function useTeams() {
 }
 
 export function generateAccessCode(): string {
+  const bytes = new Uint8Array(15);
+  crypto.getRandomValues(bytes);
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let code = '';
-  // Increased to 20 characters for maximum brute-force protection (36^20 combinations)
-  for (let i = 0; i < 20; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
+  return Array.from(bytes).map(b => chars[b % chars.length]).join('');
 }
 
 export async function checkAccessCodeAvailable(code: string): Promise<boolean> {
