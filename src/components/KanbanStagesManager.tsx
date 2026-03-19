@@ -142,8 +142,8 @@ function StageForm({
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="flex flex-1 min-h-0 flex-col">
+      <div className="flex items-center gap-2 mb-4 shrink-0">
         <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onBack}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -152,7 +152,7 @@ function StageForm({
         </h3>
       </div>
 
-      <div className="space-y-4 flex-1 overflow-y-auto">
+      <div className="space-y-4 flex-1 min-h-0 overflow-y-auto pr-1">
         <div className="space-y-2">
           <Label htmlFor="stage-name">Nome da Etapa</Label>
           <Input
@@ -233,7 +233,7 @@ function StageForm({
         </div>
       </div>
 
-      <div className="flex gap-2 pt-4 mt-auto shrink-0 border-t border-border/50">
+      <div className="mt-4 flex shrink-0 gap-2 border-t border-border/50 bg-background pt-4">
         <Button variant="outline" className="flex-1" onClick={onBack}>
           Cancelar
         </Button>
