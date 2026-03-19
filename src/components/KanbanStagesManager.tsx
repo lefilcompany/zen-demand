@@ -233,7 +233,7 @@ function StageForm({
         </div>
       </div>
 
-      <div className="flex gap-2 pt-4 mt-auto">
+      <div className="flex gap-2 pt-4 mt-auto shrink-0 border-t border-border/50">
         <Button variant="outline" className="flex-1" onClick={onBack}>
           Cancelar
         </Button>
