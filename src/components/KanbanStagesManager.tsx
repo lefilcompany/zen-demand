@@ -259,6 +259,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const [newStatusName, setNewStatusName] = useState("");
   const [newStatusColor, setNewStatusColor] = useState("#3B82F6");
   const [newStatusAdjustmentType, setNewStatusAdjustmentType] = useState<AdjustmentType>("none");
+  const [newStatusVisibleRoles, setNewStatusVisibleRoles] = useState<string[]>([]);
   const [localStatuses, setLocalStatuses] = useState<BoardStatus[]>([]);
   const [isMoving, setIsMoving] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
