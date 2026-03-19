@@ -845,7 +845,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                 visibility: sidePanel ? 'visible' : 'hidden',
               }}
             >
-              <div className="p-5 flex flex-col flex-1 min-h-0 max-h-[85vh] overflow-y-auto">
+              <div className="p-5 flex flex-col flex-1 min-h-0 overflow-hidden">
                 {(sidePanel === 'create' || (!sidePanel && sidePanelVisible)) && (
                   <StageForm
                     mode="create"
