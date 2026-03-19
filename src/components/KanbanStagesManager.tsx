@@ -826,6 +826,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
 
             {/* Floating side panel — positioned to the right of center on desktop */}
             <div
+              data-stage-side-panel
               className={cn(
                 "hidden sm:flex sm:flex-col fixed top-1/2 -translate-y-1/2 pointer-events-auto",
                 "bg-background border border-border rounded-xl shadow-2xl",
