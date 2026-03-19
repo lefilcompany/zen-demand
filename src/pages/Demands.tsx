@@ -195,7 +195,7 @@ export default function Demands() {
       const dateB = new Date(b.due_date).getTime();
       return dateA - dateB;
     });
-  }, [demands, searchQuery, filters, hideDelivered, showOnlyMine, user?.id, membersByPosition]);
+  }, [activeDemands, searchQuery, filters, hideDelivered, showOnlyMine, user?.id, membersByPosition]);
 
   // Handle calendar day click
   const handleDayClick = (date: Date) => {
