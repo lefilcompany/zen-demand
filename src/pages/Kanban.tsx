@@ -31,6 +31,7 @@ import { useRealtimeDemands, useKanbanRealtimeNotifications } from "@/hooks/useR
 import { isToday, isThisWeek, isPast } from "date-fns";
 import { ScheduledDemandsModal } from "@/components/ScheduledDemandsModal";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
+import { useTeamMembershipRole } from "@/hooks/useTeamRole";
 
 export default function Kanban() {
   const { t } = useTranslation();
@@ -40,6 +41,7 @@ export default function Kanban() {
   const { selectedBoardId, currentTeamId } = useSelectedBoard();
   const { data: demands, isLoading } = useDemands(selectedBoardId || undefined);
   const { data: role } = useBoardRole(selectedBoardId);
+  const { data: teamMembershipRole } = useTeamMembershipRole(currentTeamId);
   const { data: currentBoard } = useBoard(selectedBoardId);
   const { canManage } = useIsTeamAdminOrModerator(currentTeamId);
   const { columns: kanbanColumns } = useKanbanColumns(selectedBoardId, role);
@@ -81,7 +83,7 @@ export default function Kanban() {
     clearAllNotifications 
   } = useKanbanRealtimeNotifications(selectedBoardId || undefined);
 
-  const isReadOnly = role === "requester";
+  const isReadOnly = role === "requester" || (!role && teamMembershipRole === "requester");
 
   // Filter demands based on all filters
   const filteredDemands = useMemo(() => {
