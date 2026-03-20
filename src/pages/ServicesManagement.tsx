@@ -41,7 +41,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useTeams } from "@/hooks/useTeams";
 import {
   useHierarchicalServices,
-  usePotentialParentServices,
   useCreateService,
   useUpdateService,
   useDeleteService,
