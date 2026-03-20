@@ -108,10 +108,14 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     }
   };
 
-  if (boardRole === "requester" && isOpen) {
-    handleClose();
-    return null;
-  }
+  // When requester opens the create demand modal, close it - they use request flow instead
+  // Do NOT use <Navigate> here as this component is rendered globally via CreateDemandGlobal
+  useEffect(() => {
+    if (boardRole === "requester" && isOpen) {
+      handleClose();
+    }
+  }, [boardRole, isOpen]);
+
 
   const isServiceValid = () => {
     if (!serviceId || serviceId === "none") return false;
