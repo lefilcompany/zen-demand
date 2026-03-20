@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { usePendingRequestsCount as usePendingDemandRequestsCount, useReturnedRequestsCount } from "@/hooks/useDemandRequests";
 import { usePendingRequestsCount as usePendingJoinRequestsCount } from "@/hooks/useTeamJoinRequests";
-import { useTeamRole } from "@/hooks/useTeamRole";
+import { useTeamMembershipRole, useTeamRole } from "@/hooks/useTeamRole";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeamSubscription } from "@/hooks/useSubscription";
 import { useSelectedBoardSafe } from "@/contexts/BoardContext";
@@ -43,6 +43,7 @@ export function AppSidebar() {
   const {
     data: role
   } = useTeamRole(selectedTeamId);
+  const { data: teamMembershipRole } = useTeamMembershipRole(selectedTeamId);
   const { data: boardRole } = useBoardRole(selectedBoardId);
   const { data: pendingDemandRequests } = usePendingDemandRequestsCount();
   const { data: pendingJoinRequests } = usePendingJoinRequestsCount(selectedTeamId);
@@ -52,7 +53,7 @@ export function AppSidebar() {
   const isTeamAdminOrModerator = role === "owner";
   const isBoardAdminOrModerator = boardRole === "admin" || boardRole === "moderator";
   const isBoardAdminModeratorOrExecutor = boardRole === "admin" || boardRole === "moderator" || boardRole === "executor";
-  const isRequester = boardRole === "requester";
+  const isRequester = boardRole === "requester" || (!boardRole && teamMembershipRole === "requester");
 
   const baseMenuItems = [{
     title: t("dashboard.title"),

@@ -31,6 +31,7 @@ import { format } from "date-fns";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { ptBR, enUS, es } from "date-fns/locale";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
+import { useTeamMembershipRole } from "@/hooks/useTeamRole";
 
 const Index = () => {
   const { t, i18n } = useTranslation();
@@ -42,6 +43,7 @@ const Index = () => {
   const { data: demands } = useDemands(selectedBoardId || undefined);
   const { data: teams } = useTeams();
   const { data: role, isLoading: roleLoading } = useBoardRole(selectedBoardId);
+  const { data: teamMembershipRole, isLoading: teamRoleLoading } = useTeamMembershipRole(selectedTeamId);
   const { data: scope, isLoading: scopeLoading } = useTeamScope();
   const { 
     canCreate, 
@@ -53,10 +55,10 @@ const Index = () => {
   const { data: demandData, isLoading: demandsLoading } = useDemandsByPeriod(period);
   const { widgets, setWidgets, isSaving } = useDashboardWidgets();
 
-  const isRequester = role === "requester";
+  const isRequester = role === "requester" || (!role && teamMembershipRole === "requester");
 
   // Show loading while role is being determined to prevent layout glitch
-  if (roleLoading) {
+  if (roleLoading || teamRoleLoading) {
     return (
       <div className="space-y-6 animate-fade-in">
         <Skeleton className="h-8 w-48" />
