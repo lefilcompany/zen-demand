@@ -36,32 +36,34 @@ function StatCard({
 }) {
   return (
     <Card className="relative overflow-hidden">
-      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-        <CardTitle className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
+      <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 p-3 sm:p-4 md:p-6">
+        <CardTitle className="text-[10px] sm:text-xs font-medium text-muted-foreground tracking-wide uppercase leading-tight">
           {label}
         </CardTitle>
-        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-          <Icon className="h-4 w-4 text-primary" />
+        <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <Icon className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
         </div>
       </CardHeader>
-      <CardContent className="pb-4">
+      <CardContent className="pb-3 sm:pb-4 px-3 sm:px-4 md:px-6 pt-0">
         {isLoading ? (
-          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-7 w-16" />
         ) : (
-          <div className="flex items-end gap-2">
-            <p className="text-3xl font-bold tabular-nums tracking-tight">{value.toLocaleString("pt-BR")}</p>
-            {trend && trend.value > 0 && (
-              <span className="flex items-center gap-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 pb-1">
-                <TrendingUp className="h-3 w-3" />+{trend.value}
-                <span className="text-muted-foreground ml-0.5">{trend.label}</span>
-              </span>
-            )}
-            {alert && (
-              <span className="flex items-center gap-0.5 text-xs font-medium text-amber-600 dark:text-amber-400 pb-1">
-                <AlertTriangle className="h-3 w-3" />
-                <span>expirando</span>
-              </span>
-            )}
+          <div className="flex flex-col gap-0.5">
+            <p className="text-2xl sm:text-3xl font-bold tabular-nums tracking-tight">{value.toLocaleString("pt-BR")}</p>
+            <div className="flex items-center gap-1 min-h-[16px]">
+              {trend && trend.value > 0 && (
+                <span className="flex items-center gap-0.5 text-[10px] sm:text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                  <TrendingUp className="h-3 w-3" />+{trend.value}
+                  <span className="text-muted-foreground ml-0.5">{trend.label}</span>
+                </span>
+              )}
+              {alert && (
+                <span className="flex items-center gap-0.5 text-[10px] sm:text-xs font-medium text-amber-600 dark:text-amber-400">
+                  <AlertTriangle className="h-3 w-3" />
+                  <span>expirando</span>
+                </span>
+              )}
+            </div>
           </div>
         )}
       </CardContent>
