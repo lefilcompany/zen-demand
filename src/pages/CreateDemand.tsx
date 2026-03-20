@@ -108,8 +108,9 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     }
   };
 
-  if (boardRole === "requester") {
-    return <Navigate to="/demands/request" replace />;
+  if (boardRole === "requester" && isOpen) {
+    handleClose();
+    return null;
   }
 
   const isServiceValid = () => {
