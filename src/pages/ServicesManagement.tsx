@@ -106,7 +106,7 @@ export default function ServicesManagement() {
   const [dragOverRoot, setDragOverRoot] = useState(false);
   const draggedServiceRef = useRef<string | null>(null);
 
-  const { data: potentialParents } = usePotentialParentServices(id || null, editingService?.id);
+  const folders = hierarchicalServices?.filter(s => s.isCategory && s.id !== editingService?.id) || [];
   const team = teams?.find((t) => t.id === id);
 
   const toggleCategory = (categoryId: string) => {
