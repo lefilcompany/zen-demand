@@ -262,11 +262,19 @@ export default function Kanban() {
             <p className="text-muted-foreground mt-2">
               {isReadOnly ? t("common.noResults") : t("demands.createFirst")}
             </p>
-            {!filters.myTasks && (
+            {!filters.myTasks && !isReadOnly && (
               <div className="mt-6">
                 <Button onClick={() => openCreateDemand()}>
                   <Plus className="mr-2 h-4 w-4" />
                   {t("demands.createFirst")}
+                </Button>
+              </div>
+            )}
+            {!filters.myTasks && isReadOnly && (
+              <div className="mt-6">
+                <Button onClick={() => navigate("/demands/request")}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Criar Solicitação
                 </Button>
               </div>
             )}
