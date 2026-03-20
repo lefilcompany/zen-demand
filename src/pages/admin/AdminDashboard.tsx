@@ -212,7 +212,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Tables Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
         {/* Recent Teams */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-3">
