@@ -100,20 +100,20 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto">
+    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 max-w-[1400px] mx-auto">
       {/* Header */}
-      <div className="flex items-end justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Visão geral do sistema SoMA</p>
+      <div className="flex items-end justify-between gap-2">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Visão geral do sistema SoMA</p>
         </div>
-        <p className="text-xs text-muted-foreground hidden sm:block">
+        <p className="text-[10px] sm:text-xs text-muted-foreground shrink-0">
           Atualizado {format(new Date(), "dd/MM · HH:mm")}
         </p>
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
         <StatCard label="Equipes" value={stats?.totalTeams ?? 0} icon={Building2} isLoading={isLoading} trend={{ value: stats?.newTeamsLast30Days ?? 0, label: "30d" }} />
         <StatCard label="Usuários" value={stats?.totalUsers ?? 0} icon={Users} isLoading={isLoading} trend={{ value: stats?.newUsersLast30Days ?? 0, label: "30d" }} />
         <StatCard label="Assinaturas" value={stats?.activeSubscriptions ?? 0} icon={CreditCard} isLoading={isLoading} />
