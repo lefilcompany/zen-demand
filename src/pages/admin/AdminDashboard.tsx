@@ -161,7 +161,7 @@ export default function AdminDashboard() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Distribuição por Plano</CardTitle>
           </CardHeader>
-          <CardContent className="h-[260px] flex items-center justify-center">
+          <CardContent className="h-[200px] sm:h-[260px] flex items-center justify-center">
             {planDistribution.isLoading ? (
               <Skeleton className="h-40 w-40 rounded-full" />
             ) : (planDistribution.data?.length ?? 0) === 0 ? (
