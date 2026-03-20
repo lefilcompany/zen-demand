@@ -68,22 +68,22 @@ export function AppSidebar() {
     icon: Briefcase
   }];
 
-  // Add demand requests link for admins/moderators/executors
-  const adminMenuItems = isBoardAdminModeratorOrExecutor ? [
+  // Add demand requests link for admins/moderators/executors OR requesters (they can view)
+  const adminMenuItems = (isBoardAdminModeratorOrExecutor || isRequester) ? [
     {
       title: "Solicitações de Demanda",
       url: "/demand-requests",
       icon: FileText,
       showDemandRequestBadge: true
     },
-    ...(isBoardAdminOrModerator ? [{
+    ...((isBoardAdminOrModerator) ? [{
       title: "Gerenciamento de Tempo",
       url: "/time-management",
       icon: Clock
     }] : [])
   ] : [];
 
-  // Add my requests link for requesters
+  // Requester-specific items (store + my requests) - always shown for requesters
   const requesterMenuItems = isRequester ? [
     {
       title: "Loja de Serviços",
@@ -108,13 +108,6 @@ export function AppSidebar() {
 
   // Soma Notes - temporarily hidden (keep code for future re-activation)
   const notesMenuItems: typeof baseMenuItems = [];
-  // const notesMenuItems = [
-  //   {
-  //     title: "Soma Notes",
-  //     url: "/notes",
-  //     icon: StickyNote
-  //   }
-  // ];
 
   const endMenuItems = [{
     title: t("demands.archived"),
