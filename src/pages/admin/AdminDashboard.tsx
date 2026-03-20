@@ -123,7 +123,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Growth Chart */}
         <Card className="lg:col-span-3">
           <CardHeader className="pb-2">
