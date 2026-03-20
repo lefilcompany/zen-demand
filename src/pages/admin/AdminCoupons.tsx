@@ -445,6 +445,13 @@ function CouponCard({
             </div>
           </div>
 
+          {isMaxed && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-destructive/10 border border-destructive/20 mb-3">
+              <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
+              <span className="text-[11px] font-medium text-destructive">Limite de resgates atingido — cupom inativado automaticamente</span>
+            </div>
+          )}
+
           <div className="flex items-center justify-between pt-2 border-t border-border/50">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
