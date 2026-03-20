@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
 export type TeamRole = "owner" | "member";
+export type TeamMembershipRole = "admin" | "moderator" | "executor" | "requester";
 
 // Map DB team_role enum to simplified UI roles
 function mapDbRoleToTeamRole(dbRole: string | null): TeamRole | null {
@@ -30,6 +31,33 @@ export function useTeamRole(teamId: string | null) {
         throw error;
       }
       return mapDbRoleToTeamRole(data?.role ?? null);
+    },
+    enabled: !!user && !!teamId,
+  });
+}
+
+// Raw team membership role from DB enum (admin/moderator/executor/requester)
+export function useTeamMembershipRole(teamId: string | null) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["team-membership-role", teamId, user?.id],
+    queryFn: async () => {
+      if (!user || !teamId) return null;
+
+      const { data, error } = await supabase
+        .from("team_members")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("team_id", teamId)
+        .maybeSingle();
+
+      if (error) {
+        if (error.code === "PGRST116") return null;
+        throw error;
+      }
+
+      return (data?.role as TeamMembershipRole | null) ?? null;
     },
     enabled: !!user && !!teamId,
   });
