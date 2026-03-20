@@ -648,11 +648,11 @@ export default function ServicesManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Sem pasta (independente)</SelectItem>
-                  {potentialParents?.map((parent) => (
-                    <SelectItem key={parent.id} value={parent.id}>
+                  {folders.map((folder) => (
+                    <SelectItem key={folder.id} value={folder.id}>
                       <div className="flex items-center gap-2">
                         <Folder className="h-3.5 w-3.5" />
-                        {parent.name}
+                        {folder.name}
                       </div>
                     </SelectItem>
                   ))}
