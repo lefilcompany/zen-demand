@@ -212,10 +212,17 @@ export default function Kanban() {
           {/* Scheduled demands */}
           <ScheduledDemandsModal boardId={selectedBoardId} teamId={currentTeamId} buttonStyle="standard" />
 
-          <Button onClick={() => openCreateDemand()} size="sm" className="shadow-primary shrink-0 sm:size-default">
-            <Plus className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">{t("demands.newDemand")}</span>
-          </Button>
+          {isReadOnly ? (
+            <Button onClick={() => navigate("/demands/request")} size="sm" className="shadow-primary shrink-0 sm:size-default">
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Nova Solicitação</span>
+            </Button>
+          ) : (
+            <Button onClick={() => openCreateDemand()} size="sm" className="shadow-primary shrink-0 sm:size-default">
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">{t("demands.newDemand")}</span>
+            </Button>
+          )}
         </div>
       </div>
 
