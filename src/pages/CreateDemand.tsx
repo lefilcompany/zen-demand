@@ -112,9 +112,10 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   // Do NOT use <Navigate> here as this component is rendered globally via CreateDemandGlobal
   useEffect(() => {
     if (boardRole === "requester" && isOpen) {
-      handleClose();
+      onClose?.();
+      closeCreateDemand();
     }
-  }, [boardRole, isOpen]);
+  }, [boardRole, isOpen, onClose, closeCreateDemand]);
 
 
   const isServiceValid = () => {
