@@ -129,7 +129,7 @@ export default function AdminDashboard() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Crescimento Mensal</CardTitle>
           </CardHeader>
-          <CardContent className="h-[260px]">
+          <CardContent className="h-[200px] sm:h-[260px]">
             {monthlyGrowth.isLoading ? (
               <Skeleton className="h-full w-full" />
             ) : (
