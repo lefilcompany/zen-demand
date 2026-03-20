@@ -155,14 +155,14 @@ const Index = () => {
               }}
             />
             <Button 
-              onClick={() => openCreateDemand()}
-              disabled={!canCreate || !isTeamActive}
+              onClick={() => navigate("/demands/request")}
+              disabled={!isTeamActive}
               className="gap-2"
               data-tour="new-demand-btn"
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("demands.newDemand")}</span>
-              <span className="sm:hidden">{t("demands.newDemand").split(" ")[0]}</span>
+              <span className="hidden sm:inline">Nova Solicitação</span>
+              <span className="sm:hidden">Solicitar</span>
             </Button>
           </div>
         </div>
@@ -303,9 +303,9 @@ const Index = () => {
                     <Button 
                       variant="link" 
                       className="mt-2 text-sm"
-                      onClick={() => openCreateDemand()}
+                      onClick={() => navigate("/demands/request")}
                     >
-                      {t("demands.createFirst")}
+                      Criar Solicitação
                     </Button>
                   </div>
                 )}

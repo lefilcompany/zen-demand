@@ -284,14 +284,25 @@ export default function Demands() {
           </div>
           
           {/* Create Button - Desktop */}
-          <Button 
-            onClick={() => openCreateDemand()} 
-            className="hidden sm:flex shadow-sm"
-            size="default"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            {t("demands.newDemand")}
-          </Button>
+          {isReadOnly ? (
+            <Button 
+              onClick={() => navigate("/demands/request")} 
+              className="hidden sm:flex shadow-sm"
+              size="default"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Solicitação
+            </Button>
+          ) : (
+            <Button 
+              onClick={() => openCreateDemand()} 
+              className="hidden sm:flex shadow-sm"
+              size="default"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t("demands.newDemand")}
+            </Button>
+          )}
         </div>
 
         {/* Search and Filters Toolbar */}
