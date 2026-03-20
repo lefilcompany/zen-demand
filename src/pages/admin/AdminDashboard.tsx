@@ -36,32 +36,34 @@ function StatCard({
 }) {
   return (
     <Card className="relative overflow-hidden">
-      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-        <CardTitle className="text-xs font-medium text-muted-foreground tracking-wide uppercase">
+      <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 p-3 sm:p-4 md:p-6">
+        <CardTitle className="text-[10px] sm:text-xs font-medium text-muted-foreground tracking-wide uppercase leading-tight">
           {label}
         </CardTitle>
-        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-          <Icon className="h-4 w-4 text-primary" />
+        <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <Icon className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
         </div>
       </CardHeader>
-      <CardContent className="pb-4">
+      <CardContent className="pb-3 sm:pb-4 px-3 sm:px-4 md:px-6 pt-0">
         {isLoading ? (
-          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-7 w-16" />
         ) : (
-          <div className="flex items-end gap-2">
-            <p className="text-3xl font-bold tabular-nums tracking-tight">{value.toLocaleString("pt-BR")}</p>
-            {trend && trend.value > 0 && (
-              <span className="flex items-center gap-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 pb-1">
-                <TrendingUp className="h-3 w-3" />+{trend.value}
-                <span className="text-muted-foreground ml-0.5">{trend.label}</span>
-              </span>
-            )}
-            {alert && (
-              <span className="flex items-center gap-0.5 text-xs font-medium text-amber-600 dark:text-amber-400 pb-1">
-                <AlertTriangle className="h-3 w-3" />
-                <span>expirando</span>
-              </span>
-            )}
+          <div className="flex flex-col gap-0.5">
+            <p className="text-2xl sm:text-3xl font-bold tabular-nums tracking-tight">{value.toLocaleString("pt-BR")}</p>
+            <div className="flex items-center gap-1 min-h-[16px]">
+              {trend && trend.value > 0 && (
+                <span className="flex items-center gap-0.5 text-[10px] sm:text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                  <TrendingUp className="h-3 w-3" />+{trend.value}
+                  <span className="text-muted-foreground ml-0.5">{trend.label}</span>
+                </span>
+              )}
+              {alert && (
+                <span className="flex items-center gap-0.5 text-[10px] sm:text-xs font-medium text-amber-600 dark:text-amber-400">
+                  <AlertTriangle className="h-3 w-3" />
+                  <span>expirando</span>
+                </span>
+              )}
+            </div>
           </div>
         )}
       </CardContent>
@@ -98,20 +100,20 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto">
+    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 max-w-[1400px] mx-auto">
       {/* Header */}
-      <div className="flex items-end justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Visão geral do sistema SoMA</p>
+      <div className="flex items-end justify-between gap-2">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Visão geral do sistema SoMA</p>
         </div>
-        <p className="text-xs text-muted-foreground hidden sm:block">
+        <p className="text-[10px] sm:text-xs text-muted-foreground shrink-0">
           Atualizado {format(new Date(), "dd/MM · HH:mm")}
         </p>
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
         <StatCard label="Equipes" value={stats?.totalTeams ?? 0} icon={Building2} isLoading={isLoading} trend={{ value: stats?.newTeamsLast30Days ?? 0, label: "30d" }} />
         <StatCard label="Usuários" value={stats?.totalUsers ?? 0} icon={Users} isLoading={isLoading} trend={{ value: stats?.newUsersLast30Days ?? 0, label: "30d" }} />
         <StatCard label="Assinaturas" value={stats?.activeSubscriptions ?? 0} icon={CreditCard} isLoading={isLoading} />
@@ -121,13 +123,13 @@ export default function AdminDashboard() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Growth Chart */}
         <Card className="lg:col-span-3">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Crescimento Mensal</CardTitle>
           </CardHeader>
-          <CardContent className="h-[260px]">
+          <CardContent className="h-[200px] sm:h-[260px]">
             {monthlyGrowth.isLoading ? (
               <Skeleton className="h-full w-full" />
             ) : (
@@ -159,7 +161,7 @@ export default function AdminDashboard() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Distribuição por Plano</CardTitle>
           </CardHeader>
-          <CardContent className="h-[260px] flex items-center justify-center">
+          <CardContent className="h-[200px] sm:h-[260px] flex items-center justify-center">
             {planDistribution.isLoading ? (
               <Skeleton className="h-40 w-40 rounded-full" />
             ) : (planDistribution.data?.length ?? 0) === 0 ? (
@@ -210,7 +212,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Tables Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
         {/* Recent Teams */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-3">
