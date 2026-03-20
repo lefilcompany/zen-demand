@@ -24,6 +24,7 @@ import { CreateRequestQuickDialog } from "@/components/CreateRequestQuickDialog"
 import { useDemandAssignees } from "@/hooks/useDemandAssignees";
 import { ScheduledDemandsModal } from "@/components/ScheduledDemandsModal";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
+import { useTeamMembershipRole } from "@/hooks/useTeamRole";
 type ViewMode = "table" | "grid" | "calendar";
 const TABLET_BREAKPOINT = 1024;
 export default function Demands() {
@@ -47,6 +48,7 @@ export default function Demands() {
   const {
     data: role
   } = useBoardRole(selectedBoardId);
+  const { data: teamMembershipRole } = useTeamMembershipRole(currentTeamId);
 
   // Enable realtime updates for demands
   useRealtimeDemands(selectedBoardId || undefined);
@@ -101,7 +103,7 @@ export default function Demands() {
 
   // Force grid view on mobile/tablet (screens < 1024px), but allow calendar on all devices
   const effectiveViewMode = isTabletOrSmaller && viewMode !== "calendar" ? "grid" : viewMode;
-  const isReadOnly = role === "requester";
+  const isReadOnly = role === "requester" || (!role && teamMembershipRole === "requester");
 
   // Count delivered demands
   const deliveredCount = useMemo(() => {
