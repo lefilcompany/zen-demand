@@ -41,7 +41,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useTeams } from "@/hooks/useTeams";
 import {
   useHierarchicalServices,
-  usePotentialParentServices,
   useCreateService,
   useUpdateService,
   useDeleteService,
@@ -106,7 +105,7 @@ export default function ServicesManagement() {
   const [dragOverRoot, setDragOverRoot] = useState(false);
   const draggedServiceRef = useRef<string | null>(null);
 
-  const { data: potentialParents } = usePotentialParentServices(id || null, editingService?.id);
+  const folders = hierarchicalServices?.filter(s => s.isCategory && s.id !== editingService?.id) || [];
   const team = teams?.find((t) => t.id === id);
 
   const toggleCategory = (categoryId: string) => {
@@ -649,11 +648,11 @@ export default function ServicesManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Sem pasta (independente)</SelectItem>
-                  {potentialParents?.map((parent) => (
-                    <SelectItem key={parent.id} value={parent.id}>
+                  {folders.map((folder) => (
+                    <SelectItem key={folder.id} value={folder.id}>
                       <div className="flex items-center gap-2">
                         <Folder className="h-3.5 w-3.5" />
-                        {parent.name}
+                        {folder.name}
                       </div>
                     </SelectItem>
                   ))}
