@@ -1,92 +1,39 @@
 
+Diagnóstico confirmado
+- Do I know what the issue is? Sim.
+- Hoje o botão **“Criar Quadro”** da tela sem quadros chama `navigate("/boards")`, mas o `ProtectedLayout` bloqueia essa rota quando `hasBoards=false`. Por isso parece que “não funciona”.
+- Na mesma tela, como não há sidebar, faltam atalhos para **detalhes da equipe** (onde você vê código de acesso e gestão).
 
-# Admin Dashboard Completo - Plano de Implementação
+Plano de implementação
 
-## Objetivo
-Transformar o dashboard do painel admin de 4 cards simples em um painel completo e acionável, com métricas de crescimento, distribuição por planos, equipes recentes, trials expirando, e visão geral que ajude o admin a tomar decisões para aumentar a base de usuários.
+1) Corrigir o bloqueio de rota no cenário sem quadro  
+- Arquivo: `src/components/ProtectedLayout.tsx`  
+- Ajustar a regra `allowedWithoutBoards` para permitir acesso a rotas de setup mesmo sem quadro:
+  - `/boards` (exato) para criação do primeiro quadro
+  - `/teams` e `/teams/*` para detalhes/código da equipe
+  - manter `/profile` e `/settings`
+- Manter bloqueio dos módulos operacionais (kanban/demandas etc.) até existir quadro.
 
-## Layout do Dashboard
+2) Melhorar a NoBoardsScreen para não deixar usuário “preso”  
+- Arquivo: `src/components/NoBoardsScreen.tsx`  
+- Manter CTA de admin para criar quadro, agora com rota funcional (`/boards` liberada).
+- Adicionar ação visível **“Ver detalhes da equipe”** levando para `/teams/${currentTeam.id}`.
+- Adicionar no menu do avatar item **“Detalhes da equipe”** (atalho rápido para código e gestão da equipe).
 
-```text
-┌─────────────────────────────────────────────────────────┐
-│  Header: "Dashboard" + Subtítulo + Última atualização   │
-├────────┬────────┬────────┬────────┬────────┬────────────┤
-│ Equipes│Usuários│Assin.  │ Trial  │Cupons  │ Demandas   │
-│   5    │  42    │   1    │   3    │   1    │   248      │
-│ +20%▲  │ +15%▲  │        │ ⚠ exp  │        │            │
-├────────┴────────┴────────┴────────┴────────┴────────────┤
-│                                                         │
-│  ┌──────────────────────┐  ┌──────────────────────────┐ │
-│  │ Crescimento Mensal   │  │ Distribuição por Plano   │ │
-│  │ (AreaChart usuários  │  │ (PieChart: Free/Pro/Ent) │ │
-│  │  e equipes por mês)  │  │                          │ │
-│  └──────────────────────┘  └──────────────────────────┘ │
-│                                                         │
-│  ┌──────────────────────┐  ┌──────────────────────────┐ │
-│  │ Equipes Recentes     │  │ Trials Expirando         │ │
-│  │ (últimas 5 equipes   │  │ (equipes com trial       │ │
-│  │  criadas com status) │  │  acabando em 7 dias)     │ │
-│  └──────────────────────┘  └──────────────────────────┘ │
-│                                                         │
-│  ┌──────────────────────────────────────────────────────┐│
-│  │ Usuários Recentes (últimos 5 cadastros)             ││
-│  └──────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────┘
-```
+3) Resolver gargalo comum de criação do primeiro quadro  
+- Ainda na `NoBoardsScreen`, para owner/admin adicionar ação secundária:
+  - **“Gerenciar serviços”** -> `/teams/${currentTeam.id}/services`
+- Isso evita bloqueio prático quando a equipe ainda não possui serviços configurados para o quadro.
 
-## Implementação
+4) Validação ponta a ponta (E2E)  
+- Owner sem quadro: clicar “Criar Quadro” deve abrir `/boards` e permitir iniciar criação.
+- Owner sem quadro: “Ver detalhes da equipe” deve abrir a página com código de acesso.
+- Membro/requester sem quadro: não vê ações de admin, mas consegue acessar detalhes da equipe.
+- Após criar o primeiro quadro: sair automaticamente do estado de espera e voltar ao layout normal.
+- Validar desktop + mobile (botões e menu de avatar).
 
-### 1. Expandir `useAdminStats` hook
-Adicionar queries para buscar dados mais ricos:
-- **Total de demandas** no sistema inteiro
-- **Trials ativos** (subscriptions com status `trialing`)
-- **Novos usuários nos últimos 30 dias** (para calcular crescimento)
-- **Novas equipes nos últimos 30 dias**
-
-### 2. Criar hook `useAdminDashboardData`
-Novo hook dedicado para dados do dashboard completo:
-- **Equipes recentes**: últimas 5 equipes com subscription info
-- **Trials expirando**: equipes com `trial_ends_at` nos próximos 7 dias
-- **Usuários recentes**: últimos 5 perfis criados
-- **Distribuição por plano**: contagem de subscriptions agrupada por plano
-- **Crescimento mensal**: perfis e equipes criados por mês (últimos 6 meses)
-
-### 3. Redesenhar `AdminDashboard.tsx`
-Compor o dashboard com seções:
-
-**a) Stat Cards (6 cards em grid)**
-- Total de Equipes, Total de Usuários, Assinaturas Ativas, Trials Ativos, Cupons Ativos, Total de Demandas
-- Cada card com ícone, valor grande e indicador de variação mensal (seta verde/vermelha)
-
-**b) Gráfico de Crescimento (AreaChart - Recharts)**
-- Linha de usuários e equipes novos por mês nos últimos 6 meses
-- Usa `ResponsiveContainer`, `AreaChart`, `Area`, `XAxis`, `YAxis`, `Tooltip`
-
-**c) Distribuição por Plano (PieChart - Recharts)**
-- Donut chart mostrando quantas equipes estão em cada plano
-- Reutiliza padrão visual do `DeliveryStatusChart` existente
-
-**d) Equipes Recentes (tabela compacta)**
-- Nome, data de criação, plano, status da assinatura
-- Link para `/admin/teams`
-
-**e) Trials Expirando (lista de alertas)**
-- Equipes cujo trial acaba em 7 dias, com contagem regressiva
-- Destaque visual em vermelho/amarelo para urgência
-- Ação rápida de "Ver equipe"
-
-**f) Usuários Recentes (lista compacta)**
-- Avatar, nome, email, data de cadastro
-- Link para `/admin/users`
-
-### 4. Arquivos Modificados
-- `src/hooks/admin/useAdminStats.ts` — expandir com mais contagens
-- `src/hooks/admin/useAdminDashboardData.ts` — **novo** hook para dados detalhados
-- `src/pages/admin/AdminDashboard.tsx` — redesenhar completamente
-
-### Detalhes Técnicos
-- Todas as queries usam Supabase client-side com as tabelas existentes (`teams`, `profiles`, `subscriptions`, `demands`, `plans`, `trial_coupons`)
-- Gráficos usam Recharts (já instalado no projeto)
-- Crescimento mensal calculado client-side agrupando `created_at` por mês
-- Nenhuma migração de banco necessária — tudo usa dados existentes
-
+Detalhes técnicos
+- Arquivos que serão alterados:  
+  - `src/components/ProtectedLayout.tsx`  
+  - `src/components/NoBoardsScreen.tsx`
+- Sem mudança de banco/RLS/backend; é ajuste de regra de navegação e UX para estado “equipe sem quadro”.
