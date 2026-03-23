@@ -787,6 +787,8 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
             {panelMounted && (
               <div
                 data-stage-form-panel
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
                  className={cn(
                   "pointer-events-auto bg-background border border-border rounded-xl overflow-hidden min-h-0",
                   "h-[85vh] max-h-[85vh]",
@@ -805,6 +807,8 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
             {showForm && (
               <div
                 data-stage-form-panel
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
                 className="lg:hidden pointer-events-auto bg-background border border-border rounded-xl shadow-2xl flex flex-col w-[92vw] sm:w-[480px] h-[85vh] max-h-[85vh] animate-fade-in"
               >
                 {renderFormPanel(true)}
