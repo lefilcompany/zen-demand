@@ -100,6 +100,12 @@ export function NoBoardsScreen() {
                   <Settings className="h-4 w-4 mr-2" />
                   Configurações
                 </DropdownMenuItem>
+                {currentTeam && (
+                  <DropdownMenuItem onClick={() => navigate(`/teams/${currentTeam.id}`)}>
+                    <Users className="h-4 w-4 mr-2" />
+                    Detalhes da Equipe
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => setLogoutOpen(true)}
