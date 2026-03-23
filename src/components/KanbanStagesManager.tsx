@@ -561,7 +561,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
 
   return (
     <>
-      <Dialog open={open} onOpenChange={handleOpenChange}>
+      <Dialog open={open} onOpenChange={handleOpenChange} modal={false}>
         <DialogTrigger asChild>
           <Button variant="outline" size="sm" className="gap-2">
             <Settings className="h-4 w-4" />
