@@ -38,10 +38,6 @@ export function BoardSelector() {
   const handleBoardChange = (newBoardId: string) => {
     if (newBoardId !== selectedBoardId) {
       setSelectedBoardId(newBoardId);
-      // Redireciona para o dashboard se não estiver nele
-      if (location.pathname !== "/") {
-        navigate("/");
-      }
     }
   };
 
