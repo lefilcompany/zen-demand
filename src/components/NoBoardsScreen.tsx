@@ -141,15 +141,24 @@ export function NoBoardsScreen() {
               Verificando em tempo real
             </div>
 
+            {currentTeam && (
+              <Button variant="outline" size="sm" onClick={() => navigate(`/teams/${currentTeam.id}`)} className="gap-2">
+                <Users className="h-4 w-4" />
+                Ver detalhes da equipe
+              </Button>
+            )}
+
             {isAdmin && (
               <div className="pt-4 border-t border-border">
                 <p className="text-sm text-muted-foreground mb-3">
                   Como administrador, você pode criar um quadro:
                 </p>
-                <Button onClick={() => navigate("/boards")} className="gap-2">
-                  <LayoutGrid className="h-4 w-4" />
-                  Criar Quadro
-                </Button>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <Button onClick={() => navigate("/boards")} className="gap-2">
+                    <LayoutGrid className="h-4 w-4" />
+                    Criar Quadro
+                  </Button>
+                </div>
               </div>
             )}
 
