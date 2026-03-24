@@ -239,7 +239,7 @@ export default function DemandDetail() {
   const canManageAssignees = !isDeliveredStatus && (boardRole === "admin" || boardRole === "moderator");
   const canEdit = !isDeliveredStatus;
   const canArchive = !isDeliveredStatus;
-  const canChangeBoard = !isDeliveredStatus && (boardRole === "admin" || boardRole === "moderator");
+  const canChangeBoard = !isDeliveredStatus && (boardRole === "admin" || boardRole === "moderator" || boardRole === "executor");
   const isCreator = demand?.created_by === user?.id;
 
   // Permissões de ajuste baseadas no boardRole

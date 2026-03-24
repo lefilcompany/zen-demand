@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { useBoards, Board } from "@/hooks/useBoards";
-import { useSelectedBoardSafe } from "@/contexts/BoardContext";
+import { useBoards } from "@/hooks/useBoards";
+import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -40,10 +42,35 @@ export function ChangeBoardDialog({
   isPending,
 }: ChangeBoardDialogProps) {
   const [selectedBoardId, setSelectedBoardId] = useState<string>("");
-  const { data: boards, isLoading } = useBoards(teamId);
+  const { user } = useAuth();
+  const { data: boards, isLoading: boardsLoading } = useBoards(teamId);
 
-  // Filter out the current board
-  const availableBoards = boards?.filter((b) => b.id !== currentBoardId) || [];
+  // Fetch all board_members for the current user to know which boards they belong to
+  const { data: userBoardIds, isLoading: membershipLoading } = useQuery({
+    queryKey: ["user-board-memberships", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("board_members")
+        .select("board_id, role")
+        .eq("user_id", user.id);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user && open,
+  });
+
+  const isLoading = boardsLoading || membershipLoading;
+
+  // Only show boards where user is a member (excluding current board) and has agent/coordinator/admin role
+  const allowedRoles = new Set(["admin", "moderator", "executor"]);
+  const userBoardMap = new Map(userBoardIds?.map((m) => [m.board_id, m.role]) || []);
+
+  const availableBoards = boards?.filter((b) => {
+    if (b.id === currentBoardId) return false;
+    const role = userBoardMap.get(b.id);
+    return role && allowedRoles.has(role);
+  }) || [];
 
   const selectedBoard = availableBoards.find((b) => b.id === selectedBoardId);
 
