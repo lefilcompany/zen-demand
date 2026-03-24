@@ -430,6 +430,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                     onChange={(e) => setTitle(e.target.value)}
                     required
                     autoFocus
+                    disabled={!formBoardId}
                   />
                 </div>
 
