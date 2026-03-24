@@ -1156,7 +1156,7 @@ export default function DemandDetail() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-3xl mx-auto max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl mx-auto max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Demanda</DialogTitle>
             <DialogDescription>
