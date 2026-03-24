@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DemandCard } from "@/components/DemandCard";
-import { useDemands } from "@/hooks/useDemands";
+import { useDemands, useUpdateDemand } from "@/hooks/useDemands";
 import { useAllTeamDemands } from "@/hooks/useAllTeamDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
@@ -204,6 +204,15 @@ export default function Demands() {
     setSelectedDateForCreate(date);
     setIsCreateDialogOpen(true);
   };
+
+  const updateDemand = useUpdateDemand();
+
+  const handleDemandDateChange = async (demandId: string, newDate: Date) => {
+    await updateDemand.mutateAsync({
+      id: demandId,
+      due_date: newDate.toISOString(),
+    });
+  };
   const renderDemandList = (demandList: typeof filteredDemands) => {
     if (activeIsLoading) {
       return <div className="text-center py-12">
@@ -245,7 +254,7 @@ export default function Demands() {
           from: "demands",
           viewMode: "calendar"
         }
-      })} onDayClick={handleDayClick} isRequester={isReadOnly} />;
+      })} onDayClick={handleDayClick} isRequester={isReadOnly} onDemandDateChange={handleDemandDateChange} />;
     }
     if (effectiveViewMode === "table") {
       return <DataTable columns={demandColumns} data={demandList as unknown as DemandTableRow[]} onRowClick={row => navigate(`/demands/${row.id}`, {

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { CalendarDemandCard } from "@/components/CalendarDemandCard";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -35,6 +35,17 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 interface Demand {
   id: string;
@@ -52,6 +63,7 @@ interface DemandsCalendarViewProps {
   onDemandClick: (demandId: string) => void;
   onDayClick: (date: Date) => void;
   isRequester?: boolean;
+  onDemandDateChange?: (demandId: string, newDate: Date) => Promise<void>;
 }
 
 const WEEKDAYS = ["D", "S", "T", "Q", "Q", "S", "S"];
@@ -68,16 +80,26 @@ interface SelectedDaySheet {
   demands: Demand[];
 }
 
+interface DragDropConfirmation {
+  demand: Demand;
+  fromDate: Date;
+  toDate: Date;
+}
+
 export function DemandsCalendarView({
   demands,
   onDemandClick,
   onDayClick,
   isRequester = false,
+  onDemandDateChange,
 }: DemandsCalendarViewProps) {
   const isMobile = useIsMobile();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<CalendarViewMode>("month");
   const [selectedDaySheet, setSelectedDaySheet] = useState<SelectedDaySheet | null>(null);
+  const [dragOverDate, setDragOverDate] = useState<string | null>(null);
+  const [dragConfirmation, setDragConfirmation] = useState<DragDropConfirmation | null>(null);
+  const [isMoving, setIsMoving] = useState(false);
 
   // Group demands by date
   const demandsByDate = useMemo(() => {
@@ -131,6 +153,50 @@ export function DemandsCalendarView({
   };
 
   const goToToday = () => setCurrentDate(new Date());
+
+  // Drag and drop handlers
+  const handleDragStart = useCallback((e: React.DragEvent, demand: Demand) => {
+    e.dataTransfer.setData("application/json", JSON.stringify(demand));
+    e.dataTransfer.effectAllowed = "move";
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, dateKey: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverDate(dateKey);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverDate(null);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, targetDate: Date) => {
+    e.preventDefault();
+    setDragOverDate(null);
+    try {
+      const demand: Demand = JSON.parse(e.dataTransfer.getData("application/json"));
+      if (!demand.due_date) return;
+      const fromDate = new Date(demand.due_date);
+      if (isSameDay(fromDate, targetDate)) return;
+      setDragConfirmation({ demand, fromDate, toDate: targetDate });
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleConfirmMove = async () => {
+    if (!dragConfirmation || !onDemandDateChange) return;
+    setIsMoving(true);
+    try {
+      await onDemandDateChange(dragConfirmation.demand.id, dragConfirmation.toDate);
+      toast.success("Data da demanda atualizada com sucesso");
+    } catch {
+      toast.error("Erro ao mover demanda");
+    } finally {
+      setIsMoving(false);
+      setDragConfirmation(null);
+    }
+  };
 
   // Get header title based on view mode
   const getHeaderTitle = () => {
@@ -251,9 +317,13 @@ export function DemandsCalendarView({
                   className={cn(
                     "min-h-[120px] sm:min-h-[200px] border-b border-r border-border p-0.5 sm:p-2 transition-colors",
                     !isPastDay && "hover:bg-muted/30 cursor-pointer",
-                    isPastDay && "bg-muted/10 opacity-70"
+                    isPastDay && "bg-muted/10 opacity-70",
+                    dragOverDate === dateKey && "bg-primary/10 ring-2 ring-primary/40"
                   )}
                   onClick={() => !isPastDay && onDayClick(day)}
+                  onDragOver={(e) => handleDragOver(e, dateKey)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, day)}
                 >
                   <div className="flex items-center justify-between mb-0.5 sm:mb-1">
                     <span
@@ -274,12 +344,18 @@ export function DemandsCalendarView({
 
                   <div className="space-y-0.5 sm:space-y-1">
                     {visibleDemands.map((demand) => (
-                      <CalendarDemandCard
+                      <div
                         key={demand.id}
-                        demand={demand}
-                        onClick={() => onDemandClick(demand.id)}
-                        compact={isMobile}
-                      />
+                        draggable={!!onDemandDateChange && !!demand.due_date}
+                        onDragStart={(e) => handleDragStart(e, demand)}
+                        className={cn(onDemandDateChange && demand.due_date && "cursor-grab active:cursor-grabbing")}
+                      >
+                        <CalendarDemandCard
+                          demand={demand}
+                          onClick={() => onDemandClick(demand.id)}
+                          compact={isMobile}
+                        />
+                      </div>
                     ))}
 
                     {hasMoreDemands && (
@@ -346,7 +422,8 @@ export function DemandsCalendarView({
                     !isCurrentMonth && "bg-muted/10 text-muted-foreground",
                     isPastDay && "bg-muted/10 opacity-70",
                     index % 7 === 0 && "border-l-0",
-                    index < 7 && "border-t-0"
+                    index < 7 && "border-t-0",
+                    dragOverDate === dateKey && "bg-primary/10 ring-2 ring-primary/40"
                   )}
                   onClick={() => {
                     if (isMobile && dayDemands.length > 0) {
@@ -355,6 +432,9 @@ export function DemandsCalendarView({
                       onDayClick(day);
                     }
                   }}
+                  onDragOver={(e) => handleDragOver(e, dateKey)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, day)}
                 >
                   {/* Day Number */}
                   <div className="flex items-center justify-between mb-0.5 sm:mb-1">
@@ -384,12 +464,18 @@ export function DemandsCalendarView({
                   {/* Demands List */}
                   <div className="space-y-0.5 sm:space-y-1">
                     {visibleDemands.map((demand) => (
-                      <CalendarDemandCard
+                      <div
                         key={demand.id}
-                        demand={demand}
-                        onClick={() => onDemandClick(demand.id)}
-                        compact={isMobile}
-                      />
+                        draggable={!!onDemandDateChange && !!demand.due_date}
+                        onDragStart={(e) => handleDragStart(e, demand)}
+                        className={cn(onDemandDateChange && demand.due_date && "cursor-grab active:cursor-grabbing")}
+                      >
+                        <CalendarDemandCard
+                          demand={demand}
+                          onClick={() => onDemandClick(demand.id)}
+                          compact={isMobile}
+                        />
+                      </div>
                     ))}
 
                     {/* More demands indicator */}
@@ -580,6 +666,31 @@ export function DemandsCalendarView({
           </ScrollArea>
         </SheetContent>
       </Sheet>
+
+      {/* Drag and drop confirmation dialog */}
+      <AlertDialog open={!!dragConfirmation} onOpenChange={(open) => !open && setDragConfirmation(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mover demanda?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja mover a demanda <strong className="text-foreground">"{dragConfirmation?.demand.title}"</strong> de{" "}
+              <strong className="text-foreground">
+                {dragConfirmation && format(dragConfirmation.fromDate, "d 'de' MMMM", { locale: ptBR })}
+              </strong>{" "}
+              para{" "}
+              <strong className="text-foreground">
+                {dragConfirmation && format(dragConfirmation.toDate, "d 'de' MMMM", { locale: ptBR })}
+              </strong>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isMoving}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmMove} disabled={isMoving}>
+              {isMoving ? "Movendo..." : "Confirmar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
