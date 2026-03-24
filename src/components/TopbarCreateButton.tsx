@@ -40,7 +40,7 @@ export function TopbarCreateButton() {
         >
           <Plus className="h-4 w-4" />
         </Button>
-      </TooltipTrigger>
+      </Button>
       <TooltipContent side="bottom">
         <p>Nova Demanda</p>
       </TooltipContent>
