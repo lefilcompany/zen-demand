@@ -21,6 +21,7 @@ import { NotificationDropdown } from "@/components/NotificationDropdown";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { FloatingCreateButton } from "@/components/FloatingCreateButton";
 import { SideCreateDemandButton } from "@/components/SideCreateDemandButton";
+import { TopbarCreateButton } from "@/components/TopbarCreateButton";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useSelectedTeam } from "@/contexts/TeamContext";
