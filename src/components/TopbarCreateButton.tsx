@@ -22,9 +22,19 @@ export function TopbarCreateButton() {
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
-          variant="ghost"
+          variant="default"
+          size="sm"
+          className="h-7 gap-1.5 px-2.5 text-xs font-medium hidden sm:flex"
+          onClick={handleClick}
+          aria-label="Nova Demanda"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Nova Demanda
+        </Button>
+        <Button
+          variant="default"
           size="icon"
-          className="h-7 w-7 shrink-0"
+          className="h-7 w-7 shrink-0 sm:hidden"
           onClick={handleClick}
           aria-label="Nova Demanda"
         >
