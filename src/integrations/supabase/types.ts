@@ -1025,6 +1025,7 @@ export type Database = {
           meet_link: string | null
           priority: string | null
           service_id: string | null
+          status_changed_at: string | null
           status_id: string
           team_id: string
           time_in_progress_seconds: number | null
@@ -1047,6 +1048,7 @@ export type Database = {
           meet_link?: string | null
           priority?: string | null
           service_id?: string | null
+          status_changed_at?: string | null
           status_id: string
           team_id: string
           time_in_progress_seconds?: number | null
@@ -1069,6 +1071,7 @@ export type Database = {
           meet_link?: string | null
           priority?: string | null
           service_id?: string | null
+          status_changed_at?: string | null
           status_id?: string
           team_id?: string
           time_in_progress_seconds?: number | null
