@@ -399,9 +399,10 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                   </Label>
                   <Select value={formBoardId} onValueChange={(val) => {
                     setFormBoardId(val);
-                    // Reset service when board changes
+                    // Reset dependent fields when board changes
                     setServiceId("");
                     setAssigneeIds([]);
+                    setStatusId("");
                   }}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o quadro" />
