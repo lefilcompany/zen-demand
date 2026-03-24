@@ -783,9 +783,16 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               onClick={() => onDemandClick(demand.id)}
             >
               {demand.board_sequence_number && (
-                <Badge variant="outline" className="text-xs mb-1.5 bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono">
-                  {formatDemandCode(demand.board_sequence_number)}
-                </Badge>
+                <TooltipProvider delayDuration={300}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge variant="outline" className="text-xs mb-1.5 bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono">
+                        {formatDemandCode(demand.board_sequence_number)}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent side="top"><p>Código único da demanda</p></TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
               <h4 className="font-medium text-sm line-clamp-2 mb-1" title={demand.title}>
                 {truncateText(demand.title)}
