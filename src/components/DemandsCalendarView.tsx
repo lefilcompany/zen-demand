@@ -344,12 +344,18 @@ export function DemandsCalendarView({
 
                   <div className="space-y-0.5 sm:space-y-1">
                     {visibleDemands.map((demand) => (
-                      <CalendarDemandCard
+                      <div
                         key={demand.id}
-                        demand={demand}
-                        onClick={() => onDemandClick(demand.id)}
-                        compact={isMobile}
-                      />
+                        draggable={!!onDemandDateChange && !!demand.due_date}
+                        onDragStart={(e) => handleDragStart(e, demand)}
+                        className={cn(onDemandDateChange && demand.due_date && "cursor-grab active:cursor-grabbing")}
+                      >
+                        <CalendarDemandCard
+                          demand={demand}
+                          onClick={() => onDemandClick(demand.id)}
+                          compact={isMobile}
+                        />
+                      </div>
                     ))}
 
                     {hasMoreDemands && (
