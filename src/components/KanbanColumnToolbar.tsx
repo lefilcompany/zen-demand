@@ -20,8 +20,8 @@ interface KanbanColumnToolbarProps {
 }
 
 const SORT_OPTIONS: { value: KanbanSortOption; label: string; icon: React.ReactNode }[] = [
-  { value: "newest", label: "Mais recente", icon: <ArrowDown className="h-3 w-3" /> },
-  { value: "oldest", label: "Mais antigo", icon: <ArrowUp className="h-3 w-3" /> },
+  { value: "newest", label: "Mais recente na etapa", icon: <ArrowDown className="h-3 w-3" /> },
+  { value: "oldest", label: "Mais antigo na etapa", icon: <ArrowUp className="h-3 w-3" /> },
   { value: "priority_high", label: "Prioridade (alta → baixa)", icon: <ArrowDown className="h-3 w-3" /> },
   { value: "priority_low", label: "Prioridade (baixa → alta)", icon: <ArrowUp className="h-3 w-3" /> },
   { value: "due_date_asc", label: "Prazo (próximo)", icon: <Calendar className="h-3 w-3" /> },
