@@ -13,10 +13,10 @@ export function SideCreateDemandButton() {
   return (
     <button
       onClick={openCreateDemand}
-      className="fixed right-0 top-1/2 -translate-y-1/2 z-40 group flex items-center gap-2 
-        bg-primary text-primary-foreground rounded-l-lg shadow-lg
-        pl-2 pr-1 py-3 
-        w-8 hover:w-auto hover:pr-4
+      className="fixed right-6 bottom-6 z-40 group flex items-center gap-2 
+        bg-primary text-primary-foreground rounded-full shadow-lg
+        pl-3 pr-3 py-3 
+        hover:pr-5 hover:rounded-lg
         transition-all duration-300 ease-in-out overflow-hidden cursor-pointer"
       aria-label="Criar nova demanda"
     >
