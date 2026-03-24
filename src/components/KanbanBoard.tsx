@@ -210,6 +210,9 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
   const [adjustmentDemandId, setAdjustmentDemandId] = useState<string | null>(null);
   const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, string>>({});
+  const [columnSearches, setColumnSearches] = useState<Record<string, string>>({});
+  const [columnSorts, setColumnSorts] = useState<Record<string, KanbanSortOption>>({});
+  const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, string>>({});
   const { data: statuses } = useDemandStatuses();
   const updateDemand = useUpdateDemand();
   
