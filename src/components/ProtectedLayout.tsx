@@ -21,6 +21,7 @@ import { NotificationDropdown } from "@/components/NotificationDropdown";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { FloatingCreateButton } from "@/components/FloatingCreateButton";
 import { SideCreateDemandButton } from "@/components/SideCreateDemandButton";
+import { TopbarCreateButton } from "@/components/TopbarCreateButton";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useSelectedTeam } from "@/contexts/TeamContext";
@@ -141,6 +142,10 @@ export function ProtectedLayout() {
                 <ThemeToggle />
               </div>
 
+              <TopbarCreateButton />
+
+              <div className="h-4 w-px bg-border hidden sm:block" />
+
               <GlobalSearchBar />
 
               <div data-tour="notifications-btn">
@@ -203,7 +208,6 @@ export function ProtectedLayout() {
             <Outlet />
           </div>
           <FloatingCreateButton />
-          <SideCreateDemandButton />
         </main>
       </div>
 
