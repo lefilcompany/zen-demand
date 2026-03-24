@@ -49,7 +49,17 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const { selectedTeamId, teams } = useSelectedTeam();
   const { selectedBoardId, setSelectedBoardId, boards: contextBoards } = useSelectedBoardSafe();
   const { data: allBoards } = useBoards(selectedTeamId);
-  const { data: statuses } = useDemandStatuses();
+  const { data: boardStatuses } = useBoardStatuses(formBoardId || null);
+  
+  // Derive statuses from board-specific statuses
+  const statuses = useMemo(() => {
+    if (!boardStatuses) return [];
+    return boardStatuses.map(bs => ({
+      id: bs.status.id,
+      name: bs.status.name,
+      color: bs.status.color,
+    }));
+  }, [boardStatuses]);
 
   // Local board selection for this form (defaults to current board)
   const [formBoardId, setFormBoardId] = useState<string>("");
