@@ -860,13 +860,20 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 )}
 
                 {adjustmentCount > 0 && (
-                  <Badge
-                    variant="outline"
-                    className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/20"
-                  >
-                    <RefreshCw className="h-3 w-3 mr-1" />
-                    {adjustmentCount}
-                  </Badge>
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge
+                          variant="outline"
+                          className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/20"
+                        >
+                          <RefreshCw className="h-3 w-3 mr-1" />
+                          {adjustmentCount}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="top"><p>Quantidade de ajustes realizados</p></TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
 
                 {columnKey === "Em Ajuste" && latestAdjustmentType && (
