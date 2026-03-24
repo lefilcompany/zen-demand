@@ -422,7 +422,8 @@ export function DemandsCalendarView({
                     !isCurrentMonth && "bg-muted/10 text-muted-foreground",
                     isPastDay && "bg-muted/10 opacity-70",
                     index % 7 === 0 && "border-l-0",
-                    index < 7 && "border-t-0"
+                    index < 7 && "border-t-0",
+                    dragOverDate === dateKey && "bg-primary/10 ring-2 ring-primary/40"
                   )}
                   onClick={() => {
                     if (isMobile && dayDemands.length > 0) {
@@ -431,6 +432,9 @@ export function DemandsCalendarView({
                       onDayClick(day);
                     }
                   }}
+                  onDragOver={(e) => handleDragOver(e, dateKey)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, day)}
                 >
                   {/* Day Number */}
                   <div className="flex items-center justify-between mb-0.5 sm:mb-1">
