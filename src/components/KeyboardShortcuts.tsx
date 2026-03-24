@@ -49,8 +49,8 @@ export function KeyboardShortcutsProvider({ children }: { children: React.ReactN
         return;
       }
 
-      // Ctrl+N for new demand
-      if (e.key === "n" && (e.ctrlKey || e.metaKey)) {
+      // Ctrl+Shift+D for new demand
+      if (e.key === "D" && (e.ctrlKey || e.metaKey) && e.shiftKey) {
         e.preventDefault();
         window.dispatchEvent(new CustomEvent("open-create-demand"));
         return;
