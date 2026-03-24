@@ -972,6 +972,22 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     );
   };
 
+  // Per-column search/sort helpers
+  const getColumnSearch = useCallback((columnKey: string) => columnSearches[columnKey] || "", [columnSearches]);
+  const setColumnSearch = useCallback((columnKey: string, query: string) => {
+    setColumnSearches(prev => ({ ...prev, [columnKey]: query }));
+  }, []);
+  const getColumnSort = useCallback((columnKey: string): KanbanSortOption => columnSorts[columnKey] || "newest", [columnSorts]);
+  const setColumnSort = useCallback((columnKey: string, sort: KanbanSortOption) => {
+    setColumnSorts(prev => ({ ...prev, [columnKey]: sort }));
+  }, []);
+
+  // Get filtered and sorted demands for a column
+  const getFilteredDemandsForColumn = useCallback((columnKey: string) => {
+    const raw = getDemandsForColumn(columnKey);
+    return filterAndSortDemands(raw, getColumnSearch(columnKey), getColumnSort(columnKey));
+  }, [demands, optimisticUpdates, columnSearches, columnSorts]);
+
   // Render column content
   const renderColumnContent = (columnKey: string, showMoveMenu: boolean = false, columnAdjustmentType?: AdjustmentTypeColumn) => {
     const columnDemands = getFilteredDemandsForColumn(columnKey);
