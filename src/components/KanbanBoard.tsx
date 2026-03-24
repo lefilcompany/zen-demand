@@ -843,13 +843,20 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
                 {/* Service badge */}
                 {demand.services?.name && (
-                  <Badge
-                    variant="outline"
-                    className="text-xs bg-primary/5 text-primary border-primary/20 flex items-center gap-1"
-                  >
-                    <Wrench className="h-3 w-3" />
-                    {demand.services.name}
-                  </Badge>
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge
+                          variant="outline"
+                          className="text-xs bg-primary/5 text-primary border-primary/20 flex items-center gap-1"
+                        >
+                          <Wrench className="h-3 w-3" />
+                          {demand.services.name}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="top"><p>Serviço vinculado à demanda</p></TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
 
                 {adjustmentCount > 0 && (
