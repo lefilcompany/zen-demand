@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight, X, WifiOff, CloudOff, Check } from "lucide-react";
+import { KanbanColumnToolbar, KanbanSortOption, filterAndSortDemands } from "@/components/KanbanColumnToolbar";
 import { format } from "date-fns";
 import { formatDateOnlyBR, isDateOverdue } from "@/lib/dateUtils";
 import { cn, truncateText } from "@/lib/utils";
@@ -209,6 +210,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
   const [adjustmentDemandId, setAdjustmentDemandId] = useState<string | null>(null);
   const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, string>>({});
+  const [columnSearches, setColumnSearches] = useState<Record<string, string>>({});
+  const [columnSorts, setColumnSorts] = useState<Record<string, KanbanSortOption>>({});
   const { data: statuses } = useDemandStatuses();
   const updateDemand = useUpdateDemand();
   
@@ -969,9 +972,25 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     );
   };
 
+  // Per-column search/sort helpers
+  const getColumnSearch = useCallback((columnKey: string) => columnSearches[columnKey] || "", [columnSearches]);
+  const setColumnSearch = useCallback((columnKey: string, query: string) => {
+    setColumnSearches(prev => ({ ...prev, [columnKey]: query }));
+  }, []);
+  const getColumnSort = useCallback((columnKey: string): KanbanSortOption => columnSorts[columnKey] || "newest", [columnSorts]);
+  const setColumnSort = useCallback((columnKey: string, sort: KanbanSortOption) => {
+    setColumnSorts(prev => ({ ...prev, [columnKey]: sort }));
+  }, []);
+
+  // Get filtered and sorted demands for a column
+  const getFilteredDemandsForColumn = useCallback((columnKey: string) => {
+    const raw = getDemandsForColumn(columnKey);
+    return filterAndSortDemands(raw, getColumnSearch(columnKey), getColumnSort(columnKey));
+  }, [demands, optimisticUpdates, columnSearches, columnSorts]);
+
   // Render column content
   const renderColumnContent = (columnKey: string, showMoveMenu: boolean = false, columnAdjustmentType?: AdjustmentTypeColumn) => {
-    const columnDemands = getDemandsForColumn(columnKey);
+    const columnDemands = getFilteredDemandsForColumn(columnKey);
     const adjType = columnAdjustmentType || columns.find(c => c.key === columnKey)?.adjustmentType || 'none';
     
     return (
@@ -979,13 +998,22 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         {columnDemands.map((demand) => renderDemandCard(demand, columnKey, showMoveMenu, adjType))}
         {columnDemands.length === 0 && (
           <div className="text-center py-8 text-muted-foreground text-sm border-2 border-dashed rounded-lg">
-            {readOnly ? "Nenhuma demanda" : (isMobile ? "Nenhuma demanda" : "Arraste demandas aqui")}
+            {getColumnSearch(columnKey) ? "Nenhum resultado" : (readOnly ? "Nenhuma demanda" : (isMobile ? "Nenhuma demanda" : "Arraste demandas aqui"))}
           </div>
         )}
       </div>
     );
   };
 
+  // Render column toolbar
+  const renderColumnToolbar = (columnKey: string) => (
+    <KanbanColumnToolbar
+      searchQuery={getColumnSearch(columnKey)}
+      onSearchChange={(q) => setColumnSearch(columnKey, q)}
+      sortOption={getColumnSort(columnKey)}
+      onSortChange={(s) => setColumnSort(columnKey, s)}
+    />
+  );
 
   // Mobile view with dropdown selector - shows move menu on cards
   if (isMobile) {
@@ -1035,9 +1063,12 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
                 {activeColumnData.label}
               </h3>
-              <Badge variant="secondary" className="text-xs">
-                {getDemandsForColumn(mobileActiveColumn).length}
-              </Badge>
+              <div className="flex items-center gap-1.5">
+                {renderColumnToolbar(mobileActiveColumn)}
+                <Badge variant="secondary" className="text-xs">
+                  {getDemandsForColumn(mobileActiveColumn).length}
+                </Badge>
+              </div>
             </div>
             {/* Pass showMoveMenu=true for mobile */}
             {renderColumnContent(mobileActiveColumn, true)}
@@ -1109,7 +1140,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                       <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground truncate">
                         {column.label}
                       </h3>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-1 shrink-0">
+                        {renderColumnToolbar(column.key)}
                         <Badge variant="secondary" className="text-xs">
                           {columnDemands.length}
                         </Badge>
@@ -1218,7 +1250,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                       <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground truncate">
                         {column.label}
                       </h3>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-1 shrink-0">
+                        {renderColumnToolbar(column.key)}
                         <Badge variant="secondary" className="text-xs">
                           {columnDemands.length}
                         </Badge>
