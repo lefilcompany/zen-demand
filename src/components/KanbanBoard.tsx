@@ -57,10 +57,11 @@ interface Demand {
   created_by?: string;
   created_at?: string;
   updated_at?: string;
+  status_changed_at?: string | null;
   time_in_progress_seconds?: number | null;
   last_started_at?: string | null;
-  team_id?: string; // Added for adjustment type determination
-  board_sequence_number?: number | null; // Sequential ID per board
+  team_id?: string;
+  board_sequence_number?: number | null;
   service_id?: string | null;
   demand_statuses?: { name: string; color: string } | null;
   profiles?: { full_name: string; avatar_url?: string | null } | null;
@@ -68,7 +69,7 @@ interface Demand {
   teams?: { name: string } | null;
   services?: { id: string; name: string } | null;
   demand_assignees?: Assignee[];
-  _isOffline?: boolean; // Flag for offline-created demands
+  _isOffline?: boolean;
 }
 
 type AdjustmentTypeColumn = 'none' | 'internal' | 'external';
