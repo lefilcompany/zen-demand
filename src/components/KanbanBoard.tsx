@@ -974,7 +974,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
   // Render column content
   const renderColumnContent = (columnKey: string, showMoveMenu: boolean = false, columnAdjustmentType?: AdjustmentTypeColumn) => {
-    const columnDemands = getDemandsForColumn(columnKey);
+    const columnDemands = getFilteredDemandsForColumn(columnKey);
     const adjType = columnAdjustmentType || columns.find(c => c.key === columnKey)?.adjustmentType || 'none';
     
     return (
@@ -982,12 +982,22 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         {columnDemands.map((demand) => renderDemandCard(demand, columnKey, showMoveMenu, adjType))}
         {columnDemands.length === 0 && (
           <div className="text-center py-8 text-muted-foreground text-sm border-2 border-dashed rounded-lg">
-            {readOnly ? "Nenhuma demanda" : (isMobile ? "Nenhuma demanda" : "Arraste demandas aqui")}
+            {getColumnSearch(columnKey) ? "Nenhum resultado" : (readOnly ? "Nenhuma demanda" : (isMobile ? "Nenhuma demanda" : "Arraste demandas aqui"))}
           </div>
         )}
       </div>
     );
   };
+
+  // Render column toolbar
+  const renderColumnToolbar = (columnKey: string) => (
+    <KanbanColumnToolbar
+      searchQuery={getColumnSearch(columnKey)}
+      onSearchChange={(q) => setColumnSearch(columnKey, q)}
+      sortOption={getColumnSort(columnKey)}
+      onSortChange={(s) => setColumnSort(columnKey, s)}
+    />
+  );
 
   // Per-column search/sort helpers
   const getColumnSearch = useCallback((columnKey: string) => columnSearches[columnKey] || "", [columnSearches]);
