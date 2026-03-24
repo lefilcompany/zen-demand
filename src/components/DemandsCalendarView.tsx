@@ -91,11 +91,15 @@ export function DemandsCalendarView({
   onDemandClick,
   onDayClick,
   isRequester = false,
+  onDemandDateChange,
 }: DemandsCalendarViewProps) {
   const isMobile = useIsMobile();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<CalendarViewMode>("month");
   const [selectedDaySheet, setSelectedDaySheet] = useState<SelectedDaySheet | null>(null);
+  const [dragOverDate, setDragOverDate] = useState<string | null>(null);
+  const [dragConfirmation, setDragConfirmation] = useState<DragDropConfirmation | null>(null);
+  const [isMoving, setIsMoving] = useState(false);
 
   // Group demands by date
   const demandsByDate = useMemo(() => {
