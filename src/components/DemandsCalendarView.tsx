@@ -317,9 +317,13 @@ export function DemandsCalendarView({
                   className={cn(
                     "min-h-[120px] sm:min-h-[200px] border-b border-r border-border p-0.5 sm:p-2 transition-colors",
                     !isPastDay && "hover:bg-muted/30 cursor-pointer",
-                    isPastDay && "bg-muted/10 opacity-70"
+                    isPastDay && "bg-muted/10 opacity-70",
+                    dragOverDate === dateKey && "bg-primary/10 ring-2 ring-primary/40"
                   )}
                   onClick={() => !isPastDay && onDayClick(day)}
+                  onDragOver={(e) => handleDragOver(e, dateKey)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, day)}
                 >
                   <div className="flex items-center justify-between mb-0.5 sm:mb-1">
                     <span
