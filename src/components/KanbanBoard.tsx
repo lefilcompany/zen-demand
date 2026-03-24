@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight, X, WifiOff, CloudOff, Check } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { KanbanColumnToolbar, KanbanSortOption, filterAndSortDemands } from "@/components/KanbanColumnToolbar";
 import { format } from "date-fns";
 import { formatDateOnlyBR, isDateOverdue } from "@/lib/dateUtils";
@@ -782,9 +783,16 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               onClick={() => onDemandClick(demand.id)}
             >
               {demand.board_sequence_number && (
-                <Badge variant="outline" className="text-xs mb-1.5 bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono">
-                  {formatDemandCode(demand.board_sequence_number)}
-                </Badge>
+                <TooltipProvider delayDuration={300}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge variant="outline" className="text-xs mb-1.5 bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono">
+                        {formatDemandCode(demand.board_sequence_number)}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent side="top"><p>Código único da demanda</p></TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
               <h4 className="font-medium text-sm line-clamp-2 mb-1" title={demand.title}>
                 {truncateText(demand.title)}
@@ -814,37 +822,58 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 )}
                 
                 {demand.priority && (
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "text-xs capitalize",
-                      priorityColors[demand.priority] ||
-                        "bg-muted text-muted-foreground"
-                    )}
-                  >
-                    {demand.priority}
-                  </Badge>
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-xs capitalize",
+                            priorityColors[demand.priority] ||
+                              "bg-muted text-muted-foreground"
+                          )}
+                        >
+                          {demand.priority}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="top"><p>Nível de prioridade da demanda</p></TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
 
                 {/* Service badge */}
                 {demand.services?.name && (
-                  <Badge
-                    variant="outline"
-                    className="text-xs bg-primary/5 text-primary border-primary/20 flex items-center gap-1"
-                  >
-                    <Wrench className="h-3 w-3" />
-                    {demand.services.name}
-                  </Badge>
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge
+                          variant="outline"
+                          className="text-xs bg-primary/5 text-primary border-primary/20 flex items-center gap-1"
+                        >
+                          <Wrench className="h-3 w-3" />
+                          {demand.services.name}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="top"><p>Serviço vinculado à demanda</p></TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
 
                 {adjustmentCount > 0 && (
-                  <Badge
-                    variant="outline"
-                    className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/20"
-                  >
-                    <RefreshCw className="h-3 w-3 mr-1" />
-                    {adjustmentCount}
-                  </Badge>
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge
+                          variant="outline"
+                          className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/20"
+                        >
+                          <RefreshCw className="h-3 w-3 mr-1" />
+                          {adjustmentCount}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="top"><p>Quantidade de ajustes realizados</p></TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
 
                 {columnKey === "Em Ajuste" && latestAdjustmentType && (
@@ -935,27 +964,45 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               <div className="flex items-center justify-between mt-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   {demand.status_changed_at && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground" title={`Movido para esta etapa em ${format(new Date(demand.status_changed_at), "dd/MM/yyyy 'às' HH:mm")}`}>
-                      <ArrowRight className="h-3 w-3" />
-                      {formatDateOnlyBR(demand.status_changed_at)}
-                    </div>
+                    <TooltipProvider delayDuration={300}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground cursor-default">
+                            <ArrowRight className="h-3 w-3" />
+                            {formatDateOnlyBR(demand.status_changed_at)}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p>Entrou nesta etapa em {format(new Date(demand.status_changed_at), "dd/MM/yyyy 'às' HH:mm")}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
                   {demand.due_date && (
-                    <div
-                      className={cn(
-                        "flex items-center gap-1 text-xs",
-                        isOverdue(demand.due_date) && columnKey !== "Entregue"
-                          ? "text-destructive"
-                          : "text-muted-foreground"
-                      )}
-                    >
-                      {isOverdue(demand.due_date) && columnKey !== "Entregue" ? (
-                        <Clock className="h-3 w-3" />
-                      ) : (
-                        <Calendar className="h-3 w-3" />
-                      )}
-                      {formatDateOnlyBR(demand.due_date) || ""}
-                    </div>
+                    <TooltipProvider delayDuration={300}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={cn(
+                              "flex items-center gap-1 text-xs cursor-default",
+                              isOverdue(demand.due_date) && columnKey !== "Entregue"
+                                ? "text-destructive"
+                                : "text-muted-foreground"
+                            )}
+                          >
+                            {isOverdue(demand.due_date) && columnKey !== "Entregue" ? (
+                              <Clock className="h-3 w-3" />
+                            ) : (
+                              <Calendar className="h-3 w-3" />
+                            )}
+                            {formatDateOnlyBR(demand.due_date) || ""}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p>{isOverdue(demand.due_date) && columnKey !== "Entregue" ? "Data de expiração (atrasada)" : "Data de expiração"}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
                 </div>
 
