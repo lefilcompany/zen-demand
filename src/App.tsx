@@ -156,6 +156,7 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
                           <Route path="/board-summary" element={<BoardSummary />} />
                           <Route path="/user/:userId" element={<UserProfile />} />
                           <Route path="/team-demands" element={<TeamDemands />} />
+                          <Route path="/my-demands" element={<MyDemands />} />
                           <Route path="/notes" element={<Notes />} />
                           <Route path="/notes/:noteId" element={<NoteDetail />} />
                           
