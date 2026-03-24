@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { CalendarDemandCard } from "@/components/CalendarDemandCard";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -35,6 +35,17 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 interface Demand {
   id: string;
@@ -52,6 +63,7 @@ interface DemandsCalendarViewProps {
   onDemandClick: (demandId: string) => void;
   onDayClick: (date: Date) => void;
   isRequester?: boolean;
+  onDemandDateChange?: (demandId: string, newDate: Date) => Promise<void>;
 }
 
 const WEEKDAYS = ["D", "S", "T", "Q", "Q", "S", "S"];
@@ -66,6 +78,12 @@ type CalendarViewMode = "day" | "week" | "month";
 interface SelectedDaySheet {
   date: Date;
   demands: Demand[];
+}
+
+interface DragDropConfirmation {
+  demand: Demand;
+  fromDate: Date;
+  toDate: Date;
 }
 
 export function DemandsCalendarView({
