@@ -49,6 +49,10 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const { selectedTeamId, teams } = useSelectedTeam();
   const { selectedBoardId, setSelectedBoardId, boards: contextBoards } = useSelectedBoardSafe();
   const { data: allBoards } = useBoards(selectedTeamId);
+
+  // Local board selection for this form (defaults to current board)
+  const [formBoardId, setFormBoardId] = useState<string>("");
+
   const { data: boardStatuses } = useBoardStatuses(formBoardId || null);
   
   // Derive statuses from board-specific statuses
@@ -60,9 +64,6 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
       color: bs.status.color,
     }));
   }, [boardStatuses]);
-
-  // Local board selection for this form (defaults to current board)
-  const [formBoardId, setFormBoardId] = useState<string>("");
   
   // Success state: holds info about the created demand
   const [successState, setSuccessState] = useState<{
