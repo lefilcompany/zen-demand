@@ -228,7 +228,8 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
         onDontShowAgain={setDontShowAgain}
       />
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Title */}
         <div className="space-y-2">
           <Label htmlFor="edit-title">Título *</Label>
           <Input
@@ -240,17 +241,19 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
           />
         </div>
 
+        {/* Description */}
         <div className="space-y-2">
           <Label htmlFor="edit-description">Descrição</Label>
           <RichTextEditor
             value={description}
             onChange={setDescription}
             placeholder="Descreva os detalhes da demanda... (cole imagens diretamente no editor)"
-            minHeight="120px"
+            minHeight="180px"
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        {/* Grid: Status, Priority, Due Date */}
+        <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="edit-status">Status *</Label>
             <Select value={statusId} onValueChange={setStatusId} required>
@@ -280,43 +283,47 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
               </SelectContent>
             </Select>
           </div>
-        </div>
 
-        <div className="space-y-2">
-          <Label>Serviço</Label>
-          <ServiceSelector
-            teamId={demand.team_id}
-            boardId={demand.board_id}
-            value={serviceId}
-            onChange={handleServiceChange}
-          />
-        </div>
-
-        {canAssignResponsibles && (
           <div className="space-y-2">
-            <Label>Responsáveis</Label>
-            <AssigneeSelector
-              teamId={demand.team_id}
-              boardId={demand.board_id}
-              selectedUserIds={selectedAssignees}
-              onChange={setSelectedAssignees}
+            <Label htmlFor="edit-dueDate">Data de Vencimento</Label>
+            <Input
+              id="edit-dueDate"
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
             />
           </div>
-        )}
+        </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="edit-dueDate">Data de Vencimento</Label>
-          <Input
-            id="edit-dueDate"
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-          />
+        {/* Grid: Service, Assignees */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label>Serviço</Label>
+            <ServiceSelector
+              teamId={demand.team_id}
+              boardId={demand.board_id}
+              value={serviceId}
+              onChange={handleServiceChange}
+            />
+          </div>
+
+          {canAssignResponsibles && (
+            <div className="space-y-2">
+              <Label>Responsáveis</Label>
+              <AssigneeSelector
+                teamId={demand.team_id}
+                boardId={demand.board_id}
+                selectedUserIds={selectedAssignees}
+                onChange={setSelectedAssignees}
+              />
+            </div>
+          )}
         </div>
 
         {/* Recurrence Config */}
         <RecurrenceConfig value={recurrence} onChange={setRecurrence} compact />
 
+        {/* Actions */}
         <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4 sticky bottom-0 bg-background pb-1">
           <Button
             type="button"
