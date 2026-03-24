@@ -142,6 +142,10 @@ export function ProtectedLayout() {
                 <ThemeToggle />
               </div>
 
+              <TopbarCreateButton />
+
+              <div className="h-4 w-px bg-border hidden sm:block" />
+
               <GlobalSearchBar />
 
               <div data-tour="notifications-btn">
