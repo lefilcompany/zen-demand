@@ -964,27 +964,45 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               <div className="flex items-center justify-between mt-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   {demand.status_changed_at && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground" title={`Movido para esta etapa em ${format(new Date(demand.status_changed_at), "dd/MM/yyyy 'às' HH:mm")}`}>
-                      <ArrowRight className="h-3 w-3" />
-                      {formatDateOnlyBR(demand.status_changed_at)}
-                    </div>
+                    <TooltipProvider delayDuration={300}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground cursor-default">
+                            <ArrowRight className="h-3 w-3" />
+                            {formatDateOnlyBR(demand.status_changed_at)}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p>Entrou nesta etapa em {format(new Date(demand.status_changed_at), "dd/MM/yyyy 'às' HH:mm")}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
                   {demand.due_date && (
-                    <div
-                      className={cn(
-                        "flex items-center gap-1 text-xs",
-                        isOverdue(demand.due_date) && columnKey !== "Entregue"
-                          ? "text-destructive"
-                          : "text-muted-foreground"
-                      )}
-                    >
-                      {isOverdue(demand.due_date) && columnKey !== "Entregue" ? (
-                        <Clock className="h-3 w-3" />
-                      ) : (
-                        <Calendar className="h-3 w-3" />
-                      )}
-                      {formatDateOnlyBR(demand.due_date) || ""}
-                    </div>
+                    <TooltipProvider delayDuration={300}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={cn(
+                              "flex items-center gap-1 text-xs cursor-default",
+                              isOverdue(demand.due_date) && columnKey !== "Entregue"
+                                ? "text-destructive"
+                                : "text-muted-foreground"
+                            )}
+                          >
+                            {isOverdue(demand.due_date) && columnKey !== "Entregue" ? (
+                              <Clock className="h-3 w-3" />
+                            ) : (
+                              <Calendar className="h-3 w-3" />
+                            )}
+                            {formatDateOnlyBR(demand.due_date) || ""}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p>{isOverdue(demand.due_date) && columnKey !== "Entregue" ? "Data de expiração (atrasada)" : "Data de expiração"}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
                 </div>
 
