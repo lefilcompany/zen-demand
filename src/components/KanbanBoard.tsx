@@ -1158,6 +1158,9 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                         </Button>
                       </div>
                     </div>
+                    <div className="flex-1 min-h-0 overflow-y-auto">
+                      {renderColumnContent(column.key)}
+                    </div>
                   </div>
                 ) : (
                   <div className={cn(
