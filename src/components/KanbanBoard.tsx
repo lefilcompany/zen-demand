@@ -57,10 +57,11 @@ interface Demand {
   created_by?: string;
   created_at?: string;
   updated_at?: string;
+  status_changed_at?: string | null;
   time_in_progress_seconds?: number | null;
   last_started_at?: string | null;
-  team_id?: string; // Added for adjustment type determination
-  board_sequence_number?: number | null; // Sequential ID per board
+  team_id?: string;
+  board_sequence_number?: number | null;
   service_id?: string | null;
   demand_statuses?: { name: string; color: string } | null;
   profiles?: { full_name: string; avatar_url?: string | null } | null;
@@ -68,7 +69,7 @@ interface Demand {
   teams?: { name: string } | null;
   services?: { id: string; name: string } | null;
   demand_assignees?: Assignee[];
-  _isOffline?: boolean; // Flag for offline-created demands
+  _isOffline?: boolean;
 }
 
 type AdjustmentTypeColumn = 'none' | 'internal' | 'external';
@@ -932,23 +933,31 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               })()}
 
               <div className="flex items-center justify-between mt-2">
-                {demand.due_date && (
-                  <div
-                    className={cn(
-                      "flex items-center gap-1 text-xs",
-                      isOverdue(demand.due_date) && columnKey !== "Entregue"
-                        ? "text-destructive"
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    {isOverdue(demand.due_date) && columnKey !== "Entregue" ? (
-                      <Clock className="h-3 w-3" />
-                    ) : (
-                      <Calendar className="h-3 w-3" />
-                    )}
-                    {formatDateOnlyBR(demand.due_date) || ""}
-                  </div>
-                )}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {demand.status_changed_at && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground" title={`Movido para esta etapa em ${format(new Date(demand.status_changed_at), "dd/MM/yyyy 'às' HH:mm")}`}>
+                      <ArrowRight className="h-3 w-3" />
+                      {formatDateOnlyBR(demand.status_changed_at)}
+                    </div>
+                  )}
+                  {demand.due_date && (
+                    <div
+                      className={cn(
+                        "flex items-center gap-1 text-xs",
+                        isOverdue(demand.due_date) && columnKey !== "Entregue"
+                          ? "text-destructive"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      {isOverdue(demand.due_date) && columnKey !== "Entregue" ? (
+                        <Clock className="h-3 w-3" />
+                      ) : (
+                        <Calendar className="h-3 w-3" />
+                      )}
+                      {formatDateOnlyBR(demand.due_date) || ""}
+                    </div>
+                  )}
+                </div>
 
                 {assignees.length > 0 ? (
                   <AssigneeAvatars assignees={assignees} size="sm" maxVisible={2} />

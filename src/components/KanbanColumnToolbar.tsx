@@ -20,8 +20,8 @@ interface KanbanColumnToolbarProps {
 }
 
 const SORT_OPTIONS: { value: KanbanSortOption; label: string; icon: React.ReactNode }[] = [
-  { value: "newest", label: "Mais recente", icon: <ArrowDown className="h-3 w-3" /> },
-  { value: "oldest", label: "Mais antigo", icon: <ArrowUp className="h-3 w-3" /> },
+  { value: "newest", label: "Mais recente na etapa", icon: <ArrowDown className="h-3 w-3" /> },
+  { value: "oldest", label: "Mais antigo na etapa", icon: <ArrowUp className="h-3 w-3" /> },
   { value: "priority_high", label: "Prioridade (alta → baixa)", icon: <ArrowDown className="h-3 w-3" /> },
   { value: "priority_low", label: "Prioridade (baixa → alta)", icon: <ArrowUp className="h-3 w-3" /> },
   { value: "due_date_asc", label: "Prazo (próximo)", icon: <Calendar className="h-3 w-3" /> },
@@ -144,6 +144,7 @@ export function filterAndSortDemands<T extends {
   due_date?: string | null;
   created_at?: string;
   updated_at?: string;
+  status_changed_at?: string | null;
 }>(
   demands: T[],
   searchQuery: string,
@@ -166,9 +167,9 @@ export function filterAndSortDemands<T extends {
   const sorted = [...filtered].sort((a, b) => {
     switch (sortOption) {
       case "newest":
-        return new Date(b.updated_at || b.created_at || 0).getTime() - new Date(a.updated_at || a.created_at || 0).getTime();
+        return new Date(b.status_changed_at || b.updated_at || b.created_at || 0).getTime() - new Date(a.status_changed_at || a.updated_at || a.created_at || 0).getTime();
       case "oldest":
-        return new Date(a.updated_at || a.created_at || 0).getTime() - new Date(b.updated_at || b.created_at || 0).getTime();
+        return new Date(a.status_changed_at || a.updated_at || a.created_at || 0).getTime() - new Date(b.status_changed_at || b.updated_at || b.created_at || 0).getTime();
       case "priority_high": {
         const wa = PRIORITY_WEIGHTS[a.priority || "média"] || 2;
         const wb = PRIORITY_WEIGHTS[b.priority || "média"] || 2;
