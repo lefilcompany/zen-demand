@@ -204,6 +204,15 @@ export default function Demands() {
     setSelectedDateForCreate(date);
     setIsCreateDialogOpen(true);
   };
+
+  const updateDemand = useUpdateDemand();
+
+  const handleDemandDateChange = async (demandId: string, newDate: Date) => {
+    await updateDemand.mutateAsync({
+      id: demandId,
+      due_date: newDate.toISOString(),
+    });
+  };
   const renderDemandList = (demandList: typeof filteredDemands) => {
     if (activeIsLoading) {
       return <div className="text-center py-12">
