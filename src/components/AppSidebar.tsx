@@ -67,6 +67,10 @@ export function AppSidebar() {
     title: t("demands.title"),
     url: "/demands",
     icon: Briefcase
+  }, {
+    title: "Minhas Demandas",
+    url: "/my-demands",
+    icon: User
   }];
 
   // Add demand requests link for admins/moderators/executors OR requesters (they can view)
