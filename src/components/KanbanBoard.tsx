@@ -1140,7 +1140,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                       <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground truncate">
                         {column.label}
                       </h3>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-1 shrink-0">
+                        {renderColumnToolbar(column.key)}
                         <Badge variant="secondary" className="text-xs">
                           {columnDemands.length}
                         </Badge>
@@ -1156,9 +1157,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                           <X className="h-3.5 w-3.5" />
                         </Button>
                       </div>
-                    </div>
-                    <div className="flex-1 min-h-0 overflow-y-auto">
-                      {renderColumnContent(column.key)}
                     </div>
                   </div>
                 ) : (
