@@ -245,7 +245,7 @@ export default function Demands() {
           from: "demands",
           viewMode: "calendar"
         }
-      })} onDayClick={handleDayClick} isRequester={isReadOnly} />;
+      })} onDayClick={handleDayClick} isRequester={isReadOnly} onDemandDateChange={handleDemandDateChange} />;
     }
     if (effectiveViewMode === "table") {
       return <DataTable columns={demandColumns} data={demandList as unknown as DemandTableRow[]} onRowClick={row => navigate(`/demands/${row.id}`, {
