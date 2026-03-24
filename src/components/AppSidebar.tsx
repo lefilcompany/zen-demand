@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, Kanban, Archive, ChevronUp, Settings, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock, Sparkles, ShoppingCart, Layers, StickyNote } from "lucide-react";
+import { LayoutDashboard, Users, User, Briefcase, Kanban, Archive, ChevronUp, Settings, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock, Sparkles, ShoppingCart, Layers, StickyNote } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import logoSoma from "@/assets/logo-soma-dark.png";
 import { NavLink } from "@/components/NavLink";
@@ -67,6 +67,10 @@ export function AppSidebar() {
     title: t("demands.title"),
     url: "/demands",
     icon: Briefcase
+  }, {
+    title: "Minhas Demandas",
+    url: "/my-demands",
+    icon: User
   }];
 
   // Add demand requests link for admins/moderators/executors OR requesters (they can view)
@@ -119,7 +123,7 @@ export function AppSidebar() {
   const menuItems = [...baseMenuItems, ...adminMenuItems, ...requesterMenuItems, ...aiMenuItems, ...notesMenuItems, ...endMenuItems];
 
   // Keep team section expanded if on team/board routes
-  const isOnTeamRoute = location.pathname.startsWith("/boards") || location.pathname.startsWith("/team-config") || location.pathname.includes("/services") || location.pathname.includes("/requests") || location.pathname === "/team-demands";
+  const isOnTeamRoute = location.pathname.startsWith("/boards") || location.pathname.startsWith("/team-config") || location.pathname.includes("/services") || location.pathname.includes("/requests") || location.pathname === "/team-demands" || location.pathname === "/my-demands";
   const [teamOpen, setTeamOpen] = useState(isOnTeamRoute);
   const [popoverOpen, setPopoverOpen] = useState(false);
 
