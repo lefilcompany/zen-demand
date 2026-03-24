@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight, X, WifiOff, CloudOff, Check } from "lucide-react";
+import { KanbanColumnToolbar, KanbanSortOption, filterAndSortDemands } from "@/components/KanbanColumnToolbar";
 import { format } from "date-fns";
 import { formatDateOnlyBR, isDateOverdue } from "@/lib/dateUtils";
 import { cn, truncateText } from "@/lib/utils";
