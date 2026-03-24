@@ -822,16 +822,23 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 )}
                 
                 {demand.priority && (
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "text-xs capitalize",
-                      priorityColors[demand.priority] ||
-                        "bg-muted text-muted-foreground"
-                    )}
-                  >
-                    {demand.priority}
-                  </Badge>
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-xs capitalize",
+                            priorityColors[demand.priority] ||
+                              "bg-muted text-muted-foreground"
+                          )}
+                        >
+                          {demand.priority}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="top"><p>Nível de prioridade da demanda</p></TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
 
                 {/* Service badge */}
