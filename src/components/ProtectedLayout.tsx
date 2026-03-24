@@ -203,6 +203,7 @@ export function ProtectedLayout() {
             <Outlet />
           </div>
           <FloatingCreateButton />
+          <SideCreateDemandButton />
         </main>
       </div>
 
