@@ -437,9 +437,9 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
                   <div className="space-y-2">
                     <Label htmlFor="status">Status *</Label>
-                    <Select value={statusId} onValueChange={setStatusId} required>
+                    <Select value={statusId} onValueChange={setStatusId} required disabled={!formBoardId}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
+                        <SelectValue placeholder={!formBoardId ? "Selecione o quadro primeiro" : "Selecione"} />
                       </SelectTrigger>
                       <SelectContent>
                         {statuses?.map((status) => (
