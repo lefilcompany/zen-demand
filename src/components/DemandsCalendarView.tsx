@@ -666,6 +666,31 @@ export function DemandsCalendarView({
           </ScrollArea>
         </SheetContent>
       </Sheet>
+
+      {/* Drag and drop confirmation dialog */}
+      <AlertDialog open={!!dragConfirmation} onOpenChange={(open) => !open && setDragConfirmation(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mover demanda?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja mover a demanda <strong className="text-foreground">"{dragConfirmation?.demand.title}"</strong> de{" "}
+              <strong className="text-foreground">
+                {dragConfirmation && format(dragConfirmation.fromDate, "d 'de' MMMM", { locale: ptBR })}
+              </strong>{" "}
+              para{" "}
+              <strong className="text-foreground">
+                {dragConfirmation && format(dragConfirmation.toDate, "d 'de' MMMM", { locale: ptBR })}
+              </strong>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isMoving}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmMove} disabled={isMoving}>
+              {isMoving ? "Movendo..." : "Confirmar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
