@@ -154,6 +154,50 @@ export function DemandsCalendarView({
 
   const goToToday = () => setCurrentDate(new Date());
 
+  // Drag and drop handlers
+  const handleDragStart = useCallback((e: React.DragEvent, demand: Demand) => {
+    e.dataTransfer.setData("application/json", JSON.stringify(demand));
+    e.dataTransfer.effectAllowed = "move";
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, dateKey: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverDate(dateKey);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverDate(null);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, targetDate: Date) => {
+    e.preventDefault();
+    setDragOverDate(null);
+    try {
+      const demand: Demand = JSON.parse(e.dataTransfer.getData("application/json"));
+      if (!demand.due_date) return;
+      const fromDate = new Date(demand.due_date);
+      if (isSameDay(fromDate, targetDate)) return;
+      setDragConfirmation({ demand, fromDate, toDate: targetDate });
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleConfirmMove = async () => {
+    if (!dragConfirmation || !onDemandDateChange) return;
+    setIsMoving(true);
+    try {
+      await onDemandDateChange(dragConfirmation.demand.id, dragConfirmation.toDate);
+      toast.success("Data da demanda atualizada com sucesso");
+    } catch {
+      toast.error("Erro ao mover demanda");
+    } finally {
+      setIsMoving(false);
+      setDragConfirmation(null);
+    }
+  };
+
   // Get header title based on view mode
   const getHeaderTitle = () => {
     if (viewMode === "day") {
