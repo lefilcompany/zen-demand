@@ -5,7 +5,8 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useCreateDemand, useDemandStatuses } from "@/hooks/useDemands";
+import { useCreateDemand } from "@/hooks/useDemands";
+import { useBoardStatuses } from "@/hooks/useBoardStatuses";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { useCanCreateDemandOnBoard } from "@/hooks/useBoardScope";
@@ -48,10 +49,21 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const { selectedTeamId, teams } = useSelectedTeam();
   const { selectedBoardId, setSelectedBoardId, boards: contextBoards } = useSelectedBoardSafe();
   const { data: allBoards } = useBoards(selectedTeamId);
-  const { data: statuses } = useDemandStatuses();
 
   // Local board selection for this form (defaults to current board)
   const [formBoardId, setFormBoardId] = useState<string>("");
+
+  const { data: boardStatuses } = useBoardStatuses(formBoardId || null);
+  
+  // Derive statuses from board-specific statuses
+  const statuses = useMemo(() => {
+    if (!boardStatuses) return [];
+    return boardStatuses.map(bs => ({
+      id: bs.status.id,
+      name: bs.status.name,
+      color: bs.status.color,
+    }));
+  }, [boardStatuses]);
   
   // Success state: holds info about the created demand
   const [successState, setSuccessState] = useState<{
@@ -387,9 +399,10 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                   </Label>
                   <Select value={formBoardId} onValueChange={(val) => {
                     setFormBoardId(val);
-                    // Reset service when board changes
+                    // Reset dependent fields when board changes
                     setServiceId("");
                     setAssigneeIds([]);
+                    setStatusId("");
                   }}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o quadro" />
@@ -417,6 +430,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                     onChange={(e) => setTitle(e.target.value)}
                     required
                     autoFocus
+                    disabled={!formBoardId}
                   />
                 </div>
 
@@ -424,9 +438,9 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
                   <div className="space-y-2">
                     <Label htmlFor="status">Status *</Label>
-                    <Select value={statusId} onValueChange={setStatusId} required>
+                    <Select value={statusId} onValueChange={setStatusId} required disabled={!formBoardId}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione" />
+                        <SelectValue placeholder={!formBoardId ? "Selecione o quadro primeiro" : "Selecione"} />
                       </SelectTrigger>
                       <SelectContent>
                         {statuses?.map((status) => (
