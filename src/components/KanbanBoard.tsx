@@ -1250,7 +1250,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                       <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground truncate">
                         {column.label}
                       </h3>
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-1 shrink-0">
+                        {renderColumnToolbar(column.key)}
                         <Badge variant="secondary" className="text-xs">
                           {columnDemands.length}
                         </Badge>
