@@ -1063,9 +1063,12 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
                 {activeColumnData.label}
               </h3>
-              <Badge variant="secondary" className="text-xs">
-                {getDemandsForColumn(mobileActiveColumn).length}
-              </Badge>
+              <div className="flex items-center gap-1.5">
+                {renderColumnToolbar(mobileActiveColumn)}
+                <Badge variant="secondary" className="text-xs">
+                  {getDemandsForColumn(mobileActiveColumn).length}
+                </Badge>
+              </div>
             </div>
             {/* Pass showMoveMenu=true for mobile */}
             {renderColumnContent(mobileActiveColumn, true)}
