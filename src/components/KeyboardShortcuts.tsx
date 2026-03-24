@@ -20,7 +20,7 @@ export function KeyboardShortcutsProvider({ children }: { children: React.ReactN
 
   const shortcuts: Shortcut[] = [
     { keys: ["Ctrl", "K"], description: "Busca global" },
-    { keys: ["Ctrl", "N"], description: "Nova demanda", action: () => { window.dispatchEvent(new CustomEvent("open-create-demand")); } },
+    { keys: ["Ctrl", "Shift", "D"], description: "Nova demanda", action: () => { window.dispatchEvent(new CustomEvent("open-create-demand")); } },
     { keys: ["?"], description: "Mostrar atalhos" },
     { keys: ["G", "D"], description: "Ir para Dashboard", action: () => navigate("/") },
     { keys: ["G", "K"], description: "Ir para Kanban", action: () => navigate("/kanban") },
@@ -49,8 +49,8 @@ export function KeyboardShortcutsProvider({ children }: { children: React.ReactN
         return;
       }
 
-      // Ctrl+N for new demand
-      if (e.key === "n" && (e.ctrlKey || e.metaKey)) {
+      // Ctrl+Shift+D for new demand
+      if (e.key === "D" && (e.ctrlKey || e.metaKey) && e.shiftKey) {
         e.preventDefault();
         window.dispatchEvent(new CustomEvent("open-create-demand"));
         return;

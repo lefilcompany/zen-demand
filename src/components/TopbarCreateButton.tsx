@@ -35,7 +35,7 @@ export function TopbarCreateButton() {
           </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom">
-          <p>Criar nova demanda (Ctrl+N)</p>
+          <p>Criar nova demanda (Ctrl+Shift+D)</p>
         </TooltipContent>
       </Tooltip>
 
