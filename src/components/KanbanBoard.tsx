@@ -62,12 +62,14 @@ interface Demand {
   time_in_progress_seconds?: number | null;
   last_started_at?: string | null;
   team_id?: string;
+  board_id?: string;
   board_sequence_number?: number | null;
   service_id?: string | null;
   demand_statuses?: { name: string; color: string } | null;
   profiles?: { full_name: string; avatar_url?: string | null } | null;
   assigned_profile?: { full_name: string; avatar_url?: string | null } | null;
   teams?: { name: string } | null;
+  boards?: { id: string; name: string } | null;
   services?: { id: string; name: string } | null;
   demand_assignees?: Assignee[];
   _isOffline?: boolean;
@@ -92,7 +94,8 @@ interface KanbanBoardProps {
   userRole?: string;
   boardName?: string;
   boardId?: string;
-  initialColumnsOpen?: boolean; // If true, all columns start open
+  initialColumnsOpen?: boolean;
+  showBoardBadge?: boolean; // Show board name badge on each card
 }
 
 const priorityColors: Record<string, string> = {
@@ -170,7 +173,7 @@ function useIsLargeDesktop() {
 // No limit on open columns - users can open all if they want
 // Horizontal scroll handles overflow
 
-export function KanbanBoard({ demands, columns: propColumns, onDemandClick, readOnly = false, userRole, boardName, boardId, initialColumnsOpen = false }: KanbanBoardProps) {
+export function KanbanBoard({ demands, columns: propColumns, onDemandClick, readOnly = false, userRole, boardName, boardId, initialColumnsOpen = false, showBoardBadge = false }: KanbanBoardProps) {
   // Use provided columns or fallback to default
   const allColumns = propColumns && propColumns.length > 0 ? propColumns : DEFAULT_COLUMNS;
   
@@ -782,18 +785,25 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               className="flex-1 min-w-0"
               onClick={() => onDemandClick(demand.id)}
             >
-              {demand.board_sequence_number && (
-                <TooltipProvider delayDuration={300}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge variant="outline" className="text-xs mb-1.5 bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono">
-                        {formatDemandCode(demand.board_sequence_number)}
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent side="top"><p>Código único da demanda</p></TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
+              <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
+                {demand.board_sequence_number && (
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline" className="text-xs bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono">
+                          {formatDemandCode(demand.board_sequence_number)}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="top"><p>Código único da demanda</p></TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {showBoardBadge && demand.boards?.name && (
+                  <Badge variant="outline" className="text-xs bg-accent/50 text-accent-foreground border-accent-foreground/20">
+                    {demand.boards.name}
+                  </Badge>
+                )}
+              </div>
               <h4 className="font-medium text-sm line-clamp-2 mb-1" title={demand.title}>
                 {truncateText(demand.title)}
               </h4>
