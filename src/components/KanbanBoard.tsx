@@ -62,12 +62,14 @@ interface Demand {
   time_in_progress_seconds?: number | null;
   last_started_at?: string | null;
   team_id?: string;
+  board_id?: string;
   board_sequence_number?: number | null;
   service_id?: string | null;
   demand_statuses?: { name: string; color: string } | null;
   profiles?: { full_name: string; avatar_url?: string | null } | null;
   assigned_profile?: { full_name: string; avatar_url?: string | null } | null;
   teams?: { name: string } | null;
+  boards?: { id: string; name: string } | null;
   services?: { id: string; name: string } | null;
   demand_assignees?: Assignee[];
   _isOffline?: boolean;
