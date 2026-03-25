@@ -461,38 +461,6 @@ export default function DemandDetail() {
         {id && <DemandPresenceIndicator demandId={id} />}
       </div>
 
-      {/* Adjustment Alert - Shows when demand is in "Em Ajuste" status */}
-      {isInAdjustment && latestAdjustmentRequest && (() => {
-        const latestMetadata = latestAdjustmentRequest.metadata as {
-          adjustment_type?: string;
-        } | null;
-        const latestType = latestMetadata?.adjustment_type || "external";
-        const isInternalAlert = latestType === "internal";
-        return <Alert className={isInternalAlert ? "border-blue-500/50 bg-blue-500/10" : "border-purple-500/50 bg-purple-500/10"}>
-            <Wrench className={`h-4 w-4 ${isInternalAlert ? "text-blue-600" : "text-purple-600"}`} />
-            <AlertTitle className={`${isInternalAlert ? "text-blue-600" : "text-purple-600"} font-semibold`}>
-              {isInternalAlert ? "Ajuste Interno Solicitado" : "Ajuste Externo Solicitado"}
-            </AlertTitle>
-            <AlertDescription className="mt-2 space-y-2 overflow-hidden">
-              <LinkifiedText 
-                text={latestAdjustmentRequest.content || ""} 
-                className="text-xs sm:text-sm text-foreground whitespace-pre-wrap break-words [overflow-wrap:anywhere] block" 
-              />
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="font-medium">
-                  {latestAdjustmentRequest.profiles?.full_name}
-                </span>
-                <span>•</span>
-                <span>
-                  {format(new Date(latestAdjustmentRequest.created_at), "dd/MM/yyyy 'às' HH:mm", {
-                  locale: ptBR
-                })}
-                </span>
-              </div>
-            </AlertDescription>
-          </Alert>;
-      })()}
-
       <Card className="overflow-hidden">
         <CardHeader className="p-3 sm:p-4 md:p-6">
           <div className="flex flex-col gap-3 sm:gap-4">
