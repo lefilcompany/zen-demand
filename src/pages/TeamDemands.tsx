@@ -360,7 +360,10 @@ export default function TeamDemands() {
               Visão Geral
             </h1>
             <p className="text-sm text-muted-foreground">
-              {currentTeam?.name ? `Equipe ${currentTeam.name}` : "Todas as demandas"} • {boards?.length || 0} quadros
+              {isTeamAdminOrModerator 
+                ? (currentTeam?.name ? `Equipe ${currentTeam.name}` : "Todas as demandas")
+                : "Demandas dos quadros que você participa"
+              } • {boards?.length || 0} quadros
             </p>
           </div>
         </div>
