@@ -317,30 +317,6 @@ export default function TeamDemands() {
     );
   }
 
-  // Access denied state
-  if (!isTeamAdminOrModerator) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Card className="max-w-md w-full border-destructive/20">
-          <CardContent className="pt-6 text-center">
-            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-              <ShieldAlert className="h-8 w-8 text-destructive" />
-            </div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">
-              Acesso Restrito
-            </h3>
-            <p className="text-muted-foreground mb-6">
-              Apenas administradores e moderadores podem acessar a visão geral da equipe.
-            </p>
-            <Button onClick={() => navigate("/")} className="w-full">
-              Voltar ao Dashboard
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   // No team selected
   if (!selectedTeamId) {
     return (
