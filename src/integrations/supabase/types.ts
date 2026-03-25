@@ -559,6 +559,7 @@ export type Database = {
       }
       demand_interactions: {
         Row: {
+          channel: string
           content: string | null
           created_at: string
           demand_id: string
@@ -568,6 +569,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          channel?: string
           content?: string | null
           created_at?: string
           demand_id: string
@@ -577,6 +579,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          channel?: string
           content?: string | null
           created_at?: string
           demand_id?: string
@@ -2264,6 +2267,10 @@ export type Database = {
       }
       can_edit_note: {
         Args: { _note_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_view_demand_channel: {
+        Args: { _channel: string; _demand_id: string; _user_id: string }
         Returns: boolean
       }
       check_access_code_exists: { Args: { code: string }; Returns: boolean }
