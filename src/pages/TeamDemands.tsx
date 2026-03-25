@@ -24,7 +24,8 @@ import {
   Clock,
   CheckCircle2,
   AlertTriangle,
-  Filter
+  Filter,
+  Kanban as KanbanIcon
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table";
@@ -35,6 +36,9 @@ import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { DemandsCalendarView } from "@/components/DemandsCalendarView";
 import { isDateOverdue } from "@/lib/dateUtils";
 import { InfoTooltip } from "@/components/InfoTooltip";
+import { KanbanBoard } from "@/components/KanbanBoard";
+import { useKanbanColumns } from "@/hooks/useBoardStatuses";
+import { useBoardRole } from "@/hooks/useBoardMembers";
 import {
   Select,
   SelectContent,
@@ -42,7 +46,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-type ViewMode = "table" | "grid" | "calendar";
+type ViewMode = "table" | "grid" | "calendar" | "kanban";
 
 const TABLET_BREAKPOINT = 1024;
 const POSITION_FILTER_KEY = "teamDemandsPositionFilter";
@@ -82,6 +86,18 @@ export default function TeamDemands() {
   
   const [hideDelivered, setHideDelivered] = useState(false);
   
+  // Kanban board selection - auto-select first board
+  const [kanbanBoardId, setKanbanBoardId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (!kanbanBoardId && boards && boards.length > 0) {
+      setKanbanBoardId(boards[0].id);
+    }
+  }, [boards, kanbanBoardId]);
+
+  const { data: kanbanBoardRole } = useBoardRole(kanbanBoardId);
+  const { columns: kanbanColumns } = useKanbanColumns(kanbanBoardId, kanbanBoardRole);
+  
   // Fetch members with selected position for filtering
   const { data: membersByPosition } = useMembersByPosition(selectedTeamId, filters.position);
   
@@ -97,8 +113,8 @@ export default function TeamDemands() {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
   
-  // Force grid view on mobile/tablet (screens < 1024px), but allow calendar on all devices
-  const effectiveViewMode = isTabletOrSmaller && viewMode !== "calendar" ? "grid" : viewMode;
+  // Force grid view on mobile/tablet (screens < 1024px), but allow calendar and kanban on all devices
+  const effectiveViewMode = isTabletOrSmaller && viewMode !== "calendar" && viewMode !== "kanban" ? "grid" : viewMode;
 
   // Statistics based on all filters (excluding hideDelivered and status, which are view-level)
   const stats = useMemo(() => {
@@ -244,7 +260,7 @@ export default function TeamDemands() {
       );
     }
 
-    if (demandList.length === 0 && effectiveViewMode !== "calendar") {
+    if (demandList.length === 0 && effectiveViewMode !== "calendar" && effectiveViewMode !== "kanban") {
       if (searchQuery) {
         return (
           <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-muted/20">
@@ -267,6 +283,61 @@ export default function TeamDemands() {
           <p className="text-muted-foreground mt-2">
             Não há demandas nos quadros desta equipe
           </p>
+        </div>
+      );
+    }
+
+    if (effectiveViewMode === "kanban") {
+      const selectedBoard = boards?.find(b => b.id === kanbanBoardId);
+      const boardDemands = demandList.filter((d: any) => d.board_id === kanbanBoardId);
+      
+      return (
+        <div className="space-y-4">
+          {/* Board selector for kanban */}
+          <div className="flex items-center gap-3">
+            <Select
+              value={kanbanBoardId || ""}
+              onValueChange={(v) => setKanbanBoardId(v)}
+            >
+              <SelectTrigger className="w-[250px]">
+                <SelectValue placeholder="Selecione um quadro" />
+              </SelectTrigger>
+              <SelectContent>
+                {boards?.map((board) => (
+                  <SelectItem key={board.id} value={board.id}>
+                    {board.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedBoard && (
+              <span className="text-sm text-muted-foreground">
+                {boardDemands.length} demandas
+              </span>
+            )}
+          </div>
+
+          {kanbanBoardId && kanbanColumns ? (
+            <KanbanBoard
+              demands={boardDemands as any}
+              columns={kanbanColumns}
+              onDemandClick={(id) => navigate(`/demands/${id}`, { state: { from: "team-demands", viewMode: "kanban" } })}
+              readOnly={false}
+              userRole={kanbanBoardRole || undefined}
+              boardName={selectedBoard?.name}
+              boardId={kanbanBoardId}
+            />
+          ) : (
+            <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-muted/20">
+              <KanbanIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h3 className="mt-4 text-lg font-semibold text-foreground">
+                Selecione um quadro
+              </h3>
+              <p className="text-muted-foreground mt-2">
+                Escolha um quadro para visualizar o Kanban
+              </p>
+            </div>
+          )}
         </div>
       );
     }
@@ -538,6 +609,15 @@ export default function TeamDemands() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  className={`rounded-none h-8 w-8 ${viewMode === "kanban" ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}`}
+                  onClick={() => setViewMode("kanban")}
+                  title="Visualização em Kanban"
+                >
+                  <KanbanIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className={`rounded-none h-8 w-8 ${viewMode === "calendar" ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}`}
                   onClick={() => setViewMode("calendar")}
                   title="Visualização em calendário"
@@ -566,13 +646,15 @@ export default function TeamDemands() {
         </CardContent>
       </Card>
 
-      {/* Status Filter Tabs */}
-      <div className="flex items-center gap-3 overflow-x-auto pb-2 -mb-2">
-        <StatusFilterTabs
-          value={filters.status}
-          onChange={(status) => setFilters({ ...filters, status })}
-        />
-      </div>
+      {/* Status Filter Tabs - hidden in kanban mode */}
+      {effectiveViewMode !== "kanban" && (
+        <div className="flex items-center gap-3 overflow-x-auto pb-2 -mb-2">
+          <StatusFilterTabs
+            value={filters.status}
+            onChange={(status) => setFilters({ ...filters, status })}
+          />
+        </div>
+      )}
 
       {/* Content */}
       {renderDemandList(filteredDemands)}
