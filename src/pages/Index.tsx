@@ -341,15 +341,6 @@ const Index = () => {
           <p className="text-sm md:text-base text-muted-foreground">{t("settings.description")}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button 
-            onClick={() => openCreateDemand()}
-            className="gap-2 bg-[hsl(32,95%,50%)] hover:bg-[hsl(32,95%,45%)] text-white rounded-lg px-5 h-10 shadow-md"
-            data-tour="new-demand-btn"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">{t("demands.newDemand")}</span>
-            <span className="sm:hidden">Nova</span>
-          </Button>
           <DashboardCustomizer widgets={widgets} onChange={setWidgets} isSaving={isSaving} />
         </div>
       </div>

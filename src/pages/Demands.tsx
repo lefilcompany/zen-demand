@@ -294,26 +294,6 @@ export default function Demands() {
             </p>
           </div>
           
-          {/* Create Button - Desktop */}
-          {isReadOnly ? (
-            <Button 
-              onClick={() => navigate("/demands/request")} 
-              className="hidden sm:flex shadow-sm"
-              size="default"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Solicitação
-            </Button>
-          ) : (
-            <Button 
-              onClick={() => openCreateDemand()} 
-              className="hidden sm:flex shadow-sm"
-              size="default"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              {t("demands.newDemand")}
-            </Button>
-          )}
         </div>
 
         {/* Search and Filters Toolbar */}
@@ -458,14 +438,6 @@ export default function Demands() {
                 </button>
               </div>
               
-              {/* Create Button - Mobile (Floating style) */}
-              <Button 
-                onClick={() => openCreateDemand()} 
-                size="icon"
-                className="sm:hidden h-8 w-8 rounded-full shadow-sm"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
             </div>
           </div>
         </div>
