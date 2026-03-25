@@ -260,7 +260,7 @@ export default function TeamDemands() {
       );
     }
 
-    if (demandList.length === 0 && effectiveViewMode !== "calendar") {
+    if (demandList.length === 0 && effectiveViewMode !== "calendar" && effectiveViewMode !== "kanban") {
       if (searchQuery) {
         return (
           <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-muted/20">
@@ -283,6 +283,61 @@ export default function TeamDemands() {
           <p className="text-muted-foreground mt-2">
             Não há demandas nos quadros desta equipe
           </p>
+        </div>
+      );
+    }
+
+    if (effectiveViewMode === "kanban") {
+      const selectedBoard = boards?.find(b => b.id === kanbanBoardId);
+      const boardDemands = demandList.filter((d: any) => d.board_id === kanbanBoardId);
+      
+      return (
+        <div className="space-y-4">
+          {/* Board selector for kanban */}
+          <div className="flex items-center gap-3">
+            <Select
+              value={kanbanBoardId || ""}
+              onValueChange={(v) => setKanbanBoardId(v)}
+            >
+              <SelectTrigger className="w-[250px]">
+                <SelectValue placeholder="Selecione um quadro" />
+              </SelectTrigger>
+              <SelectContent>
+                {boards?.map((board) => (
+                  <SelectItem key={board.id} value={board.id}>
+                    {board.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedBoard && (
+              <span className="text-sm text-muted-foreground">
+                {boardDemands.length} demandas
+              </span>
+            )}
+          </div>
+
+          {kanbanBoardId && kanbanColumns ? (
+            <KanbanBoard
+              demands={boardDemands as any}
+              columns={kanbanColumns}
+              onDemandClick={(id) => navigate(`/demands/${id}`, { state: { from: "team-demands", viewMode: "kanban" } })}
+              readOnly={false}
+              userRole={kanbanBoardRole || undefined}
+              boardName={selectedBoard?.name}
+              boardId={kanbanBoardId}
+            />
+          ) : (
+            <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-muted/20">
+              <KanbanIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h3 className="mt-4 text-lg font-semibold text-foreground">
+                Selecione um quadro
+              </h3>
+              <p className="text-muted-foreground mt-2">
+                Escolha um quadro para visualizar o Kanban
+              </p>
+            </div>
+          )}
         </div>
       );
     }
