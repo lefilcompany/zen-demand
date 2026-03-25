@@ -231,18 +231,6 @@ export default function DemandDetail() {
 
   // Timer control permissions (same as Kanban)
   const canControlTimer = !isDeliveredStatus && (boardRole === "admin" || boardRole === "moderator" || boardRole === "executor") && (isInProgress || isInAdjustment);
-  const filteredInteractions = useMemo(() => {
-    if (!interactions) return [];
-    if (interactionFilter === "all") return interactions;
-    return interactions.filter(i => i.interaction_type === interactionFilter);
-  }, [interactions, interactionFilter]);
-
-  // Get the latest adjustment request for highlighting
-  const latestAdjustmentRequest = useMemo(() => {
-    if (!interactions) return null;
-    const adjustmentRequests = interactions.filter(i => i.interaction_type === "adjustment_request");
-    return adjustmentRequests.length > 0 ? adjustmentRequests[0] : null; // Already sorted by created_at desc
-  }, [interactions]);
 
   // Handle board change
   const handleChangeBoard = async (newBoardId: string) => {
