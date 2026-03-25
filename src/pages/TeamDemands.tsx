@@ -274,13 +274,6 @@ export default function TeamDemands() {
       );
     }
 
-    if (effectiveViewMode === "calendar") {
-              </p>
-            </div>
-          )}
-        </div>
-      );
-    }
 
     if (effectiveViewMode === "calendar") {
       return (
