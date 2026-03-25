@@ -467,12 +467,27 @@ export default function TeamDemands() {
                 selected={filters.boards}
                 onChange={(boards) => setFilters({ ...filters, boards })}
               />
-              {isTeamAdminOrModerator && (
+              {isTeamAdminOrModerator ? (
                 <TeamDemandsFilters 
                   teamId={selectedTeamId} 
                   filters={filters} 
                   onChange={setFilters} 
                 />
+              ) : (
+                <Select
+                  value={filters.priority || "all"}
+                  onValueChange={(v) => setFilters({ ...filters, priority: v === "all" ? null : v })}
+                >
+                  <SelectTrigger className="w-[130px] h-9">
+                    <SelectValue placeholder="Prioridade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    <SelectItem value="alta">Alta</SelectItem>
+                    <SelectItem value="média">Média</SelectItem>
+                    <SelectItem value="baixa">Baixa</SelectItem>
+                  </SelectContent>
+                </Select>
               )}
               
               {/* Toggle hide/show delivered */}
