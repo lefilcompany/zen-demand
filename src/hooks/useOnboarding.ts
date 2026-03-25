@@ -189,7 +189,14 @@ export function useOnboarding() {
 
   // Check if user has completed onboarding
   useEffect(() => {
-    if (!user?.id || !role) {
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
+
+    // Fast localStorage check first
+    if (localStorage.getItem(`onboarding_completed_${user.id}`) === 'true') {
+      setHasCompleted(true);
       setIsLoading(false);
       return;
     }
@@ -207,15 +214,14 @@ export function useOnboarding() {
           console.error("Error checking onboarding status:", error);
         }
 
-        const completed = data?.preference_value as { completed?: boolean; role?: string } | null;
+        const completed = data?.preference_value as { completed?: boolean } | null;
+        const hasCompletedOnboarding = completed?.completed === true;
         
-        // Check if completed for current role
-        const hasCompletedForRole = completed?.completed && completed?.role === role;
-        setHasCompleted(hasCompletedForRole || false);
+        setHasCompleted(hasCompletedOnboarding);
         
-        // Auto-start tour if not completed
-        if (!hasCompletedForRole) {
-          // Small delay to ensure DOM is ready
+        if (hasCompletedOnboarding) {
+          localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
+        } else {
           setTimeout(() => setIsOpen(true), 1000);
         }
       } catch (error) {
@@ -226,7 +232,7 @@ export function useOnboarding() {
     };
 
     checkOnboardingStatus();
-  }, [user?.id, role]);
+  }, [user?.id]);
 
   // Mark onboarding as complete
   const completeOnboarding = useCallback(async () => {
