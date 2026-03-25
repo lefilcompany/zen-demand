@@ -9,7 +9,7 @@ import { LinkifiedText } from "@/components/LinkifiedText";
 import { DemandChat } from "@/components/DemandChat";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useDemandById, useDemandInteractions, useCreateInteraction, useUpdateInteraction, useDeleteInteraction, useUpdateDemand } from "@/hooks/useDemands";
+import { useDemandById, useCreateInteraction, useUpdateDemand } from "@/hooks/useDemands";
 import { useBoardStatuses } from "@/hooks/useBoardStatuses";
 import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
 import { useBoard, useBoards } from "@/hooks/useBoards";
