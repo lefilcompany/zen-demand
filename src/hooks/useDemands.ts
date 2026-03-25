@@ -384,18 +384,23 @@ export function useUpdateDemand() {
   });
 }
 
-export function useDemandInteractions(demandId: string) {
+export function useDemandInteractions(demandId: string, channel?: "general" | "internal") {
   return useQuery({
-    queryKey: ["demand-interactions", demandId],
+    queryKey: ["demand-interactions", demandId, channel],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("demand_interactions")
         .select(`
           *,
           profiles(full_name, avatar_url)
         `)
-        .eq("demand_id", demandId)
-        .order("created_at", { ascending: false });
+        .eq("demand_id", demandId);
+
+      if (channel) {
+        query = query.eq("channel", channel);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;
