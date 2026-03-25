@@ -274,26 +274,7 @@ export default function TeamDemands() {
       );
     }
 
-    if (effectiveViewMode === "kanban") {
-      return (
-        <div>
-          {allBoardsKanbanColumns ? (
-            <KanbanBoard
-              demands={demandList as any}
-              columns={allBoardsKanbanColumns}
-              onDemandClick={(id) => navigate(`/demands/${id}`, { state: { from: "team-demands", viewMode: "kanban" } })}
-              readOnly={true}
-              showBoardBadge
-              initialColumnsOpen
-            />
-          ) : (
-            <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-muted/20">
-              <KanbanIcon className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h3 className="mt-4 text-lg font-semibold text-foreground">
-                Nenhuma etapa encontrada
-              </h3>
-              <p className="text-muted-foreground mt-2">
-                Não há etapas configuradas nos seus quadros
+    if (effectiveViewMode === "calendar") {
               </p>
             </div>
           )}
