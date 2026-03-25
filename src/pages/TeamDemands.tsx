@@ -45,7 +45,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-type ViewMode = "table" | "grid" | "calendar" | "kanban";
+type ViewMode = "table" | "grid" | "calendar";
 
 const TABLET_BREAKPOINT = 1024;
 const POSITION_FILTER_KEY = "teamDemandsPositionFilter";
