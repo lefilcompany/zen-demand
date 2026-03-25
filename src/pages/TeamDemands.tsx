@@ -461,11 +461,13 @@ export default function TeamDemands() {
                 selected={filters.boards}
                 onChange={(boards) => setFilters({ ...filters, boards })}
               />
-              <TeamDemandsFilters 
-                teamId={selectedTeamId} 
-                filters={filters} 
-                onChange={setFilters} 
-              />
+              {isTeamAdminOrModerator && (
+                <TeamDemandsFilters 
+                  teamId={selectedTeamId} 
+                  filters={filters} 
+                  onChange={setFilters} 
+                />
+              )}
               
               {/* Toggle hide/show delivered */}
               {stats.delivered > 0 && (
