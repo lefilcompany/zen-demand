@@ -42,18 +42,14 @@ import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { cn } from "@/lib/utils";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
-import { copyRichContent } from "@/lib/clipboardUtils";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { sendAdjustmentPushNotification, sendCommentPushNotification, sendMentionPushNotification } from "@/hooks/useSendPushNotification";
+import { sendAdjustmentPushNotification } from "@/hooks/useSendPushNotification";
 import { extractMentionedUserIds } from "@/lib/mentionUtils";
 import { useSendEmail } from "@/hooks/useSendEmail";
 import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 import { useRealtimeDemandDetail } from "@/hooks/useRealtimeDemandDetail";
 import { DemandPresenceIndicator } from "@/components/DemandPresenceIndicator";
 import { RealtimeUpdateIndicator } from "@/components/RealtimeUpdateIndicator";
-import { useTypingIndicator } from "@/hooks/useTypingIndicator";
-import { TypingIndicator } from "@/components/TypingIndicator";
 export default function DemandDetail() {
   const {
     id
