@@ -48,7 +48,7 @@ export default function TeamDemands() {
   const { selectedTeamId, currentTeam } = useSelectedTeam();
   const { data: role, isLoading: isRoleLoading } = useTeamRole(selectedTeamId);
   const isTeamAdminOrModerator = role === "owner";
-  const { data: demands, isLoading } = useAllTeamDemands(isTeamAdminOrModerator ? selectedTeamId : null);
+  const { data: demands, isLoading } = useAllTeamDemands(selectedTeamId);
   const { data: boards } = useBoards(selectedTeamId);
   
   const [searchQuery, setSearchQuery] = useState("");
