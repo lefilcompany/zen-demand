@@ -25,7 +25,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Filter,
-  Kanban as KanbanIcon
+  
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table";
