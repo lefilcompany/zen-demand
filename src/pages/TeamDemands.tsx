@@ -35,7 +35,13 @@ import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { DemandsCalendarView } from "@/components/DemandsCalendarView";
 import { isDateOverdue } from "@/lib/dateUtils";
 import { InfoTooltip } from "@/components/InfoTooltip";
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 type ViewMode = "table" | "grid" | "calendar";
 
 const TABLET_BREAKPOINT = 1024;
@@ -48,7 +54,7 @@ export default function TeamDemands() {
   const { selectedTeamId, currentTeam } = useSelectedTeam();
   const { data: role, isLoading: isRoleLoading } = useTeamRole(selectedTeamId);
   const isTeamAdminOrModerator = role === "owner";
-  const { data: demands, isLoading } = useAllTeamDemands(isTeamAdminOrModerator ? selectedTeamId : null);
+  const { data: demands, isLoading } = useAllTeamDemands(selectedTeamId);
   const { data: boards } = useBoards(selectedTeamId);
   
   const [searchQuery, setSearchQuery] = useState("");
@@ -317,30 +323,6 @@ export default function TeamDemands() {
     );
   }
 
-  // Access denied state
-  if (!isTeamAdminOrModerator) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Card className="max-w-md w-full border-destructive/20">
-          <CardContent className="pt-6 text-center">
-            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-              <ShieldAlert className="h-8 w-8 text-destructive" />
-            </div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">
-              Acesso Restrito
-            </h3>
-            <p className="text-muted-foreground mb-6">
-              Apenas administradores e moderadores podem acessar a visão geral da equipe.
-            </p>
-            <Button onClick={() => navigate("/")} className="w-full">
-              Voltar ao Dashboard
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   // No team selected
   if (!selectedTeamId) {
     return (
@@ -378,7 +360,10 @@ export default function TeamDemands() {
               Visão Geral
             </h1>
             <p className="text-sm text-muted-foreground">
-              {currentTeam?.name ? `Equipe ${currentTeam.name}` : "Todas as demandas"} • {boards?.length || 0} quadros
+              {isTeamAdminOrModerator 
+                ? (currentTeam?.name ? `Equipe ${currentTeam.name}` : "Todas as demandas")
+                : "Demandas dos quadros que você participa"
+              } • {boards?.length || 0} quadros
             </p>
           </div>
         </div>
@@ -485,11 +470,28 @@ export default function TeamDemands() {
                 selected={filters.boards}
                 onChange={(boards) => setFilters({ ...filters, boards })}
               />
-              <TeamDemandsFilters 
-                teamId={selectedTeamId} 
-                filters={filters} 
-                onChange={setFilters} 
-              />
+              {isTeamAdminOrModerator ? (
+                <TeamDemandsFilters 
+                  teamId={selectedTeamId} 
+                  filters={filters} 
+                  onChange={setFilters} 
+                />
+              ) : (
+                <Select
+                  value={filters.priority || "all"}
+                  onValueChange={(v) => setFilters({ ...filters, priority: v === "all" ? null : v })}
+                >
+                  <SelectTrigger className="w-[130px] h-9">
+                    <SelectValue placeholder="Prioridade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    <SelectItem value="alta">Alta</SelectItem>
+                    <SelectItem value="média">Média</SelectItem>
+                    <SelectItem value="baixa">Baixa</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
               
               {/* Toggle hide/show delivered */}
               {stats.delivered > 0 && (
