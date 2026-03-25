@@ -278,58 +278,31 @@ export default function TeamDemands() {
     }
 
     if (effectiveViewMode === "kanban") {
-      const selectedBoard = boards?.find(b => b.id === kanbanBoardId);
-      const boardDemands = demandList.filter((d: any) => d.board_id === kanbanBoardId);
-      
       return (
-        <div className="space-y-4">
-          {/* Board selector for kanban */}
-          <div className="flex items-center gap-3">
-            <Select
-              value={kanbanBoardId || ""}
-              onValueChange={(v) => setKanbanBoardId(v)}
-            >
-              <SelectTrigger className="w-[250px]">
-                <SelectValue placeholder="Selecione um quadro" />
-              </SelectTrigger>
-              <SelectContent>
-                {boards?.map((board) => (
-                  <SelectItem key={board.id} value={board.id}>
-                    {board.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedBoard && (
-              <span className="text-sm text-muted-foreground">
-                {boardDemands.length} demandas
-              </span>
-            )}
-          </div>
-
-          {kanbanBoardId && kanbanColumns ? (
+        <div>
+          {allBoardsKanbanColumns ? (
             <KanbanBoard
-              demands={boardDemands as any}
-              columns={kanbanColumns}
+              demands={demandList as any}
+              columns={allBoardsKanbanColumns}
               onDemandClick={(id) => navigate(`/demands/${id}`, { state: { from: "team-demands", viewMode: "kanban" } })}
-              readOnly={false}
-              userRole={kanbanBoardRole || undefined}
-              boardName={selectedBoard?.name}
-              boardId={kanbanBoardId}
+              readOnly={true}
+              showBoardBadge
+              initialColumnsOpen
             />
           ) : (
             <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-muted/20">
               <KanbanIcon className="mx-auto h-12 w-12 text-muted-foreground" />
               <h3 className="mt-4 text-lg font-semibold text-foreground">
-                Selecione um quadro
+                Nenhuma etapa encontrada
               </h3>
               <p className="text-muted-foreground mt-2">
-                Escolha um quadro para visualizar o Kanban
+                Não há etapas configuradas nos seus quadros
               </p>
             </div>
           )}
         </div>
       );
+    }
     }
 
     if (effectiveViewMode === "calendar") {
