@@ -83,8 +83,6 @@ export default function TeamDemands() {
   
   const [hideDelivered, setHideDelivered] = useState(false);
   
-  // Merged kanban columns from all boards
-  const { columns: allBoardsKanbanColumns } = useAllBoardsKanbanColumns(selectedTeamId);
   
   
   // Fetch members with selected position for filtering
