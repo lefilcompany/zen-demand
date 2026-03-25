@@ -247,7 +247,7 @@ export default function TeamDemands() {
       );
     }
 
-    if (demandList.length === 0 && effectiveViewMode !== "calendar" && effectiveViewMode !== "kanban") {
+    if (demandList.length === 0 && effectiveViewMode !== "calendar") {
       if (searchQuery) {
         return (
           <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-muted/20">
