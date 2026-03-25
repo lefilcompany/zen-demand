@@ -484,7 +484,7 @@ export function useCreateCustomStatus() {
 }
 
 // Sort board statuses ensuring "Entregue" is always last
-function sortWithFixedBoundaries(statuses: BoardStatus[]): BoardStatus[] {
+export function sortWithFixedBoundaries(statuses: BoardStatus[]): BoardStatus[] {
   return [...statuses].sort((a, b) => {
     const aIsEnd = a.status.name === FIXED_END_STATUS;
     const bIsEnd = b.status.name === FIXED_END_STATUS;
