@@ -100,8 +100,8 @@ export default function TeamDemands() {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
   
-  // Force grid view on mobile/tablet (screens < 1024px), but allow calendar and kanban on all devices
-  const effectiveViewMode = isTabletOrSmaller && viewMode !== "calendar" && viewMode !== "kanban" ? "grid" : viewMode;
+  // Force grid view on mobile/tablet (screens < 1024px), but allow calendar on all devices
+  const effectiveViewMode = isTabletOrSmaller && viewMode !== "calendar" ? "grid" : viewMode;
 
   // Statistics based on all filters (excluding hideDelivered and status, which are view-level)
   const stats = useMemo(() => {
