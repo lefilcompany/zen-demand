@@ -24,7 +24,8 @@ import {
   Clock,
   CheckCircle2,
   AlertTriangle,
-  Filter
+  Filter,
+  Kanban as KanbanIcon
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table";
@@ -35,6 +36,9 @@ import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { DemandsCalendarView } from "@/components/DemandsCalendarView";
 import { isDateOverdue } from "@/lib/dateUtils";
 import { InfoTooltip } from "@/components/InfoTooltip";
+import { KanbanBoard } from "@/components/KanbanBoard";
+import { useKanbanColumns } from "@/hooks/useBoardStatuses";
+import { useBoardRole } from "@/hooks/useBoardMembers";
 import {
   Select,
   SelectContent,
@@ -42,7 +46,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-type ViewMode = "table" | "grid" | "calendar";
+type ViewMode = "table" | "grid" | "calendar" | "kanban";
 
 const TABLET_BREAKPOINT = 1024;
 const POSITION_FILTER_KEY = "teamDemandsPositionFilter";
