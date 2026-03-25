@@ -17,7 +17,6 @@ import { ChangeBoardDialog } from "@/components/ChangeBoardDialog";
 import { useUploadAttachment } from "@/hooks/useAttachments";
 import { PendingFile } from "@/components/InlineFileUploader";
 import { supabase } from "@/integrations/supabase/client";
-import { supabase } from "@/integrations/supabase/client";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useAuth } from "@/lib/auth";
