@@ -785,18 +785,25 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               className="flex-1 min-w-0"
               onClick={() => onDemandClick(demand.id)}
             >
-              {demand.board_sequence_number && (
-                <TooltipProvider delayDuration={300}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge variant="outline" className="text-xs mb-1.5 bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono">
-                        {formatDemandCode(demand.board_sequence_number)}
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent side="top"><p>Código único da demanda</p></TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
+              <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
+                {demand.board_sequence_number && (
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline" className="text-xs bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono">
+                          {formatDemandCode(demand.board_sequence_number)}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="top"><p>Código único da demanda</p></TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {showBoardBadge && demand.boards?.name && (
+                  <Badge variant="outline" className="text-xs bg-accent/50 text-accent-foreground border-accent-foreground/20">
+                    {demand.boards.name}
+                  </Badge>
+                )}
+              </div>
               <h4 className="font-medium text-sm line-clamp-2 mb-1" title={demand.title}>
                 {truncateText(demand.title)}
               </h4>
