@@ -284,6 +284,21 @@ export function AppSidebar() {
                     
                     <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
                       <NavLink 
+                        to="/team-kanban" 
+                        onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
+                        className="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-zinc-800 w-full" 
+                        activeClassName="bg-gray-100 dark:bg-zinc-800 text-primary font-medium"
+                      >
+                        <Kanban className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                        <div className="flex flex-col">
+                          <span className="text-sm text-gray-700 dark:text-gray-200">Kanban Geral</span>
+                          <span className="text-[11px] text-muted-foreground">Todos os quadros unificados</span>
+                        </div>
+                      </NavLink>
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuItem asChild className="p-0 focus:bg-transparent">
+                      <NavLink 
                         to="/boards" 
                         onClick={() => { setPopoverOpen(false); closeMobileSidebar(); }} 
                         className="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-zinc-800 w-full" 
