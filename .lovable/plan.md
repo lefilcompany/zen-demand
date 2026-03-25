@@ -1,39 +1,28 @@
 
-Diagnóstico confirmado
-- Do I know what the issue is? Sim.
-- Hoje o botão **“Criar Quadro”** da tela sem quadros chama `navigate("/boards")`, mas o `ProtectedLayout` bloqueia essa rota quando `hasBoards=false`. Por isso parece que “não funciona”.
-- Na mesma tela, como não há sidebar, faltam atalhos para **detalhes da equipe** (onde você vê código de acesso e gestão).
 
-Plano de implementação
+## Problem
 
-1) Corrigir o bloqueio de rota no cenário sem quadro  
-- Arquivo: `src/components/ProtectedLayout.tsx`  
-- Ajustar a regra `allowedWithoutBoards` para permitir acesso a rotas de setup mesmo sem quadro:
-  - `/boards` (exato) para criação do primeiro quadro
-  - `/teams` e `/teams/*` para detalhes/código da equipe
-  - manter `/profile` e `/settings`
-- Manter bloqueio dos módulos operacionais (kanban/demandas etc.) até existir quadro.
+The onboarding tour reappears on every login because the completion check compares the stored role with the current role, and they never match. The `useTeamRole` hook now returns simplified values (`"owner"` / `"member"`), but previously saved preferences contain old role values (`"admin"`, `"moderator"`, etc.). This means `completed?.role === role` always evaluates to `false`, causing the tour to restart.
 
-2) Melhorar a NoBoardsScreen para não deixar usuário “preso”  
-- Arquivo: `src/components/NoBoardsScreen.tsx`  
-- Manter CTA de admin para criar quadro, agora com rota funcional (`/boards` liberada).
-- Adicionar ação visível **“Ver detalhes da equipe”** levando para `/teams/${currentTeam.id}`.
-- Adicionar no menu do avatar item **“Detalhes da equipe”** (atalho rápido para código e gestão da equipe).
+Additionally, since the tour steps are always the same (`ADMIN_TOUR_STEPS`) regardless of role, the role-based check is unnecessary.
 
-3) Resolver gargalo comum de criação do primeiro quadro  
-- Ainda na `NoBoardsScreen`, para owner/admin adicionar ação secundária:
-  - **“Gerenciar serviços”** -> `/teams/${currentTeam.id}/services`
-- Isso evita bloqueio prático quando a equipe ainda não possui serviços configurados para o quadro.
+## Fix
 
-4) Validação ponta a ponta (E2E)  
-- Owner sem quadro: clicar “Criar Quadro” deve abrir `/boards` e permitir iniciar criação.
-- Owner sem quadro: “Ver detalhes da equipe” deve abrir a página com código de acesso.
-- Membro/requester sem quadro: não vê ações de admin, mas consegue acessar detalhes da equipe.
-- Após criar o primeiro quadro: sair automaticamente do estado de espera e voltar ao layout normal.
-- Validar desktop + mobile (botões e menu de avatar).
+**File: `src/hooks/useOnboarding.ts`**
 
-Detalhes técnicos
-- Arquivos que serão alterados:  
-  - `src/components/ProtectedLayout.tsx`  
-  - `src/components/NoBoardsScreen.tsx`
-- Sem mudança de banco/RLS/backend; é ajuste de regra de navegação e UX para estado “equipe sem quadro”.
+1. Remove the role comparison from the completion check — only check `completed?.completed === true`.
+2. When saving completion, store `completed: true` without the role (or keep it for informational purposes but stop using it for the gate check).
+3. Remove the dependency on `role` for the initial check `useEffect`, so the status is verified as soon as the user is available (no waiting for team role to load).
+4. Add a `localStorage` fallback so even if the database query fails, the tour won't re-show.
+
+**Key change (line ~213):**
+```typescript
+// Before (broken):
+const hasCompletedForRole = completed?.completed && completed?.role === role;
+
+// After (fixed):
+const hasCompletedOnboarding = completed?.completed === true;
+```
+
+This ensures users who already completed the tour will never see it again, regardless of role changes.
+
