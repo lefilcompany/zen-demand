@@ -126,7 +126,6 @@ export default function DemandDetail() {
   const createInteraction = useCreateInteraction();
   const updateDemand = useUpdateDemand();
   const setAssignees = useSetAssignees();
-  const uploadAttachment = useUploadAttachment();
   const {
     isTimerRunning,
     startTimer,
@@ -134,7 +133,6 @@ export default function DemandDetail() {
     isLoading: isTimerLoading
   } = useUserTimerControl(id);
   const sendEmail = useSendEmail();
-  const [adjustmentPendingFiles, setAdjustmentPendingFiles] = useState<PendingFile[]>([]);
   const [editingAssignees, setEditingAssignees] = useState(false);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
