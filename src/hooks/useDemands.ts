@@ -435,6 +435,7 @@ export function useCreateInteraction() {
         content: validatedData.content ?? null,
         metadata: (validatedData.metadata ?? null) as Json,
         user_id: user.id,
+        channel: data.channel || "general",
       };
       
       const { data: interaction, error } = await supabase
