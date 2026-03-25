@@ -283,14 +283,13 @@ export function useOnboarding() {
         .eq("user_id", user.id)
         .eq("preference_key", "onboarding_completed");
 
+      localStorage.removeItem(`onboarding_completed_${user.id}`);
       setHasCompleted(false);
       
-      // Navigate to initial screen before opening tour
       if (navigateFn) {
         navigateFn();
       }
       
-      // Small delay to ensure navigation completed
       setTimeout(() => setIsOpen(true), 150);
     } catch (error) {
       console.error("Error resetting onboarding:", error);
