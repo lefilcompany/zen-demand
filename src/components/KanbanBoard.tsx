@@ -173,7 +173,7 @@ function useIsLargeDesktop() {
 // No limit on open columns - users can open all if they want
 // Horizontal scroll handles overflow
 
-export function KanbanBoard({ demands, columns: propColumns, onDemandClick, readOnly = false, userRole, boardName, boardId, initialColumnsOpen = false }: KanbanBoardProps) {
+export function KanbanBoard({ demands, columns: propColumns, onDemandClick, readOnly = false, userRole, boardName, boardId, initialColumnsOpen = false, showBoardBadge = false }: KanbanBoardProps) {
   // Use provided columns or fallback to default
   const allColumns = propColumns && propColumns.length > 0 ? propColumns : DEFAULT_COLUMNS;
   
