@@ -37,6 +37,7 @@ import { DemandsCalendarView } from "@/components/DemandsCalendarView";
 import { isDateOverdue } from "@/lib/dateUtils";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { useAllBoardsKanbanColumns } from "@/hooks/useAllBoardsKanbanColumns";
+import { KanbanBoard } from "@/components/KanbanBoard";
 import {
   Select,
   SelectContent,
