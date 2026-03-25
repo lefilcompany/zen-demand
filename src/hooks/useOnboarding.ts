@@ -236,10 +236,11 @@ export function useOnboarding() {
 
   // Mark onboarding as complete
   const completeOnboarding = useCallback(async () => {
-    if (!user?.id || !role) return;
+    if (!user?.id) return;
 
     setIsOpen(false);
     setHasCompleted(true);
+    localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
 
     try {
       const { data: existing } = await supabase
@@ -253,7 +254,7 @@ export function useOnboarding() {
         await supabase
           .from("user_preferences")
           .update({
-            preference_value: { completed: true, role },
+            preference_value: { completed: true },
             updated_at: new Date().toISOString(),
           })
           .eq("id", existing.id);
@@ -263,13 +264,13 @@ export function useOnboarding() {
           .insert({
             user_id: user.id,
             preference_key: "onboarding_completed",
-            preference_value: { completed: true, role },
+            preference_value: { completed: true },
           });
       }
     } catch (error) {
       console.error("Error saving onboarding status:", error);
     }
-  }, [user?.id, role]);
+  }, [user?.id]);
 
   // Reset onboarding (for testing or re-watching)
   const resetOnboarding = useCallback(async (navigateFn?: () => void) => {
