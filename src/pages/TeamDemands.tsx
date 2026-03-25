@@ -86,6 +86,18 @@ export default function TeamDemands() {
   
   const [hideDelivered, setHideDelivered] = useState(false);
   
+  // Kanban board selection - auto-select first board
+  const [kanbanBoardId, setKanbanBoardId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (!kanbanBoardId && boards && boards.length > 0) {
+      setKanbanBoardId(boards[0].id);
+    }
+  }, [boards, kanbanBoardId]);
+
+  const { data: kanbanBoardRole } = useBoardRole(kanbanBoardId);
+  const { columns: kanbanColumns } = useKanbanColumns(kanbanBoardId, kanbanBoardRole);
+  
   // Fetch members with selected position for filtering
   const { data: membersByPosition } = useMembersByPosition(selectedTeamId, filters.position);
   
@@ -101,8 +113,8 @@ export default function TeamDemands() {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
   
-  // Force grid view on mobile/tablet (screens < 1024px), but allow calendar on all devices
-  const effectiveViewMode = isTabletOrSmaller && viewMode !== "calendar" ? "grid" : viewMode;
+  // Force grid view on mobile/tablet (screens < 1024px), but allow calendar and kanban on all devices
+  const effectiveViewMode = isTabletOrSmaller && viewMode !== "calendar" && viewMode !== "kanban" ? "grid" : viewMode;
 
   // Statistics based on all filters (excluding hideDelivered and status, which are view-level)
   const stats = useMemo(() => {
