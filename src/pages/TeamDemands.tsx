@@ -609,6 +609,15 @@ export default function TeamDemands() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  className={`rounded-none h-8 w-8 ${viewMode === "kanban" ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}`}
+                  onClick={() => setViewMode("kanban")}
+                  title="Visualização em Kanban"
+                >
+                  <KanbanIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className={`rounded-none h-8 w-8 ${viewMode === "calendar" ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}`}
                   onClick={() => setViewMode("calendar")}
                   title="Visualização em calendário"
