@@ -25,7 +25,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Filter,
-  Kanban as KanbanIcon
+  
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table";
@@ -36,8 +36,6 @@ import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { DemandsCalendarView } from "@/components/DemandsCalendarView";
 import { isDateOverdue } from "@/lib/dateUtils";
 import { InfoTooltip } from "@/components/InfoTooltip";
-import { useAllBoardsKanbanColumns } from "@/hooks/useAllBoardsKanbanColumns";
-import { KanbanBoard } from "@/components/KanbanBoard";
 import {
   Select,
   SelectContent,
@@ -45,7 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-type ViewMode = "table" | "grid" | "calendar" | "kanban";
+type ViewMode = "table" | "grid" | "calendar";
 
 const TABLET_BREAKPOINT = 1024;
 const POSITION_FILTER_KEY = "teamDemandsPositionFilter";
@@ -85,8 +83,6 @@ export default function TeamDemands() {
   
   const [hideDelivered, setHideDelivered] = useState(false);
   
-  // Merged kanban columns from all boards
-  const { columns: allBoardsKanbanColumns } = useAllBoardsKanbanColumns(selectedTeamId);
   
   
   // Fetch members with selected position for filtering
@@ -104,8 +100,8 @@ export default function TeamDemands() {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
   
-  // Force grid view on mobile/tablet (screens < 1024px), but allow calendar and kanban on all devices
-  const effectiveViewMode = isTabletOrSmaller && viewMode !== "calendar" && viewMode !== "kanban" ? "grid" : viewMode;
+  // Force grid view on mobile/tablet (screens < 1024px), but allow calendar on all devices
+  const effectiveViewMode = isTabletOrSmaller && viewMode !== "calendar" ? "grid" : viewMode;
 
   // Statistics based on all filters (excluding hideDelivered and status, which are view-level)
   const stats = useMemo(() => {
@@ -251,7 +247,7 @@ export default function TeamDemands() {
       );
     }
 
-    if (demandList.length === 0 && effectiveViewMode !== "calendar" && effectiveViewMode !== "kanban") {
+    if (demandList.length === 0 && effectiveViewMode !== "calendar") {
       if (searchQuery) {
         return (
           <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-muted/20">
@@ -278,32 +274,6 @@ export default function TeamDemands() {
       );
     }
 
-    if (effectiveViewMode === "kanban") {
-      return (
-        <div>
-          {allBoardsKanbanColumns ? (
-            <KanbanBoard
-              demands={demandList as any}
-              columns={allBoardsKanbanColumns}
-              onDemandClick={(id) => navigate(`/demands/${id}`, { state: { from: "team-demands", viewMode: "kanban" } })}
-              readOnly={true}
-              showBoardBadge
-              initialColumnsOpen
-            />
-          ) : (
-            <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-muted/20">
-              <KanbanIcon className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h3 className="mt-4 text-lg font-semibold text-foreground">
-                Nenhuma etapa encontrada
-              </h3>
-              <p className="text-muted-foreground mt-2">
-                Não há etapas configuradas nos seus quadros
-              </p>
-            </div>
-          )}
-        </div>
-      );
-    }
 
     if (effectiveViewMode === "calendar") {
       return (
@@ -572,15 +542,6 @@ export default function TeamDemands() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className={`rounded-none h-8 w-8 ${viewMode === "kanban" ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}`}
-                  onClick={() => setViewMode("kanban")}
-                  title="Visualização em Kanban"
-                >
-                  <KanbanIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
                   className={`rounded-none h-8 w-8 ${viewMode === "calendar" ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}`}
                   onClick={() => setViewMode("calendar")}
                   title="Visualização em calendário"
@@ -609,15 +570,13 @@ export default function TeamDemands() {
         </CardContent>
       </Card>
 
-      {/* Status Filter Tabs - hidden in kanban mode */}
-      {effectiveViewMode !== "kanban" && (
-        <div className="flex items-center gap-3 overflow-x-auto pb-2 -mb-2">
-          <StatusFilterTabs
-            value={filters.status}
-            onChange={(status) => setFilters({ ...filters, status })}
-          />
-        </div>
-      )}
+      {/* Status Filter Tabs */}
+      <div className="flex items-center gap-3 overflow-x-auto pb-2 -mb-2">
+        <StatusFilterTabs
+          value={filters.status}
+          onChange={(status) => setFilters({ ...filters, status })}
+        />
+      </div>
 
       {/* Content */}
       {renderDemandList(filteredDemands)}
