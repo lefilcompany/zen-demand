@@ -118,9 +118,6 @@ export default function DemandDetail() {
     error
   } = useDemandById(id);
   const {
-    data: interactions
-  } = useDemandInteractions(id!);
-  const {
     data: assignees
   } = useDemandAssignees(id || null);
   const {
@@ -137,15 +134,7 @@ export default function DemandDetail() {
     clearUpdateIndicator
   } = useRealtimeDemandDetail(id);
 
-  // Enable typing indicator
-  const {
-    typingUsers,
-    handleInputChange,
-    stopTyping
-  } = useTypingIndicator(id);
   const createInteraction = useCreateInteraction();
-  const updateInteraction = useUpdateInteraction();
-  const deleteInteraction = useDeleteInteraction();
   const updateDemand = useUpdateDemand();
   const setAssignees = useSetAssignees();
   const uploadAttachment = useUploadAttachment();
@@ -156,18 +145,12 @@ export default function DemandDetail() {
     isLoading: isTimerLoading
   } = useUserTimerControl(id);
   const sendEmail = useSendEmail();
-  const [comment, setComment] = useState("");
-  const [isSendingComment, setIsSendingComment] = useState(false);
-  const [commentPendingFiles, setCommentPendingFiles] = useState<PendingFile[]>([]);
   const [adjustmentPendingFiles, setAdjustmentPendingFiles] = useState<PendingFile[]>([]);
   const [editingAssignees, setEditingAssignees] = useState(false);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAdjustmentDialogOpen, setIsAdjustmentDialogOpen] = useState(false);
   const [adjustmentReason, setAdjustmentReason] = useState("");
-  const [interactionFilter, setInteractionFilter] = useState<string>("all");
-  const [editingInteractionId, setEditingInteractionId] = useState<string | null>(null);
-  const [editingInteractionContent, setEditingInteractionContent] = useState("");
   const [isChangeBoardDialogOpen, setIsChangeBoardDialogOpen] = useState(false);
 
   // Track toast state
