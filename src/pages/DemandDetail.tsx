@@ -396,6 +396,7 @@ export default function DemandDetail() {
       }
     });
   };
+  const handleEditAssignees = () => {
     setSelectedAssignees(assignees?.map(a => a.user_id) || []);
     setEditingAssignees(true);
   };
