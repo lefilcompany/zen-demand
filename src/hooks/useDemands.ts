@@ -417,6 +417,7 @@ export function useCreateInteraction() {
       interaction_type: string;
       content?: string;
       metadata?: Record<string, unknown>;
+      channel?: "general" | "internal";
     }) => {
       // Verify user is authenticated first
       const { data: { user }, error: authError } = await supabase.auth.getUser();
