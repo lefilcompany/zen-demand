@@ -189,7 +189,14 @@ export function useOnboarding() {
 
   // Check if user has completed onboarding
   useEffect(() => {
-    if (!user?.id || !role) {
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
+
+    // Fast localStorage check first
+    if (localStorage.getItem(`onboarding_completed_${user.id}`) === 'true') {
+      setHasCompleted(true);
       setIsLoading(false);
       return;
     }
@@ -207,15 +214,14 @@ export function useOnboarding() {
           console.error("Error checking onboarding status:", error);
         }
 
-        const completed = data?.preference_value as { completed?: boolean; role?: string } | null;
+        const completed = data?.preference_value as { completed?: boolean } | null;
+        const hasCompletedOnboarding = completed?.completed === true;
         
-        // Check if completed for current role
-        const hasCompletedForRole = completed?.completed && completed?.role === role;
-        setHasCompleted(hasCompletedForRole || false);
+        setHasCompleted(hasCompletedOnboarding);
         
-        // Auto-start tour if not completed
-        if (!hasCompletedForRole) {
-          // Small delay to ensure DOM is ready
+        if (hasCompletedOnboarding) {
+          localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
+        } else {
           setTimeout(() => setIsOpen(true), 1000);
         }
       } catch (error) {
@@ -226,14 +232,15 @@ export function useOnboarding() {
     };
 
     checkOnboardingStatus();
-  }, [user?.id, role]);
+  }, [user?.id]);
 
   // Mark onboarding as complete
   const completeOnboarding = useCallback(async () => {
-    if (!user?.id || !role) return;
+    if (!user?.id) return;
 
     setIsOpen(false);
     setHasCompleted(true);
+    localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
 
     try {
       const { data: existing } = await supabase
@@ -247,7 +254,7 @@ export function useOnboarding() {
         await supabase
           .from("user_preferences")
           .update({
-            preference_value: { completed: true, role },
+            preference_value: { completed: true },
             updated_at: new Date().toISOString(),
           })
           .eq("id", existing.id);
@@ -257,13 +264,13 @@ export function useOnboarding() {
           .insert({
             user_id: user.id,
             preference_key: "onboarding_completed",
-            preference_value: { completed: true, role },
+            preference_value: { completed: true },
           });
       }
     } catch (error) {
       console.error("Error saving onboarding status:", error);
     }
-  }, [user?.id, role]);
+  }, [user?.id]);
 
   // Reset onboarding (for testing or re-watching)
   const resetOnboarding = useCallback(async (navigateFn?: () => void) => {
@@ -276,14 +283,13 @@ export function useOnboarding() {
         .eq("user_id", user.id)
         .eq("preference_key", "onboarding_completed");
 
+      localStorage.removeItem(`onboarding_completed_${user.id}`);
       setHasCompleted(false);
       
-      // Navigate to initial screen before opening tour
       if (navigateFn) {
         navigateFn();
       }
       
-      // Small delay to ensure navigation completed
       setTimeout(() => setIsOpen(true), 150);
     } catch (error) {
       console.error("Error resetting onboarding:", error);
