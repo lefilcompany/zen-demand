@@ -119,7 +119,7 @@ export function AppSidebar() {
   const menuItems = [...baseMenuItems, ...adminMenuItems, ...requesterMenuItems, ...aiMenuItems, ...notesMenuItems, ...endMenuItems];
 
   // Keep team section expanded if on team/board routes
-  const isOnTeamRoute = location.pathname.startsWith("/boards") || location.pathname.startsWith("/team-config") || location.pathname.includes("/services") || location.pathname.includes("/requests") || location.pathname === "/team-demands" || location.pathname === "/my-demands";
+  const isOnTeamRoute = location.pathname.startsWith("/boards") || location.pathname.startsWith("/team-config") || location.pathname.includes("/services") || location.pathname.includes("/requests") || location.pathname === "/team-demands" || location.pathname === "/team-kanban" || location.pathname === "/my-demands";
   const [teamOpen, setTeamOpen] = useState(isOnTeamRoute);
   const [popoverOpen, setPopoverOpen] = useState(false);
 
