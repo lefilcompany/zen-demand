@@ -84,17 +84,9 @@ export default function TeamDemands() {
   
   const [hideDelivered, setHideDelivered] = useState(false);
   
-  // Kanban board selection - auto-select first board
-  const [kanbanBoardId, setKanbanBoardId] = useState<string | null>(null);
+  // Merged kanban columns from all boards
+  const { columns: allBoardsKanbanColumns } = useAllBoardsKanbanColumns(selectedTeamId);
   
-  useEffect(() => {
-    if (!kanbanBoardId && boards && boards.length > 0) {
-      setKanbanBoardId(boards[0].id);
-    }
-  }, [boards, kanbanBoardId]);
-
-  const { data: kanbanBoardRole } = useBoardRole(kanbanBoardId);
-  const { columns: kanbanColumns } = useKanbanColumns(kanbanBoardId, kanbanBoardRole);
   
   // Fetch members with selected position for filtering
   const { data: membersByPosition } = useMembersByPosition(selectedTeamId, filters.position);
