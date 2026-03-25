@@ -15,8 +15,8 @@ import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees"
 import { useBoard, useBoards } from "@/hooks/useBoards";
 import { ChangeBoardDialog } from "@/components/ChangeBoardDialog";
 import { useUploadAttachment } from "@/hooks/useAttachments";
-import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/components/InlineFileUploader";
-import { InteractionAttachments } from "@/components/InteractionAttachments";
+import { PendingFile } from "@/components/InlineFileUploader";
+import { supabase } from "@/integrations/supabase/client";
 import { supabase } from "@/integrations/supabase/client";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useBoardRole } from "@/hooks/useBoardMembers";
