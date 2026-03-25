@@ -304,7 +304,6 @@ export default function TeamDemands() {
         </div>
       );
     }
-    }
 
     if (effectiveViewMode === "calendar") {
       return (
