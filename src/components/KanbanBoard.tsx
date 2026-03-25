@@ -94,7 +94,8 @@ interface KanbanBoardProps {
   userRole?: string;
   boardName?: string;
   boardId?: string;
-  initialColumnsOpen?: boolean; // If true, all columns start open
+  initialColumnsOpen?: boolean;
+  showBoardBadge?: boolean; // Show board name badge on each card
 }
 
 const priorityColors: Record<string, string> = {
