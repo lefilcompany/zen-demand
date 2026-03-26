@@ -81,7 +81,7 @@ export function DemandChat({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  // Auto-scroll on new messages if near bottom
+  // Auto-scroll on new messages or pending files change if near bottom
   useEffect(() => {
     if (isNearBottomRef.current) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -92,6 +92,13 @@ export function DemandChat({
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "instant" });
   }, [channel]);
+
+  // Auto-scroll when pending files change (keeps view at bottom when attaching)
+  useEffect(() => {
+    if (pendingFiles.length > 0) {
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    }
+  }, [pendingFiles.length]);
 
   // Track scroll position
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
