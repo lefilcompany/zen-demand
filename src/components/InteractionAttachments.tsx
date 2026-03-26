@@ -105,6 +105,11 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
               <Maximize2 className="h-3.5 w-3.5" />
             </Button>
           )}
+          {canPreview && !isImage && (
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPreviewOpen(true)} title="Visualizar">
+              <Eye className="h-3.5 w-3.5" />
+            </Button>
+          )}
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleDownload}>
             <Download className="h-3.5 w-3.5" />
           </Button>
