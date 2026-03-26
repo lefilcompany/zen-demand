@@ -525,17 +525,24 @@ export default function DemandDetail() {
               ) : (
                 <div className="group/title flex items-center gap-2">
                   <CardTitle className="text-base sm:text-lg md:text-2xl break-words [overflow-wrap:anywhere]">{demand.title}</CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 shrink-0 md:opacity-0 md:group-hover/title:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
-                    onClick={() => {
-                      setEditingTitle(demand.title);
-                      setIsEditingTitle(true);
-                    }}
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
+                  {(() => {
+                    const currentStatusName = boardStatuses?.find(s => s.status_id === demand.status_id)?.demand_statuses?.name?.toLowerCase();
+                    const isDelivered = currentStatusName === "entregue";
+                    if (isDelivered) return null;
+                    return (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0 md:opacity-0 md:group-hover/title:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                        onClick={() => {
+                          setEditingTitle(demand.title);
+                          setIsEditingTitle(true);
+                        }}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    );
+                  })()}
                 </div>
               )}
               <div className="flex flex-wrap items-center gap-2">
