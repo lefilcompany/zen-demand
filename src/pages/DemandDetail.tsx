@@ -460,7 +460,20 @@ export default function DemandDetail() {
               </div>
               <CardTitle className="text-base sm:text-lg md:text-2xl break-words [overflow-wrap:anywhere]">{demand.title}</CardTitle>
               <div className="flex flex-wrap items-center gap-2">
-                {demand.priority && <Badge variant="outline">{demand.priority}</Badge>}
+                {demand.priority && (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "uppercase text-[10px] font-bold tracking-wider border",
+                      demand.priority === "urgente" && "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30",
+                      demand.priority === "alta" && "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/30",
+                      demand.priority === "media" && "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/30",
+                      demand.priority === "baixa" && "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30",
+                    )}
+                  >
+                    {demand.priority}
+                  </Badge>
+                )}
                 {demand.teams && <Badge variant="secondary">{demand.teams.name}</Badge>}
                 
                 {/* Board Badge - clickable if can change */}
