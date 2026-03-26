@@ -1,75 +1,40 @@
 
 
-## Plan: Transform Comments into Discord-Style Chat with Channel System
+## Plan: Document Preview Modal (PDF, Images, etc.)
 
 ### Overview
-Transform the current comment/interaction section in DemandDetail into a modern, Discord-inspired chat interface with two channels: **Internal Chat** (agents only, hidden from requesters) and **General Chat** (visible to all including requesters).
+Add an "Eye" preview button alongside the download button on all attachment items. Clicking it opens a full-screen modal that renders the document inline — PDFs via `<iframe>` with the signed URL, images as they already work. This avoids unnecessary downloads.
 
-### Database Changes
+### Changes
 
-**Add `channel` column to `demand_interactions` table:**
-- New column: `channel TEXT NOT NULL DEFAULT 'general'` (values: `'internal'` or `'general'`)
-- Update RLS: Add a policy that filters `internal` channel messages -- requesters can only SELECT interactions where `channel = 'general'`
-- Create a security definer function `can_view_interaction(interaction_id, user_id)` that checks board role and channel visibility
+**1. `src/components/InteractionAttachments.tsx`**
+- Add `Eye` icon import from lucide-react
+- For non-image files (PDFs, etc.), add a preview button next to download
+- For images, keep existing expand behavior
+- Add a new `DocumentPreviewDialog` that:
+  - Opens a near-fullscreen modal (`max-w-[95vw] max-h-[95vh]`)
+  - Loads the signed URL on open
+  - Renders PDFs via `<iframe src={signedUrl} />` (browsers render PDFs natively with page-by-page navigation)
+  - Shows file name + download button in footer
+  - Shows a loading spinner while the URL is being fetched
 
-### New Component: `DemandChat.tsx`
-A self-contained chat component replacing the current "Historico" Card in DemandDetail. Structure:
+**2. `src/components/AttachmentUploader.tsx`**
+- Same pattern: add preview button for previewable file types (PDF, images)
+- Reuse the same modal approach with `<iframe>` for PDFs
 
-```text
-┌──────────────────────────────────────────────┐
-│  # Geral    # Interno 🔒                     │  ← Channel tabs (Internal hidden for requesters)
-├──────────────────────────────────────────────┤
-│                                              │
-│  ┌─ avatar ── nome ──── 14:32 ─────────┐    │  ← Messages grouped by user/time
-│  │  Message content here               │    │     (Discord-style: consecutive msgs
-│  │  Another message from same user     │    │     from same user are grouped)
-│  └─────────────────────────────────────┘    │
-│                                              │
-│  ── Hoje ──────────────────────────────      │  ← Date separators
-│                                              │
-│  ┌─ avatar ── nome ──── 15:10 ─────────┐    │
-│  │  New message with hover actions     │    │  ← Hover reveals: edit, delete, copy
-│  └─────────────────────────────────────┘    │
-│                                              │
-│  🟢 João está digitando...                   │  ← Typing indicator
-├──────────────────────────────────────────────┤
-│  [+] │ Write a message...        │ [Send]   │  ← Input bar at bottom (fixed)
-│      │ @ mentions, file paste    │          │
-└──────────────────────────────────────────────┘
-```
+**3. `src/components/RequestAttachmentUploader.tsx`**
+- Same pattern applied to request attachments
 
-### Design Details (Discord-Inspired)
-- **Dark-toned chat area** with `bg-muted/30` background and subtle rounded message bubbles
-- **Channel tabs** styled like Discord channels with `#` prefix and lock icon for internal
-- **Message grouping**: consecutive messages from same user within 5 minutes show only content (no repeated avatar/name)
-- **Date separators**: horizontal line with date badge in center
-- **Hover actions**: message actions appear on hover (edit, delete, copy) as a floating toolbar
-- **Scroll area** with auto-scroll to bottom on new messages, "scroll to bottom" fab when scrolled up
-- **Input bar** pinned at bottom with attachment button, mention support, send button
-- **Status/adjustment interactions** rendered as system messages (centered, muted, with icon)
-- **Internal channel** has a subtle colored border/indicator (e.g., blue tint) to visually distinguish
+### How PDF Preview Works
+- Use the browser's native PDF viewer via `<iframe src={signedUrl} type="application/pdf" />` 
+- This gives page-by-page navigation, zoom, search — all built-in, zero extra dependencies
+- Previewable types: `application/pdf`, `image/*`, `text/plain`
+- Non-previewable types: only show download button (no preview icon)
 
-### Files to Create/Edit
-
-1. **Migration**: Add `channel` column + RLS policy for channel-based visibility
-2. **`src/components/DemandChat.tsx`** (NEW): Main chat component with channel tabs, message list, input bar
-3. **`src/components/DemandChatMessage.tsx`** (NEW): Individual message rendering with grouping logic, hover actions
-4. **`src/components/DemandChatInput.tsx`** (NEW): Bottom input bar with mentions, file upload, send
-5. **`src/hooks/useDemands.ts`**: Update `useDemandInteractions` to accept `channel` filter, update `useCreateInteraction` to include channel
-6. **`src/pages/DemandDetail.tsx`**: Replace the entire "Historico" Card section with `<DemandChat>`, move notification logic into the chat component or keep as callback
-7. **`src/hooks/useTypingIndicator.ts`**: Add channel awareness to typing broadcasts
-
-### Key Logic
-- **Channel visibility**: `boardRole === 'requester'` users see only "Geral" tab; agents/admins see both tabs
-- **Default channel**: "Geral" for requesters, "Interno" for agents (last used preference)
-- **Adjustment requests** continue to work as before but render as system messages in the appropriate channel
-- **Status changes** render as system messages in "Geral"
-- **Existing interactions** (no channel column) default to `'general'` via the column default
-
-### Technical Details
-- Query: `useDemandInteractions(demandId, channel)` filters by channel
-- Interactions ordered `ascending` (oldest first) for chat UX (currently descending)
-- Auto-scroll to latest message using `useRef` + `scrollIntoView`
-- Realtime subscription already exists via `useRealtimeDemandDetail` -- will trigger re-fetch on new messages
-- Message grouping computed via `useMemo` comparing consecutive messages' `user_id` and timestamp delta
+### UI Design
+- Preview button: `Eye` icon, ghost variant, same size as download button (`h-7 w-7`)
+- Modal: dark overlay, `max-w-[95vw] h-[90vh]`, iframe fills available space
+- Header bar with file name + close button
+- Footer with file size + download button
+- Follows existing dialog patterns and system colors
 
