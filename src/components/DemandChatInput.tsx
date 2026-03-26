@@ -121,7 +121,7 @@ export function DemandChatInput({
 
   return (
     <div className={cn(
-      "border-t bg-background/80 backdrop-blur-sm px-3 py-2",
+      "border-t bg-background/80 backdrop-blur-sm px-1.5 py-2",
       channel === "internal" && "border-t-blue-500/30"
     )}>
       {/* Pending files preview - compact chips */}
