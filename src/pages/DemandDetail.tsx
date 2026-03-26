@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { RichTextEditor, RichTextDisplay } from "@/components/ui/rich-text-editor";
@@ -140,6 +141,8 @@ export default function DemandDetail() {
   const [isAdjustmentDialogOpen, setIsAdjustmentDialogOpen] = useState(false);
   const [adjustmentReason, setAdjustmentReason] = useState("");
   const [isChangeBoardDialogOpen, setIsChangeBoardDialogOpen] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editingTitle, setEditingTitle] = useState("");
   const { selectedBoardId } = useSelectedBoard();
 
   // Redirect to dashboard if board changes and demand belongs to a different board
@@ -468,7 +471,73 @@ export default function DemandDetail() {
                     {formatDemandCode(demand.board_sequence_number)}
                   </Badge>}
               </div>
-              <CardTitle className="text-base sm:text-lg md:text-2xl break-words [overflow-wrap:anywhere]">{demand.title}</CardTitle>
+              {isEditingTitle ? (
+                <form
+                  className="flex items-center gap-2 w-full"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (editingTitle.trim() && editingTitle.trim() !== demand.title) {
+                      updateDemand.mutate(
+                        { id: demand.id, title: editingTitle.trim() },
+                        {
+                          onSuccess: () => {
+                            toast.success("Título atualizado");
+                            setIsEditingTitle(false);
+                          },
+                          onError: (err) => toast.error(getErrorMessage(err)),
+                        }
+                      );
+                    } else {
+                      setIsEditingTitle(false);
+                    }
+                  }}
+                >
+                  <Input
+                    autoFocus
+                    value={editingTitle}
+                    onChange={(e) => setEditingTitle(e.target.value)}
+                    className="text-base sm:text-lg md:text-2xl font-semibold h-auto py-1"
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        setIsEditingTitle(false);
+                        setEditingTitle(demand.title);
+                      }
+                    }}
+                    onBlur={() => {
+                      if (editingTitle.trim() && editingTitle.trim() !== demand.title) {
+                        updateDemand.mutate(
+                          { id: demand.id, title: editingTitle.trim() },
+                          {
+                            onSuccess: () => {
+                              toast.success("Título atualizado");
+                              setIsEditingTitle(false);
+                            },
+                            onError: (err) => toast.error(getErrorMessage(err)),
+                          }
+                        );
+                      } else {
+                        setIsEditingTitle(false);
+                        setEditingTitle(demand.title);
+                      }
+                    }}
+                  />
+                </form>
+              ) : (
+                <div className="group/title flex items-center gap-2">
+                  <CardTitle className="text-base sm:text-lg md:text-2xl break-words [overflow-wrap:anywhere]">{demand.title}</CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 md:opacity-0 md:group-hover/title:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      setEditingTitle(demand.title);
+                      setIsEditingTitle(true);
+                    }}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
               <div className="flex flex-wrap items-center gap-2">
                 {demand.priority && (
                   <Badge
