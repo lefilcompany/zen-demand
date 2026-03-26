@@ -2,11 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getAttachmentUrl } from "@/hooks/useAttachments";
-import { FileText, Download, Maximize2 } from "lucide-react";
+import { FileText, Download, Maximize2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { DocumentPreviewDialog, isPreviewable } from "@/components/DocumentPreviewDialog";
 
 interface Attachment {
   id: string;
@@ -42,8 +43,10 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   
   const isImage = attachment.file_type.startsWith("image/");
+  const canPreview = isPreviewable(attachment.file_type);
   
   useEffect(() => {
     if (isImage) {
@@ -102,6 +105,11 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
               <Maximize2 className="h-3.5 w-3.5" />
             </Button>
           )}
+          {canPreview && !isImage && (
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPreviewOpen(true)} title="Visualizar">
+              <Eye className="h-3.5 w-3.5" />
+            </Button>
+          )}
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleDownload}>
             <Download className="h-3.5 w-3.5" />
           </Button>
@@ -129,6 +137,16 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
             </div>
           </DialogContent>
         </Dialog>
+      )}
+      {canPreview && !isImage && (
+        <DocumentPreviewDialog
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          fileName={attachment.file_name}
+          fileType={attachment.file_type}
+          fileSize={attachment.file_size}
+          getUrl={() => getAttachmentUrl(attachment.file_path)}
+        />
       )}
     </>
   );

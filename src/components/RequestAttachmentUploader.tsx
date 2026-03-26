@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Paperclip, X, Download, FileText, Image, File, Trash2, Loader2, Maximize2 } from "lucide-react";
+import { Paperclip, X, Download, FileText, Image, File, Trash2, Loader2, Maximize2, Eye } from "lucide-react";
 import { 
   useRequestAttachments, 
   useUploadRequestAttachment, 
@@ -10,6 +10,7 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { DocumentPreviewDialog, isPreviewable } from "@/components/DocumentPreviewDialog";
 
 interface RequestAttachmentUploaderProps {
   requestId: string;
@@ -184,6 +185,8 @@ function ImageAttachment({ attachment, readOnly, onDelete, url }: AttachmentItem
 
 function FileAttachment({ attachment, readOnly, onDelete, url }: AttachmentItemProps & { url: string | null }) {
   const [downloading, setDownloading] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const canPreview = isPreviewable(attachment.file_type);
 
   const getFileIcon = (type: string) => {
     if (type.includes("pdf") || type.includes("document")) return FileText;
@@ -236,6 +239,17 @@ function FileAttachment({ attachment, readOnly, onDelete, url }: AttachmentItemP
       </div>
 
       <div className="flex items-center gap-1">
+        {canPreview && url && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setPreviewOpen(true)}
+            title="Visualizar"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        )}
         {url && (
           <Button
             variant="ghost"
@@ -265,6 +279,17 @@ function FileAttachment({ attachment, readOnly, onDelete, url }: AttachmentItemP
           </Button>
         )}
       </div>
+
+      {canPreview && (
+        <DocumentPreviewDialog
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          fileName={attachment.file_name}
+          fileType={attachment.file_type}
+          fileSize={attachment.file_size}
+          getUrl={() => getRequestAttachmentUrl(attachment.file_path)}
+        />
+      )}
     </div>
   );
 }

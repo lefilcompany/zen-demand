@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Paperclip, X, Download, FileText, Image, File, Trash2, Loader2, Maximize2 } from "lucide-react";
+import { Paperclip, X, Download, FileText, Image, File, Trash2, Loader2, Maximize2, Eye } from "lucide-react";
 import { useAttachments, useUploadAttachment, useDeleteAttachment, getAttachmentUrl } from "@/hooks/useAttachments";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
+import { DocumentPreviewDialog, isPreviewable } from "@/components/DocumentPreviewDialog";
 
 interface AttachmentUploaderProps {
   demandId: string;
@@ -37,6 +38,7 @@ function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps)
   const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -65,6 +67,7 @@ function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps)
 
   const Icon = getFileIcon(attachment.file_type);
   const isImage = attachment.file_type.startsWith("image/");
+  const canPreview = isPreviewable(attachment.file_type);
 
   return (
     <>
@@ -99,6 +102,17 @@ function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps)
               onClick={() => setIsExpanded(true)}
             >
               <Maximize2 className="h-4 w-4" />
+            </Button>
+          )}
+          {canPreview && !isImage && url && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setPreviewOpen(true)}
+              title="Visualizar"
+            >
+              <Eye className="h-4 w-4" />
             </Button>
           )}
           {url && (
@@ -158,6 +172,17 @@ function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps)
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {canPreview && !isImage && (
+        <DocumentPreviewDialog
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          fileName={attachment.file_name}
+          fileType={attachment.file_type}
+          fileSize={attachment.file_size}
+          getUrl={() => getAttachmentUrl(attachment.file_path)}
+        />
       )}
     </>
   );
