@@ -1,40 +1,53 @@
 
 
-## Plan: Document Preview Modal (PDF, Images, etc.)
+## Problem
 
-### Overview
-Add an "Eye" preview button alongside the download button on all attachment items. Clicking it opens a full-screen modal that renders the document inline — PDFs via `<iframe>` with the signed URL, images as they already work. This avoids unnecessary downloads.
+When a team owner views join requests, the requester's name/email/avatar shows as "Usuário" because:
+1. The hook fetches profiles in a **separate query** (`supabase.from("profiles").select(...)`)
+2. The `profiles` RLS policy only allows viewing profiles of users in `team_members` or `board_members`
+3. A join requester is **not yet** a team member, so RLS blocks their profile — returning empty data
 
-### Changes
+## Solution
 
-**1. `src/components/InteractionAttachments.tsx`**
-- Add `Eye` icon import from lucide-react
-- For non-image files (PDFs, etc.), add a preview button next to download
-- For images, keep existing expand behavior
-- Add a new `DocumentPreviewDialog` that:
-  - Opens a near-fullscreen modal (`max-w-[95vw] max-h-[95vh]`)
-  - Loads the signed URL on open
-  - Renders PDFs via `<iframe src={signedUrl} />` (browsers render PDFs natively with page-by-page navigation)
-  - Shows file name + download button in footer
-  - Shows a loading spinner while the URL is being fetched
+Create a **security definer database function** that bypasses RLS to fetch requester profiles for team owners. This is the correct approach since the team owner has a legitimate need to see who is requesting to join.
 
-**2. `src/components/AttachmentUploader.tsx`**
-- Same pattern: add preview button for previewable file types (PDF, images)
-- Reuse the same modal approach with `<iframe>` for PDFs
+### Step 1: Database migration — create RPC function
 
-**3. `src/components/RequestAttachmentUploader.tsx`**
-- Same pattern applied to request attachments
+```sql
+CREATE OR REPLACE FUNCTION public.get_join_request_profiles(request_team_id uuid)
+RETURNS TABLE(id uuid, full_name text, avatar_url text, email text)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT p.id, p.full_name, p.avatar_url, p.email
+  FROM profiles p
+  INNER JOIN team_join_requests tjr ON tjr.user_id = p.id
+  WHERE tjr.team_id = request_team_id
+    AND tjr.status = 'pending'
+    AND is_team_owner(auth.uid(), request_team_id)
+$$;
+```
 
-### How PDF Preview Works
-- Use the browser's native PDF viewer via `<iframe src={signedUrl} type="application/pdf" />` 
-- This gives page-by-page navigation, zoom, search — all built-in, zero extra dependencies
-- Previewable types: `application/pdf`, `image/*`, `text/plain`
-- Non-previewable types: only show download button (no preview icon)
+This function:
+- Only works if the caller is the team owner (validated inside the function)
+- Only returns profiles of users with pending requests for that team
+- Uses `SECURITY DEFINER` to bypass profile RLS
 
-### UI Design
-- Preview button: `Eye` icon, ghost variant, same size as download button (`h-7 w-7`)
-- Modal: dark overlay, `max-w-[95vw] h-[90vh]`, iframe fills available space
-- Header bar with file name + close button
-- Footer with file size + download button
-- Follows existing dialog patterns and system colors
+### Step 2: Update `src/hooks/useTeamJoinRequests.ts`
+
+In the `useTeamJoinRequests` function, replace the separate `profiles` query with a call to the new RPC:
+
+```ts
+const { data: profiles } = await supabase
+  .rpc("get_join_request_profiles", { request_team_id: teamId });
+```
+
+Everything else stays the same — the profileMap logic and the component rendering in `TeamRequests.tsx` remain unchanged.
+
+### Technical details
+- Single RPC call replaces the broken two-step fetch
+- Security is enforced server-side via `is_team_owner` check inside the function
+- No changes needed in the UI component (`TeamRequests.tsx`)
 
