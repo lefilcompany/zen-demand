@@ -38,6 +38,7 @@ function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps)
   const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
