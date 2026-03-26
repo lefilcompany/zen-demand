@@ -50,7 +50,7 @@ import BoardSummary from "./pages/BoardSummary";
 import Store from "./pages/Store";
 import Contract from "./pages/Contract";
 import TeamDemands from "./pages/TeamDemands";
-import TeamKanbanGeral from "./pages/TeamKanbanGeral";
+
 import MyDemands from "./pages/MyDemands";
 import Notes from "./pages/Notes";
 import NoteDetail from "./pages/NoteDetail";
