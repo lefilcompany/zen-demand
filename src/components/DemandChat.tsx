@@ -249,43 +249,38 @@ export function DemandChat({
   };
 
   return (
-    <div className="flex flex-col rounded-xl border bg-card overflow-hidden" style={{ height: "min(700px, 70vh)" }}>
+    <div className="flex flex-col rounded-xl border border-border/60 bg-card overflow-hidden shadow-sm" style={{ height: "min(700px, 70vh)" }}>
       {/* Channel tabs */}
-      <div className="flex items-center gap-1 px-3 py-2 border-b bg-muted/30">
+      <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-border/40 bg-muted/20">
         <button
           onClick={() => setChannel("general")}
           className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+            "flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold tracking-wide uppercase transition-all",
             channel === "general"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              ? "bg-primary/10 text-primary shadow-sm"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
           )}
         >
-          <Hash className="h-3.5 w-3.5" />
+          <Hash className="h-3 w-3" />
           Geral
-          {channel !== "general" && sortedInteractions.length > 0 && (
-            <Badge variant="secondary" className="text-[10px] h-4 px-1 ml-0.5">
-              {sortedInteractions.length}
-            </Badge>
-          )}
         </button>
         {canSeeInternal && (
           <button
             onClick={() => setChannel("internal")}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+              "flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold tracking-wide uppercase transition-all",
               channel === "internal"
                 ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 shadow-sm border border-blue-500/20"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
             )}
           >
-            <Lock className="h-3.5 w-3.5" />
+            <Lock className="h-3 w-3" />
             Interno
           </button>
         )}
         <div className="flex-1" />
-        <span className="text-[10px] text-muted-foreground/50">
-          {sortedInteractions.length} mensagen{sortedInteractions.length !== 1 ? "s" : ""}
+        <span className="text-[10px] text-muted-foreground/40 tabular-nums">
+          {sortedInteractions.length} {sortedInteractions.length !== 1 ? "mensagens" : "mensagem"}
         </span>
       </div>
 
