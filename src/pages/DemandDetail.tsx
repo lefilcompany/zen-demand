@@ -140,6 +140,8 @@ export default function DemandDetail() {
   const [isAdjustmentDialogOpen, setIsAdjustmentDialogOpen] = useState(false);
   const [adjustmentReason, setAdjustmentReason] = useState("");
   const [isChangeBoardDialogOpen, setIsChangeBoardDialogOpen] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editingTitle, setEditingTitle] = useState("");
   const { selectedBoardId } = useSelectedBoard();
 
   // Redirect to dashboard if board changes and demand belongs to a different board
