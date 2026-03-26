@@ -185,6 +185,8 @@ function ImageAttachment({ attachment, readOnly, onDelete, url }: AttachmentItem
 
 function FileAttachment({ attachment, readOnly, onDelete, url }: AttachmentItemProps & { url: string | null }) {
   const [downloading, setDownloading] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const canPreview = isPreviewable(attachment.file_type);
 
   const getFileIcon = (type: string) => {
     if (type.includes("pdf") || type.includes("document")) return FileText;
