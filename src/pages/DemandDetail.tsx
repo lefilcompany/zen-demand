@@ -28,6 +28,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatDateOnlyBR } from "@/lib/dateUtils";
 import { useState, useMemo, useEffect, useRef } from "react";
+import { useSelectedBoard } from "@/contexts/BoardContext";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { cn } from "@/lib/utils";
@@ -139,6 +140,15 @@ export default function DemandDetail() {
   const [isAdjustmentDialogOpen, setIsAdjustmentDialogOpen] = useState(false);
   const [adjustmentReason, setAdjustmentReason] = useState("");
   const [isChangeBoardDialogOpen, setIsChangeBoardDialogOpen] = useState(false);
+  const { selectedBoardId } = useSelectedBoard();
+
+  // Redirect to dashboard if board changes and demand belongs to a different board
+  const demandBoardId = demand?.board_id;
+  useEffect(() => {
+    if (demandBoardId && selectedBoardId && demandBoardId !== selectedBoardId) {
+      navigate("/", { replace: true });
+    }
+  }, [selectedBoardId, demandBoardId, navigate]);
 
   // Track toast state
   const toastShownRef = useRef<{
