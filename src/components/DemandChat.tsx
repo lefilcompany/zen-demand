@@ -81,7 +81,7 @@ export function DemandChat({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
-  // Auto-scroll on new messages if near bottom
+  // Auto-scroll on new messages or pending files change if near bottom
   useEffect(() => {
     if (isNearBottomRef.current) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -92,6 +92,13 @@ export function DemandChat({
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "instant" });
   }, [channel]);
+
+  // Auto-scroll when pending files change (keeps view at bottom when attaching)
+  useEffect(() => {
+    if (pendingFiles.length > 0) {
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    }
+  }, [pendingFiles.length]);
 
   // Track scroll position
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
@@ -249,7 +256,7 @@ export function DemandChat({
   };
 
   return (
-    <div className="relative flex flex-col rounded-xl border border-border/60 bg-card shadow-sm" style={{ height: "min(700px, 70vh)" }}>
+    <div className="relative flex flex-col rounded-xl border border-border/60 bg-card shadow-sm min-h-[400px]" style={{ height: "min(700px, 70vh)" }}>
       {/* Channel tabs */}
       <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-border/40 bg-muted/20">
         <button
@@ -287,7 +294,7 @@ export function DemandChat({
       {/* Messages area */}
       <div
         className={cn(
-          "flex-1 overflow-y-auto",
+          "flex-1 min-h-0 overflow-y-auto",
           channel === "internal" && "bg-blue-500/[0.02]"
         )}
         ref={scrollRef}
