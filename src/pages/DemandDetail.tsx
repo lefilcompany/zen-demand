@@ -20,7 +20,7 @@ import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { DemandEditForm } from "@/components/DemandEditForm";
 import { AttachmentUploader } from "@/components/AttachmentUploader";
-import { Calendar, Users, Archive, Pencil, Wrench, AlertTriangle, LayoutGrid, List, ChevronDown, Kanban, CalendarDays, LucideIcon } from "lucide-react";
+import { Calendar, Users, Archive, Pencil, Wrench, AlertTriangle, LayoutGrid, List, ChevronDown, Kanban, CalendarDays, LucideIcon, Check, X } from "lucide-react";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { ShareDemandButton } from "@/components/ShareDemandButton";
 import { UserTimeTrackingDisplay } from "@/components/UserTimeTrackingDisplay";
@@ -473,7 +473,7 @@ export default function DemandDetail() {
               </div>
               {isEditingTitle ? (
                 <form
-                  className="flex items-center w-full overflow-hidden"
+                  className="flex items-center gap-1.5 w-full overflow-hidden"
                   onSubmit={(e) => {
                     e.preventDefault();
                     if (editingTitle.trim() && editingTitle.trim() !== demand.title) {
@@ -503,24 +503,13 @@ export default function DemandDetail() {
                         setEditingTitle(demand.title);
                       }
                     }}
-                    onBlur={() => {
-                      if (editingTitle.trim() && editingTitle.trim() !== demand.title) {
-                        updateDemand.mutate(
-                          { id: demand.id, title: editingTitle.trim() },
-                          {
-                            onSuccess: () => {
-                              toast.success("Título atualizado");
-                              setIsEditingTitle(false);
-                            },
-                            onError: (err) => toast.error(getErrorMessage(err)),
-                          }
-                        );
-                      } else {
-                        setIsEditingTitle(false);
-                        setEditingTitle(demand.title);
-                      }
-                    }}
                   />
+                  <Button type="submit" variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-primary hover:bg-primary/10">
+                    <Check className="h-4 w-4" />
+                  </Button>
+                  <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" onClick={() => { setIsEditingTitle(false); setEditingTitle(demand.title); }}>
+                    <X className="h-4 w-4" />
+                  </Button>
                 </form>
               ) : (
                 <div className="group/title flex items-center gap-2">
