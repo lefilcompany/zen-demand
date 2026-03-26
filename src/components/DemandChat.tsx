@@ -249,7 +249,7 @@ export function DemandChat({
   };
 
   return (
-    <div className="flex flex-col rounded-xl border border-border/60 bg-card overflow-hidden shadow-sm" style={{ height: "min(700px, 70vh)" }}>
+    <div className="relative flex flex-col rounded-xl border border-border/60 bg-card shadow-sm" style={{ height: "min(700px, 70vh)" }}>
       {/* Channel tabs */}
       <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-border/40 bg-muted/20">
         <button
