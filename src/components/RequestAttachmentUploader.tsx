@@ -239,6 +239,17 @@ function FileAttachment({ attachment, readOnly, onDelete, url }: AttachmentItemP
       </div>
 
       <div className="flex items-center gap-1">
+        {canPreview && url && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setPreviewOpen(true)}
+            title="Visualizar"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        )}
         {url && (
           <Button
             variant="ghost"
@@ -268,6 +279,17 @@ function FileAttachment({ attachment, readOnly, onDelete, url }: AttachmentItemP
           </Button>
         )}
       </div>
+
+      {canPreview && (
+        <DocumentPreviewDialog
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          fileName={attachment.file_name}
+          fileType={attachment.file_type}
+          fileSize={attachment.file_size}
+          getUrl={() => getRequestAttachmentUrl(attachment.file_path)}
+        />
+      )}
     </div>
   );
 }

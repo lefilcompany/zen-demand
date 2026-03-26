@@ -138,6 +138,16 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
           </DialogContent>
         </Dialog>
       )}
+      {canPreview && !isImage && (
+        <DocumentPreviewDialog
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+          fileName={attachment.file_name}
+          fileType={attachment.file_type}
+          fileSize={attachment.file_size}
+          getUrl={() => getAttachmentUrl(attachment.file_path)}
+        />
+      )}
     </>
   );
 }
