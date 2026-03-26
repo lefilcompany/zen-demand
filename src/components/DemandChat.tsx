@@ -49,7 +49,7 @@ export function DemandChat({
   const isRequester = boardRole === "requester";
   const canSeeInternal = !isRequester;
 
-  const [channel, setChannel] = useState<"general" | "internal">(canSeeInternal ? "internal" : "general");
+  const [channel, setChannel] = useState<"general" | "internal">("general");
   const [comment, setComment] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
