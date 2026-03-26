@@ -496,7 +496,7 @@ export default function DemandDetail() {
                     autoFocus
                     value={editingTitle}
                     onChange={(e) => setEditingTitle(e.target.value)}
-                    className="text-base sm:text-lg md:text-2xl font-semibold h-auto py-1"
+                    className="text-base sm:text-lg md:text-2xl font-semibold h-auto py-1 border-muted focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0"
                     onKeyDown={(e) => {
                       if (e.key === "Escape") {
                         setIsEditingTitle(false);
