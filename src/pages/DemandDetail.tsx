@@ -526,7 +526,7 @@ export default function DemandDetail() {
                 <div className="group/title flex items-center gap-2">
                   <CardTitle className="text-base sm:text-lg md:text-2xl break-words [overflow-wrap:anywhere]">{demand.title}</CardTitle>
                   {(() => {
-                    const currentStatusName = boardStatuses?.find(s => s.status_id === demand.status_id)?.demand_statuses?.name?.toLowerCase();
+                    const currentStatusName = boardStatuses?.find(s => s.status_id === demand.status_id)?.status?.name?.toLowerCase();
                     const isDelivered = currentStatusName === "entregue";
                     if (isDelivered) return null;
                     return (
