@@ -43,8 +43,10 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   
   const isImage = attachment.file_type.startsWith("image/");
+  const canPreview = isPreviewable(attachment.file_type);
   
   useEffect(() => {
     if (isImage) {
