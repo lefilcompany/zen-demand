@@ -134,7 +134,7 @@ export function useTeamJoinRequests(teamId: string | null) {
       // Then get profiles via RPC (bypasses RLS for non-members)
       if (requests && requests.length > 0) {
         const { data: profiles } = await supabase
-          .rpc("get_join_request_profiles", { request_team_id: teamId });
+          .rpc("get_join_request_profiles" as any, { request_team_id: teamId }) as { data: { id: string; full_name: string; avatar_url: string | null; email: string | null }[] | null };
 
         const profileMap = new Map(profiles?.map((p) => [p.id, p]) || []);
 
