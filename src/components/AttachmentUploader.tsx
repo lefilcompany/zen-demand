@@ -67,6 +67,7 @@ function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps)
 
   const Icon = getFileIcon(attachment.file_type);
   const isImage = attachment.file_type.startsWith("image/");
+  const canPreview = isPreviewable(attachment.file_type);
 
   return (
     <>
