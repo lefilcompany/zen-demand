@@ -10,6 +10,7 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { DocumentPreviewDialog, isPreviewable } from "@/components/DocumentPreviewDialog";
 
 interface RequestAttachmentUploaderProps {
   requestId: string;
