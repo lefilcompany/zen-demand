@@ -104,6 +104,17 @@ function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps)
               <Maximize2 className="h-4 w-4" />
             </Button>
           )}
+          {canPreview && !isImage && url && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setPreviewOpen(true)}
+              title="Visualizar"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          )}
           {url && (
             <Button
               variant="ghost"
