@@ -36,24 +36,42 @@ export function DocumentPreviewDialog({
   fileSize,
   getUrl,
 }: DocumentPreviewDialogProps) {
-  const [url, setUrl] = useState<string | null>(null);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (open && !url) {
+    let objectUrl: string | null = null;
+
+    if (open) {
       setLoading(true);
-      getUrl().then((u) => {
-        setUrl(u);
+      getUrl().then(async (signedUrl) => {
+        if (!signedUrl) {
+          setLoading(false);
+          return;
+        }
+        setDownloadUrl(signedUrl);
+        try {
+          const res = await fetch(signedUrl);
+          const blob = await res.blob();
+          objectUrl = URL.createObjectURL(blob);
+          setBlobUrl(objectUrl);
+        } catch (e) {
+          console.error("Failed to fetch blob for preview:", e);
+        }
         setLoading(false);
       });
     }
-    if (!open) {
-      setUrl(null);
-    }
+
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      setBlobUrl(null);
+      setDownloadUrl(null);
+    };
   }, [open]);
 
   const handleDownload = () => {
-    if (url) window.open(url, "_blank");
+    if (downloadUrl) window.open(downloadUrl, "_blank");
   };
 
   const isImage = fileType.startsWith("image/");
@@ -74,7 +92,7 @@ export function DocumentPreviewDialog({
             )}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Button variant="outline" size="sm" onClick={handleDownload} disabled={!url}>
+            <Button variant="outline" size="sm" onClick={handleDownload} disabled={!downloadUrl}>
               <Download className="h-4 w-4 mr-1" />
               Baixar
             </Button>
@@ -91,23 +109,23 @@ export function DocumentPreviewDialog({
               <Loader2 className="h-8 w-8 animate-spin" />
               <span className="text-sm">Carregando documento...</span>
             </div>
-          ) : !url ? (
+          ) : !blobUrl ? (
             <span className="text-sm text-muted-foreground">Não foi possível carregar o arquivo.</span>
           ) : isPdf ? (
             <iframe
-              src={url}
+              src={blobUrl}
               title={fileName}
               className="w-full h-full border-0"
             />
           ) : isImage ? (
             <img
-              src={url}
+              src={blobUrl}
               alt={fileName}
               className="max-w-full max-h-full object-contain p-4"
             />
           ) : isText ? (
             <iframe
-              src={url}
+              src={blobUrl}
               title={fileName}
               className="w-full h-full border-0 bg-background p-4"
             />
