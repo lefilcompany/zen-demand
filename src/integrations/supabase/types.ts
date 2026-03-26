@@ -2311,6 +2311,15 @@ export type Database = {
         Args: { _board_id: string; _service_id: string }
         Returns: number
       }
+      get_join_request_profiles: {
+        Args: { request_team_id: string }
+        Returns: {
+          avatar_url: string
+          email: string
+          full_name: string
+          id: string
+        }[]
+      }
       get_monthly_demand_count: {
         Args: { _month: number; _team_id: string; _year: number }
         Returns: number
