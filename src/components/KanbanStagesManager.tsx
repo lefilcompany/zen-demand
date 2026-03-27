@@ -638,10 +638,12 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                       <TooltipProvider>
                         {localStatuses.map((bs, index) => {
                           const isFixedStatus = isFixedBoundaryStatus(bs.status.name);
+                          const entregueCount = localStatuses.filter(s => s.status.name === FIXED_END_STATUS).length;
+                          const isLastEntregue = isFixedStatus && entregueCount <= 1;
                           const isEndStatus = bs.status.name === FIXED_END_STATUS;
                           const isDragging = dragIndex === index;
                           const isDragOver = dragOverIndex === index && dragIndex !== index;
-                          const canDrag = !isFixedStatus && !isMoving;
+                          const canDrag = !isLastEntregue && !isMoving;
                           const isEditingThis = panelMode === 'edit' && editingStatus?.id === bs.id;
                           
                           return (
