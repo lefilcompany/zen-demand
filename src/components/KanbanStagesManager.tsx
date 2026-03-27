@@ -440,8 +440,12 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const handleDeleteClick = (status: BoardStatus) => {
     const demandCount = demandCounts?.[status.status_id] || 0;
     if (isFixedBoundaryStatus(status.status.name)) {
-      toast.error(`A etapa "${status.status.name}" é essencial para o fluxo e não pode ser removida`);
-      return;
+      // Allow deletion if there are other "Entregue" stages
+      const entregueCount = localStatuses.filter(s => s.status.name === FIXED_END_STATUS).length;
+      if (entregueCount <= 1) {
+        toast.error(`A etapa "${status.status.name}" é essencial para o fluxo e não pode ser removida. Deve existir pelo menos uma.`);
+        return;
+      }
     }
     if (demandCount > 0) {
       toast.error(`Esta etapa possui ${demandCount} demanda${demandCount === 1 ? '' : 's'}. Mova para outra etapa antes de excluir.`);
@@ -634,10 +638,12 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                       <TooltipProvider>
                         {localStatuses.map((bs, index) => {
                           const isFixedStatus = isFixedBoundaryStatus(bs.status.name);
+                          const entregueCount = localStatuses.filter(s => s.status.name === FIXED_END_STATUS).length;
+                          const isLastEntregue = isFixedStatus && entregueCount <= 1;
                           const isEndStatus = bs.status.name === FIXED_END_STATUS;
                           const isDragging = dragIndex === index;
                           const isDragOver = dragOverIndex === index && dragIndex !== index;
-                          const canDrag = !isFixedStatus && !isMoving;
+                          const canDrag = !isLastEntregue && !isMoving;
                           const isEditingThis = panelMode === 'edit' && editingStatus?.id === bs.id;
                           
                           return (
@@ -677,7 +683,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                                   )}>
                                     {bs.status.name}
                                   </span>
-                                  {isFixedStatus && (
+                                  {isLastEntregue && (
                                     <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary shrink-0">Fixa</Badge>
                                   )}
                                 </div>
@@ -686,7 +692,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                                 </Badge>
 
                                 <div className="flex items-center gap-0.5 shrink-0">
-                                  {!isFixedStatus ? (
+                                  {!isLastEntregue ? (
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground" onClick={() => openEditPanel(bs)}>
@@ -715,19 +721,19 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <span>
-                                        <Switch checked={bs.is_active} onCheckedChange={(checked) => handleToggleStatus(bs.id, checked)} disabled={toggleStatus.isPending || isFixedStatus} className="scale-90" />
+                                        <Switch checked={bs.is_active} onCheckedChange={(checked) => handleToggleStatus(bs.id, checked)} disabled={toggleStatus.isPending || isLastEntregue} className="scale-90" />
                                       </span>
                                     </TooltipTrigger>
-                                    {isFixedStatus && <TooltipContent>Etapas fixas não podem ser desativadas</TooltipContent>}
+                                    {isLastEntregue && <TooltipContent>Etapa fixa não pode ser desativada (única "Entregue")</TooltipContent>}
                                   </Tooltip>
 
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <Button variant="ghost" size="icon" className={cn("h-7 w-7 shrink-0", isFixedStatus ? "text-muted-foreground/30 cursor-not-allowed" : "text-muted-foreground hover:text-destructive hover:bg-destructive/10")} onClick={() => !isFixedStatus && handleDeleteClick(bs)} disabled={isFixedStatus}>
+                                      <Button variant="ghost" size="icon" className={cn("h-7 w-7 shrink-0", isLastEntregue ? "text-muted-foreground/30 cursor-not-allowed" : "text-muted-foreground hover:text-destructive hover:bg-destructive/10")} onClick={() => !isLastEntregue && handleDeleteClick(bs)} disabled={isLastEntregue}>
                                         <Trash2 className="h-3.5 w-3.5" />
                                       </Button>
                                     </TooltipTrigger>
-                                    <TooltipContent>{isFixedStatus ? "Etapas fixas não podem ser removidas" : "Remover etapa do quadro"}</TooltipContent>
+                                    <TooltipContent>{isLastEntregue ? "Deve existir pelo menos uma etapa Entregue" : "Remover etapa do quadro"}</TooltipContent>
                                   </Tooltip>
                                 </div>
                               </div>
