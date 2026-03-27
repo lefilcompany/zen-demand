@@ -440,8 +440,12 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   const handleDeleteClick = (status: BoardStatus) => {
     const demandCount = demandCounts?.[status.status_id] || 0;
     if (isFixedBoundaryStatus(status.status.name)) {
-      toast.error(`A etapa "${status.status.name}" é essencial para o fluxo e não pode ser removida`);
-      return;
+      // Allow deletion if there are other "Entregue" stages
+      const entregueCount = localStatuses.filter(s => s.status.name === FIXED_END_STATUS).length;
+      if (entregueCount <= 1) {
+        toast.error(`A etapa "${status.status.name}" é essencial para o fluxo e não pode ser removida. Deve existir pelo menos uma.`);
+        return;
+      }
     }
     if (demandCount > 0) {
       toast.error(`Esta etapa possui ${demandCount} demanda${demandCount === 1 ? '' : 's'}. Mova para outra etapa antes de excluir.`);
