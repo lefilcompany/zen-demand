@@ -683,7 +683,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                                   )}>
                                     {bs.status.name}
                                   </span>
-                                  {isFixedStatus && (
+                                  {isLastEntregue && (
                                     <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary shrink-0">Fixa</Badge>
                                   )}
                                 </div>
