@@ -692,7 +692,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                                 </Badge>
 
                                 <div className="flex items-center gap-0.5 shrink-0">
-                                  {!isFixedStatus ? (
+                                  {!isLastEntregue ? (
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground" onClick={() => openEditPanel(bs)}>
