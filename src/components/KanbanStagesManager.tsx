@@ -721,19 +721,19 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <span>
-                                        <Switch checked={bs.is_active} onCheckedChange={(checked) => handleToggleStatus(bs.id, checked)} disabled={toggleStatus.isPending || isFixedStatus} className="scale-90" />
+                                        <Switch checked={bs.is_active} onCheckedChange={(checked) => handleToggleStatus(bs.id, checked)} disabled={toggleStatus.isPending || isLastEntregue} className="scale-90" />
                                       </span>
                                     </TooltipTrigger>
-                                    {isFixedStatus && <TooltipContent>Etapas fixas não podem ser desativadas</TooltipContent>}
+                                    {isLastEntregue && <TooltipContent>Etapa fixa não pode ser desativada (única "Entregue")</TooltipContent>}
                                   </Tooltip>
 
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <Button variant="ghost" size="icon" className={cn("h-7 w-7 shrink-0", isFixedStatus ? "text-muted-foreground/30 cursor-not-allowed" : "text-muted-foreground hover:text-destructive hover:bg-destructive/10")} onClick={() => !isFixedStatus && handleDeleteClick(bs)} disabled={isFixedStatus}>
+                                      <Button variant="ghost" size="icon" className={cn("h-7 w-7 shrink-0", isLastEntregue ? "text-muted-foreground/30 cursor-not-allowed" : "text-muted-foreground hover:text-destructive hover:bg-destructive/10")} onClick={() => !isLastEntregue && handleDeleteClick(bs)} disabled={isLastEntregue}>
                                         <Trash2 className="h-3.5 w-3.5" />
                                       </Button>
                                     </TooltipTrigger>
-                                    <TooltipContent>{isFixedStatus ? "Etapas fixas não podem ser removidas" : "Remover etapa do quadro"}</TooltipContent>
+                                    <TooltipContent>{isLastEntregue ? "Deve existir pelo menos uma etapa Entregue" : "Remover etapa do quadro"}</TooltipContent>
                                   </Tooltip>
                                 </div>
                               </div>
