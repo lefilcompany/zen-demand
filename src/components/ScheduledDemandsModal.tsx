@@ -48,22 +48,8 @@ export function ScheduledDemandsModal({ boardId, teamId, buttonStyle = "compact"
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Record<string, any>>({});
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const count = recurringDemands?.length || 0;
-
-  const processNow = async () => {
-    setIsProcessing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("process-recurring-demands");
-      if (error) throw error;
-      toast.success(`Processamento concluído: ${data?.processed || 0} demanda(s) criada(s)`);
-    } catch {
-      toast.error("Erro ao processar demandas recorrentes");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const startEditing = (item: any) => {
     setEditingId(item.id);
