@@ -53,7 +53,7 @@ export function DocumentPreviewDialog({
       setBlobUrl(null);
       setDownloadUrl(null);
 
-      getUrl().then(async (signedUrl) => {
+      getUrlRef.current().then(async (signedUrl) => {
         if (cancelled || !signedUrl) {
           if (!cancelled) setLoading(false);
           return;
@@ -79,7 +79,7 @@ export function DocumentPreviewDialog({
       setBlobUrl(null);
       setDownloadUrl(null);
     };
-  }, [open, getUrl]);
+  }, [open]);
 
   const handleDownload = () => {
     if (downloadUrl) downloadFileFromUrl(downloadUrl, fileName);
