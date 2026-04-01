@@ -58,7 +58,7 @@ export default function AdminLayout() {
 
   return (
     <SidebarProvider>
-      <div className="flex h-[100dvh] w-full bg-sidebar p-2 md:p-3 overflow-hidden">
+      <div className="flex flex-1 min-h-0 w-full bg-sidebar p-2 md:p-3 overflow-hidden">
         <AdminSidebar />
         <main className="flex-1 flex flex-col bg-background rounded-xl shadow-xl overflow-hidden min-h-0">
           <header className="flex h-14 shrink-0 items-center justify-between gap-2 bg-background px-4 md:px-6 border-b border-border rounded-t-xl">
