@@ -11,7 +11,7 @@ export interface RecurringDemandInput {
   status_id: string;
   service_id?: string | null;
   assignee_ids?: string[];
-  frequency: "daily" | "weekly" | "biweekly" | "monthly";
+  frequency: "daily" | "weekly" | "biweekly" | "monthly" | "test_1min" | "test_5min";
   weekdays?: number[];
   day_of_month?: number | null;
   start_date: string;
