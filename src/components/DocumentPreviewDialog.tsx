@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, X } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
+import { downloadFileFromUrl } from "@/lib/fileDownloadUtils";
 
 interface DocumentPreviewDialogProps {
   open: boolean;
@@ -71,7 +72,7 @@ export function DocumentPreviewDialog({
   }, [open]);
 
   const handleDownload = () => {
-    if (downloadUrl) window.open(downloadUrl, "_blank");
+    if (downloadUrl) downloadFileFromUrl(downloadUrl, fileName);
   };
 
   const isImage = fileType.startsWith("image/");

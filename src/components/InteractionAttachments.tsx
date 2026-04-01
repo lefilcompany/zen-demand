@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getAttachmentUrl } from "@/hooks/useAttachments";
 import { FileText, Download, Maximize2, Eye } from "lucide-react";
+import { downloadFileFromUrl } from "@/lib/fileDownloadUtils";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -62,7 +63,7 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
   const handleDownload = async () => {
     const url = await getAttachmentUrl(attachment.file_path);
     if (url) {
-      window.open(url, "_blank");
+      downloadFileFromUrl(url, attachment.file_name);
     }
   };
 
@@ -130,7 +131,7 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
               <span className="text-sm text-muted-foreground truncate max-w-[70%]">
                 {attachment.file_name}
               </span>
-              <Button variant="outline" size="sm" onClick={handleDownload}>
+              <Button variant="outline" size="sm" onClick={() => imageUrl && downloadFileFromUrl(imageUrl, attachment.file_name)}>
                 <Download className="h-4 w-4 mr-1" />
                 Baixar
               </Button>

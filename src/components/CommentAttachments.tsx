@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useCommentAttachments, getRequestAttachmentUrl } from "@/hooks/useRequestAttachments";
-import { FileText, Image as ImageIcon, File, Download, X } from "lucide-react";
+import { FileText, Image as ImageIcon, File, Download, Eye } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { downloadFileFromUrl } from "@/lib/fileDownloadUtils";
+import { DocumentPreviewDialog, isPreviewable } from "@/components/DocumentPreviewDialog";
 
 interface CommentAttachmentsProps {
   commentId: string;
@@ -24,8 +26,9 @@ function getFileIcon(fileType: string) {
 
 export function CommentAttachments({ commentId, className }: CommentAttachmentsProps) {
   const { data: attachments, isLoading } = useCommentAttachments(commentId);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<{ url: string; name: string } | null>(null);
   const [loadingUrls, setLoadingUrls] = useState<Record<string, string>>({});
+  const [previewFile, setPreviewFile] = useState<{ filePath: string; fileName: string; fileType: string; fileSize: number } | null>(null);
 
   const loadImageUrl = async (filePath: string, attachmentId: string) => {
     if (loadingUrls[attachmentId]) return loadingUrls[attachmentId];
@@ -39,20 +42,14 @@ export function CommentAttachments({ commentId, className }: CommentAttachmentsP
   const handleDownload = async (filePath: string, fileName: string) => {
     const url = await getRequestAttachmentUrl(filePath);
     if (url) {
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName;
-      a.target = "_blank";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      downloadFileFromUrl(url, fileName);
     }
   };
 
-  const handleImageClick = async (filePath: string, attachmentId: string) => {
+  const handleImageClick = async (filePath: string, attachmentId: string, fileName: string) => {
     const url = loadingUrls[attachmentId] || (await loadImageUrl(filePath, attachmentId));
     if (url) {
-      setImagePreview(url);
+      setImagePreview({ url, name: fileName });
     }
   };
 
@@ -70,7 +67,7 @@ export function CommentAttachments({ commentId, className }: CommentAttachmentsP
             <ImageThumbnail
               key={attachment.id}
               attachment={attachment}
-              onClick={() => handleImageClick(attachment.file_path, attachment.id)}
+              onClick={() => handleImageClick(attachment.file_path, attachment.id, attachment.file_name)}
               cachedUrl={loadingUrls[attachment.id]}
               onLoadUrl={(url) => setLoadingUrls((prev) => ({ ...prev, [attachment.id]: url }))}
             />
@@ -83,6 +80,7 @@ export function CommentAttachments({ commentId, className }: CommentAttachmentsP
         <div className="flex flex-wrap gap-2">
           {files.map((attachment) => {
             const Icon = getFileIcon(attachment.file_type);
+            const canPreview = isPreviewable(attachment.file_type);
             return (
               <div
                 key={attachment.id}
@@ -91,6 +89,17 @@ export function CommentAttachments({ commentId, className }: CommentAttachmentsP
                 <Icon className="h-3 w-3 text-muted-foreground" />
                 <span className="truncate max-w-[100px]">{attachment.file_name}</span>
                 <span className="text-muted-foreground">{formatSize(attachment.file_size)}</span>
+                {canPreview && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5"
+                    onClick={() => setPreviewFile({ filePath: attachment.file_path, fileName: attachment.file_name, fileType: attachment.file_type, fileSize: attachment.file_size })}
+                    title="Visualizar"
+                  >
+                    <Eye className="h-3 w-3" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -107,26 +116,39 @@ export function CommentAttachments({ commentId, className }: CommentAttachmentsP
 
       {/* Image preview modal */}
       <Dialog open={!!imagePreview} onOpenChange={() => setImagePreview(null)}>
-        <DialogContent className="max-w-4xl p-0 overflow-hidden">
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-2 right-2 z-10 bg-background/80"
-              onClick={() => setImagePreview(null)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-            {imagePreview && (
+        <DialogContent className="max-w-[90vw] max-h-[90vh] p-4 flex flex-col items-center justify-center gap-3">
+          {imagePreview && (
+            <>
               <img
-                src={imagePreview}
-                alt="Preview"
-                className="w-full h-auto max-h-[80vh] object-contain"
+                src={imagePreview.url}
+                alt={imagePreview.name}
+                className="max-w-full max-h-[78vh] object-contain rounded-md"
               />
-            )}
-          </div>
+              <div className="flex items-center justify-between w-full px-1">
+                <span className="text-sm text-muted-foreground truncate max-w-[70%]">
+                  {imagePreview.name}
+                </span>
+                <Button variant="outline" size="sm" onClick={() => downloadFileFromUrl(imagePreview.url, imagePreview.name)}>
+                  <Download className="h-4 w-4 mr-1" />
+                  Baixar
+                </Button>
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
+
+      {/* Document preview modal */}
+      {previewFile && (
+        <DocumentPreviewDialog
+          open={!!previewFile}
+          onOpenChange={(open) => { if (!open) setPreviewFile(null); }}
+          fileName={previewFile.fileName}
+          fileType={previewFile.fileType}
+          fileSize={previewFile.fileSize}
+          getUrl={() => getRequestAttachmentUrl(previewFile.filePath)}
+        />
+      )}
     </div>
   );
 }
