@@ -168,11 +168,6 @@ export function calculateNextRunDate(
   today.setHours(0, 0, 0, 0);
   const start = new Date(startDate + "T00:00:00");
 
-  // Test frequencies: always set next_run_date to today so cron picks it up immediately
-  if (frequency === "test_1min" || frequency === "test_5min") {
-    return formatDate(today);
-  }
-
   // If start_date is in the future or today, use it directly (or find first matching day)
   if (start >= today) {
     if ((frequency === "weekly" || frequency === "biweekly") && weekdays && weekdays.length > 0) {
