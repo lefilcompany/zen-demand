@@ -46,10 +46,10 @@ export function CommentAttachments({ commentId, className }: CommentAttachmentsP
     }
   };
 
-  const handleImageClick = async (filePath: string, attachmentId: string) => {
+  const handleImageClick = async (filePath: string, attachmentId: string, fileName: string) => {
     const url = loadingUrls[attachmentId] || (await loadImageUrl(filePath, attachmentId));
     if (url) {
-      setImagePreview(url);
+      setImagePreview({ url, name: fileName });
     }
   };
 
