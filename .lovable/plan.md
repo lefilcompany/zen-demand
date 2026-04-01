@@ -2,38 +2,48 @@
 
 ## Problem
 
-When a logged-in user opens a shared demand link (`/shared/:token`), they always see the public read-only view. If they belong to the demand's board, they should be redirected to the full internal view (`/demands/:id`) with automatic board switching. If they don't belong to the board, the public view should still work fine (which it already does).
+Multiple issues with attachment preview modals across demands and chat:
+
+1. **Two overlapping close buttons**: `DialogContent` already renders an X button (from `dialog.tsx` line 45-48), and some modals add a second manual X button
+2. **Download opens new tab instead of downloading**: `window.open(url, "_blank")` and `<a href={url} target="_blank">` just navigate to the signed URL — they don't trigger a real download
+3. **Chat attachments (non-image) only show download, no preview**: `CommentAttachments` only has a download button for files, no way to open `DocumentPreviewDialog`
+4. **Image preview in chat** uses a raw Dialog with manual X button (duplicate close)
 
 ## Solution
 
-Modify `src/pages/SharedDemand.tsx` to detect if the current user is authenticated and belongs to the demand's board. If so, redirect them to `/demands/:demandId` (which already auto-switches board context via the existing `DemandDetail` effect).
+### 1. Fix `DocumentPreviewDialog` — remove duplicate close button, fix download
 
-### Changes
+- Remove the header's manual close button since `DialogContent` already provides one
+- Fix download: fetch as blob → create object URL → use `<a download>` trick to force real download instead of opening new tab
+- Style: position the native DialogContent X button properly so it doesn't overlap with the "Baixar" button
 
-**`src/pages/SharedDemand.tsx`**:
-- Import `useAuth` and `useSelectedBoard` (safe version)
-- After the demand data loads, check if the user is logged in
-- If logged in, fetch the user's board IDs and check if `demand.board_id` (obtained from the edge function response — need to include `board_id` in the shared-demand response) is in their boards
-- If the user is a board member: `navigate(/demands/${demand.id}, { replace: true })` and call `setSelectedBoardId(demand.board_id)` before navigating
-- If the user is NOT a board member: show the existing public view as-is (no change)
+### 2. Fix `AttachmentUploader` image preview — remove duplicate X, fix download
 
-**`supabase/functions/shared-demand/index.ts`**:
-- Add `board_id` to the demand select query (it's already in the `demands` table columns but not explicitly selected — need to verify and add if missing)
+- In the image expanded dialog, remove the manual `<Button>` with X icon (DialogContent already has one)
+- Fix download: use blob fetch + `<a download>` pattern
 
-### Flow
+### 3. Fix `InteractionAttachments` (chat) — remove duplicate X, fix download, add preview for files
 
-```text
-User opens /shared/:token
-  ├─ Not logged in → public read-only view (current behavior)
-  └─ Logged in
-       ├─ Is board member → switch board + redirect to /demands/:id
-       └─ Not board member → public read-only view
-```
+- Remove manual X button in image preview dialog
+- Fix `handleDownload` to use blob download
+- For non-image files: add the same preview capability using `DocumentPreviewDialog`
 
-### Technical details
-- The `useAuth` hook provides `session?.user` to check login status
-- The `useSelectedBoard` hook (safe version) provides `boards` array and `setSelectedBoardId`
-- Board membership check: `boards?.some(b => b.id === demand.board_id)`
-- The redirect uses `replace: true` to avoid back-button loops
-- The edge function already returns the demand object; just need to ensure `board_id` is in the select fields
+### 4. Fix `CommentAttachments` — add file preview, remove duplicate X, fix download
+
+- Add `DocumentPreviewDialog` for non-image file attachments (click to preview)
+- Remove manual X button from image preview dialog
+- Fix download to use blob pattern
+- Add an Eye icon button for previewable files
+
+### 5. Create shared download utility
+
+- Add a `downloadFileFromUrl(signedUrl, fileName)` helper in a utils file that fetches as blob and triggers a real download via anchor element with `download` attribute
+
+### Files to change
+
+1. **`src/lib/fileDownloadUtils.ts`** (new) — shared blob download function
+2. **`src/components/DocumentPreviewDialog.tsx`** — fix download, remove redundant close button styling
+3. **`src/components/AttachmentUploader.tsx`** — remove duplicate X, use blob download
+4. **`src/components/InteractionAttachments.tsx`** — remove duplicate X, use blob download
+5. **`src/components/CommentAttachments.tsx`** — add DocumentPreviewDialog for files, remove duplicate X, use blob download
 
