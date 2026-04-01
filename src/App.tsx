@@ -183,6 +183,8 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
               </TeamProvider>
             </PresenceProvider>
           </AuthProvider>
+          </div>
+          </div>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
