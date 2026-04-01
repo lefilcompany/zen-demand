@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 export interface RecurrenceData {
   enabled: boolean;
-  frequency: "daily" | "weekly" | "biweekly" | "monthly";
+  frequency: "daily" | "weekly" | "biweekly" | "monthly" | "test_1min" | "test_5min";
   weekdays: number[];
   dayOfMonth: number | null;
   startDate: string;
@@ -118,6 +118,8 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                   {value.frequency === "weekly" && "Semanal"}
                   {value.frequency === "biweekly" && "Quinzenal"}
                   {value.frequency === "monthly" && `Mensal (dia ${value.dayOfMonth || 1})`}
+                  {value.frequency === "test_1min" && "Teste (1 min)"}
+                  {value.frequency === "test_5min" && "Teste (5 min)"}
                 </span>
                 {startDate && (
                   <span className="text-muted-foreground">
@@ -151,6 +153,27 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                         value.frequency === opt.value
                           ? "bg-background text-foreground shadow-sm"
                           : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 p-1 bg-amber-500/10 rounded-lg border border-amber-500/20">
+                  <span className="col-span-2 text-[10px] text-amber-600 dark:text-amber-400 font-semibold uppercase tracking-wider px-1 pt-0.5">Teste rápido</span>
+                  {[
+                    { value: "test_1min" as const, label: "1 min" },
+                    { value: "test_5min" as const, label: "5 min" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => update({ frequency: opt.value })}
+                      className={cn(
+                        "px-2 py-1.5 text-xs font-medium rounded-md transition-all duration-150 text-center",
+                        value.frequency === opt.value
+                          ? "bg-amber-500 text-white shadow-sm"
+                          : "text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
                       )}
                     >
                       {opt.label}
@@ -363,6 +386,8 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                       : "Selecione pelo menos um dia.")}
                   {value.frequency === "monthly" &&
                     `Todo dia ${value.dayOfMonth || 1} de cada mês.`}
+                  {value.frequency === "test_1min" && "⚡ Modo teste: nova demanda a cada 1 minuto."}
+                  {value.frequency === "test_5min" && "⚡ Modo teste: nova demanda a cada 5 minutos."}
                 </p>
               </div>
             </div>

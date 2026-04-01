@@ -11,7 +11,7 @@ export interface RecurringDemandInput {
   status_id: string;
   service_id?: string | null;
   assignee_ids?: string[];
-  frequency: "daily" | "weekly" | "biweekly" | "monthly";
+  frequency: "daily" | "weekly" | "biweekly" | "monthly" | "test_1min" | "test_5min";
   weekdays?: number[];
   day_of_month?: number | null;
   start_date: string;
@@ -91,7 +91,7 @@ export interface RecurringDemandUpdate {
   title?: string;
   description?: string | null;
   priority?: string;
-  frequency?: "daily" | "weekly" | "biweekly" | "monthly";
+  frequency?: "daily" | "weekly" | "biweekly" | "monthly" | "test_1min" | "test_5min";
   weekdays?: number[];
   day_of_month?: number | null;
   start_date?: string;
@@ -167,6 +167,11 @@ export function calculateNextRunDate(
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const start = new Date(startDate + "T00:00:00");
+
+  // Test frequencies: always set next_run_date to today so cron picks it up immediately
+  if (frequency === "test_1min" || frequency === "test_5min") {
+    return formatDate(today);
+  }
 
   // If start_date is in the future or today, use it directly (or find first matching day)
   if (start >= today) {

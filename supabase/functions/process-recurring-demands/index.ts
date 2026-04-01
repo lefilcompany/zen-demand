@@ -54,6 +54,19 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        // For test frequencies, check cooldown based on last_generated_at
+        if (rd.frequency === "test_1min" || rd.frequency === "test_5min") {
+          if (rd.last_generated_at) {
+            const lastGen = new Date(rd.last_generated_at).getTime();
+            const now = Date.now();
+            const cooldownMs = rd.frequency === "test_1min" ? 60 * 1000 : 5 * 60 * 1000;
+            if (now - lastGen < cooldownMs) {
+              console.log(`Skipping ${rd.id}: cooldown not elapsed (${rd.frequency})`);
+              continue;
+            }
+          }
+        }
+
         // Calculate due_date: if service has estimated_hours, add business days
         const estimatedHours = rd.services?.estimated_hours;
         const dueDate = estimatedHours
@@ -174,6 +187,11 @@ function calculateNextRunDate(
   dayOfMonth: number | null
 ): string {
   const current = new Date(currentDate + "T12:00:00Z");
+
+  // Test frequencies: next_run_date = today (cron runs every minute, so it'll pick it up again)
+  if (frequency === "test_1min" || frequency === "test_5min") {
+    return formatDate(current); // same day = cron picks it up next minute
+  }
 
   if (frequency === "daily") {
     current.setUTCDate(current.getUTCDate() + 1);
