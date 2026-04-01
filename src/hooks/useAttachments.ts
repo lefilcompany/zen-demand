@@ -127,6 +127,18 @@ export async function getAttachmentUrl(filePath: string): Promise<string | null>
       return null;
     }
 
+    if (error && "context" in error) {
+      try {
+        const response = error.context as Response;
+        const errorBody = await response.json().catch(() => null);
+        if (errorBody?.code === "FILE_NOT_FOUND" || errorBody?.code === "ATTACHMENT_NOT_FOUND") {
+          return null;
+        }
+      } catch {
+        // ignore response parsing failures and continue to fallback
+      }
+    }
+
     console.error("Edge function error:", error || data);
   } catch (e) {
     console.error("Failed to get attachment URL:", e);

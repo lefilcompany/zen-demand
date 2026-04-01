@@ -12,11 +12,21 @@ const respond = (status: number, body: Record<string, unknown>) =>
 
 const BUCKET = "demand-attachments";
 
+function safeDecodeURIComponent(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 function normalizeObjectPath(raw: string): string {
-  return decodeURIComponent(String(raw))
+  return safeDecodeURIComponent(String(raw))
     .replace(/^https?:\/\/[^/]+\/storage\/v1\/object\/(?:public|sign)\/[^/]+\//, "")
-    .replace(new RegExp(`^${BUCKET}/`), "")
     .replace(/^\/+/, "")
+    .replace(new RegExp(`^${BUCKET}/`), "")
+    .replace(/^attachments\//, "")
+    .replace(/\?.*$/, "")
     .trim();
 }
 
@@ -90,9 +100,21 @@ Deno.serve(async (req) => {
 
     if (signError || !signedData?.signedUrl) {
       console.error("Signed URL error:", signError, "path:", filePath);
-      return respond(404, {
-        code: "FILE_NOT_FOUND",
-        error: "O arquivo não existe mais no armazenamento. Pode ter sido removido.",
+      const isMissingFile =
+        signError?.statusCode === "404" ||
+        signError?.status === 400 ||
+        signError?.message?.toLowerCase().includes("object not found");
+
+      if (isMissingFile) {
+        return respond(404, {
+          code: "FILE_NOT_FOUND",
+          error: "O arquivo não existe mais no armazenamento. Pode ter sido removido.",
+        });
+      }
+
+      return respond(500, {
+        code: "SIGNED_URL_ERROR",
+        error: "Failed to generate signed URL",
       });
     }
 
