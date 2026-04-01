@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { RichTextDisplay } from "@/components/ui/rich-text-editor";
 import { useSharedDemand, useSharedDemandInteractions, useSharedDemandAttachments } from "@/hooks/useShareDemand";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Calendar, Users, Wrench, ExternalLink, Lock, MessageSquare, Loader2, AlertTriangle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -15,12 +15,30 @@ import { cn } from "@/lib/utils";
 import logoSoma from "@/assets/logo-soma.png";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
+import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 
 export default function SharedDemand() {
   const { token } = useParams<{ token: string }>();
+  const navigate = useNavigate();
+  const { session } = useAuth();
+  const { boards, setSelectedBoardId } = useSelectedBoardSafe();
+  const redirectedRef = useRef(false);
   const { data: demand, isLoading, error } = useSharedDemand(token || null);
   const { data: interactions } = useSharedDemandInteractions(token || null, demand?.id || null);
   const { data: attachments } = useSharedDemandAttachments(token || null, demand?.id || null);
+
+  // Redirect authenticated board members to internal view
+  useEffect(() => {
+    if (redirectedRef.current || !demand?.id || !demand?.board_id || !session?.user || !boards) return;
+    
+    const isBoardMember = boards.some((b: any) => b.id === demand.board_id);
+    if (isBoardMember) {
+      redirectedRef.current = true;
+      setSelectedBoardId(demand.board_id);
+      navigate(`/demands/${demand.id}`, { replace: true });
+    }
+  }, [demand, session, boards, setSelectedBoardId, navigate]);
 
   const comments = interactions?.filter((i: any) => i.interaction_type === "comment") || [];
 
