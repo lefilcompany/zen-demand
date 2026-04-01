@@ -146,7 +146,7 @@ export function useDeleteRecurringDemand() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("recurring_demands" as any)
+        .from("recurring_demands")
         .update({ is_active: false })
         .eq("id", id);
 
