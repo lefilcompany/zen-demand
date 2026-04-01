@@ -25,7 +25,7 @@ export function useRecurringDemands(boardId?: string) {
     queryKey: ["recurring-demands", boardId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("recurring_demands" as any)
+        .from("recurring_demands")
         .select("*")
         .eq("board_id", boardId!)
         .eq("is_active", true)
