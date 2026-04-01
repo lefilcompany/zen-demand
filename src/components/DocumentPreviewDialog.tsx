@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
@@ -37,35 +37,45 @@ export function DocumentPreviewDialog({
   fileSize,
   getUrl,
 }: DocumentPreviewDialogProps) {
+  const getUrlRef = useRef(getUrl);
+  getUrlRef.current = getUrl;
+
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    let objectUrl: string | null = null;
+    let cancelled = false;
+    let currentObjectUrl: string | null = null;
 
     if (open) {
       setLoading(true);
-      getUrl().then(async (signedUrl) => {
-        if (!signedUrl) {
-          setLoading(false);
+      setBlobUrl(null);
+      setDownloadUrl(null);
+
+      getUrlRef.current().then(async (signedUrl) => {
+        if (cancelled || !signedUrl) {
+          if (!cancelled) setLoading(false);
           return;
         }
         setDownloadUrl(signedUrl);
         try {
           const res = await fetch(signedUrl);
+          if (cancelled) return;
           const blob = await res.blob();
-          objectUrl = URL.createObjectURL(blob);
-          setBlobUrl(objectUrl);
+          if (cancelled) return;
+          currentObjectUrl = URL.createObjectURL(blob);
+          setBlobUrl(currentObjectUrl);
         } catch (e) {
           console.error("Failed to fetch blob for preview:", e);
         }
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       });
     }
 
     return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      cancelled = true;
+      if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
       setBlobUrl(null);
       setDownloadUrl(null);
     };
