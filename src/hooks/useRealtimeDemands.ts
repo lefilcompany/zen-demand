@@ -84,8 +84,14 @@ export function useRealtimeAllDemands() {
         (payload) => {
           console.log('Realtime demand change (all):', payload.eventType);
           
-          // Invalidate all demands queries
+          // Invalidate all demands queries broadly
           queryClient.invalidateQueries({ queryKey: ["demands"] });
+          queryClient.invalidateQueries({ queryKey: ["demands-list"] });
+          queryClient.invalidateQueries({ queryKey: ["my-demands-overview"] });
+          queryClient.invalidateQueries({ queryKey: ["all-team-demands"] });
+          queryClient.invalidateQueries({ queryKey: ["active-timer-demands"] });
+          queryClient.invalidateQueries({ queryKey: ["demands-by-period"] });
+          queryClient.invalidateQueries({ queryKey: ["demands-by-status"] });
           
           // If it's a specific demand, invalidate that too
           if (payload.new && (payload.new as any).id) {
