@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarClock, ChevronDown, ChevronRight, Pencil, Power, Save, X, Loader2, Play } from "lucide-react";
+import { CalendarClock, ChevronDown, ChevronRight, Pencil, Power, Save, X, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,7 +17,6 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useRecurringDemands, useUpdateRecurringDemand, useDeleteRecurringDemand, calculateNextRunDate } from "@/hooks/useRecurringDemands";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface ScheduledDemandsModalProps {
@@ -32,8 +31,6 @@ const FREQUENCY_LABELS: Record<string, string> = {
   weekly: "Semanal",
   biweekly: "Quinzenal",
   monthly: "Mensal",
-  test_1min: "Teste (1 min)",
-  test_5min: "Teste (5 min)",
 };
 const PRIORITY_OPTIONS = [
   { value: "baixa", label: "Baixa" },
@@ -51,22 +48,8 @@ export function ScheduledDemandsModal({ boardId, teamId, buttonStyle = "compact"
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Record<string, any>>({});
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const count = recurringDemands?.length || 0;
-
-  const processNow = async () => {
-    setIsProcessing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("process-recurring-demands");
-      if (error) throw error;
-      toast.success(`Processamento concluído: ${data?.processed || 0} demanda(s) criada(s)`);
-    } catch {
-      toast.error("Erro ao processar demandas recorrentes");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const startEditing = (item: any) => {
     setEditingId(item.id);
@@ -151,24 +134,10 @@ export function ScheduledDemandsModal({ boardId, teamId, buttonStyle = "compact"
       </DialogTrigger>
       <DialogContent className="w-[calc(100%-2rem)] max-w-3xl h-[90vh] sm:h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-2">
-              <CalendarClock className="h-5 w-5" />
-              Demandas Agendadas
-            </DialogTitle>
-            {count > 0 && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={processNow}
-                disabled={isProcessing}
-                className="h-7 text-xs gap-1"
-              >
-                {isProcessing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
-                Processar agora
-              </Button>
-            )}
-          </div>
+          <DialogTitle className="flex items-center gap-2">
+            <CalendarClock className="h-5 w-5" />
+            Demandas Agendadas
+          </DialogTitle>
         </DialogHeader>
 
         {isLoading ? (
