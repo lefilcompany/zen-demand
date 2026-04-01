@@ -91,6 +91,9 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
+          <div className="flex flex-col h-[100dvh]">
+          <UpdateBanner />
+          <div className="flex-1 min-h-0 flex flex-col">
           <ScrollToTop />
           <AuthProvider>
             <PresenceProvider>
