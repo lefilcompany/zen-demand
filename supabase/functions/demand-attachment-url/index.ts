@@ -5,13 +5,20 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const jsonHeaders = {
-  ...corsHeaders,
-  "Content-Type": "application/json",
-};
+const jsonHeaders = { ...corsHeaders, "Content-Type": "application/json" };
 
-const createResponse = (status: number, body: Record<string, unknown>) =>
+const respond = (status: number, body: Record<string, unknown>) =>
   new Response(JSON.stringify(body), { status, headers: jsonHeaders });
+
+const BUCKET = "demand-attachments";
+
+function normalizeObjectPath(raw: string): string {
+  return decodeURIComponent(String(raw))
+    .replace(/^https?:\/\/[^/]+\/storage\/v1\/object\/(?:public|sign)\/[^/]+\//, "")
+    .replace(new RegExp(`^${BUCKET}/`), "")
+    .replace(/^\/+/, "")
+    .trim();
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -21,48 +28,33 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return createResponse(401, {
-        code: "UNAUTHORIZED",
-        error: "Missing authorization header",
-      });
+      return respond(401, { code: "UNAUTHORIZED", error: "Missing authorization header" });
     }
 
     const payload = await req.json().catch(() => null);
-    const filePath = typeof payload?.filePath === "string" ? payload.filePath.trim() : "";
+    const rawPath = payload?.filePath ?? payload?.path ?? payload?.url ?? "";
+    const filePath = normalizeObjectPath(rawPath);
 
     if (!filePath) {
-      return createResponse(400, {
-        code: "BAD_REQUEST",
-        error: "Missing filePath",
-      });
+      return respond(400, { code: "BAD_REQUEST", error: "Missing filePath" });
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+    // Validate user session
     const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: {
-          Authorization: authHeader,
-        },
-      },
+      global: { headers: { Authorization: authHeader } },
     });
-
-    const {
-      data: { user },
-      error: authError,
-    } = await authClient.auth.getUser();
-
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
     if (authError || !user) {
-      return createResponse(401, {
-        code: "UNAUTHORIZED",
-        error: "Invalid user session",
-      });
+      return respond(401, { code: "UNAUTHORIZED", error: "Invalid user session" });
     }
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Find the attachment record
     const { data: attachment, error: attachmentError } = await adminClient
       .from("demand_attachments")
       .select("id, file_path, demand_id, demands!inner(board_id)")
@@ -70,62 +62,43 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (attachmentError) {
-      console.error("Error loading attachment metadata:", attachmentError);
-      return createResponse(500, {
-        code: "ATTACHMENT_LOOKUP_ERROR",
-        error: "Failed to validate attachment",
-      });
+      console.error("Attachment lookup error:", attachmentError);
+      return respond(500, { code: "ATTACHMENT_LOOKUP_ERROR", error: "Failed to validate attachment" });
     }
 
     if (!attachment) {
-      return createResponse(404, {
-        code: "ATTACHMENT_NOT_FOUND",
-        error: "Attachment not found",
-      });
+      return respond(404, { code: "ATTACHMENT_NOT_FOUND", error: "Attachment not found" });
     }
 
+    // Check board membership
     const boardId = (attachment as { demands: { board_id: string } }).demands.board_id;
-
-    const { data: membership, error: membershipError } = await adminClient
+    const { data: membership } = await adminClient
       .from("board_members")
       .select("id")
       .eq("board_id", boardId)
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (membershipError) {
-      console.error("Error validating board membership:", membershipError);
-      return createResponse(500, {
-        code: "ACCESS_VALIDATION_ERROR",
-        error: "Failed to validate access",
-      });
-    }
-
     if (!membership) {
-      return createResponse(403, {
-        code: "FORBIDDEN",
-        error: "You do not have access to this attachment",
-      });
+      return respond(403, { code: "FORBIDDEN", error: "You do not have access to this attachment" });
     }
 
+    // Generate signed URL
     const { data: signedData, error: signError } = await adminClient.storage
-      .from("demand-attachments")
+      .from(BUCKET)
       .createSignedUrl(filePath, 3600);
 
     if (signError || !signedData?.signedUrl) {
-      console.error("Error creating signed URL:", signError);
-      return createResponse(404, {
-        code: "SIGNED_URL_ERROR",
-        error: "Failed to generate signed URL",
+      console.error("Signed URL error:", signError, "path:", filePath);
+      return respond(404, {
+        code: "FILE_NOT_FOUND",
+        error: "O arquivo não existe mais no armazenamento. Pode ter sido removido.",
       });
     }
 
-    return createResponse(200, { signedUrl: signedData.signedUrl });
+    return respond(200, { signedUrl: signedData.signedUrl });
   } catch (error) {
     console.error("Unexpected demand-attachment-url error:", error);
-    return createResponse(500, {
-      code: "LOAD_ERROR",
-      error: "Internal server error",
-    });
+    return respond(500, { code: "LOAD_ERROR", error: "Internal server error" });
   }
 });

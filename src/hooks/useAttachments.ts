@@ -113,22 +113,34 @@ export function useDeleteAttachment() {
 }
 
 export async function getAttachmentUrl(filePath: string): Promise<string | null> {
-  const { data, error } = await supabase.functions.invoke("demand-attachment-url", {
-    body: { filePath },
-  });
+  try {
+    const { data, error } = await supabase.functions.invoke("demand-attachment-url", {
+      body: { filePath },
+    });
 
-  if (!error && data?.signedUrl) {
-    return data.signedUrl as string;
+    if (!error && data?.signedUrl) {
+      return data.signedUrl as string;
+    }
+
+    // If file not found (deleted), return null silently
+    if (data?.code === "FILE_NOT_FOUND" || data?.code === "ATTACHMENT_NOT_FOUND") {
+      return null;
+    }
+
+    console.error("Edge function error:", error || data);
+  } catch (e) {
+    console.error("Failed to get attachment URL:", e);
   }
 
-  console.error("Error generating attachment URL via function:", error);
-
+  // Fallback to direct signed URL
   const { data: fallbackData, error: fallbackError } = await supabase.storage
     .from("demand-attachments")
     .createSignedUrl(filePath, 14400);
 
   if (fallbackError) {
-    console.error("Error creating signed URL:", fallbackError);
+    // File doesn't exist in storage — suppress noisy logs for known missing files
+    if (fallbackError.message?.includes("not found")) return null;
+    console.error("Fallback signed URL error:", fallbackError);
     return null;
   }
 
@@ -144,6 +156,6 @@ export function useAttachmentUrl(filePath: string | null) {
       return getAttachmentUrl(filePath);
     },
     enabled: !!filePath,
-    staleTime: 1000 * 60 * 60 * 3, // Cache for 3 hours (less than signed URL expiration)
+    staleTime: 1000 * 60 * 60 * 3,
   });
 }
