@@ -2,50 +2,38 @@
 
 ## Problem
 
-The recurring demand with `test_1min` frequency **never gets saved to the database** because there's a CHECK constraint on the `frequency` column:
-
-```
-CHECK (frequency = ANY (ARRAY['daily', 'weekly', 'biweekly', 'monthly']))
-```
-
-Values `test_1min` and `test_5min` are rejected, so the insert silently fails (error caught in try/catch, shown as a warning toast). The "Demandas Agendadas" modal shows empty because the table has zero rows.
-
-Additionally, `next_run_date` is a `date` column (not `timestamptz`), so the edge function's `lte('next_run_date', today)` check will always match once set to today. The cooldown logic using `last_generated_at` in the edge function handles this, but it's fragile.
+When a logged-in user opens a shared demand link (`/shared/:token`), they always see the public read-only view. If they belong to the demand's board, they should be redirected to the full internal view (`/demands/:id`) with automatic board switching. If they don't belong to the board, the public view should still work fine (which it already does).
 
 ## Solution
 
-### Step 1: Update the CHECK constraint (migration)
+Modify `src/pages/SharedDemand.tsx` to detect if the current user is authenticated and belongs to the demand's board. If so, redirect them to `/demands/:demandId` (which already auto-switches board context via the existing `DemandDetail` effect).
 
-Alter the constraint to accept the test frequencies:
+### Changes
 
-```sql
-ALTER TABLE recurring_demands DROP CONSTRAINT recurring_demands_frequency_check;
-ALTER TABLE recurring_demands ADD CONSTRAINT recurring_demands_frequency_check 
-  CHECK (frequency = ANY (ARRAY['daily', 'weekly', 'biweekly', 'monthly', 'test_1min', 'test_5min']));
+**`src/pages/SharedDemand.tsx`**:
+- Import `useAuth` and `useSelectedBoard` (safe version)
+- After the demand data loads, check if the user is logged in
+- If logged in, fetch the user's board IDs and check if `demand.board_id` (obtained from the edge function response — need to include `board_id` in the shared-demand response) is in their boards
+- If the user is a board member: `navigate(/demands/${demand.id}, { replace: true })` and call `setSelectedBoardId(demand.board_id)` before navigating
+- If the user is NOT a board member: show the existing public view as-is (no change)
+
+**`supabase/functions/shared-demand/index.ts`**:
+- Add `board_id` to the demand select query (it's already in the `demands` table columns but not explicitly selected — need to verify and add if missing)
+
+### Flow
+
+```text
+User opens /shared/:token
+  ├─ Not logged in → public read-only view (current behavior)
+  └─ Logged in
+       ├─ Is board member → switch board + redirect to /demands/:id
+       └─ Not board member → public read-only view
 ```
 
-### Step 2: Improve edge function cooldown reliability
-
-The edge function already has cooldown logic for test frequencies using `last_generated_at`. This is correct and sufficient. No changes needed to the edge function.
-
-### Step 3: No other changes needed
-
-- The UI (`RecurrenceConfig.tsx`) already supports `test_1min` and `test_5min`
-- The hook (`useRecurringDemands.ts`) already calculates `next_run_date` correctly for test frequencies (sets to today)
-- The cron job is running every minute (confirmed by logs)
-- The `ScheduledDemandsModal` already has the "Processar agora" button
-
-### Why it will work after the fix
-
-1. User creates demand with `test_1min` → insert succeeds (constraint allows it)
-2. `next_run_date` = today → cron picks it up within 1 minute
-3. Edge function creates the demand, sets `last_generated_at = now()`, keeps `next_run_date = today`
-4. Next cron run: checks cooldown (`now - last_generated_at < 60s`) → skips if too soon
-5. After 60s: cooldown elapsed → creates another demand
-
-### Files changed
-
-1. **Migration SQL** — drop + re-add CHECK constraint to include `test_1min` and `test_5min`
-
-That's it — one single database constraint fix resolves the entire issue.
+### Technical details
+- The `useAuth` hook provides `session?.user` to check login status
+- The `useSelectedBoard` hook (safe version) provides `boards` array and `setSelectedBoardId`
+- Board membership check: `boards?.some(b => b.id === demand.board_id)`
+- The redirect uses `replace: true` to avoid back-button loops
+- The edge function already returns the demand object; just need to ensure `board_id` is in the select fields
 
