@@ -26,8 +26,9 @@ function getFileIcon(fileType: string) {
 
 export function CommentAttachments({ commentId, className }: CommentAttachmentsProps) {
   const { data: attachments, isLoading } = useCommentAttachments(commentId);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<{ url: string; name: string } | null>(null);
   const [loadingUrls, setLoadingUrls] = useState<Record<string, string>>({});
+  const [previewFile, setPreviewFile] = useState<{ filePath: string; fileName: string; fileType: string; fileSize: number } | null>(null);
 
   const loadImageUrl = async (filePath: string, attachmentId: string) => {
     if (loadingUrls[attachmentId]) return loadingUrls[attachmentId];
