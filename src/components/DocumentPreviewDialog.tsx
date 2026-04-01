@@ -42,34 +42,41 @@ export function DocumentPreviewDialog({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    let objectUrl: string | null = null;
+    let cancelled = false;
+    let currentObjectUrl: string | null = null;
 
     if (open) {
       setLoading(true);
+      setBlobUrl(null);
+      setDownloadUrl(null);
+
       getUrl().then(async (signedUrl) => {
-        if (!signedUrl) {
-          setLoading(false);
+        if (cancelled || !signedUrl) {
+          if (!cancelled) setLoading(false);
           return;
         }
         setDownloadUrl(signedUrl);
         try {
           const res = await fetch(signedUrl);
+          if (cancelled) return;
           const blob = await res.blob();
-          objectUrl = URL.createObjectURL(blob);
-          setBlobUrl(objectUrl);
+          if (cancelled) return;
+          currentObjectUrl = URL.createObjectURL(blob);
+          setBlobUrl(currentObjectUrl);
         } catch (e) {
           console.error("Failed to fetch blob for preview:", e);
         }
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       });
     }
 
     return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      cancelled = true;
+      if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
       setBlobUrl(null);
       setDownloadUrl(null);
     };
-  }, [open]);
+  }, [open, getUrl]);
 
   const handleDownload = () => {
     if (downloadUrl) downloadFileFromUrl(downloadUrl, fileName);
