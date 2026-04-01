@@ -143,15 +143,15 @@ export default function DemandDetail() {
   const [isChangeBoardDialogOpen, setIsChangeBoardDialogOpen] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitle, setEditingTitle] = useState("");
-  const { selectedBoardId } = useSelectedBoard();
+  const { selectedBoardId, setSelectedBoardId } = useSelectedBoard();
 
-  // Redirect to dashboard if board changes and demand belongs to a different board
+  // Auto-switch board context to match the demand being viewed
   const demandBoardId = demand?.board_id;
   useEffect(() => {
     if (demandBoardId && selectedBoardId && demandBoardId !== selectedBoardId) {
-      navigate("/", { replace: true });
+      setSelectedBoardId(demandBoardId);
     }
-  }, [selectedBoardId, demandBoardId, navigate]);
+  }, [demandBoardId, selectedBoardId, setSelectedBoardId]);
 
   // Track toast state
   const toastShownRef = useRef<{
