@@ -63,7 +63,7 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
   const handleDownload = async () => {
     const url = await getAttachmentUrl(attachment.file_path);
     if (url) {
-      window.open(url, "_blank");
+      downloadFileFromUrl(url, attachment.file_name);
     }
   };
 
