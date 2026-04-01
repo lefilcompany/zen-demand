@@ -121,11 +121,9 @@ function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps)
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              asChild
+              onClick={() => downloadFileFromUrl(url, attachment.file_name)}
             >
-              <a href={url} download={attachment.file_name} target="_blank" rel="noopener noreferrer">
-                <Download className="h-4 w-4" />
-              </a>
+              <Download className="h-4 w-4" />
             </Button>
           )}
           
