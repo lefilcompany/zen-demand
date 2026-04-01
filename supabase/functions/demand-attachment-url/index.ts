@@ -93,29 +93,6 @@ Deno.serve(async (req) => {
       return respond(403, { code: "FORBIDDEN", error: "You do not have access to this attachment" });
     }
 
-    const { data: storageObject, error: storageLookupError } = await adminClient
-      .schema("storage")
-      .from("objects")
-      .select("name")
-      .eq("bucket_id", BUCKET)
-      .eq("name", filePath)
-      .maybeSingle();
-
-    if (storageLookupError) {
-      console.error("Storage lookup error:", storageLookupError, "path:", filePath);
-      return respond(500, {
-        code: "STORAGE_LOOKUP_ERROR",
-        error: "Failed to verify attachment in storage",
-      });
-    }
-
-    if (!storageObject) {
-      return respond(404, {
-        code: "FILE_NOT_FOUND",
-        error: "O arquivo não existe mais no armazenamento. Pode ter sido removido.",
-      });
-    }
-
     // Generate signed URL
     const { data: signedData, error: signError } = await adminClient.storage
       .from(BUCKET)
@@ -123,6 +100,18 @@ Deno.serve(async (req) => {
 
     if (signError || !signedData?.signedUrl) {
       console.error("Signed URL error:", signError, "path:", filePath);
+      const isMissingFile =
+        signError?.statusCode === "404" ||
+        signError?.status === 400 ||
+        signError?.message?.toLowerCase().includes("object not found");
+
+      if (isMissingFile) {
+        return respond(404, {
+          code: "FILE_NOT_FOUND",
+          error: "O arquivo não existe mais no armazenamento. Pode ter sido removido.",
+        });
+      }
+
       return respond(500, {
         code: "SIGNED_URL_ERROR",
         error: "Failed to generate signed URL",
