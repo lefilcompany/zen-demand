@@ -125,7 +125,7 @@ export function useUpdateRecurringDemand() {
       }
 
       const { data, error } = await supabase
-        .from("recurring_demands" as any)
+        .from("recurring_demands")
         .update(updateData)
         .eq("id", id)
         .select()
