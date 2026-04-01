@@ -56,7 +56,7 @@ export function useCreateRecurringDemand() {
       );
 
       const { data, error } = await supabase
-        .from("recurring_demands" as any)
+        .from("recurring_demands")
         .insert({
           team_id: input.team_id,
           board_id: input.board_id,
