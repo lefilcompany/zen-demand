@@ -157,27 +157,6 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                     </button>
                   ))}
                 </div>
-                <div className="grid grid-cols-2 gap-1.5 p-1 bg-amber-500/10 rounded-lg border border-amber-500/20">
-                  <span className="col-span-2 text-[10px] text-amber-600 dark:text-amber-400 font-semibold uppercase tracking-wider px-1 pt-0.5">Teste rápido</span>
-                  {[
-                    { value: "test_1min" as const, label: "1 min" },
-                    { value: "test_5min" as const, label: "5 min" },
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => update({ frequency: opt.value })}
-                      className={cn(
-                        "px-2 py-1.5 text-xs font-medium rounded-md transition-all duration-150 text-center",
-                        value.frequency === opt.value
-                          ? "bg-amber-500 text-white shadow-sm"
-                          : "text-amber-700 dark:text-amber-300 hover:bg-amber-500/20"
-                      )}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Weekly/Biweekly: weekday selector */}
