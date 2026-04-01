@@ -16,6 +16,7 @@ import { KeyboardShortcutsProvider } from "@/components/KeyboardShortcuts";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { SwipeNavigationProvider } from "@/components/SwipeNavigationProvider";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { UpdateBanner } from "@/components/UpdateBanner";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Welcome from "./pages/Welcome";
@@ -90,6 +91,9 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
+          <div className="flex flex-col h-[100dvh]">
+          <UpdateBanner />
+          <div className="flex-1 min-h-0 flex flex-col">
           <ScrollToTop />
           <AuthProvider>
             <PresenceProvider>
@@ -179,6 +183,8 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
               </TeamProvider>
             </PresenceProvider>
           </AuthProvider>
+          </div>
+          </div>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

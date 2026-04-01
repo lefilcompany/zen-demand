@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       includeAssets: ["favicon.png", "icons/**/*", "splash/**/*", "lovable-uploads/**/*"],
       manifest: {
         name: "SoMA - Gerenciamento de Demandas",
