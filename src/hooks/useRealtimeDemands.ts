@@ -34,8 +34,15 @@ export function useRealtimeDemands(boardId?: string) {
         (payload) => {
           console.log('Realtime demand change:', payload.eventType, payload);
           
-          // Invalidate queries to refresh data
+          // Invalidate all relevant demand queries
           queryClient.invalidateQueries({ queryKey: ["demands", boardId] });
+          queryClient.invalidateQueries({ queryKey: ["demands-list", boardId] });
+          queryClient.invalidateQueries({ queryKey: ["my-demands-overview"] });
+          queryClient.invalidateQueries({ queryKey: ["all-team-demands"] });
+          queryClient.invalidateQueries({ queryKey: ["active-timer-demands"] });
+          queryClient.invalidateQueries({ queryKey: ["demands-by-period"] });
+          queryClient.invalidateQueries({ queryKey: ["demands-by-status"] });
+          queryClient.invalidateQueries({ queryKey: ["board-time-entries"] });
           
           // If it's a specific demand update, also invalidate that query
           if (payload.new && (payload.new as any).id) {
