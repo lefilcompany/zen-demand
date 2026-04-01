@@ -175,6 +175,11 @@ function calculateNextRunDate(
 ): string {
   const current = new Date(currentDate + "T12:00:00Z");
 
+  // Test frequencies: next_run_date = today (cron runs every minute, so it'll pick it up again)
+  if (frequency === "test_1min" || frequency === "test_5min") {
+    return formatDate(current); // same day = cron picks it up next minute
+  }
+
   if (frequency === "daily") {
     current.setUTCDate(current.getUTCDate() + 1);
     return formatDate(adjustToBusinessDay(current));
