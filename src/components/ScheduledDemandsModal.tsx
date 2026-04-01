@@ -32,8 +32,6 @@ const FREQUENCY_LABELS: Record<string, string> = {
   weekly: "Semanal",
   biweekly: "Quinzenal",
   monthly: "Mensal",
-  test_1min: "Teste (1 min)",
-  test_5min: "Teste (5 min)",
 };
 const PRIORITY_OPTIONS = [
   { value: "baixa", label: "Baixa" },
