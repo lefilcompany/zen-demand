@@ -17,6 +17,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    console.log("Processing recurring demands for date:", today);
 
     // Fetch active recurring demands where next_run_date <= today
     const { data: recurringDemands, error: fetchError } = await supabase
@@ -25,7 +26,12 @@ Deno.serve(async (req) => {
       .eq("is_active", true)
       .lte("next_run_date", today);
 
-    if (fetchError) throw fetchError;
+    if (fetchError) {
+      console.error("Fetch error:", fetchError);
+      throw fetchError;
+    }
+    
+    console.log("Found recurring demands:", recurringDemands?.length || 0);
 
     if (!recurringDemands || recurringDemands.length === 0) {
       return new Response(

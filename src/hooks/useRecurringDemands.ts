@@ -25,7 +25,7 @@ export function useRecurringDemands(boardId?: string) {
     queryKey: ["recurring-demands", boardId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("recurring_demands" as any)
+        .from("recurring_demands")
         .select("*")
         .eq("board_id", boardId!)
         .eq("is_active", true)
@@ -56,7 +56,7 @@ export function useCreateRecurringDemand() {
       );
 
       const { data, error } = await supabase
-        .from("recurring_demands" as any)
+        .from("recurring_demands")
         .insert({
           team_id: input.team_id,
           board_id: input.board_id,
@@ -110,22 +110,22 @@ export function useUpdateRecurringDemand() {
       if (fields.frequency || fields.weekdays || fields.day_of_month || fields.start_date) {
         // We need current data to fill in missing fields
         const { data: current } = await supabase
-          .from("recurring_demands" as any)
+          .from("recurring_demands")
           .select("*")
           .eq("id", id)
           .single();
 
         if (current) {
-          const freq = fields.frequency || (current as any).frequency;
-          const start = fields.start_date || (current as any).start_date;
-          const wdays = fields.weekdays ?? (current as any).weekdays;
-          const dom = fields.day_of_month !== undefined ? fields.day_of_month : (current as any).day_of_month;
+          const freq = fields.frequency || current.frequency;
+          const start = fields.start_date || current.start_date;
+          const wdays = fields.weekdays ?? current.weekdays;
+          const dom = fields.day_of_month !== undefined ? fields.day_of_month : current.day_of_month;
           updateData.next_run_date = calculateNextRunDate(freq, start, wdays, dom);
         }
       }
 
       const { data, error } = await supabase
-        .from("recurring_demands" as any)
+        .from("recurring_demands")
         .update(updateData)
         .eq("id", id)
         .select()
@@ -146,7 +146,7 @@ export function useDeleteRecurringDemand() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("recurring_demands" as any)
+        .from("recurring_demands")
         .update({ is_active: false })
         .eq("id", id);
 
@@ -168,8 +168,8 @@ export function calculateNextRunDate(
   today.setHours(0, 0, 0, 0);
   const start = new Date(startDate + "T00:00:00");
 
-  // If start_date is in the future, use it directly (or find first matching day)
-  if (start > today) {
+  // If start_date is in the future or today, use it directly (or find first matching day)
+  if (start >= today) {
     if ((frequency === "weekly" || frequency === "biweekly") && weekdays && weekdays.length > 0) {
       const d = new Date(start);
       // Find first matching weekday from start_date
