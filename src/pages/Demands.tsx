@@ -39,8 +39,22 @@ export default function Demands() {
   } = useAuth();
   const {
     selectedBoardId,
+    setSelectedBoardId,
     currentTeamId
   } = useSelectedBoard();
+
+  const handleDemandClick = (demandId: string, boardId?: string, viewMode?: string) => {
+    // If clicking a demand from a different board, switch to that board first
+    if (boardId && boardId !== selectedBoardId) {
+      setSelectedBoardId(boardId);
+    }
+    navigate(`/demands/${demandId}`, {
+      state: {
+        from: "demands",
+        viewMode: viewMode || "table"
+      }
+    });
+  };
   const {
     data: demands,
     isLoading
