@@ -39,8 +39,22 @@ export default function Demands() {
   } = useAuth();
   const {
     selectedBoardId,
+    setSelectedBoardId,
     currentTeamId
   } = useSelectedBoard();
+
+  const handleDemandClick = (demandId: string, boardId?: string, viewMode?: string) => {
+    // If clicking a demand from a different board, switch to that board first
+    if (boardId && boardId !== selectedBoardId) {
+      setSelectedBoardId(boardId);
+    }
+    navigate(`/demands/${demandId}`, {
+      state: {
+        from: "demands",
+        viewMode: viewMode || "table"
+      }
+    });
+  };
   const {
     data: demands,
     isLoading
@@ -249,31 +263,19 @@ export default function Demands() {
         </div>;
     }
     if (effectiveViewMode === "calendar") {
-      return <DemandsCalendarView demands={demandList} onDemandClick={demandId => navigate(`/demands/${demandId}`, {
-        state: {
-          from: "demands",
-          viewMode: "calendar"
-        }
-      })} onDayClick={handleDayClick} isRequester={isReadOnly} onDemandDateChange={handleDemandDateChange} />;
+      return <DemandsCalendarView demands={demandList} onDemandClick={(demandId) => {
+        const demand = demandList.find((d: any) => d.id === demandId);
+        handleDemandClick(demandId, demand?.board_id, "calendar");
+      }} onDayClick={handleDayClick} isRequester={isReadOnly} onDemandDateChange={handleDemandDateChange} />;
     }
     if (effectiveViewMode === "table") {
-      return <DataTable columns={demandColumns} data={demandList as unknown as DemandTableRow[]} onRowClick={row => navigate(`/demands/${row.id}`, {
-        state: {
-          from: "demands",
-          viewMode: "table"
-        }
-      })} defaultSorting={[{
+      return <DataTable columns={demandColumns} data={demandList as unknown as DemandTableRow[]} onRowClick={row => handleDemandClick(row.id, (row as any).board_id, "table")} defaultSorting={[{
         id: "board_sequence_number",
         desc: false
       }]} />;
     }
     return <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {demandList.map(demand => <DemandCard key={demand.id} demand={demand} onClick={() => navigate(`/demands/${demand.id}`, {
-        state: {
-          from: "demands",
-          viewMode: "grid"
-        }
-      })} showFullDetails />)}
+        {demandList.map(demand => <DemandCard key={demand.id} demand={demand} onClick={() => handleDemandClick(demand.id, (demand as any).board_id, "grid")} showFullDetails />)}
       </div>;
   };
   return <div className="space-y-4 md:space-y-6 animate-fade-in">
