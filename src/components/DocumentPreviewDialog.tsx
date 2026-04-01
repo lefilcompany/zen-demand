@@ -37,6 +37,9 @@ export function DocumentPreviewDialog({
   fileSize,
   getUrl,
 }: DocumentPreviewDialogProps) {
+  const getUrlRef = useRef(getUrl);
+  getUrlRef.current = getUrl;
+
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
