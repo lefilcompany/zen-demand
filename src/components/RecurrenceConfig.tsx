@@ -118,6 +118,8 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                   {value.frequency === "weekly" && "Semanal"}
                   {value.frequency === "biweekly" && "Quinzenal"}
                   {value.frequency === "monthly" && `Mensal (dia ${value.dayOfMonth || 1})`}
+                  {value.frequency === "test_1min" && "Teste (1 min)"}
+                  {value.frequency === "test_5min" && "Teste (5 min)"}
                 </span>
                 {startDate && (
                   <span className="text-muted-foreground">
