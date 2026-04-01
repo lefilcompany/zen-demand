@@ -40,49 +40,45 @@ export function DocumentPreviewDialog({
   const getUrlRef = useRef(getUrl);
   getUrlRef.current = getUrl;
 
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-    let currentObjectUrl: string | null = null;
+    let alive = true;
 
-    if (open) {
-      setLoading(true);
-      setBlobUrl(null);
-      setDownloadUrl(null);
-
-      getUrlRef.current().then(async (signedUrl) => {
-        if (cancelled || !signedUrl) {
-          if (!cancelled) setLoading(false);
-          return;
-        }
-        setDownloadUrl(signedUrl);
-        try {
-          const res = await fetch(signedUrl);
-          if (cancelled) return;
-          const blob = await res.blob();
-          if (cancelled) return;
-          currentObjectUrl = URL.createObjectURL(blob);
-          setBlobUrl(currentObjectUrl);
-        } catch (e) {
-          console.error("Failed to fetch blob for preview:", e);
-        }
-        if (!cancelled) setLoading(false);
-      });
+    if (!open) {
+      setFileUrl(null);
+      return;
     }
 
+    setLoading(true);
+    setFileUrl(null);
+
+    getUrlRef.current()
+      .then((url) => {
+        if (alive) {
+          setFileUrl(url || null);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load preview URL:", error);
+      })
+      .finally(() => {
+        if (alive) {
+          setLoading(false);
+        }
+      });
+
     return () => {
-      cancelled = true;
-      if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
-      setBlobUrl(null);
-      setDownloadUrl(null);
+      alive = false;
     };
   }, [open]);
 
-  const handleDownload = () => {
-    if (downloadUrl) downloadFileFromUrl(downloadUrl, fileName);
+  const handleDownload = async () => {
+    const url = fileUrl || (await getUrlRef.current());
+    if (url) {
+      downloadFileFromUrl(url, fileName);
+    }
   };
 
   const isImage = fileType.startsWith("image/");
@@ -92,9 +88,8 @@ export function DocumentPreviewDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] w-full h-[90vh] p-0 flex flex-col gap-0 overflow-hidden">
-        {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30 flex-shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-3 min-w-0 pr-12">
             <span className="text-sm font-medium truncate">{fileName}</span>
             {fileSize != null && (
               <span className="text-xs text-muted-foreground flex-shrink-0">
@@ -103,40 +98,27 @@ export function DocumentPreviewDialog({
             )}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Button variant="outline" size="sm" onClick={handleDownload} disabled={!downloadUrl}>
+            <Button variant="outline" size="sm" onClick={handleDownload} disabled={!fileUrl}>
               <Download className="h-4 w-4 mr-1" />
               Baixar
             </Button>
           </div>
         </div>
 
-        {/* Content */}
         <div className="flex-1 min-h-0 flex items-center justify-center bg-muted/10">
           {loading ? (
             <div className="flex flex-col items-center gap-2 text-muted-foreground">
               <Loader2 className="h-8 w-8 animate-spin" />
               <span className="text-sm">Carregando documento...</span>
             </div>
-          ) : !blobUrl ? (
+          ) : !fileUrl ? (
             <span className="text-sm text-muted-foreground">Não foi possível carregar o arquivo.</span>
           ) : isPdf ? (
-            <iframe
-              src={blobUrl}
-              title={fileName}
-              className="w-full h-full border-0"
-            />
+            <iframe src={fileUrl} title={fileName} className="w-full h-full border-0" />
           ) : isImage ? (
-            <img
-              src={blobUrl}
-              alt={fileName}
-              className="max-w-full max-h-full object-contain p-4"
-            />
+            <img src={fileUrl} alt={fileName} className="max-w-full max-h-full object-contain p-4" />
           ) : isText ? (
-            <iframe
-              src={blobUrl}
-              title={fileName}
-              className="w-full h-full border-0 bg-background p-4"
-            />
+            <iframe src={fileUrl} title={fileName} className="w-full h-full border-0 bg-background p-4" />
           ) : null}
         </div>
       </DialogContent>
