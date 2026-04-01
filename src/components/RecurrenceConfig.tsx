@@ -386,6 +386,8 @@ export function RecurrenceConfig({ value, onChange, compact = false }: Recurrenc
                       : "Selecione pelo menos um dia.")}
                   {value.frequency === "monthly" &&
                     `Todo dia ${value.dayOfMonth || 1} de cada mês.`}
+                  {value.frequency === "test_1min" && "⚡ Modo teste: nova demanda a cada 1 minuto."}
+                  {value.frequency === "test_5min" && "⚡ Modo teste: nova demanda a cada 5 minutos."}
                 </p>
               </div>
             </div>
