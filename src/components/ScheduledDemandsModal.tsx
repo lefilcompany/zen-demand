@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarClock, ChevronDown, ChevronRight, Pencil, Power, Save, X, Loader2 } from "lucide-react";
+import { CalendarClock, ChevronDown, ChevronRight, Pencil, Power, Save, X, Loader2, Play } from "lucide-react";
 import {
   Dialog,
   DialogContent,
