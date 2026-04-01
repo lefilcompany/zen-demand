@@ -2,52 +2,56 @@
 
 ## Problem
 
-When a team owner views join requests, the requester's name/email/avatar shows as "Usuário" because:
-1. The hook fetches profiles in a **separate query** (`supabase.from("profiles").select(...)`)
-2. The `profiles` RLS policy only allows viewing profiles of users in `team_members` or `board_members`
-3. A join requester is **not yet** a team member, so RLS blocks their profile — returning empty data
+The recurring demands system has the edge function `process-recurring-demands` fully implemented, but **no cron job exists** to actually invoke it. The `pg_cron` and `pg_net` extensions are enabled, but `cron.schedule(...)` was never called. So the function is never executed and demands are never auto-created.
 
 ## Solution
 
-Create a **security definer database function** that bypasses RLS to fetch requester profiles for team owners. This is the correct approach since the team owner has a legitimate need to see who is requesting to join.
+### Step 1: Schedule the cron job (via insert tool, NOT migration)
 
-### Step 1: Database migration — create RPC function
+Use the Supabase insert tool to create a cron job that calls the edge function every minute:
 
 ```sql
-CREATE OR REPLACE FUNCTION public.get_join_request_profiles(request_team_id uuid)
-RETURNS TABLE(id uuid, full_name text, avatar_url text, email text)
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT p.id, p.full_name, p.avatar_url, p.email
-  FROM profiles p
-  INNER JOIN team_join_requests tjr ON tjr.user_id = p.id
-  WHERE tjr.team_id = request_team_id
-    AND tjr.status = 'pending'
-    AND is_team_owner(auth.uid(), request_team_id)
-$$;
+SELECT cron.schedule(
+  'process-recurring-demands',
+  '* * * * *',
+  $$
+  SELECT net.http_post(
+    url := 'https://dcojvsftpzwfhgvamdgm.supabase.co/functions/v1/process-recurring-demands',
+    headers := '{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjb2p2c2Z0cHp3ZmhndmFtZGdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyODI2MjMsImV4cCI6MjA4NTg1ODYyM30.aPjTbTUQWV-zLGxaX2qw4tru7ew6AuFebnx53CDqyZA"}'::jsonb,
+    body := '{}'::jsonb
+  ) AS request_id;
+  $$
+);
 ```
 
-This function:
-- Only works if the caller is the team owner (validated inside the function)
-- Only returns profiles of users with pending requests for that team
-- Uses `SECURITY DEFINER` to bypass profile RLS
+This runs every minute. When there are no demands to process, it returns quickly with `processed: 0`.
 
-### Step 2: Update `src/hooks/useTeamJoinRequests.ts`
+### Step 2: Add short-interval test frequencies
 
-In the `useTeamJoinRequests` function, replace the separate `profiles` query with a call to the new RPC:
+Update the `RecurrenceConfig.tsx` to add two test frequencies visible only in development: **"A cada 10s"** and **"A cada 1 min"**. These help verify the system works.
 
-```ts
-const { data: profiles } = await supabase
-  .rpc("get_join_request_profiles", { request_team_id: teamId });
-```
+But since the cron already runs every minute, we don't need real 10s intervals. Instead, the approach is:
 
-Everything else stays the same — the profileMap logic and the component rendering in `TeamRequests.tsx` remain unchanged.
+- Add a **"Teste (1 min)"** frequency option to the UI (only visible in dev/test mode)
+- For this frequency, set `next_run_date` to "today" so the next cron cycle picks it up immediately
+- Update the edge function to handle `frequency === "test_1min"` by setting next_run_date to current timestamp + 1 minute (formatted as today's date, so next cron picks it up again)
+
+Actually, since cron runs every minute and the edge function checks `next_run_date <= today`, a simpler approach: just create a recurring demand with `next_run_date = today` and `frequency = daily`. The cron will pick it up within 60 seconds. For testing purposes, this is sufficient.
+
+### Step 3: Add manual trigger button (for testing)
+
+Add a "Processar agora" button in the `ScheduledDemandsModal` that manually invokes the edge function via `supabase.functions.invoke('process-recurring-demands')`. This lets users (and testers) trigger processing immediately without waiting for the cron.
+
+### Files changed
+
+1. **Cron job** — SQL via insert tool (not migration)
+2. **`src/components/ScheduledDemandsModal.tsx`** — Add "Processar agora" button
+3. **`supabase/functions/process-recurring-demands/index.ts`** — No changes needed, function is correct
 
 ### Technical details
-- Single RPC call replaces the broken two-step fetch
-- Security is enforced server-side via `is_team_owner` check inside the function
-- No changes needed in the UI component (`TeamRequests.tsx`)
+
+- The edge function already uses `SUPABASE_SERVICE_ROLE_KEY` to bypass RLS
+- The cron job runs every minute; when no recurring demands are due, the function returns immediately
+- The `status_id` stored in `recurring_demands` is used directly in the created demand — this should work as long as the status belongs to the target board
+- The manual trigger button calls `supabase.functions.invoke()` which uses the anon key; the edge function creates a service-role client internally, so this is fine
 
