@@ -86,6 +86,7 @@ Deno.serve(async (req) => {
         due_date,
         created_at,
         board_sequence_number,
+        board_id,
         team_id,
         service_id,
         demand_statuses(name, color),
