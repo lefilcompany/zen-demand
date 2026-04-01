@@ -91,7 +91,7 @@ export interface RecurringDemandUpdate {
   title?: string;
   description?: string | null;
   priority?: string;
-  frequency?: "daily" | "weekly" | "biweekly" | "monthly" | "test_1min" | "test_5min";
+  frequency?: "daily" | "weekly" | "biweekly" | "monthly";
   weekdays?: number[];
   day_of_month?: number | null;
   start_date?: string;
