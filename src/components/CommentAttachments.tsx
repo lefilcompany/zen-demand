@@ -41,13 +41,7 @@ export function CommentAttachments({ commentId, className }: CommentAttachmentsP
   const handleDownload = async (filePath: string, fileName: string) => {
     const url = await getRequestAttachmentUrl(filePath);
     if (url) {
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName;
-      a.target = "_blank";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      downloadFileFromUrl(url, fileName);
     }
   };
 
