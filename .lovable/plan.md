@@ -2,56 +2,50 @@
 
 ## Problem
 
-The recurring demands system has the edge function `process-recurring-demands` fully implemented, but **no cron job exists** to actually invoke it. The `pg_cron` and `pg_net` extensions are enabled, but `cron.schedule(...)` was never called. So the function is never executed and demands are never auto-created.
+The recurring demand with `test_1min` frequency **never gets saved to the database** because there's a CHECK constraint on the `frequency` column:
+
+```
+CHECK (frequency = ANY (ARRAY['daily', 'weekly', 'biweekly', 'monthly']))
+```
+
+Values `test_1min` and `test_5min` are rejected, so the insert silently fails (error caught in try/catch, shown as a warning toast). The "Demandas Agendadas" modal shows empty because the table has zero rows.
+
+Additionally, `next_run_date` is a `date` column (not `timestamptz`), so the edge function's `lte('next_run_date', today)` check will always match once set to today. The cooldown logic using `last_generated_at` in the edge function handles this, but it's fragile.
 
 ## Solution
 
-### Step 1: Schedule the cron job (via insert tool, NOT migration)
+### Step 1: Update the CHECK constraint (migration)
 
-Use the Supabase insert tool to create a cron job that calls the edge function every minute:
+Alter the constraint to accept the test frequencies:
 
 ```sql
-SELECT cron.schedule(
-  'process-recurring-demands',
-  '* * * * *',
-  $$
-  SELECT net.http_post(
-    url := 'https://dcojvsftpzwfhgvamdgm.supabase.co/functions/v1/process-recurring-demands',
-    headers := '{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjb2p2c2Z0cHp3ZmhndmFtZGdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyODI2MjMsImV4cCI6MjA4NTg1ODYyM30.aPjTbTUQWV-zLGxaX2qw4tru7ew6AuFebnx53CDqyZA"}'::jsonb,
-    body := '{}'::jsonb
-  ) AS request_id;
-  $$
-);
+ALTER TABLE recurring_demands DROP CONSTRAINT recurring_demands_frequency_check;
+ALTER TABLE recurring_demands ADD CONSTRAINT recurring_demands_frequency_check 
+  CHECK (frequency = ANY (ARRAY['daily', 'weekly', 'biweekly', 'monthly', 'test_1min', 'test_5min']));
 ```
 
-This runs every minute. When there are no demands to process, it returns quickly with `processed: 0`.
+### Step 2: Improve edge function cooldown reliability
 
-### Step 2: Add short-interval test frequencies
+The edge function already has cooldown logic for test frequencies using `last_generated_at`. This is correct and sufficient. No changes needed to the edge function.
 
-Update the `RecurrenceConfig.tsx` to add two test frequencies visible only in development: **"A cada 10s"** and **"A cada 1 min"**. These help verify the system works.
+### Step 3: No other changes needed
 
-But since the cron already runs every minute, we don't need real 10s intervals. Instead, the approach is:
+- The UI (`RecurrenceConfig.tsx`) already supports `test_1min` and `test_5min`
+- The hook (`useRecurringDemands.ts`) already calculates `next_run_date` correctly for test frequencies (sets to today)
+- The cron job is running every minute (confirmed by logs)
+- The `ScheduledDemandsModal` already has the "Processar agora" button
 
-- Add a **"Teste (1 min)"** frequency option to the UI (only visible in dev/test mode)
-- For this frequency, set `next_run_date` to "today" so the next cron cycle picks it up immediately
-- Update the edge function to handle `frequency === "test_1min"` by setting next_run_date to current timestamp + 1 minute (formatted as today's date, so next cron picks it up again)
+### Why it will work after the fix
 
-Actually, since cron runs every minute and the edge function checks `next_run_date <= today`, a simpler approach: just create a recurring demand with `next_run_date = today` and `frequency = daily`. The cron will pick it up within 60 seconds. For testing purposes, this is sufficient.
-
-### Step 3: Add manual trigger button (for testing)
-
-Add a "Processar agora" button in the `ScheduledDemandsModal` that manually invokes the edge function via `supabase.functions.invoke('process-recurring-demands')`. This lets users (and testers) trigger processing immediately without waiting for the cron.
+1. User creates demand with `test_1min` → insert succeeds (constraint allows it)
+2. `next_run_date` = today → cron picks it up within 1 minute
+3. Edge function creates the demand, sets `last_generated_at = now()`, keeps `next_run_date = today`
+4. Next cron run: checks cooldown (`now - last_generated_at < 60s`) → skips if too soon
+5. After 60s: cooldown elapsed → creates another demand
 
 ### Files changed
 
-1. **Cron job** — SQL via insert tool (not migration)
-2. **`src/components/ScheduledDemandsModal.tsx`** — Add "Processar agora" button
-3. **`supabase/functions/process-recurring-demands/index.ts`** — No changes needed, function is correct
+1. **Migration SQL** — drop + re-add CHECK constraint to include `test_1min` and `test_5min`
 
-### Technical details
-
-- The edge function already uses `SUPABASE_SERVICE_ROLE_KEY` to bypass RLS
-- The cron job runs every minute; when no recurring demands are due, the function returns immediately
-- The `status_id` stored in `recurring_demands` is used directly in the created demand — this should work as long as the status belongs to the target board
-- The manual trigger button calls `supabase.functions.invoke()` which uses the anon key; the edge function creates a service-role client internally, so this is fine
+That's it — one single database constraint fix resolves the entire issue.
 
