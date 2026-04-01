@@ -142,31 +142,21 @@ function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps)
 
       {isImage && (
         <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
-          <DialogContent className="max-w-[90vw] max-h-[90vh] p-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-2 top-2 z-10"
-              onClick={() => setIsExpanded(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+          <DialogContent className="max-w-[90vw] max-h-[90vh] p-4 flex flex-col items-center justify-center gap-3">
             {url && (
               <img
                 src={url}
                 alt={attachment.file_name}
-                className="max-w-full max-h-[85vh] object-contain mx-auto"
+                className="max-w-full max-h-[78vh] object-contain rounded-md"
               />
             )}
-            <div className="flex items-center justify-between mt-2 px-2">
+            <div className="flex items-center justify-between w-full px-1">
               <span className="text-sm text-muted-foreground truncate max-w-[70%]">
                 {attachment.file_name}
               </span>
-              <Button variant="outline" size="sm" asChild>
-                <a href={url || "#"} download={attachment.file_name} target="_blank" rel="noopener noreferrer">
-                  <Download className="h-4 w-4 mr-1" />
-                  Baixar
-                </a>
+              <Button variant="outline" size="sm" onClick={() => url && downloadFileFromUrl(url, attachment.file_name)}>
+                <Download className="h-4 w-4 mr-1" />
+                Baixar
               </Button>
             </div>
           </DialogContent>

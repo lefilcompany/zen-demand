@@ -116,26 +116,39 @@ export function CommentAttachments({ commentId, className }: CommentAttachmentsP
 
       {/* Image preview modal */}
       <Dialog open={!!imagePreview} onOpenChange={() => setImagePreview(null)}>
-        <DialogContent className="max-w-4xl p-0 overflow-hidden">
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-2 right-2 z-10 bg-background/80"
-              onClick={() => setImagePreview(null)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-            {imagePreview && (
+        <DialogContent className="max-w-[90vw] max-h-[90vh] p-4 flex flex-col items-center justify-center gap-3">
+          {imagePreview && (
+            <>
               <img
-                src={imagePreview}
-                alt="Preview"
-                className="w-full h-auto max-h-[80vh] object-contain"
+                src={imagePreview.url}
+                alt={imagePreview.name}
+                className="max-w-full max-h-[78vh] object-contain rounded-md"
               />
-            )}
-          </div>
+              <div className="flex items-center justify-between w-full px-1">
+                <span className="text-sm text-muted-foreground truncate max-w-[70%]">
+                  {imagePreview.name}
+                </span>
+                <Button variant="outline" size="sm" onClick={() => downloadFileFromUrl(imagePreview.url, imagePreview.name)}>
+                  <Download className="h-4 w-4 mr-1" />
+                  Baixar
+                </Button>
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
+
+      {/* Document preview modal */}
+      {previewFile && (
+        <DocumentPreviewDialog
+          open={!!previewFile}
+          onOpenChange={(open) => { if (!open) setPreviewFile(null); }}
+          fileName={previewFile.fileName}
+          fileType={previewFile.fileType}
+          fileSize={previewFile.fileSize}
+          getUrl={() => getRequestAttachmentUrl(previewFile.filePath)}
+        />
+      )}
     </div>
   );
 }

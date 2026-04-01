@@ -131,7 +131,7 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
               <span className="text-sm text-muted-foreground truncate max-w-[70%]">
                 {attachment.file_name}
               </span>
-              <Button variant="outline" size="sm" onClick={handleDownload}>
+              <Button variant="outline" size="sm" onClick={() => imageUrl && downloadFileFromUrl(imageUrl, attachment.file_name)}>
                 <Download className="h-4 w-4 mr-1" />
                 Baixar
               </Button>

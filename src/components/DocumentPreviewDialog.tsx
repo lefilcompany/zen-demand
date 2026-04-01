@@ -72,7 +72,7 @@ export function DocumentPreviewDialog({
   }, [open]);
 
   const handleDownload = () => {
-    if (downloadUrl) window.open(downloadUrl, "_blank");
+    if (downloadUrl) downloadFileFromUrl(downloadUrl, fileName);
   };
 
   const isImage = fileType.startsWith("image/");
