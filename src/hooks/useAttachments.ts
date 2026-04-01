@@ -113,17 +113,26 @@ export function useDeleteAttachment() {
 }
 
 export async function getAttachmentUrl(filePath: string): Promise<string | null> {
-  // Use signed URLs for private bucket (4 hour expiration)
-  const { data, error } = await supabase.storage
+  const { data, error } = await supabase.functions.invoke("demand-attachment-url", {
+    body: { filePath },
+  });
+
+  if (!error && data?.signedUrl) {
+    return data.signedUrl as string;
+  }
+
+  console.error("Error generating attachment URL via function:", error);
+
+  const { data: fallbackData, error: fallbackError } = await supabase.storage
     .from("demand-attachments")
-    .createSignedUrl(filePath, 14400); // 4 hours
-  
-  if (error) {
-    console.error("Error creating signed URL:", error);
+    .createSignedUrl(filePath, 14400);
+
+  if (fallbackError) {
+    console.error("Error creating signed URL:", fallbackError);
     return null;
   }
-  
-  return data.signedUrl;
+
+  return fallbackData.signedUrl;
 }
 
 // Synchronous version for immediate use (creates signed URL in background)
