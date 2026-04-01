@@ -54,18 +54,6 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // For test frequencies, check cooldown based on last_generated_at
-        if (rd.frequency === "test_1min" || rd.frequency === "test_5min") {
-          if (rd.last_generated_at) {
-            const lastGen = new Date(rd.last_generated_at).getTime();
-            const now = Date.now();
-            const cooldownMs = rd.frequency === "test_1min" ? 60 * 1000 : 5 * 60 * 1000;
-            if (now - lastGen < cooldownMs) {
-              console.log(`Skipping ${rd.id}: cooldown not elapsed (${rd.frequency})`);
-              continue;
-            }
-          }
-        }
 
         // Calculate due_date: if service has estimated_hours, add business days
         const estimatedHours = rd.services?.estimated_hours;
