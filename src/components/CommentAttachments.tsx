@@ -67,7 +67,7 @@ export function CommentAttachments({ commentId, className }: CommentAttachmentsP
             <ImageThumbnail
               key={attachment.id}
               attachment={attachment}
-              onClick={() => handleImageClick(attachment.file_path, attachment.id)}
+              onClick={() => handleImageClick(attachment.file_path, attachment.id, attachment.file_name)}
               cachedUrl={loadingUrls[attachment.id]}
               onLoadUrl={(url) => setLoadingUrls((prev) => ({ ...prev, [attachment.id]: url }))}
             />
