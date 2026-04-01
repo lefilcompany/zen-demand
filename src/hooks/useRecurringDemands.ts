@@ -168,8 +168,8 @@ export function calculateNextRunDate(
   today.setHours(0, 0, 0, 0);
   const start = new Date(startDate + "T00:00:00");
 
-  // If start_date is in the future, use it directly (or find first matching day)
-  if (start > today) {
+  // If start_date is in the future or today, use it directly (or find first matching day)
+  if (start >= today) {
     if ((frequency === "weekly" || frequency === "biweekly") && weekdays && weekdays.length > 0) {
       const d = new Date(start);
       // Find first matching weekday from start_date
