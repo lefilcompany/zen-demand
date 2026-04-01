@@ -110,16 +110,16 @@ export function useUpdateRecurringDemand() {
       if (fields.frequency || fields.weekdays || fields.day_of_month || fields.start_date) {
         // We need current data to fill in missing fields
         const { data: current } = await supabase
-          .from("recurring_demands" as any)
+          .from("recurring_demands")
           .select("*")
           .eq("id", id)
           .single();
 
         if (current) {
-          const freq = fields.frequency || (current as any).frequency;
-          const start = fields.start_date || (current as any).start_date;
-          const wdays = fields.weekdays ?? (current as any).weekdays;
-          const dom = fields.day_of_month !== undefined ? fields.day_of_month : (current as any).day_of_month;
+          const freq = fields.frequency || current.frequency;
+          const start = fields.start_date || current.start_date;
+          const wdays = fields.weekdays ?? current.weekdays;
+          const dom = fields.day_of_month !== undefined ? fields.day_of_month : current.day_of_month;
           updateData.next_run_date = calculateNextRunDate(freq, start, wdays, dom);
         }
       }
