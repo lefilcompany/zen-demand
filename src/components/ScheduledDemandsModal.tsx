@@ -149,10 +149,24 @@ export function ScheduledDemandsModal({ boardId, teamId, buttonStyle = "compact"
       </DialogTrigger>
       <DialogContent className="w-[calc(100%-2rem)] max-w-3xl h-[90vh] sm:h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <CalendarClock className="h-5 w-5" />
-            Demandas Agendadas
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarClock className="h-5 w-5" />
+              Demandas Agendadas
+            </DialogTitle>
+            {count > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={processNow}
+                disabled={isProcessing}
+                className="h-7 text-xs gap-1"
+              >
+                {isProcessing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
+                Processar agora
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
         {isLoading ? (
