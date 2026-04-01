@@ -80,6 +80,7 @@ export function CommentAttachments({ commentId, className }: CommentAttachmentsP
         <div className="flex flex-wrap gap-2">
           {files.map((attachment) => {
             const Icon = getFileIcon(attachment.file_type);
+            const canPreview = isPreviewable(attachment.file_type);
             return (
               <div
                 key={attachment.id}
@@ -88,6 +89,17 @@ export function CommentAttachments({ commentId, className }: CommentAttachmentsP
                 <Icon className="h-3 w-3 text-muted-foreground" />
                 <span className="truncate max-w-[100px]">{attachment.file_name}</span>
                 <span className="text-muted-foreground">{formatSize(attachment.file_size)}</span>
+                {canPreview && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5"
+                    onClick={() => setPreviewFile({ filePath: attachment.file_path, fileName: attachment.file_name, fileType: attachment.file_type, fileSize: attachment.file_size })}
+                    title="Visualizar"
+                  >
+                    <Eye className="h-3 w-3" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
