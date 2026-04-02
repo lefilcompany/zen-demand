@@ -61,6 +61,14 @@ export default function AdminCoupons() {
       toast.error("Preencha o código e selecione um plano");
       return;
     }
+    if (!form.trial_days || form.trial_days < 1) {
+      toast.error("Os dias de teste devem ser no mínimo 1");
+      return;
+    }
+    if (!form.max_uses || form.max_uses < 1) {
+      toast.error("O máximo de usos deve ser no mínimo 1");
+      return;
+    }
     try {
       await createCoupon.mutateAsync({
         code: form.code.toUpperCase(),
@@ -94,6 +102,14 @@ export default function AdminCoupons() {
   const handleEditSubmit = () => {
     if (!editForm.plan_id) {
       toast.error("Selecione um plano");
+      return;
+    }
+    if (!editForm.trial_days || editForm.trial_days < 1) {
+      toast.error("Os dias de teste devem ser no mínimo 1");
+      return;
+    }
+    if (!editForm.max_uses || editForm.max_uses < 1) {
+      toast.error("O máximo de usos deve ser no mínimo 1");
       return;
     }
     // Show confirmation dialog
@@ -322,18 +338,18 @@ function CouponFormDialog({
               <Label>Dias de teste</Label>
               <Input
                 type="number"
-                min={1}
-                value={form.trial_days}
-                onChange={(e) => setForm((f) => ({ ...f, trial_days: parseInt(e.target.value) || 1 }))}
+                min={0}
+                value={form.trial_days === 0 ? "" : form.trial_days}
+                onChange={(e) => setForm((f) => ({ ...f, trial_days: e.target.value === "" ? 0 : parseInt(e.target.value) || 0 }))}
               />
             </div>
             <div className="space-y-2">
               <Label>Máx. usos</Label>
               <Input
                 type="number"
-                min={1}
-                value={form.max_uses}
-                onChange={(e) => setForm((f) => ({ ...f, max_uses: parseInt(e.target.value) || 1 }))}
+                min={0}
+                value={form.max_uses === 0 ? "" : form.max_uses}
+                onChange={(e) => setForm((f) => ({ ...f, max_uses: e.target.value === "" ? 0 : parseInt(e.target.value) || 0 }))}
               />
             </div>
           </div>
