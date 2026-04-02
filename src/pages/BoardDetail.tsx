@@ -630,7 +630,7 @@ export default function BoardDetail() {
                     
                     {/* Remove Button - positioned on banner */}
                     {canManage && !isCurrentUser && (
-                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="secondary" size="icon" className="h-6 w-6 sm:h-7 sm:w-7 bg-background/80 hover:bg-background text-destructive hover:text-destructive">
