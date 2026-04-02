@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getAttachmentUrl } from "@/hooks/useAttachments";
 import { FileText, Download, Maximize2, Eye } from "lucide-react";
+import { toast } from "sonner";
 import { downloadFileFromUrl } from "@/lib/fileDownloadUtils";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
