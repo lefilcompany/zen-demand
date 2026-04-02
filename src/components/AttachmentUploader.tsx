@@ -288,7 +288,7 @@ export function AttachmentUploader({ demandId, readOnly = false, demandTitle, de
     <div className="space-y-4">
       <h4 className="text-sm font-medium flex items-center gap-2">
         <Paperclip className="h-4 w-4" />
-        Anexos ({attachments?.length || 0})
+        Anexos ({availableIds.size})
       </h4>
 
       {!readOnly && (
