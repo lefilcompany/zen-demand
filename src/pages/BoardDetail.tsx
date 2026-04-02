@@ -687,7 +687,23 @@ export default function BoardDetail() {
                              <span className="truncate">{member.profile.email}</span>
                            </div>
                          )}
-                         <div className="pt-0.5">
+                         <div className="flex items-center gap-1.5 pt-0.5 flex-wrap justify-center">
+                           {(() => {
+                             const tm = teamMembers?.find(m => m.user_id === member.user_id);
+                             return tm?.position ? (
+                               <span
+                                 className="inline-flex items-center gap-1 text-[11px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-full border font-medium"
+                                 style={{
+                                   backgroundColor: `${tm.position.color}15`,
+                                   borderColor: `${tm.position.color}40`,
+                                   color: tm.position.text_color || tm.position.color,
+                                 }}
+                               >
+                                 <Briefcase className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                 <span className="truncate max-w-[70px] sm:max-w-none">{tm.position.name}</span>
+                               </span>
+                             ) : null;
+                           })()}
                            <RoleSelector
                              currentRole={member.role}
                              onRoleChange={(newRole) => handleRoleChange(member.id, newRole)}
