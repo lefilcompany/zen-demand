@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Paperclip, Download, FileText, Image, File, Trash2, Loader2, Maximize2, Eye } from "lucide-react";
-import { downloadFileFromUrl } from "@/lib/fileDownloadUtils";
+import { Paperclip, Download, FileText, Image, File, Trash2, Loader2, Maximize2, Eye, Copy } from "lucide-react";
+import { downloadFileFromUrl, copyImageToClipboard } from "@/lib/fileDownloadUtils";
 import { useAttachments, useUploadAttachment, useDeleteAttachment, getAttachmentUrl } from "@/hooks/useAttachments";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
@@ -40,6 +40,7 @@ function AttachmentItem({ attachment, readOnly, onDelete, onAvailabilityChange }
   const [loading, setLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [copying, setCopying] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -160,10 +161,20 @@ function AttachmentItem({ attachment, readOnly, onDelete, onAvailabilityChange }
               <span className="text-sm text-muted-foreground truncate max-w-[70%]">
                 {attachment.file_name}
               </span>
-              <Button variant="outline" size="sm" onClick={() => url && downloadFileFromUrl(url, attachment.file_name)}>
-                <Download className="h-4 w-4 mr-1" />
-                Baixar
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" disabled={!url || copying} onClick={async () => {
+                  if (!url) return;
+                  setCopying(true);
+                  try { await copyImageToClipboard(url); } finally { setCopying(false); }
+                }}>
+                  {copying ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Copy className="h-4 w-4 mr-1" />}
+                  Copiar
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => url && downloadFileFromUrl(url, attachment.file_name)}>
+                  <Download className="h-4 w-4 mr-1" />
+                  Baixar
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
