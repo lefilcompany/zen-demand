@@ -675,11 +675,12 @@ export default function BoardDetail() {
                          <p className="font-semibold text-xs sm:text-sm line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] leading-tight">
                            {member.profile?.full_name || "Usuário"}
                          </p>
-                         {member.profile?.job_title && (
-                           <p className="text-[10px] sm:text-xs text-muted-foreground truncate max-w-full px-1 leading-tight">
-                             {member.profile.job_title}
-                           </p>
-                         )}
+                         {(() => {
+                           const tm = teamMembers?.find(m => m.user_id === member.user_id);
+                           return tm?.position ? (
+                             <PositionBadge name={tm.position.name} color={tm.position.color} textColor={tm.position.text_color} size="sm" />
+                           ) : null;
+                         })()}
                          {member.profile?.email && (
                            <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-muted-foreground truncate max-w-full px-1">
                              <Mail className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0 opacity-60" />
