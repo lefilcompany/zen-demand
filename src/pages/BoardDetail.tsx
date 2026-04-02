@@ -188,6 +188,7 @@ export default function BoardDetail() {
   const { data: members, isLoading: membersLoading } = useBoardMembers(boardId || null);
   const { data: myBoardRole } = useBoardRole(boardId || null);
   const { data: myTeamRole } = useTeamRole(board?.team_id || null);
+  const { data: teamMembers } = useTeamMembers(board?.team_id || null);
   const deleteBoard = useDeleteBoard();
   const updateBoard = useUpdateBoard();
   const removeMember = useRemoveBoardMember();
