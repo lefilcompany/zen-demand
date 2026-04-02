@@ -2,6 +2,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { LayoutGrid, Users, Trash2, UserPlus, UserMinus, ArrowLeft, Shield, UserCog, Briefcase, User, ChevronDown, Loader2, Pencil, Check, X, Search, Mail } from "lucide-react";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { PositionBadge } from "@/components/PositionBadge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -186,6 +188,7 @@ export default function BoardDetail() {
   const { data: members, isLoading: membersLoading } = useBoardMembers(boardId || null);
   const { data: myBoardRole } = useBoardRole(boardId || null);
   const { data: myTeamRole } = useTeamRole(board?.team_id || null);
+  const { data: teamMembers } = useTeamMembers(board?.team_id || null);
   const deleteBoard = useDeleteBoard();
   const updateBoard = useUpdateBoard();
   const removeMember = useRemoveBoardMember();
@@ -599,8 +602,9 @@ export default function BoardDetail() {
                 const name = member.profile?.full_name?.toLowerCase() || "";
                 const roleLabel = roleLabels[member.role]?.toLowerCase() || "";
                 const email = member.profile?.email?.toLowerCase() || "";
-                const jobTitle = member.profile?.job_title?.toLowerCase() || "";
-                return name.includes(q) || roleLabel.includes(q) || email.includes(q) || jobTitle.includes(q);
+                const tm = teamMembers?.find(m => m.user_id === member.user_id);
+                const positionName = tm?.position?.name?.toLowerCase() || "";
+                return name.includes(q) || roleLabel.includes(q) || email.includes(q) || positionName.includes(q);
               }).map((member) => {
                 const isCurrentUser = member.user_id === user?.id;
                 // Only admins can change roles, and they can't change their own
@@ -672,11 +676,12 @@ export default function BoardDetail() {
                          <p className="font-semibold text-xs sm:text-sm line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] leading-tight">
                            {member.profile?.full_name || "Usuário"}
                          </p>
-                         {member.profile?.job_title && (
-                           <p className="text-[10px] sm:text-xs text-muted-foreground truncate max-w-full px-1 leading-tight">
-                             {member.profile.job_title}
-                           </p>
-                         )}
+                         {(() => {
+                           const tm = teamMembers?.find(m => m.user_id === member.user_id);
+                           return tm?.position ? (
+                             <PositionBadge name={tm.position.name} color={tm.position.color} textColor={tm.position.text_color} size="sm" />
+                           ) : null;
+                         })()}
                          {member.profile?.email && (
                            <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-muted-foreground truncate max-w-full px-1">
                              <Mail className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0 opacity-60" />
