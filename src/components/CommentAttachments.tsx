@@ -163,6 +163,7 @@ interface ImageThumbnailProps {
 function ImageThumbnail({ attachment, onClick, cachedUrl, onLoadUrl }: ImageThumbnailProps) {
   const [url, setUrl] = useState<string | null>(cachedUrl || null);
   const [loading, setLoading] = useState(!cachedUrl);
+  const [exists, setExists] = useState(true);
 
   useEffect(() => {
     if (!cachedUrl) {
@@ -170,11 +171,16 @@ function ImageThumbnail({ attachment, onClick, cachedUrl, onLoadUrl }: ImageThum
         if (loadedUrl) {
           setUrl(loadedUrl);
           onLoadUrl(loadedUrl);
+        } else {
+          setExists(false);
         }
         setLoading(false);
       });
     }
   }, [attachment.file_path, cachedUrl]);
+
+  // Hide if file doesn't exist
+  if (!loading && !exists) return null;
 
   return (
     <button
