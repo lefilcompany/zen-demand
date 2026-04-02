@@ -112,7 +112,10 @@ export default function AdminCoupons() {
       toast.error("O máximo de usos deve ser no mínimo 1");
       return;
     }
-    // Show confirmation dialog
+    if (editingCoupon && editForm.max_uses < editingCoupon.times_used) {
+      toast.error(`O máximo de usos não pode ser menor que ${editingCoupon.times_used} (já resgatados)`);
+      return;
+    }
     setShowConfirm(true);
   };
 
@@ -221,6 +224,7 @@ export default function AdminCoupons() {
         isPending={updateCoupon.isPending}
         submitLabel="Salvar Alterações"
         showCodeField={false}
+        minMaxUses={editingCoupon?.times_used}
         extraContent={
           editingCoupon && editingCoupon.times_used > 0 ? (
             <div className="flex items-start gap-3 p-3 rounded-lg bg-accent/50 border border-accent">
@@ -284,6 +288,7 @@ function CouponFormDialog({
   isPending,
   submitLabel,
   showCodeField,
+  minMaxUses,
   extraContent,
 }: {
   open: boolean;
@@ -296,6 +301,7 @@ function CouponFormDialog({
   isPending: boolean;
   submitLabel: string;
   showCodeField: boolean;
+  minMaxUses?: number;
   extraContent?: React.ReactNode;
 }) {
   return (
@@ -344,10 +350,10 @@ function CouponFormDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>Máx. usos</Label>
+              <Label>Máx. usos {minMaxUses ? <span className="text-xs text-muted-foreground">(mín: {minMaxUses})</span> : null}</Label>
               <Input
                 type="number"
-                min={0}
+                min={minMaxUses || 0}
                 value={form.max_uses === 0 ? "" : form.max_uses}
                 onChange={(e) => setForm((f) => ({ ...f, max_uses: e.target.value === "" ? 0 : parseInt(e.target.value) || 0 }))}
               />
@@ -399,6 +405,7 @@ function CouponCard({
   const isExpired = coupon.expires_at && new Date(coupon.expires_at) < new Date();
   const isMaxed = coupon.times_used >= coupon.max_uses;
   const isUsable = coupon.is_active && !isExpired && !isMaxed;
+  const isManuallyDeactivated = !coupon.is_active && !isMaxed;
 
   const copyCode = () => {
     navigator.clipboard.writeText(coupon.code);
@@ -407,31 +414,64 @@ function CouponCard({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const getStatusBadge = () => {
+    if (isMaxed) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-destructive/10 text-destructive border border-destructive/20">
+          <AlertTriangle className="h-3 w-3" />
+          Esgotado
+        </span>
+      );
+    }
+    if (isExpired) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-destructive/10 text-destructive border border-destructive/20">
+          Expirado
+        </span>
+      );
+    }
+    if (!coupon.is_active) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-muted text-muted-foreground border border-border">
+          Inativo
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+        Ativo
+      </span>
+    );
+  };
+
   return (
     <div className="relative group">
       <div
         className={`relative overflow-hidden rounded-2xl border-2 transition-all duration-300 ${
           isUsable
             ? "border-primary/30 bg-card hover:border-primary/60 hover:shadow-lg hover:shadow-primary/10"
-            : "border-border bg-muted/40 opacity-75"
+            : "border-border bg-muted/30"
         }`}
       >
-        <div className={`h-2 w-full ${isUsable ? "bg-gradient-to-r from-primary via-accent to-primary" : "bg-muted-foreground/20"}`} />
+        {/* Top accent bar */}
+        <div className={`h-1.5 w-full ${isUsable ? "bg-gradient-to-r from-primary via-accent to-primary" : isMaxed ? "bg-destructive/40" : "bg-muted-foreground/20"}`} />
 
+        {/* Ticket cutouts */}
         <div className="absolute left-0 top-[4.5rem] -translate-x-1/2 w-6 h-6 rounded-full bg-background border-2 border-r-0 border-border z-10" />
         <div className="absolute right-0 top-[4.5rem] translate-x-1/2 w-6 h-6 rounded-full bg-background border-2 border-l-0 border-border z-10" />
 
         <div className="p-5">
+          {/* Header */}
           <div className="flex items-start justify-between mb-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <Ticket className={`h-5 w-5 shrink-0 ${isUsable ? "text-primary" : "text-muted-foreground"}`} />
-              <span className="font-bold text-lg tracking-wide font-mono text-foreground">{coupon.code}</span>
+              <span className={`font-bold text-lg tracking-wide font-mono truncate ${isUsable ? "text-foreground" : "text-muted-foreground"}`}>{coupon.code}</span>
             </div>
-            <div className="flex items-center gap-0.5">
-              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={copyCode}>
-                {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+            <div className="flex items-center gap-0.5 shrink-0">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={copyCode}>
+                {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={onEdit}>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit}>
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
             </div>
@@ -442,15 +482,17 @@ function CouponCard({
           )}
           {!coupon.description && <div className="mb-3" />}
 
+          {/* Dashed divider */}
           <div className="border-t-2 border-dashed border-border my-3 mx-[-1.25rem] px-5" />
 
+          {/* Stats */}
           <div className="grid grid-cols-3 gap-3 text-center mb-4">
             <div>
-              <p className="text-2xl font-black text-foreground">{coupon.trial_days}</p>
+              <p className={`text-2xl font-black ${isUsable ? "text-foreground" : "text-muted-foreground"}`}>{coupon.trial_days}</p>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">dias</p>
             </div>
             <div>
-              <p className="text-2xl font-black text-foreground">
+              <p className={`text-2xl font-black ${isMaxed ? "text-destructive" : "text-foreground"}`}>
                 {coupon.times_used}<span className="text-sm font-normal text-muted-foreground">/{coupon.max_uses}</span>
               </p>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">usos</p>
@@ -461,34 +503,31 @@ function CouponCard({
             </div>
           </div>
 
-          {isMaxed && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-destructive/10 border border-destructive/20 mb-3">
-              <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
-              <span className="text-[11px] font-medium text-destructive">Limite de resgates atingido — cupom inativado automaticamente</span>
-            </div>
-          )}
-
-          <div className="flex items-center justify-between pt-2 border-t border-border/50">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Calendar className="h-3 w-3" />
-                {coupon.expires_at
-                  ? (isExpired
-                      ? <span className="text-destructive">Expirado</span>
-                      : format(new Date(coupon.expires_at), "dd/MM/yy", { locale: ptBR }))
-                  : "∞"}
-              </div>
-              <Switch
-                checked={coupon.is_active}
-                onCheckedChange={onToggle}
-                className="scale-75 origin-left"
-              />
+          {/* Footer */}
+          <div className="flex items-center justify-between pt-3 border-t border-border/50">
+            <div className="flex items-center gap-2">
+              {getStatusBadge()}
+              {/* Only show toggle if NOT maxed — maxed coupons must be edited to increase uses */}
+              {!isMaxed && (
+                <Switch
+                  checked={coupon.is_active}
+                  onCheckedChange={onToggle}
+                  className="scale-75 origin-left"
+                />
+              )}
             </div>
             <Button variant="ghost" size="sm" className="h-7 text-xs px-2" onClick={onViewRedemptions}>
               <Eye className="h-3 w-3 mr-1" />
               Resgates
             </Button>
           </div>
+
+          {/* Maxed hint */}
+          {isMaxed && (
+            <p className="text-[10px] text-muted-foreground mt-2 text-center">
+              Para reativar, edite o cupom e aumente o máximo de usos
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -550,7 +589,11 @@ function CouponListView({
                   : "Sem expiração"}
               </TableCell>
               <TableCell>
-                <Switch checked={c.is_active} onCheckedChange={(checked) => onToggle(c.id, checked)} />
+                {c.times_used >= c.max_uses ? (
+                  <span className="text-xs font-medium text-destructive">Esgotado</span>
+                ) : (
+                  <Switch checked={c.is_active} onCheckedChange={(checked) => onToggle(c.id, checked)} />
+                )}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">
