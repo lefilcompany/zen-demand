@@ -240,7 +240,7 @@ export function useAvailableTeamMembers(teamId: string | null, boardId: string |
           full_name: tm.profiles?.full_name || "Usuário",
           avatar_url: tm.profiles?.avatar_url || null,
           job_title: tm.profiles?.job_title || null,
-          team_role: tm.role as string,
+          team_role: tm.role === "admin" ? "owner" : "member",
         }));
     },
     enabled: !!user && !!teamId && !!boardId,
