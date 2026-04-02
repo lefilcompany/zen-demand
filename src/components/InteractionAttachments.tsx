@@ -45,20 +45,26 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [fileExists, setFileExists] = useState(true);
   
   const isImage = attachment.file_type.startsWith("image/");
   const canPreview = isPreviewable(attachment.file_type);
   
   useEffect(() => {
-    if (isImage) {
-      getAttachmentUrl(attachment.file_path).then((url) => {
+    // Always verify file existence by trying to get URL
+    getAttachmentUrl(attachment.file_path).then((url) => {
+      if (isImage) {
         setImageUrl(url);
-        setIsLoading(false);
-      });
-    } else {
+      }
+      setFileExists(!!url);
       setIsLoading(false);
-    }
+    });
   }, [isImage, attachment.file_path]);
+
+  // Hide attachment if file doesn't exist in storage
+  if (!isLoading && !fileExists) {
+    return null;
+  }
 
   const handleDownload = async () => {
     const url = await getAttachmentUrl(attachment.file_path);

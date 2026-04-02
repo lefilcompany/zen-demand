@@ -35,7 +35,7 @@ interface AttachmentItemProps {
   onDelete: (id: string, filePath: string) => void;
 }
 
-function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps) {
+function AttachmentItem({ attachment, readOnly, onDelete, onAvailabilityChange }: AttachmentItemProps & { onAvailabilityChange?: (id: string, available: boolean) => void }) {
   const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -48,11 +48,17 @@ function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps)
       if (mounted) {
         setUrl(signedUrl);
         setLoading(false);
+        onAvailabilityChange?.(attachment.id, !!signedUrl);
       }
     });
     
     return () => { mounted = false; };
   }, [attachment.file_path]);
+
+  // Hide attachment if file doesn't exist in storage
+  if (!loading && !url) {
+    return null;
+  }
 
   const getFileIcon = (type: string) => {
     if (type.startsWith("image/")) return Image;

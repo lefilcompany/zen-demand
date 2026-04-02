@@ -322,7 +322,12 @@ function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps)
     );
   }
 
-  if (isImage && url) {
+  // Hide attachment if file doesn't exist in storage
+  if (!url) {
+    return null;
+  }
+
+  if (isImage) {
     return <ImageAttachment attachment={attachment} readOnly={readOnly} onDelete={onDelete} url={url} />;
   }
 
