@@ -138,30 +138,28 @@ export function TeamPositionsManager({ teamId, canManage, isAdmin }: TeamPositio
               )}
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
               {positions.map((position) => (
                 <div
                   key={position.id}
-                  className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors"
+                  className="group inline-flex items-center gap-1.5 pl-1 pr-1 py-1 rounded-full border bg-card hover:bg-muted/30 transition-colors"
                 >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <PositionBadge name={position.name} color={position.color} textColor={position.text_color} />
-                    {position.description && (
-                      <span className="text-sm text-muted-foreground truncate">
-                        {position.description}
-                      </span>
-                    )}
-                  </div>
+                  <PositionBadge name={position.name} color={position.color} textColor={position.text_color} />
+                  {position.description && (
+                    <span className="text-xs text-muted-foreground max-w-[120px] truncate hidden sm:inline">
+                      {position.description}
+                    </span>
+                  )}
                   
                   {canManage && (
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEdit(position)}
-                        className="h-8 w-8"
+                        className="h-6 w-6 rounded-full"
                       >
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="h-3 w-3" />
                       </Button>
                       
                       {isAdmin && (
@@ -170,13 +168,13 @@ export function TeamPositionsManager({ teamId, canManage, isAdmin }: TeamPositio
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              className="h-6 w-6 rounded-full text-destructive hover:text-destructive"
                               disabled={deletingId === position.id}
                             >
                               {deletingId === position.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <Loader2 className="h-3 w-3 animate-spin" />
                               ) : (
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-3 w-3" />
                               )}
                             </Button>
                           </AlertDialogTrigger>
