@@ -175,7 +175,7 @@ export function SidebarSubscriptionCard() {
             {/* Progress bar */}
             <div className="relative h-1.5 rounded-full bg-muted/50 overflow-hidden mb-2">
               <div className={cn("absolute inset-y-0 left-0 rounded-full bg-gradient-to-r transition-all duration-500", config.gradient)} style={{
-              width: `${Math.max(5, daysRemaining / 90 * 100)}%`
+              width: `${Math.max(5, (daysRemaining / totalTrialDays) * 100)}%`
             }} />
             </div>
 
