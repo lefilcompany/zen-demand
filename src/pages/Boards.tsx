@@ -259,9 +259,9 @@ export default function Boards() {
           {canCreateBoard && (
             <CreateBoardDialog 
               trigger={
-                <Button className="hidden sm:inline-flex w-full sm:w-auto">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Novo Quadro
+                <Button size="sm" className="w-auto">
+                  <Plus className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Novo Quadro</span>
                 </Button>
               }
             />
