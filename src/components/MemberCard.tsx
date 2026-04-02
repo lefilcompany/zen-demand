@@ -236,7 +236,7 @@ export function MemberCard({
           <button
             type="button"
             onClick={handleNameClick}
-            className="font-semibold text-sm line-clamp-2 min-h-[2.5rem] hover:text-primary hover:underline cursor-pointer transition-colors"
+            className="font-semibold text-sm line-clamp-2 min-h-[2.5rem] hover:text-primary hover:underline cursor-pointer transition-colors w-full text-center"
           >
             {member.profile.full_name}
           </button>
