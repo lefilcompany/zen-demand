@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { LayoutGrid, Users, Trash2, UserPlus, UserMinus, ArrowLeft, Shield, UserCog, Briefcase, User, ChevronDown, Loader2, Pencil, Check, X, Search, Mail } from "lucide-react";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -186,6 +187,7 @@ export default function BoardDetail() {
   const { data: members, isLoading: membersLoading } = useBoardMembers(boardId || null);
   const { data: myBoardRole } = useBoardRole(boardId || null);
   const { data: myTeamRole } = useTeamRole(board?.team_id || null);
+  const { data: teamMembers } = useTeamMembers(board?.team_id || null);
   const deleteBoard = useDeleteBoard();
   const updateBoard = useUpdateBoard();
   const removeMember = useRemoveBoardMember();
@@ -676,18 +678,29 @@ export default function BoardDetail() {
                          >
                            {member.profile?.full_name || "Usuário"}
                          </button>
-                         {member.profile?.job_title && (
-                           <p className="text-[10px] sm:text-xs text-muted-foreground truncate max-w-full px-1 leading-tight">
-                             {member.profile.job_title}
-                           </p>
-                         )}
                          {member.profile?.email && (
                            <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-muted-foreground truncate max-w-full px-1">
                              <Mail className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0 opacity-60" />
                              <span className="truncate">{member.profile.email}</span>
                            </div>
                          )}
-                         <div className="pt-0.5">
+                         <div className="flex items-center gap-1.5 pt-0.5 flex-wrap justify-center">
+                           {(() => {
+                             const tm = teamMembers?.find(m => m.user_id === member.user_id);
+                             return tm?.position ? (
+                               <span
+                                 className="inline-flex items-center gap-1 text-[11px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-full border font-medium"
+                                 style={{
+                                   backgroundColor: `${tm.position.color}15`,
+                                   borderColor: `${tm.position.color}40`,
+                                   color: tm.position.text_color || tm.position.color,
+                                 }}
+                               >
+                                 <Briefcase className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                 <span className="truncate max-w-[70px] sm:max-w-none">{tm.position.name}</span>
+                               </span>
+                             ) : null;
+                           })()}
                            <RoleSelector
                              currentRole={member.role}
                              onRoleChange={(newRole) => handleRoleChange(member.id, newRole)}
