@@ -112,7 +112,10 @@ export default function AdminCoupons() {
       toast.error("O máximo de usos deve ser no mínimo 1");
       return;
     }
-    // Show confirmation dialog
+    if (editingCoupon && editForm.max_uses < editingCoupon.times_used) {
+      toast.error(`O máximo de usos não pode ser menor que ${editingCoupon.times_used} (já resgatados)`);
+      return;
+    }
     setShowConfirm(true);
   };
 
