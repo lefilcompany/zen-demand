@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getAttachmentUrl } from "@/hooks/useAttachments";
-import { FileText, Download, Maximize2, Eye, Copy, Loader2 } from "lucide-react";
+import { FileText, Download, Eye, Copy, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { downloadFileFromUrl, copyImageToClipboard } from "@/lib/fileDownloadUtils";
 import { Button } from "@/components/ui/button";
@@ -149,8 +149,8 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           {isImage && imageUrl && (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsExpanded(true)}>
-              <Maximize2 className="h-3.5 w-3.5" />
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsExpanded(true)} title="Visualizar">
+              <Eye className="h-3.5 w-3.5" />
             </Button>
           )}
           {canPreview && !isImage && (
