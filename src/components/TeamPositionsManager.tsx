@@ -13,8 +13,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Briefcase, Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -141,34 +139,27 @@ export function TeamPositionsManager({ teamId, canManage, isAdmin }: TeamPositio
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {positions.map((position) => {
-                const chip = (
-                  <div
-                    key={position.id}
-                    className="inline-flex items-center pl-1 pr-2 py-1 rounded-full border bg-card transition-colors cursor-default"
-                  >
-                    <PositionBadge name={position.name} color={position.color} textColor={position.text_color} />
-                  </div>
-                );
-
-                if (!canManage) return <div key={position.id}>{chip}</div>;
-
-                return (
-                  <Popover key={position.id}>
-                    <PopoverTrigger asChild>
-                      <div className="inline-flex items-center pl-1 pr-2 py-1 rounded-full border bg-card hover:bg-muted/30 transition-colors cursor-pointer">
-                        <PositionBadge name={position.name} color={position.color} textColor={position.text_color} />
-                      </div>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-1.5 flex items-center gap-1" side="top" align="center">
+              {positions.map((position) => (
+                <div
+                  key={position.id}
+                  className="group inline-flex items-center gap-1.5 pl-1 pr-1 py-1 rounded-full border bg-card hover:bg-muted/30 transition-colors"
+                >
+                  <PositionBadge name={position.name} color={position.color} textColor={position.text_color} />
+                  {position.description && (
+                    <span className="text-xs text-muted-foreground max-w-[120px] truncate hidden sm:inline">
+                      {position.description}
+                    </span>
+                  )}
+                  
+                  {canManage && (
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
                         onClick={() => handleEdit(position)}
-                        className="h-7 px-2 gap-1.5 text-xs"
+                        className="h-6 w-6 rounded-full"
                       >
                         <Pencil className="h-3 w-3" />
-                        Editar
                       </Button>
                       
                       {isAdmin && (
@@ -176,8 +167,8 @@ export function TeamPositionsManager({ teamId, canManage, isAdmin }: TeamPositio
                           <AlertDialogTrigger asChild>
                             <Button
                               variant="ghost"
-                              size="sm"
-                              className="h-7 px-2 gap-1.5 text-xs text-destructive hover:text-destructive"
+                              size="icon"
+                              className="h-6 w-6 rounded-full text-destructive hover:text-destructive"
                               disabled={deletingId === position.id}
                             >
                               {deletingId === position.id ? (
@@ -185,7 +176,6 @@ export function TeamPositionsManager({ teamId, canManage, isAdmin }: TeamPositio
                               ) : (
                                 <Trash2 className="h-3 w-3" />
                               )}
-                              Excluir
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
@@ -208,10 +198,10 @@ export function TeamPositionsManager({ teamId, canManage, isAdmin }: TeamPositio
                           </AlertDialogContent>
                         </AlertDialog>
                       )}
-                    </PopoverContent>
-                  </Popover>
-                );
-              })}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
