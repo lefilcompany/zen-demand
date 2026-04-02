@@ -1,49 +1,37 @@
 
+Objetivo: corrigir a área de anexos da demanda para exibir até 3 itens visíveis por padrão e, quando houver mais, permitir rolagem apenas nessa lista.
 
-## Problem
+1. Revisar o componente certo
+- O problema está em `src/components/AttachmentUploader.tsx`, que é o bloco usado em `src/pages/DemandDetail.tsx`.
+- Confirmar que o ajuste ficará somente nessa seção da demanda, sem mexer nos anexos do chat.
 
-Multiple issues with attachment preview modals across demands and chat:
+2. Corrigir a causa do scroll não aparecer
+- Hoje a lista usa `ScrollArea` com `max-h-[240px]`.
+- O comportamento atual tende a falhar porque esse `ScrollArea` depende melhor de uma altura efetiva, e com apenas `max-height` o viewport pode crescer junto com o conteúdo.
+- A correção mais segura é trocar essa área por um container nativo com `overflow-y-auto` + `max-height`, ou então usar altura controlada apenas quando houver mais de 3 anexos.
+- Vou priorizar a abordagem mais confiável visualmente: scroll nativo só na lista de anexos da demanda.
 
-1. **Two overlapping close buttons**: `DialogContent` already renders an X button (from `dialog.tsx` line 45-48), and some modals add a second manual X button
-2. **Download opens new tab instead of downloading**: `window.open(url, "_blank")` and `<a href={url} target="_blank">` just navigate to the signed URL — they don't trigger a real download
-3. **Chat attachments (non-image) only show download, no preview**: `CommentAttachments` only has a download button for files, no way to open `DocumentPreviewDialog`
-4. **Image preview in chat** uses a raw Dialog with manual X button (duplicate close)
+3. Limitar a visualização a 3 anexos
+- Aplicar altura máxima pensada para aproximadamente 3 cards.
+- Garantir espaçamento interno e `pr-*` para não cortar ícones nem ficar colado na barra de scroll.
+- Se houver 1, 2 ou 3 anexos, a área cresce só até o necessário, sem espaço vazio exagerado.
 
-## Solution
+4. Manter todos os anexos acessíveis
+- Continuar renderizando a lista completa.
+- O scroll deve aparecer apenas quando a quantidade ultrapassar o limite visual.
+- Nenhum anexo deve “sumir” por clipping do container.
 
-### 1. Fix `DocumentPreviewDialog` — remove duplicate close button, fix download
+5. Validar impactos visuais
+- Conferir se preview, download e exclusão continuam funcionando normalmente dentro da área rolável.
+- Verificar se o último item da lista fica totalmente visível.
+- Garantir que o upload drag-and-drop acima não seja afetado.
 
-- Remove the header's manual close button since `DialogContent` already provides one
-- Fix download: fetch as blob → create object URL → use `<a download>` trick to force real download instead of opening new tab
-- Style: position the native DialogContent X button properly so it doesn't overlap with the "Baixar" button
-
-### 2. Fix `AttachmentUploader` image preview — remove duplicate X, fix download
-
-- In the image expanded dialog, remove the manual `<Button>` with X icon (DialogContent already has one)
-- Fix download: use blob fetch + `<a download>` pattern
-
-### 3. Fix `InteractionAttachments` (chat) — remove duplicate X, fix download, add preview for files
-
-- Remove manual X button in image preview dialog
-- Fix `handleDownload` to use blob download
-- For non-image files: add the same preview capability using `DocumentPreviewDialog`
-
-### 4. Fix `CommentAttachments` — add file preview, remove duplicate X, fix download
-
-- Add `DocumentPreviewDialog` for non-image file attachments (click to preview)
-- Remove manual X button from image preview dialog
-- Fix download to use blob pattern
-- Add an Eye icon button for previewable files
-
-### 5. Create shared download utility
-
-- Add a `downloadFileFromUrl(signedUrl, fileName)` helper in a utils file that fetches as blob and triggers a real download via anchor element with `download` attribute
-
-### Files to change
-
-1. **`src/lib/fileDownloadUtils.ts`** (new) — shared blob download function
-2. **`src/components/DocumentPreviewDialog.tsx`** — fix download, remove redundant close button styling
-3. **`src/components/AttachmentUploader.tsx`** — remove duplicate X, use blob download
-4. **`src/components/InteractionAttachments.tsx`** — remove duplicate X, use blob download
-5. **`src/components/CommentAttachments.tsx`** — add DocumentPreviewDialog for files, remove duplicate X, use blob download
-
+Seções técnicas
+- Arquivo principal: `src/components/AttachmentUploader.tsx`
+- Arquivo de uso: `src/pages/DemandDetail.tsx`
+- Ajuste provável:
+  - remover o `ScrollArea` dessa lista específica, ou
+  - condicionar a altura/overflow com container nativo
+- Regra final esperada:
+  - até 3 anexos: sem scroll
+  - mais de 3 anexos: scroll vertical apenas nessa lista
