@@ -13,6 +13,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 import { DocumentPreviewDialog, isPreviewable } from "@/components/DocumentPreviewDialog";
+import { Checkbox } from "@/components/ui/checkbox";
+
+const SKIP_ATTACH_DELETE_KEY = "skip-attachment-delete-confirm";
 
 interface AttachmentUploaderProps {
   demandId: string;
@@ -25,15 +28,36 @@ const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
 function DeleteConfirmPopover({ children, onConfirm }: { children: React.ReactNode; onConfirm: () => void }) {
   const [open, setOpen] = useState(false);
+  const [dontAsk, setDontAsk] = useState(false);
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (localStorage.getItem(SKIP_ATTACH_DELETE_KEY) === "true") {
+      e.preventDefault();
+      onConfirm();
+    }
+  };
+
+  const handleConfirm = () => {
+    if (dontAsk) {
+      localStorage.setItem(SKIP_ATTACH_DELETE_KEY, "true");
+    }
+    setOpen(false);
+    onConfirm();
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>{children}</PopoverTrigger>
+      <PopoverTrigger asChild onClick={handleClick}>{children}</PopoverTrigger>
       <PopoverContent side="top" align="end" className="w-auto p-3">
         <p className="text-sm font-medium mb-2">Remover este anexo?</p>
         <p className="text-xs text-muted-foreground mb-3">Esta ação é irreversível.</p>
+        <div className="flex items-center gap-2 mb-3">
+          <Checkbox id="skip-attach-delete" checked={dontAsk} onCheckedChange={(v) => setDontAsk(!!v)} />
+          <label htmlFor="skip-attach-delete" className="text-xs text-muted-foreground cursor-pointer">Não perguntar novamente</label>
+        </div>
         <div className="flex items-center justify-end gap-2">
           <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button variant="destructive" size="sm" onClick={() => { setOpen(false); onConfirm(); }}>Remover</Button>
+          <Button variant="destructive" size="sm" onClick={handleConfirm}>Remover</Button>
         </div>
       </PopoverContent>
     </Popover>
