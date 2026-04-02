@@ -23,6 +23,23 @@ interface AttachmentUploaderProps {
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
+function DeleteConfirmPopover({ children, onConfirm }: { children: React.ReactNode; onConfirm: () => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
+      <PopoverContent side="top" align="center" className="w-auto p-3">
+        <p className="text-sm font-medium mb-2">Remover este anexo?</p>
+        <p className="text-xs text-muted-foreground mb-3">Esta ação é irreversível.</p>
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button variant="destructive" size="sm" onClick={() => { setOpen(false); onConfirm(); }}>Remover</Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 interface AttachmentItemProps {
   attachment: {
     id: string;
