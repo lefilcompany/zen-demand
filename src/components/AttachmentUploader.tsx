@@ -35,7 +35,7 @@ interface AttachmentItemProps {
   onDelete: (id: string, filePath: string) => void;
 }
 
-function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps) {
+function AttachmentItem({ attachment, readOnly, onDelete, onAvailabilityChange }: AttachmentItemProps & { onAvailabilityChange?: (id: string, available: boolean) => void }) {
   const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -48,11 +48,17 @@ function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps)
       if (mounted) {
         setUrl(signedUrl);
         setLoading(false);
+        onAvailabilityChange?.(attachment.id, !!signedUrl);
       }
     });
     
     return () => { mounted = false; };
   }, [attachment.file_path]);
+
+  // Hide attachment if file doesn't exist in storage
+  if (!loading && !url) {
+    return null;
+  }
 
   const getFileIcon = (type: string) => {
     if (type.startsWith("image/")) return Image;
@@ -179,7 +185,17 @@ function AttachmentItem({ attachment, readOnly, onDelete }: AttachmentItemProps)
 
 export function AttachmentUploader({ demandId, readOnly = false, demandTitle, demandCreatedBy }: AttachmentUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [availableIds, setAvailableIds] = useState<Set<string>>(new Set());
   const { data: attachments, isLoading } = useAttachments(demandId);
+
+  const handleAvailabilityChange = useCallback((id: string, available: boolean) => {
+    setAvailableIds(prev => {
+      const next = new Set(prev);
+      if (available) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
   const uploadAttachment = useUploadAttachment();
   const deleteAttachment = useDeleteAttachment();
   const { user } = useAuth();
@@ -272,7 +288,7 @@ export function AttachmentUploader({ demandId, readOnly = false, demandTitle, de
     <div className="space-y-4">
       <h4 className="text-sm font-medium flex items-center gap-2">
         <Paperclip className="h-4 w-4" />
-        Anexos ({attachments?.length || 0})
+        Anexos ({availableIds.size})
       </h4>
 
       {!readOnly && (
@@ -310,6 +326,7 @@ export function AttachmentUploader({ demandId, readOnly = false, demandTitle, de
                 attachment={attachment}
                 readOnly={readOnly}
                 onDelete={handleDelete}
+                onAvailabilityChange={handleAvailabilityChange}
               />
             ))}
           </div>

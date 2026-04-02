@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getAttachmentUrl } from "@/hooks/useAttachments";
 import { FileText, Download, Maximize2, Eye } from "lucide-react";
+import { toast } from "sonner";
 import { downloadFileFromUrl } from "@/lib/fileDownloadUtils";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -45,25 +46,33 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [fileExists, setFileExists] = useState(true);
   
   const isImage = attachment.file_type.startsWith("image/");
   const canPreview = isPreviewable(attachment.file_type);
   
   useEffect(() => {
-    if (isImage) {
-      getAttachmentUrl(attachment.file_path).then((url) => {
+    // Always verify file existence by trying to get URL
+    getAttachmentUrl(attachment.file_path).then((url) => {
+      if (isImage) {
         setImageUrl(url);
-        setIsLoading(false);
-      });
-    } else {
+      }
+      setFileExists(!!url);
       setIsLoading(false);
-    }
+    });
   }, [isImage, attachment.file_path]);
 
+  // Hide attachment if file doesn't exist in storage
+  if (!isLoading && !fileExists) {
+    return null;
+  }
+
   const handleDownload = async () => {
-    const url = await getAttachmentUrl(attachment.file_path);
+    const url = imageUrl || await getAttachmentUrl(attachment.file_path);
     if (url) {
       downloadFileFromUrl(url, attachment.file_name);
+    } else {
+      toast.error("Arquivo não disponível");
     }
   };
 
