@@ -288,6 +288,7 @@ function CouponFormDialog({
   isPending,
   submitLabel,
   showCodeField,
+  minMaxUses,
   extraContent,
 }: {
   open: boolean;
@@ -300,6 +301,7 @@ function CouponFormDialog({
   isPending: boolean;
   submitLabel: string;
   showCodeField: boolean;
+  minMaxUses?: number;
   extraContent?: React.ReactNode;
 }) {
   return (
@@ -348,10 +350,10 @@ function CouponFormDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>Máx. usos</Label>
+              <Label>Máx. usos {minMaxUses ? <span className="text-xs text-muted-foreground">(mín: {minMaxUses})</span> : null}</Label>
               <Input
                 type="number"
-                min={0}
+                min={minMaxUses || 0}
                 value={form.max_uses === 0 ? "" : form.max_uses}
                 onChange={(e) => setForm((f) => ({ ...f, max_uses: e.target.value === "" ? 0 : parseInt(e.target.value) || 0 }))}
               />
