@@ -669,9 +669,13 @@ export default function BoardDetail() {
                       
                        {/* Member Info */}
                        <div className="pt-9 sm:pt-10 text-center flex flex-col items-center gap-1 sm:gap-1.5">
-                         <p className="font-semibold text-xs sm:text-sm line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] leading-tight">
+                         <button
+                           type="button"
+                           onClick={() => navigate(`/user/${member.user_id}`)}
+                           className="font-semibold text-xs sm:text-sm line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] leading-tight w-full text-center hover:text-primary hover:underline decoration-primary cursor-pointer transition-colors"
+                         >
                            {member.profile?.full_name || "Usuário"}
-                         </p>
+                         </button>
                          {member.profile?.job_title && (
                            <p className="text-[10px] sm:text-xs text-muted-foreground truncate max-w-full px-1 leading-tight">
                              {member.profile.job_title}
