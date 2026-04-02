@@ -46,6 +46,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+
+const SKIP_MOVE_CONFIRM_KEY = "skip-calendar-move-confirm";
 
 interface Demand {
   id: string;
@@ -178,14 +181,36 @@ export function DemandsCalendarView({
       if (!demand.due_date) return;
       const fromDate = new Date(demand.due_date);
       if (isSameDay(fromDate, targetDate)) return;
-      setDragConfirmation({ demand, fromDate, toDate: targetDate });
+      if (localStorage.getItem(SKIP_MOVE_CONFIRM_KEY) === "true") {
+        handleDirectMove(demand.id, targetDate);
+      } else {
+        setDragConfirmation({ demand, fromDate, toDate: targetDate });
+      }
     } catch {
       // ignore
     }
   }, []);
 
+  const handleDirectMove = async (demandId: string, toDate: Date) => {
+    if (!onDemandDateChange) return;
+    setIsMoving(true);
+    try {
+      await onDemandDateChange(demandId, toDate);
+      toast.success("Data da demanda atualizada com sucesso");
+    } catch {
+      toast.error("Erro ao mover demanda");
+    } finally {
+      setIsMoving(false);
+    }
+  };
+
+  const [dontAskMove, setDontAskMove] = useState(false);
+
   const handleConfirmMove = async () => {
     if (!dragConfirmation || !onDemandDateChange) return;
+    if (dontAskMove) {
+      localStorage.setItem(SKIP_MOVE_CONFIRM_KEY, "true");
+    }
     setIsMoving(true);
     try {
       await onDemandDateChange(dragConfirmation.demand.id, dragConfirmation.toDate);
@@ -683,6 +708,10 @@ export function DemandsCalendarView({
               </strong>?
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="flex items-center gap-2 px-6 pb-2">
+            <Checkbox id="skip-move-confirm" checked={dontAskMove} onCheckedChange={(v) => setDontAskMove(!!v)} />
+            <label htmlFor="skip-move-confirm" className="text-xs text-muted-foreground cursor-pointer">Não perguntar novamente</label>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isMoving}>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmMove} disabled={isMoving}>
