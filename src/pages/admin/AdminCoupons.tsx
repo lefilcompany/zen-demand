@@ -322,9 +322,9 @@ function CouponFormDialog({
               <Label>Dias de teste</Label>
               <Input
                 type="number"
-                min={1}
-                value={form.trial_days}
-                onChange={(e) => setForm((f) => ({ ...f, trial_days: parseInt(e.target.value) || 1 }))}
+                min={0}
+                value={form.trial_days === 0 ? "" : form.trial_days}
+                onChange={(e) => setForm((f) => ({ ...f, trial_days: e.target.value === "" ? 0 : parseInt(e.target.value) || 0 }))}
               />
             </div>
             <div className="space-y-2">
