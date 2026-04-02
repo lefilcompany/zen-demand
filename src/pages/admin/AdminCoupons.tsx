@@ -589,7 +589,11 @@ function CouponListView({
                   : "Sem expiração"}
               </TableCell>
               <TableCell>
-                <Switch checked={c.is_active} onCheckedChange={(checked) => onToggle(c.id, checked)} />
+                {c.times_used >= c.max_uses ? (
+                  <span className="text-xs font-medium text-destructive">Esgotado</span>
+                ) : (
+                  <Switch checked={c.is_active} onCheckedChange={(checked) => onToggle(c.id, checked)} />
+                )}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">
