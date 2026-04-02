@@ -1,6 +1,6 @@
 import { useTeamSubscription } from "@/hooks/useSubscription";
 import { useSelectedTeam } from "@/contexts/TeamContext";
-import { differenceInDays, isPast, parseISO, differenceInCalendarDays } from "date-fns";
+import { isPast, parseISO, differenceInCalendarDays } from "date-fns";
 
 export interface TrialStatus {
   isLoading: boolean;
