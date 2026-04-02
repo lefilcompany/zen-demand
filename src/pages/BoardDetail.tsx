@@ -665,18 +665,31 @@ export default function BoardDetail() {
                         </Avatar>
                       </div>
                       
-                      {/* Member Info */}
-                      <div className="pt-9 sm:pt-10 text-center flex flex-col items-center gap-1.5 sm:gap-2">
-                        <p className="font-semibold text-xs sm:text-sm line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] leading-tight">
-                          {member.profile?.full_name || "Usuário"}
-                        </p>
-                        <RoleSelector
-                          currentRole={member.role}
-                          onRoleChange={(newRole) => handleRoleChange(member.id, newRole)}
-                          isLoading={updateRole.isPending}
-                          disabled={!canChangeRole}
-                        />
-                      </div>
+                       {/* Member Info */}
+                       <div className="pt-9 sm:pt-10 text-center flex flex-col items-center gap-1 sm:gap-1.5">
+                         <p className="font-semibold text-xs sm:text-sm line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] leading-tight">
+                           {member.profile?.full_name || "Usuário"}
+                         </p>
+                         {member.profile?.job_title && (
+                           <p className="text-[10px] sm:text-xs text-muted-foreground truncate max-w-full px-1 leading-tight">
+                             {member.profile.job_title}
+                           </p>
+                         )}
+                         {member.profile?.email && (
+                           <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-muted-foreground truncate max-w-full px-1">
+                             <Mail className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0 opacity-60" />
+                             <span className="truncate">{member.profile.email}</span>
+                           </div>
+                         )}
+                         <div className="pt-0.5">
+                           <RoleSelector
+                             currentRole={member.role}
+                             onRoleChange={(newRole) => handleRoleChange(member.id, newRole)}
+                             isLoading={updateRole.isPending}
+                             disabled={!canChangeRole}
+                           />
+                         </div>
+                       </div>
                     </div>
                   </div>
                 );
