@@ -16,6 +16,8 @@ export interface BoardMember {
     id: string;
     full_name: string;
     avatar_url: string | null;
+    email: string | null;
+    job_title: string | null;
   };
 }
 
