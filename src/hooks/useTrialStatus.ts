@@ -1,7 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
-import { differenceInDays, isPast, parseISO } from "date-fns";
+import { useTeamSubscription } from "@/hooks/useSubscription";
+import { useSelectedTeam } from "@/contexts/TeamContext";
+import { differenceInDays, isPast, parseISO, differenceInCalendarDays } from "date-fns";
 
 export interface TrialStatus {
   isLoading: boolean;
@@ -9,32 +8,27 @@ export interface TrialStatus {
   isTrialExpired: boolean;
   trialEndsAt: Date | null;
   daysRemaining: number;
+  totalTrialDays: number;
 }
 
 export function useTrialStatus(): TrialStatus {
-  const { user } = useAuth();
+  const { currentTeam } = useSelectedTeam();
+  const { data: subscription, isLoading } = useTeamSubscription(currentTeam?.id);
 
-  const { data: profile, isLoading } = useQuery({
-    queryKey: ["profile-trial", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("trial_ends_at")
-        .eq("id", user.id)
-        .single();
+  // If subscription is trialing, use subscription.trial_ends_at
+  const isTrialing = subscription?.status === "trialing";
+  const trialEndsAt = isTrialing && subscription?.trial_ends_at
+    ? parseISO(subscription.trial_ends_at)
+    : null;
 
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-
-  const trialEndsAt = profile?.trial_ends_at ? parseISO(profile.trial_ends_at) : null;
-  const isTrialExpired = trialEndsAt ? isPast(trialEndsAt) : false;
-  const isTrialActive = trialEndsAt ? !isPast(trialEndsAt) : true;
+  const isTrialExpired = trialEndsAt ? isPast(trialEndsAt) : !isTrialing;
+  const isTrialActive = trialEndsAt ? !isPast(trialEndsAt) : false;
   const daysRemaining = trialEndsAt ? Math.max(0, differenceInDays(trialEndsAt, new Date())) : 0;
+
+  // Calculate total trial days from period start to trial end
+  const totalTrialDays = (isTrialing && subscription?.current_period_start && subscription?.trial_ends_at)
+    ? Math.max(1, differenceInCalendarDays(parseISO(subscription.trial_ends_at), parseISO(subscription.current_period_start)))
+    : 30; // fallback
 
   return {
     isLoading,
@@ -42,5 +36,6 @@ export function useTrialStatus(): TrialStatus {
     isTrialExpired,
     trialEndsAt,
     daysRemaining,
+    totalTrialDays,
   };
 }

@@ -102,7 +102,8 @@ export function ProtectedLayout() {
   // Check if user can use the system
   // User can use if: trial is active OR team has active subscription
   const hasActiveSubscription = subscription?.status === "active";
-  const canUseSystem = !isTrialExpired || hasActiveSubscription;
+  const hasActiveTrialing = subscription?.status === "trialing" && !isTrialExpired;
+  const canUseSystem = hasActiveSubscription || hasActiveTrialing || (!subscription && !isTrialExpired);
 
   // Show loading while checking trial/subscription status
   if (trialLoading || subLoading) {
