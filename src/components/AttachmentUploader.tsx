@@ -185,8 +185,17 @@ function AttachmentItem({ attachment, readOnly, onDelete, onAvailabilityChange }
 
 export function AttachmentUploader({ demandId, readOnly = false, demandTitle, demandCreatedBy }: AttachmentUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const [availableCount, setAvailableCount] = useState<number | null>(null);
+  const [availableIds, setAvailableIds] = useState<Set<string>>(new Set());
   const { data: attachments, isLoading } = useAttachments(demandId);
+
+  const handleAvailabilityChange = useCallback((id: string, available: boolean) => {
+    setAvailableIds(prev => {
+      const next = new Set(prev);
+      if (available) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
   const uploadAttachment = useUploadAttachment();
   const deleteAttachment = useDeleteAttachment();
   const { user } = useAuth();
