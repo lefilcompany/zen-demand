@@ -10,6 +10,9 @@ const jsonHeaders = { ...corsHeaders, "Content-Type": "application/json" };
 const respond = (status: number, body: Record<string, unknown>) =>
   new Response(JSON.stringify(body), { status, headers: jsonHeaders });
 
+const respondMissingFile = (code: "ATTACHMENT_NOT_FOUND" | "FILE_NOT_FOUND", error: string) =>
+  respond(200, { code, error, signedUrl: null, exists: false });
+
 const BUCKET = "demand-attachments";
 
 function safeDecodeURIComponent(value: string): string {
@@ -77,7 +80,7 @@ Deno.serve(async (req) => {
     }
 
     if (!attachment) {
-      return respond(404, { code: "ATTACHMENT_NOT_FOUND", error: "Attachment not found" });
+      return respondMissingFile("ATTACHMENT_NOT_FOUND", "Attachment not found");
     }
 
     // Check board membership
@@ -99,18 +102,20 @@ Deno.serve(async (req) => {
       .createSignedUrl(filePath, 3600);
 
     if (signError || !signedData?.signedUrl) {
-      console.error("Signed URL error:", signError, "path:", filePath);
       const isMissingFile =
         signError?.statusCode === "404" ||
         signError?.status === 400 ||
         signError?.message?.toLowerCase().includes("object not found");
 
       if (isMissingFile) {
-        return respond(404, {
-          code: "FILE_NOT_FOUND",
-          error: "O arquivo não existe mais no armazenamento. Pode ter sido removido.",
-        });
+        console.warn("Attachment missing in storage:", filePath);
+        return respondMissingFile(
+          "FILE_NOT_FOUND",
+          "O arquivo não existe mais no armazenamento. Pode ter sido removido.",
+        );
       }
+
+      console.error("Signed URL error:", signError, "path:", filePath);
 
       return respond(500, {
         code: "SIGNED_URL_ERROR",
