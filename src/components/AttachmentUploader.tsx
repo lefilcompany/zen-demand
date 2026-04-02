@@ -108,7 +108,7 @@ function AttachmentItem({ attachment, readOnly, onDelete, onAvailabilityChange }
               className="h-8 w-8"
               onClick={() => setIsExpanded(true)}
             >
-              <Maximize2 className="h-4 w-4" />
+              <Eye className="h-4 w-4" />
             </Button>
           )}
           {canPreview && !isImage && url && (
