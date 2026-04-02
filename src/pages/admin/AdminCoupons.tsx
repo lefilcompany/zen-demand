@@ -331,9 +331,9 @@ function CouponFormDialog({
               <Label>Máx. usos</Label>
               <Input
                 type="number"
-                min={1}
-                value={form.max_uses}
-                onChange={(e) => setForm((f) => ({ ...f, max_uses: parseInt(e.target.value) || 1 }))}
+                min={0}
+                value={form.max_uses === 0 ? "" : form.max_uses}
+                onChange={(e) => setForm((f) => ({ ...f, max_uses: e.target.value === "" ? 0 : parseInt(e.target.value) || 0 }))}
               />
             </div>
           </div>
