@@ -684,7 +684,7 @@ export default function BoardDetail() {
                              <span className="truncate">{member.profile.email}</span>
                            </div>
                          )}
-                         <div className="flex items-center gap-1.5 pt-0.5 flex-wrap justify-center">
+                         <div className="flex flex-col items-center gap-1.5 pt-0.5">
                            {(() => {
                              const tm = teamMembers?.find(m => m.user_id === member.user_id);
                              return tm?.position ? (
