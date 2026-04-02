@@ -61,6 +61,14 @@ export default function AdminCoupons() {
       toast.error("Preencha o código e selecione um plano");
       return;
     }
+    if (!form.trial_days || form.trial_days < 1) {
+      toast.error("Os dias de teste devem ser no mínimo 1");
+      return;
+    }
+    if (!form.max_uses || form.max_uses < 1) {
+      toast.error("O máximo de usos deve ser no mínimo 1");
+      return;
+    }
     try {
       await createCoupon.mutateAsync({
         code: form.code.toUpperCase(),
