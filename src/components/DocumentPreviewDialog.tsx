@@ -41,6 +41,7 @@ export function DocumentPreviewDialog({
   getUrlRef.current = getUrl;
 
   const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [copying, setCopying] = useState(false);
@@ -50,15 +51,39 @@ export function DocumentPreviewDialog({
 
     if (!open) {
       setFileUrl(null);
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+        setBlobUrl(null);
+      }
       return;
     }
 
     setLoading(true);
     setFileUrl(null);
+    setBlobUrl(null);
 
     getUrlRef.current()
-      .then((url) => {
-        if (alive) setFileUrl(url || null);
+      .then(async (url) => {
+        if (!alive || !url) {
+          if (alive) setFileUrl(null);
+          return;
+        }
+        setFileUrl(url);
+
+        // For PDFs and text, fetch as blob to avoid cross-origin iframe blocking
+        const needsBlob = fileType === "application/pdf" || fileType === "text/plain";
+        if (needsBlob) {
+          try {
+            const res = await fetch(url);
+            if (!alive) return;
+            const blob = await res.blob();
+            if (!alive) return;
+            const localUrl = URL.createObjectURL(blob);
+            setBlobUrl(localUrl);
+          } catch (e) {
+            console.error("Failed to create blob URL for preview:", e);
+          }
+        }
       })
       .catch((error) => {
         console.error("Failed to load preview URL:", error);
@@ -67,8 +92,17 @@ export function DocumentPreviewDialog({
         if (alive) setLoading(false);
       });
 
-    return () => { alive = false; };
-  }, [open]);
+    return () => {
+      alive = false;
+    };
+  }, [open, fileType]);
+
+  // Cleanup blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  }, [blobUrl]);
 
   const handleDownload = async () => {
     const url = fileUrl || (await getUrlRef.current());
@@ -138,11 +172,11 @@ export function DocumentPreviewDialog({
           ) : !fileUrl ? (
             <span className="text-sm text-muted-foreground">Não foi possível carregar o arquivo.</span>
           ) : isPdf ? (
-            <iframe src={fileUrl} title={fileName} className="w-full h-full border-0" />
+            <iframe src={blobUrl || fileUrl} title={fileName} className="w-full h-full border-0" />
           ) : isImage ? (
             <img src={fileUrl} alt={fileName} className="max-w-full max-h-full object-contain p-4" />
           ) : isText ? (
-            <iframe src={fileUrl} title={fileName} className="w-full h-full border-0 bg-background p-4" />
+            <iframe src={blobUrl || fileUrl} title={fileName} className="w-full h-full border-0 bg-background p-4" />
           ) : null}
         </div>
       </DialogContent>
