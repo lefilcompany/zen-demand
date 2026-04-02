@@ -2209,7 +2209,8 @@ export type Database = {
           id: string
           is_active: boolean
           last_triggered_at: string | null
-          secret: string
+          secret_hash: string
+          secret_prefix: string
           team_id: string
           updated_at: string
           url: string
@@ -2221,7 +2222,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_triggered_at?: string | null
-          secret: string
+          secret_hash: string
+          secret_prefix: string
           team_id: string
           updated_at?: string
           url: string
@@ -2233,7 +2235,8 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_triggered_at?: string | null
-          secret?: string
+          secret_hash?: string
+          secret_prefix?: string
           team_id?: string
           updated_at?: string
           url?: string
