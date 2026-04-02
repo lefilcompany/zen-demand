@@ -157,7 +157,7 @@ function AttachmentItem({ attachment, readOnly, onDelete, onAvailabilityChange }
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 opacity-0 group-hover:opacity-100"
+                className="h-8 w-8 opacity-0 group-hover:opacity-100 hover:bg-destructive/20"
               >
                 <Trash2 className="h-4 w-4 text-destructive" />
               </Button>
