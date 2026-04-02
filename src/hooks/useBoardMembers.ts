@@ -48,15 +48,31 @@ export function useBoardMembers(boardId: string | null) {
 
       if (error) throw error;
 
-      return data.map((member: any) => ({
-        id: member.id,
-        board_id: member.board_id,
-        user_id: member.user_id,
-        role: member.role as BoardRole,
-        added_by: member.added_by,
-        joined_at: member.joined_at,
-        profile: member.profiles,
-      })) as BoardMember[];
+      const roleOrder: Record<string, number> = {
+        admin: 0,
+        moderator: 1,
+        executor: 2,
+        requester: 3,
+      };
+
+      return data
+        .map((member: any) => ({
+          id: member.id,
+          board_id: member.board_id,
+          user_id: member.user_id,
+          role: member.role as BoardRole,
+          added_by: member.added_by,
+          joined_at: member.joined_at,
+          profile: member.profiles,
+        }))
+        .sort((a: BoardMember, b: BoardMember) => {
+          const orderA = roleOrder[a.role] ?? 99;
+          const orderB = roleOrder[b.role] ?? 99;
+          if (orderA !== orderB) return orderA - orderB;
+          const nameA = a.profile?.full_name || "";
+          const nameB = b.profile?.full_name || "";
+          return nameA.localeCompare(nameB);
+        }) as BoardMember[];
     },
     enabled: !!user && !!boardId,
   });
