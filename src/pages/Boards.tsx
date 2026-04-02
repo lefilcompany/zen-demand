@@ -167,8 +167,20 @@ export default function Boards() {
   const { selectedTeamId } = useSelectedTeam();
   const { data: boards, isLoading } = useBoards(selectedTeamId);
   const { data: teamRole } = useTeamRole(selectedTeamId);
+  const [boardSearch, setBoardSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
   
   const canCreateBoard = teamRole === "owner";
+
+  const filteredBoards = boards?.filter((board) => {
+    if (!boardSearch.trim()) return true;
+    const q = boardSearch.toLowerCase();
+    return (
+      board.name.toLowerCase().includes(q) ||
+      (board.description || "").toLowerCase().includes(q)
+    );
+  });
 
   if (isLoading) {
     return (
