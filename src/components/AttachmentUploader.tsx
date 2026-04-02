@@ -6,6 +6,7 @@ import { useAttachments, useUploadAttachment, useDeleteAttachment, getAttachment
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,23 @@ interface AttachmentUploaderProps {
 }
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+
+function DeleteConfirmPopover({ children, onConfirm }: { children: React.ReactNode; onConfirm: () => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
+      <PopoverContent side="top" align="center" className="w-auto p-3">
+        <p className="text-sm font-medium mb-2">Remover este anexo?</p>
+        <p className="text-xs text-muted-foreground mb-3">Esta ação é irreversível.</p>
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button variant="destructive" size="sm" onClick={() => { setOpen(false); onConfirm(); }}>Remover</Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 interface AttachmentItemProps {
   attachment: {
@@ -135,14 +153,15 @@ function AttachmentItem({ attachment, readOnly, onDelete, onAvailabilityChange }
           )}
           
           {!readOnly && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 opacity-0 group-hover:opacity-100"
-              onClick={() => onDelete(attachment.id, attachment.file_path)}
-            >
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
+            <DeleteConfirmPopover onConfirm={() => onDelete(attachment.id, attachment.file_path)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 opacity-0 group-hover:opacity-100"
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </DeleteConfirmPopover>
           )}
         </div>
       </div>
