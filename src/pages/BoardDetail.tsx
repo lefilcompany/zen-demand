@@ -598,7 +598,9 @@ export default function BoardDetail() {
                 const q = memberSearch.toLowerCase();
                 const name = member.profile?.full_name?.toLowerCase() || "";
                 const roleLabel = roleLabels[member.role]?.toLowerCase() || "";
-                return name.includes(q) || roleLabel.includes(q);
+                const email = member.profile?.email?.toLowerCase() || "";
+                const jobTitle = member.profile?.job_title?.toLowerCase() || "";
+                return name.includes(q) || roleLabel.includes(q) || email.includes(q) || jobTitle.includes(q);
               }).map((member) => {
                 const isCurrentUser = member.user_id === user?.id;
                 // Only admins can change roles, and they can't change their own
