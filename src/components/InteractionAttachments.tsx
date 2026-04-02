@@ -20,6 +20,10 @@ interface Attachment {
   resolved_url?: string;
 }
 
+type ExistingAttachment = Attachment & {
+  resolved_url: string;
+};
+
 interface InteractionAttachmentsProps {
   interactionId: string;
   className?: string;
@@ -38,7 +42,7 @@ export function useInteractionAttachments(interactionId: string | null) {
       if (error) throw error;
 
       const attachments = (data as Attachment[]) ?? [];
-      const validatedAttachments = await Promise.all(
+      const validatedAttachments = await Promise.all<ExistingAttachment | null>(
         attachments.map(async (attachment) => {
           const resolvedUrl = await getAttachmentUrl(attachment.file_path);
           if (!resolvedUrl) return null;
@@ -46,11 +50,11 @@ export function useInteractionAttachments(interactionId: string | null) {
           return {
             ...attachment,
             resolved_url: resolvedUrl,
-          } satisfies Attachment;
+          };
         })
       );
 
-      return validatedAttachments.filter((attachment): attachment is Attachment => attachment !== null);
+      return validatedAttachments.filter((attachment): attachment is ExistingAttachment => attachment !== null);
     },
     enabled: !!interactionId,
   });
