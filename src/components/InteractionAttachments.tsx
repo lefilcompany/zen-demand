@@ -67,9 +67,11 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
   }
 
   const handleDownload = async () => {
-    const url = await getAttachmentUrl(attachment.file_path);
+    const url = imageUrl || await getAttachmentUrl(attachment.file_path);
     if (url) {
       downloadFileFromUrl(url, attachment.file_name);
+    } else {
+      toast.error("Arquivo não disponível");
     }
   };
 
