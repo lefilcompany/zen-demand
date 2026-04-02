@@ -17,7 +17,12 @@ interface Attachment {
   file_path: string;
   file_type: string;
   file_size: number;
+  resolved_url?: string;
 }
+
+type ExistingAttachment = Attachment & {
+  resolved_url: string;
+};
 
 interface InteractionAttachmentsProps {
   interactionId: string;
@@ -26,7 +31,7 @@ interface InteractionAttachmentsProps {
 
 export function useInteractionAttachments(interactionId: string | null) {
   return useQuery({
-    queryKey: ["interaction-attachments", interactionId],
+    queryKey: ["interaction-attachments", interactionId, "existing-only"],
     queryFn: async () => {
       if (!interactionId) return [];
       const { data, error } = await supabase
@@ -35,32 +40,64 @@ export function useInteractionAttachments(interactionId: string | null) {
         .eq("interaction_id", interactionId)
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data as Attachment[];
+
+      const attachments = (data as Attachment[]) ?? [];
+      const validatedAttachments = await Promise.all<ExistingAttachment | null>(
+        attachments.map(async (attachment) => {
+          const resolvedUrl = await getAttachmentUrl(attachment.file_path);
+          if (!resolvedUrl) return null;
+
+          return {
+            ...attachment,
+            resolved_url: resolvedUrl,
+          };
+        })
+      );
+
+      return validatedAttachments.filter((attachment): attachment is ExistingAttachment => attachment !== null);
     },
     enabled: !!interactionId,
   });
 }
 
 function AttachmentItem({ attachment }: { attachment: Attachment }) {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [imageUrl, setImageUrl] = useState<string | null>(attachment.resolved_url ?? null);
+  const [isLoading, setIsLoading] = useState(!attachment.resolved_url);
   const [isExpanded, setIsExpanded] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [fileExists, setFileExists] = useState(true);
+  const [fileExists, setFileExists] = useState(!!attachment.resolved_url);
   
   const isImage = attachment.file_type.startsWith("image/");
   const canPreview = isPreviewable(attachment.file_type);
   
   useEffect(() => {
-    // Always verify file existence by trying to get URL
+    let isMounted = true;
+
+    if (attachment.resolved_url) {
+      if (isImage) {
+        setImageUrl(attachment.resolved_url);
+      }
+      setFileExists(true);
+      setIsLoading(false);
+      return () => {
+        isMounted = false;
+      };
+    }
+
     getAttachmentUrl(attachment.file_path).then((url) => {
+      if (!isMounted) return;
+
       if (isImage) {
         setImageUrl(url);
       }
       setFileExists(!!url);
       setIsLoading(false);
     });
-  }, [isImage, attachment.file_path]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isImage, attachment.file_path, attachment.resolved_url]);
 
   // Hide attachment if file doesn't exist in storage
   if (!isLoading && !fileExists) {
@@ -68,7 +105,7 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
   }
 
   const handleDownload = async () => {
-    const url = imageUrl || await getAttachmentUrl(attachment.file_path);
+    const url = attachment.resolved_url || imageUrl || await getAttachmentUrl(attachment.file_path);
     if (url) {
       downloadFileFromUrl(url, attachment.file_name);
     } else {
@@ -155,7 +192,7 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
           fileName={attachment.file_name}
           fileType={attachment.file_type}
           fileSize={attachment.file_size}
-          getUrl={() => getAttachmentUrl(attachment.file_path)}
+          getUrl={() => Promise.resolve(attachment.resolved_url).then((url) => url || getAttachmentUrl(attachment.file_path))}
         />
       )}
     </>
