@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getAttachmentUrl } from "@/hooks/useAttachments";
-import { FileText, Download, Maximize2, Eye } from "lucide-react";
+import { FileText, Download, Maximize2, Eye, Copy, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { downloadFileFromUrl } from "@/lib/fileDownloadUtils";
+import { downloadFileFromUrl, copyImageToClipboard } from "@/lib/fileDownloadUtils";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -66,6 +66,7 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [fileExists, setFileExists] = useState(!!attachment.resolved_url);
+  const [copying, setCopying] = useState(false);
   
   const isImage = attachment.file_type.startsWith("image/");
   const canPreview = isPreviewable(attachment.file_type);
@@ -177,10 +178,20 @@ function AttachmentItem({ attachment }: { attachment: Attachment }) {
               <span className="text-sm text-muted-foreground truncate max-w-[70%]">
                 {attachment.file_name}
               </span>
-              <Button variant="outline" size="sm" onClick={() => imageUrl && downloadFileFromUrl(imageUrl, attachment.file_name)}>
-                <Download className="h-4 w-4 mr-1" />
-                Baixar
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" disabled={!imageUrl || copying} onClick={async () => {
+                  if (!imageUrl) return;
+                  setCopying(true);
+                  try { await copyImageToClipboard(imageUrl); } finally { setCopying(false); }
+                }}>
+                  {copying ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Copy className="h-4 w-4 mr-1" />}
+                  Copiar
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => imageUrl && downloadFileFromUrl(imageUrl, attachment.file_name)}>
+                  <Download className="h-4 w-4 mr-1" />
+                  Baixar
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
