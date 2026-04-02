@@ -28,7 +28,7 @@ function DeleteConfirmPopover({ children, onConfirm }: { children: React.ReactNo
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent side="top" align="center" className="w-auto p-3">
+      <PopoverContent side="top" align="end" className="w-auto p-3">
         <p className="text-sm font-medium mb-2">Remover este anexo?</p>
         <p className="text-xs text-muted-foreground mb-3">Esta ação é irreversível.</p>
         <div className="flex items-center justify-end gap-2">
