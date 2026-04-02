@@ -502,6 +502,21 @@ export function useDeleteInteraction() {
 
   return useMutation({
     mutationFn: async ({ id, demandId }: { id: string; demandId: string }) => {
+      // Delete attachments linked to this interaction first
+      const { data: attachments } = await supabase
+        .from("demand_attachments")
+        .select("id, file_path")
+        .eq("interaction_id", id);
+
+      if (attachments && attachments.length > 0) {
+        const filePaths = attachments.map((a) => a.file_path);
+        await supabase.storage.from("demand-attachments").remove(filePaths);
+        await supabase
+          .from("demand_attachments")
+          .delete()
+          .eq("interaction_id", id);
+      }
+
       const { error } = await supabase
         .from("demand_interactions")
         .delete()
@@ -512,6 +527,9 @@ export function useDeleteInteraction() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["demand-interactions", variables.demandId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["demand-attachments"],
       });
     },
   });
