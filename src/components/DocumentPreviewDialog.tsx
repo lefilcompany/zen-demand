@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
-import { downloadFileFromUrl } from "@/lib/fileDownloadUtils";
+import { Download, Copy, Loader2 } from "lucide-react";
+import { downloadFileFromUrl, copyImageToClipboard } from "@/lib/fileDownloadUtils";
 
 interface DocumentPreviewDialogProps {
   open: boolean;
@@ -42,6 +42,8 @@ export function DocumentPreviewDialog({
 
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [copying, setCopying] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -56,28 +58,36 @@ export function DocumentPreviewDialog({
 
     getUrlRef.current()
       .then((url) => {
-        if (alive) {
-          setFileUrl(url || null);
-        }
+        if (alive) setFileUrl(url || null);
       })
       .catch((error) => {
         console.error("Failed to load preview URL:", error);
       })
       .finally(() => {
-        if (alive) {
-          setLoading(false);
-        }
+        if (alive) setLoading(false);
       });
 
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [open]);
 
   const handleDownload = async () => {
     const url = fileUrl || (await getUrlRef.current());
-    if (url) {
-      downloadFileFromUrl(url, fileName);
+    if (!url) return;
+    setDownloading(true);
+    try {
+      await downloadFileFromUrl(url, fileName);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!fileUrl) return;
+    setCopying(true);
+    try {
+      await copyImageToClipboard(fileUrl);
+    } finally {
+      setCopying(false);
     }
   };
 
@@ -98,8 +108,22 @@ export function DocumentPreviewDialog({
             )}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Button variant="outline" size="sm" onClick={handleDownload} disabled={!fileUrl}>
-              <Download className="h-4 w-4 mr-1" />
+            {isImage && (
+              <Button variant="outline" size="sm" onClick={handleCopy} disabled={!fileUrl || copying}>
+                {copying ? (
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                ) : (
+                  <Copy className="h-4 w-4 mr-1" />
+                )}
+                Copiar
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={handleDownload} disabled={!fileUrl || downloading}>
+              {downloading ? (
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-1" />
+              )}
               Baixar
             </Button>
           </div>
