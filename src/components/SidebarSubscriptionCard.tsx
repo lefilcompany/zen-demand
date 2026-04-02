@@ -24,6 +24,7 @@ export function SidebarSubscriptionCard() {
   const {
     isTrialActive,
     daysRemaining,
+    totalTrialDays,
     isLoading: trialLoading
   } = useTrialStatus();
   const {
