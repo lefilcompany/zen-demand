@@ -16,6 +16,8 @@ export interface BoardMember {
     id: string;
     full_name: string;
     avatar_url: string | null;
+    email: string | null;
+    job_title: string | null;
   };
 }
 
@@ -40,7 +42,9 @@ export function useBoardMembers(boardId: string | null) {
           profiles:user_id (
             id,
             full_name,
-            avatar_url
+            avatar_url,
+            email,
+            job_title
           )
         `)
         .eq("board_id", boardId)
