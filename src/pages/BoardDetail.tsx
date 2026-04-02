@@ -678,11 +678,6 @@ export default function BoardDetail() {
                          >
                            {member.profile?.full_name || "Usuário"}
                          </button>
-                         {member.profile?.job_title && (
-                           <p className="text-[10px] sm:text-xs text-muted-foreground truncate max-w-full px-1 leading-tight">
-                             {member.profile.job_title}
-                           </p>
-                         )}
                          {member.profile?.email && (
                            <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-muted-foreground truncate max-w-full px-1">
                              <Mail className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0 opacity-60" />
