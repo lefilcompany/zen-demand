@@ -257,7 +257,8 @@ export function useAvailableTeamMembers(teamId: string | null, boardId: string |
           avatar_url: tm.profiles?.avatar_url || null,
           job_title: tm.profiles?.job_title || null,
           team_role: tm.role === "admin" ? "owner" : "member",
-        }));
+        }))
+        .sort((a: any, b: any) => (a.full_name as string).localeCompare(b.full_name as string));
     },
     enabled: !!user && !!teamId && !!boardId,
   });
