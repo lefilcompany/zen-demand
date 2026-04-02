@@ -10,6 +10,10 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { copyRichContent } from "@/lib/clipboardUtils";
 import { useState } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+
+const SKIP_DELETE_CONFIRM_KEY = "skip-chat-delete-confirm";
 
 interface ChatMessageProps {
   interaction: {
@@ -201,9 +205,11 @@ export function DemandChatMessage({
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(interaction.id, interaction.content || "")}>
                   <Pencil className="h-3 w-3" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => onDelete(interaction.id)}>
-                  <Trash2 className="h-3 w-3" />
-                </Button>
+                <ChatDeleteConfirm onConfirm={() => onDelete(interaction.id)}>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/20">
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </ChatDeleteConfirm>
               </>
             )}
           </div>
@@ -214,6 +220,44 @@ export function DemandChatMessage({
 }
 
 // Date separator component
+function ChatDeleteConfirm({ children, onConfirm }: { children: React.ReactNode; onConfirm: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [dontAsk, setDontAsk] = useState(false);
+
+  const handleDelete = () => {
+    if (dontAsk) {
+      localStorage.setItem(SKIP_DELETE_CONFIRM_KEY, "true");
+    }
+    setOpen(false);
+    onConfirm();
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (localStorage.getItem(SKIP_DELETE_CONFIRM_KEY) === "true") {
+      e.preventDefault();
+      onConfirm();
+    }
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild onClick={handleClick}>{children}</PopoverTrigger>
+      <PopoverContent side="top" align="end" className="w-auto p-3 max-w-[220px]">
+        <p className="text-sm font-medium mb-1">Excluir mensagem?</p>
+        <p className="text-xs text-muted-foreground mb-3">Esta ação é irreversível.</p>
+        <div className="flex items-center gap-2 mb-3">
+          <Checkbox id="skip-confirm" checked={dontAsk} onCheckedChange={(v) => setDontAsk(!!v)} />
+          <label htmlFor="skip-confirm" className="text-xs text-muted-foreground cursor-pointer">Não perguntar novamente</label>
+        </div>
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button variant="destructive" size="sm" onClick={handleDelete}>Excluir</Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function DateSeparator({ date }: { date: Date }) {
   const label = isToday(date)
     ? "Hoje"
