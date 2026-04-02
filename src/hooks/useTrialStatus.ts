@@ -1,6 +1,6 @@
 import { useTeamSubscription } from "@/hooks/useSubscription";
 import { useSelectedTeam } from "@/contexts/TeamContext";
-import { differenceInDays, isPast, parseISO, differenceInCalendarDays } from "date-fns";
+import { isPast, parseISO, differenceInCalendarDays } from "date-fns";
 
 export interface TrialStatus {
   isLoading: boolean;
@@ -23,7 +23,7 @@ export function useTrialStatus(): TrialStatus {
 
   const isTrialExpired = trialEndsAt ? isPast(trialEndsAt) : !isTrialing;
   const isTrialActive = trialEndsAt ? !isPast(trialEndsAt) : false;
-  const daysRemaining = trialEndsAt ? Math.max(0, differenceInDays(trialEndsAt, new Date())) : 0;
+  const daysRemaining = trialEndsAt ? Math.max(0, differenceInCalendarDays(trialEndsAt, new Date())) : 0;
 
   // Calculate total trial days from period start to trial end
   const totalTrialDays = (isTrialing && subscription?.current_period_start && subscription?.trial_ends_at)
