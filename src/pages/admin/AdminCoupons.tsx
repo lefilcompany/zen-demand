@@ -224,6 +224,7 @@ export default function AdminCoupons() {
         isPending={updateCoupon.isPending}
         submitLabel="Salvar Alterações"
         showCodeField={false}
+        minMaxUses={editingCoupon?.times_used}
         extraContent={
           editingCoupon && editingCoupon.times_used > 0 ? (
             <div className="flex items-start gap-3 p-3 rounded-lg bg-accent/50 border border-accent">
