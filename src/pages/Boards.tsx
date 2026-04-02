@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { LayoutGrid, Users, Settings2, Plus, Trash2 } from "lucide-react";
+import { LayoutGrid, Users, Settings2, Plus, Trash2, Search, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -167,8 +167,20 @@ export default function Boards() {
   const { selectedTeamId } = useSelectedTeam();
   const { data: boards, isLoading } = useBoards(selectedTeamId);
   const { data: teamRole } = useTeamRole(selectedTeamId);
+  const [boardSearch, setBoardSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
   
   const canCreateBoard = teamRole === "owner";
+
+  const filteredBoards = boards?.filter((board) => {
+    if (!boardSearch.trim()) return true;
+    const q = boardSearch.toLowerCase();
+    return (
+      board.name.toLowerCase().includes(q) ||
+      (board.description || "").toLowerCase().includes(q)
+    );
+  });
 
   if (isLoading) {
     return (
@@ -203,21 +215,63 @@ export default function Boards() {
             Gerencie os quadros da sua equipe
           </p>
         </div>
-        {canCreateBoard && (
-          <CreateBoardDialog 
-            trigger={
-              <Button className="hidden sm:inline-flex w-full sm:w-auto">
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Quadro
-              </Button>
-            }
-          />
-        )}
+        <div className="flex items-center gap-2">
+          {boards && boards.length > 2 && (
+            <div className="shrink-0">
+              {searchOpen ? (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    ref={searchRef}
+                    placeholder="Buscar quadro..."
+                    value={boardSearch}
+                    onChange={(e) => setBoardSearch(e.target.value)}
+                    className="pl-9 h-9 pr-8 w-[180px] sm:w-[240px]"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        setSearchOpen(false);
+                        setBoardSearch("");
+                      }
+                    }}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8"
+                    onClick={() => { setSearchOpen(false); setBoardSearch(""); }}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { setSearchOpen(true); setTimeout(() => searchRef.current?.focus(), 50); }}
+                >
+                  <Search className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Buscar</span>
+                </Button>
+              )}
+            </div>
+          )}
+          {canCreateBoard && (
+            <CreateBoardDialog 
+              trigger={
+                <Button className="hidden sm:inline-flex w-full sm:w-auto">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Novo Quadro
+                </Button>
+              }
+            />
+          )}
+        </div>
       </div>
 
-      {boards && boards.length > 0 ? (
+      {filteredBoards && filteredBoards.length > 0 ? (
         <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {boards.map((board) => (
+          {filteredBoards.map((board) => (
             <BoardCard key={board.id} board={board} />
           ))}
         </div>
