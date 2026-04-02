@@ -269,9 +269,9 @@ export default function Boards() {
         </div>
       </div>
 
-      {boards && boards.length > 0 ? (
+      {filteredBoards && filteredBoards.length > 0 ? (
         <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {boards.map((board) => (
+          {filteredBoards.map((board) => (
             <BoardCard key={board.id} board={board} />
           ))}
         </div>
