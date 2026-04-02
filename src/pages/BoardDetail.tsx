@@ -2,6 +2,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { LayoutGrid, Users, Trash2, UserPlus, UserMinus, ArrowLeft, Shield, UserCog, Briefcase, User, ChevronDown, Loader2, Pencil, Check, X, Search, Mail } from "lucide-react";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { PositionBadge } from "@/components/PositionBadge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
