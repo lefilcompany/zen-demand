@@ -372,7 +372,7 @@ export function AttachmentUploader({ demandId, readOnly = false, demandTitle, de
       )}
 
       {attachments && attachments.length > 0 && (
-        <ScrollArea className="max-h-48">
+        <ScrollArea className="max-h-[220px]">
           <div className="space-y-2 pr-2">
             {attachments.map((attachment) => (
               <AttachmentItem
