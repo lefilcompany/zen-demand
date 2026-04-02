@@ -42,7 +42,9 @@ export function useBoardMembers(boardId: string | null) {
           profiles:user_id (
             id,
             full_name,
-            avatar_url
+            avatar_url,
+            email,
+            job_title
           )
         `)
         .eq("board_id", boardId)
