@@ -1,37 +1,21 @@
 
-Objetivo: corrigir a área de anexos da demanda para exibir até 3 itens visíveis por padrão e, quando houver mais, permitir rolagem apenas nessa lista.
 
-1. Revisar o componente certo
-- O problema está em `src/components/AttachmentUploader.tsx`, que é o bloco usado em `src/pages/DemandDetail.tsx`.
-- Confirmar que o ajuste ficará somente nessa seção da demanda, sem mexer nos anexos do chat.
+## Corrigir exibição de papéis no modal de adicionar membro ao quadro
 
-2. Corrigir a causa do scroll não aparecer
-- Hoje a lista usa `ScrollArea` com `max-h-[240px]`.
-- O comportamento atual tende a falhar porque esse `ScrollArea` depende melhor de uma altura efetiva, e com apenas `max-height` o viewport pode crescer junto com o conteúdo.
-- A correção mais segura é trocar essa área por um container nativo com `overflow-y-auto` + `max-height`, ou então usar altura controlada apenas quando houver mais de 3 anexos.
-- Vou priorizar a abordagem mais confiável visualmente: scroll nativo só na lista de anexos da demanda.
+### Problema
+No modal "Adicionar Membros ao Quadro" (step 1), os membros da equipe aparecem com rótulos de papéis de quadro (ex: "Solicitante", "Agente") em vez dos papéis de equipe corretos. No nível da equipe, só existem dois papéis: **Dono** (admin no DB) e **Membro** (qualquer outro valor).
 
-3. Limitar a visualização a 3 anexos
-- Aplicar altura máxima pensada para aproximadamente 3 cards.
-- Garantir espaçamento interno e `pr-*` para não cortar ícones nem ficar colado na barra de scroll.
-- Se houver 1, 2 ou 3 anexos, a área cresce só até o necessário, sem espaço vazio exagerado.
+### Alterações
 
-4. Manter todos os anexos acessíveis
-- Continuar renderizando a lista completa.
-- O scroll deve aparecer apenas quando a quantidade ultrapassar o limite visual.
-- Nenhum anexo deve “sumir” por clipping do container.
+**1. `src/hooks/useBoardMembers.ts` — `useAvailableTeamMembers`**
+- Mapear o `team_role` retornado do banco para o papel simplificado de equipe: `admin` → `"owner"`, qualquer outro → `"member"`.
+- Isso garante que o componente receba apenas papéis de equipe válidos.
 
-5. Validar impactos visuais
-- Conferir se preview, download e exclusão continuam funcionando normalmente dentro da área rolável.
-- Verificar se o último item da lista fica totalmente visível.
-- Garantir que o upload drag-and-drop acima não seja afetado.
+**2. `src/components/AddBoardMemberDialog.tsx`**
+- No Step 1 (seleção de membros), usar a configuração de `owner`/`member` do `teamRoleConfig` para exibir o badge e o banner, em vez de usar diretamente o valor do DB que pode ser `requester`, `executor`, etc.
+- No Step 2 (definição de cargos no quadro), remover o badge de papel de equipe ou mantê-lo como "Dono"/"Membro" — já que o papel de quadro é o que está sendo definido nessa etapa.
 
-Seções técnicas
-- Arquivo principal: `src/components/AttachmentUploader.tsx`
-- Arquivo de uso: `src/pages/DemandDetail.tsx`
-- Ajuste provável:
-  - remover o `ScrollArea` dessa lista específica, ou
-  - condicionar a altura/overflow com container nativo
-- Regra final esperada:
-  - até 3 anexos: sem scroll
-  - mais de 3 anexos: scroll vertical apenas nessa lista
+### Resultado esperado
+- Step 1: cada card mostra "Dono" ou "Membro" com cores correspondentes (âmbar/cinza).
+- Step 2: mantém o badge de equipe correto ("Dono"/"Membro") ao lado do nome, enquanto os botões de cargo de quadro continuam funcionando normalmente.
+
