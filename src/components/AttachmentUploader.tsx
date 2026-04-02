@@ -185,6 +185,7 @@ function AttachmentItem({ attachment, readOnly, onDelete, onAvailabilityChange }
 
 export function AttachmentUploader({ demandId, readOnly = false, demandTitle, demandCreatedBy }: AttachmentUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [availableCount, setAvailableCount] = useState<number | null>(null);
   const { data: attachments, isLoading } = useAttachments(demandId);
   const uploadAttachment = useUploadAttachment();
   const deleteAttachment = useDeleteAttachment();
