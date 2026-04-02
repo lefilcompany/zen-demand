@@ -214,6 +214,7 @@ export function useDemandStatuses() {
 
 export function useCreateDemand() {
   const queryClient = useQueryClient();
+  const { user, refreshSession } = useAuth();
 
   return useMutation({
     mutationFn: async (data: {
@@ -227,24 +228,40 @@ export function useCreateDemand() {
       due_date?: string;
       service_id?: string;
     }) => {
-      // Validate input data before database operation
       const validatedData = validateData(DemandCreateSchema, data);
-      
-      // Get user info - may be cached
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
+
+      let userId = user?.id ?? null;
+
+      if (!userId) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        userId = sessionData.session?.user?.id ?? null;
+      }
+
+      if (!userId) {
+        try {
+          await refreshSession();
+          const { data: refreshedSession } = await supabase.auth.getSession();
+          userId = refreshedSession.session?.user?.id ?? null;
+        } catch (error) {
+          console.error("Error refreshing session before creating demand:", error);
+        }
+      }
+
+      if (!userId) {
+        throw new Error("Sua sessão expirou. Faça login novamente para criar a demanda.");
+      }
 
       // If offline, create locally and queue for sync
       if (!isOnline()) {
         console.log('Offline: creating demand locally');
-        
+
         const offlineId = generateOfflineId();
         const now = new Date().toISOString();
-        
+
         // Get status info from cache for display purposes
         const cachedStatuses = await getOfflineDemandStatuses();
         const statusInfo = cachedStatuses.find((s: any) => s.id === validatedData.status_id);
-        
+
         const offlineDemand = {
           id: offlineId,
           title: validatedData.title,
@@ -256,7 +273,7 @@ export function useCreateDemand() {
           assigned_to: validatedData.assigned_to || null,
           due_date: validatedData.due_date || null,
           service_id: validatedData.service_id || null,
-          created_by: userId || 'offline_user',
+          created_by: userId,
           created_at: now,
           updated_at: now,
           archived: false,
@@ -267,13 +284,11 @@ export function useCreateDemand() {
           demand_statuses: statusInfo || { name: 'A Iniciar', color: '#94a3b8' },
           profiles: { full_name: 'Você', avatar_url: null },
           demand_assignees: [],
-          _isOffline: true, // Flag to indicate this is an offline demand
+          _isOffline: true,
         };
 
-        // Add to local cache
         await addCachedDemand(offlineDemand);
 
-        // Add to sync queue for later sync
         await addToSyncQueue({
           type: 'create',
           table: 'demands',
@@ -288,15 +303,13 @@ export function useCreateDemand() {
             due_date: validatedData.due_date,
             service_id: validatedData.service_id,
             created_by: userId,
-            _offlineId: offlineId, // Track the offline ID for replacement after sync
+            _offlineId: offlineId,
           },
         });
 
         return offlineDemand;
       }
 
-      if (!userId) throw new Error('Usuário não autenticado');
-      
       const { data: demand, error } = await supabase
         .from("demands")
         .insert({
