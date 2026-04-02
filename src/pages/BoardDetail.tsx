@@ -602,8 +602,9 @@ export default function BoardDetail() {
                 const name = member.profile?.full_name?.toLowerCase() || "";
                 const roleLabel = roleLabels[member.role]?.toLowerCase() || "";
                 const email = member.profile?.email?.toLowerCase() || "";
-                const jobTitle = member.profile?.job_title?.toLowerCase() || "";
-                return name.includes(q) || roleLabel.includes(q) || email.includes(q) || jobTitle.includes(q);
+                const tm = teamMembers?.find(m => m.user_id === member.user_id);
+                const positionName = tm?.position?.name?.toLowerCase() || "";
+                return name.includes(q) || roleLabel.includes(q) || email.includes(q) || positionName.includes(q);
               }).map((member) => {
                 const isCurrentUser = member.user_id === user?.id;
                 // Only admins can change roles, and they can't change their own
