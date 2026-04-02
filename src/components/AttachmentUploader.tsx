@@ -326,6 +326,7 @@ export function AttachmentUploader({ demandId, readOnly = false, demandTitle, de
                 attachment={attachment}
                 readOnly={readOnly}
                 onDelete={handleDelete}
+                onAvailabilityChange={handleAvailabilityChange}
               />
             ))}
           </div>
