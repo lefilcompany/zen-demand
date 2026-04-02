@@ -601,8 +601,9 @@ export default function BoardDetail() {
                 const name = member.profile?.full_name?.toLowerCase() || "";
                 const roleLabel = roleLabels[member.role]?.toLowerCase() || "";
                 const email = member.profile?.email?.toLowerCase() || "";
-                const jobTitle = member.profile?.job_title?.toLowerCase() || "";
-                return name.includes(q) || roleLabel.includes(q) || email.includes(q) || jobTitle.includes(q);
+                const tm = teamMembers?.find(m => m.user_id === member.user_id);
+                const positionName = tm?.position?.name?.toLowerCase() || "";
+                return name.includes(q) || roleLabel.includes(q) || email.includes(q) || positionName.includes(q);
               }).map((member) => {
                 const isCurrentUser = member.user_id === user?.id;
                 // Only admins can change roles, and they can't change their own
@@ -630,7 +631,7 @@ export default function BoardDetail() {
                     
                     {/* Remove Button - positioned on banner */}
                     {canManage && !isCurrentUser && (
-                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="secondary" size="icon" className="h-6 w-6 sm:h-7 sm:w-7 bg-background/80 hover:bg-background text-destructive hover:text-destructive">
