@@ -372,19 +372,17 @@ export function AttachmentUploader({ demandId, readOnly = false, demandTitle, de
       )}
 
       {attachments && attachments.length > 0 && (
-        <ScrollArea className="max-h-[240px]">
-          <div className="space-y-2 pr-2">
-            {attachments.map((attachment) => (
-              <AttachmentItem
-                key={attachment.id}
-                attachment={attachment}
-                readOnly={readOnly}
-                onDelete={handleDelete}
-                onAvailabilityChange={handleAvailabilityChange}
-              />
-            ))}
-          </div>
-        </ScrollArea>
+        <div className="max-h-[228px] overflow-y-auto pr-1 space-y-2">
+          {attachments.map((attachment) => (
+            <AttachmentItem
+              key={attachment.id}
+              attachment={attachment}
+              readOnly={readOnly}
+              onDelete={handleDelete}
+              onAvailabilityChange={handleAvailabilityChange}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
