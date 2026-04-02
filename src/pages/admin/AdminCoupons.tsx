@@ -104,6 +104,14 @@ export default function AdminCoupons() {
       toast.error("Selecione um plano");
       return;
     }
+    if (!editForm.trial_days || editForm.trial_days < 1) {
+      toast.error("Os dias de teste devem ser no mínimo 1");
+      return;
+    }
+    if (!editForm.max_uses || editForm.max_uses < 1) {
+      toast.error("O máximo de usos deve ser no mínimo 1");
+      return;
+    }
     // Show confirmation dialog
     setShowConfirm(true);
   };
