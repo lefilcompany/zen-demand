@@ -84,12 +84,7 @@ const Index = () => {
     quarter: t("reports.quarter")
   };
 
-  // Stats for all roles
-  const totalDemands = demands?.length || 0;
-  const inProgressDemands = demands?.filter((d) => d.demand_statuses?.name === "Fazendo").length || 0;
-  const completedDemands = demands?.filter((d) => d.demand_statuses?.name === "Entregue").length || 0;
-  const pendingDemands = demands?.filter((d) => d.demand_statuses?.name === "A Iniciar").length || 0;
-  const adjustmentDemands = demands?.filter((d) => d.demand_statuses?.name === "Em Ajuste").length || 0;
+  // Stats
   const totalTeams = teams?.length || 0;
 
   // Client-specific stats
