@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Clock } from "lucide-react";
+import { AlertTriangle, Clock, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isDateOverdue } from "@/lib/dateUtils";
 
@@ -12,6 +12,10 @@ export interface CalendarDemandCardProps {
     demand_statuses?: {
       name: string;
       color: string;
+    } | null;
+    services?: {
+      id: string;
+      name: string;
     } | null;
   };
   onClick?: () => void;
@@ -31,7 +35,6 @@ export function CalendarDemandCard({ demand, onClick, compact = false }: Calenda
   const isOverdue = !isDelivered && isDateOverdue(demand.due_date);
 
   if (compact) {
-    // Compact version for mobile - just a colored bar with minimal info
     return (
       <div
         className={cn(
@@ -50,7 +53,7 @@ export function CalendarDemandCard({ demand, onClick, compact = false }: Calenda
           e.stopPropagation();
           onClick?.();
         }}
-        title={demand.title}
+        title={`${demand.title}${demand.services?.name ? ` • ${demand.services.name}` : ''}`}
       >
         <span className="font-medium text-foreground truncate block">
           {demand.title}
@@ -88,19 +91,30 @@ export function CalendarDemandCard({ demand, onClick, compact = false }: Calenda
           <p className="font-medium truncate text-foreground" title={demand.title}>
             {demand.title}
           </p>
-          {demand.demand_statuses && (
-            <Badge
-              variant="outline"
-              className="text-[10px] px-1 py-0 h-4 mt-0.5"
-              style={{
-                backgroundColor: `${demand.demand_statuses.color}15`,
-                color: demand.demand_statuses.color,
-                borderColor: `${demand.demand_statuses.color}30`,
-              }}
-            >
-              {demand.demand_statuses.name}
-            </Badge>
-          )}
+          <div className="flex flex-wrap items-center gap-1 mt-0.5">
+            {demand.demand_statuses && (
+              <Badge
+                variant="outline"
+                className="text-[10px] px-1 py-0 h-4"
+                style={{
+                  backgroundColor: `${demand.demand_statuses.color}15`,
+                  color: demand.demand_statuses.color,
+                  borderColor: `${demand.demand_statuses.color}30`,
+                }}
+              >
+                {demand.demand_statuses.name}
+              </Badge>
+            )}
+            {demand.services?.name && (
+              <Badge
+                variant="outline"
+                className="text-[10px] px-1 py-0 h-4 gap-0.5 bg-accent/50 text-muted-foreground border-border/60"
+              >
+                <Briefcase className="h-2.5 w-2.5" />
+                {demand.services.name}
+              </Badge>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-1 shrink-0">

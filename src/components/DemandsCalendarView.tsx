@@ -59,6 +59,10 @@ interface Demand {
     name: string;
     color: string;
   } | null;
+  services?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 interface DemandsCalendarViewProps {
