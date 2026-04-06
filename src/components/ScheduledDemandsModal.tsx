@@ -112,25 +112,24 @@ export function ScheduledDemandsModal({ boardId, teamId, buttonStyle = "compact"
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button 
-          variant={count > 0 ? "default" : "outline"} 
-          size="sm" 
-          className={buttonStyle === "compact" 
-            ? "relative gap-1 rounded-full h-7 px-2.5 text-[11px]" 
-            : "gap-2"
-          }
+        <button 
+          className={`
+            inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium h-8
+            transition-all duration-200 whitespace-nowrap
+            ${count > 0 
+              ? "bg-primary text-primary-foreground shadow-sm" 
+              : "bg-background border border-border/60 hover:border-primary/40 hover:text-primary"
+            }
+          `}
         >
-          <CalendarClock className="h-4 w-4" />
-          <span className={buttonStyle === "standard" ? "hidden sm:inline" : ""}>Agendadas</span>
+          <CalendarClock className="h-3.5 w-3.5" />
+          <span>Agendadas</span>
           {count > 0 && (
-            <Badge 
-              variant="secondary" 
-              className="h-5 min-w-5 px-1.5 justify-center bg-background text-foreground"
-            >
+            <span className="inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full text-[10px] font-bold bg-primary-foreground/20 text-primary-foreground">
               {count}
-            </Badge>
+            </span>
           )}
-        </Button>
+        </button>
       </DialogTrigger>
       <DialogContent className="w-[calc(100%-2rem)] max-w-3xl h-[90vh] sm:h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
