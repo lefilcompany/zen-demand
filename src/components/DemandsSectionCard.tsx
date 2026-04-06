@@ -213,18 +213,19 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
             </div>
             {categoryData.length > 0 ? (
               <div className="flex flex-col items-center gap-2">
-                <div className="relative flex-shrink-0" style={{ width: isMobile ? 120 : 150, height: isMobile ? 120 : 150 }}>
+                <div className="flex-shrink-0" style={{ width: isMobile ? 140 : 170, height: isMobile ? 140 : 170 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={categoryData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={isMobile ? 28 : 38}
-                        outerRadius={isMobile ? 52 : 65}
+                        outerRadius={isMobile ? 60 : 75}
                         dataKey="value"
                         strokeWidth={2}
                         stroke="hsl(var(--background))"
+                        label={({ name, percent }) => `${Math.round(percent * 100)}%`}
+                        labelLine={false}
                       >
                         {categoryData.map((_, idx) => (
                           <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
@@ -233,15 +234,12 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
                       <Tooltip content={<CustomPieTooltip total={totalPie} />} />
                     </PieChart>
                   </ResponsiveContainer>
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="text-lg md:text-xl font-bold text-orange-500">{topPercent}%</span>
-                  </div>
                 </div>
                 <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center w-full">
                   {categoryData.map((item, idx) => (
                     <div key={item.name} className="flex items-center gap-1.5 text-[10px] md:text-xs">
                       <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                      <span className="text-foreground font-medium">{item.name}</span>
+                      <span className="text-foreground font-medium">{item.name} ({item.value})</span>
                     </div>
                   ))}
                 </div>
