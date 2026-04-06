@@ -132,11 +132,16 @@ const Index = () => {
       <div className="space-y-4 md:space-y-6 animate-fade-in">
         {/* Header */}
         <div className="flex flex-col gap-3 sm:gap-4">
-          <div data-tour="dashboard-title">
-            <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("dashboard.title")}</h1>
-            <p className="text-sm text-muted-foreground">
-              {format(new Date(), "MMMM yyyy", { locale: getLocale() })}
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div data-tour="dashboard-title">
+              <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("dashboard.title")}</h1>
+              <p className="text-sm text-muted-foreground">
+                {format(new Date(), "MMMM yyyy", { locale: getLocale() })}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <DashboardCustomizer widgets={widgets} onChange={setWidgets} isSaving={isSaving} />
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <PeriodFilter value={period} onChange={setPeriod} />
@@ -167,8 +172,13 @@ const Index = () => {
         {/* Banner */}
         <DashboardBanner />
 
+        {/* AI Insights */}
+        {widgets.aiInsights && (
+          <DashboardAIInsights boardId={selectedBoardId} />
+        )}
+
         {/* Demands Section - service pie + cumulative area chart */}
-        {(() => {
+        {widgets.demandsSection && (() => {
           const reqDemands = (demandData?.demands || demands || []).map((d: any) => ({
             id: d.id,
             created_at: d.created_at,
@@ -182,6 +192,16 @@ const Index = () => {
 
         {/* Requests History Carousel */}
         <RequesterRequestsCarousel />
+
+        {/* Member Analysis + Recent Activities */}
+        {(widgets.memberAnalysis || widgets.recentActivities) && selectedTeamId && (
+          <div className="grid gap-4 lg:grid-cols-2 items-stretch">
+            {widgets.memberAnalysis && demands && demands.length > 0 && (
+              <MemberAnalysisSection demands={demands} />
+            )}
+            {widgets.recentActivities && <RecentActivities />}
+          </div>
+        )}
 
         {hasBoardLimit && (
           <ScopeOverviewCard 
