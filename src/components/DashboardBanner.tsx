@@ -20,7 +20,7 @@ export function DashboardBanner({
         className="absolute inset-0 w-full h-full object-cover"
       />
       <div className="absolute inset-0 bg-gradient-to-r from-foreground/80 via-foreground/60 to-transparent"></div>
-      <div className="relative z-10 h-full flex flex-col justify-between p-4 md:p-6 lg:p-8">
+      <div className="relative z-10 h-full flex items-center justify-between p-4 md:p-6 lg:p-8">
         <div>
           <h2 className="text-lg md:text-xl lg:text-2xl font-bold mb-1 text-white">
             {title}
