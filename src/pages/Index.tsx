@@ -31,6 +31,7 @@ import { DashboardAIInsights } from "@/components/DashboardAIInsights";
 import { ProductivitySection } from "@/components/ProductivitySection";
 import { DemandsSectionCard } from "@/components/DemandsSectionCard";
 import { MemberAnalysisSection } from "@/components/MemberAnalysisSection";
+import { RequesterRequestsCarousel } from "@/components/RequesterRequestsCarousel";
 
 const Index = () => {
   const { t, i18n } = useTranslation();
