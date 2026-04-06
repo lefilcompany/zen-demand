@@ -35,7 +35,7 @@ serve(async (req) => {
       });
     }
 
-    const { board_id } = await req.json();
+    const { board_id, is_requester } = await req.json();
     if (!board_id) {
       return new Response(JSON.stringify({ error: "board_id is required" }), {
         status: 400,
@@ -43,39 +43,60 @@ serve(async (req) => {
       });
     }
 
-    // Fetch board data
-    const [demandsRes, membersRes, boardRes] = await Promise.all([
-      supabase
-        .from("demands")
-        .select("id, title, priority, due_date, created_at, status_id, demand_statuses(name)")
-        .eq("board_id", board_id)
-        .eq("archived", false)
-        .order("created_at", { ascending: false })
-        .limit(100),
+    // Fetch board data — for requesters, only their own demands
+    const demandsQuery = supabase
+      .from("demands")
+      .select("id, title, priority, due_date, created_at, delivered_at, status_id, service_id, services(name), demand_statuses(name)")
+      .eq("board_id", board_id)
+      .eq("archived", false)
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (is_requester) {
+      demandsQuery.eq("created_by", user.id);
+    }
+
+    const [demandsRes, membersRes, boardRes, requestsRes] = await Promise.all([
+      demandsQuery,
       supabase
         .from("board_members")
         .select("user_id, role")
         .eq("board_id", board_id),
       supabase
         .from("boards")
-        .select("name")
+        .select("name, team_id")
         .eq("id", board_id)
         .single(),
+      is_requester
+        ? supabase
+            .from("demand_requests")
+            .select("id, status, created_at, title")
+            .eq("created_by", user.id)
+            .eq("board_id", board_id)
+            .order("created_at", { ascending: false })
+            .limit(20)
+        : Promise.resolve({ data: [] }),
     ]);
 
     const demands = demandsRes.data || [];
     const members = membersRes.data || [];
     const boardName = boardRes.data?.name || "Quadro";
+    const requests = requestsRes.data || [];
 
     // Calculate summary stats
     const statusCounts: Record<string, number> = {};
+    const serviceCounts: Record<string, number> = {};
     let overdueCount = 0;
+    let deliveredCount = 0;
     const now = new Date();
 
     for (const d of demands) {
       const statusName = (d as any).demand_statuses?.name || "Sem status";
+      const serviceName = (d as any).services?.name || "Sem serviço";
       statusCounts[statusName] = (statusCounts[statusName] || 0) + 1;
-      if (d.due_date && new Date(d.due_date) < now && statusName !== "Entregue") {
+      serviceCounts[serviceName] = (serviceCounts[serviceName] || 0) + 1;
+      if (d.delivered_at) deliveredCount++;
+      if (d.due_date && new Date(d.due_date) < now && statusName !== "Entregue" && !d.delivered_at) {
         overdueCount++;
       }
     }
@@ -83,11 +104,29 @@ serve(async (req) => {
     const totalMembers = members.length;
     const totalDemands = demands.length;
 
-    const summaryText = `Quadro: ${boardName}
+    let summaryText: string;
+
+    if (is_requester) {
+      const requestStatusCounts: Record<string, number> = {};
+      for (const r of requests as any[]) {
+        requestStatusCounts[r.status] = (requestStatusCounts[r.status] || 0) + 1;
+      }
+
+      summaryText = `Quadro: ${boardName}
+Visão do Cliente/Solicitante:
+Total de demandas solicitadas: ${totalDemands}
+Demandas entregues: ${deliveredCount}
+Demandas atrasadas: ${overdueCount}
+Status das demandas: ${Object.entries(statusCounts).map(([k, v]) => `${k}: ${v}`).join(", ")}
+Serviços solicitados: ${Object.entries(serviceCounts).map(([k, v]) => `${k}: ${v}`).join(", ")}
+Solicitações recentes: ${(requests as any[]).length} (${Object.entries(requestStatusCounts).map(([k, v]) => `${k}: ${v}`).join(", ")})`;
+    } else {
+      summaryText = `Quadro: ${boardName}
 Total de demandas: ${totalDemands}
 Membros: ${totalMembers}
 Demandas atrasadas: ${overdueCount}
 Status: ${Object.entries(statusCounts).map(([k, v]) => `${k}: ${v}`).join(", ")}`;
+    }
 
     // Call Lovable AI
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
