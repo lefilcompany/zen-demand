@@ -480,6 +480,6 @@ export default function Demands() {
       {/* Quick create dialog for calendar - show request dialog for requesters, demand dialog for others */}
       {isReadOnly ? <CreateRequestQuickDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} selectedDate={selectedDateForCreate} /> : <CreateDemandQuickDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} selectedDate={selectedDateForCreate} />}
 
-      <ArchivedDemandsModal open={isArchivedOpen} onOpenChange={setIsArchivedOpen} />
+      <ArchivedDemandsModal open={isArchivedOpen} onOpenChange={setIsArchivedOpen} isReadOnly={isReadOnly} />
     </div>;
 }
