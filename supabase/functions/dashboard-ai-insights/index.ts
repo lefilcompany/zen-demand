@@ -137,12 +137,6 @@ Status: ${Object.entries(statusCounts).map(([k, v]) => `${k}: ${v}`).join(", ")}
       });
     }
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
     const systemPrompt = is_requester
       ? `Você é um assistente de acompanhamento de serviços para clientes/solicitantes. Gere exatamente 3 insights curtos e úteis baseados nos dados das demandas do cliente.
 Responda APENAS com um JSON array de 3 objetos, sem markdown, sem code blocks.
@@ -156,6 +150,12 @@ Cada objeto deve ter: "title" (máx 6 palavras), "description" (máx 2 frases cu
 Foque em: prazos, gargalos, produtividade e distribuição de carga.
 Se não houver dados suficientes, crie insights genéricos sobre boas práticas de gestão.`;
 
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
