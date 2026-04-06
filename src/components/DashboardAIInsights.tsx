@@ -16,6 +16,7 @@ interface AIInsight {
 
 interface DashboardAIInsightsProps {
   boardId: string | null;
+  isRequester?: boolean;
 }
 
 const typeConfig = {
@@ -42,16 +43,16 @@ const typeConfig = {
   },
 };
 
-export function DashboardAIInsights({ boardId }: DashboardAIInsightsProps) {
+export function DashboardAIInsights({ boardId, isRequester = false }: DashboardAIInsightsProps) {
   const navigate = useNavigate();
   const [selectedInsight, setSelectedInsight] = useState<AIInsight | null>(null);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["dashboard-ai-insights", boardId],
+    queryKey: ["dashboard-ai-insights", boardId, isRequester],
     queryFn: async () => {
       if (!boardId) return { insights: [] };
       const { data, error } = await supabase.functions.invoke("dashboard-ai-insights", {
-        body: { board_id: boardId },
+        body: { board_id: boardId, is_requester: isRequester },
       });
       if (error) throw error;
       return data as { insights: AIInsight[] };
