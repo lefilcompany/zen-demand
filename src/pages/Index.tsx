@@ -145,27 +145,6 @@ const Index = () => {
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <PeriodFilter value={period} onChange={setPeriod} />
-            <ExportReportButton 
-              demands={exportDemands}
-              teamName={currentTeam?.name}
-              periodLabel={periodLabels[period]}
-              stats={{
-                total: demandData?.total || 0,
-                delivered: deliveredCount,
-                inProgress: clientInProgressCount,
-                pending: clientPendingCount
-              }}
-            />
-            <Button 
-              onClick={() => navigate("/demands/request")}
-              disabled={!isTeamActive}
-              className="gap-2"
-              data-tour="new-demand-btn"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Nova Solicitação</span>
-              <span className="sm:hidden">Solicitar</span>
-            </Button>
           </div>
         </div>
 
