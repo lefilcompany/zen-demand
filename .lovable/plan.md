@@ -1,20 +1,36 @@
 
 
-## Corrigir cálculo da "Média esperada" no card de Tempo em Atividade
+## Atualizar Dashboard do Solicitante com Componentes do Admin + Carrossel de Histórico
 
-### Problema
-A badge "Média esperada" exibe o mesmo valor do total de horas (`totalActiveHours`), pois o código simplesmente repete a variável. Não há cálculo de média real.
+### Contexto
+O dashboard do solicitante (requester) usa um layout antigo com stats cards simples e gráficos básicos. O admin já tem componentes modernos (ProductivitySection, DemandsSectionCard). O pedido é: (1) aplicar os mesmos componentes visuais do admin e (2) adicionar um carrossel horizontal com as 10 últimas solicitações mostrando status (aprovada/devolvida/pendente), serviço, e para as aprovadas o status atual da demanda.
 
-### Solução
-Usar `stats.avgTimePerUser` (que já existe no hook `useBoardTimeStats` e calcula `totalTimeSeconds / número de usuários`) para exibir a média real de horas por membro do quadro.
+### Plano
 
-### Mudanças
+**1. Criar componente `RequesterRequestsCarousel`**
+- Novo arquivo: `src/components/RequesterRequestsCarousel.tsx`
+- Busca as 10 últimas `demand_requests` do usuário logado (usando `useAuth` + query direta, sem depender de board selecionado - busca por `team_id`)
+- Para requests aprovadas, busca também a demanda vinculada (`demand_id` no request ou título correspondente) para mostrar o status atual
+- Layout: container com scroll horizontal (`overflow-x-auto`, `flex`, `gap-3`, `snap-x`)
+- Cada card mostra: titulo, serviço, data, badge colorido (Pendente=amarelo, Aprovada=verde, Devolvida=laranja, Rejeitada=vermelho), e para aprovadas mostra o status da demanda com a cor do status
 
-**`src/components/ProductivitySection.tsx`**
-- Criar variável `avgActiveHoursPerUser` a partir de `stats.avgTimePerUser` (converter de segundos para horas)
-- Na badge "Média esperada", substituir `totalActiveHours` por `avgActiveHoursPerUser`
-- Manter o valor principal (`totalActiveHours`) como o total acumulado do quadro
-- Fazer o mesmo ajuste no card de "Tempo médio de conclusão": a badge deve mostrar a média real calculada (que já é `avgDays`), sem mudança necessária ali — já está correto
+**2. Refatorar o bloco `isRequester` no `Index.tsx`**
+- Remover os stats cards manuais e os gráficos antigos (DeliveryStatusChart, lista de recent demands)
+- Substituir por:
+  - Header com título + PeriodFilter + botão Nova Solicitação (manter)
+  - `DemandsSectionCard` com as demandas do período (gráfico de pizza por serviço + área cumulativa)
+  - `RequesterRequestsCarousel` - carrossel com as 10 últimas solicitações
+  - `ScopeOverviewCard` (manter, condicional)
+- O requester não terá ProductivitySection (não faz sentido para cliente) nem MemberAnalysisSection, mas terá o DemandsSectionCard e o carrossel
 
-O resultado: o card mostrará o total de horas de atividade como valor principal e a média por usuário na badge.
+**3. Alimentar DemandsSectionCard com dados do requester**
+- O `useDemandsByPeriod` já busca demands do board selecionado; para o requester, as demands retornadas já incluem as dele
+- Passar `demandData?.demands` convertido para o formato esperado pelo `DemandsSectionCard`
+
+### Detalhes Técnicos
+
+- **RequesterRequestsCarousel**: Query em `demand_requests` com `eq("created_by", user.id)`, join em `services(name)`, `boards(name)`, e para status `approved` um join opcional na tabela `demands` pelo campo que vincula request->demand. Se não houver link direto, buscar por título + board_id
+- **Scroll horizontal**: `overflow-x-auto scrollbar-hide flex gap-3 snap-x snap-mandatory`, cada card `min-w-[260px] snap-start`
+- **Cores de status do request**: `pending` → amber, `approved` → green, `rejected` → red, `returned` → orange
+- Responsivo: cards com `min-w-[240px] md:min-w-[280px]`
 
