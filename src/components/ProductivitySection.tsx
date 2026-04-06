@@ -71,8 +71,8 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
               <span className="text-xs md:text-sm font-semibold text-foreground whitespace-nowrap">Tempo médio de conclusão</span>
             </div>
 
-            <div className="flex items-baseline gap-1.5">
-              <div className="inline-flex items-baseline gap-1 bg-muted/60 border border-border rounded-lg px-3 py-1.5">
+            <div className="flex items-baseline w-full">
+              <div className="inline-flex items-baseline gap-1 bg-muted/60 border border-border rounded-lg px-3 py-1.5 w-full justify-center">
                 <span className="text-xl md:text-2xl font-bold text-foreground">{avgDays > 0 ? fmt(avgDays) : "-"}</span>
                 <span className="text-xs text-muted-foreground">dias</span>
               </div>
@@ -101,8 +101,8 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
               <span className="text-xs md:text-sm font-semibold text-foreground whitespace-nowrap">Tempo em atividade</span>
             </div>
 
-            <div className="flex items-baseline gap-1.5">
-              <div className="inline-flex items-baseline gap-1 bg-muted/60 border border-border rounded-lg px-3 py-1.5">
+            <div className="flex items-baseline w-full">
+              <div className="inline-flex items-baseline gap-1 bg-muted/60 border border-border rounded-lg px-3 py-1.5 w-full justify-center">
                 <span className="text-xl md:text-2xl font-bold text-foreground">{totalActiveHours > 0 ? fmt(totalActiveHours) : "-"}</span>
                 <span className="text-xs text-muted-foreground">horas</span>
               </div>
