@@ -17,9 +17,10 @@ import { RichTextDisplay } from "@/components/ui/rich-text-editor";
 interface ArchivedDemandsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  isReadOnly?: boolean;
 }
 
-export function ArchivedDemandsModal({ open, onOpenChange }: ArchivedDemandsModalProps) {
+export function ArchivedDemandsModal({ open, onOpenChange, isReadOnly = false }: ArchivedDemandsModalProps) {
   const navigate = useNavigate();
   const { selectedBoardId } = useSelectedBoard();
   const { data: demands, isLoading } = useArchivedDemands(selectedBoardId || undefined);
