@@ -133,10 +133,7 @@ const Index = () => {
         {/* Banner with filters inside */}
         <DashboardBanner 
           actions={
-            <>
-              <PeriodFilter value={period} onChange={setPeriod} />
-              <DashboardCustomizer widgets={widgets} onChange={setWidgets} isSaving={isSaving} />
-            </>
+            <DashboardCustomizer widgets={widgets} onChange={setWidgets} isSaving={isSaving} />
           }
         />
 
