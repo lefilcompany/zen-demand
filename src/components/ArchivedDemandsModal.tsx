@@ -17,9 +17,10 @@ import { RichTextDisplay } from "@/components/ui/rich-text-editor";
 interface ArchivedDemandsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  isReadOnly?: boolean;
 }
 
-export function ArchivedDemandsModal({ open, onOpenChange }: ArchivedDemandsModalProps) {
+export function ArchivedDemandsModal({ open, onOpenChange, isReadOnly = false }: ArchivedDemandsModalProps) {
   const navigate = useNavigate();
   const { selectedBoardId } = useSelectedBoard();
   const { data: demands, isLoading } = useArchivedDemands(selectedBoardId || undefined);
@@ -68,15 +69,17 @@ export function ArchivedDemandsModal({ open, onOpenChange }: ArchivedDemandsModa
                       <CardTitle className="text-sm line-clamp-2" title={demand.title}>
                         {truncateText(demand.title)}
                       </CardTitle>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 shrink-0"
-                        onClick={(e) => handleRestore(demand.id, e)}
-                        disabled={updateDemand.isPending}
-                      >
-                        <RotateCcw className="h-3.5 w-3.5" />
-                      </Button>
+                      {!isReadOnly && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0"
+                          onClick={(e) => handleRestore(demand.id, e)}
+                          disabled={updateDemand.isPending}
+                        >
+                          <RotateCcw className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-2 pt-0">
