@@ -171,39 +171,46 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
       };
     }
 
+    let cumAIniciar = 0;
+    let cumEmAndamento = 0;
+    let cumEntregue = 0;
+
     return intervals.map((date, idx) => {
-      const intervalStart = startOfDay(date);
       const intervalEnd = idx < intervals.length - 1
         ? new Date(startOfDay(intervals[idx + 1]).getTime() - 1)
         : getIntervalEnd(date);
 
-      // Count demands CREATED in this interval
-      const createdInInterval = demands.filter((d) => {
+      // Accumulate demands CREATED up to this interval end
+      for (const d of demands) {
         const created = new Date(d.created_at);
-        return created >= intervalStart && created <= intervalEnd;
-      });
-
-      let aIniciar = 0;
-      let emAndamento = 0;
-
-      for (const demand of createdInInterval) {
-        const normalized = normalizeStatus(demand.demand_statuses?.name || "A Iniciar");
-        if (normalized === "A Iniciar") aIniciar++;
-        else if (normalized === "Em Andamento") emAndamento++;
+        // Only count demands newly entering this interval (created between prev end and current end)
+        const prevEnd = idx > 0
+          ? new Date(startOfDay(intervals[idx]).getTime() - 1)
+          : new Date(periodStart.getTime() - 1);
+        if (created > prevEnd && created <= intervalEnd) {
+          const normalized = normalizeStatus(d.demand_statuses?.name || "A Iniciar");
+          if (normalized === "A Iniciar") cumAIniciar++;
+          else if (normalized === "Em Andamento") cumEmAndamento++;
+        }
       }
 
-      // Count demands DELIVERED in this interval (by delivered_at date)
-      const entregue = demands.filter((d) => {
-        if (!d.delivered_at) return false;
-        const deliveredDate = new Date(d.delivered_at);
-        return deliveredDate >= intervalStart && deliveredDate <= intervalEnd;
-      }).length;
+      // Accumulate demands DELIVERED up to this interval end
+      for (const d of demands) {
+        if (!d.delivered_at) continue;
+        const delivered = new Date(d.delivered_at);
+        const prevEnd = idx > 0
+          ? new Date(startOfDay(intervals[idx]).getTime() - 1)
+          : new Date(periodStart.getTime() - 1);
+        if (delivered > prevEnd && delivered <= intervalEnd) {
+          cumEntregue++;
+        }
+      }
 
       return {
         label: format(date, formatStr, { locale: ptBR }),
-        "A Iniciar": aIniciar,
-        "Em Andamento": emAndamento,
-        Entregue: entregue,
+        "A Iniciar": cumAIniciar,
+        "Em Andamento": cumEmAndamento,
+        Entregue: cumEntregue,
       };
     });
   }, [demands, trendPeriod]);
