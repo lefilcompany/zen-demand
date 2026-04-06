@@ -213,7 +213,7 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
     ? Math.round((categoryData[0].value / totalPie) * 100)
     : 0;
 
-  const STATUS_KEYS = ["Solicitadas", "A Iniciar", "Em Andamento", "Entregue"] as const;
+  const STATUS_KEYS = ["A Iniciar", "Em Andamento", "Entregue"] as const;
 
   return (
     <Card className="flex flex-col h-full">
