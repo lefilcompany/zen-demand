@@ -143,21 +143,24 @@ Status: ${Object.entries(statusCounts).map(([k, v]) => `${k}: ${v}`).join(", ")}
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "system",
-            content: `Você é um analista de produtividade. Gere exatamente 3 insights curtos e acionáveis baseados nos dados do quadro.
+    const systemPrompt = is_requester
+      ? `Você é um assistente de acompanhamento de serviços para clientes/solicitantes. Gere exatamente 3 insights curtos e úteis baseados nos dados das demandas do cliente.
+Responda APENAS com um JSON array de 3 objetos, sem markdown, sem code blocks.
+Cada objeto deve ter: "title" (máx 6 palavras), "description" (máx 2 frases curtas), "type" (um de: "warning", "success", "info").
+Foque em: status das entregas, prazos, serviços mais solicitados, e andamento geral das solicitações do cliente.
+Use linguagem amigável e voltada para o cliente. Não mencione membros internos da equipe.
+Se não houver dados suficientes, crie insights sobre como acompanhar melhor as solicitações.`
+      : `Você é um analista de produtividade. Gere exatamente 3 insights curtos e acionáveis baseados nos dados do quadro.
 Responda APENAS com um JSON array de 3 objetos, sem markdown, sem code blocks.
 Cada objeto deve ter: "title" (máx 6 palavras), "description" (máx 2 frases curtas), "type" (um de: "warning", "success", "info").
 Foque em: prazos, gargalos, produtividade e distribuição de carga.
-Se não houver dados suficientes, crie insights genéricos sobre boas práticas de gestão.`,
-          },
-          {
-            role: "user",
-            content: summaryText,
-          },
+Se não houver dados suficientes, crie insights genéricos sobre boas práticas de gestão.`;
+
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: summaryText },
         ],
         tools: [
           {
