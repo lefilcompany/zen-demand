@@ -164,6 +164,9 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Banner */}
+        <DashboardBanner />
+
         {/* Demands Section - service pie + cumulative area chart */}
         {(() => {
           const reqDemands = (demandData?.demands || demands || []).map((d: any) => ({
