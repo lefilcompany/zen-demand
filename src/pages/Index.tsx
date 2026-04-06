@@ -32,6 +32,10 @@ import { InfoTooltip } from "@/components/InfoTooltip";
 import { ptBR, enUS, es } from "date-fns/locale";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
 import { useTeamMembershipRole } from "@/hooks/useTeamRole";
+import { DashboardAIInsights } from "@/components/DashboardAIInsights";
+import { ProductivitySection } from "@/components/ProductivitySection";
+import { DemandsSectionCard } from "@/components/DemandsSectionCard";
+import { MemberAnalysisSection } from "@/components/MemberAnalysisSection";
 
 const Index = () => {
   const { t, i18n } = useTranslation();
@@ -246,7 +250,6 @@ const Index = () => {
 
         {/* Chart and Recent Demands */}
         <div className="grid gap-4 md:gap-6 lg:grid-cols-2 items-stretch">
-          {/* Status Chart */}
           <Card className="flex flex-col h-full">
             <CardHeader className="p-4 md:p-6">
               <CardTitle className="text-base md:text-lg">{t("dashboard.deliveryStatus")}</CardTitle>
@@ -258,7 +261,6 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          {/* Recent Demands */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
               <CardTitle className="text-base md:text-lg">{t("dashboard.recentActivities")}</CardTitle>
@@ -316,7 +318,6 @@ const Index = () => {
           </Card>
         </div>
 
-        {/* Scope Overview - At the end */}
         {hasBoardLimit && (
           <ScopeOverviewCard 
             data-tour="scope-progress"
@@ -335,6 +336,7 @@ const Index = () => {
   // Default Dashboard View (Admin, Moderator, Executor)
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
+      {/* Header with title and customizer */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div data-tour="dashboard-title">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">{t("dashboard.title")}</h1>
@@ -348,7 +350,34 @@ const Index = () => {
       {/* Banner */}
       <DashboardBanner />
 
-      {/* Stats Cards */}
+      {/* AI Insights */}
+      {widgets.aiInsights && (
+        <DashboardAIInsights boardId={selectedBoardId} />
+      )}
+
+      {/* Productivity + Demands Section (2 cols on lg) */}
+      {(widgets.productivitySection || widgets.demandsSection) && selectedTeamId && demands && (
+        <div className="grid gap-4 lg:grid-cols-2 items-stretch">
+          {widgets.productivitySection && (
+            <ProductivitySection demands={demands} boardId={selectedBoardId} />
+          )}
+          {widgets.demandsSection && (
+            <DemandsSectionCard demands={demands} />
+          )}
+        </div>
+      )}
+
+      {/* Member Analysis + Recent Activities (2 cols on lg) */}
+      {(widgets.memberAnalysis || widgets.recentActivities) && selectedTeamId && (
+        <div className="grid gap-4 lg:grid-cols-2 items-stretch">
+          {widgets.memberAnalysis && demands && demands.length > 0 && (
+            <MemberAnalysisSection demands={demands} />
+          )}
+          {widgets.recentActivities && <RecentActivities />}
+        </div>
+      )}
+
+      {/* Legacy sections - Stats Cards */}
       {widgets.statsCards && (
         <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-5">
           <Card className="border-l-4 border-l-primary hover:shadow-md transition-shadow">
@@ -423,7 +452,6 @@ const Index = () => {
         </div>
       )}
 
-
       {/* Priority and Completion Time */}
       {selectedTeamId && demands && demands.length > 0 && (widgets.priorityChart || widgets.completionTime) && (
         <div className="grid gap-4 md:grid-cols-2">
@@ -452,9 +480,6 @@ const Index = () => {
       {widgets.workloadDistribution && selectedTeamId && demands && demands.length > 0 && (
         <WorkloadDistributionChart demands={demands} />
       )}
-
-      {/* Recent Activities */}
-      {widgets.recentActivities && <RecentActivities />}
     </div>
   );
 };

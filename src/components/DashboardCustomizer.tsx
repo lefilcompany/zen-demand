@@ -15,6 +15,10 @@ import { Settings2, Loader2, Cloud } from "lucide-react";
 import { DashboardWidgets, DEFAULT_WIDGETS } from "@/hooks/useDashboardWidgets";
 
 const WIDGET_LABELS: Record<keyof DashboardWidgets, string> = {
+  aiInsights: "Análises de IA",
+  productivitySection: "Seção de Produtividade",
+  demandsSection: "Seção de Demandas",
+  memberAnalysis: "Análise por Membro",
   statsCards: "Cards de Estatísticas",
   teamsCard: "Card de Equipes",
   welcomeCard: "Card de Boas-vindas",
@@ -111,6 +115,5 @@ export function DashboardCustomizer({ widgets, onChange, isSaving }: DashboardCu
   );
 }
 
-// Re-export types and hook for convenience
 export type { DashboardWidgets };
 export { useDashboardWidgets } from "@/hooks/useDashboardWidgets";

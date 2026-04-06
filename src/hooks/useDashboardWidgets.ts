@@ -12,6 +12,10 @@ export interface DashboardWidgets {
   completionTime: boolean;
   recentActivities: boolean;
   workloadDistribution: boolean;
+  aiInsights: boolean;
+  productivitySection: boolean;
+  demandsSection: boolean;
+  memberAnalysis: boolean;
 }
 
 export const DEFAULT_WIDGETS: DashboardWidgets = {
@@ -24,6 +28,10 @@ export const DEFAULT_WIDGETS: DashboardWidgets = {
   completionTime: true,
   recentActivities: true,
   workloadDistribution: true,
+  aiInsights: true,
+  productivitySection: true,
+  demandsSection: true,
+  memberAnalysis: true,
 };
 
 const PREFERENCE_KEY = "dashboard_widgets";
@@ -51,7 +59,6 @@ export function useDashboardWidgets() {
 
       if (!data) return DEFAULT_WIDGETS;
 
-      // Merge with defaults to ensure all keys exist
       const storedValue = data.preference_value as unknown as Partial<DashboardWidgets>;
       return { ...DEFAULT_WIDGETS, ...storedValue };
     },
@@ -62,7 +69,6 @@ export function useDashboardWidgets() {
     mutationFn: async (newWidgets: DashboardWidgets) => {
       if (!user) throw new Error("User not authenticated");
 
-      // Check if preference exists
       const { data: existing } = await supabase
         .from("user_preferences")
         .select("id")
@@ -73,14 +79,12 @@ export function useDashboardWidgets() {
       const jsonValue = JSON.parse(JSON.stringify(newWidgets));
 
       if (existing) {
-        // Update existing
         const { error } = await supabase
           .from("user_preferences")
           .update({ preference_value: jsonValue })
           .eq("id", existing.id);
         if (error) throw error;
       } else {
-        // Insert new
         const { error } = await supabase
           .from("user_preferences")
           .insert([{
