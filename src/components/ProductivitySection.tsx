@@ -118,7 +118,7 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
 
             <div className="flex justify-center">
               <Badge className="bg-orange-500 hover:bg-orange-600 text-white border-0 text-[10px] md:text-xs font-medium px-2.5 py-0.5">
-                Média esperada: {totalActiveHours > 0 ? fmt(totalActiveHours) : "0,0"} horas
+                Média esperada: {avgActiveHoursPerUser > 0 ? fmt(avgActiveHoursPerUser) : "0,0"} h/membro
               </Badge>
             </div>
 
