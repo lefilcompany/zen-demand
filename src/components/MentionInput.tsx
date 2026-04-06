@@ -479,6 +479,7 @@ export function MentionInput({
       }
       if (e.key === "Enter" || e.key === "Tab") {
         e.preventDefault();
+        e.stopPropagation();
         const member = filteredMembers[selectedUserIndex];
         if (member?.user_id && member?.profile?.full_name) {
           insertUserMention(member.user_id, member.profile.full_name);
@@ -505,6 +506,7 @@ export function MentionInput({
       }
       if (e.key === "Enter" || e.key === "Tab") {
         e.preventDefault();
+        e.stopPropagation();
         const demand = filteredDemands[selectedDemandIndex];
         if (demand?.id && demand?.board_sequence_number !== undefined) {
           insertDemandMention(demand.id, formatDemandCode(demand.board_sequence_number));
