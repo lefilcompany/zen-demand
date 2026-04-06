@@ -142,7 +142,7 @@ const Index = () => {
 
         {/* AI Insights */}
         {widgets.aiInsights && (
-          <DashboardAIInsights boardId={selectedBoardId} />
+          <DashboardAIInsights boardId={selectedBoardId} isRequester />
         )}
 
         {/* Demands Section - service pie + cumulative area chart */}
