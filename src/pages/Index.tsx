@@ -5,18 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Briefcase, Users, CheckCircle2, Clock, Timer, RefreshCw, FileText, Plus, PlusCircle, ArrowRight } from "lucide-react";
+import { CheckCircle2, Clock, FileText, Plus, ArrowRight } from "lucide-react";
 import { useDemands } from "@/hooks/useDemands";
 import { useTeams } from "@/hooks/useTeams";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
-import { DemandTrendChart } from "@/components/DemandTrendChart";
 import { RecentActivities } from "@/components/RecentActivities";
-import { AdjustmentTrendChart } from "@/components/AdjustmentTrendChart";
-import { PriorityDistributionChart } from "@/components/PriorityDistributionChart";
-import { AverageCompletionTime } from "@/components/AverageCompletionTime";
-import { WorkloadDistributionChart } from "@/components/WorkloadDistributionChart";
 import { DashboardCustomizer } from "@/components/DashboardCustomizer";
 import { useDashboardWidgets } from "@/hooks/useDashboardWidgets";
 import { ScopeOverviewCard } from "@/components/ScopeOverviewCard";
@@ -89,12 +84,7 @@ const Index = () => {
     quarter: t("reports.quarter")
   };
 
-  // Stats for all roles
-  const totalDemands = demands?.length || 0;
-  const inProgressDemands = demands?.filter((d) => d.demand_statuses?.name === "Fazendo").length || 0;
-  const completedDemands = demands?.filter((d) => d.demand_statuses?.name === "Entregue").length || 0;
-  const pendingDemands = demands?.filter((d) => d.demand_statuses?.name === "A Iniciar").length || 0;
-  const adjustmentDemands = demands?.filter((d) => d.demand_statuses?.name === "Em Ajuste").length || 0;
+  // Stats
   const totalTeams = teams?.length || 0;
 
   // Client-specific stats
@@ -377,109 +367,6 @@ const Index = () => {
         </div>
       )}
 
-      {/* Legacy sections - Stats Cards */}
-      {widgets.statsCards && (
-        <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-5">
-          <Card className="border-l-4 border-l-primary hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <div className="flex items-center gap-1">
-                <CardTitle className="text-xs md:text-sm font-medium">{t("dashboard.totalDemands")}</CardTitle>
-                <InfoTooltip text="Número total de demandas no quadro selecionado, incluindo todos os status." />
-              </div>
-              <Briefcase className="h-3 w-3 md:h-4 md:w-4 text-primary" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-              <div className="text-xl md:text-2xl font-bold text-foreground">{totalDemands}</div>
-              <p className="text-[10px] md:text-xs text-muted-foreground">{t("demands.title")}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-warning hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <div className="flex items-center gap-1">
-                <CardTitle className="text-xs md:text-sm font-medium">{t("kanban.toStart")}</CardTitle>
-                <InfoTooltip text="Demandas que ainda não foram iniciadas e aguardam execução (status 'A Iniciar')." />
-              </div>
-              <Clock className="h-3 w-3 md:h-4 md:w-4 text-warning" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-              <div className="text-xl md:text-2xl font-bold text-foreground">{pendingDemands}</div>
-              <p className="text-[10px] md:text-xs text-muted-foreground">{t("common.loading").split("...")[0]}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-accent hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <div className="flex items-center gap-1">
-                <CardTitle className="text-xs md:text-sm font-medium">{t("dashboard.inProgress")}</CardTitle>
-                <InfoTooltip text="Demandas que estão atualmente sendo executadas pela equipe (status 'Fazendo')." />
-              </div>
-              <Timer className="h-3 w-3 md:h-4 md:w-4 text-accent" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-              <div className="text-xl md:text-2xl font-bold text-foreground">{inProgressDemands}</div>
-              <p className="text-[10px] md:text-xs text-muted-foreground">{t("kanban.doing")}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-purple-500 hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <div className="flex items-center gap-1">
-                <CardTitle className="text-xs md:text-sm font-medium">{t("dashboard.adjustments")}</CardTitle>
-                <InfoTooltip text="Demandas que foram devolvidas para correção ou ajustes após revisão (status 'Em Ajuste')." />
-              </div>
-              <RefreshCw className="h-3 w-3 md:h-4 md:w-4 text-purple-500" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-              <div className="text-xl md:text-2xl font-bold text-foreground">{adjustmentDemands}</div>
-              <p className="text-[10px] md:text-xs text-muted-foreground">{t("kanban.inAdjustment")}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-success hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <div className="flex items-center gap-1">
-                <CardTitle className="text-xs md:text-sm font-medium">{t("dashboard.delivered")}</CardTitle>
-                <InfoTooltip text="Demandas que foram concluídas e entregues com sucesso (status 'Entregue')." />
-              </div>
-              <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4 text-success" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-              <div className="text-xl md:text-2xl font-bold text-foreground">{completedDemands}</div>
-              <p className="text-[10px] md:text-xs text-muted-foreground">{t("kanban.delivered")}</p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Priority and Completion Time */}
-      {selectedTeamId && demands && demands.length > 0 && (widgets.priorityChart || widgets.completionTime) && (
-        <div className="grid gap-4 md:grid-cols-2">
-          {widgets.priorityChart && (
-            <PriorityDistributionChart demands={demands} />
-          )}
-          {widgets.completionTime && (
-            <AverageCompletionTime demands={demands} />
-          )}
-        </div>
-      )}
-
-      {/* Trend Charts */}
-      {selectedTeamId && (widgets.demandTrend || widgets.adjustmentTrend) && (
-        <div className="grid gap-4 md:grid-cols-2">
-          {widgets.demandTrend && demands && demands.length > 0 && (
-            <DemandTrendChart demands={demands} />
-          )}
-          {widgets.adjustmentTrend && selectedBoardId && (
-            <AdjustmentTrendChart boardId={selectedBoardId} />
-          )}
-        </div>
-      )}
-
-      {/* Workload Distribution */}
-      {widgets.workloadDistribution && selectedTeamId && demands && demands.length > 0 && (
-        <WorkloadDistributionChart demands={demands} />
-      )}
     </div>
   );
 };
