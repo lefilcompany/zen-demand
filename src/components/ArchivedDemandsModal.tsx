@@ -69,15 +69,17 @@ export function ArchivedDemandsModal({ open, onOpenChange, isReadOnly = false }:
                       <CardTitle className="text-sm line-clamp-2" title={demand.title}>
                         {truncateText(demand.title)}
                       </CardTitle>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 shrink-0"
-                        onClick={(e) => handleRestore(demand.id, e)}
-                        disabled={updateDemand.isPending}
-                      >
-                        <RotateCcw className="h-3.5 w-3.5" />
-                      </Button>
+                      {!isReadOnly && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0"
+                          onClick={(e) => handleRestore(demand.id, e)}
+                          disabled={updateDemand.isPending}
+                        >
+                          <RotateCcw className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-2 pt-0">
