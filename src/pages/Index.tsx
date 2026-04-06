@@ -130,26 +130,15 @@ const Index = () => {
   if (isRequester) {
     return (
       <div className="space-y-4 md:space-y-6 animate-fade-in">
-        {/* Header */}
-        <div className="flex flex-col gap-3 sm:gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div data-tour="dashboard-title">
-              <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("dashboard.title")}</h1>
-              <p className="text-sm text-muted-foreground">
-                {format(new Date(), "MMMM yyyy", { locale: getLocale() })}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
+        {/* Banner with filters inside */}
+        <DashboardBanner 
+          actions={
+            <>
+              <PeriodFilter value={period} onChange={setPeriod} />
               <DashboardCustomizer widgets={widgets} onChange={setWidgets} isSaving={isSaving} />
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <PeriodFilter value={period} onChange={setPeriod} />
-          </div>
-        </div>
-
-        {/* Banner */}
-        <DashboardBanner />
+            </>
+          }
+        />
 
         {/* AI Insights */}
         {widgets.aiInsights && (
@@ -200,19 +189,12 @@ const Index = () => {
   // Default Dashboard View (Admin, Moderator, Executor)
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
-      {/* Header with title and customizer */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div data-tour="dashboard-title">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">{t("dashboard.title")}</h1>
-          <p className="text-sm md:text-base text-muted-foreground">{t("settings.description")}</p>
-        </div>
-        <div className="flex items-center gap-2">
+      {/* Banner with customizer inside */}
+      <DashboardBanner 
+        actions={
           <DashboardCustomizer widgets={widgets} onChange={setWidgets} isSaving={isSaving} />
-        </div>
-      </div>
-
-      {/* Banner */}
-      <DashboardBanner />
+        }
+      />
 
       {/* AI Insights */}
       {widgets.aiInsights && (
