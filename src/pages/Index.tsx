@@ -165,9 +165,17 @@ const Index = () => {
         </div>
 
         {/* Demands Section - service pie + cumulative area chart */}
-        {demands && (
-          <DemandsSectionCard demands={demands} />
-        )}
+        {(() => {
+          const reqDemands = (demandData?.demands || demands || []).map((d: any) => ({
+            id: d.id,
+            created_at: d.created_at,
+            delivered_at: d.delivered_at || null,
+            demand_statuses: d.demand_statuses || null,
+            services: d.services || null,
+            service_id: d.service_id || null,
+          }));
+          return reqDemands.length > 0 ? <DemandsSectionCard demands={reqDemands} /> : null;
+        })()}
 
         {/* Requests History Carousel */}
         <RequesterRequestsCarousel />
