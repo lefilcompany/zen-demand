@@ -51,6 +51,7 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
 
   const completionProgress = Math.min(100, (avgDays / 9) * 100);
   const totalActiveHours = Math.round((stats.totalTimeSeconds / 3600) * 10) / 10;
+  const avgActiveHoursPerUser = Math.round((stats.avgTimePerUser / 3600) * 10) / 10;
   const activeProgress = Math.min(100, (totalActiveHours / 15) * 100);
 
   const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
