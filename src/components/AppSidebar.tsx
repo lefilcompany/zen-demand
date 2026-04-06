@@ -110,13 +110,7 @@ export function AppSidebar() {
   // Soma Notes - temporarily hidden (keep code for future re-activation)
   const notesMenuItems: typeof baseMenuItems = [];
 
-  const endMenuItems = [{
-    title: t("demands.archived"),
-    url: "/archived",
-    icon: Archive
-  }];
-
-  const menuItems = [...baseMenuItems, ...adminMenuItems, ...requesterMenuItems, ...aiMenuItems, ...notesMenuItems, ...endMenuItems];
+  const menuItems = [...baseMenuItems, ...adminMenuItems, ...requesterMenuItems, ...aiMenuItems, ...notesMenuItems];
 
   // Keep team section expanded if on team/board routes
   const isOnTeamRoute = location.pathname.startsWith("/boards") || location.pathname.startsWith("/team-config") || location.pathname.includes("/services") || location.pathname.includes("/requests") || location.pathname === "/team-demands" || location.pathname === "/my-demands";
