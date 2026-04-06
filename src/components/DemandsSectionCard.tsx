@@ -16,6 +16,7 @@ import { useServices } from "@/hooks/useServices";
 interface Demand {
   id: string;
   created_at: string;
+  delivered_at?: string | null;
   demand_statuses?: { name: string; color?: string } | null;
   services?: { id?: string; name: string } | null;
   service_id?: string | null;
@@ -146,43 +147,60 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
     if (demands.length === 0) return [];
 
     const { start, end } = getChartPeriodRange(trendPeriod);
-    const firstDemandDate = new Date(Math.min(...demands.map((d) => new Date(d.created_at).getTime())));
-    const periodStart = start || firstDemandDate;
+    const periodStart = start || new Date(Math.min(...demands.map((d) => new Date(d.created_at).getTime())));
 
     const diffDays = Math.ceil((end.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24));
     let intervals: Date[];
     let formatStr: string;
+    let getIntervalEnd: (date: Date) => Date;
 
     if (diffDays <= 31) {
       intervals = eachDayOfInterval({ start: periodStart, end });
       formatStr = "dd/MM";
+      getIntervalEnd = (date) => new Date(startOfDay(date).getTime() + 86400000 - 1);
     } else if (diffDays <= 180) {
       intervals = eachWeekOfInterval({ start: periodStart, end });
       formatStr = "dd/MM";
+      getIntervalEnd = (date) => new Date(startOfDay(date).getTime() + 7 * 86400000 - 1);
     } else {
       intervals = eachMonthOfInterval({ start: periodStart, end });
       formatStr = "MMM";
+      getIntervalEnd = (date) => {
+        const next = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+        return next;
+      };
     }
 
-    return intervals.map((date) => {
-      const dayEnd = new Date(startOfDay(date).getTime() + 86400000 - 1);
-      const solicitadas = demands.filter((d) => new Date(d.created_at) <= dayEnd).length;
+    return intervals.map((date, idx) => {
+      const intervalStart = startOfDay(date);
+      const intervalEnd = idx < intervals.length - 1
+        ? new Date(startOfDay(intervals[idx + 1]).getTime() - 1)
+        : getIntervalEnd(date);
+
+      // Count demands CREATED in this interval
+      const createdInInterval = demands.filter((d) => {
+        const created = new Date(d.created_at);
+        return created >= intervalStart && created <= intervalEnd;
+      });
 
       let aIniciar = 0;
       let emAndamento = 0;
-      let entregue = 0;
 
-      for (const demand of demands) {
-        if (new Date(demand.created_at) > dayEnd) continue;
+      for (const demand of createdInInterval) {
         const normalized = normalizeStatus(demand.demand_statuses?.name || "A Iniciar");
         if (normalized === "A Iniciar") aIniciar++;
         else if (normalized === "Em Andamento") emAndamento++;
-        else if (normalized === "Entregue") entregue++;
       }
+
+      // Count demands DELIVERED in this interval (by delivered_at date)
+      const entregue = demands.filter((d) => {
+        if (!d.delivered_at) return false;
+        const deliveredDate = new Date(d.delivered_at);
+        return deliveredDate >= intervalStart && deliveredDate <= intervalEnd;
+      }).length;
 
       return {
         label: format(date, formatStr, { locale: ptBR }),
-        Solicitadas: solicitadas,
         "A Iniciar": aIniciar,
         "Em Andamento": emAndamento,
         Entregue: entregue,
@@ -195,7 +213,7 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
     ? Math.round((categoryData[0].value / totalPie) * 100)
     : 0;
 
-  const STATUS_KEYS = ["Solicitadas", "A Iniciar", "Em Andamento", "Entregue"] as const;
+  const STATUS_KEYS = ["A Iniciar", "Em Andamento", "Entregue"] as const;
 
   return (
     <Card className="flex flex-col h-full">
