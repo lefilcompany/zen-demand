@@ -16,6 +16,7 @@ import { useServices } from "@/hooks/useServices";
 interface Demand {
   id: string;
   created_at: string;
+  delivered_at?: string | null;
   demand_statuses?: { name: string; color?: string } | null;
   services?: { id?: string; name: string } | null;
   service_id?: string | null;
