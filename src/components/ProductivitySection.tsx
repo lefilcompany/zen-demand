@@ -51,6 +51,7 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
 
   const completionProgress = Math.min(100, (avgDays / 9) * 100);
   const totalActiveHours = Math.round((stats.totalTimeSeconds / 3600) * 10) / 10;
+  const avgActiveHoursPerUser = Math.round((stats.avgTimePerUser / 3600) * 10) / 10;
   const activeProgress = Math.min(100, (totalActiveHours / 15) * 100);
 
   const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -117,7 +118,7 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
 
             <div className="flex justify-center">
               <Badge className="bg-orange-500 hover:bg-orange-600 text-white border-0 text-[10px] md:text-xs font-medium px-2.5 py-0.5">
-                Média esperada: {totalActiveHours > 0 ? fmt(totalActiveHours) : "0,0"} horas
+                Média esperada: {avgActiveHoursPerUser > 0 ? fmt(avgActiveHoursPerUser) : "0,0"} h/membro
               </Badge>
             </div>
 
