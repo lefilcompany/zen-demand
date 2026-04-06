@@ -1,4 +1,4 @@
-import dashboardBanner from "@/assets/dashboard-banner.jpg";
+import dashboardBanner from "@/assets/dashboard-banner.png";
 
 interface DashboardBannerProps {
   title?: string;
