@@ -3,35 +3,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
 export interface DashboardWidgets {
-  statsCards: boolean;
-  teamsCard: boolean;
-  welcomeCard: boolean;
-  demandTrend: boolean;
-  adjustmentTrend: boolean;
-  priorityChart: boolean;
-  completionTime: boolean;
-  recentActivities: boolean;
-  workloadDistribution: boolean;
   aiInsights: boolean;
   productivitySection: boolean;
   demandsSection: boolean;
   memberAnalysis: boolean;
+  recentActivities: boolean;
 }
 
 export const DEFAULT_WIDGETS: DashboardWidgets = {
-  statsCards: true,
-  teamsCard: true,
-  welcomeCard: true,
-  demandTrend: true,
-  adjustmentTrend: true,
-  priorityChart: true,
-  completionTime: true,
-  recentActivities: true,
-  workloadDistribution: true,
   aiInsights: true,
   productivitySection: true,
   demandsSection: true,
   memberAnalysis: true,
+  recentActivities: true,
 };
 
 const PREFERENCE_KEY = "dashboard_widgets";

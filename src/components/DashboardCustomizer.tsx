@@ -19,15 +19,7 @@ const WIDGET_LABELS: Record<keyof DashboardWidgets, string> = {
   productivitySection: "Seção de Produtividade",
   demandsSection: "Seção de Demandas",
   memberAnalysis: "Análise por Membro",
-  statsCards: "Cards de Estatísticas",
-  teamsCard: "Card de Equipes",
-  welcomeCard: "Card de Boas-vindas",
-  demandTrend: "Gráfico de Tendência de Demandas",
-  adjustmentTrend: "Gráfico de Tendência de Ajustes",
-  priorityChart: "Gráfico de Prioridades",
-  completionTime: "Tempo Médio de Conclusão",
   recentActivities: "Atividades Recentes",
-  workloadDistribution: "Carga de Trabalho por Membro",
 };
 
 interface DashboardCustomizerProps {
