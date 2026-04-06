@@ -13,7 +13,6 @@ import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { RecentActivities } from "@/components/RecentActivities";
 import { DashboardCustomizer } from "@/components/DashboardCustomizer";
-import { DashboardCustomizer } from "@/components/DashboardCustomizer";
 import { useDashboardWidgets } from "@/hooks/useDashboardWidgets";
 import { ScopeOverviewCard } from "@/components/ScopeOverviewCard";
 import { DeliveryStatusChart } from "@/components/DeliveryStatusChart";
