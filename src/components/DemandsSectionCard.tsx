@@ -224,8 +224,6 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
                         dataKey="value"
                         strokeWidth={2}
                         stroke="hsl(var(--background))"
-                        label={({ name, percent }) => `${Math.round(percent * 100)}%`}
-                        labelLine={false}
                       >
                         {categoryData.map((_, idx) => (
                           <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
