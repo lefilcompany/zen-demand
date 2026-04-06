@@ -10,7 +10,7 @@ import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useAuth } from "@/lib/auth";
 import { useMembersByPosition } from "@/hooks/useMembersByPosition";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
-import { Plus, Briefcase, LayoutGrid, List, Search, Eye, EyeOff, CalendarDays, User, Layers } from "lucide-react";
+import { Plus, Briefcase, LayoutGrid, List, Search, Eye, EyeOff, CalendarDays, User, Layers, Archive } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table";
 import { demandColumns, DemandTableRow } from "@/components/demands/columns";
@@ -25,6 +25,7 @@ import { useDemandAssignees } from "@/hooks/useDemandAssignees";
 import { ScheduledDemandsModal } from "@/components/ScheduledDemandsModal";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
 import { useTeamMembershipRole } from "@/hooks/useTeamRole";
+import { ArchivedDemandsModal } from "@/components/ArchivedDemandsModal";
 type ViewMode = "table" | "grid" | "calendar";
 const TABLET_BREAKPOINT = 1024;
 export default function Demands() {
@@ -103,6 +104,7 @@ export default function Demands() {
   // Calendar quick create dialog
   const [selectedDateForCreate, setSelectedDateForCreate] = useState<Date | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isArchivedOpen, setIsArchivedOpen] = useState(false);
 
   // Detect if screen is mobile or tablet (< 1024px)
   const [isTabletOrSmaller, setIsTabletOrSmaller] = useState(false);
@@ -337,6 +339,16 @@ export default function Demands() {
 
               {/* Scheduled demands button */}
               <ScheduledDemandsModal boardId={selectedBoardId} teamId={currentTeamId} />
+
+              {/* Archived demands button */}
+              <button
+                onClick={() => setIsArchivedOpen(true)}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium h-8 transition-all duration-200 whitespace-nowrap bg-background border border-border/60 hover:border-primary/40 hover:text-primary"
+                title="Demandas arquivadas"
+              >
+                <Archive className="h-3.5 w-3.5" />
+                <span>Arquivadas</span>
+              </button>
               
               {/* Quick toggle chips */}
               {!isReadOnly && myDemandsCount > 0 && (
@@ -467,5 +479,7 @@ export default function Demands() {
 
       {/* Quick create dialog for calendar - show request dialog for requesters, demand dialog for others */}
       {isReadOnly ? <CreateRequestQuickDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} selectedDate={selectedDateForCreate} /> : <CreateDemandQuickDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} selectedDate={selectedDateForCreate} />}
+
+      <ArchivedDemandsModal open={isArchivedOpen} onOpenChange={setIsArchivedOpen} />
     </div>;
 }
