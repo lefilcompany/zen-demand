@@ -264,6 +264,7 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
                 Sem dados suficientes no período
               </div>
             )}
+            <ChartPeriodSelector value={trendPeriod} onChange={setTrendPeriod} className="justify-center" compact />
           </div>
         </div>
       </CardContent>
