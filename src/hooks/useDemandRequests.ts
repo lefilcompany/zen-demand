@@ -369,14 +369,21 @@ export function useApproveDemandRequest() {
       if (fetchError) throw fetchError;
       if (!request) throw new Error("Solicitação não encontrada");
 
-      // Get default status
-      const { data: defaultStatus } = await supabase
-        .from("demand_statuses")
-        .select("id")
-        .eq("name", "A Iniciar")
-        .single();
+      // Get default status for the specific board
+      const { data: boardStatuses } = await supabase
+        .from("board_statuses")
+        .select("status_id, demand_statuses:demand_statuses!board_statuses_status_id_fkey(id, name)")
+        .eq("board_id", request.board_id)
+        .order("position", { ascending: true });
 
-      if (!defaultStatus) throw new Error("Status padrão não encontrado");
+      const defaultBoardStatus = boardStatuses?.find(
+        (bs: any) => bs.demand_statuses?.name === "A Iniciar"
+      );
+      const defaultStatusId = defaultBoardStatus?.status_id || boardStatuses?.[0]?.status_id;
+
+      if (!defaultStatusId) throw new Error("Status padrão não encontrado para este quadro");
+
+      
 
       // Create the demand
       const { data: demand, error: demandError } = await supabase
@@ -389,7 +396,7 @@ export function useApproveDemandRequest() {
           description: request.description,
           priority: request.priority,
           service_id: request.service_id,
-          status_id: defaultStatus.id,
+          status_id: defaultStatusId,
           due_date: dueDate || null,
         })
         .select()

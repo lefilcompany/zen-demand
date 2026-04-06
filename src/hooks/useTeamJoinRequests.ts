@@ -201,15 +201,18 @@ export function useRespondToRequest() {
 
       if (updateError) throw updateError;
 
-      // If approved, add user to team as member
+      // If approved, add user to team as member (ignore if already exists)
       if (status === "approved") {
         const { error: memberError } = await supabase
           .from("team_members")
-          .insert({
-            team_id: teamId,
-            user_id: userId,
-            role: "requester" as const,
-          });
+          .upsert(
+            {
+              team_id: teamId,
+              user_id: userId,
+              role: "requester" as any,
+            },
+            { onConflict: "team_id,user_id" }
+          );
 
         if (memberError) throw memberError;
       }
