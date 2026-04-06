@@ -142,10 +142,9 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
               {menuItems.map(item => {
-                const tourId = item.url === "/" ? "dashboard-link" 
+              const tourId = item.url === "/" ? "dashboard-link" 
                   : item.url === "/kanban" ? "kanban-link"
                   : item.url === "/demands" ? "demands-link"
-                  : item.url === "/archived" ? "archived-link"
                   : undefined;
                 
                 return (
