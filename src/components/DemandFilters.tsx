@@ -263,22 +263,24 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button 
-          variant={activeFiltersCount > 0 ? "default" : "outline"} 
-          size="sm" 
-          className="relative gap-1 rounded-full h-8 px-3 text-xs"
+        <button 
+          className={`
+            inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium h-8
+            transition-all duration-200 whitespace-nowrap
+            ${activeFiltersCount > 0 
+              ? "bg-primary text-primary-foreground shadow-sm" 
+              : "bg-background border border-border/60 hover:border-primary/40 hover:text-primary"
+            }
+          `}
         >
-          <Filter className="h-4 w-4" />
-          Filtros
+          <Filter className="h-3.5 w-3.5" />
+          <span>Filtros</span>
           {activeFiltersCount > 0 && (
-            <Badge 
-              variant="secondary" 
-              className="h-5 min-w-5 px-1.5 justify-center bg-background text-foreground"
-            >
+            <span className="inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full text-[10px] font-bold bg-primary-foreground/20 text-primary-foreground">
               {activeFiltersCount}
-            </Badge>
+            </span>
           )}
-        </Button>
+        </button>
       </PopoverTrigger>
       <PopoverContent className="w-[340px] p-0 flex flex-col" align="start" side="bottom" avoidCollisions style={{ maxHeight: 'min(480px, calc(100vh - 200px))' }}>
         <div className="border-b border-border bg-muted/30 px-4 py-3 rounded-t-lg shrink-0">
