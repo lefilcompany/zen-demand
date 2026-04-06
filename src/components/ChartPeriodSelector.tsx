@@ -8,32 +8,36 @@ interface ChartPeriodSelectorProps {
   value: ChartPeriodType;
   onChange: (period: ChartPeriodType) => void;
   className?: string;
+  compact?: boolean;
 }
 
-const PERIOD_OPTIONS: { value: ChartPeriodType; label: string }[] = [
-  { value: "month", label: "Este mês" },
-  { value: "3months", label: "3 meses" },
-  { value: "6months", label: "6 meses" },
-  { value: "year", label: "1 ano" },
-  { value: "all", label: "Tudo" },
+const PERIOD_OPTIONS: { value: ChartPeriodType; label: string; shortLabel: string }[] = [
+  { value: "month", label: "Este mês", shortLabel: "Mês" },
+  { value: "3months", label: "3 meses", shortLabel: "3m" },
+  { value: "6months", label: "6 meses", shortLabel: "6m" },
+  { value: "year", label: "1 ano", shortLabel: "1a" },
+  { value: "all", label: "Tudo", shortLabel: "All" },
 ];
 
-export function ChartPeriodSelector({ value, onChange, className }: ChartPeriodSelectorProps) {
+export function ChartPeriodSelector({ value, onChange, className, compact }: ChartPeriodSelectorProps) {
   return (
-    <div className={cn("flex items-center gap-1 flex-wrap", className)}>
-      <Calendar className="h-3.5 w-3.5 text-muted-foreground mr-1 hidden sm:block" />
+    <div className={cn("flex items-center gap-0.5 flex-nowrap", className)}>
+      <Calendar className="h-3 w-3 text-muted-foreground mr-0.5 shrink-0 hidden sm:block" />
       {PERIOD_OPTIONS.map((option) => (
         <Button
           key={option.value}
           variant={value === option.value ? "secondary" : "ghost"}
           size="sm"
           className={cn(
-            "h-6 px-2 text-[10px] font-medium",
+            "font-medium shrink-0",
+            compact
+              ? "h-5 px-1.5 text-[9px] md:h-6 md:px-2 md:text-[10px]"
+              : "h-6 px-2 text-[10px]",
             value === option.value && "bg-primary/10 text-primary hover:bg-primary/20"
           )}
           onClick={() => onChange(option.value)}
         >
-          {option.label}
+          {compact ? option.shortLabel : option.label}
         </Button>
       ))}
     </div>
@@ -68,7 +72,7 @@ export function getChartPeriodRange(period: ChartPeriodType): { start: Date | nu
       };
     case "all":
       return {
-        start: null, // No start limit
+        start: null,
         end,
       };
   }
