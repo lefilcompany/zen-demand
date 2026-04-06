@@ -383,7 +383,7 @@ export function useApproveDemandRequest() {
 
       if (!defaultStatusId) throw new Error("Status padrão não encontrado para este quadro");
 
-      if (!defaultStatus) throw new Error("Status padrão não encontrado");
+      
 
       // Create the demand
       const { data: demand, error: demandError } = await supabase
