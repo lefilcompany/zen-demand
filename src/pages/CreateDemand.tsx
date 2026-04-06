@@ -67,6 +67,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   
   // Success state: holds info about the created demand
   const [successState, setSuccessState] = useState<{
+    demandId: string;
     demandTitle: string;
     boardId: string;
     boardName: string;
@@ -255,6 +256,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
 
           // Show success state instead of closing
           setSuccessState({
+            demandId: demand?.id || "",
             demandTitle: title.trim(),
             boardId: activeBoardId,
             boardName: selectedBoard?.name || "Quadro",
@@ -314,14 +316,27 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                   <span className="font-medium text-primary">{successState.boardName}</span>.
                 </p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm">
+              <div className="flex flex-col sm:flex-row gap-3 w-full max-w-lg">
                 <Button
                   variant="outline"
                   className="flex-1 gap-2"
                   onClick={handleCreateAnother}
                 >
                   <Plus className="h-4 w-4" />
-                  Criar Nova Demanda
+                  Criar Nova
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="flex-1 gap-2"
+                  onClick={() => {
+                    if (successState?.demandId) {
+                      handleClose();
+                      navigate(`/demands/${successState.demandId}`);
+                    }
+                  }}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Ir para a Demanda
                 </Button>
                 <Button
                   className="flex-1 gap-2"
