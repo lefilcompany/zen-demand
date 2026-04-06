@@ -133,12 +133,8 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
     const catMap = new Map<string, number>();
 
     for (const demand of filtered) {
-      const categoryName = resolveServiceCategoryName(
-        demand.service_id,
-        demand.services?.name,
-        servicesMap as Map<string, ServiceLookup>
-      );
-      catMap.set(categoryName, (catMap.get(categoryName) || 0) + 1);
+      const serviceName = demand.services?.name?.trim() || FALLBACK_SERVICE_LABEL;
+      catMap.set(serviceName, (catMap.get(serviceName) || 0) + 1);
     }
 
     return Array.from(catMap.entries())
