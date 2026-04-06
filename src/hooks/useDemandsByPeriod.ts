@@ -41,10 +41,13 @@ export function useDemandsByPeriod(period: PeriodType, boardId?: string) {
           id,
           title,
           created_at,
+          delivered_at,
           priority,
           due_date,
           status_id,
-          demand_statuses!inner(name, color)
+          service_id,
+          demand_statuses!inner(name, color),
+          services(id, name)
         `)
         .eq("board_id", id!)
         .eq("archived", false)
