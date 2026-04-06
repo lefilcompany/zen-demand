@@ -31,6 +31,7 @@ import { DashboardAIInsights } from "@/components/DashboardAIInsights";
 import { ProductivitySection } from "@/components/ProductivitySection";
 import { DemandsSectionCard } from "@/components/DemandsSectionCard";
 import { MemberAnalysisSection } from "@/components/MemberAnalysisSection";
+import { RequesterRequestsCarousel } from "@/components/RequesterRequestsCarousel";
 
 const Index = () => {
   const { t, i18n } = useTranslation();
@@ -163,150 +164,13 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <div className="flex items-center gap-1">
-                <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                  {periodLabels[period]}
-                </CardTitle>
-                <InfoTooltip text="Total de demandas criadas no período selecionado." />
-              </div>
-              <FileText className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-              <div className="text-2xl md:text-3xl font-bold">{demandData?.total || 0}</div>
-              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-                {t("demands.title").toLowerCase()}
-              </p>
-            </CardContent>
-          </Card>
+        {/* Demands Section - service pie + cumulative area chart */}
+        {demands && (
+          <DemandsSectionCard demands={demands} />
+        )}
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <div className="flex items-center gap-1">
-                <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                  {t("dashboard.delivered")}
-                </CardTitle>
-                <InfoTooltip text="Demandas que foram concluídas e entregues com sucesso no período." />
-              </div>
-              <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4 text-green-500" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-              <div className="text-2xl md:text-3xl font-bold text-green-600">{deliveredCount}</div>
-              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-                {t("kanban.delivered").toLowerCase()}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <div className="flex items-center gap-1">
-                <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                  {t("dashboard.inProgress")}
-                </CardTitle>
-                <InfoTooltip text="Demandas que estão atualmente sendo executadas pela equipe." />
-              </div>
-              <Clock className="h-3 w-3 md:h-4 md:w-4 text-primary" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-              <div className="text-2xl md:text-3xl font-bold text-primary">{clientInProgressCount}</div>
-              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-                {t("kanban.doing").toLowerCase()}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-6 md:pb-2">
-              <div className="flex items-center gap-1">
-                <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                  {t("kanban.toStart")}
-                </CardTitle>
-                <InfoTooltip text="Demandas que ainda não foram iniciadas e aguardam execução." />
-              </div>
-              <Clock className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-              <div className="text-2xl md:text-3xl font-bold">{clientPendingCount}</div>
-              <p className="text-[10px] md:text-xs text-muted-foreground mt-1">
-                {t("common.loading").split("...")[0]}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Chart and Recent Demands */}
-        <div className="grid gap-4 md:gap-6 lg:grid-cols-2 items-stretch">
-          <Card className="flex flex-col h-full">
-            <CardHeader className="p-4 md:p-6">
-              <CardTitle className="text-base md:text-lg">{t("dashboard.deliveryStatus")}</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 md:p-6 pt-0 md:pt-0 flex-1 flex items-center justify-center">
-              <div className="w-full">
-                <DeliveryStatusChart data={demandData?.byStatus || []} />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
-              <CardTitle className="text-base md:text-lg">{t("dashboard.recentActivities")}</CardTitle>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="gap-1 text-xs md:text-sm"
-                onClick={() => navigate("/demands")}
-              >
-                {t("common.view")}
-                <ArrowRight className="h-3 w-3 md:h-4 md:w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="p-4 md:p-6 pt-0 md:pt-0">
-              <div className="space-y-3">
-                {demandData?.demands.slice(0, 5).map((demand: any) => (
-                  <div 
-                    key={demand.id}
-                    className="flex items-center justify-between p-2 md:p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer gap-2"
-                    onClick={() => navigate(`/demands/${demand.id}`)}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate text-sm md:text-base">{demand.title}</p>
-                      <p className="text-[10px] md:text-xs text-muted-foreground">
-                        {format(new Date(demand.created_at), "dd/MM/yyyy")}
-                      </p>
-                    </div>
-                    <Badge
-                      className="text-[10px] md:text-xs flex-shrink-0"
-                      style={{ 
-                        backgroundColor: demand.demand_statuses?.color || "#6B7280",
-                        color: "white"
-                      }}
-                    >
-                      {demand.demand_statuses?.name || t("common.status")}
-                    </Badge>
-                  </div>
-                ))}
-
-                {(!demandData?.demands || demandData.demands.length === 0) && (
-                  <div className="text-center py-6 md:py-8 text-muted-foreground">
-                    <FileText className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">{t("demands.noDemands")}</p>
-                    <Button 
-                      variant="link" 
-                      className="mt-2 text-sm"
-                      onClick={() => navigate("/demands/request")}
-                    >
-                      Criar Solicitação
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Requests History Carousel */}
+        <RequesterRequestsCarousel />
 
         {hasBoardLimit && (
           <ScopeOverviewCard 
