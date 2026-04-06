@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Briefcase, Users, CheckCircle2, Clock, Timer, RefreshCw, FileText, Plus, PlusCircle, ArrowRight } from "lucide-react";
+import { CheckCircle2, Clock, FileText, Plus, ArrowRight } from "lucide-react";
 import { useDemands } from "@/hooks/useDemands";
 import { useTeams } from "@/hooks/useTeams";
 import { useSelectedTeam } from "@/contexts/TeamContext";
