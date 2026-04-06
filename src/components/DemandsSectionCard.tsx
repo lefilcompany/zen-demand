@@ -165,12 +165,9 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
           {/* Pie - Por categoria */}
           <div className="p-3 md:p-4 rounded-xl border border-border/50 bg-card space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Grid2X2 className="h-4 w-4 md:h-5 md:w-5 text-orange-500 shrink-0" />
-                <span className="text-xs md:text-sm font-semibold text-foreground">Por categoria</span>
-              </div>
-              <ChartPeriodSelector value={piePeriod} onChange={setPiePeriod} compact />
+            <div className="flex items-center gap-2">
+              <Grid2X2 className="h-4 w-4 md:h-5 md:w-5 text-orange-500 shrink-0" />
+              <span className="text-xs md:text-sm font-semibold text-foreground">Por categoria</span>
             </div>
             {categoryData.length > 0 ? (
               <div className="flex items-center gap-2">
@@ -213,16 +210,14 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
                 Sem dados no período
               </div>
             )}
+            <ChartPeriodSelector value={piePeriod} onChange={setPiePeriod} className="justify-center" compact />
           </div>
 
           {/* Area - Visão geral por status */}
           <div className="p-3 md:p-4 rounded-xl border border-border/50 bg-card space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Atom className="h-4 w-4 md:h-5 md:w-5 text-orange-500 shrink-0" />
-                <span className="text-xs md:text-sm font-semibold text-foreground">Visão geral</span>
-              </div>
-              <ChartPeriodSelector value={trendPeriod} onChange={setTrendPeriod} compact />
+            <div className="flex items-center gap-2">
+              <Atom className="h-4 w-4 md:h-5 md:w-5 text-orange-500 shrink-0" />
+              <span className="text-xs md:text-sm font-semibold text-foreground">Visão geral</span>
             </div>
             {trendData.length > 1 ? (
               <>
