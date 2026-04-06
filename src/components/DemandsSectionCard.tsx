@@ -87,7 +87,7 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
 
     const catMap = new Map<string, number>();
     for (const d of filtered) {
-      const cat = (d as any).services?.name || d.demand_statuses?.name || "Sem categoria";
+      const cat = (d as any).services?.name || "Sem serviço";
       catMap.set(cat, (catMap.get(cat) || 0) + 1);
     }
     return Array.from(catMap.entries())
