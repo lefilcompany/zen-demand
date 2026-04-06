@@ -13,24 +13,24 @@ export function DashboardBanner({
   actions
 }: DashboardBannerProps) {
   return (
-    <div className="relative overflow-hidden rounded-xl h-36 md:h-44 lg:h-52 shadow-[0_8px_30px_-5px_hsl(var(--primary)/0.5)]">
+    <div className="relative overflow-hidden rounded-xl shadow-[0_8px_30px_-5px_hsl(var(--primary)/0.5)]">
       <img 
         src={dashboardBanner} 
         alt="Gestão de demandas" 
         className="absolute inset-0 w-full h-full object-cover"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-foreground/80 via-foreground/60 to-transparent"></div>
-      <div className="relative z-10 h-full flex items-center justify-between p-4 md:p-6 lg:p-8">
-        <div>
+      <div className="absolute inset-0 bg-gradient-to-r from-foreground/85 via-foreground/60 to-foreground/20"></div>
+      <div className="relative z-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4 p-5 md:p-6 lg:p-8">
+        <div className="flex-1 min-w-0">
           <h2 className="text-lg md:text-xl lg:text-2xl font-bold mb-1 text-white">
             {title}
           </h2>
-          <p className="text-white/90 text-xs md:text-sm lg:text-base max-w-md">
+          <p className="text-white/80 text-xs md:text-sm max-w-md leading-relaxed">
             {subtitle}
           </p>
         </div>
         {actions && (
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {actions}
           </div>
         )}
