@@ -22,7 +22,7 @@ interface ProductivitySectionProps {
 function ProgressBarWithMarker({ value, markerPercent }: { value: number; markerPercent: number }) {
   return (
     <div className="relative w-full">
-      <Progress value={value} className="h-3.5 md:h-4 rounded-full bg-muted" indicatorClassName="bg-orange-400 rounded-full" />
+      <Progress value={value} className="h-3 sm:h-3.5 md:h-4 rounded-full bg-muted" indicatorClassName="bg-orange-400 rounded-full" />
       <div
         className="absolute top-0 h-full w-0.5 bg-foreground/70 z-10"
         style={{ left: `${Math.min(100, Math.max(0, markerPercent))}%` }}
@@ -58,36 +58,38 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
 
   return (
     <Card className="flex flex-col h-full">
-      <CardHeader className="pb-2 p-4 md:p-6 md:pb-2">
-        <CardTitle className="text-sm md:text-base font-bold tracking-wider uppercase text-foreground text-center">
+      <CardHeader className="pb-2 p-3 sm:p-4 md:p-6 md:pb-2">
+        <CardTitle className="text-xs sm:text-sm md:text-base font-bold tracking-wider uppercase text-foreground text-center">
           Produtividade
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 p-3 md:p-6 pt-2">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+      <CardContent className="flex-1 p-2.5 sm:p-3 md:p-6 pt-1 sm:pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 md:gap-4">
           {/* Tempo médio de conclusão */}
-          <div className="p-3 md:p-4 rounded-xl border border-border/50 bg-card space-y-3">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 md:h-5 md:w-5 text-orange-500 shrink-0" />
-              <span className="text-xs md:text-sm font-semibold text-foreground whitespace-nowrap">Tempo médio de conclusão</span>
+          <div className="p-2.5 sm:p-3 md:p-4 rounded-xl border border-border/50 bg-card space-y-2 sm:space-y-3">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-orange-500 shrink-0" />
+              <span className="text-[11px] sm:text-xs md:text-sm font-semibold text-foreground leading-tight">
+                Tempo médio de conclusão
+              </span>
             </div>
 
             <div className="flex items-baseline w-full">
-              <div className="inline-flex items-baseline gap-1 bg-muted/60 border border-border rounded-lg px-3 py-1.5 w-full justify-center">
-                <span className="text-xl md:text-2xl font-bold text-foreground">{avgDays > 0 ? fmt(avgDays) : "-"}</span>
-                <span className="text-xs text-muted-foreground">dias</span>
+              <div className="inline-flex items-baseline gap-1 bg-muted/60 border border-border rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 w-full justify-center">
+                <span className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">{avgDays > 0 ? fmt(avgDays) : "-"}</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground">dias</span>
               </div>
             </div>
 
             <ProgressBarWithMarker value={completionProgress} markerPercent={completionProgress} />
 
-            <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+            <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-muted-foreground">
               <span>1- dias</span>
               <span>9+ dias</span>
             </div>
 
             <div className="flex justify-center">
-              <Badge className="bg-orange-500 hover:bg-orange-600 text-white border-0 text-[10px] md:text-xs font-medium px-2.5 py-0.5">
+              <Badge className="bg-orange-500 hover:bg-orange-600 text-white border-0 text-[9px] sm:text-[10px] md:text-xs font-medium px-2 sm:px-2.5 py-0.5 whitespace-nowrap">
                 Média esperada: {avgDays > 0 ? fmt(avgDays) : "0,0"} dias
               </Badge>
             </div>
@@ -96,28 +98,30 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
           </div>
 
           {/* Tempo em atividade */}
-          <div className="p-3 md:p-4 rounded-xl border border-border/50 bg-card space-y-3">
-            <div className="flex items-center gap-2">
-              <Timer className="h-4 w-4 md:h-5 md:w-5 text-orange-500 shrink-0" />
-              <span className="text-xs md:text-sm font-semibold text-foreground whitespace-nowrap">Tempo em atividade</span>
+          <div className="p-2.5 sm:p-3 md:p-4 rounded-xl border border-border/50 bg-card space-y-2 sm:space-y-3">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Timer className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-orange-500 shrink-0" />
+              <span className="text-[11px] sm:text-xs md:text-sm font-semibold text-foreground leading-tight">
+                Tempo em atividade
+              </span>
             </div>
 
             <div className="flex items-baseline w-full">
-              <div className="inline-flex items-baseline gap-1 bg-muted/60 border border-border rounded-lg px-3 py-1.5 w-full justify-center">
-                <span className="text-xl md:text-2xl font-bold text-foreground">{totalActiveHours > 0 ? fmt(totalActiveHours) : "-"}</span>
-                <span className="text-xs text-muted-foreground">horas</span>
+              <div className="inline-flex items-baseline gap-1 bg-muted/60 border border-border rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 w-full justify-center">
+                <span className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">{totalActiveHours > 0 ? fmt(totalActiveHours) : "-"}</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground">horas</span>
               </div>
             </div>
 
             <ProgressBarWithMarker value={activeProgress} markerPercent={activeProgress} />
 
-            <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+            <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-muted-foreground">
               <span>1- horas</span>
               <span>15+ horas</span>
             </div>
 
             <div className="flex justify-center">
-              <Badge className="bg-orange-500 hover:bg-orange-600 text-white border-0 text-[10px] md:text-xs font-medium px-2.5 py-0.5">
+              <Badge className="bg-orange-500 hover:bg-orange-600 text-white border-0 text-[9px] sm:text-[10px] md:text-xs font-medium px-2 sm:px-2.5 py-0.5 whitespace-nowrap">
                 Média esperada: {avgActiveHoursPerUser > 0 ? fmt(avgActiveHoursPerUser) : "0,0"} h/membro
               </Badge>
             </div>
