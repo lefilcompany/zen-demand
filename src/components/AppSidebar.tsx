@@ -156,7 +156,7 @@ export function AppSidebar() {
                       </NavLink>
                     </SidebarMenuButton>
                     {showText && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
-                      <Badge variant="destructive" className="absolute right-2 top-0 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1 rounded-full">
+                      <Badge className="absolute right-2 top-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1 rounded-full bg-[#F28705] text-white border-0">
                         {pendingDemandRequests}
                       </Badge>
                     )}
