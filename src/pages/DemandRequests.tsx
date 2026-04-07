@@ -661,20 +661,61 @@ export default function DemandRequests() {
     </Card>
   );
 
-  const renderPagination = (page: number, setPage: (fn: (p: number) => number) => void, totalPages: number) => {
-    if (totalPages <= 1) return null;
+  const handleItemsPerPageChange = (value: string) => {
+    const newVal = parseInt(value);
+    setItemsPerPage(newVal);
+    // Reset all pages
+    setAllBoardPage(1);
+    setPendingPage(1);
+    setApprovedPage(1);
+    setReturnedPage(1);
+  };
+
+  const renderPaginationBar = (page: number, setPage: (fn: (p: number) => number) => void, totalPages: number, totalItems: number) => {
     return (
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between border-t border-border pt-3 mt-4">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>Página {page} de {totalPages}</span>
+          <span>Itens por página</span>
+          <Select value={String(itemsPerPage)} onValueChange={handleItemsPerPageChange}>
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {rowsPerPageOptions.map(opt => (
+                <SelectItem key={opt} value={String(opt)}>{opt}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span>{totalItems} registro{totalItems !== 1 ? "s" : ""} encontrado{totalItems !== 1 ? "s" : ""}</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>Página {page} de {totalPages || 1}</span>
           <div className="flex items-center">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Keep old renderPagination for inline usage in admin toolbar
+  const renderPagination = (page: number, setPage: (fn: (p: number) => number) => void, totalPages: number) => {
+    if (totalPages <= 1) return null;
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <span>Página {page} de {totalPages}</span>
+        <div className="flex items-center">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     );
