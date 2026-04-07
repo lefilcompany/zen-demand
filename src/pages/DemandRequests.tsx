@@ -122,27 +122,14 @@ export default function DemandRequests() {
   const [myStatusFilter, setMyStatusFilter] = useState<string>("all");
   const [mySelectedDate, setMySelectedDate] = useState<Date | undefined>();
 
-  // Admin tab filters
-  const [pendingPriorityFilter, setPendingPriorityFilter] = useState<string>("all");
-  const [pendingDateFilter, setPendingDateFilter] = useState<Date | undefined>();
-  const [pendingFiltersOpen, setPendingFiltersOpen] = useState(false);
-  const [pendingSearchOpen, setPendingSearchOpen] = useState(false);
-  const [pendingSearchQuery, setPendingSearchQuery] = useState("");
-  const pendingSearchRef = useRef<HTMLInputElement>(null);
-
-  const [approvedPriorityFilter, setApprovedPriorityFilter] = useState<string>("all");
-  const [approvedDateFilter, setApprovedDateFilter] = useState<Date | undefined>();
-  const [approvedFiltersOpen, setApprovedFiltersOpen] = useState(false);
-  const [approvedSearchOpen, setApprovedSearchOpen] = useState(false);
-  const [approvedSearchQuery, setApprovedSearchQuery] = useState("");
-  const approvedSearchRef = useRef<HTMLInputElement>(null);
-
-  const [returnedPriorityFilter, setReturnedPriorityFilter] = useState<string>("all");
-  const [returnedDateFilter, setReturnedDateFilter] = useState<Date | undefined>();
-  const [returnedFiltersOpen, setReturnedFiltersOpen] = useState(false);
-  const [returnedSearchOpen, setReturnedSearchOpen] = useState(false);
-  const [returnedSearchQuery, setReturnedSearchQuery] = useState("");
-  const returnedSearchRef = useRef<HTMLInputElement>(null);
+  // Unified admin filters (single view, no tabs)
+  const [adminStatusFilter, setAdminStatusFilter] = useState<string>("all");
+  const [adminPriorityFilter, setAdminPriorityFilter] = useState<string>("all");
+  const [adminDateFilter, setAdminDateFilter] = useState<Date | undefined>();
+  const [adminFiltersOpen, setAdminFiltersOpen] = useState(false);
+  const [adminSearchOpen, setAdminSearchOpen] = useState(false);
+  const [adminSearchQuery, setAdminSearchQuery] = useState("");
+  const adminSearchRef = useRef<HTMLInputElement>(null);
 
   // Pagination states
   const [approvedPage, setApprovedPage] = useState(1);
@@ -197,7 +184,6 @@ export default function DemandRequests() {
     return { items, totalPages, totalItems: allBoardRequests.length };
   }, [allBoardRequests, allBoardPage, itemsPerPage]);
 
-  // Paginated data
   const matchesTabSearch = useCallback((request: any, query: string) => {
     if (!query.trim()) return true;
     const q = query.toLowerCase();
@@ -214,49 +200,43 @@ export default function DemandRequests() {
     return !isBefore(d, startOfDay(dateFilter)) && !isAfter(d, endOfDay(dateFilter));
   }, []);
 
-  const filteredPending = useMemo(() => (pendingRequests || []).filter(r => {
-    if (!matchesTabSearch(r, pendingSearchQuery)) return false;
-    if (pendingPriorityFilter !== "all" && (r.priority || "média") !== pendingPriorityFilter) return false;
-    if (!applyDateFilter(r, pendingDateFilter)) return false;
-    return true;
-  }), [pendingRequests, pendingSearchQuery, pendingPriorityFilter, pendingDateFilter, matchesTabSearch, applyDateFilter]);
+  // Unified admin: combine all requests, filter, sort newest first
+  const allAdminRequests = useMemo(() => {
+    const all = [
+      ...(pendingRequests || []),
+      ...(approvedRequests || []),
+      ...(returnedRequests || []),
+    ];
+    all.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return all;
+  }, [pendingRequests, approvedRequests, returnedRequests]);
 
-  const filteredApproved = useMemo(() => (approvedRequests || []).filter(r => {
-    if (!matchesTabSearch(r, approvedSearchQuery)) return false;
-    if (approvedPriorityFilter !== "all" && (r.priority || "média") !== approvedPriorityFilter) return false;
-    if (!applyDateFilter(r, approvedDateFilter, "responded_at")) return false;
-    return true;
-  }), [approvedRequests, approvedSearchQuery, approvedPriorityFilter, approvedDateFilter, matchesTabSearch, applyDateFilter]);
+  const adminStatusCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: allAdminRequests.length };
+    allAdminRequests.forEach((r: any) => {
+      counts[r.status] = (counts[r.status] || 0) + 1;
+    });
+    return counts;
+  }, [allAdminRequests]);
 
-  const filteredReturned = useMemo(() => (returnedRequests || []).filter(r => {
-    if (!matchesTabSearch(r, returnedSearchQuery)) return false;
-    if (returnedPriorityFilter !== "all" && (r.priority || "média") !== returnedPriorityFilter) return false;
-    if (!applyDateFilter(r, returnedDateFilter, "responded_at")) return false;
-    return true;
-  }), [returnedRequests, returnedSearchQuery, returnedPriorityFilter, returnedDateFilter, matchesTabSearch, applyDateFilter]);
+  const filteredAdminRequests = useMemo(() => {
+    return allAdminRequests.filter(r => {
+      if (!matchesTabSearch(r, adminSearchQuery)) return false;
+      if (adminStatusFilter !== "all" && r.status !== adminStatusFilter) return false;
+      if (adminPriorityFilter !== "all" && (r.priority || "média") !== adminPriorityFilter) return false;
+      if (!applyDateFilter(r, adminDateFilter)) return false;
+      return true;
+    });
+  }, [allAdminRequests, adminSearchQuery, adminStatusFilter, adminPriorityFilter, adminDateFilter, matchesTabSearch, applyDateFilter]);
 
-  const [pendingPage, setPendingPage] = useState(1);
+  const [adminPage, setAdminPage] = useState(1);
 
-  const paginatedPending = useMemo(() => {
-    const totalPages = Math.ceil(filteredPending.length / itemsPerPage);
-    const startIndex = (pendingPage - 1) * itemsPerPage;
-    const items = filteredPending.slice(startIndex, startIndex + itemsPerPage);
-    return { items, totalPages };
-  }, [filteredPending, pendingPage, itemsPerPage]);
-
-  const paginatedApproved = useMemo(() => {
-    const totalPages = Math.ceil(filteredApproved.length / itemsPerPage);
-    const startIndex = (approvedPage - 1) * itemsPerPage;
-    const items = filteredApproved.slice(startIndex, startIndex + itemsPerPage);
-    return { items, totalPages };
-  }, [filteredApproved, approvedPage, itemsPerPage]);
-
-  const paginatedReturned = useMemo(() => {
-    const totalPages = Math.ceil(filteredReturned.length / itemsPerPage);
-    const startIndex = (returnedPage - 1) * itemsPerPage;
-    const items = filteredReturned.slice(startIndex, startIndex + itemsPerPage);
-    return { items, totalPages };
-  }, [filteredReturned, returnedPage, itemsPerPage]);
+  const paginatedAdmin = useMemo(() => {
+    const totalPages = Math.ceil(filteredAdminRequests.length / itemsPerPage);
+    const startIndex = (adminPage - 1) * itemsPerPage;
+    const items = filteredAdminRequests.slice(startIndex, startIndex + itemsPerPage);
+    return { items, totalPages, totalItems: filteredAdminRequests.length };
+  }, [filteredAdminRequests, adminPage, itemsPerPage]);
 
   // My requests filtered
   const myStatusCounts = useMemo(() => {
@@ -673,7 +653,7 @@ export default function DemandRequests() {
     const newVal = parseInt(value);
     setItemsPerPage(newVal);
     setAllBoardPage(1);
-    setPendingPage(1);
+    setAdminPage(1);
     setApprovedPage(1);
     setReturnedPage(1);
     setMyPage(1);
@@ -736,118 +716,144 @@ export default function DemandRequests() {
     { value: "alta", label: "Alta" },
   ];
 
-  const renderAdminToolbar = ({
-    isSearchOpen, setIsSearchOpen, query, setQuery, inputRef,
-    isFiltersOpen, setIsFiltersOpen,
-    priorityFilter, setPriorityFilter,
-    dateFilter, setDateFilter,
-    dateLabel,
-    page, setPage, totalPages,
-    totalItems,
-  }: {
-    isSearchOpen: boolean; setIsSearchOpen: (v: boolean) => void;
-    query: string; setQuery: (v: string) => void;
-    inputRef: React.RefObject<HTMLInputElement>;
-    isFiltersOpen: boolean; setIsFiltersOpen: (v: boolean) => void;
-    priorityFilter: string; setPriorityFilter: (v: string) => void;
-    dateFilter: Date | undefined; setDateFilter: (v: Date | undefined) => void;
-    dateLabel: string;
-    page: number; setPage: (fn: (p: number) => number) => void; totalPages: number;
-    totalItems: number;
-  }) => {
-    const activeCount = (priorityFilter !== "all" ? 1 : 0) + (dateFilter ? 1 : 0);
+  const adminStatusOptions = [
+    { value: "all", label: "Todas", icon: null },
+    { value: "pending", label: "Pendentes", icon: Clock },
+    { value: "approved", label: "Aprovadas", icon: CheckCircle },
+    { value: "returned", label: "Devolvidas", icon: RotateCcw },
+  ];
+
+  const renderUnifiedAdminToolbar = () => {
+    const activeCount = (adminStatusFilter !== "all" ? 1 : 0) + (adminPriorityFilter !== "all" ? 1 : 0) + (adminDateFilter ? 1 : 0);
     return (
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           {/* Search */}
           <div className={cn(
             "group flex items-center transition-all duration-300 ease-in-out rounded-xl border overflow-hidden",
-            isSearchOpen
+            adminSearchOpen
               ? "w-72 sm:w-80 border-primary/40 bg-background shadow-sm ring-1 ring-primary/10"
               : "w-9 border-border bg-muted/40 hover:bg-background hover:border-[#F28705]/40 hover:shadow-sm"
           )}>
             <button
               className={cn(
                 "h-9 w-9 shrink-0 flex items-center justify-center transition-colors rounded-l-xl",
-                isSearchOpen ? "text-primary" : "text-muted-foreground group-hover:text-[#F28705]"
+                adminSearchOpen ? "text-primary" : "text-muted-foreground group-hover:text-[#F28705]"
               )}
               onClick={() => {
-                if (isSearchOpen && query) { setQuery(""); }
-                else { setIsSearchOpen(!isSearchOpen); if (isSearchOpen) setQuery(""); }
+                if (adminSearchOpen && adminSearchQuery) { setAdminSearchQuery(""); }
+                else { setAdminSearchOpen(!adminSearchOpen); if (adminSearchOpen) setAdminSearchQuery(""); }
               }}
             >
-              {isSearchOpen && query ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+              {adminSearchOpen && adminSearchQuery ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
             </button>
-            {isSearchOpen && (
+            {adminSearchOpen && (
               <input
-                ref={inputRef}
+                ref={adminSearchRef}
                 type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                value={adminSearchQuery}
+                onChange={(e) => setAdminSearchQuery(e.target.value)}
                 placeholder="Buscar por título, solicitante, prioridade..."
                 className="h-9 w-full bg-transparent text-sm outline-none pr-3 text-foreground placeholder:text-muted-foreground/60"
-                onKeyDown={(e) => { if (e.key === "Escape") { setQuery(""); setIsSearchOpen(false); } }}
+                onKeyDown={(e) => { if (e.key === "Escape") { setAdminSearchQuery(""); setAdminSearchOpen(false); } }}
               />
             )}
           </div>
 
           {/* Filter toggle */}
           <Button
-            variant={isFiltersOpen ? "secondary" : "outline"}
+            variant={adminFiltersOpen ? "secondary" : "outline"}
             size="sm"
             className={cn(
               "gap-2 rounded-lg transition-all",
-              !isFiltersOpen && "hover:bg-white hover:text-[#F28705] hover:border-[#F28705]",
+              !adminFiltersOpen && "hover:bg-white hover:text-[#F28705] hover:border-[#F28705]",
               activeCount > 0 && "border-primary text-primary bg-primary/5"
             )}
-            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+            onClick={() => setAdminFiltersOpen(!adminFiltersOpen)}
           >
             <Filter className="h-4 w-4" />
             Filtros
             {activeCount > 0 && (
               <Badge className="h-5 min-w-5 px-1.5 text-xs bg-primary text-primary-foreground">{activeCount}</Badge>
             )}
-            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", isFiltersOpen && "rotate-180")} />
+            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", adminFiltersOpen && "rotate-180")} />
           </Button>
 
           {/* Active pills */}
-          {priorityFilter !== "all" && (
+          {adminStatusFilter !== "all" && (
             <Badge variant="secondary" className="gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium">
-              Prioridade: {priorityFilter}
-              <button onClick={() => setPriorityFilter("all")} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
+              {adminStatusOptions.find(s => s.value === adminStatusFilter)?.label}
+              <button onClick={() => setAdminStatusFilter("all")} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
             </Badge>
           )}
-          {dateFilter && (
+          {adminPriorityFilter !== "all" && (
             <Badge variant="secondary" className="gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium">
-              {format(dateFilter, "dd/MM/yyyy", { locale: ptBR })}
-              <button onClick={() => setDateFilter(undefined)} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
+              Prioridade: {adminPriorityFilter}
+              <button onClick={() => setAdminPriorityFilter("all")} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
+            </Badge>
+          )}
+          {adminDateFilter && (
+            <Badge variant="secondary" className="gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium">
+              {format(adminDateFilter, "dd/MM/yyyy", { locale: ptBR })}
+              <button onClick={() => setAdminDateFilter(undefined)} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
             </Badge>
           )}
 
-          {(activeCount > 0 || query) && (
+          {(activeCount > 0 || adminSearchQuery) && (
             <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-destructive gap-1"
-              onClick={() => { setPriorityFilter("all"); setDateFilter(undefined); setQuery(""); setIsSearchOpen(false); }}>
+              onClick={() => { setAdminStatusFilter("all"); setAdminPriorityFilter("all"); setAdminDateFilter(undefined); setAdminSearchQuery(""); setAdminSearchOpen(false); }}>
               Limpar tudo
             </Button>
           )}
 
-          {/* Pagination right */}
+          {/* Results count right */}
           <div className="ml-auto flex items-center gap-2">
-            {totalItems > 0 && <span className="text-xs text-muted-foreground">{totalItems} resultado{totalItems !== 1 ? "s" : ""}</span>}
-            {totalPages > 1 && renderPagination(page, setPage, totalPages)}
+            {paginatedAdmin.totalItems > 0 && <span className="text-xs text-muted-foreground">{paginatedAdmin.totalItems} resultado{paginatedAdmin.totalItems !== 1 ? "s" : ""}</span>}
           </div>
         </div>
 
         {/* Filters panel */}
-        {isFiltersOpen && (
+        {adminFiltersOpen && (
           <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-4 animate-fade-in">
+            {/* Status filter */}
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-2">Status</p>
+              <div className="flex flex-wrap gap-2">
+                {adminStatusOptions.map((opt) => {
+                  const TabIcon = opt.icon;
+                  const count = adminStatusCounts[opt.value] || 0;
+                  const isActive = adminStatusFilter === opt.value;
+                  return (
+                    <button key={opt.value} onClick={() => { setAdminStatusFilter(opt.value); setAdminPage(1); }}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border",
+                        isActive
+                          ? "bg-primary/10 border-primary text-primary shadow-sm"
+                          : "bg-background border-border text-muted-foreground hover:bg-white hover:text-[#F28705] hover:border-[#F28705]"
+                      )}
+                    >
+                      {TabIcon && <TabIcon className="h-3.5 w-3.5" />}
+                      {opt.label}
+                      <span className={cn(
+                        "text-xs rounded-full px-1.5 py-0.5 min-w-5 text-center",
+                        isActive ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+                      )}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Priority filter */}
             <div>
               <p className="text-xs font-medium text-muted-foreground mb-2">Prioridade</p>
               <div className="flex flex-wrap gap-2">
                 {priorityOptions.map((opt) => {
-                  const isActive = priorityFilter === opt.value;
+                  const isActive = adminPriorityFilter === opt.value;
                   return (
-                    <button key={opt.value} onClick={() => setPriorityFilter(opt.value)}
+                    <button key={opt.value} onClick={() => { setAdminPriorityFilter(opt.value); setAdminPage(1); }}
                       className={cn(
                         "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border",
                         isActive
@@ -861,20 +867,22 @@ export default function DemandRequests() {
                 })}
               </div>
             </div>
+
+            {/* Date filter */}
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-2">{dateLabel}</p>
+              <p className="text-xs font-medium text-muted-foreground mb-2">Data de criação</p>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className={cn(
                     "gap-2 rounded-lg hover:bg-white hover:text-[#F28705] hover:border-[#F28705]",
-                    dateFilter && "border-primary bg-primary/5 text-primary"
+                    adminDateFilter && "border-primary bg-primary/5 text-primary"
                   )}>
                     <CalendarIcon className="h-4 w-4" />
-                    {dateFilter ? format(dateFilter, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar data"}
+                    {adminDateFilter ? format(adminDateFilter, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar data"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={dateFilter} onSelect={setDateFilter} initialFocus />
+                  <Calendar mode="single" selected={adminDateFilter} onSelect={(d) => { setAdminDateFilter(d); setAdminPage(1); }} initialFocus />
                 </PopoverContent>
               </Popover>
             </div>
@@ -907,62 +915,36 @@ export default function DemandRequests() {
         </div>
       </div>
 
+      {isRequester ? (
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className={cn(
           "w-full grid mb-4",
-          isRequester && canApproveOrReturn ? "grid-cols-5" :
-          isRequester ? "grid-cols-2" :
-          canApproveOrReturn ? "grid-cols-3" : "grid-cols-1"
+          isRequester && canApproveOrReturn ? "grid-cols-3" : "grid-cols-2"
         )}>
-          {isRequester && (
-            <TabsTrigger value="mine" className="flex items-center gap-2">
-              <Send className="h-4 w-4" />
-              <span className="hidden sm:inline">Minhas</span>
-              {myRequests && myRequests.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5">{myRequests.length}</Badge>
-              )}
-            </TabsTrigger>
-          )}
-          {isRequester && (
-            <TabsTrigger value="all-board" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Todas do Quadro</span>
-              {allBoardRequests.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5">{allBoardRequests.length}</Badge>
-              )}
-            </TabsTrigger>
-          )}
-          {(canApproveOrReturn || !isRequester) && (
-            <TabsTrigger value="pending" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              <span className="hidden sm:inline">Pendentes</span>
-              {pendingRequests && pendingRequests.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5">{pendingRequests.length}</Badge>
-              )}
-            </TabsTrigger>
-          )}
+          <TabsTrigger value="mine" className="flex items-center gap-2">
+            <Send className="h-4 w-4" />
+            <span className="hidden sm:inline">Minhas</span>
+            {myRequests && myRequests.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5">{myRequests.length}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="all-board" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Todas do Quadro</span>
+            {allBoardRequests.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5">{allBoardRequests.length}</Badge>
+            )}
+          </TabsTrigger>
           {canApproveOrReturn && (
-            <TabsTrigger value="approved" className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              <span className="hidden sm:inline">Aprovadas</span>
-              {approvedRequests && approvedRequests.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5">{approvedRequests.length}</Badge>
-              )}
-            </TabsTrigger>
-          )}
-          {canApproveOrReturn && (
-            <TabsTrigger value="returned" className="flex items-center gap-2">
-              <XCircle className="h-4 w-4" />
-              <span className="hidden sm:inline">Devolvidas</span>
-              {returnedRequests && returnedRequests.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5">{returnedRequests.length}</Badge>
+            <TabsTrigger value="admin" className="flex items-center gap-2">
+              <ClipboardList className="h-4 w-4" />
+              <span className="hidden sm:inline">Gestão</span>
+              {allAdminRequests.length > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5">{allAdminRequests.length}</Badge>
               )}
             </TabsTrigger>
           )}
         </TabsList>
-
-        {/* My Requests Tab (Requester) */}
-        {isRequester && (
           <TabsContent value="mine">
             <div className="space-y-4">
               {/* Compact filter bar */}
@@ -1153,10 +1135,8 @@ export default function DemandRequests() {
               )}
             </div>
           </TabsContent>
-        )}
 
-        {/* All Board Requests Tab (Requester) */}
-        {isRequester && (
+          {/* All Board Requests Tab (Requester) */}
           <TabsContent value="all-board">
             <div className="space-y-4">
               {/* Search, Filter & Pagination bar */}
@@ -1228,9 +1208,9 @@ export default function DemandRequests() {
                   </Button>
                 )}
 
-                {/* Pagination pushed to right */}
-                <div className="ml-auto">
-                  {paginatedAllBoard.totalPages > 1 && renderPagination(allBoardPage, setAllBoardPage, paginatedAllBoard.totalPages)}
+                {/* Results count right */}
+                <div className="ml-auto flex items-center gap-2">
+                  {paginatedAllBoard.totalItems > 0 && <span className="text-xs text-muted-foreground">{paginatedAllBoard.totalItems} resultado{paginatedAllBoard.totalItems !== 1 ? "s" : ""}</span>}
                 </div>
               </div>
 
@@ -1330,100 +1310,50 @@ export default function DemandRequests() {
               renderEmptyState("Não há solicitações neste quadro")
             )}
           </TabsContent>
-        )}
 
-        {/* Pending Tab */}
-        <TabsContent value="pending">
-          <div className="space-y-4">
-            {renderAdminToolbar({
-              isSearchOpen: pendingSearchOpen, setIsSearchOpen: setPendingSearchOpen,
-              query: pendingSearchQuery, setQuery: setPendingSearchQuery, inputRef: pendingSearchRef,
-              isFiltersOpen: pendingFiltersOpen, setIsFiltersOpen: setPendingFiltersOpen,
-              priorityFilter: pendingPriorityFilter, setPriorityFilter: setPendingPriorityFilter,
-              dateFilter: pendingDateFilter, setDateFilter: setPendingDateFilter,
-              dateLabel: "Data de criação",
-              page: pendingPage, setPage: setPendingPage, totalPages: paginatedPending.totalPages,
-              totalItems: filteredPending.length,
-            })}
-            {pendingLoading ? (
-              <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-            ) : paginatedPending.items.length > 0 ? (
-              <>
-                <div className="grid gap-4">
-                  {paginatedPending.items.map(request => renderRequestCard(request))}
-                </div>
-                {renderPaginationBar(pendingPage, setPendingPage, paginatedPending.totalPages, filteredPending.length)}
-              </>
-            ) : (
-              renderEmptyState((pendingSearchQuery || pendingPriorityFilter !== "all" || pendingDateFilter)
-                ? "Nenhuma solicitação encontrada com os filtros aplicados"
-                : "Não há solicitações pendentes para este quadro")
-            )}
-          </div>
-        </TabsContent>
-
-        {canApproveOrReturn && (
-          <TabsContent value="approved">
-            <div className="space-y-4">
-              {renderAdminToolbar({
-                isSearchOpen: approvedSearchOpen, setIsSearchOpen: setApprovedSearchOpen,
-                query: approvedSearchQuery, setQuery: setApprovedSearchQuery, inputRef: approvedSearchRef,
-                isFiltersOpen: approvedFiltersOpen, setIsFiltersOpen: setApprovedFiltersOpen,
-                priorityFilter: approvedPriorityFilter, setPriorityFilter: setApprovedPriorityFilter,
-                dateFilter: approvedDateFilter, setDateFilter: setApprovedDateFilter,
-                dateLabel: "Data de aprovação",
-                page: approvedPage, setPage: setApprovedPage, totalPages: paginatedApproved.totalPages,
-                totalItems: filteredApproved.length,
-              })}
-              {approvedLoading ? (
-                <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-              ) : paginatedApproved.items.length > 0 ? (
-                <>
-                  <div className="grid gap-4">
-                    {paginatedApproved.items.map(request => renderRequestCard(request))}
-                  </div>
-                  {renderPaginationBar(approvedPage, setApprovedPage, paginatedApproved.totalPages, filteredApproved.length)}
-                </>
-              ) : (
-                renderEmptyState((approvedSearchQuery || approvedPriorityFilter !== "all" || approvedDateFilter)
-                  ? "Nenhuma solicitação encontrada com os filtros aplicados"
-                  : "Não há solicitações aprovadas para este quadro")
-              )}
-            </div>
-          </TabsContent>
-        )}
-
-        {canApproveOrReturn && (
-          <TabsContent value="returned">
-            <div className="space-y-4">
-              {renderAdminToolbar({
-                isSearchOpen: returnedSearchOpen, setIsSearchOpen: setReturnedSearchOpen,
-                query: returnedSearchQuery, setQuery: setReturnedSearchQuery, inputRef: returnedSearchRef,
-                isFiltersOpen: returnedFiltersOpen, setIsFiltersOpen: setReturnedFiltersOpen,
-                priorityFilter: returnedPriorityFilter, setPriorityFilter: setReturnedPriorityFilter,
-                dateFilter: returnedDateFilter, setDateFilter: setReturnedDateFilter,
-                dateLabel: "Data de devolução",
-                page: returnedPage, setPage: setReturnedPage, totalPages: paginatedReturned.totalPages,
-                totalItems: filteredReturned.length,
-              })}
-              {returnedLoading ? (
-                <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-              ) : paginatedReturned.items.length > 0 ? (
-                <>
-                  <div className="grid gap-4">
-                    {paginatedReturned.items.map(request => renderRequestCard(request, true))}
-                  </div>
-                  {renderPaginationBar(returnedPage, setReturnedPage, paginatedReturned.totalPages, filteredReturned.length)}
-                </>
-              ) : (
-                renderEmptyState((returnedSearchQuery || returnedPriorityFilter !== "all" || returnedDateFilter)
-                  ? "Nenhuma solicitação encontrada com os filtros aplicados"
-                  : "Não há solicitações devolvidas para este quadro")
-              )}
-            </div>
-          </TabsContent>
-        )}
-      </Tabs>
+          {/* Admin view within requester tabs */}
+          {canApproveOrReturn && (
+            <TabsContent value="admin">
+              <div className="space-y-4">
+                {renderUnifiedAdminToolbar()}
+                {(pendingLoading || approvedLoading || returnedLoading) ? (
+                  <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+                ) : paginatedAdmin.items.length > 0 ? (
+                  <>
+                    <div className="grid gap-4">
+                      {paginatedAdmin.items.map(request => renderRequestCard(request, request.status === "returned"))}
+                    </div>
+                    {renderPaginationBar(adminPage, setAdminPage, paginatedAdmin.totalPages, paginatedAdmin.totalItems)}
+                  </>
+                ) : (
+                  renderEmptyState((adminSearchQuery || adminStatusFilter !== "all" || adminPriorityFilter !== "all" || adminDateFilter)
+                    ? "Nenhuma solicitação encontrada com os filtros aplicados"
+                    : "Não há solicitações neste quadro")
+                )}
+              </div>
+            </TabsContent>
+          )}
+        </Tabs>
+      ) : (
+        /* Non-requester unified view (admin/coordinator/agent) - no tabs */
+        <div className="space-y-4">
+          {renderUnifiedAdminToolbar()}
+          {(pendingLoading || approvedLoading || returnedLoading) ? (
+            <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+          ) : paginatedAdmin.items.length > 0 ? (
+            <>
+              <div className="grid gap-4">
+                {paginatedAdmin.items.map(request => renderRequestCard(request, request.status === "returned"))}
+              </div>
+              {renderPaginationBar(adminPage, setAdminPage, paginatedAdmin.totalPages, paginatedAdmin.totalItems)}
+            </>
+          ) : (
+            renderEmptyState((adminSearchQuery || adminStatusFilter !== "all" || adminPriorityFilter !== "all" || adminDateFilter)
+              ? "Nenhuma solicitação encontrada com os filtros aplicados"
+              : "Não há solicitações neste quadro")
+          )}
+        </div>
+      )}
 
       {/* View Details Dialog */}
       <Dialog open={!!viewing} onOpenChange={() => setViewing(null)}>
