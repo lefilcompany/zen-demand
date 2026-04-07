@@ -14,7 +14,7 @@ import {
   useDeleteDemandRequest
 } from "@/hooks/useDemandRequests";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
-import { Clock, CheckCircle, RotateCcw, Users, Layout, Paperclip, MessageSquare, Send, Trash2, XCircle, ChevronLeft, ChevronRight, ClipboardList, Edit, Plus, CalendarIcon, X, Search } from "lucide-react";
+import { Clock, CheckCircle, RotateCcw, Users, Layout, Paperclip, MessageSquare, Send, Trash2, XCircle, ChevronLeft, ChevronRight, ClipboardList, Edit, Plus, CalendarIcon, X, Search, Filter, ChevronDown } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { format, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -101,6 +101,7 @@ export default function DemandRequests() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const matchesSearch = useCallback((request: any) => {
     if (!searchQuery.trim()) return true;
@@ -635,44 +636,6 @@ export default function DemandRequests() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{pageTitle}</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <div className={cn(
-            "flex items-center transition-all duration-300 ease-in-out rounded-md border border-border overflow-hidden",
-            searchOpen ? "w-64 bg-background" : "w-9"
-          )}>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 shrink-0"
-              onClick={() => {
-                if (searchOpen && searchQuery) {
-                  setSearchQuery("");
-                } else {
-                  setSearchOpen(!searchOpen);
-                  if (searchOpen) setSearchQuery("");
-                }
-              }}
-            >
-              {searchOpen && searchQuery ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
-            </Button>
-            {searchOpen && (
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar por título, prioridade, serviço..."
-                className="h-9 w-full bg-transparent text-sm outline-none pr-3 text-foreground placeholder:text-muted-foreground"
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") {
-                    setSearchQuery("");
-                    setSearchOpen(false);
-                  }
-                }}
-              />
-            )}
-          </div>
-        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -732,67 +695,157 @@ export default function DemandRequests() {
         {/* My Requests Tab (Requester) */}
         {isRequester && (
           <TabsContent value="mine">
-            {/* Sub-filters for my requests */}
             <div className="space-y-4">
-              <Tabs value={myStatusFilter} onValueChange={setMyStatusFilter} className="w-full">
-                <TabsList className="w-full justify-start h-auto flex-wrap gap-2 bg-muted/50 p-1.5 rounded-lg">
-                  {myStatusTabs.map((tab) => {
-                    const TabIcon = tab.icon;
-                    const count = myStatusCounts[tab.value] || 0;
-                    const isActive = myStatusFilter === tab.value;
-                    return (
-                      <TabsTrigger
-                        key={tab.value}
-                        value={tab.value}
-                        className={cn(
-                          "gap-2 px-4 py-2 rounded-md transition-all duration-200",
-                          "hover:bg-background/80 hover:shadow-sm",
-                          "data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:text-primary"
-                        )}
-                      >
-                        {TabIcon && <TabIcon className={cn("h-4 w-4", isActive && "text-primary")} />}
-                        <span className="font-medium">{tab.label}</span>
-                        <Badge 
-                          variant="secondary" 
-                          className={cn(
-                            "ml-1 h-5 min-w-5 px-1.5 text-xs font-semibold transition-colors",
-                            isActive ? "bg-primary/15 text-primary" : "bg-muted-foreground/10 text-muted-foreground"
-                          )}
-                        >
-                          {count}
-                        </Badge>
-                      </TabsTrigger>
-                    );
-                  })}
-                </TabsList>
-              </Tabs>
+              {/* Compact filter bar */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Search */}
+                <div className={cn(
+                  "flex items-center transition-all duration-300 ease-in-out rounded-lg border border-border overflow-hidden bg-background",
+                  searchOpen ? "w-64" : "w-9"
+                )}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    onClick={() => {
+                      if (searchOpen && searchQuery) {
+                        setSearchQuery("");
+                      } else {
+                        setSearchOpen(!searchOpen);
+                        if (searchOpen) setSearchQuery("");
+                      }
+                    }}
+                  >
+                    {searchOpen && searchQuery ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+                  </Button>
+                  {searchOpen && (
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Buscar título, prioridade, serviço..."
+                      className="h-9 w-full bg-transparent text-sm outline-none pr-3 text-foreground placeholder:text-muted-foreground"
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setSearchQuery("");
+                          setSearchOpen(false);
+                        }
+                      }}
+                    />
+                  )}
+                </div>
 
-              {/* Date Filter */}
-              <div className="flex items-center gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={cn(
-                        "gap-2 transition-all",
-                        mySelectedDate && "border-primary bg-primary/5 text-primary"
-                      )}
-                    >
-                      <CalendarIcon className="h-4 w-4" />
-                      {mySelectedDate ? format(mySelectedDate, "dd/MM/yyyy", { locale: ptBR }) : "Filtrar por data"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={mySelectedDate} onSelect={setMySelectedDate} initialFocus />
-                  </PopoverContent>
-                </Popover>
+                {/* Filter toggle */}
+                <Button
+                  variant={filtersOpen ? "secondary" : "outline"}
+                  size="sm"
+                  className={cn(
+                    "gap-2 rounded-lg transition-all",
+                    (myStatusFilter !== "all" || mySelectedDate) && "border-primary text-primary bg-primary/5"
+                  )}
+                  onClick={() => setFiltersOpen(!filtersOpen)}
+                >
+                  <Filter className="h-4 w-4" />
+                  Filtros
+                  {(myStatusFilter !== "all" || mySelectedDate) && (
+                    <Badge className="h-5 min-w-5 px-1.5 text-xs bg-primary text-primary-foreground">
+                      {(myStatusFilter !== "all" ? 1 : 0) + (mySelectedDate ? 1 : 0)}
+                    </Badge>
+                  )}
+                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", filtersOpen && "rotate-180")} />
+                </Button>
+
+                {/* Active filter pills */}
+                {myStatusFilter !== "all" && (
+                  <Badge variant="secondary" className="gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium">
+                    {myStatusTabs.find(t => t.value === myStatusFilter)?.label}
+                    <button onClick={() => setMyStatusFilter("all")} className="ml-1 hover:text-destructive">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
                 {mySelectedDate && (
-                  <Button variant="ghost" size="sm" onClick={() => setMySelectedDate(undefined)} className="h-8 px-2 text-muted-foreground hover:text-destructive">
-                    <X className="h-4 w-4" />
+                  <Badge variant="secondary" className="gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium">
+                    {format(mySelectedDate, "dd/MM/yyyy", { locale: ptBR })}
+                    <button onClick={() => setMySelectedDate(undefined)} className="ml-1 hover:text-destructive">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+
+                {(myStatusFilter !== "all" || mySelectedDate || searchQuery) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-muted-foreground hover:text-destructive gap-1"
+                    onClick={() => { setMyStatusFilter("all"); setMySelectedDate(undefined); setSearchQuery(""); setSearchOpen(false); }}
+                  >
+                    Limpar tudo
                   </Button>
                 )}
               </div>
+
+              {/* Expanded filters panel */}
+              {filtersOpen && (
+                <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-4 animate-fade-in">
+                  {/* Status buttons */}
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Status</p>
+                    <div className="flex flex-wrap gap-2">
+                      {myStatusTabs.map((tab) => {
+                        const TabIcon = tab.icon;
+                        const count = myStatusCounts[tab.value] || 0;
+                        const isActive = myStatusFilter === tab.value;
+                        return (
+                          <button
+                            key={tab.value}
+                            onClick={() => setMyStatusFilter(tab.value)}
+                            className={cn(
+                              "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border",
+                              isActive
+                                ? "bg-primary/10 border-primary text-primary shadow-sm"
+                                : "bg-background border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                            )}
+                          >
+                            {TabIcon && <TabIcon className="h-3.5 w-3.5" />}
+                            {tab.label}
+                            <span className={cn(
+                              "text-xs rounded-full px-1.5 py-0.5 min-w-5 text-center",
+                              isActive ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+                            )}>
+                              {count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Date filter */}
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Data</p>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "gap-2 rounded-lg",
+                            mySelectedDate && "border-primary bg-primary/5 text-primary"
+                          )}
+                        >
+                          <CalendarIcon className="h-4 w-4" />
+                          {mySelectedDate ? format(mySelectedDate, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar data"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={mySelectedDate} onSelect={setMySelectedDate} initialFocus />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+              )}
 
               {myLoading ? (
                 <div className="text-center py-12 text-muted-foreground">Carregando...</div>
@@ -803,10 +856,10 @@ export default function DemandRequests() {
               ) : (
                 <Card>
                   <CardContent className="py-12 text-center text-muted-foreground">
-                    {(myStatusFilter !== "all" || mySelectedDate) ? (
+                    {(myStatusFilter !== "all" || mySelectedDate || searchQuery) ? (
                       <>
                         <p>Nenhuma solicitação encontrada com os filtros aplicados</p>
-                        <Button variant="outline" className="mt-4" onClick={() => { setMyStatusFilter("all"); setMySelectedDate(undefined); }}>
+                        <Button variant="outline" className="mt-4" onClick={() => { setMyStatusFilter("all"); setMySelectedDate(undefined); setSearchQuery(""); }}>
                           Limpar Filtros
                         </Button>
                       </>
