@@ -1348,9 +1348,12 @@ export default function DemandRequests() {
             {pendingLoading ? (
               <div className="text-center py-12 text-muted-foreground">Carregando...</div>
             ) : paginatedPending.items.length > 0 ? (
-              <div className="grid gap-4">
-                {paginatedPending.items.map(request => renderRequestCard(request))}
-              </div>
+              <>
+                <div className="grid gap-4">
+                  {paginatedPending.items.map(request => renderRequestCard(request))}
+                </div>
+                {renderPaginationBar(pendingPage, setPendingPage, paginatedPending.totalPages, filteredPending.length)}
+              </>
             ) : (
               renderEmptyState((pendingSearchQuery || pendingPriorityFilter !== "all" || pendingDateFilter)
                 ? "Nenhuma solicitação encontrada com os filtros aplicados"
@@ -1375,9 +1378,12 @@ export default function DemandRequests() {
               {approvedLoading ? (
                 <div className="text-center py-12 text-muted-foreground">Carregando...</div>
               ) : paginatedApproved.items.length > 0 ? (
-                <div className="grid gap-4">
-                  {paginatedApproved.items.map(request => renderRequestCard(request))}
-                </div>
+                <>
+                  <div className="grid gap-4">
+                    {paginatedApproved.items.map(request => renderRequestCard(request))}
+                  </div>
+                  {renderPaginationBar(approvedPage, setApprovedPage, paginatedApproved.totalPages, filteredApproved.length)}
+                </>
               ) : (
                 renderEmptyState((approvedSearchQuery || approvedPriorityFilter !== "all" || approvedDateFilter)
                   ? "Nenhuma solicitação encontrada com os filtros aplicados"
@@ -1403,9 +1409,12 @@ export default function DemandRequests() {
               {returnedLoading ? (
                 <div className="text-center py-12 text-muted-foreground">Carregando...</div>
               ) : paginatedReturned.items.length > 0 ? (
-                <div className="grid gap-4">
-                  {paginatedReturned.items.map(request => renderRequestCard(request, true))}
-                </div>
+                <>
+                  <div className="grid gap-4">
+                    {paginatedReturned.items.map(request => renderRequestCard(request, true))}
+                  </div>
+                  {renderPaginationBar(returnedPage, setReturnedPage, paginatedReturned.totalPages, filteredReturned.length)}
+                </>
               ) : (
                 renderEmptyState((returnedSearchQuery || returnedPriorityFilter !== "all" || returnedDateFilter)
                   ? "Nenhuma solicitação encontrada com os filtros aplicados"
