@@ -59,6 +59,7 @@ interface Demand {
   created_at?: string;
   updated_at?: string;
   status_changed_at?: string | null;
+  status_changed_by?: string | null;
   time_in_progress_seconds?: number | null;
   last_started_at?: string | null;
   team_id?: string;
@@ -68,6 +69,7 @@ interface Demand {
   demand_statuses?: { name: string; color: string } | null;
   profiles?: { full_name: string; avatar_url?: string | null } | null;
   assigned_profile?: { full_name: string; avatar_url?: string | null } | null;
+  status_changed_by_profile?: { full_name: string; avatar_url?: string | null } | null;
   teams?: { name: string } | null;
   boards?: { id: string; name: string } | null;
   services?: { id: string; name: string } | null;
@@ -389,6 +391,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       {
         id: demandId,
         status_id: statusId,
+        status_changed_by: user?.id || null,
       },
       {
         onSuccess: async () => {
