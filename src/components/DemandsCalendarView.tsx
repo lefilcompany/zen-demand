@@ -113,7 +113,7 @@ export function DemandsCalendarView({
     const grouped: Record<string, Demand[]> = {};
     demands.forEach((demand) => {
       if (demand.due_date) {
-        const dateKey = format(new Date(demand.due_date), "yyyy-MM-dd");
+        const dateKey = demand.due_date.substring(0, 10);
         if (!grouped[dateKey]) grouped[dateKey] = [];
         grouped[dateKey].push(demand);
       }
