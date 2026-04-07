@@ -147,7 +147,8 @@ export default function DemandRequests() {
   // Pagination states
   const [approvedPage, setApprovedPage] = useState(1);
   const [returnedPage, setReturnedPage] = useState(1);
-  const ITEMS_PER_PAGE = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const rowsPerPageOptions = [10, 25, 50, 100];
 
   // Update default tab when role changes
   useEffect(() => {
