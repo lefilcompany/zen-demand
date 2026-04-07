@@ -251,7 +251,7 @@ export function RecentActivities() {
   }
 
   return (
-    <Card>
+    <Card className="flex flex-col h-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <Activity className="h-5 w-5 text-primary" />
@@ -261,13 +261,13 @@ export function RecentActivities() {
           Atualizações de {currentBoard?.name || "quadro selecionado"}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 min-h-0">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         ) : sortedActivities.length > 0 ? (
-          <ScrollArea className="h-[280px] pr-4">
+          <ScrollArea className="h-full pr-4">
             <div className="space-y-3">
               {sortedActivities.map((activity) => {
                 const config = getActivityConfig(activity.type);
