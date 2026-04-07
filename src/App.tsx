@@ -88,9 +88,9 @@ function CreateDemandRoute() {
 }
 
 const queryClient = new QueryClient();
-const App = () => <HelmetProvider>
-  <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
     <QueryClientProvider client={queryClient}>
+      <HelmetProvider>
       <TooltipProvider>
         <BrowserRouter>
           <div className="flex flex-col h-[100dvh]">
@@ -189,7 +189,7 @@ const App = () => <HelmetProvider>
           </div>
         </BrowserRouter>
       </TooltipProvider>
+      </HelmetProvider>
     </QueryClientProvider>
-  </ThemeProvider>
-  </HelmetProvider>;
+  </ThemeProvider>;
 export default App;
