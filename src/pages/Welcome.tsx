@@ -82,6 +82,8 @@ export default function Welcome() {
   }
 
   return (
+    <>
+    <SEOHead title="Bem-vindo" description="Bem-vindo ao SoMA - Configure sua equipe e comece a gerenciar demandas." path="/welcome" />
     <div className="flex flex-col lg:flex-row min-h-screen">
       {/* Mobile/Tablet Header with Image */}
       <div 
