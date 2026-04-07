@@ -753,6 +753,22 @@ export default function DemandDetail() {
             </div>
           </div>
 
+            {/* Status changed by */}
+            {(demand as any).status_changed_by_profile && (
+              <div className="flex items-center gap-2 text-sm">
+                <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-muted-foreground">Último status por:</span>
+                <div className="flex items-center gap-1.5">
+                  <Avatar className="h-5 w-5 border border-border">
+                    <AvatarImage src={(demand as any).status_changed_by_profile.avatar_url || undefined} alt={(demand as any).status_changed_by_profile.full_name} />
+                    <AvatarFallback className="text-[8px] bg-muted text-muted-foreground">
+                      {(demand as any).status_changed_by_profile.full_name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium">{(demand as any).status_changed_by_profile.full_name}</span>
+                </div>
+              </div>
+            )}
 
 
           {/* Attachments section - result/deliverables - only agents/admins can upload */}
