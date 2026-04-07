@@ -135,6 +135,24 @@ export default function DemandRequests() {
     }
   }, [highlightId, pendingRequests, approvedRequests, returnedRequests, myRequests]);
 
+  // All board requests combined (for requester "Todas do Quadro" tab)
+  const allBoardRequests = useMemo(() => {
+    return [
+      ...(pendingRequests || []),
+      ...(approvedRequests || []),
+      ...(returnedRequests || []),
+    ];
+  }, [pendingRequests, approvedRequests, returnedRequests]);
+
+  const [allBoardPage, setAllBoardPage] = useState(1);
+
+  const paginatedAllBoard = useMemo(() => {
+    const totalPages = Math.ceil(allBoardRequests.length / ITEMS_PER_PAGE);
+    const startIndex = (allBoardPage - 1) * ITEMS_PER_PAGE;
+    const items = allBoardRequests.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    return { items, totalPages };
+  }, [allBoardRequests, allBoardPage]);
+
   // Paginated data
   const paginatedApproved = useMemo(() => {
     if (!approvedRequests) return { items: [], totalPages: 0 };
@@ -603,8 +621,8 @@ export default function DemandRequests() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className={cn(
           "w-full grid mb-4",
-          isRequester && canApproveOrReturn ? "grid-cols-4" :
-          isRequester ? "grid-cols-1" :
+          isRequester && canApproveOrReturn ? "grid-cols-5" :
+          isRequester ? "grid-cols-2" :
           canApproveOrReturn ? "grid-cols-3" : "grid-cols-1"
         )}>
           {isRequester && (
@@ -613,6 +631,15 @@ export default function DemandRequests() {
               <span className="hidden sm:inline">Minhas</span>
               {myRequests && myRequests.length > 0 && (
                 <Badge variant="secondary" className="ml-1 h-5 px-1.5">{myRequests.length}</Badge>
+              )}
+            </TabsTrigger>
+          )}
+          {isRequester && (
+            <TabsTrigger value="all-board" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Todas do Quadro</span>
+              {allBoardRequests.length > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5">{allBoardRequests.length}</Badge>
               )}
             </TabsTrigger>
           )}
@@ -739,6 +766,62 @@ export default function DemandRequests() {
                 </Card>
               )}
             </div>
+          </TabsContent>
+        )}
+
+        {/* All Board Requests Tab (Requester) */}
+        {isRequester && (
+          <TabsContent value="all-board">
+            {(pendingLoading || approvedLoading || returnedLoading) ? (
+              <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+            ) : allBoardRequests.length > 0 ? (
+              <div className="space-y-4">
+                {paginatedAllBoard.totalPages > 1 && renderPagination(allBoardPage, setAllBoardPage, paginatedAllBoard.totalPages)}
+                <div className="grid gap-4">
+                  {paginatedAllBoard.items.map((request: any) => (
+                    <Card
+                      key={request.id}
+                      className="cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => setViewing(request)}
+                    >
+                      <CardHeader className="pb-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="text-base truncate">{request.title}</CardTitle>
+                            <CardDescription className="flex items-center gap-2 mt-1 flex-wrap">
+                              <span className="flex items-center gap-1">
+                                <Users className="h-3.5 w-3.5" />
+                                {request.profiles?.full_name || "Usuário"}
+                              </span>
+                              <span>•</span>
+                              <span>{format(new Date(request.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
+                            </CardDescription>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Badge variant="outline" className={priorityColors[request.priority || "média"]}>
+                              {request.priority || "média"}
+                            </Badge>
+                            <Badge variant={request.status === "pending" ? "secondary" : request.status === "approved" ? "default" : "destructive"}>
+                              {request.status === "pending" ? "Pendente" : request.status === "approved" ? "Aprovada" : "Devolvida"}
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      {request.service?.name && (
+                        <CardContent className="pt-0 pb-3">
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <ClipboardList className="h-3 w-3" />
+                            {request.service.name}
+                          </span>
+                        </CardContent>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              renderEmptyState("Não há solicitações neste quadro")
+            )}
           </TabsContent>
         )}
 
