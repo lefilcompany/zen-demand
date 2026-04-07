@@ -80,7 +80,8 @@ export default function DemandDetail() {
           label: "Calendário",
           icon: CalendarDays,
           path: "/demands",
-          viewMode: "calendar"
+          viewMode: "calendar",
+          calendarMonth
         };
       case "grid":
         return {
