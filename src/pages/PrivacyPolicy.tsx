@@ -1,5 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import { SEOHead } from "@/components/SEOHead";
 import logoSoma from "@/assets/logo-soma.png";
 
 export default function PrivacyPolicy() {

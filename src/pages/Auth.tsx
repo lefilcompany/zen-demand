@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { SEOHead } from "@/components/SEOHead";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
