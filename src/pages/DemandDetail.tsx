@@ -66,6 +66,7 @@ export default function DemandDetail() {
     icon: LucideIcon;
     path: string;
     viewMode?: string;
+    calendarMonth?: string;
   } => {
     if (cameFromKanban) {
       return {
