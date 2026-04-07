@@ -52,7 +52,8 @@ export default function Demands() {
     navigate(`/demands/${demandId}`, {
       state: {
         from: "demands",
-        viewMode: viewMode || "table"
+        viewMode: viewMode || "table",
+        calendarMonth: viewMode === "calendar" ? calendarMonth.toISOString() : undefined
       }
     });
   };
