@@ -611,10 +611,6 @@ export default function DemandRequests() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{pageTitle}</h1>
-          <p className="text-sm md:text-base text-muted-foreground flex items-center gap-2">
-            <Layout className="h-4 w-4 shrink-0" />
-            <span className="truncate">Quadro: <span className="font-medium">{currentBoard?.name || "Selecione um quadro"}</span></span>
-          </p>
         </div>
       </div>
 
