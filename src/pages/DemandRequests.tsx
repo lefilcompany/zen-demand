@@ -603,8 +603,8 @@ export default function DemandRequests() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className={cn(
           "w-full grid mb-4",
-          isRequester && canApproveOrReturn ? "grid-cols-4" :
-          isRequester ? "grid-cols-1" :
+          isRequester && canApproveOrReturn ? "grid-cols-5" :
+          isRequester ? "grid-cols-2" :
           canApproveOrReturn ? "grid-cols-3" : "grid-cols-1"
         )}>
           {isRequester && (
@@ -613,6 +613,15 @@ export default function DemandRequests() {
               <span className="hidden sm:inline">Minhas</span>
               {myRequests && myRequests.length > 0 && (
                 <Badge variant="secondary" className="ml-1 h-5 px-1.5">{myRequests.length}</Badge>
+              )}
+            </TabsTrigger>
+          )}
+          {isRequester && (
+            <TabsTrigger value="all-board" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Todas do Quadro</span>
+              {allBoardRequests.length > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5">{allBoardRequests.length}</Badge>
               )}
             </TabsTrigger>
           )}
