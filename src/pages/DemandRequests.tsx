@@ -599,7 +599,7 @@ export default function DemandRequests() {
     { value: "rejected", label: "Rejeitadas", icon: XCircle },
   ];
 
-  const pageTitle = isRequester && !canApproveOrReturn ? "Minhas Solicitações" : "Solicitações de Demanda";
+  const pageTitle = "Solicitações de Demanda";
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
