@@ -679,6 +679,161 @@ export default function DemandRequests() {
     );
   };
 
+  const priorityOptions = [
+    { value: "all", label: "Todas" },
+    { value: "baixa", label: "Baixa" },
+    { value: "média", label: "Média" },
+    { value: "alta", label: "Alta" },
+  ];
+
+  const renderAdminToolbar = ({
+    isSearchOpen, setIsSearchOpen, query, setQuery, inputRef,
+    isFiltersOpen, setIsFiltersOpen,
+    priorityFilter, setPriorityFilter,
+    dateFilter, setDateFilter,
+    dateLabel,
+    page, setPage, totalPages,
+    totalItems,
+  }: {
+    isSearchOpen: boolean; setIsSearchOpen: (v: boolean) => void;
+    query: string; setQuery: (v: string) => void;
+    inputRef: React.RefObject<HTMLInputElement>;
+    isFiltersOpen: boolean; setIsFiltersOpen: (v: boolean) => void;
+    priorityFilter: string; setPriorityFilter: (v: string) => void;
+    dateFilter: Date | undefined; setDateFilter: (v: Date | undefined) => void;
+    dateLabel: string;
+    page: number; setPage: (fn: (p: number) => number) => void; totalPages: number;
+    totalItems: number;
+  }) => {
+    const activeCount = (priorityFilter !== "all" ? 1 : 0) + (dateFilter ? 1 : 0);
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          {/* Search */}
+          <div className={cn(
+            "group flex items-center transition-all duration-300 ease-in-out rounded-xl border overflow-hidden",
+            isSearchOpen
+              ? "w-72 sm:w-80 border-primary/40 bg-background shadow-sm ring-1 ring-primary/10"
+              : "w-9 border-border bg-muted/40 hover:bg-background hover:border-[#F28705]/40 hover:shadow-sm"
+          )}>
+            <button
+              className={cn(
+                "h-9 w-9 shrink-0 flex items-center justify-center transition-colors rounded-l-xl",
+                isSearchOpen ? "text-primary" : "text-muted-foreground group-hover:text-[#F28705]"
+              )}
+              onClick={() => {
+                if (isSearchOpen && query) { setQuery(""); }
+                else { setIsSearchOpen(!isSearchOpen); if (isSearchOpen) setQuery(""); }
+              }}
+            >
+              {isSearchOpen && query ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+            </button>
+            {isSearchOpen && (
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Buscar por título, solicitante, prioridade..."
+                className="h-9 w-full bg-transparent text-sm outline-none pr-3 text-foreground placeholder:text-muted-foreground/60"
+                onKeyDown={(e) => { if (e.key === "Escape") { setQuery(""); setIsSearchOpen(false); } }}
+              />
+            )}
+          </div>
+
+          {/* Filter toggle */}
+          <Button
+            variant={isFiltersOpen ? "secondary" : "outline"}
+            size="sm"
+            className={cn(
+              "gap-2 rounded-lg transition-all",
+              !isFiltersOpen && "hover:bg-white hover:text-[#F28705] hover:border-[#F28705]",
+              activeCount > 0 && "border-primary text-primary bg-primary/5"
+            )}
+            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+          >
+            <Filter className="h-4 w-4" />
+            Filtros
+            {activeCount > 0 && (
+              <Badge className="h-5 min-w-5 px-1.5 text-xs bg-primary text-primary-foreground">{activeCount}</Badge>
+            )}
+            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", isFiltersOpen && "rotate-180")} />
+          </Button>
+
+          {/* Active pills */}
+          {priorityFilter !== "all" && (
+            <Badge variant="secondary" className="gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium">
+              Prioridade: {priorityFilter}
+              <button onClick={() => setPriorityFilter("all")} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
+            </Badge>
+          )}
+          {dateFilter && (
+            <Badge variant="secondary" className="gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium">
+              {format(dateFilter, "dd/MM/yyyy", { locale: ptBR })}
+              <button onClick={() => setDateFilter(undefined)} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
+            </Badge>
+          )}
+
+          {(activeCount > 0 || query) && (
+            <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-destructive gap-1"
+              onClick={() => { setPriorityFilter("all"); setDateFilter(undefined); setQuery(""); setIsSearchOpen(false); }}>
+              Limpar tudo
+            </Button>
+          )}
+
+          {/* Pagination right */}
+          <div className="ml-auto flex items-center gap-2">
+            {totalItems > 0 && <span className="text-xs text-muted-foreground">{totalItems} resultado{totalItems !== 1 ? "s" : ""}</span>}
+            {totalPages > 1 && renderPagination(page, setPage, totalPages)}
+          </div>
+        </div>
+
+        {/* Filters panel */}
+        {isFiltersOpen && (
+          <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-4 animate-fade-in">
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-2">Prioridade</p>
+              <div className="flex flex-wrap gap-2">
+                {priorityOptions.map((opt) => {
+                  const isActive = priorityFilter === opt.value;
+                  return (
+                    <button key={opt.value} onClick={() => setPriorityFilter(opt.value)}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border",
+                        isActive
+                          ? "bg-primary/10 border-primary text-primary shadow-sm"
+                          : "bg-background border-border text-muted-foreground hover:bg-white hover:text-[#F28705] hover:border-[#F28705]"
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-2">{dateLabel}</p>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn(
+                    "gap-2 rounded-lg hover:bg-white hover:text-[#F28705] hover:border-[#F28705]",
+                    dateFilter && "border-primary bg-primary/5 text-primary"
+                  )}>
+                    <CalendarIcon className="h-4 w-4" />
+                    {dateFilter ? format(dateFilter, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={dateFilter} onSelect={setDateFilter} initialFocus />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const myStatusTabs = [
     { value: "all", label: "Todas", icon: null },
     { value: "pending", label: "Pendentes", icon: Clock },
