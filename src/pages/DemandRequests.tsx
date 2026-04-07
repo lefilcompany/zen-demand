@@ -831,7 +831,7 @@ export default function DemandRequests() {
                           variant="outline"
                           size="sm"
                           className={cn(
-                            "gap-2 rounded-lg",
+                            "gap-2 rounded-lg hover:bg-white hover:text-[#F28705] hover:border-[#F28705]",
                             mySelectedDate && "border-primary bg-primary/5 text-primary"
                           )}
                         >
