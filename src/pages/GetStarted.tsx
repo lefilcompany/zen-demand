@@ -254,6 +254,8 @@ export default function GetStarted() {
   };
 
   return (
+    <>
+    <SEOHead title="Começar" description="Crie sua conta e comece a gerenciar demandas com o SoMA - Kanban, equipes e produtividade." path="/get-started" />
     <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-background">
       <GetStartedHero />
       <div className="flex-1 lg:w-3/5 xl:w-[55%] flex flex-col min-h-0">
