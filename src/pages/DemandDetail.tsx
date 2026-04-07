@@ -54,9 +54,11 @@ export default function DemandDetail() {
   const fromState = location.state as {
     from?: string;
     viewMode?: string;
+    calendarMonth?: string;
   } | null;
   const cameFromKanban = fromState?.from === "kanban" || document.referrer.includes("/kanban");
   const demandsViewMode = fromState?.viewMode || "table";
+  const calendarMonth = fromState?.calendarMonth;
 
   // Determine origin info for breadcrumb and back navigation
   const getOriginInfo = (): {
@@ -64,6 +66,7 @@ export default function DemandDetail() {
     icon: LucideIcon;
     path: string;
     viewMode?: string;
+    calendarMonth?: string;
   } => {
     if (cameFromKanban) {
       return {
@@ -78,7 +81,8 @@ export default function DemandDetail() {
           label: "Calendário",
           icon: CalendarDays,
           path: "/demands",
-          viewMode: "calendar"
+          viewMode: "calendar",
+          calendarMonth
         };
       case "grid":
         return {
@@ -385,9 +389,10 @@ export default function DemandDetail() {
       onSuccess: () => {
         toast.success("Demanda arquivada com sucesso!");
         navigate(originInfo.path, {
-          state: originInfo.viewMode ? {
-            viewMode: originInfo.viewMode
-          } : undefined
+          state: {
+            viewMode: originInfo.viewMode,
+            ...(originInfo.calendarMonth && { calendarMonth: originInfo.calendarMonth })
+          }
         });
       },
       onError: (error: any) => {
@@ -431,9 +436,10 @@ export default function DemandDetail() {
         <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
         <p className="text-muted-foreground">Demanda não encontrada</p>
         <Button onClick={() => navigate(originInfo.path, {
-        state: originInfo.viewMode ? {
-          viewMode: originInfo.viewMode
-        } : undefined
+        state: {
+          viewMode: originInfo.viewMode,
+          ...(originInfo.calendarMonth && { calendarMonth: originInfo.calendarMonth })
+        }
       })} className="mt-4">
           Voltar para {originInfo.label}
         </Button>
@@ -452,9 +458,10 @@ export default function DemandDetail() {
           label: originInfo.label,
           href: originInfo.path,
           icon: originInfo.icon,
-          state: originInfo.viewMode ? {
-            viewMode: originInfo.viewMode
-          } : undefined
+          state: {
+            viewMode: originInfo.viewMode,
+            ...(originInfo.calendarMonth && { calendarMonth: originInfo.calendarMonth })
+          }
         }, {
           label: demand?.title || "Carregando...",
           isCurrent: true

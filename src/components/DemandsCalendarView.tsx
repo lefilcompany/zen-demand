@@ -71,6 +71,8 @@ interface DemandsCalendarViewProps {
   onDayClick: (date: Date) => void;
   isRequester?: boolean;
   onDemandDateChange?: (demandId: string, newDate: Date) => Promise<void>;
+  initialDate?: Date;
+  onDateChange?: (date: Date) => void;
 }
 
 const WEEKDAYS = ["D", "S", "T", "Q", "Q", "S", "S"];
@@ -99,9 +101,15 @@ export function DemandsCalendarView({
   onDayClick,
   isRequester = false,
   onDemandDateChange,
+  initialDate,
+  onDateChange,
 }: DemandsCalendarViewProps) {
   const isMobile = useIsMobile();
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDateRaw] = useState(initialDate || new Date());
+  const setCurrentDate = useCallback((date: Date) => {
+    setCurrentDateRaw(date);
+    onDateChange?.(date);
+  }, [onDateChange]);
   const [viewMode, setViewMode] = useState<CalendarViewMode>("month");
   const [selectedDaySheet, setSelectedDaySheet] = useState<SelectedDaySheet | null>(null);
   const [dragOverDate, setDragOverDate] = useState<string | null>(null);

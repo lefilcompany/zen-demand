@@ -52,7 +52,8 @@ export default function Demands() {
     navigate(`/demands/${demandId}`, {
       state: {
         from: "demands",
-        viewMode: viewMode || "table"
+        viewMode: viewMode || "table",
+        calendarMonth: viewMode === "calendar" ? calendarMonth.toISOString() : undefined
       }
     });
   };
@@ -75,6 +76,12 @@ export default function Demands() {
       viewMode?: ViewMode;
     })?.viewMode;
     return stateViewMode || "table";
+  });
+
+  // Track calendar month for persistence across navigation
+  const [calendarMonth, setCalendarMonth] = useState<Date>(() => {
+    const stateMonth = (location.state as { calendarMonth?: string })?.calendarMonth;
+    return stateMonth ? new Date(stateMonth) : new Date();
   });
   const [filters, setFilters] = useState<DemandFiltersState>({
     status: null,
@@ -268,7 +275,7 @@ export default function Demands() {
       return <DemandsCalendarView demands={demandList} onDemandClick={(demandId) => {
         const demand = demandList.find((d: any) => d.id === demandId);
         handleDemandClick(demandId, demand?.board_id, "calendar");
-      }} onDayClick={handleDayClick} isRequester={isReadOnly} onDemandDateChange={handleDemandDateChange} />;
+      }} onDayClick={handleDayClick} isRequester={isReadOnly} onDemandDateChange={handleDemandDateChange} initialDate={calendarMonth} onDateChange={setCalendarMonth} />;
     }
     if (effectiveViewMode === "table") {
       return <DataTable columns={demandColumns} data={demandList as unknown as DemandTableRow[]} onRowClick={row => handleDemandClick(row.id, (row as any).board_id, "table")} defaultSorting={[{
