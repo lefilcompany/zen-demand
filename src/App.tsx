@@ -1,6 +1,7 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/lib/auth";
 import { TeamProvider } from "@/contexts/TeamContext";
@@ -87,7 +88,8 @@ function CreateDemandRoute() {
 }
 
 const queryClient = new QueryClient();
-const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+const App = () => <HelmetProvider>
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
@@ -188,5 +190,6 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
-  </ThemeProvider>;
+  </ThemeProvider>
+  </HelmetProvider>;
 export default App;
