@@ -122,27 +122,14 @@ export default function DemandRequests() {
   const [myStatusFilter, setMyStatusFilter] = useState<string>("all");
   const [mySelectedDate, setMySelectedDate] = useState<Date | undefined>();
 
-  // Admin tab filters
-  const [pendingPriorityFilter, setPendingPriorityFilter] = useState<string>("all");
-  const [pendingDateFilter, setPendingDateFilter] = useState<Date | undefined>();
-  const [pendingFiltersOpen, setPendingFiltersOpen] = useState(false);
-  const [pendingSearchOpen, setPendingSearchOpen] = useState(false);
-  const [pendingSearchQuery, setPendingSearchQuery] = useState("");
-  const pendingSearchRef = useRef<HTMLInputElement>(null);
-
-  const [approvedPriorityFilter, setApprovedPriorityFilter] = useState<string>("all");
-  const [approvedDateFilter, setApprovedDateFilter] = useState<Date | undefined>();
-  const [approvedFiltersOpen, setApprovedFiltersOpen] = useState(false);
-  const [approvedSearchOpen, setApprovedSearchOpen] = useState(false);
-  const [approvedSearchQuery, setApprovedSearchQuery] = useState("");
-  const approvedSearchRef = useRef<HTMLInputElement>(null);
-
-  const [returnedPriorityFilter, setReturnedPriorityFilter] = useState<string>("all");
-  const [returnedDateFilter, setReturnedDateFilter] = useState<Date | undefined>();
-  const [returnedFiltersOpen, setReturnedFiltersOpen] = useState(false);
-  const [returnedSearchOpen, setReturnedSearchOpen] = useState(false);
-  const [returnedSearchQuery, setReturnedSearchQuery] = useState("");
-  const returnedSearchRef = useRef<HTMLInputElement>(null);
+  // Unified admin filters (single view, no tabs)
+  const [adminStatusFilter, setAdminStatusFilter] = useState<string>("all");
+  const [adminPriorityFilter, setAdminPriorityFilter] = useState<string>("all");
+  const [adminDateFilter, setAdminDateFilter] = useState<Date | undefined>();
+  const [adminFiltersOpen, setAdminFiltersOpen] = useState(false);
+  const [adminSearchOpen, setAdminSearchOpen] = useState(false);
+  const [adminSearchQuery, setAdminSearchQuery] = useState("");
+  const adminSearchRef = useRef<HTMLInputElement>(null);
 
   // Pagination states
   const [approvedPage, setApprovedPage] = useState(1);
