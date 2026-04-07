@@ -74,7 +74,7 @@ export function AppSidebar() {
     {
       title: "Solicitações de Demanda",
       url: "/demand-requests",
-      icon: FileText,
+      icon: Send,
       showDemandRequestBadge: true
     },
     ...((isBoardAdminOrModerator) ? [{
