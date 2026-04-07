@@ -297,7 +297,8 @@ export default function DemandDetail() {
       await new Promise<void>((resolve, reject) => {
         updateDemand.mutate({
           id,
-          status_id: adjustmentStatusId
+          status_id: adjustmentStatusId,
+          status_changed_by: user?.id || null
         }, {
           onSuccess: () => resolve(),
           onError: error => reject(error)
