@@ -389,9 +389,10 @@ export default function DemandDetail() {
       onSuccess: () => {
         toast.success("Demanda arquivada com sucesso!");
         navigate(originInfo.path, {
-          state: originInfo.viewMode ? {
-            viewMode: originInfo.viewMode
-          } : undefined
+          state: {
+            viewMode: originInfo.viewMode,
+            ...(originInfo.calendarMonth && { calendarMonth: originInfo.calendarMonth })
+          }
         });
       },
       onError: (error: any) => {
