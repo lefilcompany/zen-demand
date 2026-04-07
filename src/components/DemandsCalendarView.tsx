@@ -101,9 +101,11 @@ export function DemandsCalendarView({
   onDayClick,
   isRequester = false,
   onDemandDateChange,
+  initialDate,
+  onDateChange,
 }: DemandsCalendarViewProps) {
   const isMobile = useIsMobile();
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(initialDate || new Date());
   const [viewMode, setViewMode] = useState<CalendarViewMode>("month");
   const [selectedDaySheet, setSelectedDaySheet] = useState<SelectedDaySheet | null>(null);
   const [dragOverDate, setDragOverDate] = useState<string | null>(null);
