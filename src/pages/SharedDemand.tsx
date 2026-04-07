@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,29 +16,57 @@ import logoSoma from "@/assets/logo-soma.png";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { TeamContext } from "@/contexts/TeamContext";
 import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 
 export default function SharedDemand() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const { session } = useAuth();
-  const { boards, setSelectedBoardId } = useSelectedBoardSafe();
+  const teamContext = useContext(TeamContext);
+  const { setSelectedBoardId } = useSelectedBoardSafe();
   const redirectedRef = useRef(false);
+  const [membershipChecked, setMembershipChecked] = useState(false);
   const { data: demand, isLoading, error } = useSharedDemand(token || null);
   const { data: interactions } = useSharedDemandInteractions(token || null, demand?.id || null);
   const { data: attachments } = useSharedDemandAttachments(token || null, demand?.id || null);
 
-  // Redirect authenticated board members to internal view
+  // Direct membership check - independent of selected team context
   useEffect(() => {
-    if (redirectedRef.current || !demand?.id || !demand?.board_id || !session?.user || !boards) return;
-    
-    const isBoardMember = boards.some((b: any) => b.id === demand.board_id);
-    if (isBoardMember) {
-      redirectedRef.current = true;
-      setSelectedBoardId(demand.board_id);
-      navigate(`/demands/${demand.id}`, { replace: true });
+    if (redirectedRef.current || !demand?.id || !demand?.board_id || !session?.user) {
+      if (!session?.user && demand) {
+        setMembershipChecked(true);
+      }
+      return;
     }
-  }, [demand, session, boards, setSelectedBoardId, navigate]);
+
+    const checkMembership = async () => {
+      try {
+        const { data } = await supabase
+          .from("board_members")
+          .select("id")
+          .eq("board_id", demand.board_id)
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+
+        if (data) {
+          redirectedRef.current = true;
+          // Sync team and board context before navigating
+          if (teamContext?.setSelectedTeamId && demand.team_id) {
+            teamContext.setSelectedTeamId(demand.team_id);
+          }
+          setSelectedBoardId(demand.board_id);
+          navigate(`/demands/${demand.id}`, { replace: true });
+          return;
+        }
+      } catch (err) {
+        console.error("Error checking board membership:", err);
+      }
+      setMembershipChecked(true);
+    };
+
+    checkMembership();
+  }, [demand, session]);
 
   const comments = interactions?.filter((i: any) => i.interaction_type === "comment") || [];
 
@@ -48,7 +76,8 @@ export default function SharedDemand() {
     avatar_url: a.profile?.avatar_url,
   })) || [];
 
-  if (isLoading) {
+  // Show loading while checking membership for authenticated users
+  if (isLoading || (session?.user && demand && !membershipChecked && !redirectedRef.current)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex items-center gap-2 text-muted-foreground">
