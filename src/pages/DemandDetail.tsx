@@ -458,9 +458,10 @@ export default function DemandDetail() {
           label: originInfo.label,
           href: originInfo.path,
           icon: originInfo.icon,
-          state: originInfo.viewMode ? {
-            viewMode: originInfo.viewMode
-          } : undefined
+          state: {
+            viewMode: originInfo.viewMode,
+            ...(originInfo.calendarMonth && { calendarMonth: originInfo.calendarMonth })
+          }
         }, {
           label: demand?.title || "Carregando...",
           isCurrent: true
