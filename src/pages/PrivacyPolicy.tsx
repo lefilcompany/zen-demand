@@ -1,12 +1,12 @@
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
-
+import { SEOHead } from "@/components/SEOHead";
 import logoSoma from "@/assets/logo-soma.png";
 
 export default function PrivacyPolicy() {
   return (
     <>
-      
+      <SEOHead title="Política de Privacidade" description="Conheça a Política de Privacidade do SoMA e como protegemos seus dados." path="/privacy-policy" />
       <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-4">
