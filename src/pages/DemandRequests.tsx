@@ -1281,9 +1281,9 @@ export default function DemandRequests() {
 
             {(pendingLoading || approvedLoading || returnedLoading) ? (
               <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-            ) : allBoardRequests.length > 0 ? (
-              <div className="space-y-4 mt-4">
-                <div className="grid gap-4">
+            ) : paginatedAllBoard.items.length > 0 ? (
+              <>
+                <div className="grid gap-4 mt-4">
                   {paginatedAllBoard.items.map((request: any) => (
                     <Card
                       key={request.id}
@@ -1324,7 +1324,8 @@ export default function DemandRequests() {
                     </Card>
                   ))}
                 </div>
-              </div>
+                {renderPaginationBar(allBoardPage, setAllBoardPage, paginatedAllBoard.totalPages, paginatedAllBoard.totalItems)}
+              </>
             ) : (
               renderEmptyState("Não há solicitações neste quadro")
             )}
