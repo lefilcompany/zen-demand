@@ -769,6 +769,62 @@ export default function DemandRequests() {
           </TabsContent>
         )}
 
+        {/* All Board Requests Tab (Requester) */}
+        {isRequester && (
+          <TabsContent value="all-board">
+            {(pendingLoading || approvedLoading || returnedLoading) ? (
+              <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+            ) : allBoardRequests.length > 0 ? (
+              <div className="space-y-4">
+                {paginatedAllBoard.totalPages > 1 && renderPagination(allBoardPage, setAllBoardPage, paginatedAllBoard.totalPages)}
+                <div className="grid gap-4">
+                  {paginatedAllBoard.items.map((request: any) => (
+                    <Card
+                      key={request.id}
+                      className="cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => setViewing(request)}
+                    >
+                      <CardHeader className="pb-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="text-base truncate">{request.title}</CardTitle>
+                            <CardDescription className="flex items-center gap-2 mt-1 flex-wrap">
+                              <span className="flex items-center gap-1">
+                                <Users className="h-3.5 w-3.5" />
+                                {request.profiles?.full_name || "Usuário"}
+                              </span>
+                              <span>•</span>
+                              <span>{format(new Date(request.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
+                            </CardDescription>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Badge variant="outline" className={priorityColors[request.priority || "média"]}>
+                              {request.priority || "média"}
+                            </Badge>
+                            <Badge variant={request.status === "pending" ? "secondary" : request.status === "approved" ? "default" : "destructive"}>
+                              {request.status === "pending" ? "Pendente" : request.status === "approved" ? "Aprovada" : "Devolvida"}
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      {request.service?.name && (
+                        <CardContent className="pt-0 pb-3">
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <ClipboardList className="h-3 w-3" />
+                            {request.service.name}
+                          </span>
+                        </CardContent>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              renderEmptyState("Não há solicitações neste quadro")
+            )}
+          </TabsContent>
+        )}
+
         {/* Pending Tab */}
         <TabsContent value="pending">
           {pendingLoading ? (
