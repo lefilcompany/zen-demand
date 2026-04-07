@@ -887,8 +887,8 @@ export default function DemandRequests() {
         {isRequester && (
           <TabsContent value="all-board">
             <div className="space-y-4">
-              {/* Search & Filter bar */}
-              <div className="flex flex-wrap items-center gap-2">
+              {/* Search, Filter & Pagination bar */}
+              <div className="flex items-center gap-2">
                 {/* Search */}
                 <div className={cn(
                   "group flex items-center transition-all duration-300 ease-in-out rounded-xl border overflow-hidden",
@@ -930,6 +930,21 @@ export default function DemandRequests() {
                   )}
                 </div>
 
+                {/* Filter toggle */}
+                <Button
+                  variant={filtersOpen ? "secondary" : "outline"}
+                  size="sm"
+                  className={cn(
+                    "gap-2 rounded-lg transition-all",
+                    !filtersOpen && "hover:bg-white hover:text-[#F28705] hover:border-[#F28705]"
+                  )}
+                  onClick={() => setFiltersOpen(!filtersOpen)}
+                >
+                  <Filter className="h-4 w-4" />
+                  <span className="hidden sm:inline">Filtros</span>
+                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", filtersOpen && "rotate-180")} />
+                </Button>
+
                 {searchQuery && (
                   <Button
                     variant="ghost"
@@ -940,14 +955,62 @@ export default function DemandRequests() {
                     Limpar busca
                   </Button>
                 )}
+
+                {/* Pagination pushed to right */}
+                <div className="ml-auto">
+                  {paginatedAllBoard.totalPages > 1 && renderPagination(allBoardPage, setAllBoardPage, paginatedAllBoard.totalPages)}
+                </div>
               </div>
+
+              {/* Expanded filters panel */}
+              {filtersOpen && (
+                <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-4 animate-fade-in">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Status</p>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { value: "all", label: "Todas", icon: null },
+                        { value: "pending", label: "Pendentes", icon: Clock },
+                        { value: "approved", label: "Aprovadas", icon: CheckCircle },
+                        { value: "returned", label: "Devolvidas", icon: RotateCcw },
+                      ].map((tab) => {
+                        const TabIcon = tab.icon;
+                        const count = tab.value === "all"
+                          ? allBoardRequests.length
+                          : allBoardRequests.filter((r: any) => r.status === tab.value).length;
+                        const isActive = myStatusFilter === tab.value;
+                        return (
+                          <button
+                            key={tab.value}
+                            onClick={() => setMyStatusFilter(tab.value)}
+                            className={cn(
+                              "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border",
+                              isActive
+                                ? "bg-primary/10 border-primary text-primary shadow-sm"
+                                : "bg-background border-border text-muted-foreground hover:bg-white hover:text-[#F28705] hover:border-[#F28705]"
+                            )}
+                          >
+                            {TabIcon && <TabIcon className="h-3.5 w-3.5" />}
+                            {tab.label}
+                            <span className={cn(
+                              "text-xs rounded-full px-1.5 py-0.5 min-w-5 text-center",
+                              isActive ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+                            )}>
+                              {count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {(pendingLoading || approvedLoading || returnedLoading) ? (
               <div className="text-center py-12 text-muted-foreground">Carregando...</div>
             ) : allBoardRequests.length > 0 ? (
-              <div className="space-y-4">
-                {paginatedAllBoard.totalPages > 1 && renderPagination(allBoardPage, setAllBoardPage, paginatedAllBoard.totalPages)}
+              <div className="space-y-4 mt-4">
                 <div className="grid gap-4">
                   {paginatedAllBoard.items.map((request: any) => (
                     <Card
