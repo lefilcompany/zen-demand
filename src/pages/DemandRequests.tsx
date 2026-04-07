@@ -1135,10 +1135,8 @@ export default function DemandRequests() {
               )}
             </div>
           </TabsContent>
-        )}
 
-        {/* All Board Requests Tab (Requester) */}
-        {isRequester && (
+          {/* All Board Requests Tab (Requester) */}
           <TabsContent value="all-board">
             <div className="space-y-4">
               {/* Search, Filter & Pagination bar */}
@@ -1210,9 +1208,9 @@ export default function DemandRequests() {
                   </Button>
                 )}
 
-                {/* Pagination pushed to right */}
-                <div className="ml-auto">
-                  {paginatedAllBoard.totalPages > 1 && renderPagination(allBoardPage, setAllBoardPage, paginatedAllBoard.totalPages)}
+                {/* Results count right */}
+                <div className="ml-auto flex items-center gap-2">
+                  {paginatedAllBoard.totalItems > 0 && <span className="text-xs text-muted-foreground">{paginatedAllBoard.totalItems} resultado{paginatedAllBoard.totalItems !== 1 ? "s" : ""}</span>}
                 </div>
               </div>
 
@@ -1312,100 +1310,50 @@ export default function DemandRequests() {
               renderEmptyState("Não há solicitações neste quadro")
             )}
           </TabsContent>
-        )}
 
-        {/* Pending Tab */}
-        <TabsContent value="pending">
-          <div className="space-y-4">
-            {renderAdminToolbar({
-              isSearchOpen: pendingSearchOpen, setIsSearchOpen: setPendingSearchOpen,
-              query: pendingSearchQuery, setQuery: setPendingSearchQuery, inputRef: pendingSearchRef,
-              isFiltersOpen: pendingFiltersOpen, setIsFiltersOpen: setPendingFiltersOpen,
-              priorityFilter: pendingPriorityFilter, setPriorityFilter: setPendingPriorityFilter,
-              dateFilter: pendingDateFilter, setDateFilter: setPendingDateFilter,
-              dateLabel: "Data de criação",
-              page: pendingPage, setPage: setPendingPage, totalPages: paginatedPending.totalPages,
-              totalItems: filteredPending.length,
-            })}
-            {pendingLoading ? (
-              <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-            ) : paginatedPending.items.length > 0 ? (
-              <>
-                <div className="grid gap-4">
-                  {paginatedPending.items.map(request => renderRequestCard(request))}
-                </div>
-                {renderPaginationBar(pendingPage, setPendingPage, paginatedPending.totalPages, filteredPending.length)}
-              </>
-            ) : (
-              renderEmptyState((pendingSearchQuery || pendingPriorityFilter !== "all" || pendingDateFilter)
-                ? "Nenhuma solicitação encontrada com os filtros aplicados"
-                : "Não há solicitações pendentes para este quadro")
-            )}
-          </div>
-        </TabsContent>
-
-        {canApproveOrReturn && (
-          <TabsContent value="approved">
-            <div className="space-y-4">
-              {renderAdminToolbar({
-                isSearchOpen: approvedSearchOpen, setIsSearchOpen: setApprovedSearchOpen,
-                query: approvedSearchQuery, setQuery: setApprovedSearchQuery, inputRef: approvedSearchRef,
-                isFiltersOpen: approvedFiltersOpen, setIsFiltersOpen: setApprovedFiltersOpen,
-                priorityFilter: approvedPriorityFilter, setPriorityFilter: setApprovedPriorityFilter,
-                dateFilter: approvedDateFilter, setDateFilter: setApprovedDateFilter,
-                dateLabel: "Data de aprovação",
-                page: approvedPage, setPage: setApprovedPage, totalPages: paginatedApproved.totalPages,
-                totalItems: filteredApproved.length,
-              })}
-              {approvedLoading ? (
-                <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-              ) : paginatedApproved.items.length > 0 ? (
-                <>
-                  <div className="grid gap-4">
-                    {paginatedApproved.items.map(request => renderRequestCard(request))}
-                  </div>
-                  {renderPaginationBar(approvedPage, setApprovedPage, paginatedApproved.totalPages, filteredApproved.length)}
-                </>
-              ) : (
-                renderEmptyState((approvedSearchQuery || approvedPriorityFilter !== "all" || approvedDateFilter)
-                  ? "Nenhuma solicitação encontrada com os filtros aplicados"
-                  : "Não há solicitações aprovadas para este quadro")
-              )}
-            </div>
-          </TabsContent>
-        )}
-
-        {canApproveOrReturn && (
-          <TabsContent value="returned">
-            <div className="space-y-4">
-              {renderAdminToolbar({
-                isSearchOpen: returnedSearchOpen, setIsSearchOpen: setReturnedSearchOpen,
-                query: returnedSearchQuery, setQuery: setReturnedSearchQuery, inputRef: returnedSearchRef,
-                isFiltersOpen: returnedFiltersOpen, setIsFiltersOpen: setReturnedFiltersOpen,
-                priorityFilter: returnedPriorityFilter, setPriorityFilter: setReturnedPriorityFilter,
-                dateFilter: returnedDateFilter, setDateFilter: setReturnedDateFilter,
-                dateLabel: "Data de devolução",
-                page: returnedPage, setPage: setReturnedPage, totalPages: paginatedReturned.totalPages,
-                totalItems: filteredReturned.length,
-              })}
-              {returnedLoading ? (
-                <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-              ) : paginatedReturned.items.length > 0 ? (
-                <>
-                  <div className="grid gap-4">
-                    {paginatedReturned.items.map(request => renderRequestCard(request, true))}
-                  </div>
-                  {renderPaginationBar(returnedPage, setReturnedPage, paginatedReturned.totalPages, filteredReturned.length)}
-                </>
-              ) : (
-                renderEmptyState((returnedSearchQuery || returnedPriorityFilter !== "all" || returnedDateFilter)
-                  ? "Nenhuma solicitação encontrada com os filtros aplicados"
-                  : "Não há solicitações devolvidas para este quadro")
-              )}
-            </div>
-          </TabsContent>
-        )}
-      </Tabs>
+          {/* Admin view within requester tabs */}
+          {canApproveOrReturn && (
+            <TabsContent value="admin">
+              <div className="space-y-4">
+                {renderUnifiedAdminToolbar()}
+                {(pendingLoading || approvedLoading || returnedLoading) ? (
+                  <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+                ) : paginatedAdmin.items.length > 0 ? (
+                  <>
+                    <div className="grid gap-4">
+                      {paginatedAdmin.items.map(request => renderRequestCard(request, request.status === "returned"))}
+                    </div>
+                    {renderPaginationBar(adminPage, setAdminPage, paginatedAdmin.totalPages, paginatedAdmin.totalItems)}
+                  </>
+                ) : (
+                  renderEmptyState((adminSearchQuery || adminStatusFilter !== "all" || adminPriorityFilter !== "all" || adminDateFilter)
+                    ? "Nenhuma solicitação encontrada com os filtros aplicados"
+                    : "Não há solicitações neste quadro")
+                )}
+              </div>
+            </TabsContent>
+          )}
+        </Tabs>
+      ) : (
+        /* Non-requester unified view (admin/coordinator/agent) - no tabs */
+        <div className="space-y-4">
+          {renderUnifiedAdminToolbar()}
+          {(pendingLoading || approvedLoading || returnedLoading) ? (
+            <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+          ) : paginatedAdmin.items.length > 0 ? (
+            <>
+              <div className="grid gap-4">
+                {paginatedAdmin.items.map(request => renderRequestCard(request, request.status === "returned"))}
+              </div>
+              {renderPaginationBar(adminPage, setAdminPage, paginatedAdmin.totalPages, paginatedAdmin.totalItems)}
+            </>
+          ) : (
+            renderEmptyState((adminSearchQuery || adminStatusFilter !== "all" || adminPriorityFilter !== "all" || adminDateFilter)
+              ? "Nenhuma solicitação encontrada com os filtros aplicados"
+              : "Não há solicitações neste quadro")
+          )}
+        </div>
+      )}
 
       {/* View Details Dialog */}
       <Dialog open={!!viewing} onOpenChange={() => setViewing(null)}>
