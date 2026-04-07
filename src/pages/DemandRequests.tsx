@@ -102,7 +102,6 @@ export default function DemandRequests() {
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const matchesSearch = useCallback((request: any) => {
     if (!searchQuery.trim()) return true;
