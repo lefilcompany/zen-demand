@@ -23,7 +23,7 @@ const roleColors: Record<string, string> = {
   admin: "bg-red-500/10 text-red-500 border-red-500/20",
   moderator: "bg-blue-500/10 text-blue-500 border-blue-500/20",
   executor: "bg-green-500/10 text-green-500 border-green-500/20",
-  requester: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+  requester: "bg-purple-500/10 text-purple-500 border-purple-500/20",
 };
 
 export function BoardSelector() {
