@@ -886,12 +886,12 @@ export default function DemandRequests() {
         <TabsContent value="pending">
           {pendingLoading ? (
             <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-          ) : pendingRequests && pendingRequests.length > 0 ? (
+          ) : filteredPending.length > 0 ? (
             <div className="grid gap-4">
-              {pendingRequests.map(request => renderRequestCard(request))}
+              {filteredPending.map(request => renderRequestCard(request))}
             </div>
           ) : (
-            renderEmptyState("Não há solicitações pendentes para este quadro")
+            renderEmptyState(searchQuery ? "Nenhuma solicitação encontrada para essa busca" : "Não há solicitações pendentes para este quadro")
           )}
         </TabsContent>
 
