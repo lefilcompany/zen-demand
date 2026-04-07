@@ -275,7 +275,7 @@ export default function Demands() {
       return <DemandsCalendarView demands={demandList} onDemandClick={(demandId) => {
         const demand = demandList.find((d: any) => d.id === demandId);
         handleDemandClick(demandId, demand?.board_id, "calendar");
-      }} onDayClick={handleDayClick} isRequester={isReadOnly} onDemandDateChange={handleDemandDateChange} />;
+      }} onDayClick={handleDayClick} isRequester={isReadOnly} onDemandDateChange={handleDemandDateChange} initialDate={calendarMonth} onDateChange={setCalendarMonth} />;
     }
     if (effectiveViewMode === "table") {
       return <DataTable columns={demandColumns} data={demandList as unknown as DemandTableRow[]} onRowClick={row => handleDemandClick(row.id, (row as any).board_id, "table")} defaultSorting={[{
