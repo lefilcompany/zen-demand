@@ -191,9 +191,9 @@ export default function DemandRequests() {
   const [allBoardPage, setAllBoardPage] = useState(1);
 
   const paginatedAllBoard = useMemo(() => {
-    const totalPages = Math.ceil(allBoardRequests.length / ITEMS_PER_PAGE);
-    const startIndex = (allBoardPage - 1) * ITEMS_PER_PAGE;
-    const items = allBoardRequests.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(allBoardRequests.length / itemsPerPage);
+    const startIndex = (allBoardPage - 1) * itemsPerPage;
+    const items = allBoardRequests.slice(startIndex, startIndex + itemsPerPage);
     return { items, totalPages };
   }, [allBoardRequests, allBoardPage]);
 
@@ -238,23 +238,23 @@ export default function DemandRequests() {
   const [pendingPage, setPendingPage] = useState(1);
 
   const paginatedPending = useMemo(() => {
-    const totalPages = Math.ceil(filteredPending.length / ITEMS_PER_PAGE);
-    const startIndex = (pendingPage - 1) * ITEMS_PER_PAGE;
-    const items = filteredPending.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filteredPending.length / itemsPerPage);
+    const startIndex = (pendingPage - 1) * itemsPerPage;
+    const items = filteredPending.slice(startIndex, startIndex + itemsPerPage);
     return { items, totalPages };
   }, [filteredPending, pendingPage]);
 
   const paginatedApproved = useMemo(() => {
-    const totalPages = Math.ceil(filteredApproved.length / ITEMS_PER_PAGE);
-    const startIndex = (approvedPage - 1) * ITEMS_PER_PAGE;
-    const items = filteredApproved.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filteredApproved.length / itemsPerPage);
+    const startIndex = (approvedPage - 1) * itemsPerPage;
+    const items = filteredApproved.slice(startIndex, startIndex + itemsPerPage);
     return { items, totalPages };
   }, [filteredApproved, approvedPage]);
 
   const paginatedReturned = useMemo(() => {
-    const totalPages = Math.ceil(filteredReturned.length / ITEMS_PER_PAGE);
-    const startIndex = (returnedPage - 1) * ITEMS_PER_PAGE;
-    const items = filteredReturned.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filteredReturned.length / itemsPerPage);
+    const startIndex = (returnedPage - 1) * itemsPerPage;
+    const items = filteredReturned.slice(startIndex, startIndex + itemsPerPage);
     return { items, totalPages };
   }, [filteredReturned, returnedPage]);
 
