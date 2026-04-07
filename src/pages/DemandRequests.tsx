@@ -700,13 +700,16 @@ export default function DemandRequests() {
               <div className="flex flex-wrap items-center gap-2">
                 {/* Search */}
                 <div className={cn(
-                  "flex items-center transition-all duration-300 ease-in-out rounded-lg border border-border overflow-hidden bg-background",
-                  searchOpen ? "w-64" : "w-9"
+                  "group flex items-center transition-all duration-300 ease-in-out rounded-xl border overflow-hidden",
+                  searchOpen
+                    ? "w-72 sm:w-80 border-primary/40 bg-background shadow-sm ring-1 ring-primary/10"
+                    : "w-9 border-border bg-muted/40 hover:bg-background hover:border-[#F28705]/40 hover:shadow-sm"
                 )}>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 shrink-0"
+                  <button
+                    className={cn(
+                      "h-9 w-9 shrink-0 flex items-center justify-center transition-colors rounded-l-xl",
+                      searchOpen ? "text-primary" : "text-muted-foreground group-hover:text-[#F28705]"
+                    )}
                     onClick={() => {
                       if (searchOpen && searchQuery) {
                         setSearchQuery("");
@@ -717,15 +720,15 @@ export default function DemandRequests() {
                     }}
                   >
                     {searchOpen && searchQuery ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
-                  </Button>
+                  </button>
                   {searchOpen && (
                     <input
                       ref={searchInputRef}
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Buscar título, prioridade, serviço..."
-                      className="h-9 w-full bg-transparent text-sm outline-none pr-3 text-foreground placeholder:text-muted-foreground"
+                      placeholder="Buscar por título, prioridade ou serviço..."
+                      className="h-9 w-full bg-transparent text-sm outline-none pr-3 text-foreground placeholder:text-muted-foreground/60"
                       onKeyDown={(e) => {
                         if (e.key === "Escape") {
                           setSearchQuery("");
