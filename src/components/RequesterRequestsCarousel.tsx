@@ -5,7 +5,7 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { History, FileText } from "lucide-react";
+import { History, FileText, Tag, Layout, CalendarDays, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
@@ -27,11 +27,10 @@ export function RequesterRequestsCarousel() {
     queryFn: async () => {
       if (!user || !selectedTeamId) return [];
 
-      // Fetch last 10 requests
       const { data, error } = await supabase
         .from("demand_requests")
         .select(`
-          id, title, status, priority, created_at,
+          id, title, status, priority, created_at, responded_at,
           service:services(name),
           board:boards(name)
         `)
@@ -113,8 +112,8 @@ export function RequesterRequestsCarousel() {
               return (
                 <div
                   key={req.id}
-                  className="min-w-[240px] md:min-w-[280px] snap-start flex-shrink-0 rounded-xl border bg-card p-4 hover:shadow-md transition-shadow cursor-pointer space-y-3"
-                  onClick={() => navigate("/my-requests")}
+                  className="min-w-[240px] md:min-w-[280px] snap-start flex-shrink-0 rounded-xl border bg-card p-4 hover:shadow-md transition-shadow cursor-pointer space-y-2.5"
+                  onClick={() => navigate(`/demand-requests?highlight=${req.id}`)}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-medium text-sm leading-tight line-clamp-2 flex-1">
@@ -126,19 +125,22 @@ export function RequesterRequestsCarousel() {
                   </div>
 
                   {req.service?.name && (
-                    <p className="text-xs text-muted-foreground truncate">
-                      🏷️ {req.service.name}
+                    <p className="text-xs text-muted-foreground truncate flex items-center gap-1.5">
+                      <Tag className="h-3 w-3 shrink-0" />
+                      {req.service.name}
                     </p>
                   )}
 
                   {req.board?.name && (
-                    <p className="text-xs text-muted-foreground truncate">
-                      📋 {req.board.name}
+                    <p className="text-xs text-muted-foreground truncate flex items-center gap-1.5">
+                      <Layout className="h-3 w-3 shrink-0" />
+                      {req.board.name}
                     </p>
                   )}
 
                   {req.demandStatus && (
                     <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-muted-foreground">Status Atual:</span>
                       <span
                         className="h-2 w-2 rounded-full flex-shrink-0"
                         style={{ backgroundColor: req.demandStatus.color }}
@@ -149,9 +151,18 @@ export function RequesterRequestsCarousel() {
                     </div>
                   )}
 
-                  <p className="text-[10px] text-muted-foreground">
-                    {format(new Date(req.created_at), "dd MMM yyyy", { locale: ptBR })}
-                  </p>
+                  <div className="flex flex-col gap-1 pt-1 border-t border-border/50">
+                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                      <CalendarDays className="h-2.5 w-2.5 shrink-0" />
+                      Criada em {format(new Date(req.created_at), "dd MMM yyyy", { locale: ptBR })}
+                    </p>
+                    {req.status === "approved" && req.responded_at && (
+                      <p className="text-[10px] text-green-600 dark:text-green-400 flex items-center gap-1">
+                        <CheckCircle className="h-2.5 w-2.5 shrink-0" />
+                        Aprovada em {format(new Date(req.responded_at), "dd MMM yyyy", { locale: ptBR })}
+                      </p>
+                    )}
+                  </div>
                 </div>
               );
             })}

@@ -29,7 +29,7 @@ import CreateDemand from "./pages/CreateDemand";
 import CreateDemandRequest from "./pages/CreateDemandRequest";
 import CreateTeam from "./pages/CreateTeam";
 import JoinTeam from "./pages/JoinTeam";
-import MyDemandRequests from "./pages/MyDemandRequests";
+
 import DemandRequests from "./pages/DemandRequests";
 import DemandDetail from "./pages/DemandDetail";
 import SharedDemand from "./pages/SharedDemand";
@@ -149,7 +149,7 @@ const App = () => <ThemeProvider attribute="class" defaultTheme="light" enableSy
                           <Route path="/demands/create" element={<CreateDemandRoute />} />
                           <Route path="/demands/request" element={<CreateDemandRequest />} />
                           <Route path="/demands/:id" element={<DemandDetail />} />
-                          <Route path="/my-requests" element={<MyDemandRequests />} />
+                          
                           <Route path="/demand-requests" element={<DemandRequests />} />
                           <Route path="/store" element={<Store />} />
                           {/* Contract hidden for now */}

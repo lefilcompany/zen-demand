@@ -90,12 +90,6 @@ export function AppSidebar() {
       title: "Loja de Serviços",
       url: "/store",
       icon: ShoppingCart
-    },
-    {
-      title: "Minhas Solicitações",
-      url: "/my-requests",
-      icon: Send,
-      showReturnedBadge: true
     }
   ] : [];
 

@@ -152,7 +152,7 @@ export default function CreateDemandRequest() {
     toast.success("Solicitação enviada com sucesso!", {
       description: "Aguarde a aprovação de um administrador ou coordenador.",
     });
-    navigate("/my-requests");
+    navigate("/demand-requests");
   };
 
   // If request was created, show attachment step
@@ -210,7 +210,7 @@ export default function CreateDemandRequest() {
 
       <PageBreadcrumb
         items={[
-          { label: "Minhas Solicitações", href: "/my-requests", icon: ClipboardList },
+          { label: "Solicitações", href: "/demand-requests", icon: ClipboardList },
           { label: "Nova Solicitação", icon: Plus, isCurrent: true },
         ]}
       />
