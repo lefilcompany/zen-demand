@@ -93,7 +93,7 @@ export function RequesterRequestsCarousel() {
 
   return (
     <Card>
-      <CardHeader className="p-4 md:p-6 pb-3">
+      <CardHeader className="p-4 md:p-6 pb-1">
         <CardTitle className="text-base md:text-lg flex items-center gap-2">
           <History className="h-4 w-4 md:h-5 md:w-5 text-primary" />
           Últimas Solicitações
