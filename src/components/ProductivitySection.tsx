@@ -2,10 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Timer } from "lucide-react";
-import { ChartPeriodSelector, type ChartPeriodType } from "@/components/ChartPeriodSelector";
+import { ChartPeriodSelector, type ChartPeriodType, getChartPeriodRange } from "@/components/ChartPeriodSelector";
 import { useState, useMemo } from "react";
 import { differenceInHours } from "date-fns";
-import { useBoardTimeStats } from "@/hooks/useBoardTimeStats";
+import { useBoardTimeEntries } from "@/hooks/useBoardTimeEntries";
 
 interface Demand {
   created_at: string;
@@ -31,13 +31,20 @@ function ProgressBarWithMarker({ value, markerPercent }: { value: number; marker
   );
 }
 
+function filterByPeriod<T>(items: T[], period: ChartPeriodType, getDate: (item: T) => string): T[] {
+  const { start } = getChartPeriodRange(period);
+  if (!start) return items;
+  return items.filter(item => new Date(getDate(item)) >= start);
+}
+
 export function ProductivitySection({ demands, boardId }: ProductivitySectionProps) {
   const [periodLeft, setPeriodLeft] = useState<ChartPeriodType>("month");
   const [periodRight, setPeriodRight] = useState<ChartPeriodType>("month");
-  const { stats } = useBoardTimeStats(boardId);
+  const { data: allEntries } = useBoardTimeEntries(boardId);
 
   const { avgDays } = useMemo(() => {
-    const completedDemands = demands.filter(d => d.demand_statuses?.name === "Entregue");
+    const filtered = filterByPeriod(demands, periodLeft, d => d.created_at);
+    const completedDemands = filtered.filter(d => d.demand_statuses?.name === "Entregue");
     if (completedDemands.length === 0) return { avgDays: 0 };
 
     const totalHours = completedDemands.reduce((acc, d) => {
@@ -47,11 +54,24 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
     }, 0);
 
     return { avgDays: Math.round((totalHours / completedDemands.length / 24) * 10) / 10 };
-  }, [demands]);
+  }, [demands, periodLeft]);
+
+  const { totalActiveHours, avgActiveHoursPerUser } = useMemo(() => {
+    if (!allEntries || allEntries.length === 0) return { totalActiveHours: 0, avgActiveHoursPerUser: 0 };
+    const filtered = filterByPeriod(allEntries, periodRight, e => e.started_at);
+    
+    let totalSecs = 0;
+    const uniqueUsers = new Set<string>();
+    for (const entry of filtered) {
+      totalSecs += entry.duration_seconds || 0;
+      uniqueUsers.add(entry.user_id);
+    }
+    const hours = Math.round((totalSecs / 3600) * 10) / 10;
+    const avgPerUser = uniqueUsers.size > 0 ? Math.round((totalSecs / uniqueUsers.size / 3600) * 10) / 10 : 0;
+    return { totalActiveHours: hours, avgActiveHoursPerUser: avgPerUser };
+  }, [allEntries, periodRight]);
 
   const completionProgress = Math.min(100, (avgDays / 9) * 100);
-  const totalActiveHours = Math.round((stats.totalTimeSeconds / 3600) * 10) / 10;
-  const avgActiveHoursPerUser = Math.round((stats.avgTimePerUser / 3600) * 10) / 10;
   const activeProgress = Math.min(100, (totalActiveHours / 15) * 100);
 
   const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
