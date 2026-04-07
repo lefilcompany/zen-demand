@@ -44,7 +44,7 @@ const typeConfig = {
 
 export function DashboardAIInsights({ boardId, isRequester = false }: DashboardAIInsightsProps) {
   const navigate = useNavigate();
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const [expandedIndexes, setExpandedIndexes] = useState<Set<number>>(new Set());
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["dashboard-ai-insights", boardId, isRequester],
@@ -74,65 +74,93 @@ export function DashboardAIInsights({ boardId, isRequester = false }: DashboardA
   if (error || !data?.insights?.length) return null;
 
   const insights = data.insights;
+  const allExpanded = expandedIndexes.size === insights.length;
+
+  const toggleIndex = (i: number) => {
+    setExpandedIndexes(prev => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (allExpanded) {
+      setExpandedIndexes(new Set());
+    } else {
+      setExpandedIndexes(new Set(insights.map((_, i) => i)));
+    }
+  };
 
   return (
-    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-      {insights.map((insight, i) => {
-        const config = typeConfig[insight.type] || typeConfig.info;
-        const Icon = config.icon;
-        const isExpanded = expandedIndex === i;
-        return (
-          <Card
-            key={i}
-            className={`p-3 md:p-4 border ${config.border} ${config.bg} transition-all duration-300 hover:shadow-md`}
-          >
-            <div className="flex items-start gap-2.5">
-              <div className="p-1.5 rounded-lg bg-background/60 shrink-0">
-                <Icon className={`h-4 w-4 ${config.iconColor}`} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className={`text-sm font-semibold leading-tight ${config.titleColor}`}>
-                  {insight.title}
-                </p>
-                <p className={`text-xs text-muted-foreground mt-1 whitespace-pre-line ${isExpanded ? "" : "line-clamp-2"}`}>
-                  {insight.description}
-                </p>
-                <button
-                  onClick={() => setExpandedIndex(isExpanded ? null : i)}
-                  className="text-[11px] font-medium text-primary hover:underline mt-1.5 inline-block"
-                >
-                  {isExpanded ? "Ver menos" : "Ler mais"}
-                </button>
-              </div>
-            </div>
-          </Card>
-        );
-      })}
-
-      {/* CTA Card */}
-      <Card className="p-3 md:p-4 border border-primary/30 bg-primary/5 flex flex-col justify-between transition-shadow hover:shadow-md">
-        <div className="flex items-start gap-2.5">
-          <div className="p-1.5 rounded-lg bg-primary/10 shrink-0">
-            <Sparkles className="h-4 w-4 text-primary" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-primary leading-tight">
-              Resumo Completo
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Gere uma análise detalhada com IA
-            </p>
-          </div>
-        </div>
-        <Button
-          size="sm"
-          className="mt-3 w-full gap-1.5 text-xs"
-          onClick={() => navigate("/board-summary")}
+    <div className="space-y-2">
+      <div className="flex justify-end">
+        <button
+          onClick={toggleAll}
+          className="text-[11px] font-medium text-primary hover:underline"
         >
-          Gerar Resumo
-          <ArrowRight className="h-3 w-3" />
-        </Button>
-      </Card>
+          {allExpanded ? "Recolher todos" : "Expandir todos"}
+        </button>
+      </div>
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        {insights.map((insight, i) => {
+          const config = typeConfig[insight.type] || typeConfig.info;
+          const Icon = config.icon;
+          const isExpanded = expandedIndexes.has(i);
+          return (
+            <Card
+              key={i}
+              className={`p-3 md:p-4 border ${config.border} ${config.bg} transition-all duration-300 hover:shadow-md`}
+            >
+              <div className="flex items-start gap-2.5">
+                <div className="p-1.5 rounded-lg bg-background/60 shrink-0">
+                  <Icon className={`h-4 w-4 ${config.iconColor}`} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className={`text-sm font-semibold leading-tight ${config.titleColor}`}>
+                    {insight.title}
+                  </p>
+                  <p className={`text-xs text-muted-foreground mt-1 whitespace-pre-line ${isExpanded ? "" : "line-clamp-2"}`}>
+                    {insight.description}
+                  </p>
+                  <button
+                    onClick={() => toggleIndex(i)}
+                    className="text-[11px] font-medium text-primary hover:underline mt-1.5 inline-block"
+                  >
+                    {isExpanded ? "Ver menos" : "Ler mais"}
+                  </button>
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+
+        {/* CTA Card */}
+        <Card className="p-3 md:p-4 border border-primary/30 bg-primary/5 flex flex-col justify-between transition-shadow hover:shadow-md">
+          <div className="flex items-start gap-2.5">
+            <div className="p-1.5 rounded-lg bg-primary/10 shrink-0">
+              <Sparkles className="h-4 w-4 text-primary" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-primary leading-tight">
+                Resumo Completo
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Gere uma análise detalhada com IA
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            className="mt-3 w-full gap-1.5 text-xs"
+            onClick={() => navigate("/board-summary")}
+          >
+            Gerar Resumo
+            <ArrowRight className="h-3 w-3" />
+          </Button>
+        </Card>
+      </div>
     </div>
   );
 }
