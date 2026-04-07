@@ -805,7 +805,7 @@ export default function DemandRequests() {
                               "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border",
                               isActive
                                 ? "bg-primary/10 border-primary text-primary shadow-sm"
-                                : "bg-background border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                                : "bg-background border-border text-muted-foreground hover:bg-white hover:text-[#F28705] hover:border-[#F28705]"
                             )}
                           >
                             {TabIcon && <TabIcon className="h-3.5 w-3.5" />}
