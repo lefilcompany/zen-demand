@@ -14,12 +14,12 @@ import {
   useDeleteDemandRequest
 } from "@/hooks/useDemandRequests";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
-import { Clock, CheckCircle, RotateCcw, Users, Layout, Paperclip, MessageSquare, Send, Trash2, XCircle, ChevronLeft, ChevronRight, ClipboardList, Edit, Plus, CalendarIcon, X } from "lucide-react";
+import { Clock, CheckCircle, RotateCcw, Users, Layout, Paperclip, MessageSquare, Send, Trash2, XCircle, ChevronLeft, ChevronRight, ClipboardList, Edit, Plus, CalendarIcon, X, Search } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { format, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor, RichTextDisplay } from "@/components/ui/rich-text-editor";
@@ -97,6 +97,26 @@ export default function DemandRequests() {
   const [editPriority, setEditPriority] = useState("média");
   const [editServiceId, setEditServiceId] = useState("");
 
+  // Search state
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const matchesSearch = useCallback((request: any) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const title = (request.title || "").toLowerCase();
+    const priority = (request.priority || "").toLowerCase();
+    const serviceName = (request.service?.name || "").toLowerCase();
+    return title.includes(q) || priority.includes(q) || serviceName.includes(q);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (searchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [searchOpen]);
+
   // My requests filters
   const [myStatusFilter, setMyStatusFilter] = useState<string>("all");
   const [mySelectedDate, setMySelectedDate] = useState<Date | undefined>();
@@ -141,8 +161,8 @@ export default function DemandRequests() {
       ...(pendingRequests || []),
       ...(approvedRequests || []),
       ...(returnedRequests || []),
-    ];
-  }, [pendingRequests, approvedRequests, returnedRequests]);
+    ].filter(matchesSearch);
+  }, [pendingRequests, approvedRequests, returnedRequests, matchesSearch]);
 
   const [allBoardPage, setAllBoardPage] = useState(1);
 
@@ -154,21 +174,23 @@ export default function DemandRequests() {
   }, [allBoardRequests, allBoardPage]);
 
   // Paginated data
+  const filteredPending = useMemo(() => (pendingRequests || []).filter(matchesSearch), [pendingRequests, matchesSearch]);
+  const filteredApproved = useMemo(() => (approvedRequests || []).filter(matchesSearch), [approvedRequests, matchesSearch]);
+  const filteredReturned = useMemo(() => (returnedRequests || []).filter(matchesSearch), [returnedRequests, matchesSearch]);
+
   const paginatedApproved = useMemo(() => {
-    if (!approvedRequests) return { items: [], totalPages: 0 };
-    const totalPages = Math.ceil(approvedRequests.length / ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filteredApproved.length / ITEMS_PER_PAGE);
     const startIndex = (approvedPage - 1) * ITEMS_PER_PAGE;
-    const items = approvedRequests.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const items = filteredApproved.slice(startIndex, startIndex + ITEMS_PER_PAGE);
     return { items, totalPages };
-  }, [approvedRequests, approvedPage]);
+  }, [filteredApproved, approvedPage]);
 
   const paginatedReturned = useMemo(() => {
-    if (!returnedRequests) return { items: [], totalPages: 0 };
-    const totalPages = Math.ceil(returnedRequests.length / ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filteredReturned.length / ITEMS_PER_PAGE);
     const startIndex = (returnedPage - 1) * ITEMS_PER_PAGE;
-    const items = returnedRequests.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const items = filteredReturned.slice(startIndex, startIndex + ITEMS_PER_PAGE);
     return { items, totalPages };
-  }, [returnedRequests, returnedPage]);
+  }, [filteredReturned, returnedPage]);
 
   // My requests filtered
   const myStatusCounts = useMemo(() => {
@@ -183,6 +205,7 @@ export default function DemandRequests() {
   const filteredMyRequests = useMemo(() => {
     if (!myRequests) return [];
     return myRequests.filter((request: any) => {
+      if (!matchesSearch(request)) return false;
       if (myStatusFilter !== "all" && request.status !== myStatusFilter) return false;
       if (mySelectedDate) {
         const requestDate = new Date(request.created_at);
@@ -192,7 +215,7 @@ export default function DemandRequests() {
       }
       return true;
     });
-  }, [myRequests, myStatusFilter, mySelectedDate]);
+  }, [myRequests, myStatusFilter, mySelectedDate, matchesSearch]);
 
   // Comments hooks
   const { data: comments, isLoading: commentsLoading } = useRequestComments(viewing?.id || null);
@@ -612,6 +635,44 @@ export default function DemandRequests() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{pageTitle}</h1>
         </div>
+        <div className="flex items-center gap-2">
+          <div className={cn(
+            "flex items-center transition-all duration-300 ease-in-out rounded-md border border-border overflow-hidden",
+            searchOpen ? "w-64 bg-background" : "w-9"
+          )}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={() => {
+                if (searchOpen && searchQuery) {
+                  setSearchQuery("");
+                } else {
+                  setSearchOpen(!searchOpen);
+                  if (searchOpen) setSearchQuery("");
+                }
+              }}
+            >
+              {searchOpen && searchQuery ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+            </Button>
+            {searchOpen && (
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar por título, prioridade, serviço..."
+                className="h-9 w-full bg-transparent text-sm outline-none pr-3 text-foreground placeholder:text-muted-foreground"
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    setSearchQuery("");
+                    setSearchOpen(false);
+                  }
+                }}
+              />
+            )}
+          </div>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -825,12 +886,12 @@ export default function DemandRequests() {
         <TabsContent value="pending">
           {pendingLoading ? (
             <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-          ) : pendingRequests && pendingRequests.length > 0 ? (
+          ) : filteredPending.length > 0 ? (
             <div className="grid gap-4">
-              {pendingRequests.map(request => renderRequestCard(request))}
+              {filteredPending.map(request => renderRequestCard(request))}
             </div>
           ) : (
-            renderEmptyState("Não há solicitações pendentes para este quadro")
+            renderEmptyState(searchQuery ? "Nenhuma solicitação encontrada para essa busca" : "Não há solicitações pendentes para este quadro")
           )}
         </TabsContent>
 
