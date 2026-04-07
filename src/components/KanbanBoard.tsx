@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -59,6 +60,7 @@ interface Demand {
   created_at?: string;
   updated_at?: string;
   status_changed_at?: string | null;
+  status_changed_by?: string | null;
   time_in_progress_seconds?: number | null;
   last_started_at?: string | null;
   team_id?: string;
@@ -68,6 +70,7 @@ interface Demand {
   demand_statuses?: { name: string; color: string } | null;
   profiles?: { full_name: string; avatar_url?: string | null } | null;
   assigned_profile?: { full_name: string; avatar_url?: string | null } | null;
+  status_changed_by_profile?: { full_name: string; avatar_url?: string | null } | null;
   teams?: { name: string } | null;
   boards?: { id: string; name: string } | null;
   services?: { id: string; name: string } | null;
@@ -389,6 +392,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       {
         id: demandId,
         status_id: statusId,
+        status_changed_by: user?.id || null,
       },
       {
         onSuccess: async () => {
@@ -643,7 +647,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     setOptimisticUpdates(prev => ({ ...prev, [demandId]: "Entregue" }));
     
     updateDemand.mutate(
-      { id: demandId, status_id: entregueStatus.id },
+      { id: demandId, status_id: entregueStatus.id, status_changed_by: user?.id || null },
       {
         onSuccess: async () => {
           setOptimisticUpdates(prev => {
@@ -984,6 +988,23 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                         </TooltipTrigger>
                         <TooltipContent side="top">
                           <p>Entrou nesta etapa em {format(new Date(demand.status_changed_at), "dd/MM/yyyy 'às' HH:mm")}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  {demand.status_changed_by_profile && (
+                    <TooltipProvider delayDuration={300}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Avatar className="h-5 w-5 cursor-default border border-border">
+                            <AvatarImage src={demand.status_changed_by_profile.avatar_url || undefined} alt={demand.status_changed_by_profile.full_name} />
+                            <AvatarFallback className="text-[8px] bg-muted text-muted-foreground">
+                              {demand.status_changed_by_profile.full_name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p>Movido por {demand.status_changed_by_profile.full_name}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>

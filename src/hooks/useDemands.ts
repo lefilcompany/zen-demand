@@ -70,6 +70,7 @@ export function useDemands(boardId?: string) {
           demand_statuses(name, color),
           profiles!demands_created_by_fkey(full_name, avatar_url),
           assigned_profile:profiles!demands_assigned_to_fkey(full_name, avatar_url),
+          status_changed_by_profile:profiles!demands_status_changed_by_fkey(full_name, avatar_url),
           teams(name),
           services(id, name),
           boards(id, name),
@@ -128,6 +129,7 @@ export function useDemandById(demandId: string | undefined) {
           demand_statuses(name, color),
           profiles!demands_created_by_fkey(full_name, avatar_url),
           assigned_profile:profiles!demands_assigned_to_fkey(full_name, avatar_url),
+          status_changed_by_profile:profiles!demands_status_changed_by_fkey(full_name, avatar_url),
           teams(name),
           services(id, name),
           demand_assignees(
@@ -355,6 +357,7 @@ export function useUpdateDemand() {
       archived_at?: string | null;
       service_id?: string | null;
       board_id?: string;
+      status_changed_by?: string | null;
     }) => {
       // If offline, queue the operation and update cache optimistically
       if (!isOnline()) {

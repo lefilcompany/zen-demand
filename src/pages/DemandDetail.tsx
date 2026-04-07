@@ -20,7 +20,8 @@ import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { DemandEditForm } from "@/components/DemandEditForm";
 import { AttachmentUploader } from "@/components/AttachmentUploader";
-import { Calendar, Users, Archive, Pencil, Wrench, AlertTriangle, LayoutGrid, List, ChevronDown, Kanban, CalendarDays, LucideIcon, Check, X } from "lucide-react";
+import { Calendar, Users, Archive, Pencil, Wrench, AlertTriangle, LayoutGrid, List, ChevronDown, Kanban, CalendarDays, LucideIcon, Check, X, ArrowRight } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { ShareDemandButton } from "@/components/ShareDemandButton";
 import { UserTimeTrackingDisplay } from "@/components/UserTimeTrackingDisplay";
@@ -296,7 +297,8 @@ export default function DemandDetail() {
       await new Promise<void>((resolve, reject) => {
         updateDemand.mutate({
           id,
-          status_id: adjustmentStatusId
+          status_id: adjustmentStatusId,
+          status_changed_by: user?.id || null
         }, {
           onSuccess: () => resolve(),
           onError: error => reject(error)
@@ -647,7 +649,8 @@ export default function DemandDetail() {
                     if (status.id !== demand.status_id) {
                       updateDemand.mutate({
                         id: demand.id,
-                        status_id: status.id
+                        status_id: status.id,
+                        status_changed_by: user?.id || null
                       }, {
                         onSuccess: () => {
                           toast.success(`Status alterado para "${status.name}"!`);
@@ -752,6 +755,22 @@ export default function DemandDetail() {
             </div>
           </div>
 
+            {/* Status changed by */}
+            {(demand as any).status_changed_by_profile && (
+              <div className="flex items-center gap-2 text-sm">
+                <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-muted-foreground">Último status por:</span>
+                <div className="flex items-center gap-1.5">
+                  <Avatar className="h-5 w-5 border border-border">
+                    <AvatarImage src={(demand as any).status_changed_by_profile.avatar_url || undefined} alt={(demand as any).status_changed_by_profile.full_name} />
+                    <AvatarFallback className="text-[8px] bg-muted text-muted-foreground">
+                      {(demand as any).status_changed_by_profile.full_name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium">{(demand as any).status_changed_by_profile.full_name}</span>
+                </div>
+              </div>
+            )}
 
 
           {/* Attachments section - result/deliverables - only agents/admins can upload */}
