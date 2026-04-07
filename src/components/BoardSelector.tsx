@@ -69,16 +69,14 @@ export function BoardSelector() {
         </SelectContent>
       </Select>
 
-      {/* Hide role badge on mobile, only show for non-requesters */}
-      {!isRequester && (
-        roleLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground hidden sm:block" />
-        ) : boardRole ? (
-          <Badge variant="outline" className={`${roleColors[boardRole]} text-xs hidden sm:inline-flex`}>
-            {roleLabels[boardRole]}
-          </Badge>
-        ) : null
-      )}
+      {/* Role badge for all roles including requester */}
+      {roleLoading ? (
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground hidden sm:block" />
+      ) : boardRole ? (
+        <Badge variant="outline" className={`${roleColors[boardRole]} text-xs hidden sm:inline-flex`}>
+          {roleLabels[boardRole]}
+        </Badge>
+      ) : null}
     </div>
   );
 }
