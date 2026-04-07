@@ -144,7 +144,7 @@ const Index = () => {
 
         {/* Demands Section - service pie + cumulative area chart */}
         {widgets.demandsSection && (() => {
-          const reqDemands = (demandData?.demands || demands || []).map((d: any) => ({
+          const reqDemands = (demands || []).map((d: any) => ({
             id: d.id,
             created_at: d.created_at,
             delivered_at: d.delivered_at || null,
