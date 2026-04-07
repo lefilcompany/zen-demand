@@ -298,7 +298,8 @@ export default function DemandDetail() {
         updateDemand.mutate({
           id,
           status_id: adjustmentStatusId,
-          status_changed_by: user?.id || null
+          status_changed_by: user?.id || null,
+          status_changed_at: new Date().toISOString()
         }, {
           onSuccess: () => resolve(),
           onError: error => reject(error)
@@ -650,7 +651,8 @@ export default function DemandDetail() {
                       updateDemand.mutate({
                         id: demand.id,
                         status_id: status.id,
-                        status_changed_by: user?.id || null
+                        status_changed_by: user?.id || null,
+                        status_changed_at: new Date().toISOString()
                       }, {
                         onSuccess: () => {
                           toast.success(`Status alterado para "${status.name}"!`);
