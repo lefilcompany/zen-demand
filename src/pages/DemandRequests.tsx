@@ -886,6 +886,63 @@ export default function DemandRequests() {
         {/* All Board Requests Tab (Requester) */}
         {isRequester && (
           <TabsContent value="all-board">
+            <div className="space-y-4">
+              {/* Search & Filter bar */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Search */}
+                <div className={cn(
+                  "group flex items-center transition-all duration-300 ease-in-out rounded-xl border overflow-hidden",
+                  searchOpen
+                    ? "w-72 sm:w-80 border-primary/40 bg-background shadow-sm ring-1 ring-primary/10"
+                    : "w-9 border-border bg-muted/40 hover:bg-background hover:border-[#F28705]/40 hover:shadow-sm"
+                )}>
+                  <button
+                    className={cn(
+                      "h-9 w-9 shrink-0 flex items-center justify-center transition-colors rounded-l-xl",
+                      searchOpen ? "text-primary" : "text-muted-foreground group-hover:text-[#F28705]"
+                    )}
+                    onClick={() => {
+                      if (searchOpen && searchQuery) {
+                        setSearchQuery("");
+                      } else {
+                        setSearchOpen(!searchOpen);
+                        if (searchOpen) setSearchQuery("");
+                      }
+                    }}
+                  >
+                    {searchOpen && searchQuery ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+                  </button>
+                  {searchOpen && (
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Buscar por título, prioridade ou serviço..."
+                      className="h-9 w-full bg-transparent text-sm outline-none pr-3 text-foreground placeholder:text-muted-foreground/60"
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setSearchQuery("");
+                          setSearchOpen(false);
+                        }
+                      }}
+                    />
+                  )}
+                </div>
+
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-muted-foreground hover:text-destructive gap-1"
+                    onClick={() => { setSearchQuery(""); setSearchOpen(false); }}
+                  >
+                    Limpar busca
+                  </Button>
+                )}
+              </div>
+            </div>
+
             {(pendingLoading || approvedLoading || returnedLoading) ? (
               <div className="text-center py-12 text-muted-foreground">Carregando...</div>
             ) : allBoardRequests.length > 0 ? (
