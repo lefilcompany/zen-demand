@@ -393,6 +393,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         id: demandId,
         status_id: statusId,
         status_changed_by: user?.id || null,
+        status_changed_at: new Date().toISOString(),
       },
       {
         onSuccess: async () => {
