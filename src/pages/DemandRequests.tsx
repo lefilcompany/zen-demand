@@ -744,7 +744,8 @@ export default function DemandRequests() {
                   variant={filtersOpen ? "secondary" : "outline"}
                   size="sm"
                   className={cn(
-                    "gap-2 rounded-lg transition-all hover:bg-white hover:text-[#F28705] hover:border-[#F28705]",
+                    "gap-2 rounded-lg transition-all",
+                    !filtersOpen && "hover:bg-white hover:text-[#F28705] hover:border-[#F28705]",
                     (myStatusFilter !== "all" || mySelectedDate) && "border-primary text-primary bg-primary/5"
                   )}
                   onClick={() => setFiltersOpen(!filtersOpen)}
