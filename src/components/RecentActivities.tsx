@@ -261,12 +261,13 @@ export function RecentActivities() {
           Atualizações de {currentBoard?.name || "quadro selecionado"}
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 min-h-0">
+      <CardContent className="flex-1 min-h-0 relative">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         ) : sortedActivities.length > 0 ? (
+          <div className="absolute inset-0 px-6 pb-6">
           <ScrollArea className="h-full pr-4">
             <div className="space-y-3">
               {sortedActivities.map((activity) => {
@@ -313,6 +314,7 @@ export function RecentActivities() {
               })}
             </div>
           </ScrollArea>
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
             <Activity className="h-8 w-8 mb-2 opacity-50" />
