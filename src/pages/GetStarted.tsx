@@ -274,5 +274,6 @@ export default function GetStarted() {
         </div>
       </div>
     </div>
+    </>
   );
 }
