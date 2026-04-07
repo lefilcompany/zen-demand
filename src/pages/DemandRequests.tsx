@@ -653,7 +653,7 @@ export default function DemandRequests() {
     const newVal = parseInt(value);
     setItemsPerPage(newVal);
     setAllBoardPage(1);
-    setPendingPage(1);
+    setAdminPage(1);
     setApprovedPage(1);
     setReturnedPage(1);
     setMyPage(1);
