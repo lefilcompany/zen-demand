@@ -161,8 +161,8 @@ export default function DemandRequests() {
       ...(pendingRequests || []),
       ...(approvedRequests || []),
       ...(returnedRequests || []),
-    ];
-  }, [pendingRequests, approvedRequests, returnedRequests]);
+    ].filter(matchesSearch);
+  }, [pendingRequests, approvedRequests, returnedRequests, matchesSearch]);
 
   const [allBoardPage, setAllBoardPage] = useState(1);
 
@@ -174,21 +174,23 @@ export default function DemandRequests() {
   }, [allBoardRequests, allBoardPage]);
 
   // Paginated data
+  const filteredPending = useMemo(() => (pendingRequests || []).filter(matchesSearch), [pendingRequests, matchesSearch]);
+  const filteredApproved = useMemo(() => (approvedRequests || []).filter(matchesSearch), [approvedRequests, matchesSearch]);
+  const filteredReturned = useMemo(() => (returnedRequests || []).filter(matchesSearch), [returnedRequests, matchesSearch]);
+
   const paginatedApproved = useMemo(() => {
-    if (!approvedRequests) return { items: [], totalPages: 0 };
-    const totalPages = Math.ceil(approvedRequests.length / ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filteredApproved.length / ITEMS_PER_PAGE);
     const startIndex = (approvedPage - 1) * ITEMS_PER_PAGE;
-    const items = approvedRequests.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const items = filteredApproved.slice(startIndex, startIndex + ITEMS_PER_PAGE);
     return { items, totalPages };
-  }, [approvedRequests, approvedPage]);
+  }, [filteredApproved, approvedPage]);
 
   const paginatedReturned = useMemo(() => {
-    if (!returnedRequests) return { items: [], totalPages: 0 };
-    const totalPages = Math.ceil(returnedRequests.length / ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filteredReturned.length / ITEMS_PER_PAGE);
     const startIndex = (returnedPage - 1) * ITEMS_PER_PAGE;
-    const items = returnedRequests.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const items = filteredReturned.slice(startIndex, startIndex + ITEMS_PER_PAGE);
     return { items, totalPages };
-  }, [returnedRequests, returnedPage]);
+  }, [filteredReturned, returnedPage]);
 
   // My requests filtered
   const myStatusCounts = useMemo(() => {
@@ -203,6 +205,7 @@ export default function DemandRequests() {
   const filteredMyRequests = useMemo(() => {
     if (!myRequests) return [];
     return myRequests.filter((request: any) => {
+      if (!matchesSearch(request)) return false;
       if (myStatusFilter !== "all" && request.status !== myStatusFilter) return false;
       if (mySelectedDate) {
         const requestDate = new Date(request.created_at);
@@ -212,7 +215,7 @@ export default function DemandRequests() {
       }
       return true;
     });
-  }, [myRequests, myStatusFilter, mySelectedDate]);
+  }, [myRequests, myStatusFilter, mySelectedDate, matchesSearch]);
 
   // Comments hooks
   const { data: comments, isLoading: commentsLoading } = useRequestComments(viewing?.id || null);
