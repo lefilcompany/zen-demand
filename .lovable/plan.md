@@ -1,59 +1,38 @@
 
 
-## Problem
+## Ativação de SEO — Plano atualizado
 
-When an authenticated user opens a shared demand link (`/shared/:token`), they see the public read-only view instead of being redirected to the internal demand detail page. This happens because:
+Domínio principal: **`https://pla.soma.lefil.com.br`**
 
-1. The current redirect logic relies on `boards` from `BoardContext`, which only loads boards for the **currently selected team**
-2. If the demand belongs to a different team, or team/board data hasn't loaded yet, the check `boards.some(b => b.id === demand.board_id)` fails silently
+### 1. `index.html` — Meta tags e JSON-LD
+- Adicionar `<link rel="canonical" href="https://pla.soma.lefil.com.br" />`
+- Atualizar `og:url` para `https://pla.soma.lefil.com.br`
+- Adicionar `og:site_name` como "SoMA"
+- Melhorar `description` com palavras-chave: gestão de demandas, kanban, equipes, produtividade, marketing
+- Adicionar meta `keywords`
+- Inserir bloco `<script type="application/ld+json">` com schema `SoftwareApplication`
 
-## Solution
+### 2. `public/sitemap.xml` (novo)
+- Listar páginas públicas (`/`, `/auth`, `/get-started`, `/privacy-policy`, `/terms-of-service`) com base em `https://pla.soma.lefil.com.br`
 
-Replace the indirect board-context check with a **direct database query** to `board_members` to verify if the authenticated user is a member of the demand's board. This is independent of the selected team context and works reliably.
+### 3. `public/robots.txt`
+- Adicionar `Sitemap: https://pla.soma.lefil.com.br/sitemap.xml`
+- Bloquear rotas protegidas: `/demands`, `/kanban`, `/boards`, `/settings`, `/profile`, `/teams`, `/notes`, `/reports`, `/admin`
 
-## Changes
+### 4. Componente `SEOHead` + `react-helmet-async`
+- Instalar `react-helmet-async`
+- Criar `src/components/SEOHead.tsx` — componente reutilizável que injeta `<title>`, `<meta description>`, `<link canonical>` dinamicamente
+- Wrap do App com `HelmetProvider` em `src/App.tsx`
+- Aplicar `SEOHead` nas páginas públicas: `Auth`, `GetStarted`, `Welcome`, `Pricing`, `PrivacyPolicy`, `TermsOfService`
 
-### 1. `src/pages/SharedDemand.tsx`
-
-- Remove the dependency on `useSelectedBoardSafe()` for the redirect logic
-- Add a direct query: when `session?.user` exists and `demand` is loaded, query `board_members` to check if the user belongs to `demand.board_id`
-- If the user is a board member:
-  - Update `selectedTeamId` (via TeamContext) to the demand's `team_id`
-  - Update `selectedBoardId` (via BoardContext) to the demand's `board_id`
-  - Redirect to `/demands/${demand.id}` with `replace: true`
-- Show a brief loading state during the membership check to avoid flashing the public view
-- Keep the current public view as fallback for non-members and anonymous users
-
-### Technical approach
-
-```tsx
-// Direct membership check, independent of selected team
-useEffect(() => {
-  if (redirectedRef.current || !demand?.id || !demand?.board_id || !session?.user) return;
-  
-  const checkMembership = async () => {
-    const { data } = await supabase
-      .from("board_members")
-      .select("id")
-      .eq("board_id", demand.board_id)
-      .eq("user_id", session.user.id)
-      .maybeSingle();
-    
-    if (data) {
-      redirectedRef.current = true;
-      // Sync team and board context before navigating
-      setSelectedTeamId(demand.team_id);
-      setSelectedBoardId(demand.board_id);
-      navigate(`/demands/${demand.id}`, { replace: true });
-    } else {
-      setMembershipChecked(true); // show public view
-    }
-  };
-  
-  checkMembership();
-}, [demand, session]);
-```
-
-- A `membershipChecked` state prevents the public view from flashing before the check completes
-- The loading spinner is shown while the check runs for authenticated users
+### Arquivos
+| Ação | Arquivo |
+|------|---------|
+| Criar | `public/sitemap.xml` |
+| Criar | `src/components/SEOHead.tsx` |
+| Editar | `index.html` |
+| Editar | `public/robots.txt` |
+| Editar | `src/App.tsx` |
+| Editar | Páginas públicas (Auth, Welcome, GetStarted, Pricing, PrivacyPolicy, TermsOfService) |
+| Instalar | `react-helmet-async` |
 
