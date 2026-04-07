@@ -392,7 +392,9 @@ export default function Auth() {
   // Password match validation
   const passwordsMatch = signupData.password && signupData.confirmPassword && signupData.password === signupData.confirmPassword;
   const passwordsDontMatch = signupData.confirmPassword && signupData.password !== signupData.confirmPassword;
-  return <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen lg:overflow-hidden">
+  return <>
+    <SEOHead title="Login" description="Acesse o SoMA - Sistema operacional de marketing para gestão de demandas, kanban e equipes." path="/auth" />
+    <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen lg:overflow-hidden">
       {/* Mobile/Tablet Header with Image - Fixed height */}
       <div className="lg:hidden relative h-40 sm:h-48 md:h-56 flex-shrink-0 overflow-hidden" style={{
       backgroundImage: `url(${authBackground})`,
