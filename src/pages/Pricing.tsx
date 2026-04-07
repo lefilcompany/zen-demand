@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { SEOHead } from "@/components/SEOHead";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
@@ -91,6 +92,8 @@ export default function Pricing() {
   }
 
   return (
+    <>
+    <SEOHead title="Planos e Preços" description="Conheça os planos do SoMA - Escolha o melhor plano para sua equipe de marketing." path="/pricing" />
     <div className="min-h-screen">
       {/* Hero Section with Gradient Background */}
       <div className="relative overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background pb-8">
@@ -237,5 +240,6 @@ export default function Pricing() {
         </div>
       </div>
     </div>
+    </>
   );
 }
