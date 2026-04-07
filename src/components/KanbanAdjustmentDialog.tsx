@@ -113,7 +113,7 @@ export const KanbanAdjustmentDialog = React.memo(function KanbanAdjustmentDialog
       // Atualizar status da demanda para "Em Ajuste"
       await new Promise<void>((resolve, reject) => {
         updateDemand.mutate(
-          { id: demandId, status_id: adjustmentStatusId, status_changed_by: user?.id || null },
+          { id: demandId, status_id: adjustmentStatusId, status_changed_by: user?.id || null, status_changed_at: new Date().toISOString() },
           {
             onSuccess: () => resolve(),
             onError: (error) => reject(error),
