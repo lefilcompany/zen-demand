@@ -71,6 +71,8 @@ interface DemandsCalendarViewProps {
   onDayClick: (date: Date) => void;
   isRequester?: boolean;
   onDemandDateChange?: (demandId: string, newDate: Date) => Promise<void>;
+  initialDate?: Date;
+  onDateChange?: (date: Date) => void;
 }
 
 const WEEKDAYS = ["D", "S", "T", "Q", "Q", "S", "S"];
