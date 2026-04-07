@@ -194,8 +194,8 @@ export default function DemandRequests() {
     const totalPages = Math.ceil(allBoardRequests.length / itemsPerPage);
     const startIndex = (allBoardPage - 1) * itemsPerPage;
     const items = allBoardRequests.slice(startIndex, startIndex + itemsPerPage);
-    return { items, totalPages };
-  }, [allBoardRequests, allBoardPage]);
+    return { items, totalPages, totalItems: allBoardRequests.length };
+  }, [allBoardRequests, allBoardPage, itemsPerPage]);
 
   // Paginated data
   const matchesTabSearch = useCallback((request: any, query: string) => {
@@ -242,21 +242,21 @@ export default function DemandRequests() {
     const startIndex = (pendingPage - 1) * itemsPerPage;
     const items = filteredPending.slice(startIndex, startIndex + itemsPerPage);
     return { items, totalPages };
-  }, [filteredPending, pendingPage]);
+  }, [filteredPending, pendingPage, itemsPerPage]);
 
   const paginatedApproved = useMemo(() => {
     const totalPages = Math.ceil(filteredApproved.length / itemsPerPage);
     const startIndex = (approvedPage - 1) * itemsPerPage;
     const items = filteredApproved.slice(startIndex, startIndex + itemsPerPage);
     return { items, totalPages };
-  }, [filteredApproved, approvedPage]);
+  }, [filteredApproved, approvedPage, itemsPerPage]);
 
   const paginatedReturned = useMemo(() => {
     const totalPages = Math.ceil(filteredReturned.length / itemsPerPage);
     const startIndex = (returnedPage - 1) * itemsPerPage;
     const items = filteredReturned.slice(startIndex, startIndex + itemsPerPage);
     return { items, totalPages };
-  }, [filteredReturned, returnedPage]);
+  }, [filteredReturned, returnedPage, itemsPerPage]);
 
   // My requests filtered
   const myStatusCounts = useMemo(() => {
