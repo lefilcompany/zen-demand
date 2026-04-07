@@ -915,62 +915,36 @@ export default function DemandRequests() {
         </div>
       </div>
 
+      {isRequester ? (
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className={cn(
           "w-full grid mb-4",
-          isRequester && canApproveOrReturn ? "grid-cols-5" :
-          isRequester ? "grid-cols-2" :
-          canApproveOrReturn ? "grid-cols-3" : "grid-cols-1"
+          isRequester && canApproveOrReturn ? "grid-cols-3" : "grid-cols-2"
         )}>
-          {isRequester && (
-            <TabsTrigger value="mine" className="flex items-center gap-2">
-              <Send className="h-4 w-4" />
-              <span className="hidden sm:inline">Minhas</span>
-              {myRequests && myRequests.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5">{myRequests.length}</Badge>
-              )}
-            </TabsTrigger>
-          )}
-          {isRequester && (
-            <TabsTrigger value="all-board" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Todas do Quadro</span>
-              {allBoardRequests.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5">{allBoardRequests.length}</Badge>
-              )}
-            </TabsTrigger>
-          )}
-          {(canApproveOrReturn || !isRequester) && (
-            <TabsTrigger value="pending" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              <span className="hidden sm:inline">Pendentes</span>
-              {pendingRequests && pendingRequests.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5">{pendingRequests.length}</Badge>
-              )}
-            </TabsTrigger>
-          )}
+          <TabsTrigger value="mine" className="flex items-center gap-2">
+            <Send className="h-4 w-4" />
+            <span className="hidden sm:inline">Minhas</span>
+            {myRequests && myRequests.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5">{myRequests.length}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="all-board" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Todas do Quadro</span>
+            {allBoardRequests.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5">{allBoardRequests.length}</Badge>
+            )}
+          </TabsTrigger>
           {canApproveOrReturn && (
-            <TabsTrigger value="approved" className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              <span className="hidden sm:inline">Aprovadas</span>
-              {approvedRequests && approvedRequests.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5">{approvedRequests.length}</Badge>
-              )}
-            </TabsTrigger>
-          )}
-          {canApproveOrReturn && (
-            <TabsTrigger value="returned" className="flex items-center gap-2">
-              <XCircle className="h-4 w-4" />
-              <span className="hidden sm:inline">Devolvidas</span>
-              {returnedRequests && returnedRequests.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5">{returnedRequests.length}</Badge>
+            <TabsTrigger value="admin" className="flex items-center gap-2">
+              <ClipboardList className="h-4 w-4" />
+              <span className="hidden sm:inline">Gestão</span>
+              {allAdminRequests.length > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5">{allAdminRequests.length}</Badge>
               )}
             </TabsTrigger>
           )}
         </TabsList>
-
-        {/* My Requests Tab (Requester) */}
-        {isRequester && (
           <TabsContent value="mine">
             <div className="space-y-4">
               {/* Compact filter bar */}
