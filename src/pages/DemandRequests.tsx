@@ -1122,10 +1122,13 @@ export default function DemandRequests() {
 
               {myLoading ? (
                 <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-              ) : filteredMyRequests.length > 0 ? (
-                <div className="grid gap-4">
-                  {filteredMyRequests.map((request: any) => renderMyRequestCard(request))}
-                </div>
+              ) : paginatedMy.items.length > 0 ? (
+                <>
+                  <div className="grid gap-4">
+                    {paginatedMy.items.map((request: any) => renderMyRequestCard(request))}
+                  </div>
+                  {renderPaginationBar(myPage, setMyPage, paginatedMy.totalPages, paginatedMy.totalItems)}
+                </>
               ) : (
                 <Card>
                   <CardContent className="py-12 text-center text-muted-foreground">
