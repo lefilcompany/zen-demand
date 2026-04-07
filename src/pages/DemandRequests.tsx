@@ -122,6 +122,28 @@ export default function DemandRequests() {
   const [myStatusFilter, setMyStatusFilter] = useState<string>("all");
   const [mySelectedDate, setMySelectedDate] = useState<Date | undefined>();
 
+  // Admin tab filters
+  const [pendingPriorityFilter, setPendingPriorityFilter] = useState<string>("all");
+  const [pendingDateFilter, setPendingDateFilter] = useState<Date | undefined>();
+  const [pendingFiltersOpen, setPendingFiltersOpen] = useState(false);
+  const [pendingSearchOpen, setPendingSearchOpen] = useState(false);
+  const [pendingSearchQuery, setPendingSearchQuery] = useState("");
+  const pendingSearchRef = useRef<HTMLInputElement>(null);
+
+  const [approvedPriorityFilter, setApprovedPriorityFilter] = useState<string>("all");
+  const [approvedDateFilter, setApprovedDateFilter] = useState<Date | undefined>();
+  const [approvedFiltersOpen, setApprovedFiltersOpen] = useState(false);
+  const [approvedSearchOpen, setApprovedSearchOpen] = useState(false);
+  const [approvedSearchQuery, setApprovedSearchQuery] = useState("");
+  const approvedSearchRef = useRef<HTMLInputElement>(null);
+
+  const [returnedPriorityFilter, setReturnedPriorityFilter] = useState<string>("all");
+  const [returnedDateFilter, setReturnedDateFilter] = useState<Date | undefined>();
+  const [returnedFiltersOpen, setReturnedFiltersOpen] = useState(false);
+  const [returnedSearchOpen, setReturnedSearchOpen] = useState(false);
+  const [returnedSearchQuery, setReturnedSearchQuery] = useState("");
+  const returnedSearchRef = useRef<HTMLInputElement>(null);
+
   // Pagination states
   const [approvedPage, setApprovedPage] = useState(1);
   const [returnedPage, setReturnedPage] = useState(1);
@@ -175,9 +197,51 @@ export default function DemandRequests() {
   }, [allBoardRequests, allBoardPage]);
 
   // Paginated data
-  const filteredPending = useMemo(() => (pendingRequests || []).filter(matchesSearch), [pendingRequests, matchesSearch]);
-  const filteredApproved = useMemo(() => (approvedRequests || []).filter(matchesSearch), [approvedRequests, matchesSearch]);
-  const filteredReturned = useMemo(() => (returnedRequests || []).filter(matchesSearch), [returnedRequests, matchesSearch]);
+  const matchesTabSearch = useCallback((request: any, query: string) => {
+    if (!query.trim()) return true;
+    const q = query.toLowerCase();
+    const title = (request.title || "").toLowerCase();
+    const priority = (request.priority || "").toLowerCase();
+    const serviceName = (request.service?.name || "").toLowerCase();
+    const creatorName = (request.creator?.full_name || "").toLowerCase();
+    return title.includes(q) || priority.includes(q) || serviceName.includes(q) || creatorName.includes(q);
+  }, []);
+
+  const applyDateFilter = useCallback((request: any, dateFilter: Date | undefined, dateField: string = "created_at") => {
+    if (!dateFilter) return true;
+    const d = new Date(request[dateField]);
+    return !isBefore(d, startOfDay(dateFilter)) && !isAfter(d, endOfDay(dateFilter));
+  }, []);
+
+  const filteredPending = useMemo(() => (pendingRequests || []).filter(r => {
+    if (!matchesTabSearch(r, pendingSearchQuery)) return false;
+    if (pendingPriorityFilter !== "all" && (r.priority || "média") !== pendingPriorityFilter) return false;
+    if (!applyDateFilter(r, pendingDateFilter)) return false;
+    return true;
+  }), [pendingRequests, pendingSearchQuery, pendingPriorityFilter, pendingDateFilter, matchesTabSearch, applyDateFilter]);
+
+  const filteredApproved = useMemo(() => (approvedRequests || []).filter(r => {
+    if (!matchesTabSearch(r, approvedSearchQuery)) return false;
+    if (approvedPriorityFilter !== "all" && (r.priority || "média") !== approvedPriorityFilter) return false;
+    if (!applyDateFilter(r, approvedDateFilter, "responded_at")) return false;
+    return true;
+  }), [approvedRequests, approvedSearchQuery, approvedPriorityFilter, approvedDateFilter, matchesTabSearch, applyDateFilter]);
+
+  const filteredReturned = useMemo(() => (returnedRequests || []).filter(r => {
+    if (!matchesTabSearch(r, returnedSearchQuery)) return false;
+    if (returnedPriorityFilter !== "all" && (r.priority || "média") !== returnedPriorityFilter) return false;
+    if (!applyDateFilter(r, returnedDateFilter, "responded_at")) return false;
+    return true;
+  }), [returnedRequests, returnedSearchQuery, returnedPriorityFilter, returnedDateFilter, matchesTabSearch, applyDateFilter]);
+
+  const [pendingPage, setPendingPage] = useState(1);
+
+  const paginatedPending = useMemo(() => {
+    const totalPages = Math.ceil(filteredPending.length / ITEMS_PER_PAGE);
+    const startIndex = (pendingPage - 1) * ITEMS_PER_PAGE;
+    const items = filteredPending.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    return { items, totalPages };
+  }, [filteredPending, pendingPage]);
 
   const paginatedApproved = useMemo(() => {
     const totalPages = Math.ceil(filteredApproved.length / ITEMS_PER_PAGE);
@@ -611,6 +675,161 @@ export default function DemandRequests() {
             </Button>
           </div>
         </div>
+      </div>
+    );
+  };
+
+  const priorityOptions = [
+    { value: "all", label: "Todas" },
+    { value: "baixa", label: "Baixa" },
+    { value: "média", label: "Média" },
+    { value: "alta", label: "Alta" },
+  ];
+
+  const renderAdminToolbar = ({
+    isSearchOpen, setIsSearchOpen, query, setQuery, inputRef,
+    isFiltersOpen, setIsFiltersOpen,
+    priorityFilter, setPriorityFilter,
+    dateFilter, setDateFilter,
+    dateLabel,
+    page, setPage, totalPages,
+    totalItems,
+  }: {
+    isSearchOpen: boolean; setIsSearchOpen: (v: boolean) => void;
+    query: string; setQuery: (v: string) => void;
+    inputRef: React.RefObject<HTMLInputElement>;
+    isFiltersOpen: boolean; setIsFiltersOpen: (v: boolean) => void;
+    priorityFilter: string; setPriorityFilter: (v: string) => void;
+    dateFilter: Date | undefined; setDateFilter: (v: Date | undefined) => void;
+    dateLabel: string;
+    page: number; setPage: (fn: (p: number) => number) => void; totalPages: number;
+    totalItems: number;
+  }) => {
+    const activeCount = (priorityFilter !== "all" ? 1 : 0) + (dateFilter ? 1 : 0);
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          {/* Search */}
+          <div className={cn(
+            "group flex items-center transition-all duration-300 ease-in-out rounded-xl border overflow-hidden",
+            isSearchOpen
+              ? "w-72 sm:w-80 border-primary/40 bg-background shadow-sm ring-1 ring-primary/10"
+              : "w-9 border-border bg-muted/40 hover:bg-background hover:border-[#F28705]/40 hover:shadow-sm"
+          )}>
+            <button
+              className={cn(
+                "h-9 w-9 shrink-0 flex items-center justify-center transition-colors rounded-l-xl",
+                isSearchOpen ? "text-primary" : "text-muted-foreground group-hover:text-[#F28705]"
+              )}
+              onClick={() => {
+                if (isSearchOpen && query) { setQuery(""); }
+                else { setIsSearchOpen(!isSearchOpen); if (isSearchOpen) setQuery(""); }
+              }}
+            >
+              {isSearchOpen && query ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+            </button>
+            {isSearchOpen && (
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Buscar por título, solicitante, prioridade..."
+                className="h-9 w-full bg-transparent text-sm outline-none pr-3 text-foreground placeholder:text-muted-foreground/60"
+                onKeyDown={(e) => { if (e.key === "Escape") { setQuery(""); setIsSearchOpen(false); } }}
+              />
+            )}
+          </div>
+
+          {/* Filter toggle */}
+          <Button
+            variant={isFiltersOpen ? "secondary" : "outline"}
+            size="sm"
+            className={cn(
+              "gap-2 rounded-lg transition-all",
+              !isFiltersOpen && "hover:bg-white hover:text-[#F28705] hover:border-[#F28705]",
+              activeCount > 0 && "border-primary text-primary bg-primary/5"
+            )}
+            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+          >
+            <Filter className="h-4 w-4" />
+            Filtros
+            {activeCount > 0 && (
+              <Badge className="h-5 min-w-5 px-1.5 text-xs bg-primary text-primary-foreground">{activeCount}</Badge>
+            )}
+            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", isFiltersOpen && "rotate-180")} />
+          </Button>
+
+          {/* Active pills */}
+          {priorityFilter !== "all" && (
+            <Badge variant="secondary" className="gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium">
+              Prioridade: {priorityFilter}
+              <button onClick={() => setPriorityFilter("all")} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
+            </Badge>
+          )}
+          {dateFilter && (
+            <Badge variant="secondary" className="gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium">
+              {format(dateFilter, "dd/MM/yyyy", { locale: ptBR })}
+              <button onClick={() => setDateFilter(undefined)} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
+            </Badge>
+          )}
+
+          {(activeCount > 0 || query) && (
+            <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-destructive gap-1"
+              onClick={() => { setPriorityFilter("all"); setDateFilter(undefined); setQuery(""); setIsSearchOpen(false); }}>
+              Limpar tudo
+            </Button>
+          )}
+
+          {/* Pagination right */}
+          <div className="ml-auto flex items-center gap-2">
+            {totalItems > 0 && <span className="text-xs text-muted-foreground">{totalItems} resultado{totalItems !== 1 ? "s" : ""}</span>}
+            {totalPages > 1 && renderPagination(page, setPage, totalPages)}
+          </div>
+        </div>
+
+        {/* Filters panel */}
+        {isFiltersOpen && (
+          <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-4 animate-fade-in">
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-2">Prioridade</p>
+              <div className="flex flex-wrap gap-2">
+                {priorityOptions.map((opt) => {
+                  const isActive = priorityFilter === opt.value;
+                  return (
+                    <button key={opt.value} onClick={() => setPriorityFilter(opt.value)}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border",
+                        isActive
+                          ? "bg-primary/10 border-primary text-primary shadow-sm"
+                          : "bg-background border-border text-muted-foreground hover:bg-white hover:text-[#F28705] hover:border-[#F28705]"
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-2">{dateLabel}</p>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn(
+                    "gap-2 rounded-lg hover:bg-white hover:text-[#F28705] hover:border-[#F28705]",
+                    dateFilter && "border-primary bg-primary/5 text-primary"
+                  )}>
+                    <CalendarIcon className="h-4 w-4" />
+                    {dateFilter ? format(dateFilter, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={dateFilter} onSelect={setDateFilter} initialFocus />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -1061,48 +1280,84 @@ export default function DemandRequests() {
 
         {/* Pending Tab */}
         <TabsContent value="pending">
-          {pendingLoading ? (
-            <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-          ) : filteredPending.length > 0 ? (
-            <div className="grid gap-4">
-              {filteredPending.map(request => renderRequestCard(request))}
-            </div>
-          ) : (
-            renderEmptyState(searchQuery ? "Nenhuma solicitação encontrada para essa busca" : "Não há solicitações pendentes para este quadro")
-          )}
+          <div className="space-y-4">
+            {renderAdminToolbar({
+              isSearchOpen: pendingSearchOpen, setIsSearchOpen: setPendingSearchOpen,
+              query: pendingSearchQuery, setQuery: setPendingSearchQuery, inputRef: pendingSearchRef,
+              isFiltersOpen: pendingFiltersOpen, setIsFiltersOpen: setPendingFiltersOpen,
+              priorityFilter: pendingPriorityFilter, setPriorityFilter: setPendingPriorityFilter,
+              dateFilter: pendingDateFilter, setDateFilter: setPendingDateFilter,
+              dateLabel: "Data de criação",
+              page: pendingPage, setPage: setPendingPage, totalPages: paginatedPending.totalPages,
+              totalItems: filteredPending.length,
+            })}
+            {pendingLoading ? (
+              <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+            ) : paginatedPending.items.length > 0 ? (
+              <div className="grid gap-4">
+                {paginatedPending.items.map(request => renderRequestCard(request))}
+              </div>
+            ) : (
+              renderEmptyState((pendingSearchQuery || pendingPriorityFilter !== "all" || pendingDateFilter)
+                ? "Nenhuma solicitação encontrada com os filtros aplicados"
+                : "Não há solicitações pendentes para este quadro")
+            )}
+          </div>
         </TabsContent>
 
         {canApproveOrReturn && (
           <TabsContent value="approved">
-            {approvedLoading ? (
-              <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-            ) : approvedRequests && approvedRequests.length > 0 ? (
-              <div className="space-y-4">
-                {renderPagination(approvedPage, setApprovedPage, paginatedApproved.totalPages)}
+            <div className="space-y-4">
+              {renderAdminToolbar({
+                isSearchOpen: approvedSearchOpen, setIsSearchOpen: setApprovedSearchOpen,
+                query: approvedSearchQuery, setQuery: setApprovedSearchQuery, inputRef: approvedSearchRef,
+                isFiltersOpen: approvedFiltersOpen, setIsFiltersOpen: setApprovedFiltersOpen,
+                priorityFilter: approvedPriorityFilter, setPriorityFilter: setApprovedPriorityFilter,
+                dateFilter: approvedDateFilter, setDateFilter: setApprovedDateFilter,
+                dateLabel: "Data de aprovação",
+                page: approvedPage, setPage: setApprovedPage, totalPages: paginatedApproved.totalPages,
+                totalItems: filteredApproved.length,
+              })}
+              {approvedLoading ? (
+                <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+              ) : paginatedApproved.items.length > 0 ? (
                 <div className="grid gap-4">
                   {paginatedApproved.items.map(request => renderRequestCard(request))}
                 </div>
-              </div>
-            ) : (
-              renderEmptyState("Não há solicitações aprovadas para este quadro")
-            )}
+              ) : (
+                renderEmptyState((approvedSearchQuery || approvedPriorityFilter !== "all" || approvedDateFilter)
+                  ? "Nenhuma solicitação encontrada com os filtros aplicados"
+                  : "Não há solicitações aprovadas para este quadro")
+              )}
+            </div>
           </TabsContent>
         )}
 
         {canApproveOrReturn && (
           <TabsContent value="returned">
-            {returnedLoading ? (
-              <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-            ) : returnedRequests && returnedRequests.length > 0 ? (
-              <div className="space-y-4">
-                {renderPagination(returnedPage, setReturnedPage, paginatedReturned.totalPages)}
+            <div className="space-y-4">
+              {renderAdminToolbar({
+                isSearchOpen: returnedSearchOpen, setIsSearchOpen: setReturnedSearchOpen,
+                query: returnedSearchQuery, setQuery: setReturnedSearchQuery, inputRef: returnedSearchRef,
+                isFiltersOpen: returnedFiltersOpen, setIsFiltersOpen: setReturnedFiltersOpen,
+                priorityFilter: returnedPriorityFilter, setPriorityFilter: setReturnedPriorityFilter,
+                dateFilter: returnedDateFilter, setDateFilter: setReturnedDateFilter,
+                dateLabel: "Data de devolução",
+                page: returnedPage, setPage: setReturnedPage, totalPages: paginatedReturned.totalPages,
+                totalItems: filteredReturned.length,
+              })}
+              {returnedLoading ? (
+                <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+              ) : paginatedReturned.items.length > 0 ? (
                 <div className="grid gap-4">
                   {paginatedReturned.items.map(request => renderRequestCard(request, true))}
                 </div>
-              </div>
-            ) : (
-              renderEmptyState("Não há solicitações devolvidas para este quadro")
-            )}
+              ) : (
+                renderEmptyState((returnedSearchQuery || returnedPriorityFilter !== "all" || returnedDateFilter)
+                  ? "Nenhuma solicitação encontrada com os filtros aplicados"
+                  : "Não há solicitações devolvidas para este quadro")
+              )}
+            </div>
           </TabsContent>
         )}
       </Tabs>
