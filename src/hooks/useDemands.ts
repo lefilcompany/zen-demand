@@ -358,6 +358,7 @@ export function useUpdateDemand() {
       service_id?: string | null;
       board_id?: string;
       status_changed_by?: string | null;
+      status_changed_at?: string | null;
     }) => {
       // If offline, queue the operation and update cache optimistically
       if (!isOnline()) {
