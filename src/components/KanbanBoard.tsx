@@ -978,36 +978,38 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               <div className="flex items-center justify-between mt-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   {demand.status_changed_at && (
-                    <TooltipProvider delayDuration={300}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground cursor-default">
-                            <ArrowRight className="h-3 w-3" />
-                            {formatDateOnlyBR(demand.status_changed_at)}
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="top">
-                          <p>Entrou nesta etapa em {format(new Date(demand.status_changed_at), "dd/MM/yyyy 'às' HH:mm")}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                  {demand.status_changed_by_profile && (
-                    <TooltipProvider delayDuration={300}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Avatar className="h-5 w-5 cursor-default border border-border">
-                            <AvatarImage src={demand.status_changed_by_profile.avatar_url || undefined} alt={demand.status_changed_by_profile.full_name} />
-                            <AvatarFallback className="text-[8px] bg-muted text-muted-foreground">
-                              {demand.status_changed_by_profile.full_name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                        </TooltipTrigger>
-                        <TooltipContent side="top">
-                          <p>Movido por {demand.status_changed_by_profile.full_name}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <div className="flex items-center gap-1">
+                      <TooltipProvider delayDuration={300}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground cursor-default">
+                              <ArrowRight className="h-3 w-3" />
+                              {formatDateOnlyBR(demand.status_changed_at)}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <p>Entrou nesta etapa em {format(new Date(demand.status_changed_at), "dd/MM/yyyy 'às' HH:mm")}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      {demand.status_changed_by_profile && (
+                        <TooltipProvider delayDuration={300}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Avatar className="h-4 w-4 cursor-default border border-border">
+                                <AvatarImage src={demand.status_changed_by_profile.avatar_url || undefined} alt={demand.status_changed_by_profile.full_name} />
+                                <AvatarFallback className="text-[7px] bg-muted text-muted-foreground">
+                                  {demand.status_changed_by_profile.full_name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <p>Movido para esta etapa por {demand.status_changed_by_profile.full_name}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
                   )}
                   {demand.due_date && (
                     <TooltipProvider delayDuration={300}>
