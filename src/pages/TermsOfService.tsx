@@ -1,12 +1,12 @@
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
-import { SEOHead } from "@/components/SEOHead";
+
 import logoSoma from "@/assets/logo-soma.png";
 
 export default function TermsOfService() {
   return (
     <>
-      <SEOHead title="Termos de Serviço" description="Termos de Serviço do SoMA - Condições de uso da plataforma de gestão de demandas." path="/terms-of-service" />
+      
       <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-4">

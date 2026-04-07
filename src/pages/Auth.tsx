@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { SEOHead } from "@/components/SEOHead";
+
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -393,7 +393,7 @@ export default function Auth() {
   const passwordsMatch = signupData.password && signupData.confirmPassword && signupData.password === signupData.confirmPassword;
   const passwordsDontMatch = signupData.confirmPassword && signupData.password !== signupData.confirmPassword;
   return <>
-    <SEOHead title="Login" description="Acesse o SoMA - Sistema operacional de marketing para gestão de demandas, kanban e equipes." path="/auth" />
+    
     <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen lg:overflow-hidden">
       {/* Mobile/Tablet Header with Image - Fixed height */}
       <div className="lg:hidden relative h-40 sm:h-48 md:h-56 flex-shrink-0 overflow-hidden" style={{
