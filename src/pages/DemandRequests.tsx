@@ -147,7 +147,8 @@ export default function DemandRequests() {
   // Pagination states
   const [approvedPage, setApprovedPage] = useState(1);
   const [returnedPage, setReturnedPage] = useState(1);
-  const ITEMS_PER_PAGE = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const rowsPerPageOptions = [10, 25, 50, 100];
 
   // Update default tab when role changes
   useEffect(() => {
@@ -190,11 +191,11 @@ export default function DemandRequests() {
   const [allBoardPage, setAllBoardPage] = useState(1);
 
   const paginatedAllBoard = useMemo(() => {
-    const totalPages = Math.ceil(allBoardRequests.length / ITEMS_PER_PAGE);
-    const startIndex = (allBoardPage - 1) * ITEMS_PER_PAGE;
-    const items = allBoardRequests.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-    return { items, totalPages };
-  }, [allBoardRequests, allBoardPage]);
+    const totalPages = Math.ceil(allBoardRequests.length / itemsPerPage);
+    const startIndex = (allBoardPage - 1) * itemsPerPage;
+    const items = allBoardRequests.slice(startIndex, startIndex + itemsPerPage);
+    return { items, totalPages, totalItems: allBoardRequests.length };
+  }, [allBoardRequests, allBoardPage, itemsPerPage]);
 
   // Paginated data
   const matchesTabSearch = useCallback((request: any, query: string) => {
@@ -237,25 +238,25 @@ export default function DemandRequests() {
   const [pendingPage, setPendingPage] = useState(1);
 
   const paginatedPending = useMemo(() => {
-    const totalPages = Math.ceil(filteredPending.length / ITEMS_PER_PAGE);
-    const startIndex = (pendingPage - 1) * ITEMS_PER_PAGE;
-    const items = filteredPending.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filteredPending.length / itemsPerPage);
+    const startIndex = (pendingPage - 1) * itemsPerPage;
+    const items = filteredPending.slice(startIndex, startIndex + itemsPerPage);
     return { items, totalPages };
-  }, [filteredPending, pendingPage]);
+  }, [filteredPending, pendingPage, itemsPerPage]);
 
   const paginatedApproved = useMemo(() => {
-    const totalPages = Math.ceil(filteredApproved.length / ITEMS_PER_PAGE);
-    const startIndex = (approvedPage - 1) * ITEMS_PER_PAGE;
-    const items = filteredApproved.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filteredApproved.length / itemsPerPage);
+    const startIndex = (approvedPage - 1) * itemsPerPage;
+    const items = filteredApproved.slice(startIndex, startIndex + itemsPerPage);
     return { items, totalPages };
-  }, [filteredApproved, approvedPage]);
+  }, [filteredApproved, approvedPage, itemsPerPage]);
 
   const paginatedReturned = useMemo(() => {
-    const totalPages = Math.ceil(filteredReturned.length / ITEMS_PER_PAGE);
-    const startIndex = (returnedPage - 1) * ITEMS_PER_PAGE;
-    const items = filteredReturned.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filteredReturned.length / itemsPerPage);
+    const startIndex = (returnedPage - 1) * itemsPerPage;
+    const items = filteredReturned.slice(startIndex, startIndex + itemsPerPage);
     return { items, totalPages };
-  }, [filteredReturned, returnedPage]);
+  }, [filteredReturned, returnedPage, itemsPerPage]);
 
   // My requests filtered
   const myStatusCounts = useMemo(() => {
@@ -281,6 +282,14 @@ export default function DemandRequests() {
       return true;
     });
   }, [myRequests, myStatusFilter, mySelectedDate, matchesSearch]);
+
+  const [myPage, setMyPage] = useState(1);
+  const paginatedMy = useMemo(() => {
+    const totalPages = Math.ceil(filteredMyRequests.length / itemsPerPage);
+    const startIndex = (myPage - 1) * itemsPerPage;
+    const items = filteredMyRequests.slice(startIndex, startIndex + itemsPerPage);
+    return { items, totalPages, totalItems: filteredMyRequests.length };
+  }, [filteredMyRequests, myPage, itemsPerPage]);
 
   // Comments hooks
   const { data: comments, isLoading: commentsLoading } = useRequestComments(viewing?.id || null);
@@ -660,20 +669,61 @@ export default function DemandRequests() {
     </Card>
   );
 
-  const renderPagination = (page: number, setPage: (fn: (p: number) => number) => void, totalPages: number) => {
-    if (totalPages <= 1) return null;
+  const handleItemsPerPageChange = (value: string) => {
+    const newVal = parseInt(value);
+    setItemsPerPage(newVal);
+    setAllBoardPage(1);
+    setPendingPage(1);
+    setApprovedPage(1);
+    setReturnedPage(1);
+    setMyPage(1);
+  };
+
+  const renderPaginationBar = (page: number, setPage: (fn: (p: number) => number) => void, totalPages: number, totalItems: number) => {
     return (
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between border-t border-border pt-3 mt-4">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>Página {page} de {totalPages}</span>
+          <span>Itens por página</span>
+          <Select value={String(itemsPerPage)} onValueChange={handleItemsPerPageChange}>
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {rowsPerPageOptions.map(opt => (
+                <SelectItem key={opt} value={String(opt)}>{opt}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span>{totalItems} registro{totalItems !== 1 ? "s" : ""} encontrado{totalItems !== 1 ? "s" : ""}</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>Página {page} de {totalPages || 1}</span>
           <div className="flex items-center">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Keep old renderPagination for inline usage in admin toolbar
+  const renderPagination = (page: number, setPage: (fn: (p: number) => number) => void, totalPages: number) => {
+    if (totalPages <= 1) return null;
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <span>Página {page} de {totalPages}</span>
+        <div className="flex items-center">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     );
@@ -1072,10 +1122,13 @@ export default function DemandRequests() {
 
               {myLoading ? (
                 <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-              ) : filteredMyRequests.length > 0 ? (
-                <div className="grid gap-4">
-                  {filteredMyRequests.map((request: any) => renderMyRequestCard(request))}
-                </div>
+              ) : paginatedMy.items.length > 0 ? (
+                <>
+                  <div className="grid gap-4">
+                    {paginatedMy.items.map((request: any) => renderMyRequestCard(request))}
+                  </div>
+                  {renderPaginationBar(myPage, setMyPage, paginatedMy.totalPages, paginatedMy.totalItems)}
+                </>
               ) : (
                 <Card>
                   <CardContent className="py-12 text-center text-muted-foreground">
@@ -1228,9 +1281,9 @@ export default function DemandRequests() {
 
             {(pendingLoading || approvedLoading || returnedLoading) ? (
               <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-            ) : allBoardRequests.length > 0 ? (
-              <div className="space-y-4 mt-4">
-                <div className="grid gap-4">
+            ) : paginatedAllBoard.items.length > 0 ? (
+              <>
+                <div className="grid gap-4 mt-4">
                   {paginatedAllBoard.items.map((request: any) => (
                     <Card
                       key={request.id}
@@ -1271,7 +1324,8 @@ export default function DemandRequests() {
                     </Card>
                   ))}
                 </div>
-              </div>
+                {renderPaginationBar(allBoardPage, setAllBoardPage, paginatedAllBoard.totalPages, paginatedAllBoard.totalItems)}
+              </>
             ) : (
               renderEmptyState("Não há solicitações neste quadro")
             )}
@@ -1294,9 +1348,12 @@ export default function DemandRequests() {
             {pendingLoading ? (
               <div className="text-center py-12 text-muted-foreground">Carregando...</div>
             ) : paginatedPending.items.length > 0 ? (
-              <div className="grid gap-4">
-                {paginatedPending.items.map(request => renderRequestCard(request))}
-              </div>
+              <>
+                <div className="grid gap-4">
+                  {paginatedPending.items.map(request => renderRequestCard(request))}
+                </div>
+                {renderPaginationBar(pendingPage, setPendingPage, paginatedPending.totalPages, filteredPending.length)}
+              </>
             ) : (
               renderEmptyState((pendingSearchQuery || pendingPriorityFilter !== "all" || pendingDateFilter)
                 ? "Nenhuma solicitação encontrada com os filtros aplicados"
@@ -1321,9 +1378,12 @@ export default function DemandRequests() {
               {approvedLoading ? (
                 <div className="text-center py-12 text-muted-foreground">Carregando...</div>
               ) : paginatedApproved.items.length > 0 ? (
-                <div className="grid gap-4">
-                  {paginatedApproved.items.map(request => renderRequestCard(request))}
-                </div>
+                <>
+                  <div className="grid gap-4">
+                    {paginatedApproved.items.map(request => renderRequestCard(request))}
+                  </div>
+                  {renderPaginationBar(approvedPage, setApprovedPage, paginatedApproved.totalPages, filteredApproved.length)}
+                </>
               ) : (
                 renderEmptyState((approvedSearchQuery || approvedPriorityFilter !== "all" || approvedDateFilter)
                   ? "Nenhuma solicitação encontrada com os filtros aplicados"
@@ -1349,9 +1409,12 @@ export default function DemandRequests() {
               {returnedLoading ? (
                 <div className="text-center py-12 text-muted-foreground">Carregando...</div>
               ) : paginatedReturned.items.length > 0 ? (
-                <div className="grid gap-4">
-                  {paginatedReturned.items.map(request => renderRequestCard(request, true))}
-                </div>
+                <>
+                  <div className="grid gap-4">
+                    {paginatedReturned.items.map(request => renderRequestCard(request, true))}
+                  </div>
+                  {renderPaginationBar(returnedPage, setReturnedPage, paginatedReturned.totalPages, filteredReturned.length)}
+                </>
               ) : (
                 renderEmptyState((returnedSearchQuery || returnedPriorityFilter !== "all" || returnedDateFilter)
                   ? "Nenhuma solicitação encontrada com os filtros aplicados"
