@@ -184,6 +184,22 @@ export default function DemandRequests() {
     return { items, totalPages, totalItems: allBoardRequests.length };
   }, [allBoardRequests, allBoardPage, itemsPerPage]);
 
+  const matchesTabSearch = useCallback((request: any, query: string) => {
+    if (!query.trim()) return true;
+    const q = query.toLowerCase();
+    const title = (request.title || "").toLowerCase();
+    const priority = (request.priority || "").toLowerCase();
+    const serviceName = (request.service?.name || "").toLowerCase();
+    const creatorName = (request.creator?.full_name || "").toLowerCase();
+    return title.includes(q) || priority.includes(q) || serviceName.includes(q) || creatorName.includes(q);
+  }, []);
+
+  const applyDateFilter = useCallback((request: any, dateFilter: Date | undefined, dateField: string = "created_at") => {
+    if (!dateFilter) return true;
+    const d = new Date(request[dateField]);
+    return !isBefore(d, startOfDay(dateFilter)) && !isAfter(d, endOfDay(dateFilter));
+  }, []);
+
   // Unified admin: combine all requests, filter, sort newest first
   const allAdminRequests = useMemo(() => {
     const all = [
@@ -191,7 +207,6 @@ export default function DemandRequests() {
       ...(approvedRequests || []),
       ...(returnedRequests || []),
     ];
-    // Sort newest first by created_at
     all.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     return all;
   }, [pendingRequests, approvedRequests, returnedRequests]);
@@ -222,20 +237,6 @@ export default function DemandRequests() {
     const items = filteredAdminRequests.slice(startIndex, startIndex + itemsPerPage);
     return { items, totalPages, totalItems: filteredAdminRequests.length };
   }, [filteredAdminRequests, adminPage, itemsPerPage]);
-
-  const paginatedApproved = useMemo(() => {
-    const totalPages = Math.ceil(filteredApproved.length / itemsPerPage);
-    const startIndex = (approvedPage - 1) * itemsPerPage;
-    const items = filteredApproved.slice(startIndex, startIndex + itemsPerPage);
-    return { items, totalPages };
-  }, [filteredApproved, approvedPage, itemsPerPage]);
-
-  const paginatedReturned = useMemo(() => {
-    const totalPages = Math.ceil(filteredReturned.length / itemsPerPage);
-    const startIndex = (returnedPage - 1) * itemsPerPage;
-    const items = filteredReturned.slice(startIndex, startIndex + itemsPerPage);
-    return { items, totalPages };
-  }, [filteredReturned, returnedPage, itemsPerPage]);
 
   // My requests filtered
   const myStatusCounts = useMemo(() => {
