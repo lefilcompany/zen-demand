@@ -1029,6 +1029,7 @@ export type Database = {
           priority: string | null
           service_id: string | null
           status_changed_at: string | null
+          status_changed_by: string | null
           status_id: string
           team_id: string
           time_in_progress_seconds: number | null
@@ -1052,6 +1053,7 @@ export type Database = {
           priority?: string | null
           service_id?: string | null
           status_changed_at?: string | null
+          status_changed_by?: string | null
           status_id: string
           team_id: string
           time_in_progress_seconds?: number | null
@@ -1075,6 +1077,7 @@ export type Database = {
           priority?: string | null
           service_id?: string | null
           status_changed_at?: string | null
+          status_changed_by?: string | null
           status_id?: string
           team_id?: string
           time_in_progress_seconds?: number | null
@@ -1108,6 +1111,13 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demands_status_changed_by_fkey"
+            columns: ["status_changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
