@@ -635,44 +635,6 @@ export default function DemandRequests() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{pageTitle}</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <div className={cn(
-            "flex items-center transition-all duration-300 ease-in-out rounded-md border border-border overflow-hidden",
-            searchOpen ? "w-64 bg-background" : "w-9"
-          )}>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 shrink-0"
-              onClick={() => {
-                if (searchOpen && searchQuery) {
-                  setSearchQuery("");
-                } else {
-                  setSearchOpen(!searchOpen);
-                  if (searchOpen) setSearchQuery("");
-                }
-              }}
-            >
-              {searchOpen && searchQuery ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
-            </Button>
-            {searchOpen && (
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar por título, prioridade, serviço..."
-                className="h-9 w-full bg-transparent text-sm outline-none pr-3 text-foreground placeholder:text-muted-foreground"
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") {
-                    setSearchQuery("");
-                    setSearchOpen(false);
-                  }
-                }}
-              />
-            )}
-          </div>
-        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
