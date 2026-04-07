@@ -1,44 +1,59 @@
 
 
-## Plano: Melhorar carrossel de solicitações e unificar telas
+## Problem
 
-### Resumo
-Melhorar os cards do carrossel no dashboard do solicitante com ícones, datas e informações mais claras. Remover a página `/my-requests` (MyDemandRequests) e unificar tudo na página `/demand-requests` (DemandRequests), adicionando uma aba "Minhas Solicitações" para solicitantes. Cada card do carrossel levará diretamente à solicitação específica via dialog.
+When an authenticated user opens a shared demand link (`/shared/:token`), they see the public read-only view instead of being redirected to the internal demand detail page. This happens because:
 
-### Alterações
+1. The current redirect logic relies on `boards` from `BoardContext`, which only loads boards for the **currently selected team**
+2. If the demand belongs to a different team, or team/board data hasn't loaded yet, the check `boards.some(b => b.id === demand.board_id)` fails silently
 
-**1. `src/components/RequesterRequestsCarousel.tsx`** — Melhorar cards do carrossel
-- Trocar emojis (🏷️, 📋) por ícones Lucide (`Tag`, `Layout`)
-- Adicionar label "Status Atual:" antes do status da demanda vinculada
-- Mostrar data de criação com ícone `CalendarDays`
-- Mostrar data de aprovação (responded_at) quando aprovada, com ícone `CheckCircle`
-- Buscar `responded_at` na query do Supabase
-- Ao clicar, navegar para `/demand-requests?highlight={requestId}` para abrir diretamente a solicitação
+## Solution
 
-**2. `src/pages/DemandRequests.tsx`** — Unificar com "Minhas Solicitações"
-- Adicionar aba "Minhas" visível para solicitantes (role requester), que exibe as solicitações criadas pelo usuário com filtros de status e data (funcionalidade do antigo MyDemandRequests)
-- Incluir edição/reenvio inline para solicitações devolvidas/pendentes do próprio usuário
-- Ler query param `highlight` da URL para abrir automaticamente o dialog de visualização da solicitação correspondente ao carregar a página
-- Ajustar título e breadcrumb dinamicamente conforme o papel do usuário
+Replace the indirect board-context check with a **direct database query** to `board_members` to verify if the authenticated user is a member of the demand's board. This is independent of the selected team context and works reliably.
 
-**3. `src/components/AppSidebar.tsx`** — Atualizar navegação
-- Mudar URL de "Minhas Solicitações" de `/my-requests` para `/demand-requests`
-- Manter ícone e badge de pendentes/devolvidas
+## Changes
 
-**4. `src/App.tsx`** — Remover rota
-- Remover import e rota `/my-requests` (MyDemandRequests)
+### 1. `src/pages/SharedDemand.tsx`
 
-**5. `src/components/CreateRequestQuickDialog.tsx` e `src/pages/CreateDemandRequest.tsx`**
-- Mudar navegação pós-criação de `/my-requests` para `/demand-requests`
+- Remove the dependency on `useSelectedBoardSafe()` for the redirect logic
+- Add a direct query: when `session?.user` exists and `demand` is loaded, query `board_members` to check if the user belongs to `demand.board_id`
+- If the user is a board member:
+  - Update `selectedTeamId` (via TeamContext) to the demand's `team_id`
+  - Update `selectedBoardId` (via BoardContext) to the demand's `board_id`
+  - Redirect to `/demands/${demand.id}` with `replace: true`
+- Show a brief loading state during the membership check to avoid flashing the public view
+- Keep the current public view as fallback for non-members and anonymous users
 
-**6. `src/pages/MyDemandRequests.tsx`** — Remover arquivo
-- Excluir o arquivo (funcionalidade migrada para DemandRequests)
+### Technical approach
 
-### Detalhes técnicos
+```tsx
+// Direct membership check, independent of selected team
+useEffect(() => {
+  if (redirectedRef.current || !demand?.id || !demand?.board_id || !session?.user) return;
+  
+  const checkMembership = async () => {
+    const { data } = await supabase
+      .from("board_members")
+      .select("id")
+      .eq("board_id", demand.board_id)
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+    
+    if (data) {
+      redirectedRef.current = true;
+      // Sync team and board context before navigating
+      setSelectedTeamId(demand.team_id);
+      setSelectedBoardId(demand.board_id);
+      navigate(`/demands/${demand.id}`, { replace: true });
+    } else {
+      setMembershipChecked(true); // show public view
+    }
+  };
+  
+  checkMembership();
+}, [demand, session]);
+```
 
-- Query do carrossel adicionará `responded_at` ao select do Supabase
-- Highlight param: `useSearchParams` para ler `?highlight=<id>` e auto-abrir o dialog `setViewing(request)` no mount
-- A aba "Minhas" no DemandRequests usará o hook `useMyDemandRequests` já existente, com filtros de status/data incorporados
-- Para solicitantes, as abas visíveis serão: "Pendentes", "Aprovadas", "Devolvidas", "Rejeitadas" (todas filtradas por `created_by = user.id`)
-- Para admins/coordenadores, mantém as abas atuais + visualização de todas as solicitações
+- A `membershipChecked` state prevents the public view from flashing before the check completes
+- The loading spinner is shown while the check runs for authenticated users
 
