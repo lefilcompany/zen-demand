@@ -44,7 +44,26 @@ const typeConfig = {
 
 export function DashboardAIInsights({ boardId, isRequester = false }: DashboardAIInsightsProps) {
   const navigate = useNavigate();
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const [expandedIndexes, setExpandedIndexes] = useState<Set<number>>(new Set());
+
+  const allExpanded = data?.insights?.length ? expandedIndexes.size === data.insights.length : false;
+
+  const toggleIndex = (i: number) => {
+    setExpandedIndexes(prev => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (allExpanded) {
+      setExpandedIndexes(new Set());
+    } else {
+      setExpandedIndexes(new Set(data?.insights?.map((_, i) => i) || []));
+    }
+  };
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["dashboard-ai-insights", boardId, isRequester],
