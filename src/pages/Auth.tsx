@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff, Loader2, Mail, Check, X } from "lucide-react";
 import { lovable } from "@/integrations/lovable/index";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SEOHead } from "@/components/SEOHead";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
 interface IBGEState {
@@ -393,7 +394,7 @@ export default function Auth() {
   const passwordsMatch = signupData.password && signupData.confirmPassword && signupData.password === signupData.confirmPassword;
   const passwordsDontMatch = signupData.confirmPassword && signupData.password !== signupData.confirmPassword;
   return <>
-    
+    <SEOHead title="Entrar ou Criar Conta" description="Acesse o SoMA - Sistema Operacional de Marketing. Faça login ou crie sua conta para gerenciar demandas e produtividade." path="/auth" />
     <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen lg:overflow-hidden">
       {/* Mobile/Tablet Header with Image - Fixed height */}
       <div className="lg:hidden relative h-40 sm:h-48 md:h-56 flex-shrink-0 overflow-hidden" style={{
