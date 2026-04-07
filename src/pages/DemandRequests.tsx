@@ -135,6 +135,24 @@ export default function DemandRequests() {
     }
   }, [highlightId, pendingRequests, approvedRequests, returnedRequests, myRequests]);
 
+  // All board requests combined (for requester "Todas do Quadro" tab)
+  const allBoardRequests = useMemo(() => {
+    return [
+      ...(pendingRequests || []),
+      ...(approvedRequests || []),
+      ...(returnedRequests || []),
+    ];
+  }, [pendingRequests, approvedRequests, returnedRequests]);
+
+  const [allBoardPage, setAllBoardPage] = useState(1);
+
+  const paginatedAllBoard = useMemo(() => {
+    const totalPages = Math.ceil(allBoardRequests.length / ITEMS_PER_PAGE);
+    const startIndex = (allBoardPage - 1) * ITEMS_PER_PAGE;
+    const items = allBoardRequests.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    return { items, totalPages };
+  }, [allBoardRequests, allBoardPage]);
+
   // Paginated data
   const paginatedApproved = useMemo(() => {
     if (!approvedRequests) return { items: [], totalPages: 0 };
