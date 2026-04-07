@@ -76,6 +76,12 @@ export default function Demands() {
     })?.viewMode;
     return stateViewMode || "table";
   });
+
+  // Track calendar month for persistence across navigation
+  const [calendarMonth, setCalendarMonth] = useState<Date>(() => {
+    const stateMonth = (location.state as { calendarMonth?: string })?.calendarMonth;
+    return stateMonth ? new Date(stateMonth) : new Date();
+  });
   const [filters, setFilters] = useState<DemandFiltersState>({
     status: null,
     priority: null,
