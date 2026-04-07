@@ -672,11 +672,11 @@ export default function DemandRequests() {
   const handleItemsPerPageChange = (value: string) => {
     const newVal = parseInt(value);
     setItemsPerPage(newVal);
-    // Reset all pages
     setAllBoardPage(1);
     setPendingPage(1);
     setApprovedPage(1);
     setReturnedPage(1);
+    setMyPage(1);
   };
 
   const renderPaginationBar = (page: number, setPage: (fn: (p: number) => number) => void, totalPages: number, totalItems: number) => {
