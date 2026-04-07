@@ -647,7 +647,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     setOptimisticUpdates(prev => ({ ...prev, [demandId]: "Entregue" }));
     
     updateDemand.mutate(
-      { id: demandId, status_id: entregueStatus.id },
+      { id: demandId, status_id: entregueStatus.id, status_changed_by: user?.id || null },
       {
         onSuccess: async () => {
           setOptimisticUpdates(prev => {
