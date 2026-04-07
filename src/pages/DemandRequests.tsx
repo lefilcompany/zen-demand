@@ -1280,48 +1280,84 @@ export default function DemandRequests() {
 
         {/* Pending Tab */}
         <TabsContent value="pending">
-          {pendingLoading ? (
-            <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-          ) : filteredPending.length > 0 ? (
-            <div className="grid gap-4">
-              {filteredPending.map(request => renderRequestCard(request))}
-            </div>
-          ) : (
-            renderEmptyState(searchQuery ? "Nenhuma solicitação encontrada para essa busca" : "Não há solicitações pendentes para este quadro")
-          )}
+          <div className="space-y-4">
+            {renderAdminToolbar({
+              isSearchOpen: pendingSearchOpen, setIsSearchOpen: setPendingSearchOpen,
+              query: pendingSearchQuery, setQuery: setPendingSearchQuery, inputRef: pendingSearchRef,
+              isFiltersOpen: pendingFiltersOpen, setIsFiltersOpen: setPendingFiltersOpen,
+              priorityFilter: pendingPriorityFilter, setPriorityFilter: setPendingPriorityFilter,
+              dateFilter: pendingDateFilter, setDateFilter: setPendingDateFilter,
+              dateLabel: "Data de criação",
+              page: pendingPage, setPage: setPendingPage, totalPages: paginatedPending.totalPages,
+              totalItems: filteredPending.length,
+            })}
+            {pendingLoading ? (
+              <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+            ) : paginatedPending.items.length > 0 ? (
+              <div className="grid gap-4">
+                {paginatedPending.items.map(request => renderRequestCard(request))}
+              </div>
+            ) : (
+              renderEmptyState((pendingSearchQuery || pendingPriorityFilter !== "all" || pendingDateFilter)
+                ? "Nenhuma solicitação encontrada com os filtros aplicados"
+                : "Não há solicitações pendentes para este quadro")
+            )}
+          </div>
         </TabsContent>
 
         {canApproveOrReturn && (
           <TabsContent value="approved">
-            {approvedLoading ? (
-              <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-            ) : approvedRequests && approvedRequests.length > 0 ? (
-              <div className="space-y-4">
-                {renderPagination(approvedPage, setApprovedPage, paginatedApproved.totalPages)}
+            <div className="space-y-4">
+              {renderAdminToolbar({
+                isSearchOpen: approvedSearchOpen, setIsSearchOpen: setApprovedSearchOpen,
+                query: approvedSearchQuery, setQuery: setApprovedSearchQuery, inputRef: approvedSearchRef,
+                isFiltersOpen: approvedFiltersOpen, setIsFiltersOpen: setApprovedFiltersOpen,
+                priorityFilter: approvedPriorityFilter, setPriorityFilter: setApprovedPriorityFilter,
+                dateFilter: approvedDateFilter, setDateFilter: setApprovedDateFilter,
+                dateLabel: "Data de aprovação",
+                page: approvedPage, setPage: setApprovedPage, totalPages: paginatedApproved.totalPages,
+                totalItems: filteredApproved.length,
+              })}
+              {approvedLoading ? (
+                <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+              ) : paginatedApproved.items.length > 0 ? (
                 <div className="grid gap-4">
                   {paginatedApproved.items.map(request => renderRequestCard(request))}
                 </div>
-              </div>
-            ) : (
-              renderEmptyState("Não há solicitações aprovadas para este quadro")
-            )}
+              ) : (
+                renderEmptyState((approvedSearchQuery || approvedPriorityFilter !== "all" || approvedDateFilter)
+                  ? "Nenhuma solicitação encontrada com os filtros aplicados"
+                  : "Não há solicitações aprovadas para este quadro")
+              )}
+            </div>
           </TabsContent>
         )}
 
         {canApproveOrReturn && (
           <TabsContent value="returned">
-            {returnedLoading ? (
-              <div className="text-center py-12 text-muted-foreground">Carregando...</div>
-            ) : returnedRequests && returnedRequests.length > 0 ? (
-              <div className="space-y-4">
-                {renderPagination(returnedPage, setReturnedPage, paginatedReturned.totalPages)}
+            <div className="space-y-4">
+              {renderAdminToolbar({
+                isSearchOpen: returnedSearchOpen, setIsSearchOpen: setReturnedSearchOpen,
+                query: returnedSearchQuery, setQuery: setReturnedSearchQuery, inputRef: returnedSearchRef,
+                isFiltersOpen: returnedFiltersOpen, setIsFiltersOpen: setReturnedFiltersOpen,
+                priorityFilter: returnedPriorityFilter, setPriorityFilter: setReturnedPriorityFilter,
+                dateFilter: returnedDateFilter, setDateFilter: setReturnedDateFilter,
+                dateLabel: "Data de devolução",
+                page: returnedPage, setPage: setReturnedPage, totalPages: paginatedReturned.totalPages,
+                totalItems: filteredReturned.length,
+              })}
+              {returnedLoading ? (
+                <div className="text-center py-12 text-muted-foreground">Carregando...</div>
+              ) : paginatedReturned.items.length > 0 ? (
                 <div className="grid gap-4">
                   {paginatedReturned.items.map(request => renderRequestCard(request, true))}
                 </div>
-              </div>
-            ) : (
-              renderEmptyState("Não há solicitações devolvidas para este quadro")
-            )}
+              ) : (
+                renderEmptyState((returnedSearchQuery || returnedPriorityFilter !== "all" || returnedDateFilter)
+                  ? "Nenhuma solicitação encontrada com os filtros aplicados"
+                  : "Não há solicitações devolvidas para este quadro")
+              )}
+            </div>
           </TabsContent>
         )}
       </Tabs>
