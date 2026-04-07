@@ -647,7 +647,8 @@ export default function DemandDetail() {
                     if (status.id !== demand.status_id) {
                       updateDemand.mutate({
                         id: demand.id,
-                        status_id: status.id
+                        status_id: status.id,
+                        status_changed_by: user?.id || null
                       }, {
                         onSuccess: () => {
                           toast.success(`Status alterado para "${status.name}"!`);
