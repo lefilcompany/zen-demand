@@ -598,12 +598,6 @@ export default function DemandRequests() {
             <span className="truncate">Quadro: <span className="font-medium">{currentBoard?.name || "Selecione um quadro"}</span></span>
           </p>
         </div>
-        {isRequester && (
-          <Button onClick={() => navigate("/demands/request")}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Solicitação
-          </Button>
-        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
