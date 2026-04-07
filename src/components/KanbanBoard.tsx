@@ -996,9 +996,9 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                         <TooltipProvider delayDuration={300}>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Avatar className="h-4 w-4 cursor-default border border-border">
+                              <Avatar className="h-5 w-5 cursor-default ring-1 ring-primary/30 hover:scale-100">
                                 <AvatarImage src={demand.status_changed_by_profile.avatar_url || undefined} alt={demand.status_changed_by_profile.full_name} />
-                                <AvatarFallback className="text-[7px] bg-muted text-muted-foreground">
+                                <AvatarFallback className="text-[7px] bg-primary/10 text-primary">
                                   {demand.status_changed_by_profile.full_name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
                                 </AvatarFallback>
                               </Avatar>
