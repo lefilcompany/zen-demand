@@ -283,6 +283,14 @@ export default function DemandRequests() {
     });
   }, [myRequests, myStatusFilter, mySelectedDate, matchesSearch]);
 
+  const [myPage, setMyPage] = useState(1);
+  const paginatedMy = useMemo(() => {
+    const totalPages = Math.ceil(filteredMyRequests.length / itemsPerPage);
+    const startIndex = (myPage - 1) * itemsPerPage;
+    const items = filteredMyRequests.slice(startIndex, startIndex + itemsPerPage);
+    return { items, totalPages, totalItems: filteredMyRequests.length };
+  }, [filteredMyRequests, myPage, itemsPerPage]);
+
   // Comments hooks
   const { data: comments, isLoading: commentsLoading } = useRequestComments(viewing?.id || null);
   const createComment = useCreateRequestComment();
