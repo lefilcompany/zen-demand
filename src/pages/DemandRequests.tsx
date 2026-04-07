@@ -197,9 +197,51 @@ export default function DemandRequests() {
   }, [allBoardRequests, allBoardPage]);
 
   // Paginated data
-  const filteredPending = useMemo(() => (pendingRequests || []).filter(matchesSearch), [pendingRequests, matchesSearch]);
-  const filteredApproved = useMemo(() => (approvedRequests || []).filter(matchesSearch), [approvedRequests, matchesSearch]);
-  const filteredReturned = useMemo(() => (returnedRequests || []).filter(matchesSearch), [returnedRequests, matchesSearch]);
+  const matchesTabSearch = useCallback((request: any, query: string) => {
+    if (!query.trim()) return true;
+    const q = query.toLowerCase();
+    const title = (request.title || "").toLowerCase();
+    const priority = (request.priority || "").toLowerCase();
+    const serviceName = (request.service?.name || "").toLowerCase();
+    const creatorName = (request.creator?.full_name || "").toLowerCase();
+    return title.includes(q) || priority.includes(q) || serviceName.includes(q) || creatorName.includes(q);
+  }, []);
+
+  const applyDateFilter = useCallback((request: any, dateFilter: Date | undefined, dateField: string = "created_at") => {
+    if (!dateFilter) return true;
+    const d = new Date(request[dateField]);
+    return !isBefore(d, startOfDay(dateFilter)) && !isAfter(d, endOfDay(dateFilter));
+  }, []);
+
+  const filteredPending = useMemo(() => (pendingRequests || []).filter(r => {
+    if (!matchesTabSearch(r, pendingSearchQuery)) return false;
+    if (pendingPriorityFilter !== "all" && (r.priority || "média") !== pendingPriorityFilter) return false;
+    if (!applyDateFilter(r, pendingDateFilter)) return false;
+    return true;
+  }), [pendingRequests, pendingSearchQuery, pendingPriorityFilter, pendingDateFilter, matchesTabSearch, applyDateFilter]);
+
+  const filteredApproved = useMemo(() => (approvedRequests || []).filter(r => {
+    if (!matchesTabSearch(r, approvedSearchQuery)) return false;
+    if (approvedPriorityFilter !== "all" && (r.priority || "média") !== approvedPriorityFilter) return false;
+    if (!applyDateFilter(r, approvedDateFilter, "responded_at")) return false;
+    return true;
+  }), [approvedRequests, approvedSearchQuery, approvedPriorityFilter, approvedDateFilter, matchesTabSearch, applyDateFilter]);
+
+  const filteredReturned = useMemo(() => (returnedRequests || []).filter(r => {
+    if (!matchesTabSearch(r, returnedSearchQuery)) return false;
+    if (returnedPriorityFilter !== "all" && (r.priority || "média") !== returnedPriorityFilter) return false;
+    if (!applyDateFilter(r, returnedDateFilter, "responded_at")) return false;
+    return true;
+  }), [returnedRequests, returnedSearchQuery, returnedPriorityFilter, returnedDateFilter, matchesTabSearch, applyDateFilter]);
+
+  const [pendingPage, setPendingPage] = useState(1);
+
+  const paginatedPending = useMemo(() => {
+    const totalPages = Math.ceil(filteredPending.length / ITEMS_PER_PAGE);
+    const startIndex = (pendingPage - 1) * ITEMS_PER_PAGE;
+    const items = filteredPending.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    return { items, totalPages };
+  }, [filteredPending, pendingPage]);
 
   const paginatedApproved = useMemo(() => {
     const totalPages = Math.ceil(filteredApproved.length / ITEMS_PER_PAGE);
