@@ -54,9 +54,11 @@ export default function DemandDetail() {
   const fromState = location.state as {
     from?: string;
     viewMode?: string;
+    calendarMonth?: string;
   } | null;
   const cameFromKanban = fromState?.from === "kanban" || document.referrer.includes("/kanban");
   const demandsViewMode = fromState?.viewMode || "table";
+  const calendarMonth = fromState?.calendarMonth;
 
   // Determine origin info for breadcrumb and back navigation
   const getOriginInfo = (): {
