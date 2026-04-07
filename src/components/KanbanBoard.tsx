@@ -992,6 +992,23 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                       </Tooltip>
                     </TooltipProvider>
                   )}
+                  {demand.status_changed_by_profile && (
+                    <TooltipProvider delayDuration={300}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Avatar className="h-5 w-5 cursor-default border border-border">
+                            <AvatarImage src={demand.status_changed_by_profile.avatar_url || undefined} alt={demand.status_changed_by_profile.full_name} />
+                            <AvatarFallback className="text-[8px] bg-muted text-muted-foreground">
+                              {demand.status_changed_by_profile.full_name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p>Movido por {demand.status_changed_by_profile.full_name}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                   {demand.due_date && (
                     <TooltipProvider delayDuration={300}>
                       <Tooltip>
