@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Timer, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
@@ -18,36 +17,82 @@ interface ProductivitySectionProps {
   boardId: string | null;
 }
 
-function ProgressBarWithMarker({ value, markerPercent }: { value: number; markerPercent: number }) {
+function getHealthStatus(value: number, benchmark: number, lowerIsBetter: boolean) {
+  if (benchmark === 0) return { color: "text-muted-foreground", bgClass: "bg-muted", label: "Sem dados" };
+
+  const deviation = Math.abs(value - benchmark) / benchmark;
+
+  // Determine if the value is "good" or "bad"
+  const isGood = lowerIsBetter ? value <= benchmark : value >= benchmark;
+
+  if (deviation <= 0.2) {
+    return { color: "text-emerald-600", bgClass: "bg-emerald-500", label: "Na média" };
+  }
+  if (deviation <= 0.5) {
+    return {
+      color: isGood ? "text-emerald-600" : "text-yellow-600",
+      bgClass: isGood ? "bg-emerald-500" : "bg-yellow-500",
+      label: isGood ? (lowerIsBetter ? "Abaixo da média" : "Acima da média") : (lowerIsBetter ? "Acima da média" : "Abaixo da média"),
+    };
+  }
+  return {
+    color: isGood ? "text-emerald-600" : "text-red-600",
+    bgClass: isGood ? "bg-emerald-500" : "bg-red-500",
+    label: isGood ? (lowerIsBetter ? "Muito abaixo" : "Muito acima") : (lowerIsBetter ? "Muito acima" : "Muito abaixo"),
+  };
+}
+
+function MainProgressBar({ value, benchmark }: { value: number; benchmark: number }) {
+  const maxScale = benchmark * 2;
+  const fillPercent = maxScale > 0 ? Math.min(100, Math.max(0, (value / maxScale) * 100)) : 0;
+
   return (
     <div className="relative w-full">
-      <Progress value={value} className="h-3 sm:h-3.5 md:h-4 rounded-full bg-muted" indicatorClassName="bg-orange-400 rounded-full" />
-      <div
-        className="absolute top-0 h-full w-0.5 bg-foreground/70 z-10"
-        style={{ left: `${Math.min(100, Math.max(0, markerPercent))}%` }}
-      />
+      <div className="relative h-3 sm:h-3.5 md:h-4 rounded-full bg-muted overflow-hidden">
+        <div
+          className="absolute inset-y-0 left-0 bg-orange-400 rounded-full transition-all duration-500"
+          style={{ width: `${fillPercent}%` }}
+        />
+      </div>
+      {/* Center marker for ideal */}
+      <div className="absolute top-0 h-full w-0.5 bg-foreground/60 z-10" style={{ left: "50%" }} />
     </div>
+  );
+}
+
+function HealthIndicatorBar({ bgClass }: { bgClass: string }) {
+  return (
+    <div className={`w-full h-1 sm:h-1.5 rounded-full ${bgClass} transition-colors duration-300`} />
   );
 }
 
 export function ProductivitySection({ demands, boardId }: ProductivitySectionProps) {
   const { data: allEntries } = useBoardTimeEntries(boardId);
 
-  const { avgDays } = useMemo(() => {
+  const { avgDays, completionBenchmark } = useMemo(() => {
     const completedDemands = demands.filter(d => d.demand_statuses?.name === "Entregue");
-    if (completedDemands.length === 0) return { avgDays: 0 };
+    if (completedDemands.length === 0) return { avgDays: 0, completionBenchmark: 5 };
 
-    const totalHours = completedDemands.reduce((acc, d) => {
+    const daysList = completedDemands.map(d => {
       const created = new Date(d.created_at);
       const completed = new Date(d.delivered_at || d.updated_at);
-      return acc + differenceInHours(completed, created);
-    }, 0);
+      return differenceInHours(completed, created) / 24;
+    }).sort((a, b) => a - b);
 
-    return { avgDays: Math.round((totalHours / completedDemands.length / 24) * 10) / 10 };
+    const avg = Math.round((daysList.reduce((a, b) => a + b, 0) / daysList.length) * 10) / 10;
+
+    // Median as benchmark
+    const mid = Math.floor(daysList.length / 2);
+    const median = daysList.length % 2 !== 0
+      ? daysList[mid]
+      : (daysList[mid - 1] + daysList[mid]) / 2;
+    const benchmark = Math.round(median * 10) / 10 || 5;
+
+    return { avgDays: avg, completionBenchmark: benchmark };
   }, [demands]);
 
-  const { totalActiveHours, avgActiveHoursPerUser } = useMemo(() => {
-    if (!allEntries || allEntries.length === 0) return { totalActiveHours: 0, avgActiveHoursPerUser: 0 };
+  const { totalActiveHours, avgActiveHoursPerUser, activityBenchmark } = useMemo(() => {
+    if (!allEntries || allEntries.length === 0) return { totalActiveHours: 0, avgActiveHoursPerUser: 0, activityBenchmark: 8 };
 
     let totalSecs = 0;
     const uniqueUsers = new Set<string>();
@@ -57,11 +102,12 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
     }
     const hours = Math.round((totalSecs / 3600) * 10) / 10;
     const avgPerUser = uniqueUsers.size > 0 ? Math.round((totalSecs / uniqueUsers.size / 3600) * 10) / 10 : 0;
-    return { totalActiveHours: hours, avgActiveHoursPerUser: avgPerUser };
+
+    return { totalActiveHours: hours, avgActiveHoursPerUser: avgPerUser, activityBenchmark: avgPerUser || 8 };
   }, [allEntries]);
 
-  const completionProgress = Math.min(100, (avgDays / 9) * 100);
-  const activeProgress = Math.min(100, (totalActiveHours / 15) * 100);
+  const completionHealth = getHealthStatus(avgDays, completionBenchmark, true);
+  const activityHealth = getHealthStatus(avgActiveHoursPerUser, activityBenchmark, false);
 
   const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
@@ -91,16 +137,19 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
               </div>
             </div>
 
-            <ProgressBarWithMarker value={completionProgress} markerPercent={completionProgress} />
+            <MainProgressBar value={avgDays} benchmark={completionBenchmark} />
 
             <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-muted-foreground">
-              <span>1- dias</span>
-              <span>9+ dias</span>
+              <span>0 dias</span>
+              <span className="font-medium text-foreground/70">ideal</span>
+              <span>{fmt(completionBenchmark * 2)} dias</span>
             </div>
 
+            <HealthIndicatorBar bgClass={completionHealth.bgClass} />
+
             <div className="flex justify-center">
-              <Badge className="bg-orange-500 hover:bg-orange-600 text-white border-0 text-[9px] sm:text-[10px] md:text-xs font-medium px-2 sm:px-2.5 py-0.5 whitespace-nowrap">
-                Média esperada: {avgDays > 0 ? fmt(avgDays) : "0,0"} dias
+              <Badge className={`${completionHealth.bgClass} hover:opacity-90 text-white border-0 text-[9px] sm:text-[10px] md:text-xs font-medium px-2 sm:px-2.5 py-0.5 whitespace-nowrap`}>
+                {completionHealth.label} · Ideal: {fmt(completionBenchmark)} dias
               </Badge>
             </div>
           </div>
@@ -121,16 +170,19 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
               </div>
             </div>
 
-            <ProgressBarWithMarker value={activeProgress} markerPercent={activeProgress} />
+            <MainProgressBar value={avgActiveHoursPerUser} benchmark={activityBenchmark} />
 
             <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-muted-foreground">
-              <span>1- horas</span>
-              <span>15+ horas</span>
+              <span>0 horas</span>
+              <span className="font-medium text-foreground/70">ideal</span>
+              <span>{fmt(activityBenchmark * 2)} h</span>
             </div>
 
+            <HealthIndicatorBar bgClass={activityHealth.bgClass} />
+
             <div className="flex justify-center">
-              <Badge className="bg-orange-500 hover:bg-orange-600 text-white border-0 text-[9px] sm:text-[10px] md:text-xs font-medium px-2 sm:px-2.5 py-0.5 whitespace-nowrap">
-                Média esperada: {avgActiveHoursPerUser > 0 ? fmt(avgActiveHoursPerUser) : "0,0"} h/membro
+              <Badge className={`${activityHealth.bgClass} hover:opacity-90 text-white border-0 text-[9px] sm:text-[10px] md:text-xs font-medium px-2 sm:px-2.5 py-0.5 whitespace-nowrap`}>
+                {activityHealth.label} · Ideal: {fmt(activityBenchmark)} h/membro
               </Badge>
             </div>
           </div>
