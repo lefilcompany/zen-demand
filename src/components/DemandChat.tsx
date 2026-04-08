@@ -76,29 +76,34 @@ export function DemandChat({
     );
   }, [interactions]);
 
-  // Scroll to bottom
-  const scrollToBottom = useCallback(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  // Scroll to bottom within container only (avoid scrolling entire page)
+  const scrollContainerToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
+    const container = scrollRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, []);
 
-  // Auto-scroll on new messages or pending files change if near bottom
+  const scrollToBottom = scrollContainerToBottom;
+
+  // Auto-scroll on new messages if near bottom
   useEffect(() => {
     if (isNearBottomRef.current) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      scrollContainerToBottom("smooth");
     }
-  }, [sortedInteractions]);
+  }, [sortedInteractions, scrollContainerToBottom]);
 
-  // Initial scroll to bottom
+  // Initial scroll to bottom on channel change
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "instant" });
-  }, [channel]);
+    setTimeout(() => scrollContainerToBottom("instant"), 50);
+  }, [channel, scrollContainerToBottom]);
 
-  // Auto-scroll when pending files change (keeps view at bottom when attaching)
+  // Auto-scroll when pending files change
   useEffect(() => {
     if (pendingFiles.length > 0) {
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+      setTimeout(() => scrollContainerToBottom("smooth"), 50);
     }
-  }, [pendingFiles.length]);
+  }, [pendingFiles.length, scrollContainerToBottom]);
 
   // Track scroll position
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
