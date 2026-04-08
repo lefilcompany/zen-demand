@@ -137,23 +137,23 @@ export function DashboardAIInsights({ boardId, isRequester = false }: DashboardA
         })}
 
         {/* CTA Card */}
-        <Card className="p-3 md:p-4 border border-primary/30 bg-primary/5 flex flex-col justify-between transition-shadow hover:shadow-md">
+        <Card className="p-3 md:p-4 border-0 bg-primary flex flex-col justify-between transition-shadow hover:shadow-lg shadow-md">
           <div className="flex items-start gap-2.5">
-            <div className="p-1.5 rounded-lg bg-primary/10 shrink-0">
-              <Sparkles className="h-4 w-4 text-primary" />
+            <div className="p-1.5 rounded-lg bg-white/20 shrink-0">
+              <Sparkles className="h-4 w-4 text-white" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-primary leading-tight">
+              <p className="text-sm font-semibold text-white leading-tight">
                 Resumo Completo
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-white/70 mt-1">
                 Gere uma análise detalhada com IA
               </p>
             </div>
           </div>
           <Button
             size="sm"
-            className="mt-3 w-full gap-1.5 text-xs"
+            className="mt-3 w-full gap-1.5 text-xs bg-white text-primary hover:bg-white/90 font-semibold"
             onClick={() => navigate("/board-summary")}
           >
             Gerar Resumo
