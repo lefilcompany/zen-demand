@@ -1,45 +1,44 @@
 
 
-## Redesign dos indicadores de produtividade
+## Redesign da barra de produtividade
 
-### Conceito
+### Problema atual
+A barra atual usa o centro (50%) como "ideal" e preenche proporcionalmente. O usuário quer algo diferente:
 
-A barra principal não é uma escala fixa — ela representa **onde o valor real está em relação ao benchmark ideal**. O centro da barra (50%) é o valor ideal. Se o valor real está melhor que o ideal, a barra preenche menos (para a esquerda). Se está pior, preenche mais (para a direita). Assim o usuário entende visualmente se está acima ou abaixo do esperado.
+### Nova lógica visual
 
-### Como funciona
+```text
+Barra completa (cinza de fundo):
+|░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░|  ← cinza (escala 0 a max)
 
-**Tempo médio de conclusão** (menor = melhor):
-- Benchmark ideal: calculado como mediana das demandas entregues, ou 5 dias se não houver dados suficientes
-- Centro da barra (50%) = benchmark ideal
-- Se `avgDays` < benchmark → barra preenche menos que 50% (bom, mais para a esquerda)
-- Se `avgDays` > benchmark → barra preenche mais que 50% (ruim, mais para a direita)
-- Escala: 0 a 2× o benchmark (ex: benchmark 5 dias → escala 0–10 dias)
+Preenchimento laranja (valor real):
+|████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░|  ← laranja até o valor real
 
-**Tempo em atividade** (maior = melhor):
-- Benchmark ideal: calculado como média de horas por membro, ou 8h se não houver dados
-- Centro da barra (50%) = benchmark ideal
-- Se `avgHoursPerUser` > benchmark → barra preenche mais que 50% (bom)
-- Se `avgHoursPerUser` < benchmark → barra preenche menos que 50% (ruim)
-- Escala: 0 a 2× o benchmark
+Linha vertical do ideal (sobreposta):
+|████████████████████████░░░░░|░░░░░░░░░░░░░░░░░░|  ← linha vermelha/escura no ideal
+                              ↑ ideal
+```
 
-**Barra indicadora de saúde (pequena, abaixo)**:
-- Preenchida 100% com cor baseada no desvio:
-  - **Verde**: dentro de ±20% do ideal
-  - **Amarelo**: entre 20%–50% de desvio
-  - **Vermelho**: >50% de desvio
-- Label textual: "Acima da média", "Na média", "Abaixo da média"
+- **Barra cinza**: fundo completo representando a escala (0 até `max`)
+- **Preenchimento laranja**: preenche da esquerda até onde o valor real está na escala
+- **Linha vertical sobreposta**: marca onde está o "ideal" (benchmark), para o usuário comparar visualmente se o laranja passou ou ficou aquém do ideal
 
-**Badge**: muda de cor conforme o status (verde/amarelo/vermelho) e mostra o benchmark ideal como referência.
+### Escala
+- `max` = benchmark × 2 (para dar espaço visual dos dois lados)
+- Se o valor real ultrapassar o max, limita em 100%
 
-### Alterações técnicas
+### O que muda no código
 
 **Arquivo: `src/components/ProductivitySection.tsx`**
 
-1. Remover `ProgressBarWithMarker`
-2. Criar `MainProgressBar` — barra com preenchimento laranja proporcional à posição do valor real na escala (0 a 2×benchmark), onde 50% = ideal
-3. Criar `HealthIndicatorBar` — barra fina (h-1.5) 100% preenchida com verde/amarelo/vermelho
-4. Adicionar função `getHealthStatus(value, benchmark, lowerIsBetter)` retornando `{ color, label, bgClass }`
-5. Calcular benchmarks dinamicamente a partir dos dados do quadro
-6. Atualizar labels da escala para mostrar "0" à esquerda e "2× ideal" à direita, com marcador central "ideal"
-7. Badge mostra "Média ideal: X dias" com cor do status
+1. **`MainProgressBar`** — recebe `value`, `benchmark`, `maxScale`:
+   - Barra cinza de fundo (já existe)
+   - Preenchimento laranja: `width = (value / maxScale) * 100%`
+   - **Nova linha vertical** na posição do ideal: `left = (benchmark / maxScale) * 100%`, com cor escura/vermelha (2px de largura), altura total da barra, z-index acima do laranja
+
+2. **`HealthIndicatorBar`** — sem mudança (continua verde/amarelo/vermelho)
+
+3. **Labels da escala** — sem mudança conceitual, já mostram 0 e 2×benchmark
+
+Mudança é apenas no componente `MainProgressBar` — trocar o marker central fixo em 50% por um marker posicionado em `(benchmark / maxScale) * 100%` e garantir que o preenchimento laranja represente o valor real absoluto na escala.
 
