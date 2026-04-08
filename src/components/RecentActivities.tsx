@@ -253,8 +253,8 @@ export function RecentActivities() {
   return (
     <Card className="flex flex-col h-full">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Activity className="h-5 w-5 text-primary" />
+        <CardTitle className="text-sm md:text-base font-bold tracking-wider uppercase text-foreground text-center flex items-center justify-center gap-2">
+          <Activity className="h-4 w-4 md:h-5 md:w-5 text-foreground" />
           Atividades do Quadro
         </CardTitle>
         <CardDescription>
