@@ -353,7 +353,7 @@ export function DemandChat({
             size="icon"
             variant="secondary"
             className="absolute bottom-20 right-4 h-8 w-8 rounded-full shadow-lg z-10"
-            onClick={scrollToBottom}
+            onClick={() => scrollToBottom()}
           >
             <ChevronDown className="h-4 w-4" />
           </Button>
