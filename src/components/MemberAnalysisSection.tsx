@@ -146,8 +146,8 @@ export function MemberAnalysisSection({ demands }: MemberAnalysisSectionProps) {
   return (
     <Card className="flex flex-col h-full">
       <CardHeader className="pb-2 p-4 md:p-6 md:pb-2">
-        <CardTitle className="text-sm md:text-base font-semibold tracking-wide uppercase text-muted-foreground flex items-center gap-2">
-          <Users className="h-4 w-4" />
+        <CardTitle className="text-sm md:text-base font-bold tracking-wider uppercase text-foreground text-center flex items-center justify-center gap-2">
+          <Users className="h-4 w-4 md:h-5 md:w-5 text-foreground" />
           Análise por Membro
         </CardTitle>
       </CardHeader>
