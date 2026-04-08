@@ -45,6 +45,7 @@ function getHealthStatus(value: number, benchmark: number, lowerIsBetter: boolea
 function MainProgressBar({ value, benchmark }: { value: number; benchmark: number }) {
   const maxScale = benchmark * 2;
   const fillPercent = maxScale > 0 ? Math.min(100, Math.max(0, (value / maxScale) * 100)) : 0;
+  const benchmarkPos = maxScale > 0 ? (benchmark / maxScale) * 100 : 50;
 
   return (
     <div className="relative w-full">
@@ -54,8 +55,8 @@ function MainProgressBar({ value, benchmark }: { value: number; benchmark: numbe
           style={{ width: `${fillPercent}%` }}
         />
       </div>
-      {/* Center marker for ideal */}
-      <div className="absolute top-0 h-full w-0.5 bg-foreground/60 z-10" style={{ left: "50%" }} />
+      {/* Ideal benchmark marker */}
+      <div className="absolute top-0 h-full w-0.5 bg-red-500 z-10" style={{ left: `${benchmarkPos}%` }} />
     </div>
   );
 }
