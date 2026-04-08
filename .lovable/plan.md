@@ -1,38 +1,45 @@
 
 
-## Ativação de SEO — Plano atualizado
+## Redesign dos indicadores de produtividade
 
-Domínio principal: **`https://pla.soma.lefil.com.br`**
+### Conceito
 
-### 1. `index.html` — Meta tags e JSON-LD
-- Adicionar `<link rel="canonical" href="https://pla.soma.lefil.com.br" />`
-- Atualizar `og:url` para `https://pla.soma.lefil.com.br`
-- Adicionar `og:site_name` como "SoMA"
-- Melhorar `description` com palavras-chave: gestão de demandas, kanban, equipes, produtividade, marketing
-- Adicionar meta `keywords`
-- Inserir bloco `<script type="application/ld+json">` com schema `SoftwareApplication`
+A barra principal não é uma escala fixa — ela representa **onde o valor real está em relação ao benchmark ideal**. O centro da barra (50%) é o valor ideal. Se o valor real está melhor que o ideal, a barra preenche menos (para a esquerda). Se está pior, preenche mais (para a direita). Assim o usuário entende visualmente se está acima ou abaixo do esperado.
 
-### 2. `public/sitemap.xml` (novo)
-- Listar páginas públicas (`/`, `/auth`, `/get-started`, `/privacy-policy`, `/terms-of-service`) com base em `https://pla.soma.lefil.com.br`
+### Como funciona
 
-### 3. `public/robots.txt`
-- Adicionar `Sitemap: https://pla.soma.lefil.com.br/sitemap.xml`
-- Bloquear rotas protegidas: `/demands`, `/kanban`, `/boards`, `/settings`, `/profile`, `/teams`, `/notes`, `/reports`, `/admin`
+**Tempo médio de conclusão** (menor = melhor):
+- Benchmark ideal: calculado como mediana das demandas entregues, ou 5 dias se não houver dados suficientes
+- Centro da barra (50%) = benchmark ideal
+- Se `avgDays` < benchmark → barra preenche menos que 50% (bom, mais para a esquerda)
+- Se `avgDays` > benchmark → barra preenche mais que 50% (ruim, mais para a direita)
+- Escala: 0 a 2× o benchmark (ex: benchmark 5 dias → escala 0–10 dias)
 
-### 4. Componente `SEOHead` + `react-helmet-async`
-- Instalar `react-helmet-async`
-- Criar `src/components/SEOHead.tsx` — componente reutilizável que injeta `<title>`, `<meta description>`, `<link canonical>` dinamicamente
-- Wrap do App com `HelmetProvider` em `src/App.tsx`
-- Aplicar `SEOHead` nas páginas públicas: `Auth`, `GetStarted`, `Welcome`, `Pricing`, `PrivacyPolicy`, `TermsOfService`
+**Tempo em atividade** (maior = melhor):
+- Benchmark ideal: calculado como média de horas por membro, ou 8h se não houver dados
+- Centro da barra (50%) = benchmark ideal
+- Se `avgHoursPerUser` > benchmark → barra preenche mais que 50% (bom)
+- Se `avgHoursPerUser` < benchmark → barra preenche menos que 50% (ruim)
+- Escala: 0 a 2× o benchmark
 
-### Arquivos
-| Ação | Arquivo |
-|------|---------|
-| Criar | `public/sitemap.xml` |
-| Criar | `src/components/SEOHead.tsx` |
-| Editar | `index.html` |
-| Editar | `public/robots.txt` |
-| Editar | `src/App.tsx` |
-| Editar | Páginas públicas (Auth, Welcome, GetStarted, Pricing, PrivacyPolicy, TermsOfService) |
-| Instalar | `react-helmet-async` |
+**Barra indicadora de saúde (pequena, abaixo)**:
+- Preenchida 100% com cor baseada no desvio:
+  - **Verde**: dentro de ±20% do ideal
+  - **Amarelo**: entre 20%–50% de desvio
+  - **Vermelho**: >50% de desvio
+- Label textual: "Acima da média", "Na média", "Abaixo da média"
+
+**Badge**: muda de cor conforme o status (verde/amarelo/vermelho) e mostra o benchmark ideal como referência.
+
+### Alterações técnicas
+
+**Arquivo: `src/components/ProductivitySection.tsx`**
+
+1. Remover `ProgressBarWithMarker`
+2. Criar `MainProgressBar` — barra com preenchimento laranja proporcional à posição do valor real na escala (0 a 2×benchmark), onde 50% = ideal
+3. Criar `HealthIndicatorBar` — barra fina (h-1.5) 100% preenchida com verde/amarelo/vermelho
+4. Adicionar função `getHealthStatus(value, benchmark, lowerIsBetter)` retornando `{ color, label, bgClass }`
+5. Calcular benchmarks dinamicamente a partir dos dados do quadro
+6. Atualizar labels da escala para mostrar "0" à esquerda e "2× ideal" à direita, com marcador central "ideal"
+7. Badge mostra "Média ideal: X dias" com cor do status
 
