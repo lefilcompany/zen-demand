@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Timer } from "lucide-react";
+import { Clock, Timer, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 import { differenceInHours } from "date-fns";
 import { useBoardTimeEntries } from "@/hooks/useBoardTimeEntries";
@@ -68,7 +68,8 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
   return (
     <Card className="flex flex-col h-full">
       <CardHeader className="pb-2 p-3 sm:p-4 md:p-6 md:pb-2">
-        <CardTitle className="text-xs sm:text-sm md:text-base font-bold tracking-wider uppercase text-foreground text-center">
+        <CardTitle className="text-xs sm:text-sm md:text-base font-bold tracking-wider uppercase text-foreground text-center flex items-center justify-center gap-2">
+          <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-foreground" />
           Produtividade
         </CardTitle>
       </CardHeader>
