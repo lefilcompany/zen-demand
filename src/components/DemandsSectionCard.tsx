@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartPeriodSelector, type ChartPeriodType, getChartPeriodRange } from "@/components/ChartPeriodSelector";
 import { useState, useMemo } from "react";
-import { BarChart3, Grid2X2, Atom } from "lucide-react";
+import { BarChart3, Grid2X2, Atom, LayoutList } from "lucide-react";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -225,7 +225,8 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
   return (
     <Card className="flex flex-col h-full">
       <CardHeader className="pb-2 p-4 md:p-6 md:pb-2">
-        <CardTitle className="text-sm md:text-base font-bold tracking-wider uppercase text-foreground text-center">
+        <CardTitle className="text-sm md:text-base font-bold tracking-wider uppercase text-foreground text-center flex items-center justify-center gap-2">
+          <LayoutList className="h-4 w-4 md:h-5 md:w-5 text-foreground" />
           Demandas
         </CardTitle>
       </CardHeader>
