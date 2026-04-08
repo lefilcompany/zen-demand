@@ -257,9 +257,6 @@ export function RecentActivities() {
           <Activity className="h-4 w-4 md:h-5 md:w-5 text-foreground" />
           Atividades do Quadro
         </CardTitle>
-        <CardDescription>
-          Atualizações de {currentBoard?.name || "quadro selecionado"}
-        </CardDescription>
       </CardHeader>
       <CardContent className="flex-1 min-h-0 relative">
         {isLoading ? (
