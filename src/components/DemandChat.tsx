@@ -60,6 +60,7 @@ export function DemandChat({
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
+  const prevLengthRef = useRef(0);
 
   const { data: interactions } = useDemandInteractions(demandId, channel);
   const createInteraction = useCreateInteraction();
