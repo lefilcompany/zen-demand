@@ -103,7 +103,7 @@ export function DashboardAIInsights({ boardId, isRequester = false }: DashboardA
           {allExpanded ? "Recolher todos" : "Expandir todos"}
         </button>
       </div>
-      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         {insights.map((insight, i) => {
           const config = typeConfig[insight.type] || typeConfig.info;
           const Icon = config.icon;
