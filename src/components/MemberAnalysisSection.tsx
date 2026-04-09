@@ -156,7 +156,7 @@ export function MemberAnalysisSection({ demands }: MemberAnalysisSectionProps) {
         {chartData.length > 0 ? (
           <div className="flex flex-col 2xl:flex-row gap-4">
             {/* Left side - Chart & summary */}
-            <div className="xl:flex-[3] min-w-0 space-y-3">
+            <div className="2xl:flex-[3] min-w-0 space-y-3">
               {/* Summary */}
               <div className="grid grid-cols-3 gap-2">
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-2 text-center">
@@ -200,8 +200,8 @@ export function MemberAnalysisSection({ demands }: MemberAnalysisSectionProps) {
             </div>
 
             {/* Right side - Member list (3 visible + peek of 4th) */}
-            <div className="xl:flex-[2] shrink-0 relative">
-              <div className="xl:max-h-[260px] max-h-[200px] overflow-y-auto space-y-2 pr-1 pb-6 scrollbar-thin">
+             <div className="2xl:flex-[2] shrink-0 relative">
+               <div className="2xl:max-h-[260px] max-h-[200px] overflow-y-auto space-y-2 pr-1 pb-6 scrollbar-thin">
                 {members.map(m => {
                   const initials = m.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
                   return (
