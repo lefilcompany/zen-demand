@@ -60,6 +60,7 @@ export function DemandChat({
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
+  const prevLengthRef = useRef(0);
 
   const { data: interactions } = useDemandInteractions(demandId, channel);
   const createInteraction = useCreateInteraction();
@@ -93,10 +94,25 @@ export function DemandChat({
     }
   }, [sortedInteractions, scrollContainerToBottom]);
 
-  // Initial scroll to bottom on channel change
+  // Initial scroll to bottom on channel change or data load
   useEffect(() => {
-    setTimeout(() => scrollContainerToBottom("instant"), 50);
+    if (sortedInteractions.length > 0) {
+      requestAnimationFrame(() => {
+        scrollContainerToBottom("instant");
+      });
+    }
   }, [channel, scrollContainerToBottom]);
+
+  // Scroll to bottom when interactions load for the first time
+  
+  useEffect(() => {
+    if (sortedInteractions.length > 0 && prevLengthRef.current === 0) {
+      requestAnimationFrame(() => {
+        scrollContainerToBottom("instant");
+      });
+    }
+    prevLengthRef.current = sortedInteractions.length;
+  }, [sortedInteractions.length, scrollContainerToBottom]);
 
   // Auto-scroll when pending files change
   useEffect(() => {
@@ -299,7 +315,7 @@ export function DemandChat({
       {/* Messages area */}
       <div
         className={cn(
-          "flex-1 min-h-0 overflow-y-auto",
+          "flex-1 min-h-0 overflow-y-auto chat-scrollbar",
           channel === "internal" && "bg-blue-500/[0.02]"
         )}
         ref={scrollRef}
