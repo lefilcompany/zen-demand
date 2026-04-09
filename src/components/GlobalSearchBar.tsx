@@ -200,14 +200,12 @@ export function GlobalSearchBar() {
       {!expanded && (
         <Button
           variant="ghost"
-          className="h-7 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+          size="icon"
+          className="h-7 w-7 text-muted-foreground hover:text-foreground"
           onClick={toggleExpand}
           title="Pesquisar (⌘K)"
         >
-          <Search className="h-3.5 w-3.5" />
-          <kbd className="pointer-events-none inline-flex items-center gap-0.5 rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground">
-            Ctrl K
-          </kbd>
+          <Search className="h-4 w-4" />
         </Button>
       )}
 
