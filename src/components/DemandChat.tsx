@@ -104,7 +104,7 @@ export function DemandChat({
   }, [channel, scrollContainerToBottom]);
 
   // Scroll to bottom when interactions load for the first time
-  const prevLengthRef = useRef(0);
+  
   useEffect(() => {
     if (sortedInteractions.length > 0 && prevLengthRef.current === 0) {
       requestAnimationFrame(() => {
