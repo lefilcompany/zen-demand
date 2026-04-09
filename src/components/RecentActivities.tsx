@@ -293,10 +293,10 @@ export function RecentActivities() {
                           })}
                         </span>
                       </div>
-                      <p className="text-sm font-medium truncate" title={activity.title}>
-                        {truncateText(activity.title, 50)}
+                      <p className="text-sm font-medium line-clamp-2" title={activity.title}>
+                        {activity.title}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground break-words">
                         <span className="text-muted-foreground/70">{config.actionLabel}:</span>{" "}
                         <span className="font-medium">{activity.actionBy || "Sistema"}</span>
                         {activity.createdBy && activity.createdBy !== activity.actionBy && (
