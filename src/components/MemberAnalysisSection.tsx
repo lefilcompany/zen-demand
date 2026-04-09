@@ -153,7 +153,7 @@ export function MemberAnalysisSection({ demands }: MemberAnalysisSectionProps) {
       </CardHeader>
       <CardContent className="flex-1 p-4 md:p-6 pt-2 space-y-3">
         {chartData.length > 0 ? (
-          <div className="flex flex-col xl:flex-row gap-4">
+          <div className="flex flex-col 2xl:flex-row gap-4">
             {/* Left side - Chart & summary */}
             <div className="flex-1 min-w-0 space-y-3">
               {/* Summary */}
@@ -199,41 +199,47 @@ export function MemberAnalysisSection({ demands }: MemberAnalysisSectionProps) {
               <ChartPeriodSelector value={period} onChange={setPeriod} className="justify-center" />
             </div>
 
-            {/* Right side - Member list */}
-            <div className="xl:w-[280px] 2xl:w-[300px] shrink-0 space-y-2 xl:max-h-[360px] xl:overflow-y-auto">
-              {members.map(m => {
-                const initials = m.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
-                return (
-                  <div key={m.id} className="flex items-center justify-between p-2.5 rounded-lg border border-border/50 bg-muted/30 hover:bg-muted/50 transition-colors gap-2">
-                    <div className="flex flex-col gap-1 min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6 shrink-0">
-                          <AvatarImage src={m.avatar || undefined} />
-                          <AvatarFallback className="text-[8px] bg-primary/10 text-primary">{initials}</AvatarFallback>
-                        </Avatar>
-                        <span className="text-xs font-semibold truncate">{m.name}</span>
+            {/* Right side - Member list (3 visible + peek of 4th) */}
+            <div className="2xl:w-[300px] shrink-0 relative">
+              <div className="2xl:max-h-[220px] max-h-[200px] overflow-y-auto space-y-2 pr-1 scrollbar-thin">
+                {members.map(m => {
+                  const initials = m.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+                  return (
+                    <div key={m.id} className="flex items-center justify-between p-2.5 rounded-lg border border-border/50 bg-muted/30 hover:bg-muted/50 transition-colors gap-2">
+                      <div className="flex flex-col gap-1 min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6 shrink-0">
+                            <AvatarImage src={m.avatar || undefined} />
+                            <AvatarFallback className="text-[8px] bg-primary/10 text-primary">{initials}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-xs font-semibold truncate">{m.name}</span>
+                        </div>
+                        <div className="flex items-center gap-3 pl-8 text-[10px] text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: STATUS_COLORS.toStart }} />
+                            Ini: <strong className="text-foreground">{m.toStart}</strong>
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: STATUS_COLORS.inProgress }} />
+                            And: <strong className="text-foreground">{m.inProgress}</strong>
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: STATUS_COLORS.delivered }} />
+                            Ent: <strong className="text-foreground">{m.delivered}</strong>
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 pl-8 text-[10px] text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: STATUS_COLORS.toStart }} />
-                          Ini: <strong className="text-foreground">{m.toStart}</strong>
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: STATUS_COLORS.inProgress }} />
-                          And: <strong className="text-foreground">{m.inProgress}</strong>
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: STATUS_COLORS.delivered }} />
-                          Ent: <strong className="text-foreground">{m.delivered}</strong>
-                        </span>
-                      </div>
+                      <Badge variant="outline" className="text-[10px] h-5 px-1.5 shrink-0 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-semibold">
+                        {m.deliveryRate}%
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="text-[10px] h-5 px-1.5 shrink-0 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-semibold">
-                      {m.deliveryRate}%
-                    </Badge>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+              {/* Fade gradient to hint more content */}
+              {members.length > 3 && (
+                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent rounded-b-lg" />
+              )}
             </div>
           </div>
         ) : (
