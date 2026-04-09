@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, FileText, Loader2, X, Hash } from "lucide-react";
+import { Search, FileText, Loader2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useGlobalSearch } from "@/hooks/useGlobalSearch";
 import { useSelectedBoard } from "@/contexts/BoardContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 const priorityColors: Record<string, string> = {
@@ -20,12 +21,15 @@ export function GlobalSearchBar() {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+  const modalInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { currentBoard } = useSelectedBoard();
+  const isMobile = useIsMobile();
 
   const { data: results, isLoading } = useGlobalSearch(query, currentBoard?.id || null);
 
@@ -40,8 +44,15 @@ export function GlobalSearchBar() {
     setSelectedIndex(-1);
   }, []);
 
-  // Close when clicking outside
+  const closeModal = useCallback(() => {
+    setModalOpen(false);
+    setQuery("");
+    setSelectedIndex(-1);
+  }, []);
+
+  // Close when clicking outside (desktop only)
   useEffect(() => {
+    if (isMobile) return;
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         collapse();
@@ -49,16 +60,17 @@ export function GlobalSearchBar() {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [collapse]);
+  }, [collapse, isMobile]);
 
   // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
-      collapse();
+      if (isMobile) closeModal();
+      else collapse();
       return;
     }
 
-    if (!isOpen || !results || results.length === 0) return;
+    if (!results || results.length === 0) return;
 
     switch (e.key) {
       case "ArrowDown":
@@ -78,8 +90,9 @@ export function GlobalSearchBar() {
     }
   };
 
-  // Global Escape to collapse
+  // Global Escape to collapse (desktop)
   useEffect(() => {
+    if (isMobile) return;
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && expanded) {
         collapse();
@@ -87,7 +100,7 @@ export function GlobalSearchBar() {
     };
     document.addEventListener("keydown", handleGlobalKeyDown);
     return () => document.removeEventListener("keydown", handleGlobalKeyDown);
-  }, [expanded, collapse]);
+  }, [expanded, collapse, isMobile]);
 
   // Scroll selected item into view
   useEffect(() => {
@@ -101,15 +114,21 @@ export function GlobalSearchBar() {
 
   const handleSelect = (link: string) => {
     navigate(link);
-    collapse();
+    if (isMobile) closeModal();
+    else collapse();
   };
 
-  const toggleExpand = () => {
-    if (expanded) {
-      collapse();
+  const handleButtonClick = () => {
+    if (isMobile) {
+      setModalOpen(true);
+      setTimeout(() => modalInputRef.current?.focus(), 100);
     } else {
-      setExpanded(true);
-      setTimeout(() => inputRef.current?.focus(), 50);
+      if (expanded) {
+        collapse();
+      } else {
+        setExpanded(true);
+        setTimeout(() => inputRef.current?.focus(), 50);
+      }
     }
   };
 
@@ -148,20 +167,7 @@ export function GlobalSearchBar() {
     return <Search className="h-4 w-4" />;
   };
 
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case "demand":
-        return "Demanda";
-      case "member":
-        return "Membro";
-      case "user":
-        return "Usuário";
-      default:
-        return type;
-    }
-  };
-
-  // Group results by type for a cleaner display
+  // Group results by type
   const demandResults = results?.filter(r => r.type === "demand") || [];
   const peopleResults = results?.filter(r => r.type === "member" || r.type === "user") || [];
 
@@ -194,93 +200,131 @@ export function GlobalSearchBar() {
     </button>
   );
 
-  return (
-    <div ref={containerRef} className="relative flex items-center">
-      {/* Collapsed: just the icon button */}
-      {!expanded && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 text-muted-foreground hover:text-foreground"
-          onClick={toggleExpand}
-          title="Pesquisar (⌘K)"
-        >
-          <Search className="h-4 w-4" />
-        </Button>
-      )}
+  const renderResults = () => {
+    if (query.length < 2) return null;
 
-      {/* Expanded: search input */}
-      {expanded && (
-        <div className="relative animate-in fade-in slide-in-from-right-2 duration-200">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input
-            ref={inputRef}
-            type="text"
-            placeholder="Buscar demandas, membros..."
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setIsOpen(true);
-            }}
-            onKeyDown={handleKeyDown}
-            className="pl-8 pr-8 h-7 w-[200px] sm:w-[260px] text-xs bg-muted/50 border-border focus:border-primary focus:bg-background transition-all"
-          />
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+      );
+    }
+
+    if (results && results.length > 0) {
+      return (
+        <div ref={resultsRef} className="max-h-[380px] overflow-y-auto">
+          {demandResults.length > 0 && (
+            <>
+              <div className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30 border-b border-border/50 flex items-center gap-1.5">
+                <FileText className="h-3 w-3" />
+                Demandas ({demandResults.length})
+              </div>
+              {demandResults.map((result, i) => renderResultItem(result, i))}
+            </>
+          )}
+          {peopleResults.length > 0 && (
+            <>
+              <div className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30 border-b border-border/50 border-t flex items-center gap-1.5">
+                <Search className="h-3 w-3" />
+                Pessoas ({peopleResults.length})
+              </div>
+              {peopleResults.map((result, i) => renderResultItem(result, demandResults.length + i))}
+            </>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="py-6 text-center text-sm text-muted-foreground">
+        Nenhum resultado para "{query}"
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <div ref={containerRef} className="relative flex items-center">
+        {/* Collapsed: just the icon button */}
+        {!expanded && (
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-5 w-5"
-            onClick={collapse}
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            onClick={handleButtonClick}
+            title="Pesquisar (⌘K)"
           >
-            <X className="h-3 w-3" />
+            <Search className="h-4 w-4" />
           </Button>
-        </div>
-      )}
+        )}
 
-      {/* Results dropdown */}
-      {expanded && isOpen && query.length >= 2 && (
-        <div className="absolute top-full right-0 mt-2 w-[300px] sm:w-[360px] bg-popover border border-border rounded-lg shadow-xl z-[9999] overflow-hidden">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : results && results.length > 0 ? (
-            <div ref={resultsRef} className="max-h-[380px] overflow-y-auto">
-              {/* Demands section */}
-              {demandResults.length > 0 && (
-                <>
-                  <div className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30 border-b border-border/50 flex items-center gap-1.5">
-                    <FileText className="h-3 w-3" />
-                    Demandas ({demandResults.length})
-                  </div>
-                  {demandResults.map((result, i) => renderResultItem(result, i))}
-                </>
-              )}
-              
-              {/* People section */}
-              {peopleResults.length > 0 && (
-                <>
-                  <div className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30 border-b border-border/50 border-t flex items-center gap-1.5">
-                    <Search className="h-3 w-3" />
-                    Pessoas ({peopleResults.length})
-                  </div>
-                  {peopleResults.map((result, i) => renderResultItem(result, demandResults.length + i))}
-                </>
-              )}
-            </div>
-          ) : (
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              Nenhum resultado para "{query}"
-            </div>
-          )}
-          
-          {/* Search tip */}
-          <div className="px-3 py-1.5 border-t border-border/50 bg-muted/20">
-            <p className="text-[10px] text-muted-foreground">
-              <kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">↑↓</kbd> navegar · <kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">Enter</kbd> abrir · <kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">Esc</kbd> fechar
-            </p>
+        {/* Expanded: inline search input (desktop only) */}
+        {expanded && !isMobile && (
+          <div className="relative animate-in fade-in slide-in-from-right-2 duration-200">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              ref={inputRef}
+              type="text"
+              placeholder="Buscar demandas, membros..."
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setIsOpen(true);
+              }}
+              onKeyDown={handleKeyDown}
+              className="pl-8 pr-8 h-7 w-[200px] sm:w-[260px] text-xs bg-muted/50 border-border focus:border-primary focus:bg-background transition-all"
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-5 w-5"
+              onClick={collapse}
+            >
+              <X className="h-3 w-3" />
+            </Button>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+
+        {/* Results dropdown (desktop only) */}
+        {expanded && !isMobile && isOpen && query.length >= 2 && (
+          <div className="absolute top-full right-0 mt-2 w-[300px] sm:w-[360px] bg-popover border border-border rounded-lg shadow-xl z-[9999] overflow-hidden">
+            {renderResults()}
+            <div className="px-3 py-1.5 border-t border-border/50 bg-muted/20">
+              <p className="text-[10px] text-muted-foreground">
+                <kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">↑↓</kbd> navegar · <kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">Enter</kbd> abrir · <kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">Esc</kbd> fechar
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Search modal (mobile/tablet) */}
+      <Dialog open={modalOpen} onOpenChange={(open) => { if (!open) closeModal(); }}>
+        <DialogContent className="sm:max-w-[420px] p-0 gap-0 top-[10%] translate-y-0">
+          <div className="flex items-center gap-2 p-3 border-b border-border">
+            <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Input
+              ref={modalInputRef}
+              type="text"
+              placeholder="Buscar demandas, membros..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="border-0 h-8 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 p-0"
+              autoFocus
+            />
+            {query && (
+              <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => setQuery("")}>
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+          <div className="min-h-[100px]">
+            {renderResults()}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
