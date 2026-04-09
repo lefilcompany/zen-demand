@@ -154,7 +154,7 @@ export function MemberAnalysisSection({ demands }: MemberAnalysisSectionProps) {
       </CardHeader>
       <CardContent className="flex-1 p-2 md:p-4 pt-1 space-y-2">
         {chartData.length > 0 ? (
-          <div className="flex flex-col xl:flex-row gap-4">
+          <div className="flex flex-col 2xl:flex-row gap-4">
             {/* Left side - Chart & summary */}
             <div className="xl:flex-[3] min-w-0 space-y-3">
               {/* Summary */}
