@@ -142,18 +142,25 @@ const Index = () => {
           <DashboardAIInsights boardId={selectedBoardId} isRequester />
         )}
 
-        {/* Demands Section - service pie + cumulative area chart */}
-        {widgets.demandsSection && (() => {
-          const reqDemands = (demands || []).map((d: any) => ({
-            id: d.id,
-            created_at: d.created_at,
-            delivered_at: d.delivered_at || null,
-            demand_statuses: d.demand_statuses || null,
-            services: d.services || null,
-            service_id: d.service_id || null,
-          }));
-          return reqDemands.length > 0 ? <DemandsSectionCard demands={reqDemands} /> : null;
-        })()}
+        {/* Productivity + Demands Section */}
+        {(widgets.productivitySection || widgets.demandsSection) && selectedTeamId && demands && (
+          <div className="grid gap-4 lg:grid-cols-2 items-stretch">
+            {widgets.productivitySection && (
+              <ProductivitySection demands={demands} boardId={selectedBoardId} />
+            )}
+            {widgets.demandsSection && (() => {
+              const reqDemands = (demands || []).map((d: any) => ({
+                id: d.id,
+                created_at: d.created_at,
+                delivered_at: d.delivered_at || null,
+                demand_statuses: d.demand_statuses || null,
+                services: d.services || null,
+                service_id: d.service_id || null,
+              }));
+              return reqDemands.length > 0 ? <DemandsSectionCard demands={reqDemands} /> : null;
+            })()}
+          </div>
+        )}
 
         {/* Requests History Carousel */}
         <RequesterRequestsCarousel />
