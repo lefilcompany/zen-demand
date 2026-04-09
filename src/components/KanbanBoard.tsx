@@ -519,14 +519,15 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         status_id: targetStatusId,
       },
       {
-        onSuccess: async () => {
-          // Clear optimistic update
+        onSettled: () => {
+          // Clear optimistic update on settled to avoid racing with realtime
           setOptimisticUpdates(prev => {
             const newUpdates = { ...prev };
             delete newUpdates[demandId];
             return newUpdates;
           });
-
+        },
+        onSuccess: async () => {
           queryClient.invalidateQueries({ queryKey: ['demands'] });
 
           if (isOffline) {
