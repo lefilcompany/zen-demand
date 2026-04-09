@@ -152,93 +152,96 @@ export function MemberAnalysisSection({ demands }: MemberAnalysisSectionProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 p-4 md:p-6 pt-2 space-y-4">
-        {/* Summary */}
-        <div className="grid grid-cols-3 gap-2">
-          <div className="bg-primary/10 border border-primary/20 rounded-lg p-2 text-center">
-            <Target className="h-3.5 w-3.5 text-primary mx-auto mb-0.5" />
-            <p className="text-base md:text-lg font-bold text-primary">{totalAssigned}</p>
-            <p className="text-[8px] md:text-[10px] text-muted-foreground">Atribuídas</p>
-          </div>
-          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2 text-center">
-            <TrendingUp className="h-3.5 w-3.5 text-emerald-500 mx-auto mb-0.5" />
-            <p className="text-base md:text-lg font-bold text-emerald-600 dark:text-emerald-400">{avgDeliveryRate}%</p>
-            <p className="text-[8px] md:text-[10px] text-muted-foreground">Entrega</p>
-          </div>
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 text-center">
-            <Activity className="h-3.5 w-3.5 text-amber-500 mx-auto mb-0.5" />
-            <p className="text-base md:text-lg font-bold text-amber-600 dark:text-amber-400">{members.length}</p>
-            <p className="text-[8px] md:text-[10px] text-muted-foreground">Membros</p>
-          </div>
-        </div>
-
         {chartData.length > 0 ? (
-          <>
-            {/* Bar chart */}
-            <div className="w-full overflow-x-auto -mx-1 px-1">
-              <div className={isMobile ? "min-w-[260px]" : "min-w-[350px]"}>
-                <ResponsiveContainer width="100%" height={chartData.length * rowHeight + 10}>
-                  <BarChart
-                    layout="vertical"
-                    data={chartData}
-                    margin={{ top: 0, right: isMobile ? 5 : 15, left: 0, bottom: 0 }}
-                    barSize={barSize}
-                  >
-                    <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
-                    <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={CustomYTick as any} width={isMobile ? 95 : 145} />
-                    <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.3)" }} />
-                    <Bar dataKey="toStart" stackId="a" fill={STATUS_COLORS.toStart} name="A Iniciar" radius={[4, 0, 0, 4]} />
-                    <Bar dataKey="inProgress" stackId="a" fill={STATUS_COLORS.inProgress} name="Em Andamento" />
-                    <Bar dataKey="delivered" stackId="a" fill={STATUS_COLORS.delivered} name="Entregue" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Left side - Chart */}
+            <div className="flex-1 min-w-0 space-y-3">
+              {/* Summary */}
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-primary/10 border border-primary/20 rounded-lg p-2 text-center">
+                  <Target className="h-3.5 w-3.5 text-primary mx-auto mb-0.5" />
+                  <p className="text-base md:text-lg font-bold text-primary">{totalAssigned}</p>
+                  <p className="text-[8px] md:text-[10px] text-muted-foreground">Atribuídas</p>
+                </div>
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 text-center">
+                  <TrendingUp className="h-3.5 w-3.5 text-amber-500 mx-auto mb-0.5" />
+                  <p className="text-base md:text-lg font-bold text-amber-600 dark:text-amber-400">{members.filter(m => m.inProgress > 0).reduce((a, m) => a + m.inProgress, 0)}</p>
+                  <p className="text-[8px] md:text-[10px] text-muted-foreground">Andamento</p>
+                </div>
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2 text-center">
+                  <Activity className="h-3.5 w-3.5 text-emerald-500 mx-auto mb-0.5" />
+                  <p className="text-base md:text-lg font-bold text-emerald-600 dark:text-emerald-400">{avgDeliveryRate}%</p>
+                  <p className="text-[8px] md:text-[10px] text-muted-foreground">Entrega</p>
+                </div>
               </div>
+
+              {/* Bar chart */}
+              <div className="w-full overflow-x-auto -mx-1 px-1">
+                <div className={isMobile ? "min-w-[260px]" : "min-w-[300px]"}>
+                  <ResponsiveContainer width="100%" height={chartData.length * rowHeight + 10}>
+                    <BarChart
+                      layout="vertical"
+                      data={chartData}
+                      margin={{ top: 0, right: isMobile ? 5 : 15, left: 0, bottom: 0 }}
+                      barSize={barSize}
+                    >
+                      <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
+                      <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={CustomYTick as any} width={isMobile ? 95 : 145} />
+                      <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted) / 0.3)" }} />
+                      <Bar dataKey="toStart" stackId="a" fill={STATUS_COLORS.toStart} name="A Iniciar" radius={[4, 0, 0, 4]} />
+                      <Bar dataKey="inProgress" stackId="a" fill={STATUS_COLORS.inProgress} name="Em Andamento" />
+                      <Bar dataKey="delivered" stackId="a" fill={STATUS_COLORS.delivered} name="Entregue" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <ChartPeriodSelector value={period} onChange={setPeriod} className="justify-center" />
             </div>
 
-            {/* Member list */}
-            <div className="border-t border-border pt-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                {members.map(m => {
-                  const initials = m.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
-                  return (
-                    <div key={m.id} className="flex items-center justify-between p-2 rounded-lg border border-border/50 bg-muted/30 hover:bg-muted/50 transition-colors gap-2">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <Avatar className="h-5 w-5 shrink-0">
+            {/* Right side - Member list */}
+            <div className="lg:w-[280px] xl:w-[300px] shrink-0 space-y-2 lg:max-h-[400px] lg:overflow-y-auto">
+              {members.map(m => {
+                const initials = m.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+                return (
+                  <div key={m.id} className="flex items-center justify-between p-2.5 rounded-lg border border-border/50 bg-muted/30 hover:bg-muted/50 transition-colors gap-2">
+                    <div className="flex flex-col gap-1 min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6 shrink-0">
                           <AvatarImage src={m.avatar || undefined} />
                           <AvatarFallback className="text-[8px] bg-primary/10 text-primary">{initials}</AvatarFallback>
                         </Avatar>
-                        <span className="text-xs font-medium truncate">{m.name}</span>
+                        <span className="text-xs font-semibold truncate">{m.name}</span>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <div className="flex items-center gap-1 text-[10px]">
-                          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: STATUS_COLORS.toStart }} />
-                          <span>{m.toStart}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-[10px]">
-                          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: STATUS_COLORS.inProgress }} />
-                          <span>{m.inProgress}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-[10px]">
-                          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: STATUS_COLORS.delivered }} />
-                          <span>{m.delivered}</span>
-                        </div>
-                        <Badge variant="outline" className="text-[9px] h-4 px-1 border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
-                          {m.deliveryRate}%
-                        </Badge>
+                      <div className="flex items-center gap-3 pl-8 text-[10px] text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: STATUS_COLORS.toStart }} />
+                          Ini: <strong className="text-foreground">{m.toStart}</strong>
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: STATUS_COLORS.inProgress }} />
+                          And: <strong className="text-foreground">{m.inProgress}</strong>
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: STATUS_COLORS.delivered }} />
+                          Ent: <strong className="text-foreground">{m.delivered}</strong>
+                        </span>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                    <Badge variant="outline" className="text-[10px] h-5 px-1.5 shrink-0 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-semibold">
+                      {m.deliveryRate}%
+                    </Badge>
+                  </div>
+                );
+              })}
             </div>
-          </>
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
             <Users className="h-10 w-10 opacity-30 mb-2" />
             <p className="text-xs">Nenhum membro com demandas no período</p>
           </div>
         )}
-
-        <ChartPeriodSelector value={period} onChange={setPeriod} className="justify-center" />
       </CardContent>
     </Card>
   );
