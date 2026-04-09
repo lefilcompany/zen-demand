@@ -145,11 +145,12 @@ export function MemberAnalysisSection({ demands }: MemberAnalysisSectionProps) {
 
   return (
     <Card className="flex flex-col h-full">
-      <CardHeader className="pb-2 p-4 md:p-6 md:pb-2">
+      <CardHeader className="pb-2 p-4 md:p-6 md:pb-2 space-y-2">
         <CardTitle className="text-sm md:text-base font-bold tracking-wider uppercase text-foreground text-center flex items-center justify-center gap-2">
           <Users className="h-4 w-4 md:h-5 md:w-5 text-foreground" />
           Análise por Membro
         </CardTitle>
+        <ChartPeriodSelector value={period} onChange={setPeriod} className="justify-center" />
       </CardHeader>
       <CardContent className="flex-1 p-4 md:p-6 pt-2 space-y-3">
         {chartData.length > 0 ? (
@@ -196,7 +197,6 @@ export function MemberAnalysisSection({ demands }: MemberAnalysisSectionProps) {
                 </div>
               </div>
 
-              <ChartPeriodSelector value={period} onChange={setPeriod} className="justify-center" />
             </div>
 
             {/* Right side - Member list (3 visible + peek of 4th) */}
