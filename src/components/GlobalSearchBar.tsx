@@ -8,6 +8,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useGlobalSearch } from "@/hooks/useGlobalSearch";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
 import { cn } from "@/lib/utils";
 
 const priorityColors: Record<string, string> = {
@@ -29,6 +30,7 @@ export function GlobalSearchBar() {
   const resultsRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { currentBoard } = useSelectedBoard();
+  const { openCreateDemand } = useCreateDemandModal();
   const isMobile = useIsMobile();
 
   const { data: results, isLoading } = useGlobalSearch(query, currentBoard?.id || null);
@@ -321,7 +323,30 @@ export function GlobalSearchBar() {
             )}
           </div>
           <div className="min-h-[100px]">
-            {renderResults()}
+            {query.length < 2 ? (
+              <div className="p-2 space-y-1">
+                <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Ações rápidas</p>
+                {[
+                  { icon: <Plus className="h-4 w-4" />, label: "Nova Demanda", action: () => { closeModal(); openCreateDemand(); } },
+                  { icon: <Columns3 className="h-4 w-4" />, label: "Kanban", action: () => { closeModal(); navigate("/kanban"); } },
+                  { icon: <ClipboardList className="h-4 w-4" />, label: "Demandas", action: () => { closeModal(); navigate("/demands"); } },
+                  { icon: <LayoutDashboard className="h-4 w-4" />, label: "Dashboard", action: () => { closeModal(); navigate("/"); } },
+                  { icon: <Clock className="h-4 w-4" />, label: "Gerenciamento de Tempo", action: () => { closeModal(); navigate("/time-management"); } },
+                  { icon: <StickyNote className="h-4 w-4" />, label: "Notas", action: () => { closeModal(); navigate("/notes"); } },
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    onClick={item.action}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm hover:bg-muted/50 transition-colors"
+                  >
+                    <span className="text-muted-foreground">{item.icon}</span>
+                    <span className="font-medium">{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              renderResults()
+            )}
           </div>
         </DialogContent>
       </Dialog>
