@@ -201,7 +201,7 @@ export function MemberAnalysisSection({ demands }: MemberAnalysisSectionProps) {
 
             {/* Right side - Member list (3 visible + peek of 4th) */}
             <div className="2xl:w-[300px] shrink-0 relative">
-              <div className="2xl:max-h-[220px] max-h-[200px] overflow-y-auto space-y-2 pr-1 scrollbar-thin">
+              <div className="2xl:max-h-[220px] max-h-[200px] overflow-y-auto space-y-2 pr-1 pb-6 scrollbar-thin">
                 {members.map(m => {
                   const initials = m.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
                   return (
