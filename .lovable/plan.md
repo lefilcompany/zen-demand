@@ -1,44 +1,30 @@
 
 
-## Redesign da barra de produtividade
+## Chat estilo WhatsApp/Discord — scroll e scrollbar
 
-### Problema atual
-A barra atual usa o centro (50%) como "ideal" e preenche proporcionalmente. O usuário quer algo diferente:
+### O que muda
 
-### Nova lógica visual
+1. **Scroll padrão mostrando mensagens mais recentes**: O chat já faz scroll to bottom no mount e channel change (linha 97-99). Vou garantir que isso funcione de forma confiável adicionando um `requestAnimationFrame` + scroll após os dados carregarem (não apenas no mount).
 
-```text
-Barra completa (cinza de fundo):
-|░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░|  ← cinza (escala 0 a max)
+2. **Scrollbar invisível que aparece ao scrollar**: Adicionar CSS customizado no container de mensagens para ocultar a scrollbar por padrão e mostrar apenas durante o scroll, com fade-out automático após parar — igual WhatsApp/Discord.
 
-Preenchimento laranja (valor real):
-|████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░|  ← laranja até o valor real
+### Alterações técnicas
 
-Linha vertical do ideal (sobreposta):
-|████████████████████████░░░░░|░░░░░░░░░░░░░░░░░░|  ← linha vermelha/escura no ideal
-                              ↑ ideal
-```
+**Arquivo: `src/components/DemandChat.tsx`**
 
-- **Barra cinza**: fundo completo representando a escala (0 até `max`)
-- **Preenchimento laranja**: preenche da esquerda até onde o valor real está na escala
-- **Linha vertical sobreposta**: marca onde está o "ideal" (benchmark), para o usuário comparar visualmente se o laranja passou ou ficou aquém do ideal
+- No div da área de mensagens (linha 300-306), adicionar classe CSS `chat-scrollbar` 
+- Adicionar `useEffect` que faz scroll to bottom quando `interactions` carregam pela primeira vez (não apenas no channel change)
 
-### Escala
-- `max` = benchmark × 2 (para dar espaço visual dos dois lados)
-- Se o valor real ultrapassar o max, limita em 100%
+**Arquivo: `src/index.css`**
 
-### O que muda no código
+- Adicionar regras CSS para `.chat-scrollbar`:
+  - Esconder scrollbar por padrão (`scrollbar-width: none` / `::-webkit-scrollbar { opacity: 0 }`)
+  - Ao fazer hover ou durante scroll, mostrar scrollbar fina com transição suave
+  - Usar `scrollbar-gutter: stable` para evitar layout shift
+  - Scrollbar fina (4-6px), arredondada, semi-transparente — estilo moderno
 
-**Arquivo: `src/components/ProductivitySection.tsx`**
-
-1. **`MainProgressBar`** — recebe `value`, `benchmark`, `maxScale`:
-   - Barra cinza de fundo (já existe)
-   - Preenchimento laranja: `width = (value / maxScale) * 100%`
-   - **Nova linha vertical** na posição do ideal: `left = (benchmark / maxScale) * 100%`, com cor escura/vermelha (2px de largura), altura total da barra, z-index acima do laranja
-
-2. **`HealthIndicatorBar`** — sem mudança (continua verde/amarelo/vermelho)
-
-3. **Labels da escala** — sem mudança conceitual, já mostram 0 e 2×benchmark
-
-Mudança é apenas no componente `MainProgressBar` — trocar o marker central fixo em 50% por um marker posicionado em `(benchmark / maxScale) * 100%` e garantir que o preenchimento laranja represente o valor real absoluto na escala.
+### Resultado esperado
+- Ao abrir uma demanda, o chat mostra as mensagens mais recentes (fundo)
+- Scrollbar fica invisível até o usuário interagir
+- Ao scrollar, aparece uma scrollbar fina e discreta que some após ~1s de inatividade
 
