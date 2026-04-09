@@ -152,7 +152,7 @@ export function MemberAnalysisSection({ demands }: MemberAnalysisSectionProps) {
         </CardTitle>
         <ChartPeriodSelector value={period} onChange={setPeriod} className="justify-center" />
       </CardHeader>
-      <CardContent className="flex-1 p-4 md:p-6 pt-2 space-y-3">
+      <CardContent className="flex-1 p-2 md:p-4 pt-1 space-y-2">
         {chartData.length > 0 ? (
           <div className="flex flex-col 2xl:flex-row gap-4">
             {/* Left side - Chart & summary */}
