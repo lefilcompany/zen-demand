@@ -6,6 +6,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const VALID_FREQUENCIES = ["daily", "weekly", "biweekly", "monthly"];
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -42,6 +44,7 @@ Deno.serve(async (req) => {
 
     let processed = 0;
     let errors = 0;
+    let skipped = 0;
 
     for (const rd of recurringDemands) {
       try {
@@ -54,6 +57,22 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        // Validate frequency - skip invalid ones
+        if (!VALID_FREQUENCIES.includes(rd.frequency)) {
+          console.warn(`Skipping recurring demand ${rd.id}: invalid frequency "${rd.frequency}"`);
+          skipped++;
+          continue;
+        }
+
+        // Guard against duplicate execution: if last_generated_at is today, skip
+        if (rd.last_generated_at) {
+          const lastGenDate = rd.last_generated_at.split("T")[0];
+          if (lastGenDate === today) {
+            console.log(`Skipping recurring demand ${rd.id}: already generated today`);
+            skipped++;
+            continue;
+          }
+        }
 
         // Calculate due_date: if service has estimated_hours, add business days
         const estimatedHours = rd.services?.estimated_hours;
@@ -98,12 +117,22 @@ Deno.serve(async (req) => {
         }
 
         // Calculate next_run_date
-        const nextDate = calculateNextRunDate(
+        let nextDate = calculateNextRunDate(
           rd.frequency,
           rd.next_run_date,
           rd.weekdays,
           rd.day_of_month
         );
+
+        // Ensure next_run_date is strictly in the future (after today)
+        while (nextDate <= today) {
+          nextDate = calculateNextRunDate(
+            rd.frequency,
+            nextDate,
+            rd.weekdays,
+            rd.day_of_month
+          );
+        }
 
         // Check if next date exceeds end_date
         const isStillActive = !rd.end_date || nextDate <= rd.end_date;
@@ -125,7 +154,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ message: "Processing complete", processed, errors }),
+      JSON.stringify({ message: "Processing complete", processed, errors, skipped }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
@@ -204,20 +233,16 @@ function calculateNextRunDate(
 
   if (frequency === "biweekly") {
     if (!weekdays || weekdays.length === 0) {
-      // No specific weekdays: simply add 14 days
       current.setUTCDate(current.getUTCDate() + 14);
       return formatDate(adjustToBusinessDay(current));
     }
 
-    // Biweekly with weekdays: jump 2 weeks and find first matching weekday
     const sortedDays = [...weekdays].sort((a, b) => a - b);
     const currentDay = current.getUTCDay();
     
-    // Jump to the same day 2 weeks from now, then find the first matching weekday
     const twoWeeksLater = new Date(current);
-    twoWeeksLater.setUTCDate(twoWeeksLater.getUTCDate() + 14 - currentDay); // Go to start of that week (Sunday)
+    twoWeeksLater.setUTCDate(twoWeeksLater.getUTCDate() + 14 - currentDay);
     
-    // Find first matching weekday in that week
     for (const wd of sortedDays) {
       const candidate = new Date(twoWeeksLater);
       candidate.setUTCDate(candidate.getUTCDate() + wd);
@@ -226,7 +251,6 @@ function calculateNextRunDate(
       }
     }
     
-    // Fallback: just add 14 days
     current.setUTCDate(current.getUTCDate() + 14);
     return formatDate(adjustToBusinessDay(current));
   }

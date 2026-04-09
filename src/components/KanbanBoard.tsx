@@ -396,14 +396,15 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         status_changed_at: new Date().toISOString(),
       },
       {
-        onSuccess: async () => {
-          // Clear optimistic update after success
+        onSettled: () => {
+          // Clear optimistic update on settled (success or error) to avoid racing with realtime
           setOptimisticUpdates(prev => {
             const newUpdates = { ...prev };
             delete newUpdates[demandId];
             return newUpdates;
           });
-
+        },
+        onSuccess: async () => {
           // Invalidate to sync with server data
           queryClient.invalidateQueries({ queryKey: ['demands'] });
 
@@ -467,12 +468,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           }
         },
         onError: (error: any) => {
-          // Revert optimistic update on error
-          setOptimisticUpdates(prev => {
-            const newUpdates = { ...prev };
-            delete newUpdates[demandId];
-            return newUpdates;
-          });
           toast.error("Erro ao alterar status", {
             description: getErrorMessage(error),
           });
@@ -524,14 +519,15 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         status_id: targetStatusId,
       },
       {
-        onSuccess: async () => {
-          // Clear optimistic update
+        onSettled: () => {
+          // Clear optimistic update on settled to avoid racing with realtime
           setOptimisticUpdates(prev => {
             const newUpdates = { ...prev };
             delete newUpdates[demandId];
             return newUpdates;
           });
-
+        },
+        onSuccess: async () => {
           queryClient.invalidateQueries({ queryKey: ['demands'] });
 
           if (isOffline) {
@@ -607,14 +603,22 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   };
 
   // Get demands for column, considering optimistic updates
+  // Track seen IDs to prevent duplicates across columns
+  const seenDemandIds = useMemo(() => new Set<string>(), [demands, optimisticUpdates]);
+  
   const getDemandsForColumn = (columnKey: string) => {
     return demands.filter((d) => {
+      // Deduplicate: if this demand was already shown in another column, skip
+      if (seenDemandIds.has(d.id)) return false;
+      
       // Check if there's an optimistic update for this demand
       const optimisticStatus = optimisticUpdates[d.id];
-      if (optimisticStatus) {
-        return optimisticStatus === columnKey;
+      const matches = optimisticStatus ? optimisticStatus === columnKey : d.demand_statuses?.name === columnKey;
+      
+      if (matches) {
+        seenDemandIds.add(d.id);
       }
-      return d.demand_statuses?.name === columnKey;
+      return matches;
     });
   };
 

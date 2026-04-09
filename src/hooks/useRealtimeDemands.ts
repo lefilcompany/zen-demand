@@ -174,8 +174,7 @@ export function useKanbanRealtimeNotifications(boardId?: string) {
             }
           }
 
-          // Invalidate queries to refresh data
-          queryClient.invalidateQueries({ queryKey: ["demands", boardId] });
+          // Removed: redundant invalidation already handled by useRealtimeDemands
         }
       )
       .subscribe((status) => {
