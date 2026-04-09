@@ -197,7 +197,6 @@ export function MemberAnalysisSection({ demands }: MemberAnalysisSectionProps) {
                 </div>
               </div>
 
-              <ChartPeriodSelector value={period} onChange={setPeriod} className="justify-center" />
             </div>
 
             {/* Right side - Member list (3 visible + peek of 4th) */}
