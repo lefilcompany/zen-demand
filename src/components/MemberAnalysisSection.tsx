@@ -151,10 +151,10 @@ export function MemberAnalysisSection({ demands }: MemberAnalysisSectionProps) {
           Análise por Membro
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 p-4 md:p-6 pt-2 space-y-4">
+      <CardContent className="flex-1 p-4 md:p-6 pt-2 space-y-3">
         {chartData.length > 0 ? (
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Left side - Chart */}
+          <div className="flex flex-col xl:flex-row gap-4">
+            {/* Left side - Chart & summary */}
             <div className="flex-1 min-w-0 space-y-3">
               {/* Summary */}
               <div className="grid grid-cols-3 gap-2">
@@ -165,7 +165,7 @@ export function MemberAnalysisSection({ demands }: MemberAnalysisSectionProps) {
                 </div>
                 <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 text-center">
                   <TrendingUp className="h-3.5 w-3.5 text-amber-500 mx-auto mb-0.5" />
-                  <p className="text-base md:text-lg font-bold text-amber-600 dark:text-amber-400">{members.filter(m => m.inProgress > 0).reduce((a, m) => a + m.inProgress, 0)}</p>
+                  <p className="text-base md:text-lg font-bold text-amber-600 dark:text-amber-400">{members.reduce((a, m) => a + m.inProgress, 0)}</p>
                   <p className="text-[8px] md:text-[10px] text-muted-foreground">Andamento</p>
                 </div>
                 <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2 text-center">
@@ -200,7 +200,7 @@ export function MemberAnalysisSection({ demands }: MemberAnalysisSectionProps) {
             </div>
 
             {/* Right side - Member list */}
-            <div className="lg:w-[280px] xl:w-[300px] shrink-0 space-y-2 lg:max-h-[400px] lg:overflow-y-auto">
+            <div className="xl:w-[280px] 2xl:w-[300px] shrink-0 space-y-2 xl:max-h-[360px] xl:overflow-y-auto">
               {members.map(m => {
                 const initials = m.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
                 return (
