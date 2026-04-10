@@ -33,6 +33,7 @@ export default function FolderDetail() {
   const { currentTeamId, selectedBoardId, setSelectedBoardId } = useSelectedBoard();
 
   const { data: folders } = useDemandFolders(currentTeamId, user?.id);
+  const updateFolder = useUpdateFolder();
   const folder = folders?.find((f) => f.id === folderId);
 
   const { data: folderDemandIds } = useFolderDemandIds(folderId || null);
