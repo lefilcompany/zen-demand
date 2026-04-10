@@ -53,12 +53,15 @@ function CompletionProgressBar({ avgDays, expectedAvgDays, maxDays }: { avgDays:
     <div className="relative w-full">
       {/* Expected avg label above bar */}
       {markerPercent !== null && expectedAvgDays !== null && (
-        <div className="relative h-5 mb-1">
+        <div className="relative h-8 mt-2 mb-2">
           <div
             className="absolute -translate-x-1/2 flex flex-col items-center"
             style={{ left: `${markerPercent}%` }}
           >
-            <span className="text-[9px] sm:text-[10px] font-bold text-slate-800 dark:text-white whitespace-nowrap bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground whitespace-nowrap">
+              Tempo médio esperado:
+            </span>
+            <span className="text-xs sm:text-sm font-bold text-foreground whitespace-nowrap">
               {expectedAvgDays.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} dias
             </span>
           </div>
