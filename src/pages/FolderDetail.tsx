@@ -39,6 +39,14 @@ export default function FolderDetail() {
   const updateFolder = useUpdateFolder();
   const folder = folders?.find((f) => f.id === folderId);
 
+  // Determine if user can edit this folder (owner or shared with edit permission)
+  const canEdit = useMemo(() => {
+    if (!folder || !user?.id) return false;
+    if (folder.is_owner) return true;
+    const share = folder.shared_with?.find((s) => s.user_id === user.id);
+    return share?.permission === "edit";
+  }, [folder, user?.id]);
+
   const { data: folderDemandIds } = useFolderDemandIds(folderId || null);
   const { data: allTeamDemands, isLoading } = useAllTeamDemands(currentTeamId);
 
