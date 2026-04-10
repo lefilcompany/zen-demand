@@ -58,8 +58,8 @@ function CompletionProgressBar({ avgDays, expectedAvgDays, maxDays }: { avgDays:
             className="absolute -translate-x-1/2 flex flex-col items-center"
             style={{ left: `${markerPercent}%` }}
           >
-            <span className="text-[10px] sm:text-xs font-semibold text-muted-foreground whitespace-nowrap">
-              Tempo médio esperado:
+            <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap text-center leading-tight">
+              Tempo médio<br />esperado:
             </span>
             <span className="text-xs sm:text-sm font-bold text-foreground whitespace-nowrap">
               {expectedAvgDays.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} dias
