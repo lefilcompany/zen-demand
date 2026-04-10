@@ -92,20 +92,43 @@ function HealthIndicatorBar({ bgClass }: { bgClass: string }) {
   );
 }
 
-function ActivityProgressBar({ value, benchmark }: { value: number; benchmark: number }) {
-  const maxScale = benchmark * 2;
-  const fillPercent = maxScale > 0 ? Math.min(100, Math.max(0, (value / maxScale) * 100)) : 0;
-  const benchmarkPos = maxScale > 0 ? (benchmark / maxScale) * 100 : 50;
+function ActivityProgressBar({ avgHoursPerMember, expectedAvgHours, maxHours }: { avgHoursPerMember: number; expectedAvgHours: number | null; maxHours: number }) {
+  const fillPercent = maxHours > 0 ? Math.min(100, Math.max(0, (avgHoursPerMember / maxHours) * 100)) : 0;
+  const markerPercent = expectedAvgHours !== null && maxHours > 0 ? Math.min(100, Math.max(0, (expectedAvgHours / maxHours) * 100)) : null;
 
   return (
     <div className="relative w-full">
-      <div className="relative h-3 sm:h-3.5 md:h-4 rounded-full bg-muted overflow-hidden">
+      {/* Expected avg label above bar */}
+      {markerPercent !== null && expectedAvgHours !== null && (
+        <div className="relative h-16 mt-3 mb-3">
+          <div
+            className="absolute -translate-x-1/2 flex flex-col items-center"
+            style={{ left: `${markerPercent}%` }}
+          >
+            <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap text-center leading-tight">
+              Tempo médio<br />esperado:
+            </span>
+            <span className="whitespace-nowrap">
+              <span className="text-sm sm:text-base font-bold text-foreground">{expectedAvgHours.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground ml-0.5">horas</span>
+            </span>
+          </div>
+        </div>
+      )}
+      {/* Progress bar */}
+      <div className="relative h-3 sm:h-3.5 md:h-4 rounded-full bg-muted overflow-visible">
         <div
           className="absolute inset-y-0 left-0 bg-orange-400 rounded-full transition-all duration-500"
           style={{ width: `${fillPercent}%` }}
         />
+        {/* Expected avg vertical marker */}
+        {markerPercent !== null && (
+          <div
+            className="absolute top-[-4px] bottom-[-4px] w-[3px] rounded-full bg-slate-800 dark:bg-white z-10 shadow-md"
+            style={{ left: `${markerPercent}%`, transform: 'translateX(-50%)' }}
+          />
+        )}
       </div>
-      <div className="absolute top-0 h-full w-0.5 bg-destructive z-10" style={{ left: `${benchmarkPos}%` }} />
     </div>
   );
 }
