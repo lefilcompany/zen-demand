@@ -191,9 +191,9 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
             </div>
 
             <div className="flex items-baseline w-full">
-              <div className="inline-flex items-baseline gap-1 bg-muted/60 border border-border rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 w-full justify-center">
-                <span className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">{avgDays > 0 ? fmt(avgDays) : "-"}</span>
-                <span className="text-[10px] sm:text-xs text-muted-foreground">dias</span>
+              <div className="inline-flex items-baseline gap-1 bg-orange-500 rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 w-full justify-center">
+                <span className="text-lg sm:text-xl md:text-2xl font-bold text-white">{avgDays > 0 ? fmt(avgDays) : "-"}</span>
+                <span className="text-[10px] sm:text-xs text-white/80">dias</span>
               </div>
             </div>
 
