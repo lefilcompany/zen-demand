@@ -449,6 +449,41 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                   />
                 </div>
 
+                {/* Row: Service + Assignees */}
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Package className="h-4 w-4" />
+                      Serviço {hasBoardServices ? "*" : ""}
+                    </Label>
+                    <ServiceSelector
+                      teamId={selectedTeamId}
+                      boardId={activeBoardId}
+                      value={serviceId}
+                      onChange={handleServiceChange}
+                      userRole={boardRole}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {hasBoardServices 
+                        ? "Serviço obrigatório para esta demanda"
+                        : "Selecione para calcular data de entrega"
+                      }
+                    </p>
+                  </div>
+
+                  {canAssignResponsibles && (
+                    <div className="space-y-2">
+                      <Label>Responsáveis</Label>
+                      <AssigneeSelector
+                        teamId={selectedTeamId}
+                        boardId={activeBoardId}
+                        selectedUserIds={assigneeIds}
+                        onChange={setAssigneeIds}
+                      />
+                    </div>
+                  )}
+                </div>
+
                 {/* Row: Status + Priority + Due Date */}
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
                   <div className="space-y-2">
@@ -490,41 +525,6 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                       onChange={(e) => setDueDate(e.target.value)}
                     />
                   </div>
-                </div>
-
-                {/* Row: Service + Assignees */}
-                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2">
-                      <Package className="h-4 w-4" />
-                      Serviço {hasBoardServices ? "*" : ""}
-                    </Label>
-                    <ServiceSelector
-                      teamId={selectedTeamId}
-                      boardId={activeBoardId}
-                      value={serviceId}
-                      onChange={handleServiceChange}
-                      userRole={boardRole}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {hasBoardServices 
-                        ? "Serviço obrigatório para esta demanda"
-                        : "Selecione para calcular data de entrega"
-                      }
-                    </p>
-                  </div>
-
-                  {canAssignResponsibles && (
-                    <div className="space-y-2">
-                      <Label>Responsáveis</Label>
-                      <AssigneeSelector
-                        teamId={selectedTeamId}
-                        boardId={activeBoardId}
-                        selectedUserIds={assigneeIds}
-                        onChange={setAssigneeIds}
-                      />
-                    </div>
-                  )}
                 </div>
 
                 {/* Description - full width */}
