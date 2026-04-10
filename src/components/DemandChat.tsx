@@ -263,7 +263,7 @@ export function DemandChat({
           templateData: {
             title: "Você foi mencionado",
             message: `${mName} mencionou você na demanda "${demandTitle}":\n\n"${content.substring(0, 200)}"`,
-            actionUrl: publicUrl, actionText: "Ver demanda", type: "mention",
+            actionUrl: publicUrl, actionText: "Ver demanda", type: "info",
           },
         });
       }
