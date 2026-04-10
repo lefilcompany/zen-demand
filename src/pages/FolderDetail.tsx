@@ -453,16 +453,16 @@ export default function FolderDetail() {
               open={isBoardOpen(group.boardId)}
               onOpenChange={() => toggleBoard(group.boardId)}
             >
-              <CollapsibleTrigger className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl bg-muted/50 hover:bg-muted/70 transition-colors text-left border border-border/40">
+              <CollapsibleTrigger className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl bg-[#F28705] hover:bg-[#D95204] transition-colors text-left border border-[#F28705]/60">
                 {isBoardOpen(group.boardId) ? (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <ChevronDown className="h-4 w-4 text-white shrink-0" />
                 ) : (
-                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <ChevronRight className="h-4 w-4 text-white shrink-0" />
                 )}
-                <span className="text-sm font-semibold text-foreground truncate flex-1">
+                <span className="text-sm font-semibold text-white truncate flex-1">
                   {group.boardName}
                 </span>
-                <Badge variant="secondary" className="text-[11px] h-5 px-2">
+                <Badge className="text-[11px] h-5 px-2 bg-white text-[#F28705] hover:bg-white/90 border-0">
                   {group.demands.length}
                 </Badge>
               </CollapsibleTrigger>
