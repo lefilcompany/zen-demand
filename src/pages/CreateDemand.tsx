@@ -22,6 +22,7 @@ import { useUploadAttachment } from "@/hooks/useAttachments";
 import { RecurrenceConfig, RecurrenceData, defaultRecurrenceData } from "@/components/RecurrenceConfig";
 import { useCreateRecurringDemand } from "@/hooks/useRecurringDemands";
 import { AlertTriangle, Ban, CloudOff, WifiOff, Package, CheckCircle2, Plus, ExternalLink, LayoutGrid } from "lucide-react";
+import { PriorityCards } from "@/components/PriorityCards";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
@@ -301,7 +302,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0 bg-background/80 backdrop-blur-xl border-white/10 shadow-2xl">
         {successState ? (
           // Success state
           <>
@@ -351,9 +352,9 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
         ) : (
           // Form state
           <>
-            <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
+            <DialogHeader className="px-6 pt-6 pb-2 shrink-0 border-b border-white/10">
               <DialogTitle className="text-xl font-bold">Nova Demanda</DialogTitle>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground pb-2">
                 Selecione o quadro e preencha os dados da demanda
               </p>
             </DialogHeader>
@@ -406,129 +407,129 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
 
               {/* Form */}
               <form id="create-demand-form" onSubmit={handleSubmit} className="space-y-5">
-                {/* Board Selector */}
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <LayoutGrid className="h-4 w-4" />
-                    Quadro *
-                  </Label>
-                  <Select value={formBoardId} onValueChange={(val) => {
-                    setFormBoardId(val);
-                    // Reset dependent fields when board changes
-                    setServiceId("");
-                    setAssigneeIds([]);
-                    setStatusId("");
-                  }}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o quadro" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allBoards?.map((board) => (
-                        <SelectItem key={board.id} value={board.id}>
-                          <div className="flex items-center gap-2">
-                            <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
-                            {board.name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Title - full width */}
-                <div className="space-y-2">
-                  <Label htmlFor="title">Título *</Label>
-                  <Input
-                    id="title"
-                    placeholder="Ex: Implementar nova funcionalidade"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    required
-                    autoFocus
-                    disabled={!formBoardId}
-                  />
-                </div>
-
-                {/* Row: Service + Assignees */}
-                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                {/* Section 1: Board + Title */}
+                <div className="rounded-xl border border-white/10 bg-white/5 dark:bg-white/5 backdrop-blur-sm p-4 space-y-4">
+                  {/* Board Selector */}
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2">
-                      <Package className="h-4 w-4" />
-                      Serviço {hasBoardServices ? "*" : ""}
+                      <LayoutGrid className="h-4 w-4" />
+                      Quadro *
                     </Label>
-                    <ServiceSelector
-                      teamId={selectedTeamId}
-                      boardId={activeBoardId}
-                      value={serviceId}
-                      onChange={handleServiceChange}
-                      userRole={boardRole}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {hasBoardServices 
-                        ? "Serviço obrigatório para esta demanda"
-                        : "Selecione para calcular data de entrega"
-                      }
-                    </p>
-                  </div>
-
-                  {canAssignResponsibles && (
-                    <div className="space-y-2">
-                      <Label>Responsáveis</Label>
-                      <AssigneeSelector
-                        teamId={selectedTeamId}
-                        boardId={activeBoardId}
-                        selectedUserIds={assigneeIds}
-                        onChange={setAssigneeIds}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Row: Status + Priority + Due Date */}
-                <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Status *</Label>
-                    <Select value={statusId} onValueChange={setStatusId} required disabled={!formBoardId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={!formBoardId ? "Selecione o quadro primeiro" : "Selecione"} />
+                    <Select value={formBoardId} onValueChange={(val) => {
+                      setFormBoardId(val);
+                      setServiceId("");
+                      setAssigneeIds([]);
+                      setStatusId("");
+                    }}>
+                      <SelectTrigger className="bg-white/5 border-white/10">
+                        <SelectValue placeholder="Selecione o quadro" />
                       </SelectTrigger>
                       <SelectContent>
-                        {statuses?.map((status) => (
-                          <SelectItem key={status.id} value={status.id}>
-                            {status.name}
+                        {allBoards?.map((board) => (
+                          <SelectItem key={board.id} value={board.id}>
+                            <div className="flex items-center gap-2">
+                              <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
+                              {board.name}
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
 
+                  {/* Title */}
                   <div className="space-y-2">
-                    <Label htmlFor="priority">Prioridade</Label>
-                    <Select value={priority} onValueChange={setPriority}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="baixa">Baixa</SelectItem>
-                        <SelectItem value="média">Média</SelectItem>
-                        <SelectItem value="alta">Alta</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="dueDate">Data de Entrega</Label>
+                    <Label htmlFor="title">Título *</Label>
                     <Input
-                      id="dueDate"
-                      type="date"
-                      value={dueDate}
-                      onChange={(e) => setDueDate(e.target.value)}
+                      id="title"
+                      placeholder="Ex: Implementar nova funcionalidade"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      required
+                      autoFocus
+                      disabled={!formBoardId}
+                      className="bg-white/5 border-white/10"
                     />
                   </div>
                 </div>
 
-                {/* Description - full width */}
-                <div className="space-y-2">
+                {/* Section 2: Service + Assignees */}
+                <div className="rounded-xl border border-white/10 bg-white/5 dark:bg-white/5 backdrop-blur-sm p-4">
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <Package className="h-4 w-4" />
+                        Serviço {hasBoardServices ? "*" : ""}
+                      </Label>
+                      <ServiceSelector
+                        teamId={selectedTeamId}
+                        boardId={activeBoardId}
+                        value={serviceId}
+                        onChange={handleServiceChange}
+                        userRole={boardRole}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {hasBoardServices 
+                          ? "Serviço obrigatório para esta demanda"
+                          : "Selecione para calcular data de entrega"
+                        }
+                      </p>
+                    </div>
+
+                    {canAssignResponsibles && (
+                      <div className="space-y-2">
+                        <Label>Responsáveis</Label>
+                        <AssigneeSelector
+                          teamId={selectedTeamId}
+                          boardId={activeBoardId}
+                          selectedUserIds={assigneeIds}
+                          onChange={setAssigneeIds}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Section 3: Priority Cards */}
+                <div className="rounded-xl border border-white/10 bg-white/5 dark:bg-white/5 backdrop-blur-sm p-4 space-y-2">
+                  <Label>Prioridade</Label>
+                  <PriorityCards value={priority} onChange={setPriority} />
+                </div>
+
+                {/* Section 4: Status + Due Date */}
+                <div className="rounded-xl border border-white/10 bg-white/5 dark:bg-white/5 backdrop-blur-sm p-4">
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Status *</Label>
+                      <Select value={statusId} onValueChange={setStatusId} required disabled={!formBoardId}>
+                        <SelectTrigger className="bg-white/5 border-white/10">
+                          <SelectValue placeholder={!formBoardId ? "Selecione o quadro primeiro" : "Selecione"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statuses?.map((status) => (
+                            <SelectItem key={status.id} value={status.id}>
+                              {status.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="dueDate">Data de Entrega</Label>
+                      <Input
+                        id="dueDate"
+                        type="date"
+                        value={dueDate}
+                        onChange={(e) => setDueDate(e.target.value)}
+                        className="bg-white/5 border-white/10"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 5: Description */}
+                <div className="rounded-xl border border-white/10 bg-white/5 dark:bg-white/5 backdrop-blur-sm p-4 space-y-2">
                   <Label htmlFor="description">Descrição</Label>
                   <RichTextEditor
                     value={description}
@@ -538,38 +539,40 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                   />
                 </div>
 
-                {/* Row: Attachments + Recurrence */}
-                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label>Anexos</Label>
-                      {pendingFiles.length > 0 && (
-                        <span className="text-xs text-muted-foreground">{pendingFiles.length} arquivo(s)</span>
+                {/* Section 6: Attachments + Recurrence */}
+                <div className="rounded-xl border border-white/10 bg-white/5 dark:bg-white/5 backdrop-blur-sm p-4">
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Anexos</Label>
+                        {pendingFiles.length > 0 && (
+                          <span className="text-xs text-muted-foreground">{pendingFiles.length} arquivo(s)</span>
+                        )}
+                      </div>
+                      <InlineFileUploader
+                        pendingFiles={pendingFiles}
+                        onFilesChange={setPendingFiles}
+                        disabled={isOffline}
+                        listenToGlobalPaste={!isOffline}
+                      />
+                      {isOffline && (
+                        <p className="text-xs text-muted-foreground">
+                          Anexos não podem ser adicionados offline
+                        </p>
                       )}
                     </div>
-                    <InlineFileUploader
-                      pendingFiles={pendingFiles}
-                      onFilesChange={setPendingFiles}
-                      disabled={isOffline}
-                      listenToGlobalPaste={!isOffline}
-                    />
-                    {isOffline && (
-                      <p className="text-xs text-muted-foreground">
-                        Anexos não podem ser adicionados offline
-                      </p>
-                    )}
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label>Recorrência</Label>
-                    <RecurrenceConfig value={recurrence} onChange={setRecurrence} />
+                    <div className="space-y-2">
+                      <Label>Recorrência</Label>
+                      <RecurrenceConfig value={recurrence} onChange={setRecurrence} />
+                    </div>
                   </div>
                 </div>
               </form>
             </div>
 
             {/* Footer */}
-            <div className="shrink-0 border-t border-border px-6 py-4 flex justify-end gap-3 bg-card">
+            <div className="shrink-0 border-t border-white/10 px-6 py-4 flex justify-end gap-3 bg-white/5 backdrop-blur-sm">
               <Button type="button" variant="outline" onClick={handleClose}>
                 Cancelar
               </Button>
