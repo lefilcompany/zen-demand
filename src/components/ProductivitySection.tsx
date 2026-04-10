@@ -218,6 +218,32 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
 
           </div>
 
+          {/* Tempo em atividade */}
+          <div className="p-2.5 sm:p-3 md:p-4 rounded-xl border border-border/50 bg-card space-y-2 sm:space-y-3">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Timer className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-orange-500 shrink-0" />
+              <span className="text-[11px] sm:text-xs md:text-sm font-semibold text-foreground leading-tight">
+                Tempo em atividade
+              </span>
+            </div>
+
+            <div className="flex items-baseline w-full">
+              <div className="inline-flex items-baseline gap-1 rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 w-full justify-center bg-primary">
+                <span className="text-lg sm:text-xl md:text-2xl font-bold text-white">{avgActiveHoursPerUser > 0 ? fmt(avgActiveHoursPerUser) : "-"}</span>
+                <span className="text-[10px] sm:text-xs text-white/80">h/membro</span>
+              </div>
+            </div>
+
+            <ActivityProgressBar avgHoursPerMember={avgActiveHoursPerUser} expectedAvgHours={expectedActivityHours} maxHours={activityMaxHours} />
+
+            <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-muted-foreground">
+              <span>0 horas</span>
+              {expectedActivityHours !== null && (
+                <span className="font-medium text-foreground/70">esperado</span>
+              )}
+              <span>{activityMaxHours} horas</span>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
