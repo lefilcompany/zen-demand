@@ -252,6 +252,19 @@ export default function FolderDetail() {
             {groupedByBoard.length > 0 && ` em ${groupedByBoard.length} ${groupedByBoard.length === 1 ? "quadro" : "quadros"}`}
           </p>
         </div>
+        {folder.is_owner && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setShareOpen(true)}
+                className="p-2 rounded-lg border border-border/60 hover:bg-muted/60 transition-colors shrink-0"
+              >
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Compartilhar pasta</TooltipContent>
+          </Tooltip>
+        )}
       </div>
 
       {/* Search + View Toggle + Quick Filters */}
