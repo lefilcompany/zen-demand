@@ -18,9 +18,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FolderShareDialog } from "@/components/FolderShareDialog";
+import { FolderDemandManager } from "@/components/FolderDemandManager";
 import {
   Search, LayoutGrid, List, CalendarDays, ChevronDown, ChevronRight,
-  FolderOpen, ArrowLeft, Eye, EyeOff, User, Pencil, Check, X, Users
+  FolderOpen, ArrowLeft, Eye, EyeOff, User, Pencil, Check, X, Users, Plus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
@@ -47,6 +48,7 @@ export default function FolderDetail() {
   const [openBoards, setOpenBoards] = useState<Record<string, boolean>>({});
   const [hideDelivered, setHideDelivered] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [managerOpen, setManagerOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState("");
   const editInputRef = useRef<HTMLInputElement>(null);
@@ -252,20 +254,34 @@ export default function FolderDetail() {
             {groupedByBoard.length > 0 && ` em ${groupedByBoard.length} ${groupedByBoard.length === 1 ? "quadro" : "quadros"}`}
           </p>
         </div>
-        {folder.is_owner && (
+        <div className="flex items-center gap-2 shrink-0">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={() => setShareOpen(true)}
-                className="flex items-center gap-1.5 p-2 md:px-3 md:py-1.5 rounded-lg border border-border/60 hover:bg-muted/60 transition-colors shrink-0"
+                onClick={() => setManagerOpen(true)}
+                className="flex items-center gap-1.5 p-2 md:px-3 md:py-1.5 rounded-lg border border-border/60 hover:bg-primary/10 hover:border-primary/30 transition-colors"
               >
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <span className="hidden md:inline text-xs font-medium text-muted-foreground">Compartilhar pasta</span>
+                <Plus className="h-4 w-4 text-primary" />
+                <span className="hidden md:inline text-xs font-medium text-primary">Adicionar demanda</span>
               </button>
             </TooltipTrigger>
-            <TooltipContent className="md:hidden">Compartilhar pasta</TooltipContent>
+            <TooltipContent className="md:hidden">Adicionar demanda</TooltipContent>
           </Tooltip>
-        )}
+          {folder.is_owner && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setShareOpen(true)}
+                  className="flex items-center gap-1.5 p-2 md:px-3 md:py-1.5 rounded-lg border border-border/60 hover:bg-muted/60 transition-colors"
+                >
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span className="hidden md:inline text-xs font-medium text-muted-foreground">Compartilhar pasta</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="md:hidden">Compartilhar pasta</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
       </div>
 
       {/* Search + View Toggle + Quick Filters */}
@@ -425,6 +441,14 @@ export default function FolderDetail() {
           sharedWith={folder.shared_with || []}
         />
       )}
+
+      <FolderDemandManager
+        open={managerOpen}
+        onOpenChange={setManagerOpen}
+        folderId={folder.id}
+        folderName={folder.name}
+        teamId={currentTeamId}
+      />
     </div>
   );
 }
