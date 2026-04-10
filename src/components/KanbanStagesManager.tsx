@@ -466,16 +466,22 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
 
   const handleConfirmDelete = async () => {
     if (!statusToDelete) return;
+    const deletedStatus = statusToDelete;
+    // Optimistic local update
+    setLocalStatuses(prev => prev.filter(s => s.id !== deletedStatus.id));
+    setDeleteDialogOpen(false);
+    setStatusToDelete(null);
     try {
       await deleteStatus.mutateAsync({
-        boardStatusId: statusToDelete.id,
+        boardStatusId: deletedStatus.id,
         boardId,
-        statusId: statusToDelete.status_id,
+        statusId: deletedStatus.status_id,
       });
       toast.success("Etapa removida do quadro");
-      setDeleteDialogOpen(false);
-      setStatusToDelete(null);
     } catch (error) {
+      console.error("Erro ao remover etapa:", error);
+      // Revert optimistic update - refetch from server
+      queryClient.refetchQueries({ queryKey: ["board-statuses-all", boardId] });
       toast.error("Erro ao remover etapa");
     }
   };
