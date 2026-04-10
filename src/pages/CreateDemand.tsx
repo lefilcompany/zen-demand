@@ -103,7 +103,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
-  
+  const [selectedFolderId, setSelectedFolderId] = useState("");
   const uploadAttachment = useUploadAttachment();
   const createRecurringDemand = useCreateRecurringDemand();
 
