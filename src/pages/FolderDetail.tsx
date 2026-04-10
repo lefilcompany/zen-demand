@@ -44,6 +44,29 @@ export default function FolderDetail() {
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [openBoards, setOpenBoards] = useState<Record<string, boolean>>({});
   const [hideDelivered, setHideDelivered] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editName, setEditName] = useState("");
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  const handleStartEdit = () => {
+    if (!folder?.is_owner) return;
+    setEditName(folder.name);
+    setIsEditingName(true);
+    setTimeout(() => editInputRef.current?.focus(), 50);
+  };
+
+  const handleSaveName = () => {
+    const trimmed = editName.trim();
+    if (!trimmed || !folder) return;
+    if (trimmed !== folder.name) {
+      updateFolder.mutate({ id: folder.id, name: trimmed, color: folder.color });
+    }
+    setIsEditingName(false);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingName(false);
+  };
   const [showOnlyMine, setShowOnlyMine] = useState(false);
   const [filters, setFilters] = useState<DemandFiltersState>({
     status: null, priority: null, assignee: null, service: null,
