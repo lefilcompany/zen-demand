@@ -747,7 +747,7 @@ export default function DemandDetail() {
                   <span className="font-medium">{demand.profiles.full_name}</span>
                   {creatorBoardRole && (
                     <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-muted/50 text-muted-foreground border-muted-foreground/20">
-                      {creatorBoardRole === "admin" ? "Dono" : creatorBoardRole === "moderator" ? "Moderador" : creatorBoardRole === "executor" ? "Executor" : "Solicitante"}
+                      {creatorBoardRole === "admin" ? "Administrador" : creatorBoardRole === "moderator" ? "Coordenador" : creatorBoardRole === "executor" ? "Agente" : "Solicitante"}
                     </Badge>
                   )}
                 </div>
