@@ -273,6 +273,63 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       return false;
     }
   }, [user, queryClient]);
+
+  // Helper function to start a time entry for a demand when moved to "Fazendo"
+  const startTimerForDemand = useCallback(async (demandId: string) => {
+    if (!user) return;
+    
+    try {
+      // Check if there's already an active timer for this user on this demand
+      const { data: existingActive } = await supabase
+        .from("demand_time_entries")
+        .select("id")
+        .eq("demand_id", demandId)
+        .eq("user_id", user.id)
+        .is("ended_at", null)
+        .limit(1);
+
+      if (existingActive && existingActive.length > 0) return; // Already tracking
+
+      // Stop any other active timer the user has on ANY demand
+      const { data: otherActive } = await supabase
+        .from("demand_time_entries")
+        .select("id, started_at")
+        .eq("user_id", user.id)
+        .is("ended_at", null);
+
+      if (otherActive && otherActive.length > 0) {
+        for (const entry of otherActive) {
+          const now = new Date();
+          const durationSeconds = Math.floor((now.getTime() - new Date(entry.started_at).getTime()) / 1000);
+          await supabase
+            .from("demand_time_entries")
+            .update({ ended_at: now.toISOString(), duration_seconds: durationSeconds })
+            .eq("id", entry.id);
+        }
+      }
+
+      // Start new timer
+      await supabase
+        .from("demand_time_entries")
+        .insert({
+          demand_id: demandId,
+          user_id: user.id,
+          started_at: new Date().toISOString(),
+        });
+
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ["demand-time-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["current-user-demand-time", demandId] });
+      queryClient.invalidateQueries({ queryKey: ["active-timer-demands"] });
+      queryClient.invalidateQueries({ queryKey: ["demands"] });
+
+      toast.info("Timer iniciado automaticamente", {
+        description: "O timer foi iniciado pois a demanda entrou em andamento",
+      });
+    } catch (error) {
+      console.error("Error starting timer:", error);
+    }
+  }, [user, queryClient]);
   
   const adjustmentDemand = demands.find(d => d.id === adjustmentDemandId);
 
@@ -386,6 +443,11 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     // Stop timer if moving to "Aprovação do Cliente" or "Entregue"
     if (columnKey === "Aprovação do Cliente" || columnKey === "Entregue") {
       stopAllTimersForDemand(demandId);
+    }
+
+    // Start timer automatically when moving to "Fazendo"
+    if (columnKey === "Fazendo" && previousStatusName !== "Fazendo") {
+      startTimerForDemand(demandId);
     }
 
     updateDemand.mutate(
@@ -511,6 +573,11 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     // Stop timer if moving to "Aprovação do Cliente" or "Entregue"
     if (newStatusKey === "Aprovação do Cliente" || newStatusKey === "Entregue") {
       stopAllTimersForDemand(demandId);
+    }
+
+    // Start timer automatically when moving to "Fazendo"
+    if (newStatusKey === "Fazendo" && previousStatusName !== "Fazendo") {
+      startTimerForDemand(demandId);
     }
 
     updateDemand.mutate(
@@ -693,7 +760,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         },
       }
     );
-  }, [statuses, demands, stopAllTimersForDemand, updateDemand, queryClient, isOffline, user]);
+  }, [statuses, demands, stopAllTimersForDemand, startTimerForDemand, updateDemand, queryClient, isOffline, user]);
 
   // Handle drag start only from the drag handle
   const handleDragHandleMouseDown = useCallback((e: React.MouseEvent) => {
