@@ -241,9 +241,6 @@ export default function FolderDetail() {
               <button onClick={handleSaveName} className="p-1 rounded hover:bg-emerald-500/10 text-emerald-600">
                 <Check className="h-4 w-4" />
               </button>
-              <button onClick={handleCancelEdit} className="p-1 rounded hover:bg-destructive/10 text-muted-foreground">
-                <X className="h-4 w-4" />
-              </button>
             </div>
           ) : (
             <div className="group/title flex items-center gap-1.5">
