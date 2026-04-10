@@ -72,7 +72,7 @@ export function useDemands(boardId?: string) {
           assigned_profile:profiles!demands_assigned_to_fkey(full_name, avatar_url),
           status_changed_by_profile:profiles!demands_status_changed_by_fkey(full_name, avatar_url),
           teams(name),
-          services(id, name),
+          services(id, name, estimated_hours),
           boards(id, name),
           demand_assignees(
             user_id,
@@ -131,7 +131,7 @@ export function useDemandById(demandId: string | undefined) {
           assigned_profile:profiles!demands_assigned_to_fkey(full_name, avatar_url),
           status_changed_by_profile:profiles!demands_status_changed_by_fkey(full_name, avatar_url),
           teams(name),
-          services(id, name),
+          services(id, name, estimated_hours),
           demand_assignees(
             user_id,
             profile:profiles(full_name, avatar_url)
