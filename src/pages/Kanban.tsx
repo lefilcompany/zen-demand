@@ -233,7 +233,7 @@ export default function Kanban() {
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
             <p className="text-muted-foreground mt-4">{t("common.loading")}</p>
           </div>
-        ) : filteredDemands && filteredDemands.length > 0 ? (
+        ) : (
           <KanbanBoard 
             demands={filteredDemands} 
             columns={kanbanColumns}
@@ -244,32 +244,6 @@ export default function Kanban() {
             boardId={selectedBoardId || undefined}
             initialColumnsOpen={preferences.defaultColumnsOpen}
           />
-        ) : (
-          <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
-            <LayoutGrid className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h3 className="mt-4 text-lg font-semibold text-foreground">
-              {filters.myTasks ? "Nenhuma demanda atribuída a você" : t("demands.noDemands")}
-            </h3>
-            <p className="text-muted-foreground mt-2">
-              {isReadOnly ? t("common.noResults") : t("demands.createFirst")}
-            </p>
-            {!filters.myTasks && !isReadOnly && (
-              <div className="mt-6">
-                <Button onClick={() => openCreateDemand()}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t("demands.createFirst")}
-                </Button>
-              </div>
-            )}
-            {!filters.myTasks && isReadOnly && (
-              <div className="mt-6">
-                <Button onClick={() => navigate("/demands/request")}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Criar Solicitação
-                </Button>
-              </div>
-            )}
-          </div>
         )}
       </div>
       
