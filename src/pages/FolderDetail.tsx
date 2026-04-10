@@ -16,9 +16,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { FolderShareDialog } from "@/components/FolderShareDialog";
 import {
   Search, LayoutGrid, List, CalendarDays, ChevronDown, ChevronRight,
-  FolderOpen, ArrowLeft, Eye, EyeOff, User, Pencil, Check, X
+  FolderOpen, ArrowLeft, Eye, EyeOff, User, Pencil, Check, X, Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
