@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Clock, Timer, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 import { differenceInHours } from "date-fns";
@@ -20,30 +19,6 @@ interface ProductivitySectionProps {
   boardId: string | null;
 }
 
-function getHealthStatus(value: number, benchmark: number, lowerIsBetter: boolean) {
-  if (benchmark === 0) return { color: "text-muted-foreground", bgClass: "bg-muted", label: "Sem dados" };
-
-  const deviation = Math.abs(value - benchmark) / benchmark;
-
-  // Determine if the value is "good" or "bad"
-  const isGood = lowerIsBetter ? value <= benchmark : value >= benchmark;
-
-  if (deviation <= 0.2) {
-    return { color: "text-emerald-600", bgClass: "bg-emerald-500", label: "Na média" };
-  }
-  if (deviation <= 0.5) {
-    return {
-      color: isGood ? "text-emerald-600" : "text-yellow-600",
-      bgClass: isGood ? "bg-emerald-500" : "bg-yellow-500",
-      label: isGood ? (lowerIsBetter ? "Abaixo da média" : "Acima da média") : (lowerIsBetter ? "Acima da média" : "Abaixo da média"),
-    };
-  }
-  return {
-    color: isGood ? "text-emerald-600" : "text-red-600",
-    bgClass: isGood ? "bg-emerald-500" : "bg-red-500",
-    label: isGood ? (lowerIsBetter ? "Muito abaixo" : "Muito acima") : (lowerIsBetter ? "Muito acima" : "Muito abaixo"),
-  };
-}
 
 function CompletionProgressBar({ avgDays, expectedAvgDays, maxDays }: { avgDays: number; expectedAvgDays: number | null; maxDays: number }) {
   const fillPercent = maxDays > 0 ? Math.min(100, Math.max(0, (avgDays / maxDays) * 100)) : 0;
@@ -86,11 +61,6 @@ function CompletionProgressBar({ avgDays, expectedAvgDays, maxDays }: { avgDays:
   );
 }
 
-function HealthIndicatorBar({ bgClass }: { bgClass: string }) {
-  return (
-    <div className={`w-full h-1 sm:h-1.5 rounded-full ${bgClass} transition-colors duration-300`} />
-  );
-}
 
 function ActivityProgressBar({ avgHoursPerMember, expectedAvgHours, maxHours }: { avgHoursPerMember: number; expectedAvgHours: number | null; maxHours: number }) {
   const fillPercent = maxHours > 0 ? Math.min(100, Math.max(0, (avgHoursPerMember / maxHours) * 100)) : 0;
