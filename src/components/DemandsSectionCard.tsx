@@ -112,6 +112,7 @@ function resolveServiceCategoryName(
 export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
   const [piePeriod, setPiePeriod] = useState<ChartPeriodType>("month");
   const [trendPeriod, setTrendPeriod] = useState<ChartPeriodType>("month");
+  const [visibleStatuses, setVisibleStatuses] = useState<Set<string>>(new Set(["A Iniciar", "Em Andamento", "Entregue"]));
   const isMobile = useIsMobile();
   const { selectedBoardId, currentTeamId } = useSelectedBoard();
   const { selectedTeamId } = useSelectedTeam();
