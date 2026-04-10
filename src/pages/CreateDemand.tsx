@@ -571,7 +571,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                       <FolderOpen className="h-4 w-4" />
                       Pasta
                     </Label>
-                    <Select value={selectedFolderId} onValueChange={setSelectedFolderId}>
+                    <Select value={selectedFolderId || "none"} onValueChange={(v) => setSelectedFolderId(v === "none" ? "" : v)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Nenhuma pasta selecionada" />
                       </SelectTrigger>
