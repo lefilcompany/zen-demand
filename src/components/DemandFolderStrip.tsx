@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FolderOpen, Plus, MoreVertical, Pencil, Trash2, ListChecks, Users, Share2 } from "lucide-react";
 import { useDemandFolders, useCreateFolder, useUpdateFolder, useDeleteFolder, DemandFolder } from "@/hooks/useDemandFolders";
 import { useAuth } from "@/lib/auth";
@@ -17,11 +18,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 interface DemandFolderStripProps {
   teamId: string | null;
-  selectedFolderId: string | null;
-  onSelectFolder: (folderId: string | null) => void;
+  selectedFolderId?: string | null;
+  onSelectFolder?: (folderId: string | null) => void;
 }
 
 export function DemandFolderStrip({ teamId, selectedFolderId, onSelectFolder }: DemandFolderStripProps) {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { data: folders } = useDemandFolders(teamId, user?.id);
   const createFolder = useCreateFolder();
@@ -45,12 +47,16 @@ export function DemandFolderStrip({ teamId, selectedFolderId, onSelectFolder }: 
   };
 
   const handleDelete = (folder: DemandFolder) => {
-    if (selectedFolderId === folder.id) onSelectFolder(null);
+    if (selectedFolderId === folder.id) {
+      onSelectFolder?.(null);
+    } else {
+      onSelectFolder?.(folder.id);
+    }
     deleteFolder.mutate(folder.id);
   };
 
   const handleFolderClick = (folder: DemandFolder) => {
-    onSelectFolder(selectedFolderId === folder.id ? null : folder.id);
+    navigate(`/folders/${folder.id}`);
   };
 
   return (
