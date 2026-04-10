@@ -362,6 +362,35 @@ export default function DemandRequests() {
       setCommentText("");
       setPendingFiles([]);
       toast.success("Comentário adicionado");
+
+      // Fire mention notifications in background
+      const mentionedIds = extractMentionedUserIds(content).filter((id) => id !== user?.id);
+      if (mentionedIds.length > 0 && user?.id) {
+        (async () => {
+          try {
+            const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
+            const mentionerName = profile?.full_name || "Alguém";
+            const mentionNotifs = mentionedIds.map((uid) => ({
+              user_id: uid,
+              title: "Você foi mencionado",
+              message: `${mentionerName} mencionou você em um comentário da solicitação "${viewing.title}"`,
+              type: "mention",
+              link: `/demand-requests?view=${viewing.id}`,
+            }));
+            await supabase.from("notifications").insert(mentionNotifs);
+            for (const uid of mentionedIds) {
+              sendMentionPushNotification({
+                mentionedUserId: uid,
+                demandId: viewing.id,
+                demandTitle: viewing.title,
+                mentionerName,
+              }).catch(console.error);
+            }
+          } catch (err) {
+            console.error("Error sending mention notifications:", err);
+          }
+        })();
+      }
     } catch (error: any) {
       toast.error("Erro ao adicionar comentário", {
         description: getErrorMessage(error)
