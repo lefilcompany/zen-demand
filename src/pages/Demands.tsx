@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useTranslation } from "react-i18next";
 import { DemandFolderStrip } from "@/components/DemandFolderStrip";
 import { useFolderDemandIds } from "@/hooks/useDemandFolders";
@@ -345,90 +346,106 @@ export default function Demands() {
               <DemandFilters boardId={selectedBoardId} filters={filters} onChange={setFilters} />
               
               {/* All boards toggle */}
-              <button
-                onClick={() => setShowAllBoards(!showAllBoards)}
-                className={`
-                  inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium h-8
-                  transition-all duration-200 whitespace-nowrap
-                  ${showAllBoards 
-                    ? "bg-primary text-primary-foreground shadow-sm" 
-                    : "bg-background border border-border/60 hover:border-primary/40 hover:text-primary"
-                  }
-                `}
-                title={showAllBoards ? "Ver apenas quadro atual" : "Ver demandas de todos os quadros"}
-              >
-                <Layers className="h-3.5 w-3.5" />
-                <span>Todos os quadros</span>
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setShowAllBoards(!showAllBoards)}
+                    className={`
+                      inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium h-8
+                      transition-all duration-200 whitespace-nowrap
+                      ${showAllBoards 
+                        ? "bg-primary text-primary-foreground shadow-sm" 
+                        : "bg-background border border-border/60 hover:border-primary/40 hover:text-primary"
+                      }
+                    `}
+                  >
+                    <Layers className="h-3.5 w-3.5" />
+                    <span>Todos os quadros</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>{showAllBoards ? "Exibindo demandas de todos os quadros. Clique para ver apenas o quadro selecionado." : "Clique para ver demandas de todos os quadros ao mesmo tempo."}</TooltipContent>
+              </Tooltip>
 
               {/* Scheduled demands button */}
               <ScheduledDemandsModal boardId={selectedBoardId} teamId={currentTeamId} />
 
               {/* Archived demands button */}
-              <button
-                onClick={() => setIsArchivedOpen(true)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium h-8 transition-all duration-200 whitespace-nowrap bg-background border border-border/60 hover:border-primary/40 hover:text-primary"
-                title="Demandas arquivadas"
-              >
-                <Archive className="h-3.5 w-3.5" />
-                <span>Arquivadas</span>
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setIsArchivedOpen(true)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium h-8 transition-all duration-200 whitespace-nowrap bg-background border border-border/60 hover:border-primary/40 hover:text-primary"
+                  >
+                    <Archive className="h-3.5 w-3.5" />
+                    <span>Arquivadas</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Ver demandas que foram arquivadas e removidas da visualização principal.</TooltipContent>
+              </Tooltip>
               
               {/* Quick toggle chips */}
               {!isReadOnly && myDemandsCount > 0 && (
-                <button
-                  onClick={() => setShowOnlyMine(!showOnlyMine)}
-                  className={`
-                    inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium h-8
-                    transition-all duration-200 whitespace-nowrap
-                    ${showOnlyMine 
-                      ? "bg-primary text-primary-foreground shadow-sm" 
-                      : "bg-background border border-border/60 hover:border-primary/40 hover:text-primary"
-                    }
-                  `}
-                  title={showOnlyMine ? "Ver todas as demandas" : "Ver apenas minhas demandas"}
-                >
-                  <User className="h-3.5 w-3.5" />
-                  <span>Minhas</span>
-                  <span className={`
-                    inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 
-                    rounded-full text-[10px] font-bold
-                    ${showOnlyMine 
-                      ? "bg-primary-foreground/20 text-primary-foreground" 
-                      : "bg-primary/10 text-primary"
-                    }
-                  `}>
-                    {myDemandsCount}
-                  </span>
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setShowOnlyMine(!showOnlyMine)}
+                      className={`
+                        inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium h-8
+                        transition-all duration-200 whitespace-nowrap
+                        ${showOnlyMine 
+                          ? "bg-primary text-primary-foreground shadow-sm" 
+                          : "bg-background border border-border/60 hover:border-primary/40 hover:text-primary"
+                        }
+                      `}
+                    >
+                      <User className="h-3.5 w-3.5" />
+                      <span>Minhas</span>
+                      <span className={`
+                        inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 
+                        rounded-full text-[10px] font-bold
+                        ${showOnlyMine 
+                          ? "bg-primary-foreground/20 text-primary-foreground" 
+                          : "bg-primary/10 text-primary"
+                        }
+                      `}>
+                        {myDemandsCount}
+                      </span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{showOnlyMine ? "Mostrando apenas suas demandas. Clique para ver todas." : "Filtrar para exibir apenas as demandas atribuídas a você."}</TooltipContent>
+                </Tooltip>
               )}
               
               {deliveredCount > 0 && (
-                <button
-                  onClick={() => setHideDelivered(!hideDelivered)}
-                  className={`
-                    inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium h-8
-                    transition-all duration-200 whitespace-nowrap
-                    ${hideDelivered 
-                      ? "bg-muted-foreground text-background shadow-sm" 
-                      : "bg-background border border-border/60 hover:border-emerald-500/40 hover:text-emerald-600 dark:hover:text-emerald-400"
-                    }
-                  `}
-                  title={hideDelivered ? "Mostrar demandas entregues" : "Ocultar demandas entregues"}
-                >
-                  {hideDelivered ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                  <span>{hideDelivered ? "Ocultas" : "Entregues"}</span>
-                  <span className={`
-                    inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 
-                    rounded-full text-[10px] font-bold
-                    ${hideDelivered 
-                      ? "bg-background/20 text-background" 
-                      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                    }
-                  `}>
-                    {deliveredCount}
-                  </span>
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setHideDelivered(!hideDelivered)}
+                      className={`
+                        inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium h-8
+                        transition-all duration-200 whitespace-nowrap
+                        ${hideDelivered 
+                          ? "bg-muted-foreground text-background shadow-sm" 
+                          : "bg-background border border-border/60 hover:border-emerald-500/40 hover:text-emerald-600 dark:hover:text-emerald-400"
+                        }
+                      `}
+                    >
+                      {hideDelivered ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      <span>{hideDelivered ? "Ocultas" : "Entregues"}</span>
+                      <span className={`
+                        inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 
+                        rounded-full text-[10px] font-bold
+                        ${hideDelivered 
+                          ? "bg-background/20 text-background" 
+                          : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                        }
+                      `}>
+                        {deliveredCount}
+                      </span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{hideDelivered ? "Demandas entregues estão ocultas. Clique para exibi-las novamente." : "Ocultar demandas já entregues para focar nas pendentes."}</TooltipContent>
+                </Tooltip>
               )}
             </div>
 
