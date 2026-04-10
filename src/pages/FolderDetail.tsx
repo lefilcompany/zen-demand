@@ -257,12 +257,13 @@ export default function FolderDetail() {
             <TooltipTrigger asChild>
               <button
                 onClick={() => setShareOpen(true)}
-                className="p-2 rounded-lg border border-border/60 hover:bg-muted/60 transition-colors shrink-0"
+                className="flex items-center gap-1.5 p-2 md:px-3 md:py-1.5 rounded-lg border border-border/60 hover:bg-muted/60 transition-colors shrink-0"
               >
                 <Users className="h-4 w-4 text-muted-foreground" />
+                <span className="hidden md:inline text-xs font-medium text-muted-foreground">Compartilhar pasta</span>
               </button>
             </TooltipTrigger>
-            <TooltipContent>Compartilhar pasta</TooltipContent>
+            <TooltipContent className="md:hidden">Compartilhar pasta</TooltipContent>
           </Tooltip>
         )}
       </div>
