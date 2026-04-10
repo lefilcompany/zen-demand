@@ -57,7 +57,7 @@ export function FolderShareDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[540px] p-0 gap-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[540px] p-0 gap-0 overflow-hidden rounded-2xl">
         {/* Header */}
         <div className="px-6 pt-6 pb-4 border-b border-border/40">
           <DialogHeader className="space-y-2">
@@ -94,7 +94,7 @@ export function FolderShareDialog({
         </div>
 
         {/* Member list */}
-        <ScrollArea className="h-[400px]">
+        <ScrollArea className="h-[280px]">
           <div className="px-3 py-2">
             <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-3 py-2">
               Membros da equipe
