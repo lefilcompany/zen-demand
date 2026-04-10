@@ -161,3 +161,27 @@ export function hasLinks(text: string): boolean {
   URL_REGEX.lastIndex = 0;
   return URL_REGEX.test(text);
 }
+
+// Extrai IDs de usuários mencionados em conteúdo HTML (usado em notas com TipTap)
+// Formato: <a href="/user/UUID" data-mention="user">@Nome</a>
+const HTML_USER_MENTION_REGEX = /href="\/user\/([a-f0-9-]+)"\s+data-mention="user"/g;
+
+export function extractMentionedUserIdsFromHtml(html: string): string[] {
+  const ids: string[] = [];
+  HTML_USER_MENTION_REGEX.lastIndex = 0;
+  let match;
+  while ((match = HTML_USER_MENTION_REGEX.exec(html)) !== null) {
+    if (!ids.includes(match[1])) {
+      ids.push(match[1]);
+    }
+  }
+  return ids;
+}
+
+// Extrai IDs de usuários mencionados de qualquer formato (plaintext [[id:name]] ou HTML data-mention)
+export function extractAllMentionedUserIds(content: string): string[] {
+  const fromPlaintext = extractMentionedUserIds(content);
+  const fromHtml = extractMentionedUserIdsFromHtml(content);
+  const combined = new Set([...fromPlaintext, ...fromHtml]);
+  return Array.from(combined);
+}

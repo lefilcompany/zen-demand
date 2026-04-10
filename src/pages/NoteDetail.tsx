@@ -31,6 +31,8 @@ import { toast } from "sonner";
 import { debounce } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { extractMentionedUserIdsFromHtml } from "@/lib/mentionUtils";
+import { sendMentionPushNotification } from "@/hooks/useSendPushNotification";
 
 export default function NoteDetail() {
   const { noteId } = useParams();
@@ -54,6 +56,7 @@ export default function NoteDetail() {
   
   const coverInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLTextAreaElement>(null);
+  const notifiedMentionsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (note) {
@@ -61,6 +64,9 @@ export default function NoteDetail() {
       setContent(note.content || "");
       setIcon(note.icon || "📝");
       setTags(note.tags || []);
+      // Initialize already-mentioned users so we don't re-notify on load
+      const existingMentions = extractMentionedUserIdsFromHtml(note.content || "");
+      notifiedMentionsRef.current = new Set(existingMentions);
     }
   }, [note]);
 
@@ -99,6 +105,40 @@ export default function NoteDetail() {
     setContent(newContent);
     if (noteId) {
       debouncedSave(noteId, { content: newContent });
+
+      // Check for new mentions and notify
+      const currentMentions = extractMentionedUserIdsFromHtml(newContent);
+      const newMentions = currentMentions.filter(
+        (id) => id !== user?.id && !notifiedMentionsRef.current.has(id)
+      );
+      if (newMentions.length > 0 && user?.id) {
+        newMentions.forEach((id) => notifiedMentionsRef.current.add(id));
+        (async () => {
+          try {
+            const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
+            const mentionerName = profile?.full_name || "Alguém";
+            const noteTitle = title || "Sem título";
+            const mentionNotifs = newMentions.map((uid) => ({
+              user_id: uid,
+              title: "Você foi mencionado",
+              message: `${mentionerName} mencionou você na nota "${noteTitle}"`,
+              type: "mention",
+              link: `/notes/${noteId}`,
+            }));
+            await supabase.from("notifications").insert(mentionNotifs);
+            for (const uid of newMentions) {
+              sendMentionPushNotification({
+                mentionedUserId: uid,
+                demandId: noteId!,
+                demandTitle: noteTitle,
+                mentionerName,
+              }).catch(console.error);
+            }
+          } catch (err) {
+            console.error("Error sending note mention notifications:", err);
+          }
+        })();
+      }
     }
   };
 

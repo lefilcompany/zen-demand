@@ -238,7 +238,7 @@ export function DemandChat({
       }
     }
 
-    // Mentions
+    // Mentions - in-app + push + email
     const mentionedIds = extractMentionedUserIds(content).filter((id) => id !== user.id);
     if (mentionedIds.length > 0) {
       const { data: p } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
@@ -250,7 +250,22 @@ export function DemandChat({
       }));
       await supabase.from("notifications").insert(mentionNotifs);
       for (const uid of mentionedIds) {
-        sendMentionPushNotification({ mentionedUserId: uid, demandId, demandTitle, mentionerName: mName }).catch(console.error);
+        sendMentionPushNotification({ mentionedUserId: uid, demandId, demandTitle, mentionerName: mName, boardName }).catch(console.error);
+      }
+
+      // Send email to mentioned users
+      const publicUrl = await buildPublicDemandUrl(demandId, user.id);
+      for (const uid of mentionedIds) {
+        sendEmail.mutate({
+          to: uid,
+          subject: `💬 Você foi mencionado em "${demandTitle}"`,
+          template: "notification",
+          templateData: {
+            title: "Você foi mencionado",
+            message: `${mName} mencionou você na demanda "${demandTitle}":\n\n"${content.substring(0, 200)}"`,
+            actionUrl: publicUrl, actionText: "Ver demanda", type: "info",
+          },
+        });
       }
     }
   };
