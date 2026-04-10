@@ -30,9 +30,13 @@ function CompletionProgressBar({ avgDays, expectedAvgDays, maxDays }: { avgDays:
       {markerPercent !== null && expectedAvgDays !== null && (
         <div className="relative h-16 mt-3 mb-3">
           <div
-            className="absolute -translate-x-1/2 flex flex-col items-center"
-            style={{ left: `${markerPercent}%` }}
-          >
+              className="absolute flex flex-col"
+              style={{
+                left: `${markerPercent}%`,
+                transform: markerPercent > 75 ? 'translateX(-100%)' : markerPercent < 25 ? 'translateX(0)' : 'translateX(-50%)',
+                alignItems: markerPercent > 75 ? 'flex-end' : markerPercent < 25 ? 'flex-start' : 'center',
+              }}
+            >
             <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap text-center leading-tight">
               Tempo médio<br />esperado:
             </span>
@@ -69,22 +73,26 @@ function ActivityProgressBar({ avgHoursPerMember, expectedAvgHours, maxHours }: 
   return (
     <div className="relative w-full">
       {/* Expected avg label above bar */}
-      {markerPercent !== null && expectedAvgHours !== null && (
-        <div className="relative h-16 mt-3 mb-3">
-          <div
-            className="absolute -translate-x-1/2 flex flex-col items-center"
-            style={{ left: `${markerPercent}%` }}
-          >
-            <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap text-center leading-tight">
-              Tempo médio<br />esperado:
-            </span>
-            <span className="whitespace-nowrap">
-              <span className="text-sm sm:text-base font-bold text-foreground">{expectedAvgHours.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span>
-              <span className="text-[10px] sm:text-xs text-muted-foreground ml-0.5">horas</span>
-            </span>
+        {markerPercent !== null && expectedAvgHours !== null && (
+          <div className="relative h-16 mt-3 mb-3">
+            <div
+              className="absolute flex flex-col"
+              style={{
+                left: `${markerPercent}%`,
+                transform: markerPercent > 75 ? 'translateX(-100%)' : markerPercent < 25 ? 'translateX(0)' : 'translateX(-50%)',
+                alignItems: markerPercent > 75 ? 'flex-end' : markerPercent < 25 ? 'flex-start' : 'center',
+              }}
+            >
+              <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap text-center leading-tight">
+                Tempo médio<br />esperado:
+              </span>
+              <span className="whitespace-nowrap">
+                <span className="text-sm sm:text-base font-bold text-foreground">{expectedAvgHours.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground ml-0.5">horas</span>
+              </span>
+            </div>
           </div>
-        </div>
-      )}
+        )}
       {/* Progress bar */}
       <div className="relative h-3 sm:h-3.5 md:h-4 rounded-full bg-muted overflow-visible">
         <div
