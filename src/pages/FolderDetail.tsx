@@ -177,11 +177,15 @@ export default function FolderDetail() {
 
   return (
     <div className="space-y-4 p-4 md:p-6 max-w-[1400px] mx-auto">
+      <PageBreadcrumb
+        items={[
+          { label: "Demandas", href: "/demands" },
+          { label: folder.name, isCurrent: true },
+        ]}
+      />
+
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/demands")} className="shrink-0">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
         <FolderOpen className="h-6 w-6 shrink-0" style={{ color: folder.color }} />
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-bold text-foreground truncate">{folder.name}</h1>
