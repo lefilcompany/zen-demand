@@ -11,23 +11,28 @@ export interface DemandFolder {
   created_at: string;
   updated_at: string;
   item_count?: number;
+  is_owner?: boolean;
+  shared_with?: { user_id: string; shared_at: string }[];
 }
 
-export function useDemandFolders(teamId: string | null) {
+export function useDemandFolders(teamId: string | null, userId?: string) {
   return useQuery({
     queryKey: ["demand-folders", teamId],
     queryFn: async () => {
       if (!teamId) return [];
       const { data, error } = await supabase
         .from("demand_folders")
-        .select("*, demand_folder_items(id)")
+        .select("*, demand_folder_items(id), demand_folder_shares(user_id, shared_at)")
         .eq("team_id", teamId)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []).map((f: any) => ({
         ...f,
         item_count: f.demand_folder_items?.length || 0,
+        is_owner: f.created_by === userId,
+        shared_with: f.demand_folder_shares || [],
         demand_folder_items: undefined,
+        demand_folder_shares: undefined,
       })) as DemandFolder[];
     },
     enabled: !!teamId,
@@ -140,5 +145,42 @@ export function useRemoveDemandFromFolder() {
       qc.invalidateQueries({ queryKey: ["folder-demand-ids", vars.folder_id] });
     },
     onError: () => toast.error("Erro ao remover demanda da pasta"),
+  });
+}
+
+// Sharing hooks
+export function useShareFolder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: { folder_id: string; user_id: string }) => {
+      const { error } = await supabase
+        .from("demand_folder_shares")
+        .insert(params);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["demand-folders"] });
+      toast.success("Pasta compartilhada");
+    },
+    onError: () => toast.error("Erro ao compartilhar pasta"),
+  });
+}
+
+export function useUnshareFolder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: { folder_id: string; user_id: string }) => {
+      const { error } = await supabase
+        .from("demand_folder_shares")
+        .delete()
+        .eq("folder_id", params.folder_id)
+        .eq("user_id", params.user_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["demand-folders"] });
+      toast.success("Compartilhamento removido");
+    },
+    onError: () => toast.error("Erro ao remover compartilhamento"),
   });
 }
