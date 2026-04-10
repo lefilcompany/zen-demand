@@ -748,7 +748,7 @@ export default function DemandDetail() {
                   {creatorBoardRole && (
                     <Badge variant="outline" className={cn(
                       "text-[10px] px-1.5 py-0 h-4",
-                      creatorBoardRole === "admin" && "bg-orange-500/10 text-orange-600 border-orange-500/20 dark:text-orange-400",
+                      creatorBoardRole === "admin" && "bg-red-500/10 text-red-600 border-red-500/20 dark:text-red-400",
                       creatorBoardRole === "moderator" && "bg-blue-500/10 text-blue-600 border-blue-500/20 dark:text-blue-400",
                       creatorBoardRole === "executor" && "bg-green-500/10 text-green-600 border-green-500/20 dark:text-green-400",
                       creatorBoardRole === "requester" && "bg-purple-500/10 text-purple-600 border-purple-500/20 dark:text-purple-400",
