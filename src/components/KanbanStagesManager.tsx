@@ -360,10 +360,19 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   }, [boardStatuses]);
 
   const handleToggleStatus = async (boardStatusId: string, isActive: boolean) => {
+    // Optimistic local update
+    setLocalStatuses(prev => prev.map(s => 
+      s.id === boardStatusId ? { ...s, is_active: isActive } : s
+    ));
     try {
       await toggleStatus.mutateAsync({ boardStatusId, isActive, boardId });
       toast.success(isActive ? "Etapa ativada" : "Etapa desativada");
     } catch (error) {
+      console.error("Erro ao toggle etapa:", error);
+      // Revert optimistic update
+      setLocalStatuses(prev => prev.map(s => 
+        s.id === boardStatusId ? { ...s, is_active: !isActive } : s
+      ));
       toast.error("Erro ao alterar status da etapa");
     }
   };
