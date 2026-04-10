@@ -564,6 +564,38 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                   />
                 </div>
 
+                {/* Folder selector - only show if user has editable folders */}
+                {editableFolders.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <FolderOpen className="h-4 w-4" />
+                      Pasta
+                    </Label>
+                    <Select value={selectedFolderId} onValueChange={setSelectedFolderId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Nenhuma pasta selecionada" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhuma pasta</SelectItem>
+                        {editableFolders.map((folder) => (
+                          <SelectItem key={folder.id} value={folder.id}>
+                            <div className="flex items-center gap-2">
+                              <FolderOpen className="h-3.5 w-3.5 shrink-0" style={{ color: folder.color }} />
+                              <span className="truncate">{folder.name}</span>
+                              {!folder.is_owner && (
+                                <span className="text-[10px] text-muted-foreground ml-1">(compartilhada)</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Opcional: vincule esta demanda a uma pasta
+                    </p>
+                  </div>
+                )}
+
                 {/* Row: Attachments + Recurrence */}
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                   <div className="space-y-2">
