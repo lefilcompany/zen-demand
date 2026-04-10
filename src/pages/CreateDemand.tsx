@@ -270,6 +270,16 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
             }
           }
 
+          // Add to folder if selected
+          if (!wasCreatedOffline && selectedFolderId && demand) {
+            try {
+              await addDemandToFolder.mutateAsync({ folder_id: selectedFolderId, demand_id: demand.id });
+            } catch (folderError) {
+              console.error("Erro ao adicionar à pasta:", folderError);
+              toast.warning("Demanda criada, mas houve um erro ao adicionar à pasta");
+            }
+          }
+
           // Show success state instead of closing
           setSuccessState({
             demandId: demand?.id || "",
