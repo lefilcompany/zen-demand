@@ -37,7 +37,6 @@ function CompletionProgressBar({ avgDays, expectedAvgDays, maxDays }: { avgDays:
                 alignItems: markerPercent > 75 ? 'flex-end' : markerPercent < 25 ? 'flex-start' : 'center',
               }}
             >
-          >
             <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap text-center leading-tight">
               Tempo médio<br />esperado:
             </span>
