@@ -198,42 +198,48 @@ export default function FolderDetail() {
 
       {/* Search + View Toggle + Quick Filters */}
       <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="relative max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
               placeholder="Buscar demandas..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-9 h-8 rounded-full text-xs border-border/60"
             />
           </div>
 
-          <div className="hidden lg:flex items-center border rounded-lg p-0.5 bg-muted/30">
-            <Button
-              variant={effectiveViewMode === "table" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-8 px-2.5"
+          <div className="hidden lg:flex items-center border border-border/60 rounded-full p-0.5 bg-background">
+            <button
+              className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
+                effectiveViewMode === "table"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "hover:text-primary"
+              }`}
               onClick={() => setViewMode("table")}
             >
-              <List className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={effectiveViewMode === "grid" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-8 px-2.5"
+              <List className="h-3.5 w-3.5" />
+            </button>
+            <button
+              className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
+                effectiveViewMode === "grid"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "hover:text-primary"
+              }`}
               onClick={() => setViewMode("grid")}
             >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={effectiveViewMode === "calendar" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-8 px-2.5"
+              <LayoutGrid className="h-3.5 w-3.5" />
+            </button>
+            <button
+              className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
+                effectiveViewMode === "calendar"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "hover:text-primary"
+              }`}
               onClick={() => setViewMode("calendar")}
             >
-              <CalendarDays className="h-4 w-4" />
-            </Button>
+              <CalendarDays className="h-3.5 w-3.5" />
+            </button>
           </div>
 
           {/* Filters + Quick toggles */}
