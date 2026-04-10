@@ -582,6 +582,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                       type="date"
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
+                      className="h-8"
                     />
                   </div>
                 </div>
