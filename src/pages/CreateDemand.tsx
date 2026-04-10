@@ -14,6 +14,7 @@ import { useTeamRole } from "@/hooks/useTeamRole";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useHasBoardServices, useCanCreateWithService } from "@/hooks/useBoardServices";
 import { useBoards } from "@/hooks/useBoards";
+import { useDemandFolders, useAddDemandToFolder } from "@/hooks/useDemandFolders";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { ScopeProgressBar } from "@/components/ScopeProgressBar";
@@ -21,7 +22,7 @@ import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/component
 import { useUploadAttachment } from "@/hooks/useAttachments";
 import { RecurrenceConfig, RecurrenceData, defaultRecurrenceData } from "@/components/RecurrenceConfig";
 import { useCreateRecurringDemand } from "@/hooks/useRecurringDemands";
-import { AlertTriangle, Ban, CloudOff, WifiOff, Package, CheckCircle2, Plus, ExternalLink, LayoutGrid } from "lucide-react";
+import { AlertTriangle, Ban, CloudOff, WifiOff, Package, CheckCircle2, Plus, ExternalLink, LayoutGrid, FolderOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
@@ -31,6 +32,7 @@ import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/lib/auth";
 
 export default function CreateDemand({ open, onClose }: { open?: boolean; onClose?: () => void }) {
   const { t } = useTranslation();
