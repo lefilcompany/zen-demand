@@ -80,12 +80,14 @@ function CodeCell({
 }) {
   const code = formatDemandCode(row.original.board_sequence_number);
   if (!code) {
-    return <span className="text-muted-foreground text-sm">—</span>;
+    return <div className="flex justify-center"><span className="text-muted-foreground text-sm">—</span></div>;
   }
   return (
-    <Badge variant="outline" className="text-xs bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono">
-      {code}
-    </Badge>
+    <div className="flex justify-center">
+      <Badge variant="outline" className="text-xs bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono">
+        {code}
+      </Badge>
+    </div>
   );
 }
 
@@ -139,7 +141,7 @@ function AssigneeCell({
     });
   }
   if (assignees.length === 0) {
-    return <span className="text-muted-foreground text-sm">—</span>;
+    return <div className="flex justify-center"><span className="text-muted-foreground text-sm">—</span></div>;
   }
   return <div className="flex justify-center"><AssigneeAvatars assignees={assignees} maxVisible={3} size="sm" /></div>;
 }
@@ -154,15 +156,15 @@ function StatusCell({
 }) {
   const status = row.original.demand_statuses;
   if (!status) {
-    return <span className="text-muted-foreground text-sm">—</span>;
+    return <div className="flex justify-center"><span className="text-muted-foreground text-sm">—</span></div>;
   }
-  return <Badge variant="outline" className="border" style={{
+  return <div className="flex justify-center"><Badge variant="outline" className="border" style={{
     backgroundColor: `${status.color}20`,
     borderColor: `${status.color}50`,
     color: status.color
   }}>
       {status.name}
-    </Badge>;
+    </Badge></div>;
 }
 
 // Cell component for due date (expiration date)
@@ -175,13 +177,13 @@ function DueDateCell({
 }) {
   const dueDate = row.original.due_date;
   if (!dueDate) {
-    return <span className="text-muted-foreground text-sm">—</span>;
+    return <div className="flex justify-center"><span className="text-muted-foreground text-sm">—</span></div>;
   }
   const isOverdue = isDateOverdue(dueDate);
   const formattedDate = formatDateOnlyBR(dueDate);
-  return <span className={isOverdue ? "text-destructive font-medium" : "text-foreground"}>
+  return <div className="flex justify-center"><span className={isOverdue ? "text-destructive font-medium" : "text-foreground"}>
       {formattedDate}
-    </span>;
+    </span></div>;
 }
 
 // Cell component for board name
@@ -194,12 +196,14 @@ function BoardCell({
 }) {
   const board = row.original.boards;
   if (!board) {
-    return <span className="text-muted-foreground text-sm">—</span>;
+    return <div className="flex justify-center"><span className="text-muted-foreground text-sm">—</span></div>;
   }
   return (
-    <Badge variant="outline" className="text-xs bg-muted/50 border-border text-foreground font-medium">
-      {board.name}
-    </Badge>
+    <div className="flex justify-center">
+      <Badge variant="outline" className="text-xs bg-muted/50 border-border text-foreground font-medium">
+        {board.name}
+      </Badge>
+    </div>
   );
 }
 
@@ -213,15 +217,15 @@ function PriorityCell({
 }) {
   const priority = row.original.priority?.toLowerCase();
   if (!priority) {
-    return <span className="text-muted-foreground text-sm">—</span>;
+    return <div className="flex justify-center"><span className="text-muted-foreground text-sm">—</span></div>;
   }
   const config = priorityConfig[priority] || {
     label: priority,
     className: "bg-muted text-muted-foreground"
   };
-  return <Badge variant="outline" className={`border ${config.className}`}>
+  return <div className="flex justify-center"><Badge variant="outline" className={`border ${config.className}`}>
       {config.label}
-    </Badge>;
+    </Badge></div>;
 }
 // Cell component for service
 function ServiceCell({
@@ -233,17 +237,19 @@ function ServiceCell({
 }) {
   const service = row.original.services;
   return (
-    <Badge 
-      variant="outline" 
-      className={`text-xs flex items-center gap-1 w-fit ${
-        service?.name 
-          ? "bg-primary/5 text-primary border-primary/20" 
-          : "bg-muted/50 text-muted-foreground border-muted-foreground/20"
-      }`}
-    >
-      <Wrench className="h-3 w-3" />
-      {service?.name || "Nenhum serviço"}
-    </Badge>
+    <div className="flex justify-center">
+      <Badge 
+        variant="outline" 
+        className={`text-xs flex items-center gap-1 w-fit ${
+          service?.name 
+            ? "bg-primary/5 text-primary border-primary/20" 
+            : "bg-muted/50 text-muted-foreground border-muted-foreground/20"
+        }`}
+      >
+        <Wrench className="h-3 w-3" />
+        {service?.name || "Nenhum serviço"}
+      </Badge>
+    </div>
   );
 }
 
@@ -257,7 +263,7 @@ function CreatorCell({
 }) {
   const creator = row.original.profiles;
   if (!creator) {
-    return <span className="text-muted-foreground text-sm">—</span>;
+    return <div className="flex justify-center"><span className="text-muted-foreground text-sm">—</span></div>;
   }
   
   const initials = creator.full_name
