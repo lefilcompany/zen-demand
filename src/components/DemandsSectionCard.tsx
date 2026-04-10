@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartPeriodSelector, type ChartPeriodType, getChartPeriodRange } from "@/components/ChartPeriodSelector";
 import { useState, useMemo } from "react";
 import { BarChart3, Grid2X2, Atom, LayoutList } from "lucide-react";
+import { toast } from "sonner";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -324,7 +325,13 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
                           setVisibleStatuses((prev) => {
                             const next = new Set(prev);
                             if (next.has(key)) {
-                              if (next.size > 1) next.delete(key);
+                              if (next.size > 1) {
+                                next.delete(key);
+                              } else {
+                                toast.error("Não é possível remover todos os status", {
+                                  description: "Mantenha pelo menos um status visível no gráfico.",
+                                });
+                              }
                             } else {
                               next.add(key);
                             }
