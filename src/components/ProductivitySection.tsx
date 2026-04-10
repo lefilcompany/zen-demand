@@ -53,7 +53,7 @@ function CompletionProgressBar({ avgDays, expectedAvgDays, maxDays }: { avgDays:
     <div className="relative w-full">
       {/* Expected avg label above bar */}
       {markerPercent !== null && expectedAvgDays !== null && (
-        <div className="relative h-8 mt-2 mb-2">
+        <div className="relative h-16 mt-3 mb-3">
           <div
             className="absolute -translate-x-1/2 flex flex-col items-center"
             style={{ left: `${markerPercent}%` }}
