@@ -172,11 +172,6 @@ export function FolderShareDialog({
                           onValueChange={(v) => handlePermissionChange(m.user_id, v as FolderPermission)}
                         >
                           <SelectTrigger className="h-7 w-[110px] text-[11px] gap-1 px-2 border-border/60 bg-background">
-                            {currentPermission === "view" ? (
-                              <Eye className="h-3 w-3 text-muted-foreground shrink-0" />
-                            ) : (
-                              <Pencil className="h-3 w-3 text-primary shrink-0" />
-                            )}
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
