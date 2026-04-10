@@ -247,15 +247,21 @@ export function useToggleBoardStatus() {
       isActive: boolean;
       boardId: string;
     }) => {
-      const { data, error } = await supabase
+      const { error, count } = await supabase
         .from("board_statuses")
         .update({ is_active: isActive })
-        .eq("id", boardStatusId)
-        .select()
-        .single();
+        .eq("id", boardStatusId);
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error("Erro ao toggle board_status:", error);
+        throw error;
+      }
+      
+      if (count === 0) {
+        throw new Error("Nenhuma etapa foi atualizada. Verifique suas permissões.");
+      }
+      
+      return { boardStatusId, isActive };
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["board-statuses", variables.boardId] });
