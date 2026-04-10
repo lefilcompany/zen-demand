@@ -732,6 +732,27 @@ export default function DemandDetail() {
             </div>}
 
           <div className="grid gap-4 md:grid-cols-2">
+            {/* Creator info with board role */}
+            {demand.profiles && (
+              <div className="flex items-center gap-2 text-sm">
+                <UserCircle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-muted-foreground">Criado por:</span>
+                <div className="flex items-center gap-1.5">
+                  <Avatar className="h-5 w-5 border border-border">
+                    <AvatarImage src={demand.profiles.avatar_url || undefined} alt={demand.profiles.full_name} />
+                    <AvatarFallback className="text-[8px] bg-muted text-muted-foreground">
+                      {demand.profiles.full_name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium">{demand.profiles.full_name}</span>
+                  {creatorBoardRole && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-muted/50 text-muted-foreground border-muted-foreground/20">
+                      {creatorBoardRole === "admin" ? "Dono" : creatorBoardRole === "moderator" ? "Moderador" : creatorBoardRole === "executor" ? "Executor" : "Solicitante"}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
             {demand.due_date && <div className="flex items-center gap-2 text-sm">
                 <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <span className="text-muted-foreground">Vencimento:</span>
