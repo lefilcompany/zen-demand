@@ -50,6 +50,7 @@ interface AssigneeSelectorProps {
   selectedUserIds: string[];
   onChange: (userIds: string[]) => void;
   disabled?: boolean;
+  hideIcon?: boolean;
 }
 
 export function AssigneeSelector({
@@ -58,6 +59,7 @@ export function AssigneeSelector({
   selectedUserIds,
   onChange,
   disabled = false,
+  hideIcon = false,
 }: AssigneeSelectorProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
