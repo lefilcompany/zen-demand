@@ -50,6 +50,7 @@ interface AssigneeSelectorProps {
   selectedUserIds: string[];
   onChange: (userIds: string[]) => void;
   disabled?: boolean;
+  hideIcon?: boolean;
 }
 
 export function AssigneeSelector({
@@ -58,6 +59,7 @@ export function AssigneeSelector({
   selectedUserIds,
   onChange,
   disabled = false,
+  hideIcon = false,
 }: AssigneeSelectorProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -134,7 +136,7 @@ export function AssigneeSelector({
           !selectedUserIds.length && "text-muted-foreground"
         )}
       >
-        <Users className="h-4 w-4 shrink-0" />
+        {!hideIcon && <Users className="h-4 w-4 shrink-0" />}
         {selectedUserIds.length > 0 ? (
           <div className="flex items-center gap-2">
             <div className="flex -space-x-2">
