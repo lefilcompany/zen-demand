@@ -216,7 +216,7 @@ export default function FolderDetail() {
         <FolderOpen className="h-6 w-6 shrink-0" style={{ color: folder.color }} />
         <div className="min-w-0 flex-1">
           {isEditingName ? (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 mb-1">
               <Input
                 ref={editInputRef}
                 value={editName}
@@ -225,7 +225,7 @@ export default function FolderDetail() {
                   if (e.key === "Enter") handleSaveName();
                   if (e.key === "Escape") handleCancelEdit();
                 }}
-                className="h-8 text-xl font-bold px-2 max-w-xs"
+                className="h-8 text-xl font-bold px-2 max-w-xs focus-visible:ring-offset-0"
               />
               <button onClick={handleSaveName} className="p-1 rounded hover:bg-emerald-500/10 text-emerald-600">
                 <Check className="h-4 w-4" />
