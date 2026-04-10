@@ -23,6 +23,7 @@ interface DemandCardProps {
     description?: string | null;
     priority?: string | null;
     due_date?: string | null;
+    delivered_at?: string | null;
     created_at?: string;
     updated_at?: string;
     time_in_progress_seconds?: number | null;
@@ -67,8 +68,12 @@ export function DemandCard({ demand, onClick, showFullDetails = false }: DemandC
   const isInProgress = statusName === "Fazendo";
   const isDelivered = statusName === "Entregue";
   
-  // Check if due date is overdue
+  // Check if due date is overdue (only for non-delivered demands)
   const isOverdue = statusName !== "Entregue" && isDateOverdue(demand.due_date);
+  
+  // Check if delivered late (delivered after due date)
+  const isDeliveredLate = isDelivered && demand.due_date && demand.delivered_at &&
+    new Date(demand.delivered_at) > new Date(demand.due_date);
   
   // Fallback to assigned_profile if no assignees
   const displayAssignees = assignees.length > 0 
@@ -163,16 +168,22 @@ export function DemandCard({ demand, onClick, showFullDetails = false }: DemandC
           {demand.due_date && (
             <div className={cn(
               "flex items-center gap-1",
-              isOverdue && "text-destructive font-medium"
+              isOverdue && "text-destructive font-medium",
+              isDeliveredLate && "text-amber-600 font-medium"
             )}>
               {isOverdue ? (
                 <Clock className="h-3.5 w-3.5" />
+              ) : isDeliveredLate ? (
+                <AlertTriangle className="h-3.5 w-3.5" />
               ) : (
                 <Calendar className="h-3.5 w-3.5" />
               )}
               <span>
                 {formatDateOnlyBR(demand.due_date)}
               </span>
+              {isDeliveredLate && (
+                <span className="text-[10px]">(entregue com atraso)</span>
+              )}
             </div>
           )}
         </div>
