@@ -248,38 +248,6 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
 
           </div>
 
-          {/* Tempo em atividade */}
-          <div className="p-2.5 sm:p-3 md:p-4 rounded-xl border border-border/50 bg-card space-y-2 sm:space-y-3">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <Timer className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-orange-500 shrink-0" />
-              <span className="text-[11px] sm:text-xs md:text-sm font-semibold text-foreground leading-tight">
-                Tempo em atividade
-              </span>
-            </div>
-
-            <div className="flex items-baseline w-full">
-              <div className="inline-flex items-baseline gap-1 bg-muted/60 border border-border rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 w-full justify-center">
-                <span className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">{totalActiveHours > 0 ? fmt(totalActiveHours) : "-"}</span>
-                <span className="text-[10px] sm:text-xs text-muted-foreground">horas</span>
-              </div>
-            </div>
-
-            <ActivityProgressBar value={avgActiveHoursPerUser} benchmark={activityBenchmark} />
-
-            <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-muted-foreground">
-              <span>0 horas</span>
-              <span className="font-medium text-foreground/70">ideal</span>
-              <span>{fmt(activityBenchmark * 2)} h</span>
-            </div>
-
-            <HealthIndicatorBar bgClass={activityHealth.bgClass} />
-
-            <div className="flex justify-center">
-              <Badge className={`${activityHealth.bgClass} hover:opacity-90 text-white border-0 text-[9px] sm:text-[10px] md:text-xs font-medium px-2 sm:px-2.5 py-0.5 whitespace-nowrap`}>
-                {activityHealth.label} · Ideal: {fmt(activityBenchmark)} h/membro
-              </Badge>
-            </div>
-          </div>
         </div>
       </CardContent>
     </Card>
