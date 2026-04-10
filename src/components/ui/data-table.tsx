@@ -58,10 +58,10 @@ export function DataTable<TData, TValue>({
                 {headerGroup.headers.map((header) => (
                   <TableHead 
                     key={header.id}
-                    className={header.column.getCanSort() ? "cursor-pointer select-none hover:bg-muted/50 transition-colors" : ""}
+                    className={`text-center ${header.column.getCanSort() ? "cursor-pointer select-none hover:bg-muted/50 transition-colors" : ""}`}
                     onClick={header.column.getToggleSortingHandler()}
                   >
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center justify-center gap-1">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
