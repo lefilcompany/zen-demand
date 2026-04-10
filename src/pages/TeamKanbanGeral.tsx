@@ -46,7 +46,7 @@ export default function TeamKanbanGeral() {
       <PageBreadcrumb
         items={[
           { label: currentTeam?.name || "Equipe" },
-          { label: "Kanban Geral" },
+          { label: "Kanban Geral", icon: Kanban, isCurrent: true },
         ]}
       />
 

@@ -5,7 +5,7 @@ import { NoteCard } from "@/components/notes/NoteCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, FileText, Loader2, LayoutGrid, List, X, Tag, Users, LogOut, Eye, Pencil } from "lucide-react";
+import { Plus, Search, FileText, Loader2, LayoutGrid, List, X, Tag, Users, LogOut, Eye, Pencil, StickyNote } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -258,7 +258,7 @@ export default function Notes() {
     <div className="container max-w-6xl mx-auto px-4 py-6">
       <PageBreadcrumb 
         items={[
-          { label: "Soma Notes", href: "/notes" }
+          { label: "Soma Notes", href: "/notes", icon: StickyNote }
         ]} 
       />
 

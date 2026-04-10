@@ -217,8 +217,8 @@ export default function FolderDetail() {
     <div className="space-y-4 max-w-[1400px] mx-auto">
       <PageBreadcrumb
         items={[
-          { label: "Demandas", href: "/demands" },
-          { label: folder.name, isCurrent: true },
+          { label: "Demandas", href: "/demands", icon: LayoutList },
+          { label: folder.name, icon: FolderOpen, isCurrent: true },
         ]}
       />
 
