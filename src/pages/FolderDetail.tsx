@@ -243,25 +243,29 @@ export default function FolderDetail() {
             onChange={setFilters}
           />
 
-          <Button
-            variant={hideDelivered ? "secondary" : "outline"}
-            size="sm"
-            className="h-9 text-xs gap-1.5"
+          <button
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium h-8 transition-all duration-200 whitespace-nowrap ${
+              hideDelivered
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-background border border-border/60 hover:border-primary/40 hover:text-primary"
+            }`}
             onClick={() => setHideDelivered(!hideDelivered)}
           >
             {hideDelivered ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-            <span className="hidden sm:inline">Entregues ({deliveredCount})</span>
-          </Button>
+            <span>Entregues ({deliveredCount})</span>
+          </button>
 
-          <Button
-            variant={showOnlyMine ? "secondary" : "outline"}
-            size="sm"
-            className="h-9 text-xs gap-1.5"
+          <button
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium h-8 transition-all duration-200 whitespace-nowrap ${
+              showOnlyMine
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-background border border-border/60 hover:border-primary/40 hover:text-primary"
+            }`}
             onClick={() => setShowOnlyMine(!showOnlyMine)}
           >
             <User className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Minhas ({myCount})</span>
-          </Button>
+            <span>Minhas ({myCount})</span>
+          </button>
         </div>
       </div>
 
