@@ -36,13 +36,11 @@ export function FolderShareDialog({
 
   const filteredMembers = useMemo(() => {
     if (!members) return [];
-    // Exclude the current user (owner)
     const otherMembers = members.filter((m: any) => m.user_id !== user?.id);
     if (!search.trim()) return otherMembers;
     const q = search.toLowerCase();
     return otherMembers.filter((m: any) =>
-      m.profiles?.full_name?.toLowerCase().includes(q) ||
-      m.profiles?.email?.toLowerCase().includes(q)
+      m.profile?.full_name?.toLowerCase().includes(q)
     );
   }, [members, search, user?.id]);
 
@@ -78,7 +76,6 @@ export function FolderShareDialog({
         <ScrollArea className="h-[300px] pr-3 -mr-3">
           <div className="space-y-0.5">
             {filteredMembers.map((m: any) => {
-              const profile = m.profiles;
               const isShared = sharedUserIds.has(m.user_id);
               return (
                 <label
@@ -90,14 +87,18 @@ export function FolderShareDialog({
                     onCheckedChange={() => handleToggle(m.user_id)}
                   />
                   <Avatar className="h-7 w-7">
-                    <AvatarImage src={profile?.avatar_url || ""} />
+                    <AvatarImage src={m.profile?.avatar_url || ""} />
                     <AvatarFallback className="text-[10px]">
-                      {profile?.full_name?.charAt(0)?.toUpperCase() || "?"}
+                      {m.profile?.full_name?.charAt(0)?.toUpperCase() || "?"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{profile?.full_name || "Sem nome"}</p>
-                    <p className="text-[11px] text-muted-foreground truncate">{profile?.email || ""}</p>
+                    <p className="text-sm font-medium truncate">{m.profile?.full_name || "Sem nome"}</p>
+                    {m.position && (
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: m.position.color + "20", color: m.position.color }}>
+                        {m.position.name}
+                      </span>
+                    )}
                   </div>
                   {isShared && (
                     <span className="text-[10px] text-primary font-medium shrink-0">Compartilhado</span>
