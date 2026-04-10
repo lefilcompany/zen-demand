@@ -236,7 +236,13 @@ export default function FolderDetail() {
             </Button>
           </div>
 
-          {/* Quick toggles */}
+          {/* Filters + Quick toggles */}
+          <DemandFilters
+            boardId={null}
+            filters={filters}
+            onChange={setFilters}
+          />
+
           <Button
             variant={hideDelivered ? "secondary" : "outline"}
             size="sm"
@@ -257,12 +263,6 @@ export default function FolderDetail() {
             <span className="hidden sm:inline">Minhas ({myCount})</span>
           </Button>
         </div>
-
-        <DemandFilters
-          boardId={null}
-          filters={filters}
-          onChange={setFilters}
-        />
       </div>
 
       {/* Calendar View */}
