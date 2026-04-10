@@ -1,52 +1,43 @@
 
 
-## Diagnóstico e correções
+## Redesign do gráfico "Tempo médio de conclusão"
 
-### Problema 1: Demandas agendadas não geram automaticamente
+### Resumo
 
-**Diagnóstico:** O cron job está rodando corretamente a cada minuto (status 200). A edge function `process-recurring-demands` também funciona — os logs mostram "Found recurring demands: 0". O problema é que **não existem demandas recorrentes ativas** no banco. As únicas duas entradas usam `frequency: "test_1min"`, que não é um valor válido no frontend (as opções são `daily`, `weekly`, `biweekly`, `monthly`).
+Redesenhar o card de "Tempo médio de conclusão" no `ProductivitySection.tsx` com nova lógica de escala, barra de progresso e marcador de tempo esperado baseado em média ponderada por prioridade.
 
-**Bug real encontrado:** Quando a edge function processa uma demanda com `frequency: "test_1min"`, o `calculateNextRunDate` cai no fallback (próximo dia útil). Porém, como `next_run_date` permanece no mesmo dia, a edge function pode processar a mesma demanda **múltiplas vezes no mesmo dia** antes de atualizar o `next_run_date`. Isso é uma condição de corrida.
+### Alterações
 
-**Correção:**
-- Na edge function `process-recurring-demands/index.ts`: Adicionar uma validação de frequência antes de processar. Se a frequência não for válida (`daily`, `weekly`, `biweekly`, `monthly`), logar um aviso e pular.
-- Adicionar um campo `processing_lock` ou verificar `last_generated_at` para evitar processar a mesma demanda duas vezes no mesmo dia (se `last_generated_at` é hoje, pular).
-- Garantir que o `next_run_date` é sempre no futuro após processamento.
+**1. `src/hooks/useDemands.ts`**
+- Alterar o select de services de `services(id, name)` para `services(id, name, estimated_hours)`
 
-### Problema 2: Demandas duplicadas ao marcar como "Entregue"
+**2. `src/components/ProductivitySection.tsx`**
 
-**Diagnóstico:** Não há duplicatas reais no banco de dados. O problema é visual — uma **condição de corrida entre optimistic updates e realtime**.
+- Atualizar interface `Demand` para incluir `priority`, `service_id` e `services?: { estimated_hours: number } | null`
+- Novo cálculo do **tempo médio esperado** (média ponderada):
+  - Pesos: `alta = 3`, `média = 2`, `baixa = 1`
+  - Fórmula: `Σ(estimated_hours × peso) / Σ(peso)`
+  - **Conversão para dias úteis: dividir por 8** (jornada de trabalho padrão de 8h/dia)
+- Redesenhar `MainProgressBar` do card de conclusão:
+  - **Escala cinza**: de `1 dia` até `Math.floor(avgDays) + 4` dias
+  - **Barra laranja**: preenchida proporcionalmente até `avgDays`
+  - **Marcador vertical**: posicionado no `expectedAvgDays`, com label acima mostrando o valor (ex: "6 dias"), cor de destaque `bg-slate-800 dark:bg-white`
 
-Fluxo do bug:
-1. Usuário arrasta demanda para "Entregue" ou clica em "Marcar como concluída"
-2. `optimisticUpdates` move o card visualmente para "Entregue"
-3. O `updateDemand.mutate` envia o update ao banco
-4. O trigger de realtime (`useRealtimeDemands`) detecta a mudança e invalida as queries
-5. A query é refetchada, trazendo os dados atualizados do servidor
-6. **Por um breve momento**, tanto o optimistic update quanto os dados do servidor mostram a demanda em "Entregue", mas como o `getDemandsForColumn` verifica primeiro o `optimisticUpdates`, não deveria duplicar...
+### Detalhe importante sobre conversão
 
-**Na verdade**, o bug está na invalidação de queries: quando o realtime dispara `queryClient.invalidateQueries({ queryKey: ["demands", boardId] })`, a query refetcha e retorna dados atualizados. Mas o `onSuccess` da mutation TAMBÉM invalida queries. A combinação pode causar re-renders onde o optimistic update ainda está ativo enquanto os dados reais já foram atualizados.
+O tempo médio de conclusão real continua usando `/24` (tempo corrido entre criação e entrega). O **tempo médio esperado** (benchmark) usa `/8` porque as `estimated_hours` dos serviços representam horas úteis de trabalho em um contexto empresarial com carga horária de 8h/dia.
 
-Além disso, o `useRealtimeAllDemands` invalida `queryKey: ["demands"]` sem boardId, e `useRealtimeDemands` invalida `queryKey: ["demands", boardId]`. Ambos podem estar ativos simultaneamente na página `/demands`, causando múltiplas invalidações.
+### Resultado visual esperado
 
-**Correção no `KanbanBoard.tsx`:**
-- Limpar o optimistic update ANTES do refetch, não apenas no `onSuccess`. Usar `onMutate` para limpar assim que a resposta do servidor chegar (ou usar `onSettled` para garantir limpeza).
-- Alternativamente, no `getDemandsForColumn`, adicionar deduplicação por ID para garantir que cada demanda apareça em apenas uma coluna.
-
-**Correção no `useRealtimeDemands.ts`:**  
-- Evitar invalidações redundantes entre `useRealtimeDemands` e `useKanbanRealtimeNotifications` que ambos invalidam `["demands", boardId]`.
-
-### Alterações técnicas
-
-**Arquivo: `supabase/functions/process-recurring-demands/index.ts`**
-1. Adicionar validação: se `last_generated_at` é hoje, pular (evita dupla execução)
-2. Validar frequência antes de processar
-3. Garantir `next_run_date` é sempre estritamente futuro
-
-**Arquivo: `src/components/KanbanBoard.tsx`**
-1. No `getDemandsForColumn`: adicionar Set de IDs já vistos para deduplicação — se uma demanda já apareceu em outra coluna, não mostrar novamente
-2. Usar `onSettled` ao invés de `onSuccess` para limpar optimistic updates (garante limpeza mesmo em caso de erro + realtime racing)
-
-**Arquivo: `src/hooks/useRealtimeDemands.ts`**
-1. Remover invalidação duplicada de `["demands", boardId]` no `useKanbanRealtimeNotifications` (já feita no `useRealtimeDemands`)
+```text
+  Tempo médio de conclusão
+  ┌──────────────────────────────┐
+  │         4,4 dias             │
+  └──────────────────────────────┘
+        Tempo médio esperado:
+             2,0 dias
+  ████████████████│░░░░░░░░░░░░░░
+  1 dia          ▲           8 dias
+           marcador (/8h)
+```
 
