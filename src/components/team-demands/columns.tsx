@@ -61,12 +61,14 @@ const priorityConfig: Record<string, { label: string; className: string }> = {
 function CodeCell({ row }: { row: { original: TeamDemandTableRow } }) {
   const code = formatDemandCode(row.original.board_sequence_number);
   if (!code) {
-    return <span className="text-muted-foreground text-sm">—</span>;
+    return <div className="flex justify-center"><span className="text-muted-foreground text-sm">—</span></div>;
   }
   return (
-    <Badge variant="outline" className="text-xs bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono">
-      {code}
-    </Badge>
+    <div className="flex justify-center">
+      <Badge variant="outline" className="text-xs bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono">
+        {code}
+      </Badge>
+    </div>
   );
 }
 
@@ -83,12 +85,14 @@ function TitleCell({ row }: { row: { original: TeamDemandTableRow } }) {
 function ServiceCell({ row }: { row: { original: TeamDemandTableRow } }) {
   const service = row.original.services;
   if (!service?.name) {
-    return <span className="text-muted-foreground text-sm">—</span>;
+    return <div className="flex justify-center"><span className="text-muted-foreground text-sm">—</span></div>;
   }
   return (
-    <Badge variant="outline" className="text-xs bg-primary/5 text-primary border-primary/20">
-      {service.name}
-    </Badge>
+    <div className="flex justify-center">
+      <Badge variant="outline" className="text-xs bg-primary/5 text-primary border-primary/20">
+        {service.name}
+      </Badge>
+    </div>
   );
 }
 
@@ -119,53 +123,57 @@ function AssigneeCell({ row }: { row: { original: TeamDemandTableRow } }) {
   }
 
   if (assignees.length === 0) {
-    return <span className="text-muted-foreground text-sm">—</span>;
+    return <div className="flex justify-center"><span className="text-muted-foreground text-sm">—</span></div>;
   }
 
-  return <AssigneeAvatars assignees={assignees} maxVisible={3} size="sm" />;
+  return <div className="flex justify-center"><AssigneeAvatars assignees={assignees} maxVisible={3} size="sm" /></div>;
 }
 
 function StatusCell({ row }: { row: { original: TeamDemandTableRow } }) {
   const status = row.original.demand_statuses;
   if (!status) {
-    return <span className="text-muted-foreground text-sm">—</span>;
+    return <div className="flex justify-center"><span className="text-muted-foreground text-sm">—</span></div>;
   }
   return (
-    <Badge 
-      variant="outline" 
-      className="border" 
-      style={{
-        backgroundColor: `${status.color}20`,
-        borderColor: `${status.color}50`,
-        color: status.color
-      }}
-    >
-      {status.name}
-    </Badge>
+    <div className="flex justify-center">
+      <Badge 
+        variant="outline" 
+        className="border" 
+        style={{
+          backgroundColor: `${status.color}20`,
+          borderColor: `${status.color}50`,
+          color: status.color
+        }}
+      >
+        {status.name}
+      </Badge>
+    </div>
   );
 }
 
 function DueDateCell({ row }: { row: { original: TeamDemandTableRow } }) {
   const dueDate = row.original.due_date;
   if (!dueDate) {
-    return <span className="text-muted-foreground text-sm">—</span>;
+    return <div className="flex justify-center"><span className="text-muted-foreground text-sm">—</span></div>;
   }
   const isOverdue = isDateOverdue(dueDate);
   const formattedDate = formatDateOnlyBR(dueDate);
   return (
-    <span className={isOverdue ? "text-destructive font-medium" : "text-foreground"}>
-      {formattedDate}
-    </span>
+    <div className="flex justify-center">
+      <span className={isOverdue ? "text-destructive font-medium" : "text-foreground"}>
+        {formattedDate}
+      </span>
+    </div>
   );
 }
 
 function BoardCell({ row }: { row: { original: TeamDemandTableRow } }) {
   const board = row.original.boards;
   if (!board?.name) {
-    return <span className="text-muted-foreground text-sm">—</span>;
+    return <div className="flex justify-center"><span className="text-muted-foreground text-sm">—</span></div>;
   }
   return (
-    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+    <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
       <LayoutGrid className="h-3.5 w-3.5 shrink-0" />
       <span className="truncate max-w-[120px]" title={board.name}>
         {board.name}
@@ -177,16 +185,18 @@ function BoardCell({ row }: { row: { original: TeamDemandTableRow } }) {
 function PriorityCell({ row }: { row: { original: TeamDemandTableRow } }) {
   const priority = row.original.priority?.toLowerCase();
   if (!priority) {
-    return <span className="text-muted-foreground text-sm">—</span>;
+    return <div className="flex justify-center"><span className="text-muted-foreground text-sm">—</span></div>;
   }
   const config = priorityConfig[priority] || {
     label: priority,
     className: "bg-muted text-muted-foreground"
   };
   return (
-    <Badge variant="outline" className={`border ${config.className}`}>
-      {config.label}
-    </Badge>
+    <div className="flex justify-center">
+      <Badge variant="outline" className={`border ${config.className}`}>
+        {config.label}
+      </Badge>
+    </div>
   );
 }
 
