@@ -475,8 +475,8 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                   />
                 </div>
 
-                {/* Row: Service + Assignees */}
-                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                {/* Row: Service + Assignees + Folder */}
+                <div className={`grid gap-4 grid-cols-1 ${editableFolders.length > 0 && canAssignResponsibles ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2">
                       <Package className="h-4 w-4" />
@@ -506,6 +506,34 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                         selectedUserIds={assigneeIds}
                         onChange={setAssigneeIds}
                       />
+                    </div>
+                  )}
+
+                  {editableFolders.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <FolderOpen className="h-4 w-4" />
+                        Pasta
+                      </Label>
+                      <Select value={selectedFolderId || "none"} onValueChange={(v) => setSelectedFolderId(v === "none" ? "" : v)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Nenhuma pasta" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nenhuma pasta</SelectItem>
+                          {editableFolders.map((folder) => (
+                            <SelectItem key={folder.id} value={folder.id}>
+                              <div className="flex items-center gap-2">
+                                <FolderOpen className="h-3.5 w-3.5 shrink-0" style={{ color: folder.color }} />
+                                <span className="truncate">{folder.name}</span>
+                                {!folder.is_owner && (
+                                  <span className="text-[10px] text-muted-foreground ml-1">(compartilhada)</span>
+                                )}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   )}
                 </div>
