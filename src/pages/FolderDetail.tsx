@@ -1,8 +1,8 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { useSelectedBoard } from "@/contexts/BoardContext";
-import { useFolderDemandIds, useDemandFolders } from "@/hooks/useDemandFolders";
+import { useFolderDemandIds, useDemandFolders, useUpdateFolder } from "@/hooks/useDemandFolders";
 import { useAllTeamDemands } from "@/hooks/useAllTeamDemands";
 import { useMembersByPosition } from "@/hooks/useMembersByPosition";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
@@ -18,7 +18,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Badge } from "@/components/ui/badge";
 import {
   Search, LayoutGrid, List, CalendarDays, ChevronDown, ChevronRight,
-  FolderOpen, ArrowLeft, Eye, EyeOff, User
+  FolderOpen, ArrowLeft, Eye, EyeOff, User, Pencil, Check, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
@@ -33,6 +33,7 @@ export default function FolderDetail() {
   const { currentTeamId, selectedBoardId, setSelectedBoardId } = useSelectedBoard();
 
   const { data: folders } = useDemandFolders(currentTeamId, user?.id);
+  const updateFolder = useUpdateFolder();
   const folder = folders?.find((f) => f.id === folderId);
 
   const { data: folderDemandIds } = useFolderDemandIds(folderId || null);
@@ -43,6 +44,29 @@ export default function FolderDetail() {
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [openBoards, setOpenBoards] = useState<Record<string, boolean>>({});
   const [hideDelivered, setHideDelivered] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editName, setEditName] = useState("");
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  const handleStartEdit = () => {
+    if (!folder?.is_owner) return;
+    setEditName(folder.name);
+    setIsEditingName(true);
+    setTimeout(() => editInputRef.current?.focus(), 50);
+  };
+
+  const handleSaveName = () => {
+    const trimmed = editName.trim();
+    if (!trimmed || !folder) return;
+    if (trimmed !== folder.name) {
+      updateFolder.mutate({ id: folder.id, name: trimmed, color: folder.color });
+    }
+    setIsEditingName(false);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingName(false);
+  };
   const [showOnlyMine, setShowOnlyMine] = useState(false);
   const [filters, setFilters] = useState<DemandFiltersState>({
     status: null, priority: null, assignee: null, service: null,
@@ -188,7 +212,38 @@ export default function FolderDetail() {
       <div className="flex items-center gap-3">
         <FolderOpen className="h-6 w-6 shrink-0" style={{ color: folder.color }} />
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-bold text-foreground truncate">{folder.name}</h1>
+          {isEditingName ? (
+            <div className="flex items-center gap-1.5">
+              <Input
+                ref={editInputRef}
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSaveName();
+                  if (e.key === "Escape") handleCancelEdit();
+                }}
+                className="h-8 text-xl font-bold px-2 max-w-xs"
+              />
+              <button onClick={handleSaveName} className="p-1 rounded hover:bg-emerald-500/10 text-emerald-600">
+                <Check className="h-4 w-4" />
+              </button>
+              <button onClick={handleCancelEdit} className="p-1 rounded hover:bg-destructive/10 text-destructive">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="group/title flex items-center gap-1.5">
+              <h1 className="text-xl font-bold text-foreground truncate">{folder.name}</h1>
+              {folder.is_owner && (
+                <button
+                  onClick={handleStartEdit}
+                  className="opacity-0 group-hover/title:opacity-100 transition-opacity p-1 rounded hover:bg-muted"
+                >
+                  <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              )}
+            </div>
+          )}
           <p className="text-xs text-muted-foreground">
             {filteredDemands.length} {filteredDemands.length === 1 ? "demanda" : "demandas"}
             {groupedByBoard.length > 0 && ` em ${groupedByBoard.length} ${groupedByBoard.length === 1 ? "quadro" : "quadros"}`}
