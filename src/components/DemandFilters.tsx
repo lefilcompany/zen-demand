@@ -7,10 +7,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Filter, X, CalendarIcon, ChevronDown, Check, Briefcase } from "lucide-react";
+import { Filter, X, CalendarIcon, ChevronDown, Check, Briefcase, Layers } from "lucide-react";
 import { useDemandStatuses } from "@/hooks/useDemands";
 import { useBoardMembers } from "@/hooks/useBoardMembers";
 import { useServices } from "@/hooks/useServices";
+import { useBoards } from "@/hooks/useBoards";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useTeamPositions } from "@/hooks/useTeamPositions";
 import { format } from "date-fns";
