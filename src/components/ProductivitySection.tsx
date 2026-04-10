@@ -175,8 +175,8 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
     return { avgDays: avg, completionBenchmark: benchmark, expectedAvgDays: expectedAvg, maxDays: Math.max(scale, 5) };
   }, [demands]);
 
-  const { totalActiveHours, avgActiveHoursPerUser, activityBenchmark } = useMemo(() => {
-    if (!allEntries || allEntries.length === 0) return { totalActiveHours: 0, avgActiveHoursPerUser: 0, activityBenchmark: 8 };
+  const { totalActiveHours, avgActiveHoursPerUser, expectedActivityHours, activityMaxHours } = useMemo(() => {
+    if (!allEntries || allEntries.length === 0) return { totalActiveHours: 0, avgActiveHoursPerUser: 0, expectedActivityHours: null as number | null, activityMaxHours: 10 };
 
     let totalSecs = 0;
     const uniqueUsers = new Set<string>();
@@ -185,13 +185,27 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
       uniqueUsers.add(entry.user_id);
     }
     const hours = Math.round((totalSecs / 3600) * 10) / 10;
-    const avgPerUser = uniqueUsers.size > 0 ? Math.round((totalSecs / uniqueUsers.size / 3600) * 10) / 10 : 0;
+    const numMembers = uniqueUsers.size;
+    const avgPerUser = numMembers > 0 ? Math.round((totalSecs / numMembers / 3600) * 10) / 10 : 0;
 
-    return { totalActiveHours: hours, avgActiveHoursPerUser: avgPerUser, activityBenchmark: avgPerUser || 8 };
-  }, [allEntries]);
+    // Expected activity hours per member: Σ(estimated_hours * weight) / (Σ(weight) * numMembers)
+    const demandsWithService = demands.filter(d => d.services?.estimated_hours && d.services.estimated_hours > 0);
+    let expectedAvg: number | null = null;
+    if (demandsWithService.length > 0 && numMembers > 0) {
+      let totalWeightedHours = 0;
+      let totalWeight = 0;
+      for (const d of demandsWithService) {
+        const weight = priorityWeights[d.priority || "baixa"] || 1;
+        totalWeightedHours += d.services!.estimated_hours * weight;
+        totalWeight += weight;
+      }
+      expectedAvg = totalWeight > 0 ? Math.round((totalWeightedHours / (totalWeight * numMembers)) * 10) / 10 : null;
+    }
 
-  const completionHealth = getHealthStatus(avgDays, completionBenchmark, true);
-  const activityHealth = getHealthStatus(avgActiveHoursPerUser, activityBenchmark, false);
+    const scale = Math.floor(avgPerUser) + 4;
+
+    return { totalActiveHours: hours, avgActiveHoursPerUser: avgPerUser, expectedActivityHours: expectedAvg, activityMaxHours: Math.max(scale, 5) };
+  }, [allEntries, demands]);
 
   const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
