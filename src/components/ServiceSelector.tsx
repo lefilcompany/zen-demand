@@ -245,7 +245,7 @@ export function ServiceSelector({
         onValueChange={handleChange}
         disabled={disabled || !teamId || isLoading}
       >
-        <SelectTrigger className={selectedService?.isLimitReached ? "border-destructive" : ""}>
+        <SelectTrigger className={`h-8 ${selectedService?.isLimitReached ? "border-destructive" : ""}`}>
           <SelectValue placeholder={
             hasBoardServices 
               ? "Selecione um serviço *" 

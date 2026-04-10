@@ -130,7 +130,7 @@ export function AssigneeSelector({
         onClick={handleOpen}
         disabled={disabled || (!teamId && !boardId)}
         className={cn(
-          "w-full h-10 flex items-center justify-start gap-2 px-4 py-2 rounded-md border border-input bg-background text-sm",
+          "w-full h-8 flex items-center justify-start gap-2 px-3 py-1 rounded-md border border-input bg-background text-sm",
           "hover:bg-accent hover:text-accent-foreground transition-colors",
           "disabled:opacity-50 disabled:pointer-events-none",
           !selectedUserIds.length && "text-muted-foreground"
