@@ -1,8 +1,8 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { useSelectedBoard } from "@/contexts/BoardContext";
-import { useFolderDemandIds, useDemandFolders } from "@/hooks/useDemandFolders";
+import { useFolderDemandIds, useDemandFolders, useUpdateFolder } from "@/hooks/useDemandFolders";
 import { useAllTeamDemands } from "@/hooks/useAllTeamDemands";
 import { useMembersByPosition } from "@/hooks/useMembersByPosition";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
