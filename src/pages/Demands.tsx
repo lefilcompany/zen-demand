@@ -150,6 +150,11 @@ export default function Demands() {
   const filteredDemands = useMemo(() => {
     if (!activeDemands) return [];
     const filtered = (activeDemands as any[]).filter((d: any) => {
+      // Folder filter
+      if (selectedFolderId && folderDemandIds) {
+        if (!folderDemandIds.includes(d.id)) return false;
+      }
+
       // Show only my demands filter
       if (showOnlyMine && user?.id) {
         const isAssigned = d.demand_assignees?.some(a => a.user_id === user.id) || d.assigned_to === user.id;
