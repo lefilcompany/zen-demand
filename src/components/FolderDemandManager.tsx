@@ -77,10 +77,10 @@ export function FolderDemandManager({
     setOpenBoards((prev) => ({ ...prev, [boardId]: !prev[boardId] }));
   };
 
-  // Auto-open all boards when searching
+  // Auto-open all boards when searching, default closed
   const isBoardOpen = (boardId: string) => {
     if (search.trim()) return true;
-    return openBoards[boardId] ?? true;
+    return openBoards[boardId] ?? false;
   };
 
   const selectedCount = folderDemandIds?.length || 0;
