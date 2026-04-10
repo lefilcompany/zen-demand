@@ -209,9 +209,6 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
 
             <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-muted-foreground">
               <span>1 dia</span>
-              {expectedAvgDays !== null && (
-                <span className="font-medium text-foreground/70">esperado</span>
-              )}
               <span>{maxDays} dias</span>
             </div>
 
@@ -238,9 +235,6 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
 
             <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-muted-foreground">
               <span>0 horas</span>
-              {expectedActivityHours !== null && (
-                <span className="font-medium text-foreground/70">esperado</span>
-              )}
               <span>{activityMaxHours} horas</span>
             </div>
           </div>
