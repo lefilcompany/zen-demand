@@ -112,6 +112,16 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     serviceId && serviceId !== "none" ? serviceId : null
   );
 
+  // Folders the user owns or has edit permission on
+  const editableFolders = useMemo(() => {
+    if (!allFolders || !user?.id) return [];
+    return allFolders.filter((f) => {
+      if (f.is_owner) return true;
+      const share = f.shared_with?.find((s) => s.user_id === user.id);
+      return share?.permission === "edit";
+    });
+  }, [allFolders, user?.id]);
+
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
