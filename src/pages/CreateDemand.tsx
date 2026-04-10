@@ -431,7 +431,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
               </div>
 
               {/* Form */}
-              <form id="create-demand-form" onSubmit={handleSubmit} className="space-y-3">
+              <form id="create-demand-form" onSubmit={handleSubmit} className="space-y-4">
                 {/* Board Selector */}
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
