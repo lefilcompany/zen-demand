@@ -1,0 +1,152 @@
+import { useState } from "react";
+import { FolderOpen, Plus, MoreVertical, Pencil, Palette, Trash2, ListChecks } from "lucide-react";
+import { useDemandFolders, useCreateFolder, useUpdateFolder, useDeleteFolder, DemandFolder } from "@/hooks/useDemandFolders";
+import { useAuth } from "@/lib/auth";
+import { CreateFolderDialog } from "@/components/CreateFolderDialog";
+import { FolderDemandManager } from "@/components/FolderDemandManager";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+
+interface DemandFolderStripProps {
+  teamId: string | null;
+  selectedFolderId: string | null;
+  onSelectFolder: (folderId: string | null) => void;
+}
+
+export function DemandFolderStrip({ teamId, selectedFolderId, onSelectFolder }: DemandFolderStripProps) {
+  const { user } = useAuth();
+  const { data: folders } = useDemandFolders(teamId);
+  const createFolder = useCreateFolder();
+  const updateFolder = useUpdateFolder();
+  const deleteFolder = useDeleteFolder();
+
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editingFolder, setEditingFolder] = useState<DemandFolder | null>(null);
+  const [managingFolder, setManagingFolder] = useState<DemandFolder | null>(null);
+
+  const handleCreate = (name: string, color: string) => {
+    if (!teamId || !user?.id) return;
+    createFolder.mutate({ name, color, team_id: teamId, created_by: user.id });
+  };
+
+  const handleEdit = (name: string, color: string) => {
+    if (!editingFolder) return;
+    updateFolder.mutate({ id: editingFolder.id, name, color });
+    setEditingFolder(null);
+  };
+
+  const handleDelete = (folder: DemandFolder) => {
+    if (selectedFolderId === folder.id) onSelectFolder(null);
+    deleteFolder.mutate(folder.id);
+  };
+
+  const handleFolderClick = (folder: DemandFolder) => {
+    onSelectFolder(selectedFolderId === folder.id ? null : folder.id);
+  };
+
+  return (
+    <>
+      <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-thin">
+        {folders?.map((folder) => (
+          <div
+            key={folder.id}
+            onClick={() => handleFolderClick(folder)}
+            className={cn(
+              "group relative flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer transition-all duration-200 shrink-0 min-w-[140px] max-w-[200px]",
+              "bg-muted/40 hover:bg-muted/70",
+              selectedFolderId === folder.id
+                ? "ring-2 ring-primary border-primary/40 bg-primary/5"
+                : "border-border/50 hover:border-border"
+            )}
+          >
+            <FolderOpen
+              className="h-5 w-5 shrink-0"
+              style={{ color: folder.color }}
+            />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium truncate text-foreground">{folder.name}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {folder.item_count || 0} {folder.item_count === 1 ? "demanda" : "demandas"}
+              </p>
+            </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                onClick={(e) => e.stopPropagation()}
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-background/80"
+              >
+                <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setManagingFolder(folder); }}>
+                  <ListChecks className="h-4 w-4 mr-2" />
+                  Gerenciar demandas
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingFolder(folder); }}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Renomear
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={(e) => { e.stopPropagation(); handleDelete(folder); }}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        ))}
+
+        <button
+          onClick={() => setCreateOpen(true)}
+          className={cn(
+            "flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200 shrink-0 min-w-[140px]",
+            "border-border/60 hover:border-primary/50 hover:bg-primary/5 text-muted-foreground hover:text-primary"
+          )}
+        >
+          <div className="flex items-center justify-center h-5 w-5 shrink-0">
+            <Plus className="h-4 w-4" />
+          </div>
+          <span className="text-xs font-medium whitespace-nowrap">
+            {(!folders || folders.length === 0) ? "Criar pasta" : "Nova pasta"}
+          </span>
+        </button>
+      </div>
+
+      <CreateFolderDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onConfirm={handleCreate}
+      />
+
+      {editingFolder && (
+        <CreateFolderDialog
+          open={!!editingFolder}
+          onOpenChange={(open) => !open && setEditingFolder(null)}
+          onConfirm={handleEdit}
+          initialName={editingFolder.name}
+          initialColor={editingFolder.color}
+          isEditing
+        />
+      )}
+
+      {managingFolder && (
+        <FolderDemandManager
+          open={!!managingFolder}
+          onOpenChange={(open) => !open && setManagingFolder(null)}
+          folderId={managingFolder.id}
+          folderName={managingFolder.name}
+          teamId={teamId}
+        />
+      )}
+    </>
+  );
+}

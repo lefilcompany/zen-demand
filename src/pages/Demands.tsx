@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { DemandFolderStrip } from "@/components/DemandFolderStrip";
+import { useFolderDemandIds } from "@/hooks/useDemandFolders";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DemandCard } from "@/components/DemandCard";
@@ -95,7 +97,10 @@ export default function Demands() {
   const [hideDelivered, setHideDelivered] = useState(false);
   const [showOnlyMine, setShowOnlyMine] = useState(false);
   const [showAllBoards, setShowAllBoards] = useState(false);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
 
+  // Fetch folder demand IDs for filtering
+  const { data: folderDemandIds } = useFolderDemandIds(selectedFolderId);
   // Fetch all team demands when "all boards" mode is active
   const { data: allTeamDemands, isLoading: isLoadingAllTeam } = useAllTeamDemands(showAllBoards ? currentTeamId : null);
 
@@ -145,6 +150,11 @@ export default function Demands() {
   const filteredDemands = useMemo(() => {
     if (!activeDemands) return [];
     const filtered = (activeDemands as any[]).filter((d: any) => {
+      // Folder filter
+      if (selectedFolderId && folderDemandIds) {
+        if (!folderDemandIds.includes(d.id)) return false;
+      }
+
       // Show only my demands filter
       if (showOnlyMine && user?.id) {
         const isAssigned = d.demand_assignees?.some(a => a.user_id === user.id) || d.assigned_to === user.id;
@@ -220,7 +230,7 @@ export default function Demands() {
       const dateB = new Date(b.due_date).getTime();
       return dateA - dateB;
     });
-  }, [activeDemands, searchQuery, filters, hideDelivered, showOnlyMine, user?.id, membersByPosition]);
+  }, [activeDemands, searchQuery, filters, hideDelivered, showOnlyMine, user?.id, membersByPosition, selectedFolderId, folderDemandIds]);
 
   // Handle calendar day click
   const handleDayClick = (date: Date) => {
@@ -319,6 +329,13 @@ export default function Demands() {
               className="pl-10 h-10 bg-background"
             />
           </div>
+
+          {/* Folder Strip */}
+          <DemandFolderStrip
+            teamId={currentTeamId}
+            selectedFolderId={selectedFolderId}
+            onSelectFolder={setSelectedFolderId}
+          />
 
           {/* Actions Toolbar */}
           <div className="flex items-center gap-2 p-2 bg-muted/40 rounded-xl border border-border/50">

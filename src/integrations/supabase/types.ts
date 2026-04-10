@@ -557,6 +557,87 @@ export type Database = {
           },
         ]
       }
+      demand_folder_items: {
+        Row: {
+          added_at: string
+          demand_id: string
+          folder_id: string
+          id: string
+        }
+        Insert: {
+          added_at?: string
+          demand_id: string
+          folder_id: string
+          id?: string
+        }
+        Update: {
+          added_at?: string
+          demand_id?: string
+          folder_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_folder_items_demand_id_fkey"
+            columns: ["demand_id"]
+            isOneToOne: false
+            referencedRelation: "demands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demand_folder_items_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "demand_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      demand_folders: {
+        Row: {
+          color: string
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_folders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demand_folders_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demand_interactions: {
         Row: {
           channel: string
