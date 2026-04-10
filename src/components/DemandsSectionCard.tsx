@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartPeriodSelector, type ChartPeriodType, getChartPeriodRange } from "@/components/ChartPeriodSelector";
 import { useState, useMemo } from "react";
-import { BarChart3, Grid2X2, Atom, LayoutList } from "lucide-react";
+import { Grid2X2, Atom, LayoutList } from "lucide-react";
 import { toast } from "sonner";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
@@ -13,6 +13,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useServices } from "@/hooks/useServices";
+import { useBoardStatuses } from "@/hooks/useBoardStatuses";
 
 interface Demand {
   id: string;
@@ -42,6 +43,12 @@ const STATUS_CHART_COLORS: Record<string, string> = {
   "Em Andamento": "#F59E0B",
   "Entregue": "#10B981",
 };
+
+// Extended palette for detailed statuses
+const DETAILED_STATUS_COLORS = [
+  "#3B82F6", "#F59E0B", "#8B5CF6", "#06B6D4", "#EC4899",
+  "#10B981", "#EF4444", "#84CC16", "#F97316", "#7C3AED",
+];
 
 const CustomPieTooltip = ({ active, payload, total }: any) => {
   if (active && payload?.length) {
@@ -86,43 +93,45 @@ function normalizeStatus(statusName: string): string {
   return "Em Andamento";
 }
 
-function resolveServiceCategoryName(
-  serviceId: string | null | undefined,
-  fallbackName: string | undefined,
-  servicesMap: Map<string, ServiceLookup>
-) {
-  const normalizedFallback = fallbackName?.trim() || FALLBACK_SERVICE_LABEL;
-
-  if (!serviceId) return normalizedFallback;
-
-  let current = servicesMap.get(serviceId);
-  if (!current) return normalizedFallback;
-
-  const visited = new Set<string>();
-
-  while (current.parent_id && !visited.has(current.id)) {
-    visited.add(current.id);
-    const parent = servicesMap.get(current.parent_id);
-    if (!parent) break;
-    current = parent;
-  }
-
-  return current.name?.trim() || normalizedFallback;
-}
+type TrendViewMode = "simple" | "detailed";
 
 export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
   const [piePeriod, setPiePeriod] = useState<ChartPeriodType>("month");
   const [trendPeriod, setTrendPeriod] = useState<ChartPeriodType>("month");
-  const [visibleStatuses, setVisibleStatuses] = useState<Set<string>>(new Set(["A Iniciar", "Em Andamento", "Entregue"]));
+  const [trendViewMode, setTrendViewMode] = useState<TrendViewMode>("simple");
+  const [visibleSimpleStatuses, setVisibleSimpleStatuses] = useState<Set<string>>(new Set(["A Iniciar", "Em Andamento", "Entregue"]));
+  const [visibleDetailedStatuses, setVisibleDetailedStatuses] = useState<Set<string> | null>(null);
   const isMobile = useIsMobile();
   const { selectedBoardId, currentTeamId } = useSelectedBoard();
   const { selectedTeamId } = useSelectedTeam();
   const { data: services = [] } = useServices(selectedTeamId || currentTeamId || null, selectedBoardId);
+  const { data: boardStatuses } = useBoardStatuses(selectedBoardId || null);
 
   const servicesMap = useMemo(
     () => new Map(services.map((service) => [service.id, service] as const)),
     [services]
   );
+
+  // Build board status info: ordered names + color map
+  const boardStatusInfo = useMemo(() => {
+    if (!boardStatuses || boardStatuses.length === 0) return null;
+    
+    const activeStatuses = boardStatuses
+      .filter(bs => bs.is_active)
+      .sort((a, b) => a.position - b.position);
+    
+    const names = activeStatuses.map(bs => bs.status.name);
+    const colorMap: Record<string, string> = {};
+    activeStatuses.forEach((bs, idx) => {
+      colorMap[bs.status.name] = bs.status.color || DETAILED_STATUS_COLORS[idx % DETAILED_STATUS_COLORS.length];
+    });
+    
+    return { names, colorMap };
+  }, [boardStatuses]);
+
+  // Initialize detailed visible statuses when board statuses load
+  const detailedStatusNames = boardStatusInfo?.names || [];
+  const currentVisibleDetailed = visibleDetailedStatuses ?? new Set(detailedStatusNames);
 
   const categoryData = useMemo(() => {
     const { start, end } = getChartPeriodRange(piePeriod);
@@ -145,84 +154,26 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
       .sort((a, b) => b.value - a.value);
   }, [demands, piePeriod, servicesMap]);
 
-  const trendData = useMemo(() => {
+  // Simple trend data (3 categories)
+  const simpleTrendData = useMemo(() => {
     if (demands.length === 0) return [];
-
-    const { start, end } = getChartPeriodRange(trendPeriod);
-    const periodStart = start || new Date(Math.min(...demands.map((d) => new Date(d.created_at).getTime())));
-
-    const diffDays = Math.ceil((end.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24));
-    let intervals: Date[];
-    let formatStr: string;
-    let getIntervalEnd: (date: Date) => Date;
-
-    if (diffDays <= 31) {
-      intervals = eachDayOfInterval({ start: periodStart, end });
-      formatStr = "dd/MM";
-      getIntervalEnd = (date) => new Date(startOfDay(date).getTime() + 86400000 - 1);
-    } else if (diffDays <= 180) {
-      intervals = eachWeekOfInterval({ start: periodStart, end });
-      formatStr = "dd/MM";
-      getIntervalEnd = (date) => new Date(startOfDay(date).getTime() + 7 * 86400000 - 1);
-    } else {
-      intervals = eachMonthOfInterval({ start: periodStart, end });
-      formatStr = "MMM";
-      getIntervalEnd = (date) => {
-        const next = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
-        return next;
-      };
-    }
-
-    let cumAIniciar = 0;
-    let cumEmAndamento = 0;
-    let cumEntregue = 0;
-
-    return intervals.map((date, idx) => {
-      const intervalEnd = idx < intervals.length - 1
-        ? new Date(startOfDay(intervals[idx + 1]).getTime() - 1)
-        : getIntervalEnd(date);
-
-      // Accumulate demands CREATED up to this interval end
-      for (const d of demands) {
-        const created = new Date(d.created_at);
-        // Only count demands newly entering this interval (created between prev end and current end)
-        const prevEnd = idx > 0
-          ? new Date(startOfDay(intervals[idx]).getTime() - 1)
-          : new Date(periodStart.getTime() - 1);
-        if (created > prevEnd && created <= intervalEnd) {
-          const normalized = normalizeStatus(d.demand_statuses?.name || "A Iniciar");
-          if (normalized === "A Iniciar") cumAIniciar++;
-          else if (normalized === "Em Andamento") cumEmAndamento++;
-        }
-      }
-
-      // Accumulate demands DELIVERED up to this interval end
-      for (const d of demands) {
-        if (!d.delivered_at) continue;
-        const delivered = new Date(d.delivered_at);
-        const prevEnd = idx > 0
-          ? new Date(startOfDay(intervals[idx]).getTime() - 1)
-          : new Date(periodStart.getTime() - 1);
-        if (delivered > prevEnd && delivered <= intervalEnd) {
-          cumEntregue++;
-        }
-      }
-
-      return {
-        label: format(date, formatStr, { locale: ptBR }),
-        "A Iniciar": cumAIniciar,
-        "Em Andamento": cumEmAndamento,
-        Entregue: cumEntregue,
-      };
-    });
+    return buildTrendData(demands, trendPeriod, "simple");
   }, [demands, trendPeriod]);
 
-  const totalPie = categoryData.reduce((total, item) => total + item.value, 0);
-  const topPercent = totalPie > 0 && categoryData.length > 0
-    ? Math.round((categoryData[0].value / totalPie) * 100)
-    : 0;
+  // Detailed trend data (all board statuses)
+  const detailedTrendData = useMemo(() => {
+    if (demands.length === 0 || !boardStatusInfo) return [];
+    return buildTrendData(demands, trendPeriod, "detailed", boardStatusInfo.names);
+  }, [demands, trendPeriod, boardStatusInfo]);
 
-  const STATUS_KEYS = ["A Iniciar", "Em Andamento", "Entregue"] as const;
+  const totalPie = categoryData.reduce((total, item) => total + item.value, 0);
+
+  const SIMPLE_STATUS_KEYS = ["A Iniciar", "Em Andamento", "Entregue"] as const;
+
+  const activeStatusKeys = trendViewMode === "simple" ? SIMPLE_STATUS_KEYS : detailedStatusNames;
+  const activeTrendData = trendViewMode === "simple" ? simpleTrendData : detailedTrendData;
+  const activeVisibleSet = trendViewMode === "simple" ? visibleSimpleStatuses : currentVisibleDetailed;
+  const activeColorMap = trendViewMode === "simple" ? STATUS_CHART_COLORS : (boardStatusInfo?.colorMap || {});
 
   return (
     <Card className="flex flex-col h-full">
@@ -279,14 +230,50 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
           </div>
 
           <div className="p-3 md:p-4 rounded-xl border border-border/50 bg-card space-y-2">
-            <div className="flex items-center gap-2">
-              <Atom className="h-4 w-4 md:h-5 md:w-5 text-orange-500 shrink-0" />
-              <span className="text-xs md:text-sm font-semibold text-foreground">Visão geral</span>
+            {/* Header with view mode toggle */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Atom className="h-4 w-4 md:h-5 md:w-5 text-orange-500 shrink-0" />
+                <span className="text-xs md:text-sm font-semibold text-foreground">Visão geral</span>
+              </div>
+              {boardStatusInfo && boardStatusInfo.names.length > 0 && (
+                <div className="flex items-center bg-muted/50 rounded-lg p-0.5 border border-border/50">
+                  <button
+                    type="button"
+                    onClick={() => setTrendViewMode("simple")}
+                    className={`text-[10px] px-2 py-0.5 rounded-md transition-all ${
+                      trendViewMode === "simple"
+                        ? "bg-background text-foreground font-medium shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Resumo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTrendViewMode("detailed");
+                      // Initialize if first time
+                      if (!visibleDetailedStatuses) {
+                        setVisibleDetailedStatuses(new Set(detailedStatusNames));
+                      }
+                    }}
+                    className={`text-[10px] px-2 py-0.5 rounded-md transition-all ${
+                      trendViewMode === "detailed"
+                        ? "bg-background text-foreground font-medium shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Detalhado
+                  </button>
+                </div>
+              )}
             </div>
-            {trendData.length > 1 ? (
+
+            {activeTrendData.length > 1 ? (
               <>
                 <ResponsiveContainer width="100%" height={isMobile ? 130 : 160}>
-                  <AreaChart data={trendData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                  <AreaChart data={activeTrendData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
                     <XAxis
                       dataKey="label"
@@ -299,44 +286,64 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
                       label={{ value: "DEMANDAS", angle: -90, position: "insideLeft", offset: 15, style: { fontSize: 8, fill: "hsl(var(--muted-foreground))" } }}
                     />
                     <Tooltip content={<CustomAreaTooltip />} />
-                    {STATUS_KEYS.filter((key) => visibleStatuses.has(key)).map((key) => (
+                    {activeStatusKeys.filter((key) => activeVisibleSet.has(key)).map((key, idx) => (
                       <Area
                         key={key}
                         type="monotone"
                         dataKey={key}
-                        stroke={STATUS_CHART_COLORS[key]}
-                        fill={STATUS_CHART_COLORS[key]}
+                        stroke={activeColorMap[key] || DETAILED_STATUS_COLORS[idx % DETAILED_STATUS_COLORS.length]}
+                        fill={activeColorMap[key] || DETAILED_STATUS_COLORS[idx % DETAILED_STATUS_COLORS.length]}
                         fillOpacity={0.15}
                         strokeWidth={2}
-                        dot={{ r: 2, fill: STATUS_CHART_COLORS[key] }}
+                        dot={{ r: 2, fill: activeColorMap[key] || DETAILED_STATUS_COLORS[idx % DETAILED_STATUS_COLORS.length] }}
                         activeDot={{ r: 4 }}
                       />
                     ))}
                   </AreaChart>
                 </ResponsiveContainer>
                 <div className="flex flex-wrap gap-x-1 gap-y-1 justify-center">
-                  {STATUS_KEYS.map((key) => {
-                    const isActive = visibleStatuses.has(key);
+                  {activeStatusKeys.map((key) => {
+                    const isActive = activeVisibleSet.has(key);
+                    const color = activeColorMap[key] || DETAILED_STATUS_COLORS[activeStatusKeys.indexOf(key) % DETAILED_STATUS_COLORS.length];
                     return (
                       <button
                         key={key}
                         type="button"
                         onClick={() => {
-                          setVisibleStatuses((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(key)) {
-                              if (next.size > 1) {
-                                next.delete(key);
+                          if (trendViewMode === "simple") {
+                            setVisibleSimpleStatuses((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(key)) {
+                                if (next.size > 1) {
+                                  next.delete(key);
+                                } else {
+                                  toast.error("Não é possível remover todos os status", {
+                                    description: "Mantenha pelo menos um status visível no gráfico.",
+                                  });
+                                }
                               } else {
-                                toast.error("Não é possível remover todos os status", {
-                                  description: "Mantenha pelo menos um status visível no gráfico.",
-                                });
+                                next.add(key);
                               }
-                            } else {
-                              next.add(key);
-                            }
-                            return next;
-                          });
+                              return next;
+                            });
+                          } else {
+                            setVisibleDetailedStatuses((prev) => {
+                              const current = prev ?? new Set(detailedStatusNames);
+                              const next = new Set(current);
+                              if (next.has(key)) {
+                                if (next.size > 1) {
+                                  next.delete(key);
+                                } else {
+                                  toast.error("Não é possível remover todos os status", {
+                                    description: "Mantenha pelo menos um status visível no gráfico.",
+                                  });
+                                }
+                              } else {
+                                next.add(key);
+                              }
+                              return next;
+                            });
+                          }
                         }}
                         className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border transition-all cursor-pointer ${
                           isActive
@@ -347,7 +354,7 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
                         <div
                           className="w-2 h-2 rounded-full shrink-0 transition-opacity"
                           style={{
-                            backgroundColor: STATUS_CHART_COLORS[key],
+                            backgroundColor: color,
                             opacity: isActive ? 1 : 0.3,
                           }}
                         />
@@ -368,4 +375,109 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
       </CardContent>
     </Card>
   );
+}
+
+/** Builds trend data for both simple and detailed modes */
+function buildTrendData(
+  demands: Demand[],
+  period: ChartPeriodType,
+  mode: "simple" | "detailed",
+  detailedStatusNames?: string[]
+): Record<string, any>[] {
+  const { start, end } = getChartPeriodRange(period);
+  const periodStart = start || new Date(Math.min(...demands.map((d) => new Date(d.created_at).getTime())));
+
+  const diffDays = Math.ceil((end.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24));
+  let intervals: Date[];
+  let formatStr: string;
+  let getIntervalEnd: (date: Date) => Date;
+
+  if (diffDays <= 31) {
+    intervals = eachDayOfInterval({ start: periodStart, end });
+    formatStr = "dd/MM";
+    getIntervalEnd = (date) => new Date(startOfDay(date).getTime() + 86400000 - 1);
+  } else if (diffDays <= 180) {
+    intervals = eachWeekOfInterval({ start: periodStart, end });
+    formatStr = "dd/MM";
+    getIntervalEnd = (date) => new Date(startOfDay(date).getTime() + 7 * 86400000 - 1);
+  } else {
+    intervals = eachMonthOfInterval({ start: periodStart, end });
+    formatStr = "MMM";
+    getIntervalEnd = (date) => {
+      return new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+    };
+  }
+
+  if (mode === "simple") {
+    let cumAIniciar = 0;
+    let cumEmAndamento = 0;
+    let cumEntregue = 0;
+
+    return intervals.map((date, idx) => {
+      const intervalEnd = idx < intervals.length - 1
+        ? new Date(startOfDay(intervals[idx + 1]).getTime() - 1)
+        : getIntervalEnd(date);
+      const prevEnd = idx > 0
+        ? new Date(startOfDay(intervals[idx]).getTime() - 1)
+        : new Date(periodStart.getTime() - 1);
+
+      for (const d of demands) {
+        const created = new Date(d.created_at);
+        if (created > prevEnd && created <= intervalEnd) {
+          const normalized = normalizeStatus(d.demand_statuses?.name || "A Iniciar");
+          if (normalized === "A Iniciar") cumAIniciar++;
+          else if (normalized === "Em Andamento") cumEmAndamento++;
+        }
+      }
+
+      for (const d of demands) {
+        if (!d.delivered_at) continue;
+        const delivered = new Date(d.delivered_at);
+        if (delivered > prevEnd && delivered <= intervalEnd) {
+          cumEntregue++;
+        }
+      }
+
+      return {
+        label: format(date, formatStr, { locale: ptBR }),
+        "A Iniciar": cumAIniciar,
+        "Em Andamento": cumEmAndamento,
+        Entregue: cumEntregue,
+      };
+    });
+  }
+
+  // Detailed mode: track each board status individually
+  const statusNames = detailedStatusNames || [];
+  const cumulative: Record<string, number> = {};
+  statusNames.forEach(name => { cumulative[name] = 0; });
+
+  return intervals.map((date, idx) => {
+    const intervalEnd = idx < intervals.length - 1
+      ? new Date(startOfDay(intervals[idx + 1]).getTime() - 1)
+      : getIntervalEnd(date);
+    const prevEnd = idx > 0
+      ? new Date(startOfDay(intervals[idx]).getTime() - 1)
+      : new Date(periodStart.getTime() - 1);
+
+    for (const d of demands) {
+      const created = new Date(d.created_at);
+      if (created > prevEnd && created <= intervalEnd) {
+        const statusName = d.demand_statuses?.name || "A Iniciar";
+        // Match to exact board status name
+        if (statusName in cumulative) {
+          cumulative[statusName]++;
+        }
+      }
+    }
+
+    const point: Record<string, any> = {
+      label: format(date, formatStr, { locale: ptBR }),
+    };
+    statusNames.forEach(name => {
+      point[name] = cumulative[name];
+    });
+
+    return point;
+  });
 }
