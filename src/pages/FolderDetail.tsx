@@ -366,6 +366,21 @@ export default function FolderDetail() {
                 <TooltipTrigger asChild>
                   <button
                     className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
+                      !groupByBoard && effectiveViewMode === "grid"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "hover:text-primary"
+                    }`}
+                    onClick={() => { setGroupByBoard(false); setViewMode("grid"); }}
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Blocos geral</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
                       !groupByBoard && effectiveViewMode === "calendar"
                         ? "bg-primary text-primary-foreground shadow-sm"
                         : "hover:text-primary"
