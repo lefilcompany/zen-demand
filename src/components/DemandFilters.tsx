@@ -216,7 +216,8 @@ function AssigneeSelect({ value, onChange, members }: AssigneeSelectProps) {
 
 export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps) {
   const [open, setOpen] = useState(false);
-  const { currentTeamId } = useSelectedBoard();
+  const { currentTeamId, selectedBoardId, setSelectedBoardId } = useSelectedBoard();
+  const { data: boards } = useBoards(currentTeamId);
   const { data: statuses } = useDemandStatuses();
   const { data: members } = useBoardMembers(boardId);
   const { data: services } = useServices(currentTeamId, boardId);
