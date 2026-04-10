@@ -13,7 +13,7 @@ import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useAuth } from "@/lib/auth";
 import { useMembersByPosition } from "@/hooks/useMembersByPosition";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
-import { Plus, LayoutList, LayoutGrid, List, Search, Eye, EyeOff, CalendarDays, User, Layers, Archive } from "lucide-react";
+import { Plus, Briefcase, LayoutList, LayoutGrid, List, Search, Eye, EyeOff, CalendarDays, User, Layers, Archive } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table";
 import { demandColumns, DemandTableRow } from "@/components/demands/columns";
