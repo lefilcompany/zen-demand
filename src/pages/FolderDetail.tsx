@@ -146,20 +146,22 @@ export default function FolderDetail() {
   const mapToTableRow = (d: any): DemandTableRow => ({
     id: d.id,
     title: d.title,
-    status: d.demand_statuses?.name || "",
-    statusColor: d.demand_statuses?.color || "#6B7280",
-    priority: d.priority || "média",
-    assignees: d.demand_assignees?.map((a: any) => ({
-      user_id: a.user_id,
-      full_name: a.profile?.full_name || "",
-      avatar_url: a.profile?.avatar_url || "",
-    })) || [],
-    created_at: d.created_at,
+    description: d.description,
+    priority: d.priority,
     due_date: d.due_date,
+    delivered_at: d.delivered_at,
+    created_at: d.created_at,
+    updated_at: d.updated_at,
+    time_in_progress_seconds: d.time_in_progress_seconds,
+    last_started_at: d.last_started_at,
     board_sequence_number: d.board_sequence_number,
-    service_name: d.services?.name,
-    board_id: d.board_id,
-    board_name: d.boards?.name,
+    service_id: d.service_id,
+    demand_statuses: d.demand_statuses,
+    services: d.services,
+    profiles: d.profiles,
+    demand_assignees: d.demand_assignees,
+    assigned_profile: d.assigned_profile,
+    boards: d.boards,
   });
 
   if (!folder) {
@@ -255,9 +257,7 @@ export default function FolderDetail() {
         <DemandFilters
           boardId={null}
           filters={filters}
-          onFiltersChange={setFilters}
-          teamId={currentTeamId}
-          showAllBoards
+          onChange={setFilters}
         />
       </div>
 
@@ -266,8 +266,9 @@ export default function FolderDetail() {
         <DemandsCalendarView
           demands={filteredDemands}
           onDemandClick={(id) => handleDemandClick(id)}
-          month={calendarMonth}
-          onMonthChange={setCalendarMonth}
+          onDayClick={() => {}}
+          initialDate={calendarMonth}
+          onDateChange={setCalendarMonth}
         />
       ) : (
         /* Board-grouped view */
