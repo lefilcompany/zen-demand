@@ -413,6 +413,17 @@ export default function FolderDetail() {
           )}
         </div>
       )}
+
+      {folder.is_owner && (
+        <FolderShareDialog
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          folderId={folder.id}
+          folderName={folder.name}
+          teamId={currentTeamId}
+          sharedWith={folder.shared_with || []}
+        />
+      )}
     </div>
   );
 }
