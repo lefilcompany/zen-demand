@@ -441,6 +441,14 @@ export default function FolderDetail() {
           sharedWith={folder.shared_with || []}
         />
       )}
+
+      <FolderDemandManager
+        open={managerOpen}
+        onOpenChange={setManagerOpen}
+        folderId={folder.id}
+        folderName={folder.name}
+        teamId={currentTeamId}
+      />
     </div>
   );
 }
