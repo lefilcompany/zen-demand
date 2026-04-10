@@ -602,25 +602,24 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     );
   };
 
-  // Get demands for column, considering optimistic updates
-  // Track seen IDs to prevent duplicates across columns
-  const seenDemandIds = useMemo(() => new Set<string>(), [demands, optimisticUpdates]);
-  
-  const getDemandsForColumn = (columnKey: string) => {
-    return demands.filter((d) => {
-      // Deduplicate: if this demand was already shown in another column, skip
-      if (seenDemandIds.has(d.id)) return false;
-      
-      // Check if there's an optimistic update for this demand
+  // Pre-compute demand-to-column mapping for deduplication
+  // Each demand is assigned to exactly one column (optimistic update takes priority)
+  const demandColumnMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const d of demands) {
       const optimisticStatus = optimisticUpdates[d.id];
-      const matches = optimisticStatus ? optimisticStatus === columnKey : d.demand_statuses?.name === columnKey;
-      
-      if (matches) {
-        seenDemandIds.add(d.id);
+      const columnKey = optimisticStatus || d.demand_statuses?.name;
+      if (columnKey && !map.has(d.id)) {
+        map.set(d.id, columnKey);
       }
-      return matches;
-    });
-  };
+    }
+    return map;
+  }, [demands, optimisticUpdates]);
+
+  // Get demands for column - idempotent, can be called multiple times safely
+  const getDemandsForColumn = useCallback((columnKey: string) => {
+    return demands.filter((d) => demandColumnMap.get(d.id) === columnKey);
+  }, [demands, demandColumnMap]);
 
   const isOverdue = useCallback((dueDate: string | null | undefined) => {
     return isDateOverdue(dueDate);
@@ -1080,7 +1079,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const getFilteredDemandsForColumn = useCallback((columnKey: string) => {
     const raw = getDemandsForColumn(columnKey);
     return filterAndSortDemands(raw, getColumnSearch(columnKey), getColumnSort(columnKey));
-  }, [demands, optimisticUpdates, columnSearches, columnSorts]);
+  }, [getDemandsForColumn, columnSearches, columnSorts]);
 
   // Render column content
   const renderColumnContent = (columnKey: string, showMoveMenu: boolean = false, columnAdjustmentType?: AdjustmentTypeColumn) => {
