@@ -14,6 +14,7 @@ import { useTeamRole } from "@/hooks/useTeamRole";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useHasBoardServices, useCanCreateWithService } from "@/hooks/useBoardServices";
 import { useBoards } from "@/hooks/useBoards";
+import { useDemandFolders, useAddDemandToFolder } from "@/hooks/useDemandFolders";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { ScopeProgressBar } from "@/components/ScopeProgressBar";
@@ -21,7 +22,7 @@ import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/component
 import { useUploadAttachment } from "@/hooks/useAttachments";
 import { RecurrenceConfig, RecurrenceData, defaultRecurrenceData } from "@/components/RecurrenceConfig";
 import { useCreateRecurringDemand } from "@/hooks/useRecurringDemands";
-import { AlertTriangle, Ban, CloudOff, WifiOff, Package, CheckCircle2, Plus, ExternalLink, LayoutGrid } from "lucide-react";
+import { AlertTriangle, Ban, CloudOff, WifiOff, Package, CheckCircle2, Plus, ExternalLink, LayoutGrid, FolderOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
@@ -31,10 +32,12 @@ import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/lib/auth";
 
 export default function CreateDemand({ open, onClose }: { open?: boolean; onClose?: () => void }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { isOpen: contextOpen, closeCreateDemand } = useCreateDemandModal();
   
   const isOpen = open ?? contextOpen;
@@ -46,9 +49,11 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   
   const { isOffline } = useOfflineStatus();
   const createDemand = useCreateDemand();
+  const addDemandToFolder = useAddDemandToFolder();
   const { selectedTeamId, teams } = useSelectedTeam();
   const { selectedBoardId, setSelectedBoardId, boards: contextBoards } = useSelectedBoardSafe();
   const { data: allBoards } = useBoards(selectedTeamId);
+  const { data: allFolders } = useDemandFolders(selectedTeamId, user?.id);
 
   // Local board selection for this form (defaults to current board)
   const [formBoardId, setFormBoardId] = useState<string>("");
@@ -98,7 +103,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
-  
+  const [selectedFolderId, setSelectedFolderId] = useState("");
   const uploadAttachment = useUploadAttachment();
   const createRecurringDemand = useCreateRecurringDemand();
 
@@ -106,6 +111,16 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     activeBoardId, 
     serviceId && serviceId !== "none" ? serviceId : null
   );
+
+  // Folders the user owns or has edit permission on
+  const editableFolders = useMemo(() => {
+    if (!allFolders || !user?.id) return [];
+    return allFolders.filter((f) => {
+      if (f.is_owner) return true;
+      const share = f.shared_with?.find((s) => s.user_id === user.id);
+      return share?.permission === "edit";
+    });
+  }, [allFolders, user?.id]);
 
   // Reset form when modal opens
   useEffect(() => {
@@ -155,6 +170,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     setAssigneeIds([]);
     setPendingFiles([]);
     setRecurrence(defaultRecurrenceData);
+    setSelectedFolderId("");
   };
 
   const isServiceValid = () => {
@@ -251,6 +267,16 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
             } catch (recError) {
               console.error("Erro ao criar recorrência:", recError);
               toast.warning("Demanda criada, mas houve um erro ao configurar a recorrência");
+            }
+          }
+
+          // Add to folder if selected
+          if (!wasCreatedOffline && selectedFolderId && demand) {
+            try {
+              await addDemandToFolder.mutateAsync({ folder_id: selectedFolderId, demand_id: demand.id });
+            } catch (folderError) {
+              console.error("Erro ao adicionar à pasta:", folderError);
+              toast.warning("Demanda criada, mas houve um erro ao adicionar à pasta");
             }
           }
 
@@ -537,6 +563,38 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                     minHeight="120px"
                   />
                 </div>
+
+                {/* Folder selector - only show if user has editable folders */}
+                {editableFolders.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <FolderOpen className="h-4 w-4" />
+                      Pasta
+                    </Label>
+                    <Select value={selectedFolderId || "none"} onValueChange={(v) => setSelectedFolderId(v === "none" ? "" : v)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Nenhuma pasta selecionada" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhuma pasta</SelectItem>
+                        {editableFolders.map((folder) => (
+                          <SelectItem key={folder.id} value={folder.id}>
+                            <div className="flex items-center gap-2">
+                              <FolderOpen className="h-3.5 w-3.5 shrink-0" style={{ color: folder.color }} />
+                              <span className="truncate">{folder.name}</span>
+                              {!folder.is_owner && (
+                                <span className="text-[10px] text-muted-foreground ml-1">(compartilhada)</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Opcional: vincule esta demanda a uma pasta
+                    </p>
+                  </div>
+                )}
 
                 {/* Row: Attachments + Recurrence */}
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
