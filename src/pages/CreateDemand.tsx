@@ -170,6 +170,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     setAssigneeIds([]);
     setPendingFiles([]);
     setRecurrence(defaultRecurrenceData);
+    setSelectedFolderId("");
   };
 
   const isServiceValid = () => {
