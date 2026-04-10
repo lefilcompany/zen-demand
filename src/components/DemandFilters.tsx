@@ -32,6 +32,7 @@ interface DemandFiltersProps {
   boardId: string | null;
   filters: DemandFiltersState;
   onChange: (filters: DemandFiltersState) => void;
+  availableBoardIds?: string[];
 }
 
 interface NativeSelectProps {
@@ -214,10 +215,13 @@ function AssigneeSelect({ value, onChange, members }: AssigneeSelectProps) {
   );
 }
 
-export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps) {
+export function DemandFilters({ boardId, filters, onChange, availableBoardIds }: DemandFiltersProps) {
   const [open, setOpen] = useState(false);
   const { currentTeamId, selectedBoardId, setSelectedBoardId } = useSelectedBoard();
-  const { data: boards } = useBoards(currentTeamId);
+  const { data: allBoards } = useBoards(currentTeamId);
+  const boards = availableBoardIds && allBoards
+    ? allBoards.filter(b => availableBoardIds.includes(b.id))
+    : allBoards;
   const { data: statuses } = useDemandStatuses();
   const { data: members } = useBoardMembers(boardId);
   const { data: services } = useServices(currentTeamId, boardId);

@@ -105,6 +105,11 @@ export default function FolderDetail() {
     return (allTeamDemands as any[]).filter((d) => folderDemandIds.includes(d.id));
   }, [allTeamDemands, folderDemandIds]);
 
+  // Get unique board IDs from folder demands
+  const folderBoardIds = useMemo(() => {
+    return [...new Set(folderDemands.map((d: any) => d.board_id as string))];
+  }, [folderDemands]);
+
   // Apply filters
   const filteredDemands = useMemo(() => {
     return folderDemands.filter((d: any) => {
@@ -397,6 +402,7 @@ export default function FolderDetail() {
             boardId={null}
             filters={filters}
             onChange={setFilters}
+            availableBoardIds={folderBoardIds}
           />
 
           <button
