@@ -630,14 +630,15 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
             </div>
 
             {/* Footer */}
-            <div className="shrink-0 border-t border-border px-6 py-4 flex justify-end gap-3 bg-card">
-              <Button type="button" variant="outline" onClick={handleClose}>
+            <div className="shrink-0 border-t border-border px-6 py-2 flex justify-end gap-3 bg-card">
+              <Button type="button" variant="outline" size="sm" onClick={handleClose}>
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 form="create-demand-form"
                 disabled={isSubmitDisabled}
+                size="sm"
               >
                 {createDemand.isPending ? "Criando..." : "Criar Demanda"}
               </Button>
