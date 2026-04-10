@@ -2,9 +2,9 @@ import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, UserPlus, X } from "lucide-react";
+import { Search, UserPlus, Check, Users } from "lucide-react";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useShareFolder, useUnshareFolder } from "@/hooks/useDemandFolders";
 import { useAuth } from "@/lib/auth";
@@ -34,13 +34,16 @@ export function FolderShareDialog({
 
   const sharedUserIds = useMemo(() => new Set(sharedWith.map((s) => s.user_id)), [sharedWith]);
 
+  const sharedCount = sharedUserIds.size;
+
   const filteredMembers = useMemo(() => {
     if (!members) return [];
     const otherMembers = members.filter((m: any) => m.user_id !== user?.id);
     if (!search.trim()) return otherMembers;
     const q = search.toLowerCase();
     return otherMembers.filter((m: any) =>
-      m.profile?.full_name?.toLowerCase().includes(q)
+      m.profile?.full_name?.toLowerCase().includes(q) ||
+      m.profile?.email?.toLowerCase().includes(q)
     );
   }, [members, search, user?.id]);
 
@@ -54,65 +57,125 @@ export function FolderShareDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[420px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5 text-muted-foreground" />
-            Compartilhar — {folderName}
-          </DialogTitle>
-          <p className="text-xs text-muted-foreground mt-1">
-            Membros compartilhados verão apenas demandas dos quadros em que estão alocados.
-          </p>
-        </DialogHeader>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar membro..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
+      <DialogContent className="sm:max-w-[540px] p-0 gap-0 overflow-hidden">
+        {/* Header */}
+        <div className="px-6 pt-6 pb-4 border-b border-border/40">
+          <DialogHeader className="space-y-2">
+            <DialogTitle className="flex items-center gap-2.5 text-lg">
+              <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-primary/10">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <span>Compartilhar pasta</span>
+                <p className="text-sm font-normal text-muted-foreground mt-0.5">{folderName}</p>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* Search */}
+          <div className="relative mt-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome ou e-mail..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 h-10 rounded-lg"
+            />
+          </div>
+
+          {/* Shared count */}
+          {sharedCount > 0 && (
+            <div className="flex items-center gap-2 mt-3">
+              <Badge variant="secondary" className="text-xs font-medium">
+                {sharedCount} {sharedCount === 1 ? "pessoa com acesso" : "pessoas com acesso"}
+              </Badge>
+            </div>
+          )}
         </div>
-        <ScrollArea className="h-[300px] pr-3 -mr-3">
-          <div className="space-y-0.5">
-            {filteredMembers.map((m: any) => {
-              const isShared = sharedUserIds.has(m.user_id);
-              return (
-                <label
-                  key={m.user_id}
-                  className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/40 cursor-pointer transition-colors"
-                >
-                  <Checkbox
-                    checked={isShared}
-                    onCheckedChange={() => handleToggle(m.user_id)}
-                  />
-                  <Avatar className="h-7 w-7">
-                    <AvatarImage src={m.profile?.avatar_url || ""} />
-                    <AvatarFallback className="text-[10px]">
-                      {m.profile?.full_name?.charAt(0)?.toUpperCase() || "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{m.profile?.full_name || "Sem nome"}</p>
-                    {m.position && (
-                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: m.position.color + "20", color: m.position.color }}>
-                        {m.position.name}
-                      </span>
+
+        {/* Member list */}
+        <ScrollArea className="h-[400px]">
+          <div className="px-3 py-2">
+            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider px-3 py-2">
+              Membros da equipe
+            </p>
+            <div className="space-y-0.5">
+              {filteredMembers.map((m: any) => {
+                const isShared = sharedUserIds.has(m.user_id);
+                const initials = m.profile?.full_name
+                  ?.split(" ")
+                  .map((n: string) => n[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase() || "?";
+
+                return (
+                  <button
+                    key={m.user_id}
+                    onClick={() => handleToggle(m.user_id)}
+                    className={`flex items-center gap-3 w-full p-3 rounded-lg cursor-pointer transition-all duration-150 text-left ${
+                      isShared
+                        ? "bg-primary/5 hover:bg-primary/10 border border-primary/20"
+                        : "hover:bg-muted/50 border border-transparent"
+                    }`}
+                  >
+                    <div className="relative">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={m.profile?.avatar_url || ""} />
+                        <AvatarFallback className="text-xs font-medium bg-muted">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      {isShared && (
+                        <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full bg-primary flex items-center justify-center ring-2 ring-background">
+                          <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate text-foreground">{m.profile?.full_name || "Sem nome"}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {m.profile?.email && (
+                          <span className="text-xs text-muted-foreground truncate">{m.profile.email}</span>
+                        )}
+                        {m.position && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] h-4 px-1.5 border"
+                            style={{ backgroundColor: m.position.color + "15", borderColor: m.position.color + "40", color: m.position.color }}
+                          >
+                            {m.position.name}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {isShared && (
+                      <Badge className="bg-primary/10 text-primary border-primary/20 text-[11px] shrink-0" variant="outline">
+                        Compartilhado
+                      </Badge>
                     )}
-                  </div>
-                  {isShared && (
-                    <span className="text-[10px] text-primary font-medium shrink-0">Compartilhado</span>
-                  )}
-                </label>
-              );
-            })}
-            {filteredMembers.length === 0 && (
-              <p className="text-center text-sm text-muted-foreground py-8">
-                Nenhum membro encontrado
-              </p>
-            )}
+                  </button>
+                );
+              })}
+              {filteredMembers.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Search className="h-8 w-8 text-muted-foreground/40 mb-3" />
+                  <p className="text-sm font-medium text-muted-foreground">Nenhum membro encontrado</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Tente buscar com outro termo</p>
+                </div>
+              )}
+            </div>
           </div>
         </ScrollArea>
+
+        {/* Footer */}
+        <div className="px-6 py-3 border-t border-border/40 bg-muted/20">
+          <p className="text-[11px] text-muted-foreground text-center">
+            Membros compartilhados verão apenas demandas dos quadros em que estão alocados.
+          </p>
+        </div>
       </DialogContent>
     </Dialog>
   );
