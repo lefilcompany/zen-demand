@@ -360,10 +360,19 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
   }, [boardStatuses]);
 
   const handleToggleStatus = async (boardStatusId: string, isActive: boolean) => {
+    // Optimistic local update
+    setLocalStatuses(prev => prev.map(s => 
+      s.id === boardStatusId ? { ...s, is_active: isActive } : s
+    ));
     try {
       await toggleStatus.mutateAsync({ boardStatusId, isActive, boardId });
       toast.success(isActive ? "Etapa ativada" : "Etapa desativada");
     } catch (error) {
+      console.error("Erro ao toggle etapa:", error);
+      // Revert optimistic update
+      setLocalStatuses(prev => prev.map(s => 
+        s.id === boardStatusId ? { ...s, is_active: !isActive } : s
+      ));
       toast.error("Erro ao alterar status da etapa");
     }
   };
@@ -457,16 +466,22 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
 
   const handleConfirmDelete = async () => {
     if (!statusToDelete) return;
+    const deletedStatus = statusToDelete;
+    // Optimistic local update
+    setLocalStatuses(prev => prev.filter(s => s.id !== deletedStatus.id));
+    setDeleteDialogOpen(false);
+    setStatusToDelete(null);
     try {
       await deleteStatus.mutateAsync({
-        boardStatusId: statusToDelete.id,
+        boardStatusId: deletedStatus.id,
         boardId,
-        statusId: statusToDelete.status_id,
+        statusId: deletedStatus.status_id,
       });
       toast.success("Etapa removida do quadro");
-      setDeleteDialogOpen(false);
-      setStatusToDelete(null);
     } catch (error) {
+      console.error("Erro ao remover etapa:", error);
+      // Revert optimistic update - refetch from server
+      queryClient.refetchQueries({ queryKey: ["board-statuses-all", boardId] });
       toast.error("Erro ao remover etapa");
     }
   };
