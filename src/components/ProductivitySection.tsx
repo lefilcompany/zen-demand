@@ -30,8 +30,13 @@ function CompletionProgressBar({ avgDays, expectedAvgDays, maxDays }: { avgDays:
       {markerPercent !== null && expectedAvgDays !== null && (
         <div className="relative h-16 mt-3 mb-3">
           <div
-            className="absolute -translate-x-1/2 flex flex-col items-center"
-            style={{ left: `${markerPercent}%` }}
+              className="absolute flex flex-col"
+              style={{
+                left: `${markerPercent}%`,
+                transform: markerPercent > 75 ? 'translateX(-100%)' : markerPercent < 25 ? 'translateX(0)' : 'translateX(-50%)',
+                alignItems: markerPercent > 75 ? 'flex-end' : markerPercent < 25 ? 'flex-start' : 'center',
+              }}
+            >
           >
             <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap text-center leading-tight">
               Tempo médio<br />esperado:
