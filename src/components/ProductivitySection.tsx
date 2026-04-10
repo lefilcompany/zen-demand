@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Clock, Timer, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 import { differenceInHours } from "date-fns";
@@ -20,30 +19,6 @@ interface ProductivitySectionProps {
   boardId: string | null;
 }
 
-function getHealthStatus(value: number, benchmark: number, lowerIsBetter: boolean) {
-  if (benchmark === 0) return { color: "text-muted-foreground", bgClass: "bg-muted", label: "Sem dados" };
-
-  const deviation = Math.abs(value - benchmark) / benchmark;
-
-  // Determine if the value is "good" or "bad"
-  const isGood = lowerIsBetter ? value <= benchmark : value >= benchmark;
-
-  if (deviation <= 0.2) {
-    return { color: "text-emerald-600", bgClass: "bg-emerald-500", label: "Na média" };
-  }
-  if (deviation <= 0.5) {
-    return {
-      color: isGood ? "text-emerald-600" : "text-yellow-600",
-      bgClass: isGood ? "bg-emerald-500" : "bg-yellow-500",
-      label: isGood ? (lowerIsBetter ? "Abaixo da média" : "Acima da média") : (lowerIsBetter ? "Acima da média" : "Abaixo da média"),
-    };
-  }
-  return {
-    color: isGood ? "text-emerald-600" : "text-red-600",
-    bgClass: isGood ? "bg-emerald-500" : "bg-red-500",
-    label: isGood ? (lowerIsBetter ? "Muito abaixo" : "Muito acima") : (lowerIsBetter ? "Muito acima" : "Muito abaixo"),
-  };
-}
 
 function CompletionProgressBar({ avgDays, expectedAvgDays, maxDays }: { avgDays: number; expectedAvgDays: number | null; maxDays: number }) {
   const fillPercent = maxDays > 0 ? Math.min(100, Math.max(0, (avgDays / maxDays) * 100)) : 0;
@@ -86,26 +61,44 @@ function CompletionProgressBar({ avgDays, expectedAvgDays, maxDays }: { avgDays:
   );
 }
 
-function HealthIndicatorBar({ bgClass }: { bgClass: string }) {
-  return (
-    <div className={`w-full h-1 sm:h-1.5 rounded-full ${bgClass} transition-colors duration-300`} />
-  );
-}
 
-function ActivityProgressBar({ value, benchmark }: { value: number; benchmark: number }) {
-  const maxScale = benchmark * 2;
-  const fillPercent = maxScale > 0 ? Math.min(100, Math.max(0, (value / maxScale) * 100)) : 0;
-  const benchmarkPos = maxScale > 0 ? (benchmark / maxScale) * 100 : 50;
+function ActivityProgressBar({ avgHoursPerMember, expectedAvgHours, maxHours }: { avgHoursPerMember: number; expectedAvgHours: number | null; maxHours: number }) {
+  const fillPercent = maxHours > 0 ? Math.min(100, Math.max(0, (avgHoursPerMember / maxHours) * 100)) : 0;
+  const markerPercent = expectedAvgHours !== null && maxHours > 0 ? Math.min(100, Math.max(0, (expectedAvgHours / maxHours) * 100)) : null;
 
   return (
     <div className="relative w-full">
-      <div className="relative h-3 sm:h-3.5 md:h-4 rounded-full bg-muted overflow-hidden">
+      {/* Expected avg label above bar */}
+      {markerPercent !== null && expectedAvgHours !== null && (
+        <div className="relative h-16 mt-3 mb-3">
+          <div
+            className="absolute -translate-x-1/2 flex flex-col items-center"
+            style={{ left: `${markerPercent}%` }}
+          >
+            <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap text-center leading-tight">
+              Tempo médio<br />esperado:
+            </span>
+            <span className="whitespace-nowrap">
+              <span className="text-sm sm:text-base font-bold text-foreground">{expectedAvgHours.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground ml-0.5">horas</span>
+            </span>
+          </div>
+        </div>
+      )}
+      {/* Progress bar */}
+      <div className="relative h-3 sm:h-3.5 md:h-4 rounded-full bg-muted overflow-visible">
         <div
           className="absolute inset-y-0 left-0 bg-orange-400 rounded-full transition-all duration-500"
           style={{ width: `${fillPercent}%` }}
         />
+        {/* Expected avg vertical marker */}
+        {markerPercent !== null && (
+          <div
+            className="absolute top-[-4px] bottom-[-4px] w-[3px] rounded-full bg-slate-800 dark:bg-white z-10 shadow-md"
+            style={{ left: `${markerPercent}%`, transform: 'translateX(-50%)' }}
+          />
+        )}
       </div>
-      <div className="absolute top-0 h-full w-0.5 bg-destructive z-10" style={{ left: `${benchmarkPos}%` }} />
     </div>
   );
 }
@@ -152,8 +145,8 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
     return { avgDays: avg, completionBenchmark: benchmark, expectedAvgDays: expectedAvg, maxDays: Math.max(scale, 5) };
   }, [demands]);
 
-  const { totalActiveHours, avgActiveHoursPerUser, activityBenchmark } = useMemo(() => {
-    if (!allEntries || allEntries.length === 0) return { totalActiveHours: 0, avgActiveHoursPerUser: 0, activityBenchmark: 8 };
+  const { totalActiveHours, avgActiveHoursPerUser, expectedActivityHours, activityMaxHours } = useMemo(() => {
+    if (!allEntries || allEntries.length === 0) return { totalActiveHours: 0, avgActiveHoursPerUser: 0, expectedActivityHours: null as number | null, activityMaxHours: 10 };
 
     let totalSecs = 0;
     const uniqueUsers = new Set<string>();
@@ -162,13 +155,27 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
       uniqueUsers.add(entry.user_id);
     }
     const hours = Math.round((totalSecs / 3600) * 10) / 10;
-    const avgPerUser = uniqueUsers.size > 0 ? Math.round((totalSecs / uniqueUsers.size / 3600) * 10) / 10 : 0;
+    const numMembers = uniqueUsers.size;
+    const avgPerUser = numMembers > 0 ? Math.round((totalSecs / numMembers / 3600) * 10) / 10 : 0;
 
-    return { totalActiveHours: hours, avgActiveHoursPerUser: avgPerUser, activityBenchmark: avgPerUser || 8 };
-  }, [allEntries]);
+    // Expected activity hours per member: Σ(estimated_hours * weight) / (Σ(weight) * numMembers)
+    const demandsWithService = demands.filter(d => d.services?.estimated_hours && d.services.estimated_hours > 0);
+    let expectedAvg: number | null = null;
+    if (demandsWithService.length > 0 && numMembers > 0) {
+      let totalWeightedHours = 0;
+      let totalWeight = 0;
+      for (const d of demandsWithService) {
+        const weight = priorityWeights[d.priority || "baixa"] || 1;
+        totalWeightedHours += d.services!.estimated_hours * weight;
+        totalWeight += weight;
+      }
+      expectedAvg = totalWeight > 0 ? Math.round((totalWeightedHours / (totalWeight * numMembers)) * 10) / 10 : null;
+    }
 
-  const completionHealth = getHealthStatus(avgDays, completionBenchmark, true);
-  const activityHealth = getHealthStatus(avgActiveHoursPerUser, activityBenchmark, false);
+    const scale = Math.floor(avgPerUser) + 4;
+
+    return { totalActiveHours: hours, avgActiveHoursPerUser: avgPerUser, expectedActivityHours: expectedAvg, activityMaxHours: Math.max(scale, 5) };
+  }, [allEntries, demands]);
 
   const fmt = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
@@ -211,38 +218,6 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
 
           </div>
 
-          {/* Tempo em atividade */}
-          <div className="p-2.5 sm:p-3 md:p-4 rounded-xl border border-border/50 bg-card space-y-2 sm:space-y-3">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <Timer className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-orange-500 shrink-0" />
-              <span className="text-[11px] sm:text-xs md:text-sm font-semibold text-foreground leading-tight">
-                Tempo em atividade
-              </span>
-            </div>
-
-            <div className="flex items-baseline w-full">
-              <div className="inline-flex items-baseline gap-1 bg-muted/60 border border-border rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 w-full justify-center">
-                <span className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">{totalActiveHours > 0 ? fmt(totalActiveHours) : "-"}</span>
-                <span className="text-[10px] sm:text-xs text-muted-foreground">horas</span>
-              </div>
-            </div>
-
-            <ActivityProgressBar value={avgActiveHoursPerUser} benchmark={activityBenchmark} />
-
-            <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-muted-foreground">
-              <span>0 horas</span>
-              <span className="font-medium text-foreground/70">ideal</span>
-              <span>{fmt(activityBenchmark * 2)} h</span>
-            </div>
-
-            <HealthIndicatorBar bgClass={activityHealth.bgClass} />
-
-            <div className="flex justify-center">
-              <Badge className={`${activityHealth.bgClass} hover:opacity-90 text-white border-0 text-[9px] sm:text-[10px] md:text-xs font-medium px-2 sm:px-2.5 py-0.5 whitespace-nowrap`}>
-                {activityHealth.label} · Ideal: {fmt(activityBenchmark)} h/membro
-              </Badge>
-            </div>
-          </div>
         </div>
       </CardContent>
     </Card>
