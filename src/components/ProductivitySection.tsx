@@ -204,13 +204,7 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
               <span>{maxDays} dias</span>
             </div>
 
-            <HealthIndicatorBar bgClass={completionHealth.bgClass} />
 
-            <div className="flex justify-center">
-              <Badge className={`${completionHealth.bgClass} hover:opacity-90 text-white border-0 text-[9px] sm:text-[10px] md:text-xs font-medium px-2 sm:px-2.5 py-0.5 whitespace-nowrap`}>
-                {completionHealth.label} · Ideal: {fmt(completionBenchmark)} dias
-              </Badge>
-            </div>
           </div>
 
           {/* Tempo em atividade */}
