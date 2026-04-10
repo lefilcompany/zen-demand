@@ -1079,7 +1079,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const getFilteredDemandsForColumn = useCallback((columnKey: string) => {
     const raw = getDemandsForColumn(columnKey);
     return filterAndSortDemands(raw, getColumnSearch(columnKey), getColumnSort(columnKey));
-  }, [demands, optimisticUpdates, columnSearches, columnSorts]);
+  }, [getDemandsForColumn, columnSearches, columnSorts]);
 
   // Render column content
   const renderColumnContent = (columnKey: string, showMoveMenu: boolean = false, columnAdjustmentType?: AdjustmentTypeColumn) => {
