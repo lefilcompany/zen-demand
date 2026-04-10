@@ -252,8 +252,8 @@ export default function FolderDetail() {
           <button
             className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium h-8 transition-all duration-200 whitespace-nowrap ${
               hideDelivered
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-background border border-border/60 hover:border-primary/40 hover:text-primary"
+                ? "bg-emerald-500 text-white shadow-sm"
+                : "bg-background border border-border/60 hover:border-emerald-500/60 hover:text-emerald-600"
             }`}
             onClick={() => setHideDelivered(!hideDelivered)}
           >
