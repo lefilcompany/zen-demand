@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useTranslation } from "react-i18next";
 import { DemandFolderStrip } from "@/components/DemandFolderStrip";
 import { useFolderDemandIds } from "@/hooks/useDemandFolders";
