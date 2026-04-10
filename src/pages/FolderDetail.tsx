@@ -404,8 +404,8 @@ export default function FolderDetail() {
         </div>
       </div>
 
-      {/* Calendar View */}
-      {effectiveViewMode === "calendar" ? (
+      {/* Calendar View (always flat) */}
+      {!groupByBoard && effectiveViewMode === "calendar" ? (
         <DemandsCalendarView
           demands={filteredDemands}
           onDemandClick={(id) => handleDemandClick(id)}
@@ -413,8 +413,39 @@ export default function FolderDetail() {
           initialDate={calendarMonth}
           onDateChange={setCalendarMonth}
         />
+      ) : !groupByBoard ? (
+        /* Flat list/grid view */
+        <div>
+          {effectiveViewMode === "table" ? (
+            <DataTable
+              columns={demandColumns}
+              data={filteredDemands.map(mapToTableRow)}
+              onRowClick={(row) => handleDemandClick(row.id)}
+            />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {filteredDemands.map((d: any) => (
+                <DemandCard
+                  key={d.id}
+                  demand={d}
+                  onClick={() => handleDemandClick(d.id, d.board_id)}
+                />
+              ))}
+            </div>
+          )}
+          {filteredDemands.length === 0 && !isLoading && (
+            <div className="text-center py-16">
+              <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
+              <p className="text-sm text-muted-foreground">
+                {folderDemandIds?.length === 0
+                  ? "Nenhuma demanda nesta pasta ainda"
+                  : "Nenhuma demanda encontrada com os filtros atuais"}
+              </p>
+            </div>
+          )}
+        </div>
       ) : (
-        /* Board-grouped view */
+        /* Board-grouped view (default) */
         <div className="space-y-3">
           {groupedByBoard.map((group) => (
             <Collapsible
