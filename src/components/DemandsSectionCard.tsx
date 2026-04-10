@@ -298,7 +298,7 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
                       label={{ value: "DEMANDAS", angle: -90, position: "insideLeft", offset: 15, style: { fontSize: 8, fill: "hsl(var(--muted-foreground))" } }}
                     />
                     <Tooltip content={<CustomAreaTooltip />} />
-                    {STATUS_KEYS.map((key) => (
+                    {STATUS_KEYS.filter((key) => visibleStatuses.has(key)).map((key) => (
                       <Area
                         key={key}
                         type="monotone"
@@ -313,13 +313,41 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
                     ))}
                   </AreaChart>
                 </ResponsiveContainer>
-                <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center">
-                  {STATUS_KEYS.map((key) => (
-                    <div key={key} className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_CHART_COLORS[key] }} />
-                      <span>{key}</span>
-                    </div>
-                  ))}
+                <div className="flex flex-wrap gap-x-1 gap-y-1 justify-center">
+                  {STATUS_KEYS.map((key) => {
+                    const isActive = visibleStatuses.has(key);
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => {
+                          setVisibleStatuses((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(key)) {
+                              if (next.size > 1) next.delete(key);
+                            } else {
+                              next.add(key);
+                            }
+                            return next;
+                          });
+                        }}
+                        className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border transition-all cursor-pointer ${
+                          isActive
+                            ? "border-border bg-muted/60 text-foreground font-medium"
+                            : "border-transparent bg-transparent text-muted-foreground/50 line-through"
+                        }`}
+                      >
+                        <div
+                          className="w-2 h-2 rounded-full shrink-0 transition-opacity"
+                          style={{
+                            backgroundColor: STATUS_CHART_COLORS[key],
+                            opacity: isActive ? 1 : 0.3,
+                          }}
+                        />
+                        <span>{key}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </>
             ) : (
