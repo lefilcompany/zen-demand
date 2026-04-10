@@ -309,36 +309,66 @@ export default function FolderDetail() {
           </div>
 
           <div className="hidden lg:flex items-center border border-border/60 rounded-full p-0.5 bg-background">
-            <button
-              className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
-                effectiveViewMode === "table"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "hover:text-primary"
-              }`}
-              onClick={() => setViewMode("table")}
-            >
-              <List className="h-3.5 w-3.5" />
-            </button>
-            <button
-              className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
-                effectiveViewMode === "grid"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "hover:text-primary"
-              }`}
-              onClick={() => setViewMode("grid")}
-            >
-              <LayoutGrid className="h-3.5 w-3.5" />
-            </button>
-            <button
-              className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
-                effectiveViewMode === "calendar"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "hover:text-primary"
-              }`}
-              onClick={() => setViewMode("calendar")}
-            >
-              <CalendarDays className="h-3.5 w-3.5" />
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
+                    groupByBoard
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "hover:text-primary"
+                  }`}
+                  onClick={() => setGroupByBoard(true)}
+                >
+                  <Layers className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Agrupar por quadro</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
+                    !groupByBoard && effectiveViewMode === "table"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "hover:text-primary"
+                  }`}
+                  onClick={() => { setGroupByBoard(false); setViewMode("table"); }}
+                >
+                  <List className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Lista geral</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
+                    !groupByBoard && effectiveViewMode === "grid"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "hover:text-primary"
+                  }`}
+                  onClick={() => { setGroupByBoard(false); setViewMode("grid"); }}
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Blocos</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
+                    !groupByBoard && effectiveViewMode === "calendar"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "hover:text-primary"
+                  }`}
+                  onClick={() => { setGroupByBoard(false); setViewMode("calendar"); }}
+                >
+                  <CalendarDays className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Calendário</TooltipContent>
+            </Tooltip>
           </div>
 
           {/* Filters + Quick toggles */}
