@@ -88,12 +88,32 @@ function HealthIndicatorBar({ bgClass }: { bgClass: string }) {
   );
 }
 
+function ActivityProgressBar({ value, benchmark }: { value: number; benchmark: number }) {
+  const maxScale = benchmark * 2;
+  const fillPercent = maxScale > 0 ? Math.min(100, Math.max(0, (value / maxScale) * 100)) : 0;
+  const benchmarkPos = maxScale > 0 ? (benchmark / maxScale) * 100 : 50;
+
+  return (
+    <div className="relative w-full">
+      <div className="relative h-3 sm:h-3.5 md:h-4 rounded-full bg-muted overflow-hidden">
+        <div
+          className="absolute inset-y-0 left-0 bg-orange-400 rounded-full transition-all duration-500"
+          style={{ width: `${fillPercent}%` }}
+        />
+      </div>
+      <div className="absolute top-0 h-full w-0.5 bg-destructive z-10" style={{ left: `${benchmarkPos}%` }} />
+    </div>
+  );
+}
+
 export function ProductivitySection({ demands, boardId }: ProductivitySectionProps) {
   const { data: allEntries } = useBoardTimeEntries(boardId);
 
-  const { avgDays, completionBenchmark } = useMemo(() => {
+  const priorityWeights: Record<string, number> = { alta: 3, média: 2, baixa: 1 };
+
+  const { avgDays, completionBenchmark, expectedAvgDays, maxDays } = useMemo(() => {
     const completedDemands = demands.filter(d => d.demand_statuses?.name === "Entregue");
-    if (completedDemands.length === 0) return { avgDays: 0, completionBenchmark: 5 };
+    if (completedDemands.length === 0) return { avgDays: 0, completionBenchmark: 5, expectedAvgDays: null as number | null, maxDays: 9 };
 
     const daysList = completedDemands.map(d => {
       const created = new Date(d.created_at);
@@ -103,14 +123,29 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
 
     const avg = Math.round((daysList.reduce((a, b) => a + b, 0) / daysList.length) * 10) / 10;
 
-    // Median as benchmark
     const mid = Math.floor(daysList.length / 2);
     const median = daysList.length % 2 !== 0
       ? daysList[mid]
       : (daysList[mid - 1] + daysList[mid]) / 2;
     const benchmark = Math.round(median * 10) / 10 || 5;
 
-    return { avgDays: avg, completionBenchmark: benchmark };
+    // Expected avg: weighted average of estimated_hours by priority, converted to business days (/8)
+    const demandsWithService = demands.filter(d => d.services?.estimated_hours && d.services.estimated_hours > 0);
+    let expectedAvg: number | null = null;
+    if (demandsWithService.length > 0) {
+      let totalWeightedHours = 0;
+      let totalWeight = 0;
+      for (const d of demandsWithService) {
+        const weight = priorityWeights[d.priority || "baixa"] || 1;
+        totalWeightedHours += (d.services!.estimated_hours) * weight;
+        totalWeight += weight;
+      }
+      expectedAvg = totalWeight > 0 ? Math.round((totalWeightedHours / totalWeight / 8) * 10) / 10 : null;
+    }
+
+    const scale = Math.floor(avg) + 4;
+
+    return { avgDays: avg, completionBenchmark: benchmark, expectedAvgDays: expectedAvg, maxDays: Math.max(scale, 5) };
   }, [demands]);
 
   const { totalActiveHours, avgActiveHoursPerUser, activityBenchmark } = useMemo(() => {
@@ -159,12 +194,14 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
               </div>
             </div>
 
-            <MainProgressBar value={avgDays} benchmark={completionBenchmark} />
+            <CompletionProgressBar avgDays={avgDays} expectedAvgDays={expectedAvgDays} maxDays={maxDays} />
 
             <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-muted-foreground">
-              <span>0 dias</span>
-              <span className="font-medium text-foreground/70">ideal</span>
-              <span>{fmt(completionBenchmark * 2)} dias</span>
+              <span>1 dia</span>
+              {expectedAvgDays !== null && (
+                <span className="font-medium text-foreground/70">esperado</span>
+              )}
+              <span>{maxDays} dias</span>
             </div>
 
             <HealthIndicatorBar bgClass={completionHealth.bgClass} />
@@ -192,7 +229,7 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
               </div>
             </div>
 
-            <MainProgressBar value={avgActiveHoursPerUser} benchmark={activityBenchmark} />
+            <ActivityProgressBar value={avgActiveHoursPerUser} benchmark={activityBenchmark} />
 
             <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-muted-foreground">
               <span>0 horas</span>
@@ -208,6 +245,11 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
               </Badge>
             </div>
           </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
         </div>
       </CardContent>
     </Card>
