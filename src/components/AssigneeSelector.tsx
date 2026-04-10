@@ -136,7 +136,7 @@ export function AssigneeSelector({
           !selectedUserIds.length && "text-muted-foreground"
         )}
       >
-        <Users className="h-4 w-4 shrink-0" />
+        {!hideIcon && <Users className="h-4 w-4 shrink-0" />}
         {selectedUserIds.length > 0 ? (
           <div className="flex items-center gap-2">
             <div className="flex -space-x-2">
