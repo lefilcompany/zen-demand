@@ -1,43 +1,58 @@
 
 
-## Redesign do gráfico "Tempo médio de conclusão"
+## Plano: Pastas de Projeto para agrupar demandas
 
-### Resumo
+### Conceito
+Criar um recurso de "Pastas" (ou "Projetos") que funciona como agrupador de demandas de diferentes quadros. As pastas aparecem entre a barra de pesquisa e a toolbar de filtros na página de Demandas, com visual inspirado no Google Drive. Quando nenhuma pasta existe, mostra um card pontilhado de criação.
 
-Redesenhar o card de "Tempo médio de conclusão" no `ProductivitySection.tsx` com nova lógica de escala, barra de progresso e marcador de tempo esperado baseado em média ponderada por prioridade.
+### Mudanças no banco de dados
 
-### Alterações
+**Nova tabela `demand_folders`:**
+- `id` (uuid, PK)
+- `name` (text, not null)
+- `color` (text, default '#6B7280')
+- `team_id` (uuid, FK teams)
+- `created_by` (uuid, FK profiles)
+- `created_at`, `updated_at`
 
-**1. `src/hooks/useDemands.ts`**
-- Alterar o select de services de `services(id, name)` para `services(id, name, estimated_hours)`
+**Nova tabela `demand_folder_items`:**
+- `id` (uuid, PK)
+- `folder_id` (uuid, FK demand_folders, cascade)
+- `demand_id` (uuid, FK demands, cascade)
+- `added_at` (timestamptz)
+- Unique constraint em (folder_id, demand_id)
 
-**2. `src/components/ProductivitySection.tsx`**
+**RLS:** Membros do time podem ler/criar/editar pastas do seu time. Apenas o criador ou admins podem deletar.
 
-- Atualizar interface `Demand` para incluir `priority`, `service_id` e `services?: { estimated_hours: number } | null`
-- Novo cálculo do **tempo médio esperado** (média ponderada):
-  - Pesos: `alta = 3`, `média = 2`, `baixa = 1`
-  - Fórmula: `Σ(estimated_hours × peso) / Σ(peso)`
-  - **Conversão para dias úteis: dividir por 8** (jornada de trabalho padrão de 8h/dia)
-- Redesenhar `MainProgressBar` do card de conclusão:
-  - **Escala cinza**: de `1 dia` até `Math.floor(avgDays) + 4` dias
-  - **Barra laranja**: preenchida proporcionalmente até `avgDays`
-  - **Marcador vertical**: posicionado no `expectedAvgDays`, com label acima mostrando o valor (ex: "6 dias"), cor de destaque `bg-slate-800 dark:bg-white`
+### Novos arquivos
 
-### Detalhe importante sobre conversão
+1. **`src/hooks/useDemandFolders.ts`** — CRUD de pastas e itens (listar, criar, renomear, deletar, adicionar/remover demandas)
 
-O tempo médio de conclusão real continua usando `/24` (tempo corrido entre criação e entrega). O **tempo médio esperado** (benchmark) usa `/8` porque as `estimated_hours` dos serviços representam horas úteis de trabalho em um contexto empresarial com carga horária de 8h/dia.
+2. **`src/components/DemandFolderStrip.tsx`** — Faixa horizontal de pastas estilo Google Drive:
+   - Cards compactos com ícone de pasta, nome e contador de demandas
+   - Menu de 3 pontos (renomear, cor, excluir)
+   - Card pontilhado "Criar nova pasta" quando vazio ou sempre no final
+   - Scroll horizontal em mobile
+   - Ao clicar numa pasta, filtra as demandas para mostrar apenas as da pasta
 
-### Resultado visual esperado
+3. **`src/components/CreateFolderDialog.tsx`** — Dialog para criar/renomear pasta com nome e cor
 
-```text
-  Tempo médio de conclusão
-  ┌──────────────────────────────┐
-  │         4,4 dias             │
-  └──────────────────────────────┘
-        Tempo médio esperado:
-             2,0 dias
-  ████████████████│░░░░░░░░░░░░░░
-  1 dia          ▲           8 dias
-           marcador (/8h)
-```
+4. **`src/components/FolderDemandManager.tsx`** — Interface para adicionar/remover demandas de uma pasta (acessível pelo menu da pasta)
+
+### Alterações em arquivos existentes
+
+- **`src/pages/Demands.tsx`** — Inserir `<DemandFolderStrip>` entre a barra de pesquisa (linha ~321) e a toolbar de filtros (linha ~324). Adicionar estado `selectedFolderId` que, quando ativo, filtra `filteredDemands` para exibir apenas demandas da pasta selecionada.
+
+### Visual
+- Pastas com fundo `bg-muted/50`, borda sutil, ícone `FolderOpen` do Lucide, nome truncado e badge com contagem
+- Estado vazio: border-dashed, ícone de pasta com "+", texto "Criar pasta"
+- Pasta selecionada: destaque com `ring-2 ring-primary`
+
+### Fluxo do usuário
+1. Vê a faixa de pastas (vazia = card pontilhado convidando a criar)
+2. Clica para criar → dialog com nome e cor
+3. Pasta criada aparece na faixa
+4. Menu ⋮ da pasta → "Gerenciar demandas" abre seletor para adicionar demandas de qualquer quadro
+5. Clica na pasta → filtra a lista para só mostrar demandas dessa pasta
+6. Clica novamente → deseleciona e volta à listagem normal
 
