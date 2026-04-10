@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+export type FolderPermission = "view" | "edit";
+
 export interface DemandFolder {
   id: string;
   name: string;
@@ -12,7 +14,7 @@ export interface DemandFolder {
   updated_at: string;
   item_count?: number;
   is_owner?: boolean;
-  shared_with?: { user_id: string; shared_at: string }[];
+  shared_with?: { user_id: string; shared_at: string; permission: FolderPermission }[];
 }
 
 export function useDemandFolders(teamId: string | null, userId?: string) {
@@ -22,7 +24,7 @@ export function useDemandFolders(teamId: string | null, userId?: string) {
       if (!teamId) return [];
       const { data, error } = await supabase
         .from("demand_folders")
-        .select("*, demand_folder_items(id), demand_folder_shares(user_id, shared_at)")
+        .select("*, demand_folder_items(id), demand_folder_shares(user_id, shared_at, permission)")
         .eq("team_id", teamId)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -30,7 +32,11 @@ export function useDemandFolders(teamId: string | null, userId?: string) {
         ...f,
         item_count: f.demand_folder_items?.length || 0,
         is_owner: f.created_by === userId,
-        shared_with: f.demand_folder_shares || [],
+        shared_with: (f.demand_folder_shares || []).map((s: any) => ({
+          user_id: s.user_id,
+          shared_at: s.shared_at,
+          permission: (s.permission || "view") as FolderPermission,
+        })),
         demand_folder_items: undefined,
         demand_folder_shares: undefined,
       })) as DemandFolder[];
@@ -152,10 +158,14 @@ export function useRemoveDemandFromFolder() {
 export function useShareFolder() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { folder_id: string; user_id: string }) => {
+    mutationFn: async (params: { folder_id: string; user_id: string; permission?: FolderPermission }) => {
       const { error } = await supabase
         .from("demand_folder_shares")
-        .insert(params);
+        .insert({
+          folder_id: params.folder_id,
+          user_id: params.user_id,
+          permission: params.permission || "view",
+        } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -163,6 +173,25 @@ export function useShareFolder() {
       toast.success("Pasta compartilhada");
     },
     onError: () => toast.error("Erro ao compartilhar pasta"),
+  });
+}
+
+export function useUpdateFolderSharePermission() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: { folder_id: string; user_id: string; permission: FolderPermission }) => {
+      const { error } = await supabase
+        .from("demand_folder_shares")
+        .update({ permission: params.permission } as any)
+        .eq("folder_id", params.folder_id)
+        .eq("user_id", params.user_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["demand-folders"] });
+      toast.success("Permissão atualizada");
+    },
+    onError: () => toast.error("Erro ao atualizar permissão"),
   });
 }
 
