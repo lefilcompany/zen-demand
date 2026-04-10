@@ -37,6 +37,7 @@ import { useAuth } from "@/lib/auth";
 export default function CreateDemand({ open, onClose }: { open?: boolean; onClose?: () => void }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { isOpen: contextOpen, closeCreateDemand } = useCreateDemandModal();
   
   const isOpen = open ?? contextOpen;
@@ -48,9 +49,11 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   
   const { isOffline } = useOfflineStatus();
   const createDemand = useCreateDemand();
+  const addDemandToFolder = useAddDemandToFolder();
   const { selectedTeamId, teams } = useSelectedTeam();
   const { selectedBoardId, setSelectedBoardId, boards: contextBoards } = useSelectedBoardSafe();
   const { data: allBoards } = useBoards(selectedTeamId);
+  const { data: allFolders } = useDemandFolders(selectedTeamId, user?.id);
 
   // Local board selection for this form (defaults to current board)
   const [formBoardId, setFormBoardId] = useState<string>("");
