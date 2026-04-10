@@ -53,6 +53,7 @@ import TeamDemands from "./pages/TeamDemands";
 import MyDemands from "./pages/MyDemands";
 import Notes from "./pages/Notes";
 import NoteDetail from "./pages/NoteDetail";
+import FolderDetail from "./pages/FolderDetail";
 import NotFound from "./pages/NotFound";
 import Pricing from "./pages/Pricing";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
@@ -144,6 +145,7 @@ const App = () => (
                                 <Route path="/boards/:boardId/members" element={<BoardMembers />} />
                                 <Route path="/team-config" element={<TeamConfig />} />
                                 <Route path="/demands" element={<Demands />} />
+                                <Route path="/folders/:folderId" element={<FolderDetail />} />
                                 <Route path="/demands/create" element={<CreateDemandRoute />} />
                                 <Route path="/demands/request" element={<CreateDemandRequest />} />
                                 <Route path="/demands/:id" element={<DemandDetail />} />

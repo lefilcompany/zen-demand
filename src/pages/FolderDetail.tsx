@@ -1,0 +1,332 @@
+import { useState, useMemo, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/lib/auth";
+import { useSelectedBoard } from "@/contexts/BoardContext";
+import { useFolderDemandIds, useDemandFolders } from "@/hooks/useDemandFolders";
+import { useAllTeamDemands } from "@/hooks/useAllTeamDemands";
+import { useMembersByPosition } from "@/hooks/useMembersByPosition";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import { DemandFilters, DemandFiltersState } from "@/components/DemandFilters";
+import { DemandCard } from "@/components/DemandCard";
+import { DataTable } from "@/components/ui/data-table";
+import { demandColumns, DemandTableRow } from "@/components/demands/columns";
+import { DemandsCalendarView } from "@/components/DemandsCalendarView";
+import { StatusFilterTabs } from "@/components/StatusFilterTabs";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Badge } from "@/components/ui/badge";
+import {
+  Search, LayoutGrid, List, CalendarDays, ChevronDown, ChevronRight,
+  FolderOpen, ArrowLeft, Eye, EyeOff, User
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
+
+type ViewMode = "table" | "grid" | "calendar";
+const TABLET_BREAKPOINT = 1024;
+
+export default function FolderDetail() {
+  const { folderId } = useParams<{ folderId: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { currentTeamId, selectedBoardId, setSelectedBoardId } = useSelectedBoard();
+
+  const { data: folders } = useDemandFolders(currentTeamId, user?.id);
+  const folder = folders?.find((f) => f.id === folderId);
+
+  const { data: folderDemandIds } = useFolderDemandIds(folderId || null);
+  const { data: allTeamDemands, isLoading } = useAllTeamDemands(currentTeamId);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
+  const [openBoards, setOpenBoards] = useState<Record<string, boolean>>({});
+  const [hideDelivered, setHideDelivered] = useState(false);
+  const [showOnlyMine, setShowOnlyMine] = useState(false);
+  const [filters, setFilters] = useState<DemandFiltersState>({
+    status: null, priority: null, assignee: null, service: null,
+    dueDateFrom: null, dueDateTo: null, position: null,
+  });
+
+  const { data: membersByPosition } = useMembersByPosition(currentTeamId, filters.position);
+
+  const [isTabletOrSmaller, setIsTabletOrSmaller] = useState(false);
+  useEffect(() => {
+    const check = () => setIsTabletOrSmaller(window.innerWidth < TABLET_BREAKPOINT);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const effectiveViewMode = isTabletOrSmaller && viewMode !== "calendar" ? "grid" : viewMode;
+
+  // Filter demands to only those in this folder
+  const folderDemands = useMemo(() => {
+    if (!allTeamDemands || !folderDemandIds) return [];
+    return (allTeamDemands as any[]).filter((d) => folderDemandIds.includes(d.id));
+  }, [allTeamDemands, folderDemandIds]);
+
+  // Apply filters
+  const filteredDemands = useMemo(() => {
+    return folderDemands.filter((d: any) => {
+      if (showOnlyMine && user?.id) {
+        const isAssigned = d.demand_assignees?.some((a: any) => a.user_id === user.id) || d.assigned_to === user.id;
+        if (!isAssigned) return false;
+      }
+      if (hideDelivered && d.demand_statuses?.name === "Entregue") return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        if (
+          !d.title?.toLowerCase().includes(q) &&
+          !d.description?.toLowerCase().includes(q) &&
+          !d.priority?.toLowerCase().includes(q) &&
+          !d.demand_statuses?.name?.toLowerCase().includes(q)
+        ) return false;
+      }
+      if (filters.status && d.status_id !== filters.status) return false;
+      if (filters.priority && d.priority !== filters.priority) return false;
+      if (filters.assignee) {
+        const isAssigned = d.demand_assignees?.some((a: any) => a.user_id === filters.assignee) || d.assigned_to === filters.assignee;
+        if (!isAssigned) return false;
+      }
+      if (filters.service && d.service_id !== filters.service) return false;
+      if (filters.position && membersByPosition) {
+        const has = d.demand_assignees?.some((a: any) => membersByPosition.includes(a.user_id)) ||
+          (d.assigned_to && membersByPosition.includes(d.assigned_to));
+        if (!has) return false;
+      }
+      if (filters.dueDateFrom && d.due_date) {
+        if (isBefore(new Date(d.due_date), startOfDay(new Date(filters.dueDateFrom)))) return false;
+      }
+      if (filters.dueDateTo && d.due_date) {
+        if (isAfter(new Date(d.due_date), endOfDay(new Date(filters.dueDateTo)))) return false;
+      }
+      return true;
+    });
+  }, [folderDemands, searchQuery, filters, hideDelivered, showOnlyMine, user?.id, membersByPosition]);
+
+  // Group by board
+  const groupedByBoard = useMemo(() => {
+    const map = new Map<string, { boardId: string; boardName: string; demands: any[] }>();
+    for (const d of filteredDemands) {
+      const boardId = d.board_id || "unknown";
+      const boardName = d.boards?.name || "Sem quadro";
+      if (!map.has(boardId)) map.set(boardId, { boardId, boardName, demands: [] });
+      map.get(boardId)!.demands.push(d);
+    }
+    return Array.from(map.values()).sort((a, b) => a.boardName.localeCompare(b.boardName));
+  }, [filteredDemands]);
+
+  // Default open all boards
+  useEffect(() => {
+    if (groupedByBoard.length > 0 && Object.keys(openBoards).length === 0) {
+      const initial: Record<string, boolean> = {};
+      groupedByBoard.forEach((g) => (initial[g.boardId] = true));
+      setOpenBoards(initial);
+    }
+  }, [groupedByBoard]);
+
+  const toggleBoard = (boardId: string) => {
+    setOpenBoards((prev) => ({ ...prev, [boardId]: !prev[boardId] }));
+  };
+
+  const isBoardOpen = (boardId: string) => openBoards[boardId] ?? true;
+
+  const handleDemandClick = (demandId: string, boardId?: string) => {
+    if (boardId && boardId !== selectedBoardId) setSelectedBoardId(boardId);
+    navigate(`/demands/${demandId}`, { state: { from: "folder", folderId } });
+  };
+
+  const deliveredCount = folderDemands.filter((d: any) => d.demand_statuses?.name === "Entregue").length;
+  const myCount = folderDemands.filter((d: any) =>
+    d.demand_assignees?.some((a: any) => a.user_id === user?.id) || d.assigned_to === user?.id
+  ).length;
+
+  const mapToTableRow = (d: any): DemandTableRow => ({
+    id: d.id,
+    title: d.title,
+    status: d.demand_statuses?.name || "",
+    statusColor: d.demand_statuses?.color || "#6B7280",
+    priority: d.priority || "média",
+    assignees: d.demand_assignees?.map((a: any) => ({
+      user_id: a.user_id,
+      full_name: a.profile?.full_name || "",
+      avatar_url: a.profile?.avatar_url || "",
+    })) || [],
+    created_at: d.created_at,
+    due_date: d.due_date,
+    board_sequence_number: d.board_sequence_number,
+    service_name: d.services?.name,
+    board_id: d.board_id,
+    board_name: d.boards?.name,
+  });
+
+  if (!folder) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <p className="text-muted-foreground">Pasta não encontrada</p>
+        <Button variant="outline" onClick={() => navigate("/demands")}>
+          <ArrowLeft className="h-4 w-4 mr-2" /> Voltar para demandas
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 p-4 md:p-6 max-w-[1400px] mx-auto">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/demands")} className="shrink-0">
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <FolderOpen className="h-6 w-6 shrink-0" style={{ color: folder.color }} />
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl font-bold text-foreground truncate">{folder.name}</h1>
+          <p className="text-xs text-muted-foreground">
+            {filteredDemands.length} {filteredDemands.length === 1 ? "demanda" : "demandas"}
+            {groupedByBoard.length > 0 && ` em ${groupedByBoard.length} ${groupedByBoard.length === 1 ? "quadro" : "quadros"}`}
+          </p>
+        </div>
+      </div>
+
+      {/* Search + View Toggle + Quick Filters */}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar demandas..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          <div className="hidden lg:flex items-center border rounded-lg p-0.5 bg-muted/30">
+            <Button
+              variant={effectiveViewMode === "table" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-8 px-2.5"
+              onClick={() => setViewMode("table")}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={effectiveViewMode === "grid" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-8 px-2.5"
+              onClick={() => setViewMode("grid")}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={effectiveViewMode === "calendar" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-8 px-2.5"
+              onClick={() => setViewMode("calendar")}
+            >
+              <CalendarDays className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Quick toggles */}
+          <Button
+            variant={hideDelivered ? "secondary" : "outline"}
+            size="sm"
+            className="h-9 text-xs gap-1.5"
+            onClick={() => setHideDelivered(!hideDelivered)}
+          >
+            {hideDelivered ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+            <span className="hidden sm:inline">Entregues ({deliveredCount})</span>
+          </Button>
+
+          <Button
+            variant={showOnlyMine ? "secondary" : "outline"}
+            size="sm"
+            className="h-9 text-xs gap-1.5"
+            onClick={() => setShowOnlyMine(!showOnlyMine)}
+          >
+            <User className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Minhas ({myCount})</span>
+          </Button>
+        </div>
+
+        <DemandFilters
+          boardId={null}
+          filters={filters}
+          onFiltersChange={setFilters}
+          teamId={currentTeamId}
+          showAllBoards
+        />
+      </div>
+
+      {/* Calendar View */}
+      {effectiveViewMode === "calendar" ? (
+        <DemandsCalendarView
+          demands={filteredDemands}
+          onDemandClick={(id) => handleDemandClick(id)}
+          month={calendarMonth}
+          onMonthChange={setCalendarMonth}
+        />
+      ) : (
+        /* Board-grouped view */
+        <div className="space-y-3">
+          {groupedByBoard.map((group) => (
+            <Collapsible
+              key={group.boardId}
+              open={isBoardOpen(group.boardId)}
+              onOpenChange={() => toggleBoard(group.boardId)}
+            >
+              <CollapsibleTrigger className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl bg-muted/50 hover:bg-muted/70 transition-colors text-left border border-border/40">
+                {isBoardOpen(group.boardId) ? (
+                  <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                )}
+                <span className="text-sm font-semibold text-foreground truncate flex-1">
+                  {group.boardName}
+                </span>
+                <Badge variant="secondary" className="text-[11px] h-5 px-2">
+                  {group.demands.length}
+                </Badge>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-2 ml-1">
+                  {effectiveViewMode === "table" ? (
+                    <DataTable
+                      columns={demandColumns}
+                      data={group.demands.map(mapToTableRow)}
+                      onRowClick={(row) => handleDemandClick(row.id, group.boardId)}
+                    />
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                      {group.demands.map((d: any) => (
+                        <DemandCard
+                          key={d.id}
+                          demand={d}
+                          onClick={() => handleDemandClick(d.id, group.boardId)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          ))}
+
+          {groupedByBoard.length === 0 && !isLoading && (
+            <div className="text-center py-16">
+              <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
+              <p className="text-sm text-muted-foreground">
+                {folderDemandIds?.length === 0
+                  ? "Nenhuma demanda nesta pasta ainda"
+                  : "Nenhuma demanda encontrada com os filtros atuais"}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
