@@ -10,6 +10,9 @@ interface Demand {
   demand_statuses?: { name: string } | null;
   updated_at: string;
   delivered_at?: string | null;
+  priority?: string | null;
+  service_id?: string | null;
+  services?: { estimated_hours: number } | null;
 }
 
 interface ProductivitySectionProps {
