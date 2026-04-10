@@ -499,12 +499,16 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
 
                   {canAssignResponsibles && (
                     <div className="space-y-2">
-                      <Label>Responsáveis</Label>
+                      <Label className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        Responsáveis
+                      </Label>
                       <AssigneeSelector
                         teamId={selectedTeamId}
                         boardId={activeBoardId}
                         selectedUserIds={assigneeIds}
                         onChange={setAssigneeIds}
+                        hideIcon
                       />
                     </div>
                   )}
