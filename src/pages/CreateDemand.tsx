@@ -445,7 +445,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                     setAssigneeIds([]);
                     setStatusId("");
                   }}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-8">
                       <SelectValue placeholder="Selecione o quadro" />
                     </SelectTrigger>
                     <SelectContent>
@@ -472,6 +472,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                     required
                     autoFocus
                     disabled={!formBoardId}
+                    className="h-8"
                   />
                 </div>
 
@@ -520,7 +521,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                         Pasta
                       </Label>
                       <Select value={selectedFolderId || "none"} onValueChange={(v) => setSelectedFolderId(v === "none" ? "" : v)}>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-8">
                           <SelectValue placeholder="Nenhuma pasta" />
                         </SelectTrigger>
                         <SelectContent>
@@ -547,7 +548,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                   <div className="space-y-2">
                     <Label htmlFor="status">Status *</Label>
                     <Select value={statusId} onValueChange={setStatusId} required disabled={!formBoardId}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-8">
                         <SelectValue placeholder={!formBoardId ? "Selecione o quadro primeiro" : "Selecione"} />
                       </SelectTrigger>
                       <SelectContent>
@@ -563,7 +564,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                   <div className="space-y-2">
                     <Label htmlFor="priority">Prioridade</Label>
                     <Select value={priority} onValueChange={setPriority}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-8">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
