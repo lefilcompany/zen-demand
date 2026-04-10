@@ -250,8 +250,3 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
     </Card>
   );
 }
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
