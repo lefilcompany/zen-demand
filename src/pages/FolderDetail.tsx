@@ -200,7 +200,7 @@ export default function FolderDetail() {
   }
 
   return (
-    <div className="space-y-4 p-4 md:p-6 max-w-[1400px] mx-auto">
+    <div className="space-y-4 max-w-[1400px] mx-auto">
       <PageBreadcrumb
         items={[
           { label: "Demandas", href: "/demands" },
