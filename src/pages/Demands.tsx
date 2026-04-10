@@ -230,7 +230,7 @@ export default function Demands() {
       const dateB = new Date(b.due_date).getTime();
       return dateA - dateB;
     });
-  }, [activeDemands, searchQuery, filters, hideDelivered, showOnlyMine, user?.id, membersByPosition]);
+  }, [activeDemands, searchQuery, filters, hideDelivered, showOnlyMine, user?.id, membersByPosition, selectedFolderId, folderDemandIds]);
 
   // Handle calendar day click
   const handleDayClick = (date: Date) => {
