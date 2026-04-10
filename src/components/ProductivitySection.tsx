@@ -45,21 +45,39 @@ function getHealthStatus(value: number, benchmark: number, lowerIsBetter: boolea
   };
 }
 
-function MainProgressBar({ value, benchmark }: { value: number; benchmark: number }) {
-  const maxScale = benchmark * 2;
-  const fillPercent = maxScale > 0 ? Math.min(100, Math.max(0, (value / maxScale) * 100)) : 0;
-  const benchmarkPos = maxScale > 0 ? (benchmark / maxScale) * 100 : 50;
+function CompletionProgressBar({ avgDays, expectedAvgDays, maxDays }: { avgDays: number; expectedAvgDays: number | null; maxDays: number }) {
+  const fillPercent = maxDays > 0 ? Math.min(100, Math.max(0, (avgDays / maxDays) * 100)) : 0;
+  const markerPercent = expectedAvgDays !== null && maxDays > 0 ? Math.min(100, Math.max(0, (expectedAvgDays / maxDays) * 100)) : null;
 
   return (
     <div className="relative w-full">
-      <div className="relative h-3 sm:h-3.5 md:h-4 rounded-full bg-muted overflow-hidden">
+      {/* Expected avg label above bar */}
+      {markerPercent !== null && expectedAvgDays !== null && (
+        <div className="relative h-5 mb-1">
+          <div
+            className="absolute -translate-x-1/2 flex flex-col items-center"
+            style={{ left: `${markerPercent}%` }}
+          >
+            <span className="text-[9px] sm:text-[10px] font-bold text-slate-800 dark:text-white whitespace-nowrap bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">
+              {expectedAvgDays.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} dias
+            </span>
+          </div>
+        </div>
+      )}
+      {/* Progress bar */}
+      <div className="relative h-3 sm:h-3.5 md:h-4 rounded-full bg-muted overflow-visible">
         <div
           className="absolute inset-y-0 left-0 bg-orange-400 rounded-full transition-all duration-500"
           style={{ width: `${fillPercent}%` }}
         />
+        {/* Expected avg vertical marker */}
+        {markerPercent !== null && (
+          <div
+            className="absolute top-[-4px] bottom-[-4px] w-[3px] rounded-full bg-slate-800 dark:bg-white z-10 shadow-md"
+            style={{ left: `${markerPercent}%`, transform: 'translateX(-50%)' }}
+          />
+        )}
       </div>
-      {/* Ideal benchmark marker */}
-      <div className="absolute top-0 h-full w-0.5 bg-red-500 z-10" style={{ left: `${benchmarkPos}%` }} />
     </div>
   );
 }
