@@ -21,7 +21,7 @@ import { FolderShareDialog } from "@/components/FolderShareDialog";
 import { FolderDemandManager } from "@/components/FolderDemandManager";
 import {
   Search, LayoutGrid, List, CalendarDays, ChevronDown, ChevronRight,
-  FolderOpen, ArrowLeft, Eye, EyeOff, User, Pencil, Check, X, Users, Plus
+  FolderOpen, ArrowLeft, Eye, EyeOff, User, Pencil, Check, X, Users, Plus, Layers, LayoutList
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
@@ -55,6 +55,7 @@ export default function FolderDetail() {
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [openBoards, setOpenBoards] = useState<Record<string, boolean>>({});
   const [hideDelivered, setHideDelivered] = useState(false);
+  const [groupByBoard, setGroupByBoard] = useState(true);
   const [shareOpen, setShareOpen] = useState(false);
   const [managerOpen, setManagerOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -308,36 +309,66 @@ export default function FolderDetail() {
           </div>
 
           <div className="hidden lg:flex items-center border border-border/60 rounded-full p-0.5 bg-background">
-            <button
-              className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
-                effectiveViewMode === "table"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "hover:text-primary"
-              }`}
-              onClick={() => setViewMode("table")}
-            >
-              <List className="h-3.5 w-3.5" />
-            </button>
-            <button
-              className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
-                effectiveViewMode === "grid"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "hover:text-primary"
-              }`}
-              onClick={() => setViewMode("grid")}
-            >
-              <LayoutGrid className="h-3.5 w-3.5" />
-            </button>
-            <button
-              className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
-                effectiveViewMode === "calendar"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "hover:text-primary"
-              }`}
-              onClick={() => setViewMode("calendar")}
-            >
-              <CalendarDays className="h-3.5 w-3.5" />
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
+                    groupByBoard
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "hover:text-primary"
+                  }`}
+                  onClick={() => setGroupByBoard(true)}
+                >
+                  <Layers className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Agrupar por quadro</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
+                    !groupByBoard && effectiveViewMode === "table"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "hover:text-primary"
+                  }`}
+                  onClick={() => { setGroupByBoard(false); setViewMode("table"); }}
+                >
+                  <List className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Lista geral</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
+                    !groupByBoard && effectiveViewMode === "grid"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "hover:text-primary"
+                  }`}
+                  onClick={() => { setGroupByBoard(false); setViewMode("grid"); }}
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Blocos</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
+                    !groupByBoard && effectiveViewMode === "calendar"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "hover:text-primary"
+                  }`}
+                  onClick={() => { setGroupByBoard(false); setViewMode("calendar"); }}
+                >
+                  <CalendarDays className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Calendário</TooltipContent>
+            </Tooltip>
           </div>
 
           {/* Filters + Quick toggles */}
@@ -373,8 +404,8 @@ export default function FolderDetail() {
         </div>
       </div>
 
-      {/* Calendar View */}
-      {effectiveViewMode === "calendar" ? (
+      {/* Calendar View (always flat) */}
+      {!groupByBoard && effectiveViewMode === "calendar" ? (
         <DemandsCalendarView
           demands={filteredDemands}
           onDemandClick={(id) => handleDemandClick(id)}
@@ -382,8 +413,39 @@ export default function FolderDetail() {
           initialDate={calendarMonth}
           onDateChange={setCalendarMonth}
         />
+      ) : !groupByBoard ? (
+        /* Flat list/grid view */
+        <div>
+          {effectiveViewMode === "table" ? (
+            <DataTable
+              columns={demandColumns}
+              data={filteredDemands.map(mapToTableRow)}
+              onRowClick={(row) => handleDemandClick(row.id)}
+            />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {filteredDemands.map((d: any) => (
+                <DemandCard
+                  key={d.id}
+                  demand={d}
+                  onClick={() => handleDemandClick(d.id, d.board_id)}
+                />
+              ))}
+            </div>
+          )}
+          {filteredDemands.length === 0 && !isLoading && (
+            <div className="text-center py-16">
+              <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
+              <p className="text-sm text-muted-foreground">
+                {folderDemandIds?.length === 0
+                  ? "Nenhuma demanda nesta pasta ainda"
+                  : "Nenhuma demanda encontrada com os filtros atuais"}
+              </p>
+            </div>
+          )}
+        </div>
       ) : (
-        /* Board-grouped view */
+        /* Board-grouped view (default) */
         <div className="space-y-3">
           {groupedByBoard.map((group) => (
             <Collapsible
