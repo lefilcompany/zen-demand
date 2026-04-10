@@ -445,6 +445,11 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       stopAllTimersForDemand(demandId);
     }
 
+    // Start timer automatically when moving to "Fazendo"
+    if (columnKey === "Fazendo" && previousStatusName !== "Fazendo") {
+      startTimerForDemand(demandId);
+    }
+
     updateDemand.mutate(
       {
         id: demandId,
@@ -568,6 +573,11 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     // Stop timer if moving to "Aprovação do Cliente" or "Entregue"
     if (newStatusKey === "Aprovação do Cliente" || newStatusKey === "Entregue") {
       stopAllTimersForDemand(demandId);
+    }
+
+    // Start timer automatically when moving to "Fazendo"
+    if (newStatusKey === "Fazendo" && previousStatusName !== "Fazendo") {
+      startTimerForDemand(demandId);
     }
 
     updateDemand.mutate(
