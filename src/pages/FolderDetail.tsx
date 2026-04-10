@@ -55,7 +55,7 @@ export default function FolderDetail() {
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [openBoards, setOpenBoards] = useState<Record<string, boolean>>({});
   const [hideDelivered, setHideDelivered] = useState(false);
-  const [groupByBoard, setGroupByBoard] = useState(true);
+  const [groupByBoard, setGroupByBoard] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [managerOpen, setManagerOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -306,42 +306,6 @@ export default function FolderDetail() {
           </div>
 
           <div className="hidden lg:flex items-center gap-1">
-            {/* Grouped by board: list or grid */}
-            <div className="flex items-center border border-border/60 rounded-full p-0.5 bg-background">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
-                      groupByBoard && effectiveViewMode === "table"
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "hover:text-primary"
-                    }`}
-                    onClick={() => { setGroupByBoard(true); setViewMode("table"); }}
-                  >
-                    <Layers className="h-3.5 w-3.5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>Agrupar por quadro (lista)</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
-                      groupByBoard && effectiveViewMode === "grid"
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "hover:text-primary"
-                    }`}
-                    onClick={() => { setGroupByBoard(true); setViewMode("grid"); }}
-                  >
-                    <LayoutGrid className="h-3.5 w-3.5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>Agrupar por quadro (blocos)</TooltipContent>
-              </Tooltip>
-            </div>
-
-            <span className="text-muted-foreground/40 text-xs select-none">|</span>
-
             {/* Flat views */}
             <div className="flex items-center border border-border/60 rounded-full p-0.5 bg-background">
               <Tooltip>
@@ -388,6 +352,42 @@ export default function FolderDetail() {
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>Calendário</TooltipContent>
+              </Tooltip>
+            </div>
+
+            <span className="text-muted-foreground/40 text-xs select-none">|</span>
+
+            {/* Grouped by board: list or grid */}
+            <div className="flex items-center border border-border/60 rounded-full p-0.5 bg-background">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
+                      groupByBoard && effectiveViewMode === "table"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "hover:text-primary"
+                    }`}
+                    onClick={() => { setGroupByBoard(true); setViewMode("table"); }}
+                  >
+                    <Layers className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Agrupar por quadro (lista)</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    className={`inline-flex items-center justify-center h-7 w-7 rounded-full transition-all duration-200 ${
+                      groupByBoard && effectiveViewMode === "grid"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "hover:text-primary"
+                    }`}
+                    onClick={() => { setGroupByBoard(true); setViewMode("grid"); }}
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Agrupar por quadro (blocos)</TooltipContent>
               </Tooltip>
             </div>
           </div>
