@@ -61,8 +61,9 @@ function CompletionProgressBar({ avgDays, expectedAvgDays, maxDays }: { avgDays:
             <span className="text-xs sm:text-sm font-semibold text-muted-foreground whitespace-nowrap text-center leading-tight">
               Tempo médio<br />esperado:
             </span>
-            <span className="text-xs sm:text-sm font-bold text-foreground whitespace-nowrap">
-              {expectedAvgDays.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} dias
+            <span className="whitespace-nowrap">
+              <span className="text-sm sm:text-base font-bold text-foreground">{expectedAvgDays.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground ml-0.5">dias</span>
             </span>
           </div>
         </div>
