@@ -97,7 +97,10 @@ export default function Demands() {
   const [hideDelivered, setHideDelivered] = useState(false);
   const [showOnlyMine, setShowOnlyMine] = useState(false);
   const [showAllBoards, setShowAllBoards] = useState(false);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
 
+  // Fetch folder demand IDs for filtering
+  const { data: folderDemandIds } = useFolderDemandIds(selectedFolderId);
   // Fetch all team demands when "all boards" mode is active
   const { data: allTeamDemands, isLoading: isLoadingAllTeam } = useAllTeamDemands(showAllBoards ? currentTeamId : null);
 
