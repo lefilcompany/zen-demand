@@ -56,6 +56,7 @@ export default function NoteDetail() {
   
   const coverInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLTextAreaElement>(null);
+  const notifiedMentionsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (note) {
@@ -63,6 +64,9 @@ export default function NoteDetail() {
       setContent(note.content || "");
       setIcon(note.icon || "📝");
       setTags(note.tags || []);
+      // Initialize already-mentioned users so we don't re-notify on load
+      const existingMentions = extractMentionedUserIdsFromHtml(note.content || "");
+      notifiedMentionsRef.current = new Set(existingMentions);
     }
   }, [note]);
 
