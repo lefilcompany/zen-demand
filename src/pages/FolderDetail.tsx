@@ -277,7 +277,6 @@ export default function FolderDetail() {
               <TooltipContent className="md:hidden">Adicionar demanda</TooltipContent>
             </Tooltip>
           )}
-          </Tooltip>
           {folder.is_owner && (
             <Tooltip>
               <TooltipTrigger asChild>
