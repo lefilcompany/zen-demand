@@ -202,6 +202,23 @@ export default function DemandDetail() {
     data: role
   } = useTeamRole(demand?.team_id || null);
   const { data: boardRole } = useBoardRole(demand?.board_id || null);
+  
+  // Fetch creator's role in the board
+  const { data: creatorBoardRole } = useQuery({
+    queryKey: ["creator-board-role", demand?.board_id, demand?.created_by],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("board_members")
+        .select("role")
+        .eq("board_id", demand!.board_id)
+        .eq("user_id", demand!.created_by)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.role || null;
+    },
+    enabled: !!demand?.board_id && !!demand?.created_by,
+  });
+
   const isAssignee = assignees?.some(a => a.user_id === user?.id) || false;
   
   // Map board statuses to a flat format for the dropdown
