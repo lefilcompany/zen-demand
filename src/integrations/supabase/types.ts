@@ -597,18 +597,21 @@ export type Database = {
         Row: {
           folder_id: string
           id: string
+          permission: string
           shared_at: string
           user_id: string
         }
         Insert: {
           folder_id: string
           id?: string
+          permission?: string
           shared_at?: string
           user_id: string
         }
         Update: {
           folder_id?: string
           id?: string
+          permission?: string
           shared_at?: string
           user_id?: string
         }

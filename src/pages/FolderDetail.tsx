@@ -39,6 +39,14 @@ export default function FolderDetail() {
   const updateFolder = useUpdateFolder();
   const folder = folders?.find((f) => f.id === folderId);
 
+  // Determine if user can edit this folder (owner or shared with edit permission)
+  const canEdit = useMemo(() => {
+    if (!folder || !user?.id) return false;
+    if (folder.is_owner) return true;
+    const share = folder.shared_with?.find((s) => s.user_id === user.id);
+    return share?.permission === "edit";
+  }, [folder, user?.id]);
+
   const { data: folderDemandIds } = useFolderDemandIds(folderId || null);
   const { data: allTeamDemands, isLoading } = useAllTeamDemands(currentTeamId);
 
@@ -54,7 +62,7 @@ export default function FolderDetail() {
   const editInputRef = useRef<HTMLInputElement>(null);
 
   const handleStartEdit = () => {
-    if (!folder?.is_owner) return;
+    if (!canEdit || !folder) return;
     setEditName(folder.name);
     setIsEditingName(true);
     setTimeout(() => editInputRef.current?.focus(), 50);
@@ -239,7 +247,7 @@ export default function FolderDetail() {
           ) : (
             <div className="group/title flex items-center gap-1.5">
               <h1 className="text-xl font-bold text-foreground truncate">{folder.name}</h1>
-              {folder.is_owner && (
+              {canEdit && (
                 <button
                   onClick={handleStartEdit}
                   className="opacity-0 group-hover/title:opacity-100 transition-opacity p-1 rounded hover:bg-muted"
@@ -255,18 +263,20 @@ export default function FolderDetail() {
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => setManagerOpen(true)}
-                className="flex items-center gap-1.5 p-2 md:px-3 md:py-1.5 rounded-lg border border-border/60 hover:bg-primary/10 hover:border-primary/30 transition-colors"
-              >
-                <Plus className="h-4 w-4 text-primary" />
-                <span className="hidden md:inline text-xs font-medium text-primary">Adicionar demanda</span>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent className="md:hidden">Adicionar demanda</TooltipContent>
-          </Tooltip>
+          {canEdit && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setManagerOpen(true)}
+                  className="flex items-center gap-1.5 p-2 md:px-3 md:py-1.5 rounded-lg border border-border/60 hover:bg-primary/10 hover:border-primary/30 transition-colors"
+                >
+                  <Plus className="h-4 w-4 text-primary" />
+                  <span className="hidden md:inline text-xs font-medium text-primary">Adicionar demanda</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="md:hidden">Adicionar demanda</TooltipContent>
+            </Tooltip>
+          )}
           {folder.is_owner && (
             <Tooltip>
               <TooltipTrigger asChild>
