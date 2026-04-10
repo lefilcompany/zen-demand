@@ -303,6 +303,24 @@ export function DemandFilters({ boardId, filters, onChange }: DemandFiltersProps
         </div>
 
         <div className="p-4 space-y-4 overflow-y-auto flex-1 min-h-0">
+          {/* Board selector - mobile only */}
+          {boards && boards.length > 1 && (
+            <div className="space-y-1.5 lg:hidden">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                <Layers className="h-3 w-3" /> Quadro
+              </label>
+              <NativeSelect
+                value={selectedBoardId}
+                onChange={(v) => setSelectedBoardId(v === "all" ? null : v)}
+                options={[
+                  { value: "all", label: "Todos os quadros" },
+                  ...boards.map(b => ({ value: b.id, label: b.name }))
+                ]}
+                placeholder="Todos os quadros"
+              />
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Prioridade</label>
             <NativeSelect
