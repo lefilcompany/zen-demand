@@ -10,6 +10,9 @@ interface Demand {
   demand_statuses?: { name: string } | null;
   updated_at: string;
   delivered_at?: string | null;
+  priority?: string | null;
+  service_id?: string | null;
+  services?: { estimated_hours: number } | null;
 }
 
 interface ProductivitySectionProps {
@@ -42,7 +45,50 @@ function getHealthStatus(value: number, benchmark: number, lowerIsBetter: boolea
   };
 }
 
-function MainProgressBar({ value, benchmark }: { value: number; benchmark: number }) {
+function CompletionProgressBar({ avgDays, expectedAvgDays, maxDays }: { avgDays: number; expectedAvgDays: number | null; maxDays: number }) {
+  const fillPercent = maxDays > 0 ? Math.min(100, Math.max(0, (avgDays / maxDays) * 100)) : 0;
+  const markerPercent = expectedAvgDays !== null && maxDays > 0 ? Math.min(100, Math.max(0, (expectedAvgDays / maxDays) * 100)) : null;
+
+  return (
+    <div className="relative w-full">
+      {/* Expected avg label above bar */}
+      {markerPercent !== null && expectedAvgDays !== null && (
+        <div className="relative h-5 mb-1">
+          <div
+            className="absolute -translate-x-1/2 flex flex-col items-center"
+            style={{ left: `${markerPercent}%` }}
+          >
+            <span className="text-[9px] sm:text-[10px] font-bold text-slate-800 dark:text-white whitespace-nowrap bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">
+              {expectedAvgDays.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} dias
+            </span>
+          </div>
+        </div>
+      )}
+      {/* Progress bar */}
+      <div className="relative h-3 sm:h-3.5 md:h-4 rounded-full bg-muted overflow-visible">
+        <div
+          className="absolute inset-y-0 left-0 bg-orange-400 rounded-full transition-all duration-500"
+          style={{ width: `${fillPercent}%` }}
+        />
+        {/* Expected avg vertical marker */}
+        {markerPercent !== null && (
+          <div
+            className="absolute top-[-4px] bottom-[-4px] w-[3px] rounded-full bg-slate-800 dark:bg-white z-10 shadow-md"
+            style={{ left: `${markerPercent}%`, transform: 'translateX(-50%)' }}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function HealthIndicatorBar({ bgClass }: { bgClass: string }) {
+  return (
+    <div className={`w-full h-1 sm:h-1.5 rounded-full ${bgClass} transition-colors duration-300`} />
+  );
+}
+
+function ActivityProgressBar({ value, benchmark }: { value: number; benchmark: number }) {
   const maxScale = benchmark * 2;
   const fillPercent = maxScale > 0 ? Math.min(100, Math.max(0, (value / maxScale) * 100)) : 0;
   const benchmarkPos = maxScale > 0 ? (benchmark / maxScale) * 100 : 50;
@@ -55,24 +101,19 @@ function MainProgressBar({ value, benchmark }: { value: number; benchmark: numbe
           style={{ width: `${fillPercent}%` }}
         />
       </div>
-      {/* Ideal benchmark marker */}
-      <div className="absolute top-0 h-full w-0.5 bg-red-500 z-10" style={{ left: `${benchmarkPos}%` }} />
+      <div className="absolute top-0 h-full w-0.5 bg-destructive z-10" style={{ left: `${benchmarkPos}%` }} />
     </div>
-  );
-}
-
-function HealthIndicatorBar({ bgClass }: { bgClass: string }) {
-  return (
-    <div className={`w-full h-1 sm:h-1.5 rounded-full ${bgClass} transition-colors duration-300`} />
   );
 }
 
 export function ProductivitySection({ demands, boardId }: ProductivitySectionProps) {
   const { data: allEntries } = useBoardTimeEntries(boardId);
 
-  const { avgDays, completionBenchmark } = useMemo(() => {
+  const priorityWeights: Record<string, number> = { alta: 3, média: 2, baixa: 1 };
+
+  const { avgDays, completionBenchmark, expectedAvgDays, maxDays } = useMemo(() => {
     const completedDemands = demands.filter(d => d.demand_statuses?.name === "Entregue");
-    if (completedDemands.length === 0) return { avgDays: 0, completionBenchmark: 5 };
+    if (completedDemands.length === 0) return { avgDays: 0, completionBenchmark: 5, expectedAvgDays: null as number | null, maxDays: 9 };
 
     const daysList = completedDemands.map(d => {
       const created = new Date(d.created_at);
@@ -82,14 +123,29 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
 
     const avg = Math.round((daysList.reduce((a, b) => a + b, 0) / daysList.length) * 10) / 10;
 
-    // Median as benchmark
     const mid = Math.floor(daysList.length / 2);
     const median = daysList.length % 2 !== 0
       ? daysList[mid]
       : (daysList[mid - 1] + daysList[mid]) / 2;
     const benchmark = Math.round(median * 10) / 10 || 5;
 
-    return { avgDays: avg, completionBenchmark: benchmark };
+    // Expected avg: weighted average of estimated_hours by priority, converted to business days (/8)
+    const demandsWithService = demands.filter(d => d.services?.estimated_hours && d.services.estimated_hours > 0);
+    let expectedAvg: number | null = null;
+    if (demandsWithService.length > 0) {
+      let totalWeightedHours = 0;
+      let totalWeight = 0;
+      for (const d of demandsWithService) {
+        const weight = priorityWeights[d.priority || "baixa"] || 1;
+        totalWeightedHours += (d.services!.estimated_hours) * weight;
+        totalWeight += weight;
+      }
+      expectedAvg = totalWeight > 0 ? Math.round((totalWeightedHours / totalWeight / 8) * 10) / 10 : null;
+    }
+
+    const scale = Math.floor(avg) + 4;
+
+    return { avgDays: avg, completionBenchmark: benchmark, expectedAvgDays: expectedAvg, maxDays: Math.max(scale, 5) };
   }, [demands]);
 
   const { totalActiveHours, avgActiveHoursPerUser, activityBenchmark } = useMemo(() => {
@@ -138,12 +194,14 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
               </div>
             </div>
 
-            <MainProgressBar value={avgDays} benchmark={completionBenchmark} />
+            <CompletionProgressBar avgDays={avgDays} expectedAvgDays={expectedAvgDays} maxDays={maxDays} />
 
             <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-muted-foreground">
-              <span>0 dias</span>
-              <span className="font-medium text-foreground/70">ideal</span>
-              <span>{fmt(completionBenchmark * 2)} dias</span>
+              <span>1 dia</span>
+              {expectedAvgDays !== null && (
+                <span className="font-medium text-foreground/70">esperado</span>
+              )}
+              <span>{maxDays} dias</span>
             </div>
 
             <HealthIndicatorBar bgClass={completionHealth.bgClass} />
@@ -171,7 +229,7 @@ export function ProductivitySection({ demands, boardId }: ProductivitySectionPro
               </div>
             </div>
 
-            <MainProgressBar value={avgActiveHoursPerUser} benchmark={activityBenchmark} />
+            <ActivityProgressBar value={avgActiveHoursPerUser} benchmark={activityBenchmark} />
 
             <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-muted-foreground">
               <span>0 horas</span>
