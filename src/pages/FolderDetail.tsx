@@ -212,7 +212,38 @@ export default function FolderDetail() {
       <div className="flex items-center gap-3">
         <FolderOpen className="h-6 w-6 shrink-0" style={{ color: folder.color }} />
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-bold text-foreground truncate">{folder.name}</h1>
+          {isEditingName ? (
+            <div className="flex items-center gap-1.5">
+              <Input
+                ref={editInputRef}
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSaveName();
+                  if (e.key === "Escape") handleCancelEdit();
+                }}
+                className="h-8 text-xl font-bold px-2 max-w-xs"
+              />
+              <button onClick={handleSaveName} className="p-1 rounded hover:bg-emerald-500/10 text-emerald-600">
+                <Check className="h-4 w-4" />
+              </button>
+              <button onClick={handleCancelEdit} className="p-1 rounded hover:bg-destructive/10 text-destructive">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="group/title flex items-center gap-1.5">
+              <h1 className="text-xl font-bold text-foreground truncate">{folder.name}</h1>
+              {folder.is_owner && (
+                <button
+                  onClick={handleStartEdit}
+                  className="opacity-0 group-hover/title:opacity-100 transition-opacity p-1 rounded hover:bg-muted"
+                >
+                  <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              )}
+            </div>
+          )}
           <p className="text-xs text-muted-foreground">
             {filteredDemands.length} {filteredDemands.length === 1 ? "demanda" : "demandas"}
             {groupedByBoard.length > 0 && ` em ${groupedByBoard.length} ${groupedByBoard.length === 1 ? "quadro" : "quadros"}`}
