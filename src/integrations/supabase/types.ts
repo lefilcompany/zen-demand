@@ -593,6 +593,42 @@ export type Database = {
           },
         ]
       }
+      demand_folder_shares: {
+        Row: {
+          folder_id: string
+          id: string
+          shared_at: string
+          user_id: string
+        }
+        Insert: {
+          folder_id: string
+          id?: string
+          shared_at?: string
+          user_id: string
+        }
+        Update: {
+          folder_id?: string
+          id?: string
+          shared_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_folder_shares_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "demand_folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demand_folder_shares_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demand_folders: {
         Row: {
           color: string
@@ -2470,6 +2506,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_folder_access: {
+        Args: { _folder_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2498,6 +2538,10 @@ export type Database = {
         Returns: boolean
       }
       is_demand_shared: { Args: { demand_id_param: string }; Returns: boolean }
+      is_folder_owner: {
+        Args: { _folder_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_note_owner: {
         Args: { _note_id: string; _user_id: string }
         Returns: boolean
