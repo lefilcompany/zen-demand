@@ -141,7 +141,7 @@ function AssigneeCell({
   if (assignees.length === 0) {
     return <span className="text-muted-foreground text-sm">—</span>;
   }
-  return <AssigneeAvatars assignees={assignees} maxVisible={3} size="sm" />;
+  return <div className="flex justify-center"><AssigneeAvatars assignees={assignees} maxVisible={3} size="sm" /></div>;
 }
 
 // Cell component for status
@@ -268,19 +268,21 @@ function CreatorCell({
     .toUpperCase();
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Avatar className="h-7 w-7 cursor-pointer">
-            <AvatarImage src={creator.avatar_url || undefined} alt={creator.full_name} />
-            <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
-          </Avatar>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{creator.full_name}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div className="flex justify-center">
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Avatar className="h-7 w-7 cursor-pointer">
+              <AvatarImage src={creator.avatar_url || undefined} alt={creator.full_name} />
+              <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+            </Avatar>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{creator.full_name}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
   );
 }
 
