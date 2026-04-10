@@ -396,7 +396,7 @@ export default function BoardSummary() {
   if (!currentBoard) {
     return (
       <div className="container mx-auto py-6 px-4">
-        <PageBreadcrumb items={[{ label: "Análise IA" }]} />
+        <PageBreadcrumb items={[{ label: "Análise IA", icon: Sparkles }]} />
         <Card className="mt-6">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
@@ -411,7 +411,7 @@ export default function BoardSummary() {
 
   return (
     <div className="container mx-auto max-w-5xl px-2 sm:px-4">
-      <PageBreadcrumb items={[{ label: "Análise IA" }]} />
+      <PageBreadcrumb items={[{ label: "Análise IA", icon: Sparkles }]} />
       
       <div className="mt-4 sm:mt-6 space-y-4 sm:space-y-6">
         {/* Header Card */}

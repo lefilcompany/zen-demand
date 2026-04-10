@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
-import { Download, Shield, ArrowLeft } from "lucide-react";
+import { Download, Shield, ArrowLeft, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useIsTeamAdminOrModerator } from "@/hooks/useTeamRole";
@@ -388,7 +388,7 @@ export default function TimeManagement() {
   if (!roleLoading && !canManage && selectedBoardId) {
     return (
       <div className="container mx-auto py-6">
-        <PageBreadcrumb items={[{ label: "Gerenciamento de Tempo" }]} />
+        <PageBreadcrumb items={[{ label: "Gerenciamento de Tempo", icon: Clock }]} />
         <Card className="mt-6 border-destructive/50 bg-gradient-to-br from-destructive/5 to-transparent">
           <CardContent className="py-16 text-center">
             <div className="mx-auto w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
@@ -410,7 +410,7 @@ export default function TimeManagement() {
 
   return (
     <div className="container mx-auto space-y-6 px-0">
-      <PageBreadcrumb items={[{ label: "Gerenciamento de Tempo" }]} />
+      <PageBreadcrumb items={[{ label: "Gerenciamento de Tempo", icon: Clock }]} />
 
       {/* Header */}
       <div className="flex flex-col gap-3">

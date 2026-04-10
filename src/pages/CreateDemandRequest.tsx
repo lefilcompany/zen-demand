@@ -210,7 +210,7 @@ export default function CreateDemandRequest() {
 
       <PageBreadcrumb
         items={[
-          { label: "Solicitações", href: "/demand-requests", icon: ClipboardList },
+          { label: "Solicitações", href: "/demand-requests", icon: Send },
           { label: "Nova Solicitação", icon: Plus, isCurrent: true },
         ]}
       />
