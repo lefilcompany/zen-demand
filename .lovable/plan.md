@@ -1,59 +1,63 @@
 
 
-## Diagnóstico da Lentidão
+## Problema
 
-Identifiquei **3 causas principais** que sobrecarregam o banco e deixam o app lento:
+Quando o usuário está na página de detalhe de uma demanda, o `useEffect` no `DemandDetail.tsx` (linha 156-160) força o contexto do quadro para o quadro da demanda. Isso impede qualquer troca de quadro pelo `BoardSelector` — a seleção é imediatamente revertida.
 
-### 1. QueryClient sem configuração de cache (causa raiz)
-Em `App.tsx` linha 89: `const queryClient = new QueryClient()` — sem **nenhuma** configuração. Isso significa:
-- `staleTime = 0`: toda query é considerada "velha" instantaneamente
-- Cada vez que um componente monta, muda de aba, ou foca a janela, **todas as queries refazem requisição ao banco**
-- Com ~15 hooks ativos simultaneamente (demands, teams, boards, subscription, notifications, profiles, etc.), cada navegação gera **dezenas de requisições paralelas**
+## Solução
 
-### 2. useDataPrecache ainda pesado
-Mesmo com o throttle de 30s, o precache faz 6 queries pesadas (demands com JOINs, profiles, boards, teams, services, statuses) a cada ciclo. Como o QueryClient não tem cache, essas queries **duplicam** o que o React Query já busca.
+### 1. BoardSelector — adicionar confirmação e navegação (`src/components/BoardSelector.tsx`)
 
-### 3. Invalidações em cascata do Realtime
-O `useRealtimeDemands` invalida ~8 query keys a cada mudança de qualquer demanda. Com staleTime=0, cada invalidação dispara refetch imediato de **todos** os hooks dependentes.
+Modificar `handleBoardChange` para:
+- Detectar se o usuário está numa rota de detalhe de demanda (`/demands/:id`)
+- Se estiver, mostrar um **toast de confirmação** (usando `toast` do sonner com botão de ação) perguntando "Deseja mudar de quadro? Você será redirecionado."
+- Incluir um **checkbox "Não perguntar novamente"** persistido em `localStorage`
+- Se o usuário confirmar (ou se já marcou "não perguntar"), trocar o board e navegar para a tela de origem:
+  - Se veio do Kanban → `/kanban`
+  - Se veio de Demandas → `/demands`
+  - Default → `/demands`
 
----
+### 2. DemandDetail — não bloquear troca externa (`src/pages/DemandDetail.tsx`)
 
-## Plano de Correção
-
-### Passo 1: Configurar QueryClient com defaults globais (App.tsx)
-Adicionar `staleTime: 60_000` (1 minuto) e `gcTime: 300_000` (5 minutos) como defaults. Isso faz com que dados recém-buscados **não sejam re-buscados** por 1 minuto, eliminando a maioria das requisições duplicadas.
+Modificar o `useEffect` da linha 156-160 para só sincronizar o board **na montagem inicial** do componente (ou quando o `demandBoardId` muda pela primeira vez), não continuamente. Usar um `ref` para controlar isso:
 
 ```tsx
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60 * 1000,        // 1 minuto
-      gcTime: 5 * 60 * 1000,       // 5 minutos
-      refetchOnWindowFocus: false,  // desabilitar refetch no foco
-      retry: 2,
-    },
-  },
-});
+const boardSyncedRef = useRef(false);
+useEffect(() => {
+  if (demandBoardId && !boardSyncedRef.current) {
+    if (selectedBoardId !== demandBoardId) {
+      setSelectedBoardId(demandBoardId);
+    }
+    boardSyncedRef.current = true;
+  }
+}, [demandBoardId]);
 ```
 
-### Passo 2: Reduzir frequência do useDataPrecache
-- Aumentar `CACHE_REFRESH_INTERVAL` de 5 para 10 minutos
-- Aumentar `MIN_PRECACHE_INTERVAL` de 30s para 2 minutos
-- Remover o listener de `visibilitychange` (já não precisa com o staleTime do QueryClient)
-- Aumentar delay inicial de 2s para 5s
+### 3. Lógica de navegação no BoardSelector
 
-### Passo 3: Otimizar invalidações do Realtime
-No `useRealtimeDemands`, reduzir as invalidações para apenas as queries essenciais (demands do board atual e demand específica), removendo invalidações de queries secundárias que podem esperar o staleTime expirar.
+```tsx
+const handleBoardChange = (newBoardId: string) => {
+  if (newBoardId === selectedBoardId) return;
+  
+  const isDemandDetail = location.pathname.match(/^\/demands\/[^/]+$/);
+  const skipConfirm = localStorage.getItem("skipBoardChangeConfirm") === "true";
+  
+  if (isDemandDetail && !skipConfirm) {
+    // Mostrar dialog/toast de confirmação
+    // Se confirmar: setSelectedBoardId(newBoardId) + navigate(targetRoute)
+  } else if (isDemandDetail) {
+    // Já marcou "não perguntar" — trocar e navegar direto
+    setSelectedBoardId(newBoardId);
+    navigate(cameFromKanban ? "/kanban" : "/demands");
+  } else {
+    setSelectedBoardId(newBoardId);
+  }
+};
+```
+
+Usarei um **AlertDialog** (não toast) para a confirmação, pois permite o checkbox "não mostrar novamente" de forma mais natural.
 
 ### Arquivos alterados
-- `src/App.tsx` — configurar QueryClient
-- `src/hooks/useDataPrecache.ts` — reduzir frequência e remover listener redundante
-- `src/hooks/useRealtimeDemands.ts` — reduzir invalidações em cascata
-
-### Resultado esperado
-- Login: ~70% menos requisições ao banco
-- Navegação entre páginas: dados cacheados por 1 minuto, sem re-buscar
-- Dashboard: carrega instantaneamente após primeira visita
-- Solicitações de Demanda: para de mostrar "Carregando..." indefinidamente
-- Realtime: continua funcionando, mas sem avalanche de refetches
+- **`src/components/BoardSelector.tsx`** — adicionar lógica de confirmação com AlertDialog e navegação condicional
+- **`src/pages/DemandDetail.tsx`** — limitar auto-sync do board à montagem inicial
 
