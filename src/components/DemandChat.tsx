@@ -238,11 +238,23 @@ export function DemandChat({
       }
     }
 
-    // Mentions - push + email (in-app notification is handled by DB trigger notify_mention)
+    // Mentions - in-app notification + push + email
     const mentionedIds = extractMentionedUserIds(content).filter((id) => id !== user.id);
     if (mentionedIds.length > 0) {
       const { data: p } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
       const mName = p?.full_name || "Alguém";
+
+      // In-app notifications for mentions
+      const mentionNotifications = mentionedIds.map((uid) => ({
+        user_id: uid,
+        title: "💬 Você foi mencionado",
+        message: `${mName} mencionou você na demanda "${demandTitle.substring(0, 100)}"`,
+        type: "info",
+        link: `/demands/${demandId}`,
+      }));
+      await supabase.from("notifications").insert(mentionNotifications);
+
+      // FCM push for mentions
       for (const uid of mentionedIds) {
         sendMentionPushNotification({ mentionedUserId: uid, demandId, demandTitle, mentionerName: mName, boardName }).catch(console.error);
       }
