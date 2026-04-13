@@ -749,10 +749,10 @@ export default function DemandRequests() {
   ];
 
   const adminStatusOptions = [
-    { value: "all", label: "Todas", icon: null },
     { value: "pending", label: "Pendentes", icon: Clock },
     { value: "approved", label: "Aprovadas", icon: CheckCircle },
     { value: "returned", label: "Devolvidas", icon: RotateCcw },
+    { value: "all", label: "Todas", icon: null },
   ];
 
   const renderUnifiedAdminToolbar = () => {
