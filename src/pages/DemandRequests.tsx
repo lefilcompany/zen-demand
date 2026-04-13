@@ -801,7 +801,7 @@ export default function DemandRequests() {
                 const count = adminStatusCounts[opt.value] || 0;
                 const isActive = adminStatusFilter === opt.value;
                 return (
-                  <button key={opt.value} onClick={() => { setAdminStatusFilter(opt.value); setAdminPage(1); }}
+                  <button key={opt.value} onClick={() => { setAdminStatusFilter(isActive && opt.value !== "pending" ? "pending" : opt.value); setAdminPage(1); }}
                     className={cn(
                       "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all border whitespace-nowrap shrink-0",
                       isActive
