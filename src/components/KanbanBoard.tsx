@@ -573,14 +573,15 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
     const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && newStatusKey === "Aprovação do Cliente";
 
-    // Stop timer if moving to "Aprovação do Cliente" or "Entregue"
-    if (newStatusKey === "Aprovação do Cliente" || newStatusKey === "Entregue") {
-      stopAllTimersForDemand(demandId);
+    // Stop timer when leaving "Fazendo" or "Em Ajuste" for any other status
+    const timerStatuses = ["Fazendo", "Em Ajuste"];
+    if (previousStatusName && timerStatuses.includes(previousStatusName) && !timerStatuses.includes(newStatusKey)) {
+      await stopAllTimersForDemand(demandId);
     }
 
     // Start timer automatically when moving to "Fazendo"
     if (newStatusKey === "Fazendo" && previousStatusName !== "Fazendo") {
-      startTimerForDemand(demandId);
+      await startTimerForDemand(demandId);
     }
 
     updateDemand.mutate(
@@ -589,16 +590,14 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         status_id: targetStatusId,
       },
       {
-        onSettled: () => {
-          // Clear optimistic update on settled to avoid racing with realtime
+        onSuccess: async () => {
+          // Invalidate and THEN clear optimistic update to prevent visual duplication
+          await queryClient.invalidateQueries({ queryKey: ['demands'] });
           setOptimisticUpdates(prev => {
             const newUpdates = { ...prev };
             delete newUpdates[demandId];
             return newUpdates;
           });
-        },
-        onSuccess: async () => {
-          queryClient.invalidateQueries({ queryKey: ['demands'] });
 
           if (isOffline) {
             toast.success(`Status alterado para "${newStatusKey}"`, {
