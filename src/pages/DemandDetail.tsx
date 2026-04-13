@@ -151,13 +151,17 @@ export default function DemandDetail() {
   const [editingTitle, setEditingTitle] = useState("");
   const { selectedBoardId, setSelectedBoardId } = useSelectedBoard();
 
-  // Auto-switch board context to match the demand being viewed
+  // Auto-switch board context to match the demand being viewed (only on initial mount)
   const demandBoardId = demand?.board_id;
+  const boardSyncedRef = useRef(false);
   useEffect(() => {
-    if (demandBoardId && selectedBoardId && demandBoardId !== selectedBoardId) {
-      setSelectedBoardId(demandBoardId);
+    if (demandBoardId && !boardSyncedRef.current) {
+      if (selectedBoardId !== demandBoardId) {
+        setSelectedBoardId(demandBoardId);
+      }
+      boardSyncedRef.current = true;
     }
-  }, [demandBoardId, selectedBoardId, setSelectedBoardId]);
+  }, [demandBoardId]);
 
   // Track toast state
   const toastShownRef = useRef<{
