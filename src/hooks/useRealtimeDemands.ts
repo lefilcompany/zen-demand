@@ -34,17 +34,10 @@ export function useRealtimeDemands(boardId?: string) {
         (payload) => {
           console.log('Realtime demand change:', payload.eventType, payload);
           
-          // Invalidate all relevant demand queries
+          // Invalidate only essential queries for this board
           queryClient.invalidateQueries({ queryKey: ["demands", boardId] });
           queryClient.invalidateQueries({ queryKey: ["demands-list", boardId] });
-          queryClient.invalidateQueries({ queryKey: ["my-demands-overview"] });
-          queryClient.invalidateQueries({ queryKey: ["all-team-demands"] });
-          queryClient.invalidateQueries({ queryKey: ["active-timer-demands"] });
-          queryClient.invalidateQueries({ queryKey: ["demands-by-period"] });
-          queryClient.invalidateQueries({ queryKey: ["demands-by-status"] });
-          queryClient.invalidateQueries({ queryKey: ["board-time-entries"] });
           
-          // If it's a specific demand update, also invalidate that query
           if (payload.new && (payload.new as any).id) {
             queryClient.invalidateQueries({ 
               queryKey: ["demand", (payload.new as any).id] 
@@ -84,16 +77,10 @@ export function useRealtimeAllDemands() {
         (payload) => {
           console.log('Realtime demand change (all):', payload.eventType);
           
-          // Invalidate all demands queries broadly
+          // Invalidate only essential queries
           queryClient.invalidateQueries({ queryKey: ["demands"] });
           queryClient.invalidateQueries({ queryKey: ["demands-list"] });
-          queryClient.invalidateQueries({ queryKey: ["my-demands-overview"] });
-          queryClient.invalidateQueries({ queryKey: ["all-team-demands"] });
-          queryClient.invalidateQueries({ queryKey: ["active-timer-demands"] });
-          queryClient.invalidateQueries({ queryKey: ["demands-by-period"] });
-          queryClient.invalidateQueries({ queryKey: ["demands-by-status"] });
           
-          // If it's a specific demand, invalidate that too
           if (payload.new && (payload.new as any).id) {
             queryClient.invalidateQueries({ 
               queryKey: ["demand", (payload.new as any).id] 

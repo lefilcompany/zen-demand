@@ -11,8 +11,8 @@ import {
 } from "@/lib/offlineStorage";
 import { useSyncManager } from "@/hooks/useSyncManager";
 
-const CACHE_REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
-const MIN_PRECACHE_INTERVAL = 30 * 1000; // 30 seconds minimum between runs
+const CACHE_REFRESH_INTERVAL = 10 * 60 * 1000; // 10 minutes
+const MIN_PRECACHE_INTERVAL = 2 * 60 * 1000; // 2 minutes minimum between runs
 
 export function useDataPrecache() {
   const { user } = useAuth();
@@ -105,7 +105,7 @@ export function useDataPrecache() {
   useEffect(() => {
     if (user) {
       // Small delay to avoid competing with auth/initial queries
-      const timer = setTimeout(() => precacheUserData(), 2000);
+      const timer = setTimeout(() => precacheUserData(), 5000);
       return () => clearTimeout(timer);
     }
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -126,16 +126,6 @@ export function useDataPrecache() {
     return () => window.removeEventListener('online', handleOnline);
   }, [debouncedPrecache]);
 
-  // Refresh on visibility change (tab focus) — uses debounce + min interval
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && navigator.onLine && user) {
-        debouncedPrecache();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [user?.id, debouncedPrecache]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Cleanup debounce timer
   useEffect(() => {
