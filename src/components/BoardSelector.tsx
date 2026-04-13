@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -9,20 +9,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { LayoutGrid, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 const roleLabels: Record<string, string> = {
   admin: "Administrador",
@@ -46,20 +36,16 @@ export function BoardSelector() {
   const { data: boardRole, isLoading: roleLoading } = useBoardRole(selectedBoardId);
   const navigate = useNavigate();
   const location = useLocation();
-
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [dontAskAgain, setDontAskAgain] = useState(false);
-  const pendingBoardIdRef = useRef<string | null>(null);
+  const toastIdRef = useRef<string | number | null>(null);
 
   const isDemandDetail = /^\/demands\/[^/]+$/.test(location.pathname);
 
-  // Determine where user came from to navigate back appropriately
   const getReturnRoute = () => {
-    const from = location.state?.from;
+    const from = (location.state as any)?.from;
     if (from === "kanban") return "/kanban";
-    if (from === "demands") return "/demands";
     if (from === "my-demands") return "/my-demands";
-    // Default to demands list
+    if (from === "team-demands") return "/team-demands";
+    if (from === "team-kanban") return "/team-kanban";
     return "/demands";
   };
 
@@ -73,34 +59,44 @@ export function BoardSelector() {
   const handleBoardChange = (newBoardId: string) => {
     if (newBoardId === selectedBoardId) return;
 
-    if (isDemandDetail) {
-      const skipConfirm = localStorage.getItem(SKIP_CONFIRM_KEY) === "true";
-      if (skipConfirm) {
-        executeChange(newBoardId);
-      } else {
-        pendingBoardIdRef.current = newBoardId;
-        setDontAskAgain(false);
-        setConfirmOpen(true);
-      }
-    } else {
+    if (!isDemandDetail) {
       setSelectedBoardId(newBoardId);
+      return;
     }
-  };
 
-  const handleConfirm = () => {
-    if (dontAskAgain) {
-      localStorage.setItem(SKIP_CONFIRM_KEY, "true");
+    const skipConfirm = localStorage.getItem(SKIP_CONFIRM_KEY) === "true";
+    if (skipConfirm) {
+      executeChange(newBoardId);
+      return;
     }
-    if (pendingBoardIdRef.current) {
-      executeChange(pendingBoardIdRef.current);
-      pendingBoardIdRef.current = null;
-    }
-    setConfirmOpen(false);
-  };
 
-  const handleCancel = () => {
-    pendingBoardIdRef.current = null;
-    setConfirmOpen(false);
+    // Dismiss previous toast if still open
+    if (toastIdRef.current) {
+      toast.dismiss(toastIdRef.current);
+    }
+
+    const targetBoard = boards?.find((b) => b.id === newBoardId);
+
+    toastIdRef.current = toast("Mudar de quadro?", {
+      description: `Você será redirecionado ao sair desta demanda para o quadro "${targetBoard?.name || "selecionado"}".`,
+      duration: 10000,
+      action: {
+        label: "Mudar",
+        onClick: () => {
+          executeChange(newBoardId);
+        },
+      },
+      cancel: {
+        label: "Cancelar",
+        onClick: () => {},
+      },
+      onDismiss: () => {
+        toastIdRef.current = null;
+      },
+      onAutoClose: () => {
+        toastIdRef.current = null;
+      },
+    });
   };
 
   if (isLoading) {
@@ -131,7 +127,6 @@ export function BoardSelector() {
         </SelectContent>
       </Select>
 
-      {/* Role badge */}
       {roleLoading ? (
         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground hidden sm:block" />
       ) : boardRole ? (
@@ -139,32 +134,6 @@ export function BoardSelector() {
           {roleLabels[boardRole]}
         </Badge>
       ) : null}
-
-      {/* Confirmation dialog for board change on demand detail */}
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Mudar de quadro?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Você está visualizando uma demanda. Ao mudar de quadro, será redirecionado para a tela anterior.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex items-center gap-2 py-2">
-            <Checkbox
-              id="dontAskAgain"
-              checked={dontAskAgain}
-              onCheckedChange={(checked) => setDontAskAgain(checked === true)}
-            />
-            <label htmlFor="dontAskAgain" className="text-sm text-muted-foreground cursor-pointer">
-              Não perguntar novamente
-            </label>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancel}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirm}>Mudar quadro</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
