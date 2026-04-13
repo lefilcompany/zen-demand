@@ -440,14 +440,15 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
     const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && columnKey === "Aprovação do Cliente";
 
-    // Stop timer if moving to "Aprovação do Cliente" or "Entregue"
-    if (columnKey === "Aprovação do Cliente" || columnKey === "Entregue") {
-      stopAllTimersForDemand(demandId);
+    // Stop timer when leaving "Fazendo" or "Em Ajuste" for any other status
+    const timerStatuses = ["Fazendo", "Em Ajuste"];
+    if (previousStatusName && timerStatuses.includes(previousStatusName) && !timerStatuses.includes(columnKey)) {
+      await stopAllTimersForDemand(demandId);
     }
 
     // Start timer automatically when moving to "Fazendo"
     if (columnKey === "Fazendo" && previousStatusName !== "Fazendo") {
-      startTimerForDemand(demandId);
+      await startTimerForDemand(demandId);
     }
 
     updateDemand.mutate(
@@ -458,17 +459,14 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         status_changed_at: new Date().toISOString(),
       },
       {
-        onSettled: () => {
-          // Clear optimistic update on settled (success or error) to avoid racing with realtime
+        onSuccess: async () => {
+          // Invalidate and THEN clear optimistic update to prevent visual duplication
+          await queryClient.invalidateQueries({ queryKey: ['demands'] });
           setOptimisticUpdates(prev => {
             const newUpdates = { ...prev };
             delete newUpdates[demandId];
             return newUpdates;
           });
-        },
-        onSuccess: async () => {
-          // Invalidate to sync with server data
-          queryClient.invalidateQueries({ queryKey: ['demands'] });
 
           if (isOffline) {
             toast.success(`Status alterado para "${columnKey}"`, {
@@ -478,7 +476,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           } else {
             toast.success(`Status alterado para "${columnKey}"`);
           }
-          
           // Only send notifications if online
           if (!isOffline && demand) {
             // Send email notification to creator for important status changes
@@ -530,6 +527,12 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           }
         },
         onError: (error: any) => {
+          // Rollback optimistic update on error
+          setOptimisticUpdates(prev => {
+            const newUpdates = { ...prev };
+            delete newUpdates[demandId];
+            return newUpdates;
+          });
           toast.error("Erro ao alterar status", {
             description: getErrorMessage(error),
           });
@@ -570,14 +573,15 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
     const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && newStatusKey === "Aprovação do Cliente";
 
-    // Stop timer if moving to "Aprovação do Cliente" or "Entregue"
-    if (newStatusKey === "Aprovação do Cliente" || newStatusKey === "Entregue") {
-      stopAllTimersForDemand(demandId);
+    // Stop timer when leaving "Fazendo" or "Em Ajuste" for any other status
+    const timerStatuses = ["Fazendo", "Em Ajuste"];
+    if (previousStatusName && timerStatuses.includes(previousStatusName) && !timerStatuses.includes(newStatusKey)) {
+      await stopAllTimersForDemand(demandId);
     }
 
     // Start timer automatically when moving to "Fazendo"
     if (newStatusKey === "Fazendo" && previousStatusName !== "Fazendo") {
-      startTimerForDemand(demandId);
+      await startTimerForDemand(demandId);
     }
 
     updateDemand.mutate(
@@ -586,16 +590,14 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         status_id: targetStatusId,
       },
       {
-        onSettled: () => {
-          // Clear optimistic update on settled to avoid racing with realtime
+        onSuccess: async () => {
+          // Invalidate and THEN clear optimistic update to prevent visual duplication
+          await queryClient.invalidateQueries({ queryKey: ['demands'] });
           setOptimisticUpdates(prev => {
             const newUpdates = { ...prev };
             delete newUpdates[demandId];
             return newUpdates;
           });
-        },
-        onSuccess: async () => {
-          queryClient.invalidateQueries({ queryKey: ['demands'] });
 
           if (isOffline) {
             toast.success(`Status alterado para "${newStatusKey}"`, {
@@ -721,13 +723,12 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       { id: demandId, status_id: entregueStatus.id, status_changed_by: user?.id || null, status_changed_at: new Date().toISOString() },
       {
         onSuccess: async () => {
+          await queryClient.invalidateQueries({ queryKey: ['demands'] });
           setOptimisticUpdates(prev => {
             const newUpdates = { ...prev };
             delete newUpdates[demandId];
             return newUpdates;
           });
-          
-          queryClient.invalidateQueries({ queryKey: ['demands'] });
           toast.success("Demanda marcada como concluída!");
           
           // Notify assignees about completion
