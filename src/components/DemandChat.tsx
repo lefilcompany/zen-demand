@@ -244,16 +244,44 @@ export function DemandChat({
       const { data: p } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
       const mName = p?.full_name || "Alguém";
 
-      // In-app notifications handled by database trigger (notify_mention)
+      const { data: eligibleMembers, error: eligibleMembersError } = await supabase
+        .from("board_members")
+        .select("user_id")
+        .eq("board_id", boardId)
+        .in("user_id", mentionedIds);
+
+      if (eligibleMembersError) {
+        console.error("Erro ao validar menções do quadro:", eligibleMembersError);
+        return;
+      }
+
+      const eligibleMentionIds = Array.from(new Set((eligibleMembers || []).map((member) => member.user_id)));
+
+      if (eligibleMentionIds.length === 0) {
+        return;
+      }
+
+      const mentionNotifications = eligibleMentionIds.map((uid) => ({
+        user_id: uid,
+        title: "Você foi mencionado",
+        message: `${mName} mencionou você na demanda "${demandTitle.substring(0, 100)}"`,
+        type: "info",
+        link: `/demands/${demandId}`,
+      }));
+
+      const { error: mentionInsertError } = await supabase.from("notifications").insert(mentionNotifications);
+      if (mentionInsertError) {
+        console.error("Erro ao criar notificações de menção:", mentionInsertError);
+      }
 
       // FCM push for mentions
-      for (const uid of mentionedIds) {
+      for (const uid of eligibleMentionIds) {
         sendMentionPushNotification({ mentionedUserId: uid, demandId, demandTitle, mentionerName: mName, boardName }).catch(console.error);
       }
 
       // Send email to mentioned users
       const publicUrl = await buildPublicDemandUrl(demandId, user.id);
-      for (const uid of mentionedIds) {
+      for (const uid of eligibleMentionIds) {
         sendEmail.mutate({
           to: uid,
           subject: `💬 Você foi mencionado em "${demandTitle}"`,
