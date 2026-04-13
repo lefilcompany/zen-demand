@@ -167,7 +167,7 @@ const Index = () => {
 
         {/* Member Analysis + Recent Activities */}
         {(widgets.memberAnalysis || widgets.recentActivities) && selectedTeamId && (
-          <div className="grid gap-4 xl:grid-cols-2 items-stretch">
+        <div className="grid gap-4 2xl:grid-cols-2 items-stretch">
             {widgets.memberAnalysis && demands && demands.length > 0 && (
               <MemberAnalysisSection demands={demands} />
             )}
@@ -219,7 +219,7 @@ const Index = () => {
 
       {/* Member Analysis + Recent Activities (2 cols on lg) */}
       {(widgets.memberAnalysis || widgets.recentActivities) && selectedTeamId && (
-        <div className="grid gap-4 xl:grid-cols-2 items-stretch">
+        <div className="grid gap-4 2xl:grid-cols-2 items-stretch">
           {widgets.memberAnalysis && demands && demands.length > 0 && (
             <MemberAnalysisSection demands={demands} />
           )}
