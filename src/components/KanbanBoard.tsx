@@ -467,7 +467,15 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
             delete newUpdates[demandId];
             return newUpdates;
           });
-          
+
+          if (isOffline) {
+            toast.success(`Status alterado para "${columnKey}"`, {
+              description: t("sync.offlineDescription"),
+              icon: <CloudOff className="h-4 w-4" />,
+            });
+          } else {
+            toast.success(`Status alterado para "${columnKey}"`);
+          }
           // Only send notifications if online
           if (!isOffline && demand) {
             // Send email notification to creator for important status changes
