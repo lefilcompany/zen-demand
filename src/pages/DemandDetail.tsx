@@ -664,8 +664,17 @@ export default function DemandDetail() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="bg-popover">
-                    {statuses?.map(status => <DropdownMenuItem key={status.id} onClick={() => {
+                    {statuses?.map(status => <DropdownMenuItem key={status.id} onClick={async () => {
                     if (status.id !== demand.status_id) {
+                      const previousStatusName = demand.demand_statuses?.name;
+                      const timerStatuses = ["Fazendo", "Em Ajuste"];
+                      const isEnteringTimerStatus = timerStatuses.includes(status.name);
+                      const isLeavingTimerStatus = previousStatusName && timerStatuses.includes(previousStatusName) && !isEnteringTimerStatus;
+
+                      if (isLeavingTimerStatus && isTimerRunning) {
+                        stopTimer();
+                      }
+
                       updateDemand.mutate({
                         id: demand.id,
                         status_id: status.id,
@@ -674,6 +683,9 @@ export default function DemandDetail() {
                       }, {
                         onSuccess: () => {
                           toast.success(`Status alterado para "${status.name}"!`);
+                          if (isEnteringTimerStatus && !isTimerRunning) {
+                            startTimer();
+                          }
                         }
                       });
                     }
