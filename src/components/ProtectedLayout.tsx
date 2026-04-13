@@ -100,10 +100,12 @@ export function ProtectedLayout() {
   const defaultSidebarOpen = !isTablet;
 
   // Check if user can use the system
-  // User can use if: trial is active OR team has active subscription
+  // Fail-open when billing data is missing so the app doesn't become unavailable
+  const hasSubscriptionRecord = subscription !== null && subscription !== undefined;
   const hasActiveSubscription = subscription?.status === "active";
   const hasActiveTrialing = subscription?.status === "trialing" && !isTrialExpired;
-  const canUseSystem = hasActiveSubscription || hasActiveTrialing || (!subscription && !isTrialExpired);
+  const isBillingBlocked = hasSubscriptionRecord && !hasActiveSubscription && !hasActiveTrialing;
+  const canUseSystem = !currentTeam || !hasSubscriptionRecord || !isBillingBlocked;
 
   // Show loading while checking trial/subscription status
   if (trialLoading || subLoading) {
