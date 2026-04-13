@@ -756,13 +756,13 @@ export default function DemandRequests() {
   ];
 
   const renderUnifiedAdminToolbar = () => {
-    const activeCount = (adminStatusFilter !== "all" ? 1 : 0) + (adminPriorityFilter !== "all" ? 1 : 0) + (adminDateFilter ? 1 : 0);
     return (
       <div className="space-y-3">
+        {/* Horizontal filter row with search */}
         <div className="flex items-center gap-2">
-          {/* Search */}
+          {/* Search button */}
           <div className={cn(
-            "group flex items-center transition-all duration-300 ease-in-out rounded-xl border overflow-hidden",
+            "group flex items-center transition-all duration-300 ease-in-out rounded-xl border overflow-hidden shrink-0",
             adminSearchOpen
               ? "w-72 sm:w-80 border-primary/40 bg-background shadow-sm ring-1 ring-primary/10"
               : "w-9 border-border bg-muted/40 hover:bg-background hover:border-[#F28705]/40 hover:shadow-sm"
@@ -792,134 +792,107 @@ export default function DemandRequests() {
             )}
           </div>
 
-          {/* Filter toggle */}
-          <Button
-            variant={adminFiltersOpen ? "secondary" : "outline"}
-            size="sm"
-            className={cn(
-              "gap-2 rounded-lg transition-all",
-              !adminFiltersOpen && "hover:bg-white hover:text-[#F28705] hover:border-[#F28705]",
-              activeCount > 0 && "border-primary text-primary bg-primary/5"
-            )}
-            onClick={() => setAdminFiltersOpen(!adminFiltersOpen)}
-          >
-            <Filter className="h-4 w-4" />
-            Filtros
-            {activeCount > 0 && (
-              <Badge className="h-5 min-w-5 px-1.5 text-xs bg-primary text-primary-foreground">{activeCount}</Badge>
-            )}
-            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", adminFiltersOpen && "rotate-180")} />
-          </Button>
+          {/* Scrollable horizontal filters */}
+          <div className="flex-1 overflow-x-auto scrollbar-thin scrollbar-thumb-muted-foreground/20">
+            <div className="flex items-center gap-1.5 min-w-max">
+              {/* Status filters */}
+              {adminStatusOptions.map((opt) => {
+                const TabIcon = opt.icon;
+                const count = adminStatusCounts[opt.value] || 0;
+                const isActive = adminStatusFilter === opt.value;
+                return (
+                  <button key={opt.value} onClick={() => { setAdminStatusFilter(opt.value); setAdminPage(1); }}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all border whitespace-nowrap shrink-0",
+                      isActive
+                        ? "bg-primary/10 border-primary text-primary shadow-sm"
+                        : "bg-background border-border text-muted-foreground hover:bg-white hover:text-[#F28705] hover:border-[#F28705]"
+                    )}
+                  >
+                    {TabIcon && <TabIcon className="h-3.5 w-3.5" />}
+                    {opt.label}
+                    <span className={cn(
+                      "text-[10px] rounded-full px-1.5 py-0.5 min-w-4 text-center",
+                      isActive ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+                    )}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
 
-          {/* Active pills */}
-          {adminStatusFilter !== "all" && (
-            <Badge variant="secondary" className="gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium">
-              {adminStatusOptions.find(s => s.value === adminStatusFilter)?.label}
-              <button onClick={() => setAdminStatusFilter("all")} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
-            </Badge>
-          )}
-          {adminPriorityFilter !== "all" && (
-            <Badge variant="secondary" className="gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium">
-              Prioridade: {adminPriorityFilter}
-              <button onClick={() => setAdminPriorityFilter("all")} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
-            </Badge>
-          )}
-          {adminDateFilter && (
-            <Badge variant="secondary" className="gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium">
-              {format(adminDateFilter, "dd/MM/yyyy", { locale: ptBR })}
-              <button onClick={() => setAdminDateFilter(undefined)} className="ml-1 hover:text-destructive"><X className="h-3 w-3" /></button>
-            </Badge>
-          )}
+              {/* Separator */}
+              <div className="w-px h-5 bg-border shrink-0 mx-1" />
 
-          {(activeCount > 0 || adminSearchQuery) && (
-            <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-destructive gap-1"
-              onClick={() => { setAdminStatusFilter("all"); setAdminPriorityFilter("all"); setAdminDateFilter(undefined); setAdminSearchQuery(""); setAdminSearchOpen(false); }}>
-              Limpar tudo
-            </Button>
-          )}
+              {/* Priority filters */}
+              {priorityOptions.map((opt) => {
+                const isActive = adminPriorityFilter === opt.value;
+                return (
+                  <button key={opt.value} onClick={() => { setAdminPriorityFilter(opt.value); setAdminPage(1); }}
+                    className={cn(
+                      "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all border whitespace-nowrap shrink-0",
+                      isActive
+                        ? "bg-primary/10 border-primary text-primary shadow-sm"
+                        : "bg-background border-border text-muted-foreground hover:bg-white hover:text-[#F28705] hover:border-[#F28705]"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
 
-          {/* Results count right */}
-          <div className="ml-auto flex items-center gap-2">
-            {paginatedAdmin.totalItems > 0 && <span className="text-xs text-muted-foreground">{paginatedAdmin.totalItems} resultado{paginatedAdmin.totalItems !== 1 ? "s" : ""}</span>}
-          </div>
-        </div>
+              {/* Separator */}
+              <div className="w-px h-5 bg-border shrink-0 mx-1" />
 
-        {/* Filters panel */}
-        {adminFiltersOpen && (
-          <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-4 animate-fade-in">
-            {/* Status filter */}
-            <div>
-              <p className="text-xs font-medium text-muted-foreground mb-2">Status</p>
-              <div className="flex flex-wrap gap-2">
-                {adminStatusOptions.map((opt) => {
-                  const TabIcon = opt.icon;
-                  const count = adminStatusCounts[opt.value] || 0;
-                  const isActive = adminStatusFilter === opt.value;
-                  return (
-                    <button key={opt.value} onClick={() => { setAdminStatusFilter(opt.value); setAdminPage(1); }}
-                      className={cn(
-                        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border",
-                        isActive
-                          ? "bg-primary/10 border-primary text-primary shadow-sm"
-                          : "bg-background border-border text-muted-foreground hover:bg-white hover:text-[#F28705] hover:border-[#F28705]"
-                      )}
-                    >
-                      {TabIcon && <TabIcon className="h-3.5 w-3.5" />}
-                      {opt.label}
-                      <span className={cn(
-                        "text-xs rounded-full px-1.5 py-0.5 min-w-5 text-center",
-                        isActive ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
-                      )}>
-                        {count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Priority filter */}
-            <div>
-              <p className="text-xs font-medium text-muted-foreground mb-2">Prioridade</p>
-              <div className="flex flex-wrap gap-2">
-                {priorityOptions.map((opt) => {
-                  const isActive = adminPriorityFilter === opt.value;
-                  return (
-                    <button key={opt.value} onClick={() => { setAdminPriorityFilter(opt.value); setAdminPage(1); }}
-                      className={cn(
-                        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border",
-                        isActive
-                          ? "bg-primary/10 border-primary text-primary shadow-sm"
-                          : "bg-background border-border text-muted-foreground hover:bg-white hover:text-[#F28705] hover:border-[#F28705]"
-                      )}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Date filter */}
-            <div>
-              <p className="text-xs font-medium text-muted-foreground mb-2">Data de criação</p>
+              {/* Date filter */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className={cn(
-                    "gap-2 rounded-lg hover:bg-white hover:text-[#F28705] hover:border-[#F28705]",
-                    adminDateFilter && "border-primary bg-primary/5 text-primary"
-                  )}>
-                    <CalendarIcon className="h-4 w-4" />
-                    {adminDateFilter ? format(adminDateFilter, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar data"}
-                  </Button>
+                  <button
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all border whitespace-nowrap shrink-0",
+                      adminDateFilter
+                        ? "bg-primary/10 border-primary text-primary shadow-sm"
+                        : "bg-background border-border text-muted-foreground hover:bg-white hover:text-[#F28705] hover:border-[#F28705]"
+                    )}
+                  >
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {adminDateFilter ? format(adminDateFilter, "dd/MM/yyyy", { locale: ptBR }) : "Data"}
+                    {adminDateFilter && (
+                      <span
+                        onClick={(e) => { e.stopPropagation(); setAdminDateFilter(undefined); setAdminPage(1); }}
+                        className="ml-0.5 hover:text-destructive cursor-pointer"
+                      >
+                        <X className="h-3 w-3" />
+                      </span>
+                    )}
+                  </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar mode="single" selected={adminDateFilter} onSelect={(d) => { setAdminDateFilter(d); setAdminPage(1); }} initialFocus />
                 </PopoverContent>
               </Popover>
+
+              {/* Clear all */}
+              {(adminStatusFilter !== "all" || adminPriorityFilter !== "all" || adminDateFilter || adminSearchQuery) && (
+                <>
+                  <div className="w-px h-5 bg-border shrink-0 mx-1" />
+                  <button
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-destructive transition-colors whitespace-nowrap shrink-0"
+                    onClick={() => { setAdminStatusFilter("all"); setAdminPriorityFilter("all"); setAdminDateFilter(undefined); setAdminSearchQuery(""); setAdminSearchOpen(false); }}
+                  >
+                    <X className="h-3 w-3" />
+                    Limpar
+                  </button>
+                </>
+              )}
             </div>
           </div>
-        )}
+
+          {/* Results count */}
+          <div className="shrink-0">
+            {paginatedAdmin.totalItems > 0 && <span className="text-xs text-muted-foreground whitespace-nowrap">{paginatedAdmin.totalItems} resultado{paginatedAdmin.totalItems !== 1 ? "s" : ""}</span>}
+          </div>
+        </div>
       </div>
     );
   };
