@@ -126,7 +126,7 @@ export default function DemandRequests() {
   const [mySelectedDate, setMySelectedDate] = useState<Date | undefined>();
 
   // Unified admin filters (single view, no tabs)
-  const [adminStatusFilter, setAdminStatusFilter] = useState<string>("all");
+  const [adminStatusFilter, setAdminStatusFilter] = useState<string>("pending");
   const [adminPriorityFilter, setAdminPriorityFilter] = useState<string>("all");
   const [adminDateFilter, setAdminDateFilter] = useState<Date | undefined>();
   const [adminFiltersOpen, setAdminFiltersOpen] = useState(false);
