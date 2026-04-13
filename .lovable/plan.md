@@ -1,29 +1,59 @@
 
 
-## Diagnóstico
+## Diagnóstico da Lentidão
 
-O problema é claro: a tabela `notifications` tem RLS ativado mas **não possui policy de INSERT**. Existem apenas policies de SELECT e UPDATE. Quando o `DemandChat.tsx` tenta inserir a notificação de menção via `supabase.from("notifications").insert(...)`, o RLS bloqueia silenciosamente a operação.
+Identifiquei **3 causas principais** que sobrecarregam o banco e deixam o app lento:
 
-As notificações de status, criação de demanda, etc. funcionam porque são geradas por **triggers do banco de dados** que usam `SECURITY DEFINER` (bypassam RLS). Mas o trigger `notify_mention` nunca foi anexado à tabela `demand_interactions` — ele existe como função mas sem trigger ativo.
+### 1. QueryClient sem configuração de cache (causa raiz)
+Em `App.tsx` linha 89: `const queryClient = new QueryClient()` — sem **nenhuma** configuração. Isso significa:
+- `staleTime = 0`: toda query é considerada "velha" instantaneamente
+- Cada vez que um componente monta, muda de aba, ou foca a janela, **todas as queries refazem requisição ao banco**
+- Com ~15 hooks ativos simultaneamente (demands, teams, boards, subscription, notifications, profiles, etc.), cada navegação gera **dezenas de requisições paralelas**
 
-## Solução
+### 2. useDataPrecache ainda pesado
+Mesmo com o throttle de 30s, o precache faz 6 queries pesadas (demands com JOINs, profiles, boards, teams, services, statuses) a cada ciclo. Como o QueryClient não tem cache, essas queries **duplicam** o que o React Query já busca.
 
-Duas ações complementares para garantir robustez:
+### 3. Invalidações em cascata do Realtime
+O `useRealtimeDemands` invalida ~8 query keys a cada mudança de qualquer demanda. Com staleTime=0, cada invalidação dispara refetch imediato de **todos** os hooks dependentes.
 
-### 1. Criar o trigger no banco de dados
-Anexar a função `notify_mention()` (que já existe e está correta) à tabela `demand_interactions` como trigger AFTER INSERT. Isso faz as notificações de menção serem criadas pelo banco (com `SECURITY DEFINER`), igual às de status/criação — sem depender de policies de INSERT no cliente.
+---
 
-```sql
-CREATE TRIGGER on_mention_demand_interaction
-  AFTER INSERT ON public.demand_interactions
-  FOR EACH ROW
-  EXECUTE FUNCTION public.notify_mention();
+## Plano de Correção
+
+### Passo 1: Configurar QueryClient com defaults globais (App.tsx)
+Adicionar `staleTime: 60_000` (1 minuto) e `gcTime: 300_000` (5 minutos) como defaults. Isso faz com que dados recém-buscados **não sejam re-buscados** por 1 minuto, eliminando a maioria das requisições duplicadas.
+
+```tsx
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,        // 1 minuto
+      gcTime: 5 * 60 * 1000,       // 5 minutos
+      refetchOnWindowFocus: false,  // desabilitar refetch no foco
+      retry: 2,
+    },
+  },
+});
 ```
 
-### 2. Remover inserção duplicada do frontend
-No `DemandChat.tsx`, remover o bloco de `supabase.from("notifications").insert(mentionNotifications)` (linhas 248-255), já que o trigger cuidará disso. Manter apenas o FCM push e o envio de e-mail no frontend.
+### Passo 2: Reduzir frequência do useDataPrecache
+- Aumentar `CACHE_REFRESH_INTERVAL` de 5 para 10 minutos
+- Aumentar `MIN_PRECACHE_INTERVAL` de 30s para 2 minutos
+- Remover o listener de `visibilitychange` (já não precisa com o staleTime do QueryClient)
+- Aumentar delay inicial de 2s para 5s
+
+### Passo 3: Otimizar invalidações do Realtime
+No `useRealtimeDemands`, reduzir as invalidações para apenas as queries essenciais (demands do board atual e demand específica), removendo invalidações de queries secundárias que podem esperar o staleTime expirar.
 
 ### Arquivos alterados
-- **Migration SQL**: criar o trigger `on_mention_demand_interaction`
-- **`src/components/DemandChat.tsx`**: remover insert manual de notificações de menção (linhas 247-255)
+- `src/App.tsx` — configurar QueryClient
+- `src/hooks/useDataPrecache.ts` — reduzir frequência e remover listener redundante
+- `src/hooks/useRealtimeDemands.ts` — reduzir invalidações em cascata
+
+### Resultado esperado
+- Login: ~70% menos requisições ao banco
+- Navegação entre páginas: dados cacheados por 1 minuto, sem re-buscar
+- Dashboard: carrega instantaneamente após primeira visita
+- Solicitações de Demanda: para de mostrar "Carregando..." indefinidamente
+- Realtime: continua funcionando, mas sem avalanche de refetches
 
