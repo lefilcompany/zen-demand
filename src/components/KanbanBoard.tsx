@@ -723,13 +723,12 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       { id: demandId, status_id: entregueStatus.id, status_changed_by: user?.id || null, status_changed_at: new Date().toISOString() },
       {
         onSuccess: async () => {
+          await queryClient.invalidateQueries({ queryKey: ['demands'] });
           setOptimisticUpdates(prev => {
             const newUpdates = { ...prev };
             delete newUpdates[demandId];
             return newUpdates;
           });
-          
-          queryClient.invalidateQueries({ queryKey: ['demands'] });
           toast.success("Demanda marcada como concluída!");
           
           // Notify assignees about completion
