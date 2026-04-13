@@ -440,14 +440,15 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
     const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && columnKey === "Aprovação do Cliente";
 
-    // Stop timer if moving to "Aprovação do Cliente" or "Entregue"
-    if (columnKey === "Aprovação do Cliente" || columnKey === "Entregue") {
-      stopAllTimersForDemand(demandId);
+    // Stop timer when leaving "Fazendo" or "Em Ajuste" for any other status
+    const timerStatuses = ["Fazendo", "Em Ajuste"];
+    if (previousStatusName && timerStatuses.includes(previousStatusName) && !timerStatuses.includes(columnKey)) {
+      await stopAllTimersForDemand(demandId);
     }
 
     // Start timer automatically when moving to "Fazendo"
     if (columnKey === "Fazendo" && previousStatusName !== "Fazendo") {
-      startTimerForDemand(demandId);
+      await startTimerForDemand(demandId);
     }
 
     updateDemand.mutate(
@@ -458,14 +459,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         status_changed_at: new Date().toISOString(),
       },
       {
-        onSettled: () => {
-          // Clear optimistic update on settled (success or error) to avoid racing with realtime
-          setOptimisticUpdates(prev => {
-            const newUpdates = { ...prev };
-            delete newUpdates[demandId];
-            return newUpdates;
-          });
-        },
         onSuccess: async () => {
           // Invalidate to sync with server data
           queryClient.invalidateQueries({ queryKey: ['demands'] });
