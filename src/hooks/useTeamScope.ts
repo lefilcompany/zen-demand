@@ -9,6 +9,13 @@ export interface TeamScope {
   active: boolean;
 }
 
+const EMPTY_TEAM_SCOPE: TeamScope = {
+  scope_description: null,
+  contract_start_date: null,
+  contract_end_date: null,
+  active: true,
+};
+
 export function useTeamScope(teamId?: string) {
   const { selectedTeamId } = useSelectedTeam();
   const id = teamId || selectedTeamId;
@@ -20,10 +27,10 @@ export function useTeamScope(teamId?: string) {
         .from("teams")
         .select("scope_description, contract_start_date, contract_end_date, active")
         .eq("id", id!)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      return data as TeamScope;
+      return (data as TeamScope | null) ?? EMPTY_TEAM_SCOPE;
     },
     enabled: !!id,
   });
