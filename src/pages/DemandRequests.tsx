@@ -872,13 +872,13 @@ export default function DemandRequests() {
                 </PopoverContent>
               </Popover>
 
-              {/* Clear all */}
-              {(adminStatusFilter !== "all" || adminPriorityFilter !== "all" || adminDateFilter || adminSearchQuery) && (
+              {/* Clear all - only show when non-default filters are active */}
+              {(adminPriorityFilter !== "all" || adminDateFilter || adminSearchQuery) && (
                 <>
                   <div className="w-px h-5 bg-border shrink-0 mx-1" />
                   <button
                     className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium text-muted-foreground hover:text-destructive transition-colors whitespace-nowrap shrink-0"
-                    onClick={() => { setAdminStatusFilter("all"); setAdminPriorityFilter("all"); setAdminDateFilter(undefined); setAdminSearchQuery(""); setAdminSearchOpen(false); }}
+                    onClick={() => { setAdminStatusFilter("pending"); setAdminPriorityFilter("all"); setAdminDateFilter(undefined); setAdminSearchQuery(""); setAdminSearchOpen(false); setAdminPage(1); }}
                   >
                     <X className="h-3 w-3" />
                     Limpar
