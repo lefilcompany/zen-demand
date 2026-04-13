@@ -460,17 +460,13 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       },
       {
         onSuccess: async () => {
-          // Invalidate to sync with server data
-          queryClient.invalidateQueries({ queryKey: ['demands'] });
-
-          if (isOffline) {
-            toast.success(`Status alterado para "${columnKey}"`, {
-              description: t("sync.offlineDescription"),
-              icon: <CloudOff className="h-4 w-4" />,
-            });
-          } else {
-            toast.success(`Status alterado para "${columnKey}"`);
-          }
+          // Invalidate and THEN clear optimistic update to prevent visual duplication
+          await queryClient.invalidateQueries({ queryKey: ['demands'] });
+          setOptimisticUpdates(prev => {
+            const newUpdates = { ...prev };
+            delete newUpdates[demandId];
+            return newUpdates;
+          });
           
           // Only send notifications if online
           if (!isOffline && demand) {
