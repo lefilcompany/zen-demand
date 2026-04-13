@@ -527,6 +527,12 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           }
         },
         onError: (error: any) => {
+          // Rollback optimistic update on error
+          setOptimisticUpdates(prev => {
+            const newUpdates = { ...prev };
+            delete newUpdates[demandId];
+            return newUpdates;
+          });
           toast.error("Erro ao alterar status", {
             description: getErrorMessage(error),
           });
