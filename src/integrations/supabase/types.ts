@@ -557,6 +557,42 @@ export type Database = {
           },
         ]
       }
+      demand_dependencies: {
+        Row: {
+          created_at: string | null
+          demand_id: string
+          depends_on_demand_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          demand_id: string
+          depends_on_demand_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          demand_id?: string
+          depends_on_demand_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_dependencies_demand_id_fkey"
+            columns: ["demand_id"]
+            isOneToOne: false
+            referencedRelation: "demands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demand_dependencies_depends_on_demand_id_fkey"
+            columns: ["depends_on_demand_id"]
+            isOneToOne: false
+            referencedRelation: "demands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demand_folder_items: {
         Row: {
           added_at: string
@@ -1146,6 +1182,7 @@ export type Database = {
           id: string
           last_started_at: string | null
           meet_link: string | null
+          parent_demand_id: string | null
           priority: string | null
           service_id: string | null
           status_changed_at: string | null
@@ -1170,6 +1207,7 @@ export type Database = {
           id?: string
           last_started_at?: string | null
           meet_link?: string | null
+          parent_demand_id?: string | null
           priority?: string | null
           service_id?: string | null
           status_changed_at?: string | null
@@ -1194,6 +1232,7 @@ export type Database = {
           id?: string
           last_started_at?: string | null
           meet_link?: string | null
+          parent_demand_id?: string | null
           priority?: string | null
           service_id?: string | null
           status_changed_at?: string | null
@@ -1224,6 +1263,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demands_parent_demand_id_fkey"
+            columns: ["parent_demand_id"]
+            isOneToOne: false
+            referencedRelation: "demands"
             referencedColumns: ["id"]
           },
           {
@@ -2435,6 +2481,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      create_demand_with_subdemands: {
+        Args: { p_dependencies?: Json; p_parent: Json; p_subdemands?: Json }
+        Returns: Json
       }
       get_board_role: {
         Args: { _board_id: string; _user_id: string }
