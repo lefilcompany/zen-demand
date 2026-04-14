@@ -402,7 +402,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     }
   };
 
-  const isSubmitDisabled = createDemand.isPending || 
+  const isSubmitDisabled = (createDemand.isPending || createDemandWithSubdemands.isPending) || 
     !title.trim() || 
     !statusId || 
     !activeBoardId || 
