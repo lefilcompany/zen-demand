@@ -109,8 +109,8 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
   const [selectedFolderId, setSelectedFolderId] = useState("");
-  const [subdemands, setSubdemands] = useState<(SubdemandInput & { tempId: string; dependsOnIndex?: number })[]>([]);
-  const [subdemandDialogOpen, setSubdemandDialogOpen] = useState(false);
+  const [subdemands, setSubdemands] = useState<SubdemandFormData[]>([]);
+  const [activeView, setActiveView] = useState<'demand' | 'subdemand'>('demand');
   const [editingSubdemandIndex, setEditingSubdemandIndex] = useState<number | undefined>(undefined);
   const uploadAttachment = useUploadAttachment();
   const createRecurringDemand = useCreateRecurringDemand();
