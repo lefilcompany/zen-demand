@@ -482,15 +482,15 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
               <button
                 type="button"
                 onClick={() => {
-                  if (subdemands.length > 0 || activeView === 'subdemand') {
+                  if (subdemands.length > 0 || activeView === 'subdemand' || subdemandDraft.title.trim()) {
                     setActiveView('subdemand');
                   }
                 }}
                 className={cn(
                   "h-2 rounded-full transition-all duration-300",
                   activeView === 'subdemand' ? "w-6 bg-[#F28705]" : "w-2 bg-muted-foreground/30",
-                  (subdemands.length > 0 || activeView === 'subdemand') && "hover:bg-muted-foreground/50",
-                  subdemands.length === 0 && activeView !== 'subdemand' && "opacity-40 cursor-not-allowed"
+                  (subdemands.length > 0 || activeView === 'subdemand' || subdemandDraft.title.trim()) && "hover:bg-muted-foreground/50",
+                  subdemands.length === 0 && activeView !== 'subdemand' && !subdemandDraft.title.trim() && "opacity-40 cursor-not-allowed"
                 )}
               />
             </div>
