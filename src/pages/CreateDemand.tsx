@@ -416,7 +416,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     !isServiceValid();
 
   return (
-    <Dialog open={isOpen} onOpenChange={(o) => { if (!o) handleClose(); }}>
+    <Dialog open={isOpen} onOpenChange={(o) => { if (!o) { setActiveView('demand'); handleClose(); } }}>
       <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
         {successState ? (
           // Success state
@@ -465,258 +465,350 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
             </div>
           </>
         ) : (
-          // Form state
-          <>
-            <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
-              <DialogTitle className="text-xl font-bold">Nova Demanda</DialogTitle>
-              <p className="text-sm text-muted-foreground">
-                Selecione o quadro e preencha os dados da demanda
-              </p>
-            </DialogHeader>
-
-            <div className="flex-1 overflow-y-auto px-6 pb-6">
-              {/* Alerts */}
-              <div className="space-y-3 mb-4">
-                {isOffline && (
-                  <Alert className="border-amber-500/50 bg-amber-500/10">
-                    <WifiOff className="h-4 w-4 text-amber-600" />
-                    <AlertDescription className="text-amber-700 dark:text-amber-400">
-                      Você está offline. A demanda será salva localmente e sincronizada quando a conexão for restaurada.
-                    </AlertDescription>
-                  </Alert>
+          // Sliding views container
+          <div className="flex-1 overflow-hidden relative">
+            {/* Navigation dots */}
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveView('demand')}
+                className={cn(
+                  "h-2 rounded-full transition-all duration-300",
+                  activeView === 'demand' ? "w-6 bg-primary" : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
                 )}
-
-                {!isTeamActive && (
-                  <Alert variant="destructive">
-                    <Ban className="h-4 w-4" />
-                    <AlertDescription>
-                      O contrato desta equipe está inativo. Não é possível criar novas demandas.
-                    </AlertDescription>
-                  </Alert>
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (subdemands.length > 0 || activeView === 'subdemand') {
+                    setActiveView('subdemand');
+                  }
+                }}
+                className={cn(
+                  "h-2 rounded-full transition-all duration-300",
+                  activeView === 'subdemand' ? "w-6 bg-[#F28705]" : "w-2 bg-muted-foreground/30",
+                  (subdemands.length > 0 || activeView === 'subdemand') && "hover:bg-muted-foreground/50",
+                  subdemands.length === 0 && activeView !== 'subdemand' && "opacity-40 cursor-not-allowed"
                 )}
+              />
+            </div>
 
-                {hasBoardLimit && isTeamActive && (
-                  <div className="rounded-lg border border-border bg-card p-3">
-                    <ScopeProgressBar used={monthlyCount} limit={limit} />
-                  </div>
-                )}
+            {/* Sliding container */}
+            <div
+              className="flex h-full transition-transform duration-300 ease-in-out"
+              style={{ transform: activeView === 'subdemand' ? 'translateX(-100%)' : 'translateX(0)' }}
+            >
+              {/* View 1: Demand form */}
+              <div className="w-full shrink-0 flex flex-col h-full">
+                <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
+                  <DialogTitle className="text-xl font-bold">Nova Demanda</DialogTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Selecione o quadro e preencha os dados da demanda
+                  </p>
+                </DialogHeader>
 
-                {!isWithinLimit && isTeamActive && (
-                  <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      O limite mensal de demandas deste quadro foi atingido.
-                    </AlertDescription>
-                  </Alert>
-                )}
+                <div className="flex-1 overflow-y-auto px-6 pb-6">
+                  {/* Alerts */}
+                  <div className="space-y-3 mb-4">
+                    {isOffline && (
+                      <Alert className="border-amber-500/50 bg-amber-500/10">
+                        <WifiOff className="h-4 w-4 text-amber-600" />
+                        <AlertDescription className="text-amber-700 dark:text-amber-400">
+                          Você está offline. A demanda será salva localmente e sincronizada quando a conexão for restaurada.
+                        </AlertDescription>
+                      </Alert>
+                    )}
 
-                {canCreateWithService === false && serviceInfo && (
-                  <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      Limite mensal para o serviço selecionado atingido ({serviceInfo.currentCount}/{serviceInfo.monthly_limit}).
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
+                    {!isTeamActive && (
+                      <Alert variant="destructive">
+                        <Ban className="h-4 w-4" />
+                        <AlertDescription>
+                          O contrato desta equipe está inativo. Não é possível criar novas demandas.
+                        </AlertDescription>
+                      </Alert>
+                    )}
 
-              {/* Form */}
-              <form id="create-demand-form" onSubmit={handleSubmit} className="space-y-4">
-                {/* Board Selector */}
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <LayoutGrid className="h-4 w-4" />
-                    Quadro *
-                  </Label>
-                  <Select value={formBoardId} onValueChange={(val) => {
-                    setFormBoardId(val);
-                    // Reset dependent fields when board changes
-                    setServiceId("");
-                    setAssigneeIds([]);
-                    setStatusId("");
-                  }}>
-                    <SelectTrigger className="h-8">
-                      <SelectValue placeholder="Selecione o quadro" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allBoards?.map((board) => (
-                        <SelectItem key={board.id} value={board.id}>
-                          <div className="flex items-center gap-2">
-                            <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
-                            {board.name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    {hasBoardLimit && isTeamActive && (
+                      <div className="rounded-lg border border-border bg-card p-3">
+                        <ScopeProgressBar used={monthlyCount} limit={limit} />
+                      </div>
+                    )}
 
-                {/* Title - full width */}
-                <div className="space-y-2">
-                  <Label htmlFor="title">Título *</Label>
-                  <Input
-                    id="title"
-                    placeholder="Ex: Implementar nova funcionalidade"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    required
-                    autoFocus
-                    disabled={!formBoardId}
-                    className="h-8"
-                  />
-                </div>
+                    {!isWithinLimit && isTeamActive && (
+                      <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
+                          O limite mensal de demandas deste quadro foi atingido.
+                        </AlertDescription>
+                      </Alert>
+                    )}
 
-                {/* Row: Service + Assignees + Folder */}
-                <div className={`grid gap-4 grid-cols-1 ${editableFolders.length > 0 && canAssignResponsibles ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2">
-                      <Package className="h-4 w-4" />
-                      Serviço {hasBoardServices ? "*" : ""}
-                    </Label>
-                    <ServiceSelector
-                      teamId={selectedTeamId}
-                      boardId={activeBoardId}
-                      value={serviceId}
-                      onChange={handleServiceChange}
-                      userRole={boardRole}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {hasBoardServices 
-                        ? "Serviço obrigatório para esta demanda"
-                        : "Selecione para calcular data de entrega"
-                      }
-                    </p>
+                    {canCreateWithService === false && serviceInfo && (
+                      <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
+                          Limite mensal para o serviço selecionado atingido ({serviceInfo.currentCount}/{serviceInfo.monthly_limit}).
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </div>
 
-                  {canAssignResponsibles && (
+                  {/* Form */}
+                  <form id="create-demand-form" onSubmit={handleSubmit} className="space-y-4">
+                    {/* Board Selector */}
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        Responsáveis
+                        <LayoutGrid className="h-4 w-4" />
+                        Quadro *
                       </Label>
-                      <AssigneeSelector
-                        teamId={selectedTeamId}
-                        boardId={activeBoardId}
-                        selectedUserIds={assigneeIds}
-                        onChange={setAssigneeIds}
-                        hideIcon
-                      />
-                    </div>
-                  )}
-
-                  {editableFolders.length > 0 && (
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <FolderOpen className="h-4 w-4" />
-                        Pasta
-                      </Label>
-                      <Select value={selectedFolderId || ""} onValueChange={(v) => setSelectedFolderId(v === "none" ? "" : v)}>
+                      <Select value={formBoardId} onValueChange={(val) => {
+                        setFormBoardId(val);
+                        setServiceId("");
+                        setAssigneeIds([]);
+                        setStatusId("");
+                      }}>
                         <SelectTrigger className="h-8">
-                          <SelectValue placeholder="Selecione uma pasta" />
+                          <SelectValue placeholder="Selecione o quadro" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="none">Nenhuma pasta</SelectItem>
-                          {editableFolders.map((folder) => (
-                            <SelectItem key={folder.id} value={folder.id}>
+                          {allBoards?.map((board) => (
+                            <SelectItem key={board.id} value={board.id}>
                               <div className="flex items-center gap-2">
-                                <FolderOpen className="h-3.5 w-3.5 shrink-0" style={{ color: folder.color }} />
-                                <span className="truncate">{folder.name}</span>
-                                {!folder.is_owner && (
-                                  <span className="text-[10px] text-muted-foreground ml-1">(compartilhada)</span>
-                                )}
+                                <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
+                                {board.name}
                               </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                  )}
-                </div>
 
-                {/* Row: Status + Priority + Due Date */}
-                <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Status *</Label>
-                    <Select value={statusId} onValueChange={setStatusId} required disabled={!formBoardId}>
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder={!formBoardId ? "Selecione o quadro primeiro" : "Selecione"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statuses?.map((status) => (
-                          <SelectItem key={status.id} value={status.id}>
-                            {status.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    {/* Title - full width */}
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Título *</Label>
+                      <Input
+                        id="title"
+                        placeholder="Ex: Implementar nova funcionalidade"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        required
+                        autoFocus
+                        disabled={!formBoardId}
+                        className="h-8"
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="priority">Prioridade</Label>
-                    <Select value={priority} onValueChange={setPriority}>
-                      <SelectTrigger className="h-8">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="baixa">Baixa</SelectItem>
-                        <SelectItem value="média">Média</SelectItem>
-                        <SelectItem value="alta">Alta</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="dueDate">Data de Entrega</Label>
-                    <Input
-                      id="dueDate"
-                      type="date"
-                      value={dueDate}
-                      onChange={(e) => setDueDate(e.target.value)}
-                      className="h-8"
-                    />
-                  </div>
-                </div>
-
-                {/* Subdemands Section */}
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <GitBranch className="h-4 w-4" />
-                    Subdemandas
-                  </Label>
-
-                  <div className="grid grid-cols-3 gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-9 border-dashed border-[#F28705] text-[#F28705] hover:bg-[#F28705]/10 hover:text-[#F28705] gap-1.5 text-xs rounded-lg"
-                      onClick={() => {
-                        setEditingSubdemandIndex(undefined);
-                        setSubdemandDialogOpen(true);
-                      }}
-                    >
-                      <Plus className="h-4 w-4" />
-                      Adicionar
-                    </Button>
-
-                    {subdemands.map((sub, idx) => (
-                      <div
-                        key={sub.tempId}
-                        className="inline-flex items-center justify-between gap-1.5 rounded-md bg-[#F28705] text-white px-3 h-9 text-xs font-medium cursor-pointer hover:bg-[#F28705]/90 transition-colors truncate"
-                        onClick={() => {
-                          setEditingSubdemandIndex(idx);
-                          setSubdemandDialogOpen(true);
-                        }}
-                      >
-                        <span className="truncate">{sub.title || `Subdemanda ${idx + 1}`}</span>
-                        <Pencil className="h-3 w-3 opacity-80 shrink-0" />
+                    {/* Row: Service + Assignees + Folder */}
+                    <div className={`grid gap-4 grid-cols-1 ${editableFolders.length > 0 && canAssignResponsibles ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <Package className="h-4 w-4" />
+                          Serviço {hasBoardServices ? "*" : ""}
+                        </Label>
+                        <ServiceSelector
+                          teamId={selectedTeamId}
+                          boardId={activeBoardId}
+                          value={serviceId}
+                          onChange={handleServiceChange}
+                          userRole={boardRole}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          {hasBoardServices 
+                            ? "Serviço obrigatório para esta demanda"
+                            : "Selecione para calcular data de entrega"
+                          }
+                        </p>
                       </div>
-                    ))}
-                  </div>
 
-                  <CreateSubdemandDialog
-                    open={subdemandDialogOpen}
-                    onClose={() => {
-                      setSubdemandDialogOpen(false);
+                      {canAssignResponsibles && (
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-2">
+                            <Users className="h-4 w-4" />
+                            Responsáveis
+                          </Label>
+                          <AssigneeSelector
+                            teamId={selectedTeamId}
+                            boardId={activeBoardId}
+                            selectedUserIds={assigneeIds}
+                            onChange={setAssigneeIds}
+                            hideIcon
+                          />
+                        </div>
+                      )}
+
+                      {editableFolders.length > 0 && (
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-2">
+                            <FolderOpen className="h-4 w-4" />
+                            Pasta
+                          </Label>
+                          <Select value={selectedFolderId || ""} onValueChange={(v) => setSelectedFolderId(v === "none" ? "" : v)}>
+                            <SelectTrigger className="h-8">
+                              <SelectValue placeholder="Selecione uma pasta" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Nenhuma pasta</SelectItem>
+                              {editableFolders.map((folder) => (
+                                <SelectItem key={folder.id} value={folder.id}>
+                                  <div className="flex items-center gap-2">
+                                    <FolderOpen className="h-3.5 w-3.5 shrink-0" style={{ color: folder.color }} />
+                                    <span className="truncate">{folder.name}</span>
+                                    {!folder.is_owner && (
+                                      <span className="text-[10px] text-muted-foreground ml-1">(compartilhada)</span>
+                                    )}
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Row: Status + Priority + Due Date */}
+                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="status">Status *</Label>
+                        <Select value={statusId} onValueChange={setStatusId} required disabled={!formBoardId}>
+                          <SelectTrigger className="h-8">
+                            <SelectValue placeholder={!formBoardId ? "Selecione o quadro primeiro" : "Selecione"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {statuses?.map((status) => (
+                              <SelectItem key={status.id} value={status.id}>
+                                {status.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="priority">Prioridade</Label>
+                        <Select value={priority} onValueChange={setPriority}>
+                          <SelectTrigger className="h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="baixa">Baixa</SelectItem>
+                            <SelectItem value="média">Média</SelectItem>
+                            <SelectItem value="alta">Alta</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="dueDate">Data de Entrega</Label>
+                        <Input
+                          id="dueDate"
+                          type="date"
+                          value={dueDate}
+                          onChange={(e) => setDueDate(e.target.value)}
+                          className="h-8"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Subdemands Section */}
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <GitBranch className="h-4 w-4" />
+                        Subdemandas
+                      </Label>
+
+                      <div className="grid grid-cols-3 gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="h-9 border-dashed border-[#F28705] text-[#F28705] hover:bg-[#F28705]/10 hover:text-[#F28705] gap-1.5 text-xs rounded-lg"
+                          onClick={() => {
+                            setEditingSubdemandIndex(undefined);
+                            setActiveView('subdemand');
+                          }}
+                        >
+                          <Plus className="h-4 w-4" />
+                          Adicionar
+                        </Button>
+
+                        {subdemands.map((sub, idx) => (
+                          <div
+                            key={sub.tempId}
+                            className="inline-flex items-center justify-between gap-1.5 rounded-md bg-[#F28705] text-white px-3 h-9 text-xs font-medium cursor-pointer hover:bg-[#F28705]/90 transition-colors truncate"
+                            onClick={() => {
+                              setEditingSubdemandIndex(idx);
+                              setActiveView('subdemand');
+                            }}
+                          >
+                            <span className="truncate">{sub.title || `Subdemanda ${idx + 1}`}</span>
+                            <Pencil className="h-3 w-3 opacity-80 shrink-0" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Description - full width */}
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Descrição</Label>
+                      <RichTextEditor
+                        value={description}
+                        onChange={setDescription}
+                        placeholder="Descreva os detalhes da demanda... (cole imagens diretamente)"
+                        minHeight="120px"
+                      />
+                    </div>
+
+                    {/* Row: Attachments + Recurrence */}
+                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label>Anexos</Label>
+                          {pendingFiles.length > 0 && (
+                            <span className="text-xs text-muted-foreground">{pendingFiles.length} arquivo(s)</span>
+                          )}
+                        </div>
+                        <InlineFileUploader
+                          pendingFiles={pendingFiles}
+                          onFilesChange={setPendingFiles}
+                          disabled={isOffline}
+                          listenToGlobalPaste={!isOffline}
+                        />
+                        {isOffline && (
+                          <p className="text-xs text-muted-foreground">
+                            Anexos não podem ser adicionados offline
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Recorrência</Label>
+                        <RecurrenceConfig value={recurrence} onChange={setRecurrence} />
+                      </div>
+                    </div>
+                  </form>
+                </div>
+
+                {/* Footer */}
+                <div className="shrink-0 px-6 py-2 flex justify-end gap-3 bg-card">
+                  <Button type="button" variant="outline" size="sm" onClick={handleClose}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    form="create-demand-form"
+                    disabled={isSubmitDisabled}
+                    size="sm"
+                  >
+                    {(createDemand.isPending || createDemandWithSubdemands.isPending) ? "Criando..." : "Criar Demanda"}
+                  </Button>
+                </div>
+              </div>
+
+              {/* View 2: Subdemand form */}
+              <div className="w-full shrink-0 h-full">
+                {activeView === 'subdemand' && (
+                  <CreateSubdemandForm
+                    onBack={() => {
+                      setActiveView('demand');
                       setEditingSubdemandIndex(undefined);
                     }}
                     onSave={(data) => {
@@ -727,6 +819,8 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                       } else {
                         setSubdemands(prev => [...prev, data]);
                       }
+                      setActiveView('demand');
+                      setEditingSubdemandIndex(undefined);
                     }}
                     existingSubdemands={subdemands}
                     editingIndex={editingSubdemandIndex}
@@ -738,66 +832,10 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                     teamId={selectedTeamId}
                     boardId={activeBoardId}
                   />
-                </div>
-
-                {/* Description - full width */}
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descrição</Label>
-                  <RichTextEditor
-                    value={description}
-                    onChange={setDescription}
-                    placeholder="Descreva os detalhes da demanda... (cole imagens diretamente)"
-                    minHeight="120px"
-                  />
-                </div>
-
-                {/* Row: Attachments + Recurrence */}
-                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label>Anexos</Label>
-                      {pendingFiles.length > 0 && (
-                        <span className="text-xs text-muted-foreground">{pendingFiles.length} arquivo(s)</span>
-                      )}
-                    </div>
-                    <InlineFileUploader
-                      pendingFiles={pendingFiles}
-                      onFilesChange={setPendingFiles}
-                      disabled={isOffline}
-                      listenToGlobalPaste={!isOffline}
-                    />
-                    {isOffline && (
-                      <p className="text-xs text-muted-foreground">
-                        Anexos não podem ser adicionados offline
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Recorrência</Label>
-                    <RecurrenceConfig value={recurrence} onChange={setRecurrence} />
-                  </div>
-                </div>
-
-
-              </form>
+                )}
+              </div>
             </div>
-
-            {/* Footer */}
-            <div className="shrink-0 px-6 py-2 flex justify-end gap-3 bg-card">
-              <Button type="button" variant="outline" size="sm" onClick={handleClose}>
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                form="create-demand-form"
-                disabled={isSubmitDisabled}
-                size="sm"
-              >
-                {(createDemand.isPending || createDemandWithSubdemands.isPending) ? "Criando..." : "Criar Demanda"}
-              </Button>
-            </div>
-          </>
+          </div>
         )}
       </DialogContent>
     </Dialog>
