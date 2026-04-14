@@ -63,7 +63,7 @@ export function KanbanSubdemandsList({ demandId, onSubdemandClick }: KanbanSubde
               )}
               {assignees.length > 0 && (
                 <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
-                  <AssigneeAvatars assignees={assignees} size="xs" maxVisible={2} />
+                  <AssigneeAvatars assignees={assignees} size="sm" maxVisible={2} />
                 </div>
               )}
             </div>
