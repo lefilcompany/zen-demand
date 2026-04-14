@@ -37,7 +37,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { CreateSubdemandForm, SubdemandFormData } from "@/components/CreateSubdemandForm";
+import { CreateSubdemandForm, SubdemandFormData, SubdemandDraft, emptyDraft } from "@/components/CreateSubdemandForm";
 
 export default function CreateDemand({ open, onClose }: { open?: boolean; onClose?: () => void }) {
   const { t } = useTranslation();
@@ -112,6 +112,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const [subdemands, setSubdemands] = useState<SubdemandFormData[]>([]);
   const [activeView, setActiveView] = useState<'demand' | 'subdemand'>('demand');
   const [editingSubdemandIndex, setEditingSubdemandIndex] = useState<number | undefined>(undefined);
+  const [subdemandDraft, setSubdemandDraft] = useState<SubdemandDraft>(emptyDraft);
   const uploadAttachment = useUploadAttachment();
   const createRecurringDemand = useCreateRecurringDemand();
   const createDemandWithSubdemands = useCreateDemandWithSubdemands();
@@ -182,6 +183,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     setSelectedFolderId("");
     setSubdemands([]);
     setActiveView('demand');
+    setSubdemandDraft(emptyDraft);
   };
 
   const isServiceValid = () => {
@@ -480,15 +482,15 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
               <button
                 type="button"
                 onClick={() => {
-                  if (subdemands.length > 0 || activeView === 'subdemand') {
+                  if (subdemands.length > 0 || activeView === 'subdemand' || subdemandDraft.title.trim()) {
                     setActiveView('subdemand');
                   }
                 }}
                 className={cn(
                   "h-2 rounded-full transition-all duration-300",
                   activeView === 'subdemand' ? "w-6 bg-[#F28705]" : "w-2 bg-muted-foreground/30",
-                  (subdemands.length > 0 || activeView === 'subdemand') && "hover:bg-muted-foreground/50",
-                  subdemands.length === 0 && activeView !== 'subdemand' && "opacity-40 cursor-not-allowed"
+                  (subdemands.length > 0 || activeView === 'subdemand' || subdemandDraft.title.trim()) && "hover:bg-muted-foreground/50",
+                  subdemands.length === 0 && activeView !== 'subdemand' && !subdemandDraft.title.trim() && "opacity-40 cursor-not-allowed"
                 )}
               />
             </div>
@@ -723,6 +725,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                           className="h-9 border-dashed border-[#F28705] text-[#F28705] hover:bg-[#F28705]/10 hover:text-[#F28705] gap-1.5 text-xs rounded-lg"
                           onClick={() => {
                             setEditingSubdemandIndex(undefined);
+                            setSubdemandDraft(emptyDraft);
                             setActiveView('subdemand');
                           }}
                         >
@@ -736,6 +739,16 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                             className="inline-flex items-center justify-between gap-1.5 rounded-md bg-[#F28705] text-white px-3 h-9 text-xs font-medium cursor-pointer hover:bg-[#F28705]/90 transition-colors truncate"
                             onClick={() => {
                               setEditingSubdemandIndex(idx);
+                              // Pre-populate draft from existing subdemand
+                              setSubdemandDraft({
+                                title: sub.title,
+                                priority: sub.priority || "média",
+                                description: sub.description || "",
+                                statusId: sub.status_id || statusId,
+                                dueDate: sub.due_date || "",
+                                assigneeIds: sub.assigneeIds || [],
+                                dependsOnIndex: sub.dependsOnIndex,
+                              });
                               setActiveView('subdemand');
                             }}
                           >
@@ -803,36 +816,42 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                 </div>
               </div>
 
-              {/* View 2: Subdemand form */}
+              {/* View 2: Subdemand form — always rendered to preserve state */}
               <div className="w-full shrink-0 h-full">
-                {activeView === 'subdemand' && (
-                  <CreateSubdemandForm
-                    onBack={() => {
-                      setActiveView('demand');
-                      setEditingSubdemandIndex(undefined);
-                    }}
-                    onSave={(data) => {
-                      if (editingSubdemandIndex !== undefined) {
-                        setSubdemands(prev =>
-                          prev.map((s, i) => i === editingSubdemandIndex ? { ...data, tempId: s.tempId } : s)
-                        );
-                      } else {
-                        setSubdemands(prev => [...prev, data]);
-                      }
-                      setActiveView('demand');
-                      setEditingSubdemandIndex(undefined);
-                    }}
-                    existingSubdemands={subdemands}
-                    editingIndex={editingSubdemandIndex}
-                    editingData={editingSubdemandIndex !== undefined ? subdemands[editingSubdemandIndex] : null}
-                    parentServiceId={serviceId && serviceId !== "none" ? serviceId : undefined}
-                    parentServiceName={serviceInfo?.service?.name}
-                    statuses={statuses}
-                    defaultStatusId={statusId}
-                    teamId={selectedTeamId}
-                    boardId={activeBoardId}
-                  />
-                )}
+                <CreateSubdemandForm
+                  onBack={() => {
+                    setActiveView('demand');
+                  }}
+                  onSave={(data) => {
+                    if (editingSubdemandIndex !== undefined) {
+                      setSubdemands(prev =>
+                        prev.map((s, i) => i === editingSubdemandIndex ? { ...data, tempId: s.tempId } : s)
+                      );
+                    } else {
+                      setSubdemands(prev => [...prev, data]);
+                    }
+                    setActiveView('demand');
+                    setEditingSubdemandIndex(undefined);
+                    setSubdemandDraft(emptyDraft);
+                  }}
+                  onDelete={editingSubdemandIndex !== undefined ? () => {
+                    setSubdemands(prev => prev.filter((_, i) => i !== editingSubdemandIndex));
+                    setActiveView('demand');
+                    setEditingSubdemandIndex(undefined);
+                    setSubdemandDraft(emptyDraft);
+                  } : undefined}
+                  existingSubdemands={subdemands}
+                  editingIndex={editingSubdemandIndex}
+                  editingData={editingSubdemandIndex !== undefined ? subdemands[editingSubdemandIndex] : null}
+                  parentServiceId={serviceId && serviceId !== "none" ? serviceId : undefined}
+                  parentServiceName={serviceInfo?.service?.name}
+                  statuses={statuses}
+                  defaultStatusId={statusId}
+                  teamId={selectedTeamId}
+                  boardId={activeBoardId}
+                  draft={subdemandDraft}
+                  onDraftChange={setSubdemandDraft}
+                />
               </div>
             </div>
           </div>

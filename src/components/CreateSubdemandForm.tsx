@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
-import { ArrowLeft, GitBranch, Users } from "lucide-react";
+import { ArrowLeft, GitBranch, Users, X } from "lucide-react";
 import type { SubdemandInput } from "@/hooks/useSubdemands";
 
 export interface SubdemandFormData extends SubdemandInput {
@@ -13,6 +13,26 @@ export interface SubdemandFormData extends SubdemandInput {
   dependsOnIndex?: number;
   assigneeIds?: string[];
 }
+
+export interface SubdemandDraft {
+  title: string;
+  priority: string;
+  description: string;
+  statusId: string;
+  dueDate: string;
+  assigneeIds: string[];
+  dependsOnIndex?: number;
+}
+
+export const emptyDraft: SubdemandDraft = {
+  title: "",
+  priority: "média",
+  description: "",
+  statusId: "",
+  dueDate: "",
+  assigneeIds: [],
+  dependsOnIndex: undefined,
+};
 
 interface StatusOption {
   id: string;
@@ -23,6 +43,7 @@ interface StatusOption {
 interface CreateSubdemandFormProps {
   onBack: () => void;
   onSave: (data: SubdemandFormData) => void;
+  onDelete?: () => void;
   existingSubdemands: SubdemandFormData[];
   editingIndex?: number;
   editingData?: SubdemandFormData | null;
@@ -32,11 +53,14 @@ interface CreateSubdemandFormProps {
   defaultStatusId: string;
   teamId: string | null;
   boardId: string | null;
+  draft: SubdemandDraft;
+  onDraftChange: (draft: SubdemandDraft) => void;
 }
 
 export function CreateSubdemandForm({
   onBack,
   onSave,
+  onDelete,
   existingSubdemands,
   editingIndex,
   editingData,
@@ -46,50 +70,50 @@ export function CreateSubdemandForm({
   defaultStatusId,
   teamId,
   boardId,
+  draft,
+  onDraftChange,
 }: CreateSubdemandFormProps) {
-  const [title, setTitle] = useState("");
-  const [priority, setPriority] = useState("média");
-  const [description, setDescription] = useState("");
-  const [statusId, setStatusId] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
-  const [dependsOnIndex, setDependsOnIndex] = useState<number | undefined>(undefined);
-
   const isEditing = editingData != null;
 
+  // Sync draft from editingData when editing starts
   useEffect(() => {
     if (editingData) {
-      setTitle(editingData.title);
-      setPriority(editingData.priority || "média");
-      setDescription(editingData.description || "");
-      setStatusId(editingData.status_id || defaultStatusId);
-      setDueDate(editingData.due_date || "");
-      setAssigneeIds(editingData.assigneeIds || []);
-      setDependsOnIndex(editingData.dependsOnIndex);
-    } else {
-      setTitle("");
-      setPriority("média");
-      setDescription("");
-      setStatusId(defaultStatusId);
-      setDueDate("");
-      setAssigneeIds([]);
-      setDependsOnIndex(undefined);
+      onDraftChange({
+        title: editingData.title,
+        priority: editingData.priority || "média",
+        description: editingData.description || "",
+        statusId: editingData.status_id || defaultStatusId,
+        dueDate: editingData.due_date || "",
+        assigneeIds: editingData.assigneeIds || [],
+        dependsOnIndex: editingData.dependsOnIndex,
+      });
     }
-  }, [editingData, defaultStatusId]);
+  }, [editingData?.tempId]);
+
+  // Set default status if empty
+  useEffect(() => {
+    if (!draft.statusId && defaultStatusId) {
+      onDraftChange({ ...draft, statusId: defaultStatusId });
+    }
+  }, [defaultStatusId]);
+
+  const updateDraft = useCallback((partial: Partial<SubdemandDraft>) => {
+    onDraftChange({ ...draft, ...partial });
+  }, [draft, onDraftChange]);
 
   const handleSave = () => {
-    if (!title.trim()) return;
+    if (!draft.title.trim()) return;
     onSave({
       tempId: editingData?.tempId || crypto.randomUUID(),
-      title: title.trim(),
-      priority,
-      description: description.trim() || undefined,
-      status_id: statusId || undefined,
+      title: draft.title.trim(),
+      priority: draft.priority,
+      description: draft.description.trim() || undefined,
+      status_id: draft.statusId || undefined,
       service_id: parentServiceId || undefined,
-      due_date: dueDate || undefined,
-      assigned_to: assigneeIds[0] || undefined,
-      assigneeIds,
-      dependsOnIndex,
+      due_date: draft.dueDate || undefined,
+      assigned_to: draft.assigneeIds[0] || undefined,
+      assigneeIds: draft.assigneeIds,
+      dependsOnIndex: draft.dependsOnIndex,
     });
   };
 
@@ -109,13 +133,29 @@ export function CreateSubdemandForm({
           <ArrowLeft className="h-4 w-4" />
           Voltar para demanda
         </button>
-        <h2 className="text-xl font-bold flex items-center gap-2">
-          <GitBranch className="h-5 w-5 text-[#F28705]" />
-          {isEditing ? "Editar Subdemanda" : "Nova Subdemanda"}
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Preencha os dados da subdemanda vinculada à demanda principal
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <GitBranch className="h-5 w-5 text-[#F28705]" />
+              {isEditing ? "Editar Subdemanda" : "Nova Subdemanda"}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Preencha os dados da subdemanda vinculada à demanda principal
+            </p>
+          </div>
+          {isEditing && onDelete && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5"
+              onClick={onDelete}
+            >
+              <X className="h-4 w-4" />
+              Remover
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Form body */}
@@ -127,15 +167,15 @@ export function CreateSubdemandForm({
             <Input
               id="sub-title"
               placeholder="Ex: Criar layout da tela"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              value={draft.title}
+              onChange={(e) => updateDraft({ title: e.target.value })}
               className="h-8"
               autoFocus
             />
           </div>
 
           {/* Service (read-only, inherited) + Assignees */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {parentServiceName && (
               <div className="space-y-2">
                 <Label>Serviço</Label>
@@ -146,7 +186,7 @@ export function CreateSubdemandForm({
                 />
               </div>
             )}
-            <div className={`space-y-2 ${!parentServiceName ? "col-span-2" : ""}`}>
+            <div className={`space-y-2 ${!parentServiceName ? "sm:col-span-2" : ""}`}>
               <Label className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 Responsáveis
@@ -154,18 +194,18 @@ export function CreateSubdemandForm({
               <AssigneeSelector
                 teamId={teamId}
                 boardId={boardId}
-                selectedUserIds={assigneeIds}
-                onChange={setAssigneeIds}
+                selectedUserIds={draft.assigneeIds}
+                onChange={(ids) => updateDraft({ assigneeIds: ids })}
                 hideIcon
               />
             </div>
           </div>
 
           {/* Status + Priority + Due Date */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-2">
               <Label>Status *</Label>
-              <Select value={statusId} onValueChange={setStatusId}>
+              <Select value={draft.statusId} onValueChange={(v) => updateDraft({ statusId: v })}>
                 <SelectTrigger className="h-8">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
@@ -181,7 +221,7 @@ export function CreateSubdemandForm({
 
             <div className="space-y-2">
               <Label>Prioridade</Label>
-              <Select value={priority} onValueChange={setPriority}>
+              <Select value={draft.priority} onValueChange={(v) => updateDraft({ priority: v })}>
                 <SelectTrigger className="h-8">
                   <SelectValue />
                 </SelectTrigger>
@@ -197,8 +237,8 @@ export function CreateSubdemandForm({
               <Label>Data de Entrega</Label>
               <Input
                 type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+                value={draft.dueDate}
+                onChange={(e) => updateDraft({ dueDate: e.target.value })}
                 className="h-8"
               />
             </div>
@@ -209,8 +249,8 @@ export function CreateSubdemandForm({
             <div className="space-y-2">
               <Label>Depende de</Label>
               <Select
-                value={dependsOnIndex !== undefined ? String(dependsOnIndex) : "none"}
-                onValueChange={(v) => setDependsOnIndex(v === "none" ? undefined : Number(v))}
+                value={draft.dependsOnIndex !== undefined ? String(draft.dependsOnIndex) : "none"}
+                onValueChange={(v) => updateDraft({ dependsOnIndex: v === "none" ? undefined : Number(v) })}
               >
                 <SelectTrigger className="h-8">
                   <SelectValue placeholder="Nenhuma" />
@@ -231,8 +271,8 @@ export function CreateSubdemandForm({
           <div className="space-y-2">
             <Label>Descrição</Label>
             <RichTextEditor
-              value={description}
-              onChange={setDescription}
+              value={draft.description}
+              onChange={(v) => updateDraft({ description: v })}
               placeholder="Descreva os detalhes da subdemanda..."
               minHeight="100px"
             />
@@ -248,7 +288,7 @@ export function CreateSubdemandForm({
         <Button
           type="button"
           onClick={handleSave}
-          disabled={!title.trim()}
+          disabled={!draft.title.trim()}
           size="sm"
           className="bg-[#F28705] hover:bg-[#F28705]/90 text-white"
         >
