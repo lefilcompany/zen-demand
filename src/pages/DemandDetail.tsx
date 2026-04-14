@@ -931,27 +931,79 @@ export default function DemandDetail() {
               />
 
               {subdemands && subdemands.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {subdemands.map((sub) => {
                     const statusName = sub.demand_statuses?.name || "";
                     const isDelivered = statusName === "Entregue";
                     const isNotStarted = statusName === "A Iniciar";
-                    // Gray for not started, green for delivered, orange for in-progress
                     const bgColor = isDelivered
                       ? "#10B981"
                       : isNotStarted
                         ? "#9CA3AF"
                         : "#F28705";
+                    const assignees = sub.demand_assignees || [];
+                    const totalSeconds = sub.time_in_progress_seconds || 0;
+                    const hours = Math.floor(totalSeconds / 3600);
+                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+                    const timeLabel = totalSeconds > 0
+                      ? `${hours}h${minutes > 0 ? `${String(minutes).padStart(2, "0")}m` : ""}`
+                      : null;
+                    const priorityLabel = sub.priority === "alta" ? "Alta" : sub.priority === "baixa" ? "Baixa" : "Média";
+                    const priorityColor = sub.priority === "alta" ? "#EF4444" : sub.priority === "baixa" ? "#3B82F6" : "#F59E0B";
+
                     return (
                       <button
                         key={sub.id}
                         onClick={() => navigate(`/demands/${sub.id}`)}
-                        className="w-full text-left rounded-md px-3 py-2 text-xs font-medium text-white truncate transition-opacity hover:opacity-80 cursor-pointer"
-                        style={{ backgroundColor: bgColor }}
+                        className="w-full text-left rounded-lg overflow-hidden transition-opacity hover:opacity-90 cursor-pointer border border-border/30"
                         title={`${sub.title} — ${statusName}`}
                       >
-                        {sub.board_sequence_number ? `#${String(sub.board_sequence_number).padStart(4, "0")} ` : ""}
-                        {sub.title}
+                        {/* Color header bar */}
+                        <div className="px-3 py-1.5 text-white text-xs font-semibold truncate" style={{ backgroundColor: bgColor }}>
+                          {sub.board_sequence_number ? `#${String(sub.board_sequence_number).padStart(4, "0")} · ` : ""}
+                          {sub.title}
+                        </div>
+                        {/* Details */}
+                        <div className="px-3 py-2 bg-card space-y-1.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-medium uppercase tracking-wide" style={{ color: bgColor }}>
+                              {statusName}
+                            </span>
+                            <span className="text-[10px] font-medium uppercase" style={{ color: priorityColor }}>
+                              {priorityLabel}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+                            {/* Assignees */}
+                            <div className="flex items-center gap-1 min-w-0">
+                              {assignees.length > 0 ? (
+                                <div className="flex -space-x-1.5">
+                                  {assignees.slice(0, 3).map((a) => (
+                                    <Avatar key={a.user_id} className="h-4 w-4 border border-background">
+                                      <AvatarImage src={a.profile?.avatar_url || undefined} />
+                                      <AvatarFallback className="text-[6px]">
+                                        {a.profile?.full_name?.charAt(0) || "?"}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                  ))}
+                                  {assignees.length > 3 && (
+                                    <span className="text-[9px] ml-1">+{assignees.length - 3}</span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="truncate">Sem responsável</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {timeLabel && (
+                                <span className="font-mono">{timeLabel}</span>
+                              )}
+                              {sub.due_date && (
+                                <span>{formatDateOnlyBR(sub.due_date)}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </button>
                     );
                   })}
