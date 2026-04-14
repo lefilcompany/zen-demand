@@ -1050,8 +1050,36 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 );
               })()}
 
-              {/* Subdemands list */}
-              <KanbanSubdemandsList demandId={demand.id} onSubdemandClick={onDemandClick} />
+              {/* Parent demand reference (for subdemands) */}
+              {demand.parent_demand && (
+                <div
+                  className="mt-2 rounded-md border border-border/60 bg-muted/30 p-2 cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDemandClick(demand.parent_demand!.id);
+                  }}
+                >
+                  <span className="text-[10px] text-muted-foreground font-medium">Dentro da demanda:</span>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    {demand.parent_demand.board_sequence_number && (
+                      <Badge variant="outline" className="text-[10px] bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono px-1.5 py-0">
+                        {formatDemandCode(demand.parent_demand.board_sequence_number)}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs font-medium mt-1 line-clamp-1">{demand.parent_demand.title}</p>
+                  {demand.parent_demand.description && (() => {
+                    const txt = extractPlainText(demand.parent_demand.description);
+                    if (!txt) return null;
+                    return <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{txt.length > 60 ? txt.slice(0, 60) + "..." : txt}</p>;
+                  })()}
+                </div>
+              )}
+
+              {/* Subdemands list (only for parent demands) */}
+              {!demand.parent_demand_id && (
+                <KanbanSubdemandsList demandId={demand.id} onSubdemandClick={onDemandClick} />
+              )}
 
               <div className="flex items-center justify-between mt-2">
                 <div className="flex items-center gap-2 flex-wrap">
