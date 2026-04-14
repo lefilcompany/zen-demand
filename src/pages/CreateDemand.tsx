@@ -786,6 +786,22 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                       )}
                     </div>
                   ))}
+                  {subdemands.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full h-8 border-dashed border-[#F28705] text-[#F28705] hover:bg-[#F28705]/10 hover:text-[#F28705] gap-2 text-xs"
+                      onClick={() => {
+                        setSubdemands(prev => [
+                          ...prev,
+                          { tempId: crypto.randomUUID(), title: "", priority: "média" },
+                        ]);
+                      }}
+                    >
+                      <Plus className="h-3 w-3" />
+                      Adicionar Subdemanda
+                    </Button>
+                  )}
                 </div>
 
                 {/* Description - full width */}
