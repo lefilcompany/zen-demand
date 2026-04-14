@@ -37,7 +37,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { CreateSubdemandForm, SubdemandFormData } from "@/components/CreateSubdemandForm";
+import { CreateSubdemandForm, SubdemandFormData, SubdemandDraft, emptyDraft } from "@/components/CreateSubdemandForm";
 
 export default function CreateDemand({ open, onClose }: { open?: boolean; onClose?: () => void }) {
   const { t } = useTranslation();
