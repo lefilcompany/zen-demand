@@ -212,11 +212,14 @@ export function useStartUserTimer() {
     onMutate: async (demandId) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["user-demand-time", demandId, user?.id] });
+      await queryClient.cancelQueries({ queryKey: ["active-timer-demands", user?.id] });
       
-      // Snapshot current value
+      // Snapshot current values
       const previousTime = queryClient.getQueryData(["user-demand-time", demandId, user?.id]);
+      const previousActive = queryClient.getQueryData(["active-timer-demands", user?.id]);
       
       // Optimistically update to running state
+      const now = new Date().toISOString();
       queryClient.setQueryData(["user-demand-time", demandId, user?.id], (old: any) => {
         return {
           totalSeconds: old?.totalSeconds || 0,
@@ -224,19 +227,34 @@ export function useStartUserTimer() {
             id: "temp-" + Date.now(),
             demand_id: demandId,
             user_id: user?.id,
-            started_at: new Date().toISOString(),
+            started_at: now,
             ended_at: null,
             duration_seconds: 0,
           },
         };
       });
+
+      // Optimistically update sidebar: replace all active timers with this one
+      queryClient.setQueryData(["active-timer-demands", user?.id], (old: any[]) => {
+        return [{
+          id: demandId,
+          title: "...",
+          board_id: "",
+          boards: null,
+          started_at: now,
+          total_seconds: 0,
+        }];
+      });
       
-      return { previousTime };
+      return { previousTime, previousActive };
     },
     onError: (error, demandId, context) => {
       // Rollback on error
       if (context?.previousTime) {
         queryClient.setQueryData(["user-demand-time", demandId, user?.id], context.previousTime);
+      }
+      if (context?.previousActive !== undefined) {
+        queryClient.setQueryData(["active-timer-demands", user?.id], context.previousActive);
       }
       console.error("Error starting timer:", error);
       toast.error("Erro ao iniciar o timer");
@@ -294,9 +312,11 @@ export function useStopUserTimer() {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["user-demand-time", demandId, user?.id] });
       await queryClient.cancelQueries({ queryKey: ["user-active-timer", demandId, user?.id] });
+      await queryClient.cancelQueries({ queryKey: ["active-timer-demands", user?.id] });
       
-      // Snapshot current value
+      // Snapshot current values
       const previousTime = queryClient.getQueryData(["user-demand-time", demandId, user?.id]);
+      const previousActive = queryClient.getQueryData(["active-timer-demands", user?.id]);
       
       // Optimistically update to stopped state
       queryClient.setQueryData(["user-demand-time", demandId, user?.id], (old: any) => {
@@ -309,13 +329,22 @@ export function useStopUserTimer() {
           activeEntry: null,
         };
       });
+
+      // Optimistically remove from sidebar
+      queryClient.setQueryData(["active-timer-demands", user?.id], (old: any[]) => {
+        if (!old) return [];
+        return old.filter((d: any) => d.id !== demandId);
+      });
       
-      return { previousTime };
+      return { previousTime, previousActive };
     },
     onError: (error, demandId, context) => {
       // Rollback on error
       if (context?.previousTime) {
         queryClient.setQueryData(["user-demand-time", demandId, user?.id], context.previousTime);
+      }
+      if (context?.previousActive !== undefined) {
+        queryClient.setQueryData(["active-timer-demands", user?.id], context.previousActive);
       }
       console.error("Error stopping timer:", error);
       toast.error("Erro ao pausar o timer");
