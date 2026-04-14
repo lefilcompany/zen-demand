@@ -45,6 +45,7 @@ import { DemandPresenceIndicator } from "@/components/DemandPresenceIndicator";
 import { RealtimeUpdateIndicator } from "@/components/RealtimeUpdateIndicator";
 import { useSubdemands, useAddSubdemand } from "@/hooks/useSubdemands";
 import { SubdemandBadge } from "@/components/SubdemandBadge";
+import { CreateSubdemandDialog, type SubdemandFormData } from "@/components/CreateSubdemandDialog";
 export default function DemandDetail() {
   const {
     id
@@ -147,6 +148,7 @@ export default function DemandDetail() {
   const addSubdemand = useAddSubdemand();
   const [newSubdemandTitle, setNewSubdemandTitle] = useState("");
   const [showAddSubdemand, setShowAddSubdemand] = useState(false);
+  const [showSubdemandDialog, setShowSubdemandDialog] = useState(false);
   const [editingAssignees, setEditingAssignees] = useState(false);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -874,7 +876,7 @@ export default function DemandDetail() {
                     variant="outline"
                     size="sm"
                     className="h-7 text-xs gap-1"
-                    onClick={() => setShowAddSubdemand(!showAddSubdemand)}
+                    onClick={() => setShowSubdemandDialog(true)}
                   >
                     <Plus className="h-3 w-3" />
                     Adicionar
@@ -882,44 +884,51 @@ export default function DemandDetail() {
                 )}
               </div>
 
-              {showAddSubdemand && (
-                <form
-                  className="flex items-center gap-2"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (!newSubdemandTitle.trim() || !demand) return;
-                    const defaultStatus = statuses?.find(s => s.name === "A Iniciar") || statuses?.[0];
-                    if (!defaultStatus) return;
-                    addSubdemand.mutate(
-                      {
-                        parentDemandId: demand.id,
-                        title: newSubdemandTitle.trim(),
-                        teamId: demand.team_id,
-                        boardId: demand.board_id,
-                        statusId: defaultStatus.id,
-                      },
-                      {
-                        onSuccess: () => {
-                          setNewSubdemandTitle("");
-                          toast.success("Subdemanda criada!");
-                        },
-                        onError: (err) => toast.error(getErrorMessage(err)),
-                      }
-                    );
-                  }}
-                >
-                  <Input
-                    autoFocus
-                    placeholder="Título da subdemanda"
-                    value={newSubdemandTitle}
-                    onChange={(e) => setNewSubdemandTitle(e.target.value)}
-                    className="h-8 text-sm flex-1"
-                  />
-                  <Button type="submit" size="sm" className="h-8" disabled={!newSubdemandTitle.trim() || addSubdemand.isPending}>
-                    Criar
-                  </Button>
-                </form>
-              )}
+              <CreateSubdemandDialog
+                open={showSubdemandDialog}
+                onClose={() => setShowSubdemandDialog(false)}
+                onSave={async (data: SubdemandFormData) => {
+                  if (!demand) return;
+                  const defaultStatus = statuses?.find(s => s.name === "A Iniciar") || statuses?.[0];
+                  if (!defaultStatus) return;
+                  try {
+                    const result = await addSubdemand.mutateAsync({
+                      parentDemandId: demand.id,
+                      title: data.title,
+                      teamId: demand.team_id,
+                      boardId: demand.board_id,
+                      statusId: data.status_id || defaultStatus.id,
+                      priority: data.priority,
+                    });
+                    // Insert assignees if provided
+                    if (data.assigneeIds && data.assigneeIds.length > 0 && result?.id) {
+                      const inserts = data.assigneeIds.map(userId => ({
+                        demand_id: result.id,
+                        user_id: userId,
+                      }));
+                      await supabase.from("demand_assignees").insert(inserts);
+                    }
+                    // Update description/due_date/service if provided
+                    if (result?.id && (data.description || data.due_date || data.service_id)) {
+                      await supabase.from("demands").update({
+                        ...(data.description && { description: data.description }),
+                        ...(data.due_date && { due_date: data.due_date }),
+                        ...(data.service_id && { service_id: data.service_id }),
+                      }).eq("id", result.id);
+                    }
+                    toast.success("Subdemanda criada!");
+                  } catch (err) {
+                    toast.error(getErrorMessage(err));
+                  }
+                }}
+                existingSubdemands={[]}
+                statuses={statuses}
+                defaultStatusId={statuses?.find(s => s.name === "A Iniciar")?.id || statuses?.[0]?.id || ""}
+                teamId={demand?.team_id || null}
+                boardId={demand?.board_id || null}
+                parentServiceId={demand?.service_id || undefined}
+                parentServiceName={(demand as any)?.services?.name || undefined}
+              />
 
               {subdemands && subdemands.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
