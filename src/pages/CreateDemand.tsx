@@ -672,17 +672,17 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                 </div>
 
                 {/* Subdemands Section */}
-                <div className="space-y-3 border-t border-border pt-4">
-                  <div className="flex items-center justify-between">
-                    <Label className="flex items-center gap-2">
-                      <GitBranch className="h-4 w-4" />
-                      Subdemandas
-                    </Label>
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <GitBranch className="h-4 w-4" />
+                    Subdemandas
+                  </Label>
+
+                  {subdemands.length === 0 ? (
                     <Button
                       type="button"
                       variant="outline"
-                      size="sm"
-                      className="h-7 text-xs gap-1"
+                      className="w-full h-10 border-dashed border-[#F28705] text-[#F28705] hover:bg-[#F28705]/10 hover:text-[#F28705] gap-2 text-sm"
                       onClick={() => {
                         setSubdemands(prev => [
                           ...prev,
@@ -690,15 +690,11 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                         ]);
                       }}
                     >
-                      <Plus className="h-3 w-3" />
-                      Adicionar
+                      <Plus className="h-4 w-4" />
+                      Adicionar Subdemanda
                     </Button>
-                  </div>
-
-                  {subdemands.length === 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      Nenhuma subdemanda adicionada. Subdemandas são criadas dentro da demanda principal.
-                    </p>
+                  ) : (
+                    <></>
                   )}
 
                   {subdemands.map((sub, idx) => (
@@ -790,6 +786,22 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                       )}
                     </div>
                   ))}
+                  {subdemands.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full h-8 border-dashed border-[#F28705] text-[#F28705] hover:bg-[#F28705]/10 hover:text-[#F28705] gap-2 text-xs"
+                      onClick={() => {
+                        setSubdemands(prev => [
+                          ...prev,
+                          { tempId: crypto.randomUUID(), title: "", priority: "média" },
+                        ]);
+                      }}
+                    >
+                      <Plus className="h-3 w-3" />
+                      Adicionar Subdemanda
+                    </Button>
+                  )}
                 </div>
 
                 {/* Description - full width */}
