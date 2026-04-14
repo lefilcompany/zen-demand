@@ -842,6 +842,104 @@ export default function DemandDetail() {
             )}
 
 
+          {/* Parent demand link */}
+          {demand.parent_demand_id && (
+            <div className="flex items-center gap-2 text-sm bg-muted/50 rounded-lg px-3 py-2">
+              <GitBranch className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Subdemanda de:</span>
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto p-0 text-primary"
+                onClick={() => navigate(`/demands/${demand.parent_demand_id}`)}
+              >
+                Ver demanda pai
+              </Button>
+            </div>
+          )}
+
+          {/* Subdemands section */}
+          {!demand.parent_demand_id && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-sm md:text-base flex items-center gap-2">
+                  <GitBranch className="h-4 w-4" />
+                  Subdemandas
+                  {subdemands && subdemands.length > 0 && (
+                    <Badge variant="secondary" className="text-xs">{subdemands.length}</Badge>
+                  )}
+                </h3>
+                {canEdit && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs gap-1"
+                    onClick={() => setShowAddSubdemand(!showAddSubdemand)}
+                  >
+                    <Plus className="h-3 w-3" />
+                    Adicionar
+                  </Button>
+                )}
+              </div>
+
+              {showAddSubdemand && (
+                <form
+                  className="flex items-center gap-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!newSubdemandTitle.trim() || !demand) return;
+                    const defaultStatus = statuses?.find(s => s.name === "A Iniciar") || statuses?.[0];
+                    if (!defaultStatus) return;
+                    addSubdemand.mutate(
+                      {
+                        parentDemandId: demand.id,
+                        title: newSubdemandTitle.trim(),
+                        teamId: demand.team_id,
+                        boardId: demand.board_id,
+                        statusId: defaultStatus.id,
+                      },
+                      {
+                        onSuccess: () => {
+                          setNewSubdemandTitle("");
+                          toast.success("Subdemanda criada!");
+                        },
+                        onError: (err) => toast.error(getErrorMessage(err)),
+                      }
+                    );
+                  }}
+                >
+                  <Input
+                    autoFocus
+                    placeholder="Título da subdemanda"
+                    value={newSubdemandTitle}
+                    onChange={(e) => setNewSubdemandTitle(e.target.value)}
+                    className="h-8 text-sm flex-1"
+                  />
+                  <Button type="submit" size="sm" className="h-8" disabled={!newSubdemandTitle.trim() || addSubdemand.isPending}>
+                    Criar
+                  </Button>
+                </form>
+              )}
+
+              {subdemands && subdemands.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {subdemands.map((sub) => (
+                    <SubdemandBadge
+                      key={sub.id}
+                      title={sub.title}
+                      statusName={sub.demand_statuses?.name}
+                      statusColor={sub.demand_statuses?.color}
+                      sequenceNumber={sub.board_sequence_number}
+                      onClick={() => navigate(`/demands/${sub.id}`)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Nenhuma subdemanda</p>
+              )}
+            </div>
+          )}
+
           {/* Attachments section - result/deliverables - only agents/admins can upload */}
           <div>
             
