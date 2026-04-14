@@ -143,6 +143,10 @@ export default function DemandDetail() {
     isLoading: isTimerLoading
   } = useUserTimerControl(id);
   const sendEmail = useSendEmail();
+  const { data: subdemands } = useSubdemands(id || null);
+  const addSubdemand = useAddSubdemand();
+  const [newSubdemandTitle, setNewSubdemandTitle] = useState("");
+  const [showAddSubdemand, setShowAddSubdemand] = useState(false);
   const [editingAssignees, setEditingAssignees] = useState(false);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
