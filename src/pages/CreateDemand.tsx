@@ -725,6 +725,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                           className="h-9 border-dashed border-[#F28705] text-[#F28705] hover:bg-[#F28705]/10 hover:text-[#F28705] gap-1.5 text-xs rounded-lg"
                           onClick={() => {
                             setEditingSubdemandIndex(undefined);
+                            setSubdemandDraft(emptyDraft);
                             setActiveView('subdemand');
                           }}
                         >
