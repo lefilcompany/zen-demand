@@ -739,6 +739,16 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                             className="inline-flex items-center justify-between gap-1.5 rounded-md bg-[#F28705] text-white px-3 h-9 text-xs font-medium cursor-pointer hover:bg-[#F28705]/90 transition-colors truncate"
                             onClick={() => {
                               setEditingSubdemandIndex(idx);
+                              // Pre-populate draft from existing subdemand
+                              setSubdemandDraft({
+                                title: sub.title,
+                                priority: sub.priority || "média",
+                                description: sub.description || "",
+                                statusId: sub.status_id || statusId,
+                                dueDate: sub.due_date || "",
+                                assigneeIds: sub.assigneeIds || [],
+                                dependsOnIndex: sub.dependsOnIndex,
+                              });
                               setActiveView('subdemand');
                             }}
                           >
