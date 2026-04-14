@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
-import { ArrowLeft, GitBranch, Users } from "lucide-react";
+import { GitBranch, Users } from "lucide-react";
 import type { SubdemandInput } from "@/hooks/useSubdemands";
 
 export interface SubdemandFormData extends SubdemandInput {
@@ -20,12 +21,14 @@ interface StatusOption {
   color: string;
 }
 
-interface CreateSubdemandFormProps {
-  onBack: () => void;
+interface CreateSubdemandDialogProps {
+  open: boolean;
+  onClose: () => void;
   onSave: (data: SubdemandFormData) => void;
   existingSubdemands: SubdemandFormData[];
   editingIndex?: number;
   editingData?: SubdemandFormData | null;
+  // Context from parent demand
   parentServiceId?: string;
   parentServiceName?: string;
   statuses: StatusOption[];
@@ -34,8 +37,9 @@ interface CreateSubdemandFormProps {
   boardId: string | null;
 }
 
-export function CreateSubdemandForm({
-  onBack,
+export function CreateSubdemandDialog({
+  open,
+  onClose,
   onSave,
   existingSubdemands,
   editingIndex,
@@ -46,7 +50,7 @@ export function CreateSubdemandForm({
   defaultStatusId,
   teamId,
   boardId,
-}: CreateSubdemandFormProps) {
+}: CreateSubdemandDialogProps) {
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState("média");
   const [description, setDescription] = useState("");
@@ -58,7 +62,7 @@ export function CreateSubdemandForm({
   const isEditing = editingData != null;
 
   useEffect(() => {
-    if (editingData) {
+    if (open && editingData) {
       setTitle(editingData.title);
       setPriority(editingData.priority || "média");
       setDescription(editingData.description || "");
@@ -66,7 +70,7 @@ export function CreateSubdemandForm({
       setDueDate(editingData.due_date || "");
       setAssigneeIds(editingData.assigneeIds || []);
       setDependsOnIndex(editingData.dependsOnIndex);
-    } else {
+    } else if (open) {
       setTitle("");
       setPriority("média");
       setDescription("");
@@ -75,7 +79,7 @@ export function CreateSubdemandForm({
       setAssigneeIds([]);
       setDependsOnIndex(undefined);
     }
-  }, [editingData, defaultStatusId]);
+  }, [open, editingData, defaultStatusId]);
 
   const handleSave = () => {
     if (!title.trim()) return;
@@ -91,6 +95,7 @@ export function CreateSubdemandForm({
       assigneeIds,
       dependsOnIndex,
     });
+    onClose();
   };
 
   const availableDeps = existingSubdemands
@@ -98,29 +103,16 @@ export function CreateSubdemandForm({
     .filter(({ idx }) => idx !== editingIndex);
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="px-6 pt-6 pb-2 shrink-0">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar para demanda
-        </button>
-        <h2 className="text-xl font-bold flex items-center gap-2">
-          <GitBranch className="h-5 w-5 text-[#F28705]" />
-          {isEditing ? "Editar Subdemanda" : "Nova Subdemanda"}
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Preencha os dados da subdemanda vinculada à demanda principal
-        </p>
-      </div>
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <GitBranch className="h-4 w-4 text-[#F28705]" />
+            {isEditing ? "Editar Subdemanda" : "Nova Subdemanda"}
+          </DialogTitle>
+        </DialogHeader>
 
-      {/* Form body */}
-      <div className="flex-1 overflow-y-auto px-6 pb-6">
-        <div className="space-y-4">
+        <div className="space-y-4 py-2">
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="sub-title">Título *</Label>
@@ -238,23 +230,22 @@ export function CreateSubdemandForm({
             />
           </div>
         </div>
-      </div>
 
-      {/* Footer */}
-      <div className="shrink-0 px-6 py-2 flex justify-end gap-3 bg-card">
-        <Button type="button" variant="outline" onClick={onBack} size="sm">
-          Cancelar
-        </Button>
-        <Button
-          type="button"
-          onClick={handleSave}
-          disabled={!title.trim()}
-          size="sm"
-          className="bg-[#F28705] hover:bg-[#F28705]/90 text-white"
-        >
-          {isEditing ? "Salvar" : "Adicionar"}
-        </Button>
-      </div>
-    </div>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button type="button" variant="outline" onClick={onClose} size="sm">
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={!title.trim()}
+            size="sm"
+            className="bg-[#F28705] hover:bg-[#F28705]/90 text-white"
+          >
+            {isEditing ? "Salvar" : "Adicionar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
