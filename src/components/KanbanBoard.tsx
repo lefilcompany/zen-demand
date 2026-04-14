@@ -229,6 +229,15 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const demandIds = useMemo(() => demands.map(d => d.id), [demands]);
   const { data: adjustmentCounts } = useAdjustmentCounts(demandIds);
 
+  // Build a lookup map for parent demands from the same data set
+  const parentDemandMap = useMemo(() => {
+    const map: Record<string, { id: string; title: string; board_sequence_number: number | null; description: string | null }> = {};
+    for (const d of demands) {
+      map[d.id] = { id: d.id, title: d.title, board_sequence_number: d.board_sequence_number || null, description: d.description || null };
+    }
+    return map;
+  }, [demands]);
+
   // Helper function to stop all active timers for a demand
   const stopAllTimersForDemand = useCallback(async (demandId: string): Promise<boolean> => {
     if (!user) return false;
