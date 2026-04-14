@@ -730,6 +730,12 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                     existingSubdemands={subdemands}
                     editingIndex={editingSubdemandIndex}
                     editingData={editingSubdemandIndex !== undefined ? subdemands[editingSubdemandIndex] : null}
+                    parentServiceId={serviceId && serviceId !== "none" ? serviceId : undefined}
+                    parentServiceName={serviceInfo?.name}
+                    statuses={statuses}
+                    defaultStatusId={statusId}
+                    teamId={selectedTeamId}
+                    boardId={activeBoardId}
                   />
                 </div>
 
