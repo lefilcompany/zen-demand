@@ -141,7 +141,6 @@ export function CreateSubdemandDialog({
             )}
             <div className={`space-y-2 ${!parentServiceName ? "col-span-2" : ""}`}>
               <Label>
-                <Users className="h-4 w-4" />
                 Responsáveis
               </Label>
               <AssigneeSelector
