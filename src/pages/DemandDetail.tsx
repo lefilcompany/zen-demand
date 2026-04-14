@@ -916,12 +916,24 @@ export default function DemandDetail() {
                         ...(data.service_id && { service_id: data.service_id }),
                       }).eq("id", result.id);
                     }
+                    // Insert dependency if selected
+                    if (result?.id && data.dependsOnIndex !== undefined && subdemands && subdemands[data.dependsOnIndex]) {
+                      await supabase.from("demand_dependencies").insert({
+                        demand_id: result.id,
+                        depends_on_demand_id: subdemands[data.dependsOnIndex].id,
+                      });
+                    }
                     toast.success("Subdemanda criada!");
                   } catch (err) {
                     toast.error(getErrorMessage(err));
                   }
                 }}
-                existingSubdemands={[]}
+                existingSubdemands={(subdemands || []).map((s, i) => ({
+                  tempId: s.id,
+                  title: s.title,
+                  priority: s.priority || undefined,
+                  status_id: s.status_id,
+                }))}
                 statuses={statuses}
                 defaultStatusId={statuses?.find(s => s.name === "A Iniciar")?.id || statuses?.[0]?.id || ""}
                 teamId={demand?.team_id || null}
