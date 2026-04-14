@@ -183,6 +183,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     setSelectedFolderId("");
     setSubdemands([]);
     setActiveView('demand');
+    setSubdemandDraft(emptyDraft);
   };
 
   const isServiceValid = () => {
@@ -804,36 +805,42 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                 </div>
               </div>
 
-              {/* View 2: Subdemand form */}
+              {/* View 2: Subdemand form — always rendered to preserve state */}
               <div className="w-full shrink-0 h-full">
-                {activeView === 'subdemand' && (
-                  <CreateSubdemandForm
-                    onBack={() => {
-                      setActiveView('demand');
-                      setEditingSubdemandIndex(undefined);
-                    }}
-                    onSave={(data) => {
-                      if (editingSubdemandIndex !== undefined) {
-                        setSubdemands(prev =>
-                          prev.map((s, i) => i === editingSubdemandIndex ? { ...data, tempId: s.tempId } : s)
-                        );
-                      } else {
-                        setSubdemands(prev => [...prev, data]);
-                      }
-                      setActiveView('demand');
-                      setEditingSubdemandIndex(undefined);
-                    }}
-                    existingSubdemands={subdemands}
-                    editingIndex={editingSubdemandIndex}
-                    editingData={editingSubdemandIndex !== undefined ? subdemands[editingSubdemandIndex] : null}
-                    parentServiceId={serviceId && serviceId !== "none" ? serviceId : undefined}
-                    parentServiceName={serviceInfo?.service?.name}
-                    statuses={statuses}
-                    defaultStatusId={statusId}
-                    teamId={selectedTeamId}
-                    boardId={activeBoardId}
-                  />
-                )}
+                <CreateSubdemandForm
+                  onBack={() => {
+                    setActiveView('demand');
+                  }}
+                  onSave={(data) => {
+                    if (editingSubdemandIndex !== undefined) {
+                      setSubdemands(prev =>
+                        prev.map((s, i) => i === editingSubdemandIndex ? { ...data, tempId: s.tempId } : s)
+                      );
+                    } else {
+                      setSubdemands(prev => [...prev, data]);
+                    }
+                    setActiveView('demand');
+                    setEditingSubdemandIndex(undefined);
+                    setSubdemandDraft(emptyDraft);
+                  }}
+                  onDelete={editingSubdemandIndex !== undefined ? () => {
+                    setSubdemands(prev => prev.filter((_, i) => i !== editingSubdemandIndex));
+                    setActiveView('demand');
+                    setEditingSubdemandIndex(undefined);
+                    setSubdemandDraft(emptyDraft);
+                  } : undefined}
+                  existingSubdemands={subdemands}
+                  editingIndex={editingSubdemandIndex}
+                  editingData={editingSubdemandIndex !== undefined ? subdemands[editingSubdemandIndex] : null}
+                  parentServiceId={serviceId && serviceId !== "none" ? serviceId : undefined}
+                  parentServiceName={serviceInfo?.service?.name}
+                  statuses={statuses}
+                  defaultStatusId={statusId}
+                  teamId={selectedTeamId}
+                  boardId={activeBoardId}
+                  draft={subdemandDraft}
+                  onDraftChange={setSubdemandDraft}
+                />
               </div>
             </div>
           </div>
