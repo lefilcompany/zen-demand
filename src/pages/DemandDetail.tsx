@@ -547,9 +547,6 @@ export default function DemandDetail() {
                   <Button type="submit" variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-primary hover:bg-primary/10">
                     <Check className="h-4 w-4" />
                   </Button>
-                  <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" onClick={() => { setIsEditingTitle(false); setEditingTitle(demand.title); }}>
-                    <X className="h-4 w-4" />
-                  </Button>
                 </form>
               ) : (
                 <div className="group/title flex items-center gap-2">
