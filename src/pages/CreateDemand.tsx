@@ -109,7 +109,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
   const [selectedFolderId, setSelectedFolderId] = useState("");
-  const [subdemands, setSubdemands] = useState<(SubdemandInput & { tempId: string; dependsOnIndex?: number })[]>([]);
+  const [subdemands, setSubdemands] = useState<(SubdemandInput & { tempId: string; dependsOnIndex?: number; assigneeIds?: string[] })[]>([]);
   const [subdemandDialogOpen, setSubdemandDialogOpen] = useState(false);
   const [editingSubdemandIndex, setEditingSubdemandIndex] = useState<number | undefined>(undefined);
   const uploadAttachment = useUploadAttachment();
@@ -231,8 +231,12 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
 
       const subInputs: SubdemandInput[] = subdemands.map(s => ({
         title: s.title,
+        description: s.description || undefined,
         priority: s.priority || "média",
         status_id: s.status_id || statusId,
+        service_id: s.service_id || (serviceId && serviceId !== "none" ? serviceId : undefined),
+        assigned_to: s.assigned_to || undefined,
+        due_date: s.due_date || undefined,
       }));
 
       const deps: DependencyInput[] = subdemands
@@ -255,6 +259,22 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
               await supabase
                 .from("demand_assignees")
                 .insert(assigneeIds.map((userId) => ({ demand_id: parentId, user_id: userId })));
+            }
+
+            // Handle assignees for subdemands
+            if (result.subdemand_ids && result.subdemand_ids.length > 0) {
+              const subAssigneeInserts: { demand_id: string; user_id: string }[] = [];
+              subdemands.forEach((sub, idx) => {
+                const subId = result.subdemand_ids[idx];
+                if (subId && sub.assigneeIds && sub.assigneeIds.length > 0) {
+                  sub.assigneeIds.forEach(userId => {
+                    subAssigneeInserts.push({ demand_id: subId, user_id: userId });
+                  });
+                }
+              });
+              if (subAssigneeInserts.length > 0) {
+                await supabase.from("demand_assignees").insert(subAssigneeInserts);
+              }
             }
 
             // Handle files for parent
