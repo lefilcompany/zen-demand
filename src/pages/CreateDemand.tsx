@@ -731,7 +731,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                     editingIndex={editingSubdemandIndex}
                     editingData={editingSubdemandIndex !== undefined ? subdemands[editingSubdemandIndex] : null}
                     parentServiceId={serviceId && serviceId !== "none" ? serviceId : undefined}
-                    parentServiceName={serviceInfo?.name}
+                    parentServiceName={serviceInfo?.service?.name}
                     statuses={statuses}
                     defaultStatusId={statusId}
                     teamId={selectedTeamId}
