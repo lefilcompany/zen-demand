@@ -922,17 +922,30 @@ export default function DemandDetail() {
               )}
 
               {subdemands && subdemands.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {subdemands.map((sub) => (
-                    <SubdemandBadge
-                      key={sub.id}
-                      title={sub.title}
-                      statusName={sub.demand_statuses?.name}
-                      statusColor={sub.demand_statuses?.color}
-                      sequenceNumber={sub.board_sequence_number}
-                      onClick={() => navigate(`/demands/${sub.id}`)}
-                    />
-                  ))}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {subdemands.map((sub) => {
+                    const statusName = sub.demand_statuses?.name || "";
+                    const isDelivered = statusName === "Entregue";
+                    const isNotStarted = statusName === "A Iniciar";
+                    // Gray for not started, green for delivered, orange for in-progress
+                    const bgColor = isDelivered
+                      ? "#10B981"
+                      : isNotStarted
+                        ? "#9CA3AF"
+                        : "#F28705";
+                    return (
+                      <button
+                        key={sub.id}
+                        onClick={() => navigate(`/demands/${sub.id}`)}
+                        className="w-full text-left rounded-md px-3 py-2 text-xs font-medium text-white truncate transition-opacity hover:opacity-80 cursor-pointer"
+                        style={{ backgroundColor: bgColor }}
+                        title={`${sub.title} — ${statusName}`}
+                      >
+                        {sub.board_sequence_number ? `#${String(sub.board_sequence_number).padStart(4, "0")} ` : ""}
+                        {sub.title}
+                      </button>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground">Nenhuma subdemanda</p>
