@@ -140,8 +140,7 @@ export function CreateSubdemandDialog({
               </div>
             )}
             <div className={`space-y-2 ${!parentServiceName ? "col-span-2" : ""}`}>
-              <Label className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
+              <Label>
                 Responsáveis
               </Label>
               <AssigneeSelector
