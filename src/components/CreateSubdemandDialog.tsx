@@ -104,7 +104,7 @@ export function CreateSubdemandDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <GitBranch className="h-4 w-4 text-[#F28705]" />
@@ -112,7 +112,7 @@ export function CreateSubdemandDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="space-y-4 py-2 overflow-y-auto flex-1 min-h-0 pr-1">
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="sub-title">Título *</Label>
@@ -196,16 +196,16 @@ export function CreateSubdemandDialog({
             </div>
           </div>
 
-          {/* Dependency */}
+          {/* Dependency - inline style like reference image */}
           {existingSubdemands.length > 0 && (
-            <div className="space-y-2">
-              <Label>Depende de</Label>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Label className="whitespace-nowrap text-sm">Pode iniciar quando</Label>
               <Select
                 value={dependsOnIndex !== undefined ? String(dependsOnIndex) : "none"}
                 onValueChange={(v) => setDependsOnIndex(v === "none" ? undefined : Number(v))}
               >
-                <SelectTrigger className="h-8">
-                  <SelectValue placeholder="Nenhuma" />
+                <SelectTrigger className="h-8 w-auto min-w-[180px] max-w-[240px]">
+                  <SelectValue placeholder="Selecionar Subdemanda" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Nenhuma</SelectItem>
@@ -216,6 +216,7 @@ export function CreateSubdemandDialog({
                   ))}
                 </SelectContent>
               </Select>
+              <span className="text-sm text-muted-foreground whitespace-nowrap">for concluída</span>
             </div>
           )}
 
@@ -226,12 +227,12 @@ export function CreateSubdemandDialog({
               value={description}
               onChange={setDescription}
               placeholder="Descreva os detalhes da subdemanda..."
-              minHeight="100px"
+              minHeight="80px"
             />
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-2 sm:gap-0 pt-2 shrink-0">
           <Button type="button" variant="outline" onClick={onClose} size="sm">
             Cancelar
           </Button>
