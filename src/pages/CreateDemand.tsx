@@ -47,6 +47,9 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   
   const isOpen = open ?? contextOpen;
   const handleClose = () => {
+    setActiveView('demand');
+    setEditingSubdemandIndex(undefined);
+    setSubdemandDraft(emptyDraft);
     onClose?.();
     closeCreateDemand();
     setSuccessState(null);
