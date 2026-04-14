@@ -679,17 +679,41 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                     Subdemandas
                   </Label>
 
-                  <div className="flex flex-wrap gap-2">
-                    {/* Add button always first */}
+                  <div className="space-y-2">
+                    {subdemands.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {subdemands.map((sub, idx) => (
+                          <div key={sub.tempId} className="inline-flex items-center gap-1.5 rounded-md bg-[#F28705] text-white px-3 py-1.5 text-xs font-medium">
+                            <span>{sub.title || `Subdemanda ${idx + 1}`}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-4 w-4 p-0 text-white/80 hover:text-white hover:bg-transparent"
+                              onClick={() => {
+                                setSubdemands(prev => {
+                                  const newSubs = prev.filter((_, i) => i !== idx);
+                                  return newSubs.map(s => {
+                                    if (s.dependsOnIndex !== undefined) {
+                                      if (s.dependsOnIndex === idx) return { ...s, dependsOnIndex: undefined };
+                                      if (s.dependsOnIndex > idx) return { ...s, dependsOnIndex: s.dependsOnIndex - 1 };
+                                    }
+                                    return s;
+                                  });
+                                });
+                              }}
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     <Button
                       type="button"
                       variant="outline"
-                      className={cn(
-                        "border-dashed border-[#F28705] text-[#F28705] hover:bg-[#F28705]/10 hover:text-[#F28705] gap-1.5 text-xs rounded-lg",
-                        subdemands.length === 0
-                          ? "w-full h-10"
-                          : "w-[calc(33.333%-0.375rem)] min-h-[80px] flex-col"
-                      )}
+                      className="w-full h-9 border-dashed border-[#F28705] text-[#F28705] hover:bg-[#F28705]/10 hover:text-[#F28705] gap-1.5 text-xs rounded-lg"
                       onClick={() => {
                         setSubdemands(prev => [
                           ...prev,
@@ -698,97 +722,8 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                       }}
                     >
                       <Plus className="h-4 w-4" />
-                      <span>Adicionar</span>
+                      Adicionar
                     </Button>
-
-                    {subdemands.map((sub, idx) => (
-                      <div key={sub.tempId} className="w-[calc(33.333%-0.375rem)] flex flex-col gap-1.5 rounded-lg border border-border bg-muted/30 p-2">
-                        <div className="flex items-center gap-1.5">
-                          <Badge variant="outline" className="text-[10px] shrink-0 bg-muted px-1.5 py-0">
-                            Sub {idx + 1}
-                          </Badge>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-5 w-5 ml-auto text-muted-foreground hover:text-destructive shrink-0"
-                            onClick={() => {
-                              setSubdemands(prev => {
-                                const newSubs = prev.filter((_, i) => i !== idx);
-                                return newSubs.map(s => {
-                                  if (s.dependsOnIndex !== undefined) {
-                                    if (s.dependsOnIndex === idx) return { ...s, dependsOnIndex: undefined };
-                                    if (s.dependsOnIndex > idx) return { ...s, dependsOnIndex: s.dependsOnIndex - 1 };
-                                  }
-                                  return s;
-                                });
-                              });
-                            }}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                        <Input
-                          placeholder="Título da subdemanda"
-                          value={sub.title}
-                          onChange={(e) => {
-                            setSubdemands(prev =>
-                              prev.map((s, i) => i === idx ? { ...s, title: e.target.value } : s)
-                            );
-                          }}
-                          className="h-7 text-xs"
-                        />
-                        <Select
-                          value={sub.priority || "média"}
-                          onValueChange={(val) => {
-                            setSubdemands(prev =>
-                              prev.map((s, i) => i === idx ? { ...s, priority: val } : s)
-                            );
-                          }}
-                        >
-                          <SelectTrigger className="h-6 text-[11px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="baixa">Baixa</SelectItem>
-                            <SelectItem value="média">Média</SelectItem>
-                            <SelectItem value="alta">Alta</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {subdemands.length > 1 && (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">Depende:</span>
-                            <Select
-                              value={sub.dependsOnIndex !== undefined ? String(sub.dependsOnIndex) : "none"}
-                              onValueChange={(val) => {
-                                setSubdemands(prev =>
-                                  prev.map((s, i) =>
-                                    i === idx
-                                      ? { ...s, dependsOnIndex: val === "none" ? undefined : Number(val) }
-                                      : s
-                                  )
-                                );
-                              }}
-                            >
-                              <SelectTrigger className="h-6 text-[10px] flex-1">
-                                <SelectValue placeholder="Nenhuma" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="none">Nenhuma</SelectItem>
-                                {subdemands
-                                  .map((other, otherIdx) => ({ other, otherIdx }))
-                                  .filter(({ otherIdx }) => otherIdx !== idx)
-                                  .map(({ other, otherIdx }) => (
-                                    <SelectItem key={other.tempId} value={String(otherIdx)}>
-                                      Sub {otherIdx + 1}: {other.title || "(sem título)"}
-                                    </SelectItem>
-                                  ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )}
-                      </div>
-                    ))}
                   </div>
                 </div>
 
