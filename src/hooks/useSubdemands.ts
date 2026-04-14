@@ -8,8 +8,10 @@ export interface Subdemand {
   status_id: string;
   priority: string | null;
   due_date: string | null;
+  created_at: string;
   parent_demand_id: string;
   board_sequence_number: number | null;
+  time_in_progress_seconds: number | null;
   demand_statuses: { name: string; color: string } | null;
   demand_assignees?: { user_id: string; profile: { full_name: string; avatar_url: string | null } }[];
 }
@@ -22,7 +24,7 @@ export function useSubdemands(parentDemandId: string | null) {
       const { data, error } = await supabase
         .from("demands")
         .select(`
-          id, title, status_id, priority, due_date, parent_demand_id, board_sequence_number,
+          id, title, status_id, priority, due_date, created_at, parent_demand_id, board_sequence_number, time_in_progress_seconds,
           demand_statuses(name, color),
           demand_assignees(user_id, profile:profiles(full_name, avatar_url))
         `)
