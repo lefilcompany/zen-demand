@@ -68,6 +68,7 @@ interface Demand {
   board_id?: string;
   board_sequence_number?: number | null;
   service_id?: string | null;
+  parent_demand_id?: string | null;
   demand_statuses?: { name: string; color: string } | null;
   profiles?: { full_name: string; avatar_url?: string | null } | null;
   assigned_profile?: { full_name: string; avatar_url?: string | null } | null;
@@ -76,6 +77,7 @@ interface Demand {
   boards?: { id: string; name: string } | null;
   services?: { id: string; name: string } | null;
   demand_assignees?: Assignee[];
+  parent_demand?: { id: string; title: string; board_sequence_number: number | null; description: string | null } | null;
   _isOffline?: boolean;
 }
 
