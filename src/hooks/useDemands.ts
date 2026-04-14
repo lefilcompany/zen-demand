@@ -79,7 +79,8 @@ export function useDemands(boardId?: string) {
             profile:profiles(full_name, avatar_url)
           )
         `)
-        .eq("archived", false);
+        .eq("archived", false)
+        .is("parent_demand_id", null);
 
       if (boardId) {
         query = query.eq("board_id", boardId);

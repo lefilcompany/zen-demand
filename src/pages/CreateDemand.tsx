@@ -22,7 +22,8 @@ import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/component
 import { useUploadAttachment } from "@/hooks/useAttachments";
 import { RecurrenceConfig, RecurrenceData, defaultRecurrenceData } from "@/components/RecurrenceConfig";
 import { useCreateRecurringDemand } from "@/hooks/useRecurringDemands";
-import { AlertTriangle, Ban, CloudOff, WifiOff, Package, CheckCircle2, Plus, ExternalLink, LayoutGrid, FolderOpen, Users } from "lucide-react";
+import { useCreateDemandWithSubdemands, SubdemandInput, DependencyInput } from "@/hooks/useSubdemands";
+import { AlertTriangle, Ban, CloudOff, WifiOff, Package, CheckCircle2, Plus, ExternalLink, LayoutGrid, FolderOpen, Users, X, GitBranch } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
@@ -33,6 +34,7 @@ import { getErrorMessage } from "@/lib/errorUtils";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth";
+import { Badge } from "@/components/ui/badge";
 
 export default function CreateDemand({ open, onClose }: { open?: boolean; onClose?: () => void }) {
   const { t } = useTranslation();
@@ -104,8 +106,10 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
   const [selectedFolderId, setSelectedFolderId] = useState("");
+  const [subdemands, setSubdemands] = useState<(SubdemandInput & { tempId: string; dependsOnIndex?: number })[]>([]);
   const uploadAttachment = useUploadAttachment();
   const createRecurringDemand = useCreateRecurringDemand();
+  const createDemandWithSubdemands = useCreateDemandWithSubdemands();
 
   const { canCreate: canCreateWithService, serviceInfo } = useCanCreateWithService(
     activeBoardId, 
@@ -171,6 +175,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     setPendingFiles([]);
     setRecurrence(defaultRecurrenceData);
     setSelectedFolderId("");
+    setSubdemands([]);
   };
 
   const isServiceValid = () => {
@@ -206,6 +211,85 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
 
     const selectedBoard = allBoards?.find(b => b.id === activeBoardId);
 
+    // If there are subdemands, use transactional RPC
+    if (subdemands.length > 0) {
+      const parentData = {
+        title: title.trim(),
+        description: finalDescription,
+        team_id: selectedTeamId,
+        board_id: activeBoardId,
+        status_id: statusId,
+        priority,
+        due_date: dueDate || undefined,
+        service_id: serviceId && serviceId !== "none" ? serviceId : undefined,
+      };
+
+      const subInputs: SubdemandInput[] = subdemands.map(s => ({
+        title: s.title,
+        priority: s.priority || "média",
+        status_id: s.status_id || statusId,
+      }));
+
+      const deps: DependencyInput[] = subdemands
+        .map((s, idx) => {
+          if (s.dependsOnIndex !== undefined && s.dependsOnIndex >= 0) {
+            return { demand_index: idx + 1, depends_on_index: s.dependsOnIndex + 1 };
+          }
+          return null;
+        })
+        .filter(Boolean) as DependencyInput[];
+
+      createDemandWithSubdemands.mutate(
+        { parent: parentData, subdemands: subInputs, dependencies: deps },
+        {
+          onSuccess: async (result) => {
+            const parentId = result.parent_id;
+
+            // Handle assignees for parent
+            if (assigneeIds.length > 0 && parentId) {
+              await supabase
+                .from("demand_assignees")
+                .insert(assigneeIds.map((userId) => ({ demand_id: parentId, user_id: userId })));
+            }
+
+            // Handle files for parent
+            if (pendingFiles.length > 0 && parentId) {
+              const { success, failed } = await uploadPendingFiles(parentId, pendingFiles, uploadAttachment);
+              if (failed > 0) toast.warning(`${success} arquivo(s) enviado(s), ${failed} falhou(ram)`);
+              else if (success > 0) toast.success(`${success} arquivo(s) anexado(s)`);
+              setPendingFiles([]);
+            }
+
+            // Handle folder
+            if (selectedFolderId && parentId) {
+              try {
+                await addDemandToFolder.mutateAsync({ folder_id: selectedFolderId, demand_id: parentId });
+              } catch {}
+            }
+
+            setSuccessState({
+              demandId: parentId,
+              demandTitle: title.trim(),
+              boardId: activeBoardId,
+              boardName: selectedBoard?.name || "Quadro",
+            });
+            resetForm();
+            if (statuses && statuses.length > 0) {
+              const defaultStatus = statuses.find(s => s.name === "A Iniciar") || statuses[0];
+              setStatusId(defaultStatus.id);
+            }
+          },
+          onError: (error: any) => {
+            toast.error("Erro ao criar demanda com subdemandas", {
+              description: getErrorMessage(error),
+            });
+          },
+        }
+      );
+      return;
+    }
+
+    // No subdemands — original flow
     createDemand.mutate(
       {
         title: title.trim(),
@@ -318,7 +402,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     }
   };
 
-  const isSubmitDisabled = createDemand.isPending || 
+  const isSubmitDisabled = (createDemand.isPending || createDemandWithSubdemands.isPending) || 
     !title.trim() || 
     !statusId || 
     !activeBoardId || 
@@ -626,6 +710,129 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                     <RecurrenceConfig value={recurrence} onChange={setRecurrence} />
                   </div>
                 </div>
+
+                {/* Subdemands Section */}
+                <div className="space-y-3 border-t border-border pt-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-2">
+                      <GitBranch className="h-4 w-4" />
+                      Subdemandas
+                    </Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs gap-1"
+                      onClick={() => {
+                        setSubdemands(prev => [
+                          ...prev,
+                          { tempId: crypto.randomUUID(), title: "", priority: "média" },
+                        ]);
+                      }}
+                    >
+                      <Plus className="h-3 w-3" />
+                      Adicionar
+                    </Button>
+                  </div>
+
+                  {subdemands.length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Nenhuma subdemanda adicionada. Subdemandas são criadas dentro da demanda principal.
+                    </p>
+                  )}
+
+                  {subdemands.map((sub, idx) => (
+                    <div key={sub.tempId} className="flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-3">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-[10px] shrink-0 bg-muted">
+                          Sub {idx + 1}
+                        </Badge>
+                        <Input
+                          placeholder="Título da subdemanda"
+                          value={sub.title}
+                          onChange={(e) => {
+                            setSubdemands(prev =>
+                              prev.map((s, i) => i === idx ? { ...s, title: e.target.value } : s)
+                            );
+                          }}
+                          className="h-7 text-sm flex-1"
+                        />
+                        <Select
+                          value={sub.priority || "média"}
+                          onValueChange={(val) => {
+                            setSubdemands(prev =>
+                              prev.map((s, i) => i === idx ? { ...s, priority: val } : s)
+                            );
+                          }}
+                        >
+                          <SelectTrigger className="h-7 w-24 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="baixa">Baixa</SelectItem>
+                            <SelectItem value="média">Média</SelectItem>
+                            <SelectItem value="alta">Alta</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0"
+                          onClick={() => {
+                            setSubdemands(prev => {
+                              const newSubs = prev.filter((_, i) => i !== idx);
+                              // Clear broken dependency references
+                              return newSubs.map(s => {
+                                if (s.dependsOnIndex !== undefined) {
+                                  if (s.dependsOnIndex === idx) return { ...s, dependsOnIndex: undefined };
+                                  if (s.dependsOnIndex > idx) return { ...s, dependsOnIndex: s.dependsOnIndex - 1 };
+                                }
+                                return s;
+                              });
+                            });
+                          }}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+
+                      {/* Dependency selector */}
+                      {subdemands.length > 1 && (
+                        <div className="flex items-center gap-2 pl-1">
+                          <span className="text-[11px] text-muted-foreground whitespace-nowrap">Depende de:</span>
+                          <Select
+                            value={sub.dependsOnIndex !== undefined ? String(sub.dependsOnIndex) : "none"}
+                            onValueChange={(val) => {
+                              setSubdemands(prev =>
+                                prev.map((s, i) =>
+                                  i === idx
+                                    ? { ...s, dependsOnIndex: val === "none" ? undefined : Number(val) }
+                                    : s
+                                )
+                              );
+                            }}
+                          >
+                            <SelectTrigger className="h-6 text-[11px] flex-1">
+                              <SelectValue placeholder="Nenhuma" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Nenhuma</SelectItem>
+                              {subdemands
+                                .map((other, otherIdx) => ({ other, otherIdx }))
+                                .filter(({ otherIdx }) => otherIdx !== idx)
+                                .map(({ other, otherIdx }) => (
+                                  <SelectItem key={other.tempId} value={String(otherIdx)}>
+                                    Sub {otherIdx + 1}: {other.title || "(sem título)"}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </form>
             </div>
 
@@ -640,7 +847,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                 disabled={isSubmitDisabled}
                 size="sm"
               >
-                {createDemand.isPending ? "Criando..." : "Criar Demanda"}
+                {(createDemand.isPending || createDemandWithSubdemands.isPending) ? "Criando..." : "Criar Demanda"}
               </Button>
             </div>
           </>
