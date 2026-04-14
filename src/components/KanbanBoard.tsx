@@ -40,6 +40,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth";
 import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
+import { KanbanSubdemandsList } from "@/components/KanbanSubdemandsList";
 
 interface Assignee {
   user_id: string;
@@ -1046,6 +1047,9 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   </div>
                 );
               })()}
+
+              {/* Subdemands list */}
+              <KanbanSubdemandsList demandId={demand.id} onSubdemandClick={onDemandClick} />
 
               <div className="flex items-center justify-between mt-2">
                 <div className="flex items-center gap-2 flex-wrap">
