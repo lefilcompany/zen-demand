@@ -671,46 +671,6 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                   </div>
                 </div>
 
-                {/* Description - full width */}
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descrição</Label>
-                  <RichTextEditor
-                    value={description}
-                    onChange={setDescription}
-                    placeholder="Descreva os detalhes da demanda... (cole imagens diretamente)"
-                    minHeight="120px"
-                  />
-                </div>
-
-
-                {/* Row: Attachments + Recurrence */}
-                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label>Anexos</Label>
-                      {pendingFiles.length > 0 && (
-                        <span className="text-xs text-muted-foreground">{pendingFiles.length} arquivo(s)</span>
-                      )}
-                    </div>
-                    <InlineFileUploader
-                      pendingFiles={pendingFiles}
-                      onFilesChange={setPendingFiles}
-                      disabled={isOffline}
-                      listenToGlobalPaste={!isOffline}
-                    />
-                    {isOffline && (
-                      <p className="text-xs text-muted-foreground">
-                        Anexos não podem ser adicionados offline
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Recorrência</Label>
-                    <RecurrenceConfig value={recurrence} onChange={setRecurrence} />
-                  </div>
-                </div>
-
                 {/* Subdemands Section */}
                 <div className="space-y-3 border-t border-border pt-4">
                   <div className="flex items-center justify-between">
@@ -782,7 +742,6 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                           onClick={() => {
                             setSubdemands(prev => {
                               const newSubs = prev.filter((_, i) => i !== idx);
-                              // Clear broken dependency references
                               return newSubs.map(s => {
                                 if (s.dependsOnIndex !== undefined) {
                                   if (s.dependsOnIndex === idx) return { ...s, dependsOnIndex: undefined };
@@ -797,7 +756,6 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                         </Button>
                       </div>
 
-                      {/* Dependency selector */}
                       {subdemands.length > 1 && (
                         <div className="flex items-center gap-2 pl-1">
                           <span className="text-[11px] text-muted-foreground whitespace-nowrap">Depende de:</span>
@@ -833,6 +791,47 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                     </div>
                   ))}
                 </div>
+
+                {/* Description - full width */}
+                <div className="space-y-2">
+                  <Label htmlFor="description">Descrição</Label>
+                  <RichTextEditor
+                    value={description}
+                    onChange={setDescription}
+                    placeholder="Descreva os detalhes da demanda... (cole imagens diretamente)"
+                    minHeight="120px"
+                  />
+                </div>
+
+                {/* Row: Attachments + Recurrence */}
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Anexos</Label>
+                      {pendingFiles.length > 0 && (
+                        <span className="text-xs text-muted-foreground">{pendingFiles.length} arquivo(s)</span>
+                      )}
+                    </div>
+                    <InlineFileUploader
+                      pendingFiles={pendingFiles}
+                      onFilesChange={setPendingFiles}
+                      disabled={isOffline}
+                      listenToGlobalPaste={!isOffline}
+                    />
+                    {isOffline && (
+                      <p className="text-xs text-muted-foreground">
+                        Anexos não podem ser adicionados offline
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Recorrência</Label>
+                    <RecurrenceConfig value={recurrence} onChange={setRecurrence} />
+                  </div>
+                </div>
+
+
               </form>
             </div>
 
