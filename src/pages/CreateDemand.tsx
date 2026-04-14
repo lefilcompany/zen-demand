@@ -181,6 +181,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     setRecurrence(defaultRecurrenceData);
     setSelectedFolderId("");
     setSubdemands([]);
+    setActiveView('demand');
   };
 
   const isServiceValid = () => {
