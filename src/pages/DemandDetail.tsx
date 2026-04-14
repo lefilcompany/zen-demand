@@ -145,6 +145,15 @@ export default function DemandDetail() {
   } = useUserTimerControl(id);
   const sendEmail = useSendEmail();
   const { data: subdemands } = useSubdemands(id || null);
+  const { data: parentDemand } = useQuery({
+    queryKey: ["demand-parent", demand?.parent_demand_id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("demands").select("id, title, board_sequence_number").eq("id", demand!.parent_demand_id!).single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!demand?.parent_demand_id,
+  });
   const addSubdemand = useAddSubdemand();
   const [newSubdemandTitle, setNewSubdemandTitle] = useState("");
   const [showAddSubdemand, setShowAddSubdemand] = useState(false);
@@ -849,10 +858,11 @@ export default function DemandDetail() {
               <Button
                 variant="link"
                 size="sm"
-                className="h-auto p-0 text-primary"
+                className="h-auto p-0 text-primary font-medium"
                 onClick={() => navigate(`/demands/${demand.parent_demand_id}`)}
               >
-                Ver demanda pai
+                {parentDemand?.board_sequence_number ? `#${String(parentDemand.board_sequence_number).padStart(4, "0")} ` : ""}
+                {parentDemand?.title || "Demanda pai"}
               </Button>
             </div>
           )}
