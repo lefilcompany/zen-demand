@@ -77,8 +77,7 @@ export function useDemands(boardId?: string) {
           demand_assignees(
             user_id,
             profile:profiles(full_name, avatar_url)
-          ),
-          parent_demand:demands!demands_parent_demand_id_fkey(id, title, board_sequence_number, description)
+          )
         `)
         .eq("archived", false);
 
