@@ -112,6 +112,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const [subdemands, setSubdemands] = useState<SubdemandFormData[]>([]);
   const [activeView, setActiveView] = useState<'demand' | 'subdemand'>('demand');
   const [editingSubdemandIndex, setEditingSubdemandIndex] = useState<number | undefined>(undefined);
+  const [subdemandDraft, setSubdemandDraft] = useState<SubdemandDraft>(emptyDraft);
   const uploadAttachment = useUploadAttachment();
   const createRecurringDemand = useCreateRecurringDemand();
   const createDemandWithSubdemands = useCreateDemandWithSubdemands();
