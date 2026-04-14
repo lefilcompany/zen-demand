@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
-import { GitBranch, Users } from "lucide-react";
+import { GitBranch, Users, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { SubdemandInput } from "@/hooks/useSubdemands";
 
 export interface SubdemandFormData extends SubdemandInput {
@@ -199,7 +200,19 @@ export function CreateSubdemandDialog({
           {/* Dependency - inline style like reference image */}
           {existingSubdemands.length > 0 && (
             <div className="flex items-center gap-2 flex-wrap">
-              <Label className="whitespace-nowrap text-sm">Pode iniciar quando</Label>
+              <Label className="whitespace-nowrap text-sm flex items-center gap-1">
+                Pode iniciar quando
+                <TooltipProvider delayDuration={300}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[240px] text-xs">
+                      Define uma dependência: esta subdemanda só poderá ser iniciada após a subdemanda selecionada ser concluída (status "Entregue").
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </Label>
               <Select
                 value={dependsOnIndex !== undefined ? String(dependsOnIndex) : "none"}
                 onValueChange={(v) => setDependsOnIndex(v === "none" ? undefined : Number(v))}
