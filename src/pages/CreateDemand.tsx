@@ -683,29 +683,11 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                     Subdemandas
                   </Label>
 
-                  <div className="space-y-2">
-                    {subdemands.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {subdemands.map((sub, idx) => (
-                          <div
-                            key={sub.tempId}
-                            className="inline-flex items-center gap-1.5 rounded-md bg-[#F28705] text-white px-3 py-1.5 text-xs font-medium cursor-pointer hover:bg-[#F28705]/90 transition-colors"
-                            onClick={() => {
-                              setEditingSubdemandIndex(idx);
-                              setSubdemandDialogOpen(true);
-                            }}
-                          >
-                            <span>{sub.title || `Subdemanda ${idx + 1}`}</span>
-                            <Pencil className="h-3 w-3 opacity-80" />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
+                  <div className="grid grid-cols-3 gap-2">
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full h-9 border-dashed border-[#F28705] text-[#F28705] hover:bg-[#F28705]/10 hover:text-[#F28705] gap-1.5 text-xs rounded-lg"
+                      className="h-9 border-dashed border-[#F28705] text-[#F28705] hover:bg-[#F28705]/10 hover:text-[#F28705] gap-1.5 text-xs rounded-lg"
                       onClick={() => {
                         setEditingSubdemandIndex(undefined);
                         setSubdemandDialogOpen(true);
@@ -714,6 +696,20 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                       <Plus className="h-4 w-4" />
                       Adicionar
                     </Button>
+
+                    {subdemands.map((sub, idx) => (
+                      <div
+                        key={sub.tempId}
+                        className="inline-flex items-center justify-between gap-1.5 rounded-md bg-[#F28705] text-white px-3 h-9 text-xs font-medium cursor-pointer hover:bg-[#F28705]/90 transition-colors truncate"
+                        onClick={() => {
+                          setEditingSubdemandIndex(idx);
+                          setSubdemandDialogOpen(true);
+                        }}
+                      >
+                        <span className="truncate">{sub.title || `Subdemanda ${idx + 1}`}</span>
+                        <Pencil className="h-3 w-3 opacity-80 shrink-0" />
+                      </div>
+                    ))}
                   </div>
 
                   <CreateSubdemandDialog
