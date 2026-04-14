@@ -211,6 +211,85 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
 
     const selectedBoard = allBoards?.find(b => b.id === activeBoardId);
 
+    // If there are subdemands, use transactional RPC
+    if (subdemands.length > 0) {
+      const parentData = {
+        title: title.trim(),
+        description: finalDescription,
+        team_id: selectedTeamId,
+        board_id: activeBoardId,
+        status_id: statusId,
+        priority,
+        due_date: dueDate || undefined,
+        service_id: serviceId && serviceId !== "none" ? serviceId : undefined,
+      };
+
+      const subInputs: SubdemandInput[] = subdemands.map(s => ({
+        title: s.title,
+        priority: s.priority || "média",
+        status_id: s.status_id || statusId,
+      }));
+
+      const deps: DependencyInput[] = subdemands
+        .map((s, idx) => {
+          if (s.dependsOnIndex !== undefined && s.dependsOnIndex >= 0) {
+            return { demand_index: idx + 1, depends_on_index: s.dependsOnIndex + 1 };
+          }
+          return null;
+        })
+        .filter(Boolean) as DependencyInput[];
+
+      createDemandWithSubdemands.mutate(
+        { parent: parentData, subdemands: subInputs, dependencies: deps },
+        {
+          onSuccess: async (result) => {
+            const parentId = result.parent_id;
+
+            // Handle assignees for parent
+            if (assigneeIds.length > 0 && parentId) {
+              await supabase
+                .from("demand_assignees")
+                .insert(assigneeIds.map((userId) => ({ demand_id: parentId, user_id: userId })));
+            }
+
+            // Handle files for parent
+            if (pendingFiles.length > 0 && parentId) {
+              const { success, failed } = await uploadPendingFiles(parentId, pendingFiles, uploadAttachment);
+              if (failed > 0) toast.warning(`${success} arquivo(s) enviado(s), ${failed} falhou(ram)`);
+              else if (success > 0) toast.success(`${success} arquivo(s) anexado(s)`);
+              setPendingFiles([]);
+            }
+
+            // Handle folder
+            if (selectedFolderId && parentId) {
+              try {
+                await addDemandToFolder.mutateAsync({ folder_id: selectedFolderId, demand_id: parentId });
+              } catch {}
+            }
+
+            setSuccessState({
+              demandId: parentId,
+              demandTitle: title.trim(),
+              boardId: activeBoardId,
+              boardName: selectedBoard?.name || "Quadro",
+            });
+            resetForm();
+            if (statuses && statuses.length > 0) {
+              const defaultStatus = statuses.find(s => s.name === "A Iniciar") || statuses[0];
+              setStatusId(defaultStatus.id);
+            }
+          },
+          onError: (error: any) => {
+            toast.error("Erro ao criar demanda com subdemandas", {
+              description: getErrorMessage(error),
+            });
+          },
+        }
+      );
+      return;
+    }
+
+    // No subdemands — original flow
     createDemand.mutate(
       {
         title: title.trim(),
