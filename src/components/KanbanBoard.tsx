@@ -77,7 +77,6 @@ interface Demand {
   boards?: { id: string; name: string } | null;
   services?: { id: string; name: string } | null;
   demand_assignees?: Assignee[];
-  parent_demand?: { id: string; title: string; board_sequence_number: number | null; description: string | null } | null;
   _isOffline?: boolean;
 }
 
