@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
-import { GitBranch, Users, Info } from "lucide-react";
+import { ServiceSelector } from "@/components/ServiceSelector";
+import { GitBranch, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { SubdemandInput } from "@/hooks/useSubdemands";
 
@@ -29,7 +30,6 @@ interface CreateSubdemandDialogProps {
   existingSubdemands: SubdemandFormData[];
   editingIndex?: number;
   editingData?: SubdemandFormData | null;
-  // Context from parent demand
   parentServiceId?: string;
   parentServiceName?: string;
   statuses: StatusOption[];
@@ -57,6 +57,7 @@ export function CreateSubdemandDialog({
   const [description, setDescription] = useState("");
   const [statusId, setStatusId] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [serviceId, setServiceId] = useState("");
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [dependsOnIndex, setDependsOnIndex] = useState<number | undefined>(undefined);
 
@@ -69,6 +70,7 @@ export function CreateSubdemandDialog({
       setDescription(editingData.description || "");
       setStatusId(editingData.status_id || defaultStatusId);
       setDueDate(editingData.due_date || "");
+      setServiceId(editingData.service_id || parentServiceId || "");
       setAssigneeIds(editingData.assigneeIds || []);
       setDependsOnIndex(editingData.dependsOnIndex);
     } else if (open) {
@@ -77,10 +79,11 @@ export function CreateSubdemandDialog({
       setDescription("");
       setStatusId(defaultStatusId);
       setDueDate("");
+      setServiceId(parentServiceId || "");
       setAssigneeIds([]);
       setDependsOnIndex(undefined);
     }
-  }, [open, editingData, defaultStatusId]);
+  }, [open, editingData, defaultStatusId, parentServiceId]);
 
   const handleSave = () => {
     if (!title.trim()) return;
@@ -90,7 +93,7 @@ export function CreateSubdemandDialog({
       priority,
       description: description.trim() || undefined,
       status_id: statusId || undefined,
-      service_id: parentServiceId || undefined,
+      service_id: serviceId || undefined,
       due_date: dueDate || undefined,
       assigned_to: assigneeIds[0] || undefined,
       assigneeIds,
@@ -127,22 +130,19 @@ export function CreateSubdemandDialog({
             />
           </div>
 
-          {/* Service (read-only, inherited) + Assignees */}
+          {/* Service + Assignees */}
           <div className="grid grid-cols-2 gap-3">
-            {parentServiceName && (
-              <div className="space-y-2">
-                <Label>Serviço</Label>
-                <Input
-                  value={parentServiceName}
-                  disabled
-                  className="h-8 text-muted-foreground"
-                />
-              </div>
-            )}
-            <div className={`space-y-2 ${!parentServiceName ? "col-span-2" : ""}`}>
-              <Label>
-                Responsáveis
-              </Label>
+            <div className="space-y-2">
+              <Label>Serviço</Label>
+              <ServiceSelector
+                teamId={teamId}
+                boardId={boardId}
+                value={serviceId}
+                onChange={(id) => setServiceId(id)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Responsáveis</Label>
               <AssigneeSelector
                 teamId={teamId}
                 boardId={boardId}
@@ -196,7 +196,7 @@ export function CreateSubdemandDialog({
             </div>
           </div>
 
-          {/* Dependency - inline style like reference image */}
+          {/* Dependency */}
           {existingSubdemands.length > 0 && (
             <div className="flex items-center gap-2 flex-wrap">
               <Label className="whitespace-nowrap text-sm">Pode iniciar quando</Label>
