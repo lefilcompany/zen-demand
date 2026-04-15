@@ -1,17 +1,20 @@
 import { Clock, Play, Pause, Loader2, Users } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useLiveTimer, formatTimeDisplay } from "@/hooks/useLiveTimer";
 import { useUserTimerControl, useDemandUserTimeStats } from "@/hooks/useUserTimeTracking";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface KanbanTimeDisplayProps {
   demandId: string;
   canControl?: boolean;
   forceShow?: boolean;
+  hideIfHasSubdemands?: boolean;
 }
 
-export function KanbanTimeDisplay({ demandId, canControl = false, forceShow = false }: KanbanTimeDisplayProps) {
+export function KanbanTimeDisplay({ demandId, canControl = false, forceShow = false, hideIfHasSubdemands = false }: KanbanTimeDisplayProps) {
   const { data: userStats } = useDemandUserTimeStats(demandId);
   const {
     isTimerRunning,
@@ -22,6 +25,21 @@ export function KanbanTimeDisplay({ demandId, canControl = false, forceShow = fa
     isLoading,
   } = useUserTimerControl(demandId);
 
+  const { data: hasSubdemands = false } = useQuery({
+    queryKey: ["demand-has-subdemands", demandId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("demands")
+        .select("id", { count: "exact", head: true })
+        .eq("parent_demand_id", demandId)
+        .eq("archived", false);
+
+      if (error) throw error;
+      return (count || 0) > 0;
+    },
+    enabled: hideIfHasSubdemands && !!demandId,
+  });
+
   // Current user's live time
   const currentUserLiveTime = useLiveTimer({
     isActive: isTimerRunning,
@@ -31,6 +49,10 @@ export function KanbanTimeDisplay({ demandId, canControl = false, forceShow = fa
 
   const activeUsersCount = userStats?.filter(u => u.isActive).length || 0;
   const displayTime = currentUserLiveTime || formatTimeDisplay(totalSeconds) || "00:00:00:00";
+
+  if (hideIfHasSubdemands && hasSubdemands) {
+    return null;
+  }
 
   // Don't show if no time tracked (unless forceShow is true)
   if (!forceShow && totalSeconds === 0 && !isTimerRunning && activeUsersCount === 0) {

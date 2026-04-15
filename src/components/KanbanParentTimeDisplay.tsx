@@ -54,27 +54,45 @@ function LiveTotal({ subs }: { subs: SubTimeInfo[] }) {
 
 interface KanbanParentTimeDisplayProps {
   demandId: string;
-  subdemandIds: string[];
+  subdemandIds?: string[];
 }
 
 export function KanbanParentTimeDisplay({ demandId, subdemandIds }: KanbanParentTimeDisplayProps) {
-  const { data: subTimeData } = useQuery({
-    queryKey: ["kanban-parent-time", demandId, subdemandIds],
+  const { data: resolvedSubdemandIds } = useQuery({
+    queryKey: ["kanban-parent-subdemand-ids", demandId],
     queryFn: async () => {
-      if (subdemandIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("demands")
+        .select("id")
+        .eq("parent_demand_id", demandId)
+        .eq("archived", false);
+
+      if (error) throw error;
+      return (data || []).map((item) => item.id);
+    },
+    enabled: !!demandId && !subdemandIds,
+  });
+
+  const effectiveSubdemandIds = subdemandIds ?? resolvedSubdemandIds ?? [];
+
+  const { data: subTimeData } = useQuery({
+    queryKey: ["kanban-parent-time", demandId, effectiveSubdemandIds],
+    queryFn: async () => {
+      if (effectiveSubdemandIds.length === 0) return [];
 
       const { data: entries, error } = await supabase
         .from("demand_time_entries")
         .select("demand_id, started_at, ended_at, duration_seconds")
-        .in("demand_id", subdemandIds);
+        .in("demand_id", effectiveSubdemandIds);
 
       if (error) throw error;
 
-      return subdemandIds.map(subId => {
+      return effectiveSubdemandIds.map(subId => {
         const subEntries = (entries || []).filter(e => e.demand_id === subId);
-        const totalSeconds = subEntries
-          .filter(e => e.ended_at !== null)
-          .reduce((sum, e) => sum + (e.duration_seconds || 0), 0);
+        const totalSeconds = subEntries.reduce((sum, e) => {
+          if (!e.ended_at) return sum;
+          return sum + (e.duration_seconds || 0);
+        }, 0);
         const activeEntry = subEntries.find(e => e.ended_at === null);
 
         return {
@@ -84,7 +102,7 @@ export function KanbanParentTimeDisplay({ demandId, subdemandIds }: KanbanParent
         } as SubTimeInfo;
       });
     },
-    enabled: subdemandIds.length > 0,
+    enabled: effectiveSubdemandIds.length > 0,
     refetchInterval: 5000,
   });
 

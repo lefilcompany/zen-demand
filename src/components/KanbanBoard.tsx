@@ -276,6 +276,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         queryClient.invalidateQueries({ queryKey: ["current-user-demand-time", demandId] });
         queryClient.invalidateQueries({ queryKey: ["active-timer-demands"] });
         queryClient.invalidateQueries({ queryKey: ["board-time-entries"] });
+        queryClient.invalidateQueries({ queryKey: ["kanban-parent-time"] });
+        queryClient.invalidateQueries({ queryKey: ["subdemands-time-entries"] });
         
         // Show notification that timer was stopped
         toast.info("Timer pausado automaticamente", {
@@ -342,6 +344,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       queryClient.invalidateQueries({ queryKey: ["user-active-timer"] });
       queryClient.invalidateQueries({ queryKey: ["board-time-entries"] });
       queryClient.invalidateQueries({ queryKey: ["demands"] });
+      queryClient.invalidateQueries({ queryKey: ["kanban-parent-time"] });
+      queryClient.invalidateQueries({ queryKey: ["subdemands-time-entries"] });
 
       toast.info("Timer iniciado automaticamente", {
         description: "O timer foi iniciado pois a demanda entrou em andamento",
@@ -539,6 +543,24 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const handleDropWithStatusId = async (demandId: string, statusId: string, columnKey: string, demand: Demand | undefined) => {
     const previousStatusName = demand?.demand_statuses?.name;
 
+    const { data: childDemands } = await supabase
+      .from("demands")
+      .select("id, demand_statuses(name)")
+      .eq("parent_demand_id", demandId)
+      .eq("archived", false);
+
+    const isParentDemandByDb = (childDemands?.length || 0) > 0;
+
+    if (columnKey === "Entregue" && isParentDemandByDb) {
+      const hasUndeliveredSubdemand = (childDemands || []).some((child) => (child.demand_statuses as any)?.name !== "Entregue");
+      if (hasUndeliveredSubdemand) {
+        toast.error("Não é possível entregar a demanda pai", {
+          description: "Entregue todas as subdemandas antes de marcar a demanda principal como entregue.",
+        });
+        return;
+      }
+    }
+
     // Check dependency before allowing status change (except going back to "A Iniciar")
     if (columnKey !== "A Iniciar" && previousStatusName === "A Iniciar") {
       const depCheck = await checkDependencyBeforeStatusChange(demandId);
@@ -676,6 +698,24 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     // Check dependency before allowing status change
     const demand = demands.find(d => d.id === demandId);
     const previousStatusName = demand?.demand_statuses?.name;
+
+    const { data: childDemands } = await supabase
+      .from("demands")
+      .select("id, demand_statuses(name)")
+      .eq("parent_demand_id", demandId)
+      .eq("archived", false);
+
+    const isParentDemandByDb = (childDemands?.length || 0) > 0;
+    if (newStatusKey === "Entregue" && isParentDemandByDb) {
+      const hasUndeliveredSubdemand = (childDemands || []).some((child) => (child.demand_statuses as any)?.name !== "Entregue");
+      if (hasUndeliveredSubdemand) {
+        toast.error("Não é possível entregar a demanda pai", {
+          description: "Entregue todas as subdemandas antes de marcar a demanda principal como entregue.",
+        });
+        return;
+      }
+    }
+
     if (newStatusKey !== "A Iniciar" && previousStatusName === "A Iniciar") {
       const depCheck = await checkDependencyBeforeStatusChange(demandId);
       if (depCheck.blocked) {
@@ -1175,6 +1215,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                     demandId={demand.id}
                     canControl={canControlTimer}
                     forceShow={shouldForceShow}
+                    hideIfHasSubdemands
                   />
                 );
               })()}
