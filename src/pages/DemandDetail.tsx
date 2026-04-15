@@ -46,6 +46,8 @@ import { RealtimeUpdateIndicator } from "@/components/RealtimeUpdateIndicator";
 import { useSubdemands, useAddSubdemand } from "@/hooks/useSubdemands";
 import { SubdemandBadge } from "@/components/SubdemandBadge";
 import { CreateSubdemandDialog, type SubdemandFormData } from "@/components/CreateSubdemandDialog";
+import { checkDependencyBeforeStatusChange, useDemandDependencyInfo, useBatchDependencyInfo } from "@/hooks/useDependencyCheck";
+import { Lock, Link2 } from "lucide-react";
 export default function DemandDetail() {
   const {
     id
