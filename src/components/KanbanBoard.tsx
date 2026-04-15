@@ -273,6 +273,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         // Invalidate queries to update UI
         queryClient.invalidateQueries({ queryKey: ["demand-time-entries", demandId] });
         queryClient.invalidateQueries({ queryKey: ["current-user-demand-time", demandId] });
+        queryClient.invalidateQueries({ queryKey: ["active-timer-demands"] });
+        queryClient.invalidateQueries({ queryKey: ["board-time-entries"] });
         
         // Show notification that timer was stopped
         toast.info("Timer pausado automaticamente", {
