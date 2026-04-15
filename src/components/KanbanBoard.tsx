@@ -41,6 +41,8 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth";
 import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 import { KanbanSubdemandsList } from "@/components/KanbanSubdemandsList";
+import { checkDependencyBeforeStatusChange, useBatchDependencyInfo } from "@/hooks/useDependencyCheck";
+import { Link2, Lock } from "lucide-react";
 
 interface Assignee {
   user_id: string;
@@ -227,6 +229,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   
   const demandIds = useMemo(() => demands.map(d => d.id), [demands]);
   const { data: adjustmentCounts } = useAdjustmentCounts(demandIds);
+  const { data: batchDeps } = useBatchDependencyInfo(demandIds);
 
   // Build a lookup map for parent demands from the same data set
   const parentDemandMap = useMemo(() => {
@@ -439,6 +442,17 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const handleDropWithStatusId = async (demandId: string, statusId: string, columnKey: string, demand: Demand | undefined) => {
     const previousStatusName = demand?.demand_statuses?.name;
 
+    // Check dependency before allowing status change (except going back to "A Iniciar")
+    if (columnKey !== "A Iniciar" && previousStatusName === "A Iniciar") {
+      const depCheck = await checkDependencyBeforeStatusChange(demandId);
+      if (depCheck.blocked) {
+        toast.error("Não é possível alterar o status", {
+          description: `Esta demanda depende de "${depCheck.blockedByTitle}" que ainda não foi concluída.`,
+        });
+        return;
+      }
+    }
+
     // Adicionar a aba de destino às abertas no modo desktop grande para acompanhar o card
     if (isLargeDesktop && !activeColumns.includes(columnKey)) {
       toggleColumn(columnKey);
@@ -554,6 +568,19 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
   // Handle mobile status change via dropdown
   const handleMobileStatusChange = async (demandId: string, newStatusKey: string) => {
+    // Check dependency before allowing status change
+    const demand = demands.find(d => d.id === demandId);
+    const previousStatusName = demand?.demand_statuses?.name;
+    if (newStatusKey !== "A Iniciar" && previousStatusName === "A Iniciar") {
+      const depCheck = await checkDependencyBeforeStatusChange(demandId);
+      if (depCheck.blocked) {
+        toast.error("Não é possível alterar o status", {
+          description: `Esta demanda depende de "${depCheck.blockedByTitle}" que ainda não foi concluída.`,
+        });
+        return;
+      }
+    }
+
     // Interceptar tentativa de mover para "Em Ajuste" - abrir diálogo ao invés de mover direto
     if (newStatusKey === "Em Ajuste") {
       setAdjustmentDemandId(demandId);
@@ -574,24 +601,24 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       targetStatusId = targetStatus.id;
     }
 
-    const demand = demands.find((d) => d.id === demandId);
-    const previousStatusName = demand?.demand_statuses?.name;
+    const demandObj = demands.find((d) => d.id === demandId);
+    const prevStatusName = demandObj?.demand_statuses?.name;
     
-    if (previousStatusName === newStatusKey) return;
+    if (prevStatusName === newStatusKey) return;
 
     // Apply optimistic update immediately
     setOptimisticUpdates(prev => ({ ...prev, [demandId]: newStatusKey }));
 
-    const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && newStatusKey === "Aprovação do Cliente";
+    const isAdjustmentCompletion = prevStatusName === "Em Ajuste" && newStatusKey === "Aprovação do Cliente";
 
     // Stop timer when leaving "Fazendo" or "Em Ajuste" for any other status
     const timerStatuses = ["Fazendo", "Em Ajuste"];
-    if (previousStatusName && timerStatuses.includes(previousStatusName) && !timerStatuses.includes(newStatusKey)) {
+    if (prevStatusName && timerStatuses.includes(prevStatusName) && !timerStatuses.includes(newStatusKey)) {
       await stopAllTimersForDemand(demandId);
     }
 
     // Start timer automatically when moving to "Fazendo"
-    if (newStatusKey === "Fazendo" && previousStatusName !== "Fazendo") {
+    if (newStatusKey === "Fazendo" && prevStatusName !== "Fazendo") {
       await startTimerForDemand(demandId);
     }
 
@@ -723,6 +750,15 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     
     const demand = demands.find(d => d.id === demandId);
     if (!demand) return;
+
+    // Check dependency before allowing completion
+    const depCheck = await checkDependencyBeforeStatusChange(demandId);
+    if (depCheck.blocked) {
+      toast.error("Não é possível alterar o status", {
+        description: `Esta demanda depende de "${depCheck.blockedByTitle}" que ainda não foi concluída.`,
+      });
+      return;
+    }
     
     // Stop any active timers
     await stopAllTimersForDemand(demandId);
@@ -785,6 +821,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     const adjustmentInfo = adjustmentCounts?.[demand.id];
     const adjustmentCount = adjustmentInfo?.count || 0;
     const latestAdjustmentType = adjustmentInfo?.latestType;
+    const demandDeps = batchDeps?.[demand.id] || [];
+    const isBlocked = demandDeps.some(d => d.isBlocked);
     // Demandas em "Entregue" não podem ser movidas
     const isDelivered = columnKey === "Entregue";
     // Show drag handle on desktop and tablet (medium screens), not on mobile, and not for delivered demands
@@ -985,6 +1023,35 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   >
                     {latestAdjustmentType === "internal" ? "Interno" : "Externo"}
                   </Badge>
+                )}
+
+                {/* Dependency indicator */}
+                {demandDeps.length > 0 && (
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-xs",
+                            isBlocked
+                              ? "bg-red-500/10 text-red-600 border-red-500/20"
+                              : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                          )}
+                        >
+                          {isBlocked ? <Lock className="h-3 w-3 mr-1" /> : <Link2 className="h-3 w-3 mr-1" />}
+                          {isBlocked ? "Bloqueada" : "Dependência OK"}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[260px]">
+                        <p className="text-xs">
+                          {isBlocked
+                            ? `Depende de "${demandDeps.find(d => d.isBlocked)?.dependsOnTitle}" (${demandDeps.find(d => d.isBlocked)?.dependsOnStatusName})`
+                            : `Dependência "${demandDeps[0]?.dependsOnTitle}" concluída`}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
 

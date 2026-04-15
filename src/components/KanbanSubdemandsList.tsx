@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { useSubdemands } from "@/hooks/useSubdemands";
+import { useBatchDependencyInfo } from "@/hooks/useDependencyCheck";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { cn } from "@/lib/utils";
+import { Lock, Link2 } from "lucide-react";
+import { useMemo } from "react";
 
 interface KanbanSubdemandsListProps {
   demandId: string;
@@ -22,6 +25,9 @@ function formatTimeSeconds(seconds: number | null | undefined): string | null {
 export function KanbanSubdemandsList({ demandId, onSubdemandClick }: KanbanSubdemandsListProps) {
   const { data: subdemands } = useSubdemands(demandId);
   const [expanded, setExpanded] = useState(false);
+  
+  const subIds = useMemo(() => (subdemands || []).map(s => s.id), [subdemands]);
+  const { data: depsMap } = useBatchDependencyInfo(subIds);
 
   if (!subdemands || subdemands.length === 0) return null;
 
@@ -36,6 +42,8 @@ export function KanbanSubdemandsList({ demandId, onSubdemandClick }: KanbanSubde
         const assignees = sub.demand_assignees || [];
         const timeStr = formatTimeSeconds(sub.time_in_progress_seconds);
         const code = sub.board_sequence_number ? formatDemandCode(sub.board_sequence_number) : null;
+        const deps = depsMap?.[sub.id] || [];
+        const isBlocked = deps.some(d => d.isBlocked);
 
         return (
           <button
@@ -52,6 +60,12 @@ export function KanbanSubdemandsList({ demandId, onSubdemandClick }: KanbanSubde
               className="px-2.5 py-1.5 flex items-center gap-1.5"
               style={{ backgroundColor: color }}
             >
+              {/* Dependency icon */}
+              {deps.length > 0 && (
+                isBlocked
+                  ? <Lock className="h-3 w-3 text-white/90 shrink-0" />
+                  : <Link2 className="h-3 w-3 text-white/70 shrink-0" />
+              )}
               <span className="text-[11px] font-medium text-white truncate flex-1">
                 {code && <span className="opacity-70 mr-1">{code}</span>}
                 {sub.title.toUpperCase()}
@@ -67,6 +81,13 @@ export function KanbanSubdemandsList({ demandId, onSubdemandClick }: KanbanSubde
                 </div>
               )}
             </div>
+            {/* Dependency detail line */}
+            {deps.length > 0 && isBlocked && (
+              <div className="px-2.5 py-1 bg-red-500/10 text-[10px] text-red-600 font-medium truncate flex items-center gap-1">
+                <Lock className="h-2.5 w-2.5 shrink-0" />
+                Depende de: {deps.find(d => d.isBlocked)?.dependsOnTitle}
+              </div>
+            )}
           </button>
         );
       })}

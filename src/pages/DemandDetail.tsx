@@ -46,6 +46,8 @@ import { RealtimeUpdateIndicator } from "@/components/RealtimeUpdateIndicator";
 import { useSubdemands, useAddSubdemand } from "@/hooks/useSubdemands";
 import { SubdemandBadge } from "@/components/SubdemandBadge";
 import { CreateSubdemandDialog, type SubdemandFormData } from "@/components/CreateSubdemandDialog";
+import { checkDependencyBeforeStatusChange, useDemandDependencyInfo, useBatchDependencyInfo } from "@/hooks/useDependencyCheck";
+import { Lock, Link2 } from "lucide-react";
 export default function DemandDetail() {
   const {
     id
@@ -155,6 +157,9 @@ export default function DemandDetail() {
     enabled: !!demand?.parent_demand_id,
   });
   const addSubdemand = useAddSubdemand();
+  const { data: demandDeps } = useDemandDependencyInfo(id || null);
+  const subdemandIds = useMemo(() => (subdemands || []).map(s => s.id), [subdemands]);
+  const { data: subDepsMap } = useBatchDependencyInfo(subdemandIds);
   const [newSubdemandTitle, setNewSubdemandTitle] = useState("");
   const [showAddSubdemand, setShowAddSubdemand] = useState(false);
   const [showSubdemandDialog, setShowSubdemandDialog] = useState(false);
@@ -685,6 +690,18 @@ export default function DemandDetail() {
                     {statuses?.map(status => <DropdownMenuItem key={status.id} onClick={async () => {
                     if (status.id !== demand.status_id) {
                       const previousStatusName = demand.demand_statuses?.name;
+
+                      // Check dependency before allowing status change
+                      if (status.name !== "A Iniciar" && previousStatusName === "A Iniciar") {
+                        const depCheck = await checkDependencyBeforeStatusChange(demand.id);
+                        if (depCheck.blocked) {
+                          toast.error("Não é possível alterar o status", {
+                            description: `Esta demanda depende de "${depCheck.blockedByTitle}" que ainda não foi concluída.`,
+                          });
+                          return;
+                        }
+                      }
+
                       const timerStatuses = ["Fazendo", "Em Ajuste"];
                       const isEnteringTimerStatus = timerStatuses.includes(status.name);
                       const isLeavingTimerStatus = previousStatusName && timerStatuses.includes(previousStatusName) && !isEnteringTimerStatus;
@@ -850,6 +867,24 @@ export default function DemandDetail() {
             )}
 
 
+          {/* Dependency info banner */}
+          {demandDeps && demandDeps.length > 0 && (() => {
+            const blocked = demandDeps.find(d => d.isBlocked);
+            return (
+              <div className={cn(
+                "flex items-center gap-2 text-sm rounded-lg px-3 py-2",
+                blocked ? "bg-red-500/10 text-red-700 dark:text-red-400" : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+              )}>
+                {blocked ? <Lock className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
+                {blocked ? (
+                  <span>Bloqueada — depende de <strong>"{blocked.dependsOnTitle}"</strong> ({blocked.dependsOnStatusName})</span>
+                ) : (
+                  <span>Dependência concluída — <strong>"{demandDeps[0].dependsOnTitle}"</strong> entregue</span>
+                )}
+              </div>
+            );
+          })()}
+
           {/* Parent demand link */}
           {demand.parent_demand_id && (
             <div className="flex items-center gap-2 text-sm bg-muted/50 rounded-lg px-3 py-2">
@@ -969,6 +1004,8 @@ export default function DemandDetail() {
                       : null;
                     const priorityLabel = sub.priority === "alta" ? "Alta" : sub.priority === "baixa" ? "Baixa" : "Média";
                     const priorityColor = sub.priority === "alta" ? "#EF4444" : sub.priority === "baixa" ? "#3B82F6" : "#F59E0B";
+                    const subDeps = subDepsMap?.[sub.id] || [];
+                    const subIsBlocked = subDeps.some(d => d.isBlocked);
 
                     return (
                       <button
@@ -1022,6 +1059,22 @@ export default function DemandDetail() {
                               )}
                             </div>
                           </div>
+                          {/* Dependency indicator */}
+                          {subDeps.length > 0 && (
+                            <div className={cn(
+                              "flex items-center gap-1 px-2 py-1 text-[10px] font-medium",
+                              subIsBlocked
+                                ? "text-red-600 bg-red-500/5"
+                                : "text-emerald-600 bg-emerald-500/5"
+                            )}>
+                              {subIsBlocked ? <Lock className="h-3 w-3" /> : <Link2 className="h-3 w-3" />}
+                              <span className="truncate">
+                                {subIsBlocked
+                                  ? `Depende de: ${subDeps.find(d => d.isBlocked)?.dependsOnTitle}`
+                                  : `Dependência OK: ${subDeps[0]?.dependsOnTitle}`}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </button>
                     );
