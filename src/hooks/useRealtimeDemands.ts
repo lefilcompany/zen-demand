@@ -53,6 +53,21 @@ export function useRealtimeDemands(boardId?: string) {
           }
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'demand_time_entries',
+        },
+        () => {
+          // Timer entries changed — refresh time displays
+          queryClient.invalidateQueries({ queryKey: ["subdemands-time-entries"] });
+          queryClient.invalidateQueries({ queryKey: ["kanban-parent-time"] });
+          queryClient.invalidateQueries({ queryKey: ["board-time-entries"] });
+          queryClient.invalidateQueries({ queryKey: ["demand-time-entries"] });
+        }
+      )
       .subscribe((status) => {
         console.log('Demands realtime subscription status:', status);
       });
