@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { GitBranch, ArrowRight } from "lucide-react";
+import { GitBranch, ArrowRight, Paperclip } from "lucide-react";
 import type { SubdemandFormData } from "./SubdemandStepForm";
 
 interface StatusOption {
@@ -89,6 +89,12 @@ export function ReviewStep({
                   </span>
                   <span>{priorityLabels[sub.priority || "média"] || sub.priority}</span>
                   {sub.due_date && <span>Entrega: {sub.due_date}</span>}
+                  {sub.pendingFiles && sub.pendingFiles.length > 0 && (
+                    <span className="flex items-center gap-1">
+                      <Paperclip className="h-3 w-3" />
+                      {sub.pendingFiles.length} anexo{sub.pendingFiles.length > 1 ? "s" : ""}
+                    </span>
+                  )}
                   {sub.dependsOnIndex !== undefined && (
                     <span className="flex items-center gap-1 text-primary">
                       <ArrowRight className="h-3 w-3" />
