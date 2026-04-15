@@ -42,13 +42,15 @@ function ActiveTimerItem({ demand, isCollapsed, isMobile, onClose }: ActiveTimer
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors border border-primary/20 relative">
-            <NavLink
-              to={`/demands/${demand.id}`}
-              onClick={onClose}
-              className="absolute inset-0 flex items-center justify-center"
-            >
-              <Pause className="h-4 w-4 text-destructive" />
-            </NavLink>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handlePause}
+            disabled={stopTimer.isPending}
+            className="h-10 w-10 hover:bg-destructive/20"
+          >
+            <Pause className="h-4 w-4 text-destructive" />
+          </Button>
           </div>
         </TooltipTrigger>
         <TooltipContent side="right" className="max-w-48">
