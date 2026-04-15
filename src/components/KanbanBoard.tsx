@@ -1025,21 +1025,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   </Badge>
                 )}
 
-                {/* Dependency indicator */}
-                {demandDeps.length > 0 && (
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "text-xs",
-                      isBlocked
-                        ? "bg-red-500/10 text-red-600 border-red-500/20"
-                        : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                    )}
-                  >
-                    {isBlocked ? <Lock className="h-3 w-3 mr-1" /> : <Link2 className="h-3 w-3 mr-1" />}
-                    {isBlocked ? "Bloqueada" : "Dependência OK"}
-                  </Badge>
-                )}
               </div>
               {demandDeps.length > 0 && isBlocked && (
                 <div className="rounded-md bg-red-500/10 px-2.5 py-1.5 flex items-center gap-1.5 mb-2">
