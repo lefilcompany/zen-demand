@@ -554,8 +554,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     if (columnKey === "Entregue" && isParentDemandByDb) {
       const hasUndeliveredSubdemand = (childDemands || []).some((child) => (child.demand_statuses as any)?.name !== "Entregue");
       if (hasUndeliveredSubdemand) {
-        toast.error("Não é possível entregar a demanda pai", {
-          description: "Entregue todas as subdemandas antes de marcar a demanda principal como entregue.",
+        toast.error("Finalização bloqueada", {
+          description: "Esta demanda possui subdemandas pendentes. Conclua todas as subdemandas antes de finalizar.",
         });
         return;
       }
@@ -709,8 +709,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     if (newStatusKey === "Entregue" && isParentDemandByDb) {
       const hasUndeliveredSubdemand = (childDemands || []).some((child) => (child.demand_statuses as any)?.name !== "Entregue");
       if (hasUndeliveredSubdemand) {
-        toast.error("Não é possível entregar a demanda pai", {
-          description: "Entregue todas as subdemandas antes de marcar a demanda principal como entregue.",
+        toast.error("Finalização bloqueada", {
+          description: "Esta demanda possui subdemandas pendentes. Conclua todas as subdemandas antes de finalizar.",
         });
         return;
       }
