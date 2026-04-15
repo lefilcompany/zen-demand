@@ -560,7 +560,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
           </>
         ) : (
           <>
-            <DialogHeader className="px-6 pt-6 pb-2 shrink-0 space-y-3">
+            <DialogHeader className="shrink-0 space-y-3">
               <DialogTitle className="text-xl font-bold">{getStepTitle()}</DialogTitle>
               <p className="text-sm text-muted-foreground">{getStepDescription()}</p>
               {subdemandCount > 0 && (
