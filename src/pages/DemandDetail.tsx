@@ -766,11 +766,13 @@ export default function DemandDetail() {
         </CardHeader>
         <CardContent className="space-y-4 md:space-y-6 p-3 sm:p-4 md:p-6 pt-0 md:pt-0">
           {/* Time tracking display - prominent position (hidden for board requesters) */}
-          {(isInProgress || isInAdjustment || isDelivered) && boardRole !== "requester" && (
+          {boardRole !== "requester" && (
             !demand.parent_demand_id && subdemands && subdemands.length > 0 ? (
               <ParentDemandTimeDisplay demandId={demand.id} subdemandIds={subdemands.map(s => s.id)} />
             ) : (
-              <UserTimeTrackingDisplay demandId={demand.id} variant="detail" showControls={canControlTimer} canControl={canControlTimer} canEdit={boardRole === "admin" || boardRole === "moderator" || boardRole === "executor"} />
+              (isInProgress || isInAdjustment || isDelivered) && (
+                <UserTimeTrackingDisplay demandId={demand.id} variant="detail" showControls={canControlTimer} canControl={canControlTimer} canEdit={boardRole === "admin" || boardRole === "moderator" || boardRole === "executor"} />
+              )
             )
           )}
 
