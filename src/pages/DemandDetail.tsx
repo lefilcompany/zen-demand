@@ -1012,8 +1012,8 @@ export default function DemandDetail() {
                       <button
                         key={sub.id}
                         onClick={() => navigate(`/demands/${sub.id}`)}
-                        className="w-full h-full text-left rounded-lg overflow-hidden transition-opacity hover:opacity-90 cursor-pointer border-2 flex flex-col"
-                        style={{ borderColor: bgColor }}
+                        className="w-full h-full text-left rounded-lg overflow-hidden transition-opacity hover:opacity-90 cursor-pointer border flex flex-col"
+                        style={{ borderColor: `${bgColor}33` }}
                         title={`${sub.title} — ${statusName}`}
                       >
                         {/* Color header bar */}
