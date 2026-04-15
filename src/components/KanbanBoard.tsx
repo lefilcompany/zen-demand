@@ -1030,20 +1030,22 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "text-xs",
-                            isBlocked
-                              ? "bg-red-500/10 text-red-600 border-red-500/20"
-                              : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                          )}
-                        >
-                          {isBlocked ? <Lock className="h-3 w-3 mr-1" /> : <Link2 className="h-3 w-3 mr-1" />}
-                          {isBlocked ? "Bloqueada" : "Dependência OK"}
-                        </Badge>
+                        <div tabIndex={0} className="inline-flex cursor-default">
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-xs pointer-events-none",
+                              isBlocked
+                                ? "bg-red-500/10 text-red-600 border-red-500/20"
+                                : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                            )}
+                          >
+                            {isBlocked ? <Lock className="h-3 w-3 mr-1" /> : <Link2 className="h-3 w-3 mr-1" />}
+                            {isBlocked ? "Bloqueada" : "Dependência OK"}
+                          </Badge>
+                        </div>
                       </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-[260px]">
+                      <TooltipContent side="top" className="max-w-[260px] z-[9999]">
                         <p className="text-xs">
                           {isBlocked
                             ? `Bloqueada - Aguardando demanda '${demandDeps.find(d => d.isBlocked)?.dependsOnTitle}' ser concluída`
