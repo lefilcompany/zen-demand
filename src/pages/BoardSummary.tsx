@@ -693,7 +693,7 @@ export default function BoardSummary() {
                   <span>Equipe</span>
                 </div>
                 <div className="flex items-center gap-1.5 sm:gap-2">
-                  <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary/50" />
+                  <Lightbulb className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary/50" />
                   <span>Recomendações</span>
                 </div>
               </div>
