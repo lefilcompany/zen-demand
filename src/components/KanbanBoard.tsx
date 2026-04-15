@@ -387,7 +387,13 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
   // Helper: when a sub-demand leaves "Fazendo", check if all siblings are also out, then move parent back
   const autoCheckParentStatus = useCallback(async (demandId: string, newStatusKey: string) => {
-    const demand = demands.find(d => d.id === demandId);
+    // Fetch demand directly to avoid stale closure data
+    const { data: demand } = await supabase
+      .from("demands")
+      .select("id, parent_demand_id")
+      .eq("id", demandId)
+      .single();
+    
     if (!demand?.parent_demand_id) return;
     
     // If the sub-demand is moving TO Fazendo, auto-move parent
@@ -396,23 +402,28 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       return;
     }
     
-    // If moving FROM Fazendo, check if any sibling is still in Fazendo
-    const siblings = demands.filter(d => d.parent_demand_id === demand.parent_demand_id && d.id !== demandId);
-    const anySiblingInFazendo = siblings.some(s => {
-      const optimisticStatus = optimisticUpdates[s.id];
-      const effectiveStatus = optimisticStatus || s.demand_statuses?.name;
-      return effectiveStatus === "Fazendo" || effectiveStatus === "Em Ajuste";
+    // Fetch all siblings from DB
+    const { data: siblings } = await supabase
+      .from("demands")
+      .select("id, demand_statuses(name)")
+      .eq("parent_demand_id", demand.parent_demand_id)
+      .neq("id", demandId);
+
+    const anySiblingActive = (siblings || []).some(s => {
+      const name = (s.demand_statuses as any)?.name;
+      return name === "Fazendo" || name === "Em Ajuste";
     });
     
-    if (!anySiblingInFazendo && newStatusKey !== "Fazendo" && newStatusKey !== "Em Ajuste") {
-      // All sub-demands are out of active work - check if parent should be updated
-      // Only auto-move parent back if it's in "Fazendo" and no children are active
-      const parentDemand = demands.find(d => d.id === demand.parent_demand_id);
-      if (parentDemand?.demand_statuses?.name === "Fazendo") {
-        // Check if ALL children are delivered
-        const allDelivered = siblings.every(s => {
-          const optimisticStatus = optimisticUpdates[s.id];
-          return (optimisticStatus || s.demand_statuses?.name) === "Entregue";
+    if (!anySiblingActive && newStatusKey !== "Fazendo" && newStatusKey !== "Em Ajuste") {
+      const { data: parentDemand } = await supabase
+        .from("demands")
+        .select("id, demand_statuses(name)")
+        .eq("id", demand.parent_demand_id)
+        .single();
+        
+      if (parentDemand && (parentDemand.demand_statuses as any)?.name === "Fazendo") {
+        const allDelivered = (siblings || []).every(s => {
+          return (s.demand_statuses as any)?.name === "Entregue";
         }) && newStatusKey === "Entregue";
         
         if (allDelivered) {
@@ -428,7 +439,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         }
       }
     }
-  }, [demands, statuses, updateDemand, user, optimisticUpdates, autoMoveParentToFazendo]);
+  }, [statuses, updateDemand, user, autoMoveParentToFazendo]);
 
   const adjustmentDemand = demands.find(d => d.id === adjustmentDemandId);
 
