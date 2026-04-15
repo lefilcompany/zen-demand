@@ -91,7 +91,8 @@ function InsightCard({ insight, isExpanded, onToggle }: { insight: AIInsight; is
 }
 
 
-  export function DashboardAIInsights({ boardId, isRequester = false }: DashboardAIInsightsProps) {
+export function DashboardAIInsights({ boardId, isRequester = false }: DashboardAIInsightsProps) {
+  const navigate = useNavigate();
   const [expandedIndexes, setExpandedIndexes] = useState<Set<number>>(new Set());
 
   const { data, isLoading, error } = useQuery({
