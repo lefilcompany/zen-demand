@@ -229,6 +229,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   
   const demandIds = useMemo(() => demands.map(d => d.id), [demands]);
   const { data: adjustmentCounts } = useAdjustmentCounts(demandIds);
+  const { data: batchDeps } = useBatchDependencyInfo(demandIds);
 
   // Build a lookup map for parent demands from the same data set
   const parentDemandMap = useMemo(() => {
