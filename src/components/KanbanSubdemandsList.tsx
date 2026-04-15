@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useSubdemands } from "@/hooks/useSubdemands";
 import { useBatchDependencyInfo } from "@/hooks/useDependencyCheck";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { cn } from "@/lib/utils";
 import { Lock, Link2 } from "lucide-react";
-import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface KanbanSubdemandsListProps {
   demandId: string;
@@ -29,6 +30,27 @@ export function KanbanSubdemandsList({ demandId, onSubdemandClick }: KanbanSubde
   const subIds = useMemo(() => (subdemands || []).map(s => s.id), [subdemands]);
   const { data: depsMap } = useBatchDependencyInfo(subIds);
 
+  // Fetch real time from demand_time_entries instead of stale time_in_progress_seconds
+  const { data: timeEntriesMap } = useQuery({
+    queryKey: ["subdemands-time-entries", subIds],
+    queryFn: async () => {
+      if (subIds.length === 0) return {};
+      const { data, error } = await supabase
+        .from("demand_time_entries")
+        .select("demand_id, duration_seconds, ended_at")
+        .in("demand_id", subIds);
+      if (error) throw error;
+      const map: Record<string, number> = {};
+      for (const entry of data || []) {
+        if (entry.ended_at) {
+          map[entry.demand_id] = (map[entry.demand_id] || 0) + (entry.duration_seconds || 0);
+        }
+      }
+      return map;
+    },
+    enabled: subIds.length > 0,
+  });
+
   if (!subdemands || subdemands.length === 0) return null;
 
   const visible = expanded ? subdemands : subdemands.slice(0, MAX_VISIBLE);
@@ -40,7 +62,7 @@ export function KanbanSubdemandsList({ demandId, onSubdemandClick }: KanbanSubde
         const color = sub.demand_statuses?.color || "#6B7280";
         const statusName = sub.demand_statuses?.name || "Sem status";
         const assignees = sub.demand_assignees || [];
-        const timeStr = formatTimeSeconds(sub.time_in_progress_seconds);
+        const timeStr = formatTimeSeconds(timeEntriesMap?.[sub.id] || 0);
         const code = sub.board_sequence_number ? formatDemandCode(sub.board_sequence_number) : null;
         const deps = depsMap?.[sub.id] || [];
         const isBlocked = deps.some(d => d.isBlocked);
