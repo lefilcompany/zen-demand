@@ -45,6 +45,7 @@ import { DemandPresenceIndicator } from "@/components/DemandPresenceIndicator";
 import { RealtimeUpdateIndicator } from "@/components/RealtimeUpdateIndicator";
 import { useSubdemands, useAddSubdemand } from "@/hooks/useSubdemands";
 import { SubdemandBadge } from "@/components/SubdemandBadge";
+import { SubdemandTimer } from "@/components/SubdemandTimer";
 import { CreateSubdemandDialog, type SubdemandFormData } from "@/components/CreateSubdemandDialog";
 import { checkDependencyBeforeStatusChange, useDemandDependencyInfo, useBatchDependencyInfo } from "@/hooks/useDependencyCheck";
 import { Lock, Link2 } from "lucide-react";
@@ -988,13 +989,13 @@ export default function DemandDetail() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {subdemands.map((sub) => {
                     const statusName = sub.demand_statuses?.name || "";
+                    const statusColor = sub.demand_statuses?.color || "#9CA3AF";
                     const isDelivered = statusName === "Entregue";
                     const isNotStarted = statusName === "A Iniciar";
-                    const bgColor = isDelivered
-                      ? "#10B981"
-                      : isNotStarted
-                        ? "#9CA3AF"
-                        : "#F28705";
+                    const bgColor = statusColor !== "#9CA3AF" ? statusColor
+                      : isDelivered ? "#10B981"
+                      : isNotStarted ? "#9CA3AF"
+                      : "#F28705";
                     const assignees = sub.demand_assignees || [];
                     const totalSeconds = sub.time_in_progress_seconds || 0;
                     const hours = Math.floor(totalSeconds / 3600);
@@ -1051,8 +1052,9 @@ export default function DemandDetail() {
                               )}
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
-                              {timeLabel && (
-                                <span className="font-mono">{timeLabel}</span>
+                              <SubdemandTimer demandId={sub.id} />
+                              {!sub.time_in_progress_seconds && (
+                                <span className="font-mono text-[10px] text-muted-foreground">0h</span>
                               )}
                               {sub.due_date && (
                                 <span>{formatDateOnlyBR(sub.due_date)}</span>
