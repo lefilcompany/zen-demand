@@ -985,7 +985,7 @@ export default function DemandDetail() {
               />
 
               {subdemands && subdemands.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-start">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {subdemands.map((sub) => {
                     const statusName = sub.demand_statuses?.name || "";
                     const isDelivered = statusName === "Entregue";
@@ -1011,7 +1011,7 @@ export default function DemandDetail() {
                       <button
                         key={sub.id}
                         onClick={() => navigate(`/demands/${sub.id}`)}
-                        className="w-full text-left rounded-lg overflow-hidden transition-opacity hover:opacity-90 cursor-pointer border border-border/30"
+                        className="w-full h-full text-left rounded-lg overflow-hidden transition-opacity hover:opacity-90 cursor-pointer border border-border/30 flex flex-col"
                         title={`${sub.title} — ${statusName}`}
                       >
                         {/* Color header bar */}
@@ -1020,7 +1020,7 @@ export default function DemandDetail() {
                           {sub.title}
                         </div>
                         {/* Details */}
-                        <div className="px-3 py-2 bg-card space-y-1.5">
+                        <div className="px-3 py-2 bg-card space-y-1.5 flex-1">
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-[10px] font-medium uppercase tracking-wide" style={{ color: bgColor }}>
                               {statusName}
