@@ -821,6 +821,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     const adjustmentInfo = adjustmentCounts?.[demand.id];
     const adjustmentCount = adjustmentInfo?.count || 0;
     const latestAdjustmentType = adjustmentInfo?.latestType;
+    const demandDeps = batchDeps?.[demand.id] || [];
+    const isBlocked = demandDeps.some(d => d.isBlocked);
     // Demandas em "Entregue" não podem ser movidas
     const isDelivered = columnKey === "Entregue";
     // Show drag handle on desktop and tablet (medium screens), not on mobile, and not for delivered demands
