@@ -57,7 +57,7 @@ export function KanbanSubdemandsList({ demandId, onSubdemandClick }: KanbanSubde
   const hiddenCount = subdemands.length - MAX_VISIBLE;
 
   return (
-    <div className="mt-2 space-y-1.5">
+    <div className="mt-3 space-y-2">
       {visible.map((sub) => {
         const color = sub.demand_statuses?.color || "#6B7280";
         const statusName = sub.demand_statuses?.name || "Sem status";
