@@ -53,7 +53,7 @@ export function SubdemandStepForm({
   const availableDeps = allSubdemands
     .map((s, i) => ({ ...s, idx: i }))
     .filter(({ idx, title: t }) => idx < index && t.trim() !== "");
-    .filter(({ idx }) => idx !== index);
+    
 
   return (
     <div className="space-y-4">
