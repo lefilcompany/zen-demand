@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Paperclip, Download, FileText, Image, File, Trash2, Loader2, Maximize2, Eye, Copy } from "lucide-react";
 import { downloadFileFromUrl, copyImageToClipboard } from "@/lib/fileDownloadUtils";
