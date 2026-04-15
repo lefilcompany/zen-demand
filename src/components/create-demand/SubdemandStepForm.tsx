@@ -178,6 +178,16 @@ export function SubdemandStepForm({
           minHeight="80px"
         />
       </div>
+
+      {/* Attachments */}
+      <div className="space-y-2">
+        <Label>Anexos</Label>
+        <InlineFileUploader
+          pendingFiles={data.pendingFiles || []}
+          onFilesChange={(files) => update({ pendingFiles: files })}
+          disabled={false}
+        />
+      </div>
     </div>
   );
 }
