@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Play, ExternalLink, Clock, Zap } from "lucide-react";
+import { Pause, ExternalLink, Clock, Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
