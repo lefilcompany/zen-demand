@@ -1052,8 +1052,9 @@ export default function DemandDetail() {
                               )}
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
-                              {timeLabel && (
-                                <span className="font-mono">{timeLabel}</span>
+                              <SubdemandTimer demandId={sub.id} />
+                              {!sub.time_in_progress_seconds && (
+                                <span className="font-mono text-[10px] text-muted-foreground">0h</span>
                               )}
                               {sub.due_date && (
                                 <span>{formatDateOnlyBR(sub.due_date)}</span>
