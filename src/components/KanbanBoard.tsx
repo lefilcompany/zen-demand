@@ -1044,8 +1044,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   </Badge>
                 )}
               </div>
-              <h4 className="font-medium text-sm line-clamp-2 mb-1" title={demand.title}>
-                {truncateText(demand.title)}
+              <h4 className="font-medium text-sm line-clamp-2 mb-1 break-words overflow-hidden" title={demand.title}>
+                {truncateText(demand.title, 80)}
               </h4>
 
               {demand.description && (() => {
