@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { useSelectedBoard } from "@/contexts/BoardContext";
@@ -432,7 +433,17 @@ export default function FolderDetail() {
       </div>
 
       {/* Calendar View (always flat) */}
-      {!groupByBoard && effectiveViewMode === "calendar" ? (
+      {/* Loading state */}
+      {isLoading ? (
+        <div className="space-y-3">
+          <Skeleton className="h-10 w-full rounded-xl" />
+          <Skeleton className="h-10 w-full rounded-xl" />
+          <Skeleton className="h-10 w-full rounded-xl" />
+          <Skeleton className="h-10 w-full rounded-xl" />
+          <Skeleton className="h-10 w-full rounded-xl" />
+          <Skeleton className="h-10 w-full rounded-xl" />
+        </div>
+      ) : !groupByBoard && effectiveViewMode === "calendar" ? (
         <DemandsCalendarView
           demands={filteredDemands}
           onDemandClick={(id) => handleDemandClick(id)}
