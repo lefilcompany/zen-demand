@@ -138,7 +138,6 @@ export function useAddBoardMember() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["board-members", data.board_id] });
       queryClient.invalidateQueries({ queryKey: ["available-team-members"] });
-      toast.success("Membro adicionado ao quadro!");
     },
     onError: (error: Error) => {
       if (error.message.includes("duplicate")) {
