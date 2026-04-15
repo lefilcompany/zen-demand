@@ -135,8 +135,9 @@ export function SubdemandStepForm({
       </div>
 
       {/* Dependency */}
-      {availableDeps.length > 0 && (
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="space-y-2">
+          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Dependência entre subdemandas</Label>
+          <div className="flex items-center gap-2 flex-wrap">
           <Label className="whitespace-nowrap text-sm">Pode iniciar quando</Label>
           <Select
             value={data.dependsOnIndex !== undefined ? String(data.dependsOnIndex) : "none"}
