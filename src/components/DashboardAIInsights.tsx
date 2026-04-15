@@ -63,10 +63,14 @@ export function DashboardAIInsights({ boardId, isRequester = false }: DashboardA
 
   if (isLoading) {
     return (
-      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map(i => (
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+        {[1, 2, 3].map(i => (
           <Skeleton key={i} className="h-28 rounded-xl" />
         ))}
+        <div className="h-28 rounded-xl bg-primary/10 border border-primary/20 flex flex-col items-center justify-center gap-2 p-4">
+          <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+          <p className="text-xs text-primary font-medium text-center">Gerando insights com IA…</p>
+        </div>
       </div>
     );
   }
