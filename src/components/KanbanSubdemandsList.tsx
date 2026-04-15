@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useSubdemands } from "@/hooks/useSubdemands";
 import { useBatchDependencyInfo } from "@/hooks/useDependencyCheck";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { cn } from "@/lib/utils";
 import { Lock, Link2 } from "lucide-react";
-import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface KanbanSubdemandsListProps {
   demandId: string;
