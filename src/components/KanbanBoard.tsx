@@ -1024,6 +1024,35 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                     {latestAdjustmentType === "internal" ? "Interno" : "Externo"}
                   </Badge>
                 )}
+
+                {/* Dependency indicator */}
+                {demandDeps.length > 0 && (
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-xs",
+                            isBlocked
+                              ? "bg-red-500/10 text-red-600 border-red-500/20"
+                              : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                          )}
+                        >
+                          {isBlocked ? <Lock className="h-3 w-3 mr-1" /> : <Link2 className="h-3 w-3 mr-1" />}
+                          {isBlocked ? "Bloqueada" : "Dependência OK"}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[260px]">
+                        <p className="text-xs">
+                          {isBlocked
+                            ? `Depende de "${demandDeps.find(d => d.isBlocked)?.dependsOnTitle}" (${demandDeps.find(d => d.isBlocked)?.dependsOnStatusName})`
+                            : `Dependência "${demandDeps[0]?.dependsOnTitle}" concluída`}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
               </div>
 
               {(columnKey === "Entregue" || columnKey === "Aprovação do Cliente" || columnKey === "Fazendo" || columnKey === "Em Ajuste") && (() => {
