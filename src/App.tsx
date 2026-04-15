@@ -17,7 +17,7 @@ import { KeyboardShortcutsProvider } from "@/components/KeyboardShortcuts";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { SwipeNavigationProvider } from "@/components/SwipeNavigationProvider";
 import { ScrollToTop } from "@/components/ScrollToTop";
-import { UpdateBanner } from "@/components/UpdateBanner";
+import { UpdateModal } from "@/components/UpdateModal";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Welcome from "./pages/Welcome";
@@ -104,7 +104,7 @@ const App = () => (
       <TooltipProvider>
         <BrowserRouter>
           <div className="flex h-[100dvh] flex-col">
-            <UpdateBanner />
+            <UpdateModal />
             <div className="flex min-h-0 flex-1 flex-col">
               <ScrollToTop />
               <AuthProvider>
