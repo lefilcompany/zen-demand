@@ -45,6 +45,7 @@ import { DemandPresenceIndicator } from "@/components/DemandPresenceIndicator";
 import { RealtimeUpdateIndicator } from "@/components/RealtimeUpdateIndicator";
 import { useSubdemands, useAddSubdemand } from "@/hooks/useSubdemands";
 import { SubdemandBadge } from "@/components/SubdemandBadge";
+import { SubdemandTimer } from "@/components/SubdemandTimer";
 import { CreateSubdemandDialog, type SubdemandFormData } from "@/components/CreateSubdemandDialog";
 import { checkDependencyBeforeStatusChange, useDemandDependencyInfo, useBatchDependencyInfo } from "@/hooks/useDependencyCheck";
 import { Lock, Link2 } from "lucide-react";
