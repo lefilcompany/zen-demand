@@ -28,6 +28,7 @@ import { useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { extractPlainText } from "@/components/ui/rich-text-editor";
 import { KanbanTimeDisplay } from "@/components/KanbanTimeDisplay";
+import { KanbanParentTimeDisplay } from "@/components/KanbanParentTimeDisplay";
 import { KanbanAdjustmentDialog } from "@/components/KanbanAdjustmentDialog";
 import { toast } from "sonner";
 import { useAdjustmentCounts, AdjustmentInfo } from "@/hooks/useAdjustmentCount";
@@ -1151,6 +1152,18 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               )}
 
               {(columnKey === "Entregue" || columnKey === "Aprovação do Cliente" || columnKey === "Fazendo" || columnKey === "Em Ajuste") && (() => {
+                const childDemandIds = demands.filter(d => d.parent_demand_id === demand.id).map(d => d.id);
+                const isParent = childDemandIds.length > 0;
+
+                if (isParent) {
+                  return (
+                    <KanbanParentTimeDisplay
+                      demandId={demand.id}
+                      subdemandIds={childDemandIds}
+                    />
+                  );
+                }
+
                 const canControlTimer = !readOnly && 
                   (userRole === "admin" || userRole === "moderator" || userRole === "executor") &&
                   (columnKey === "Fazendo" || columnKey === "Em Ajuste");
