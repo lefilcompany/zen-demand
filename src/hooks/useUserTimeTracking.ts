@@ -269,6 +269,7 @@ export function useStartUserTimer() {
       queryClient.invalidateQueries({ queryKey: ["user-active-timer"] });
       queryClient.invalidateQueries({ queryKey: ["user-demand-time"] });
       queryClient.invalidateQueries({ queryKey: ["active-timer-demands"] });
+      queryClient.invalidateQueries({ queryKey: ["kanban-parent-time"] });
     },
   });
 }
@@ -355,6 +356,7 @@ export function useStopUserTimer() {
       queryClient.invalidateQueries({ queryKey: ["user-demand-time"] });
       queryClient.invalidateQueries({ queryKey: ["active-timer-demands"] });
       queryClient.invalidateQueries({ queryKey: ["demands"] });
+      queryClient.invalidateQueries({ queryKey: ["kanban-parent-time"] });
     },
   });
 }
