@@ -1,13 +1,15 @@
-import { useState, useMemo } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState, useMemo, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Search, ChevronDown, ChevronRight } from "lucide-react";
+import { Search, ChevronDown, ChevronRight, Save } from "lucide-react";
 import { useAllTeamDemands } from "@/hooks/useAllTeamDemands";
 import { useFolderDemandIds, useAddDemandToFolder, useRemoveDemandFromFolder } from "@/hooks/useDemandFolders";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface FolderDemandManagerProps {
   open: boolean;
@@ -31,13 +33,20 @@ export function FolderDemandManager({
   const addDemand = useAddDemandToFolder();
   const removeDemand = useRemoveDemandFromFolder();
 
-  // Group demands by board, then filter
+  // Local draft of selected demand IDs
+  const [draftIds, setDraftIds] = useState<Set<string>>(new Set());
+  const [saving, setSaving] = useState(false);
+
+  // Sync draft with server data when it loads or modal opens
+  useEffect(() => {
+    if (open && folderDemandIds) {
+      setDraftIds(new Set(folderDemandIds));
+    }
+  }, [open, folderDemandIds]);
+
   const groupedDemands = useMemo(() => {
     if (!allDemands) return [];
-
     const q = search.toLowerCase().trim();
-
-    // Filter demands
     const filtered = q
       ? (allDemands as any[]).filter((d: any) =>
           d.title?.toLowerCase().includes(q) ||
@@ -48,9 +57,7 @@ export function FolderDemandManager({
         )
       : (allDemands as any[]);
 
-    // Group by board
     const boardMap = new Map<string, { boardName: string; boardId: string; demands: any[] }>();
-
     for (const d of filtered) {
       const boardId = d.board_id || "unknown";
       const boardName = d.boards?.name || "Sem quadro";
@@ -59,31 +66,68 @@ export function FolderDemandManager({
       }
       boardMap.get(boardId)!.demands.push(d);
     }
-
     return Array.from(boardMap.values()).sort((a, b) => a.boardName.localeCompare(b.boardName));
   }, [allDemands, search]);
 
-  const isInFolder = (demandId: string) => folderDemandIds?.includes(demandId) || false;
+  const isInDraft = (demandId: string) => draftIds.has(demandId);
 
   const handleToggle = (demandId: string) => {
-    if (isInFolder(demandId)) {
-      removeDemand.mutate({ folder_id: folderId, demand_id: demandId });
-    } else {
-      addDemand.mutate({ folder_id: folderId, demand_id: demandId });
-    }
+    setDraftIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(demandId)) {
+        next.delete(demandId);
+      } else {
+        next.add(demandId);
+      }
+      return next;
+    });
   };
 
   const toggleBoard = (boardId: string) => {
     setOpenBoards((prev) => ({ ...prev, [boardId]: !prev[boardId] }));
   };
 
-  // Auto-open all boards when searching, default closed
   const isBoardOpen = (boardId: string) => {
     if (search.trim()) return true;
     return openBoards[boardId] ?? false;
   };
 
-  const selectedCount = folderDemandIds?.length || 0;
+  // Compute diff between server state and draft
+  const hasChanges = useMemo(() => {
+    const serverSet = new Set(folderDemandIds || []);
+    if (draftIds.size !== serverSet.size) return true;
+    for (const id of draftIds) {
+      if (!serverSet.has(id)) return true;
+    }
+    return false;
+  }, [draftIds, folderDemandIds]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const serverSet = new Set(folderDemandIds || []);
+      const toAdd = [...draftIds].filter((id) => !serverSet.has(id));
+      const toRemove = [...serverSet].filter((id) => !draftIds.has(id));
+
+      await Promise.all([
+        ...toAdd.map((demand_id) =>
+          addDemand.mutateAsync({ folder_id: folderId, demand_id })
+        ),
+        ...toRemove.map((demand_id) =>
+          removeDemand.mutateAsync({ folder_id: folderId, demand_id })
+        ),
+      ]);
+
+      toast.success("Demandas atualizadas com sucesso");
+      onOpenChange(false);
+    } catch {
+      toast.error("Erro ao salvar alterações");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const selectedCount = draftIds.size;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -110,7 +154,7 @@ export function FolderDemandManager({
         <ScrollArea className="h-[380px] pr-3 -mr-3">
           <div className="space-y-1">
             {groupedDemands.map((group) => {
-              const boardSelected = group.demands.filter((d: any) => isInFolder(d.id)).length;
+              const boardSelected = group.demands.filter((d: any) => isInDraft(d.id)).length;
               return (
                 <Collapsible
                   key={group.boardId}
@@ -143,7 +187,7 @@ export function FolderDemandManager({
                           className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/40 cursor-pointer transition-colors"
                         >
                           <Checkbox
-                            checked={isInFolder(d.id)}
+                            checked={isInDraft(d.id)}
                             onCheckedChange={() => handleToggle(d.id)}
                           />
                           <div className="min-w-0 flex-1">
@@ -189,6 +233,19 @@ export function FolderDemandManager({
             )}
           </div>
         </ScrollArea>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={!hasChanges || saving}
+            className="bg-[#F28705] hover:bg-[#D97706] text-white"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {saving ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
