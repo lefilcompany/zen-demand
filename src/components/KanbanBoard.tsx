@@ -600,8 +600,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       targetStatusId = targetStatus.id;
     }
 
-    const demand = demands.find((d) => d.id === demandId);
-    const previousStatusName = demand?.demand_statuses?.name;
+    const demandObj = demands.find((d) => d.id === demandId);
+    const prevStatusName = demandObj?.demand_statuses?.name;
     
     if (previousStatusName === newStatusKey) return;
 
