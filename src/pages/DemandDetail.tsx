@@ -985,7 +985,7 @@ export default function DemandDetail() {
               />
 
               {subdemands && subdemands.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-start">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {subdemands.map((sub) => {
                     const statusName = sub.demand_statuses?.name || "";
                     const isDelivered = statusName === "Entregue";
@@ -1020,7 +1020,7 @@ export default function DemandDetail() {
                           {sub.title}
                         </div>
                         {/* Details */}
-                        <div className="px-3 py-2 bg-card space-y-1.5">
+                        <div className="px-3 py-2 bg-card space-y-1.5 flex-1">
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-[10px] font-medium uppercase tracking-wide" style={{ color: bgColor }}>
                               {statusName}
