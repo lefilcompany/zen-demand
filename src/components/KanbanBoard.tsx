@@ -859,6 +859,10 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       {
         onSuccess: async () => {
           await queryClient.invalidateQueries({ queryKey: ['demands'] });
+          
+          // Auto-move parent status based on sub-demand changes
+          await autoCheckParentStatus(demandId, "Entregue");
+          
           setOptimisticUpdates(prev => {
             const newUpdates = { ...prev };
             delete newUpdates[demandId];
