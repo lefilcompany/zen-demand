@@ -877,7 +877,7 @@ export default function DemandDetail() {
               )}>
                 {blocked ? <Lock className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
                 {blocked ? (
-                  <span>Bloqueada — depende de <strong>"{blocked.dependsOnTitle}"</strong> ({blocked.dependsOnStatusName})</span>
+                  <span>Bloqueada - depende da demanda <strong>'{blocked.dependsOnTitle}'</strong> ser concluída</span>
                 ) : (
                   <span>Dependência concluída — <strong>"{demandDeps[0].dependsOnTitle}"</strong> entregue</span>
                 )}
