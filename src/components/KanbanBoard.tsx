@@ -352,15 +352,27 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   
   // Helper: auto-move parent demand to "Fazendo" when a sub-demand moves there (no timer on parent)
   const autoMoveParentToFazendo = useCallback(async (demandId: string) => {
-    const demand = demands.find(d => d.id === demandId);
+    // Fetch demand directly to avoid stale closure data
+    const { data: demand } = await supabase
+      .from("demands")
+      .select("id, parent_demand_id")
+      .eq("id", demandId)
+      .single();
+    
     if (!demand?.parent_demand_id) return;
     
-    const parentDemand = demands.find(d => d.id === demand.parent_demand_id);
+    const { data: parentDemand } = await supabase
+      .from("demands")
+      .select("id, status_id, demand_statuses(name)")
+      .eq("id", demand.parent_demand_id)
+      .single();
+    
     if (!parentDemand) return;
     
-    const parentStatusName = parentDemand.demand_statuses?.name;
+    const parentStatusName = (parentDemand.demand_statuses as any)?.name;
     if (parentStatusName === "Fazendo") return; // Already in Fazendo
     
+    // Find "Fazendo" status for the parent's board
     const fazendoStatus = statuses?.find(s => s.name === "Fazendo");
     if (!fazendoStatus) return;
     
@@ -371,7 +383,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       status_changed_by: user?.id || null,
       status_changed_at: new Date().toISOString(),
     });
-  }, [demands, statuses, updateDemand, user]);
+  }, [statuses, updateDemand, user]);
 
   // Helper: when a sub-demand leaves "Fazendo", check if all siblings are also out, then move parent back
   const autoCheckParentStatus = useCallback(async (demandId: string, newStatusKey: string) => {
