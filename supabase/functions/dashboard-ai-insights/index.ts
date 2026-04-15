@@ -56,7 +56,7 @@ serve(async (req) => {
       .limit(100);
 
     if (is_requester) {
-      demandsQuery.eq("created_by", user.id);
+      demandsQuery.eq("created_by", userId);
     }
 
     const [demandsRes, membersRes, boardRes, requestsRes] = await Promise.all([
@@ -74,7 +74,7 @@ serve(async (req) => {
         ? supabase
             .from("demand_requests")
             .select("id, status, created_at, title")
-            .eq("created_by", user.id)
+            .eq("created_by", userId)
             .eq("board_id", board_id)
             .order("created_at", { ascending: false })
             .limit(20)
