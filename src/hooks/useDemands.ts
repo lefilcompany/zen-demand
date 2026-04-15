@@ -394,6 +394,7 @@ export function useUpdateDemand() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["demands"] });
+      queryClient.invalidateQueries({ queryKey: ["subdemands"] });
       if (data?.id) {
         queryClient.invalidateQueries({ queryKey: ["demand", data.id] });
       }
