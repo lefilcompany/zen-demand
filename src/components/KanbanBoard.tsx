@@ -337,6 +337,9 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       queryClient.invalidateQueries({ queryKey: ["demand-time-entries"] });
       queryClient.invalidateQueries({ queryKey: ["current-user-demand-time", demandId] });
       queryClient.invalidateQueries({ queryKey: ["active-timer-demands"] });
+      queryClient.invalidateQueries({ queryKey: ["user-demand-time"] });
+      queryClient.invalidateQueries({ queryKey: ["user-active-timer"] });
+      queryClient.invalidateQueries({ queryKey: ["board-time-entries"] });
       queryClient.invalidateQueries({ queryKey: ["demands"] });
 
       toast.info("Timer iniciado automaticamente", {
