@@ -350,6 +350,74 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     }
   }, [user, queryClient]);
   
+  // Helper: auto-move parent demand to "Fazendo" when a sub-demand moves there (no timer on parent)
+  const autoMoveParentToFazendo = useCallback(async (demandId: string) => {
+    const demand = demands.find(d => d.id === demandId);
+    if (!demand?.parent_demand_id) return;
+    
+    const parentDemand = demands.find(d => d.id === demand.parent_demand_id);
+    if (!parentDemand) return;
+    
+    const parentStatusName = parentDemand.demand_statuses?.name;
+    if (parentStatusName === "Fazendo") return; // Already in Fazendo
+    
+    const fazendoStatus = statuses?.find(s => s.name === "Fazendo");
+    if (!fazendoStatus) return;
+    
+    // Move parent to "Fazendo" without starting a timer
+    updateDemand.mutate({
+      id: demand.parent_demand_id,
+      status_id: fazendoStatus.id,
+      status_changed_by: user?.id || null,
+      status_changed_at: new Date().toISOString(),
+    });
+  }, [demands, statuses, updateDemand, user]);
+
+  // Helper: when a sub-demand leaves "Fazendo", check if all siblings are also out, then move parent back
+  const autoCheckParentStatus = useCallback(async (demandId: string, newStatusKey: string) => {
+    const demand = demands.find(d => d.id === demandId);
+    if (!demand?.parent_demand_id) return;
+    
+    // If the sub-demand is moving TO Fazendo, auto-move parent
+    if (newStatusKey === "Fazendo") {
+      await autoMoveParentToFazendo(demandId);
+      return;
+    }
+    
+    // If moving FROM Fazendo, check if any sibling is still in Fazendo
+    const siblings = demands.filter(d => d.parent_demand_id === demand.parent_demand_id && d.id !== demandId);
+    const anySiblingInFazendo = siblings.some(s => {
+      const optimisticStatus = optimisticUpdates[s.id];
+      const effectiveStatus = optimisticStatus || s.demand_statuses?.name;
+      return effectiveStatus === "Fazendo" || effectiveStatus === "Em Ajuste";
+    });
+    
+    if (!anySiblingInFazendo && newStatusKey !== "Fazendo" && newStatusKey !== "Em Ajuste") {
+      // All sub-demands are out of active work - check if parent should be updated
+      // Only auto-move parent back if it's in "Fazendo" and no children are active
+      const parentDemand = demands.find(d => d.id === demand.parent_demand_id);
+      if (parentDemand?.demand_statuses?.name === "Fazendo") {
+        // Check if ALL children are delivered
+        const allDelivered = siblings.every(s => {
+          const optimisticStatus = optimisticUpdates[s.id];
+          return (optimisticStatus || s.demand_statuses?.name) === "Entregue";
+        }) && newStatusKey === "Entregue";
+        
+        if (allDelivered) {
+          const entregueStatus = statuses?.find(s => s.name === "Entregue");
+          if (entregueStatus) {
+            updateDemand.mutate({
+              id: demand.parent_demand_id!,
+              status_id: entregueStatus.id,
+              status_changed_by: user?.id || null,
+              status_changed_at: new Date().toISOString(),
+            });
+          }
+        }
+      }
+    }
+  }, [demands, statuses, updateDemand, user, optimisticUpdates, autoMoveParentToFazendo]);
+
   const adjustmentDemand = demands.find(d => d.id === adjustmentDemandId);
 
   // Handle column toggle - no limit, users can open all columns
