@@ -1,0 +1,99 @@
+import { Clock, GitBranch } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useLiveTimer, formatTimeDisplay } from "@/hooks/useLiveTimer";
+
+interface SubTimeInfo {
+  totalSeconds: number;
+  hasActiveTimer: boolean;
+  activeStartedAt: string | null;
+}
+
+function LiveTotal({ subs }: { subs: SubTimeInfo[] }) {
+  const totalBase = subs.reduce((sum, s) => sum + s.totalSeconds, 0);
+  const activeSubs = subs.filter(s => s.hasActiveTimer);
+  const hasAnyActive = activeSubs.length > 0;
+
+  const totalActiveElapsed = activeSubs.reduce((sum, s) => {
+    if (s.activeStartedAt) {
+      return sum + Math.floor((Date.now() - new Date(s.activeStartedAt).getTime()) / 1000);
+    }
+    return sum;
+  }, 0);
+
+  // Trigger re-renders via live timer
+  useLiveTimer({
+    isActive: hasAnyActive,
+    baseSeconds: 0,
+    lastStartedAt: activeSubs[0]?.activeStartedAt || null,
+  });
+
+  const grandTotal = totalBase + totalActiveElapsed;
+  const displayTime = formatTimeDisplay(grandTotal) || "00:00:00";
+
+  return (
+    <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded-md px-2 py-1 mb-2 overflow-hidden min-w-0">
+      <Clock className="h-3 w-3 shrink-0" />
+      <span className="text-[10px] uppercase font-medium shrink-0 flex items-center gap-0.5">
+        <GitBranch className="h-2.5 w-2.5" />
+        Soma:
+      </span>
+      <span className="font-mono font-medium truncate min-w-0 flex-1">{displayTime}</span>
+      {hasAnyActive && (
+        <span className="relative flex h-2 w-2 shrink-0">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+        </span>
+      )}
+      {activeSubs.length > 0 && (
+        <span className="text-[10px] shrink-0">{activeSubs.length} ativa{activeSubs.length > 1 ? "s" : ""}</span>
+      )}
+    </div>
+  );
+}
+
+interface KanbanParentTimeDisplayProps {
+  demandId: string;
+  subdemandIds: string[];
+}
+
+export function KanbanParentTimeDisplay({ demandId, subdemandIds }: KanbanParentTimeDisplayProps) {
+  const { data: subTimeData } = useQuery({
+    queryKey: ["kanban-parent-time", demandId, subdemandIds],
+    queryFn: async () => {
+      if (subdemandIds.length === 0) return [];
+
+      const { data: entries, error } = await supabase
+        .from("demand_time_entries")
+        .select("demand_id, started_at, ended_at, duration_seconds")
+        .in("demand_id", subdemandIds);
+
+      if (error) throw error;
+
+      return subdemandIds.map(subId => {
+        const subEntries = (entries || []).filter(e => e.demand_id === subId);
+        const totalSeconds = subEntries
+          .filter(e => e.ended_at !== null)
+          .reduce((sum, e) => sum + (e.duration_seconds || 0), 0);
+        const activeEntry = subEntries.find(e => e.ended_at === null);
+
+        return {
+          totalSeconds,
+          hasActiveTimer: !!activeEntry,
+          activeStartedAt: activeEntry?.started_at || null,
+        } as SubTimeInfo;
+      });
+    },
+    enabled: subdemandIds.length > 0,
+    refetchInterval: 30000,
+  });
+
+  if (!subTimeData || subTimeData.length === 0) return null;
+
+  const totalBase = subTimeData.reduce((s, x) => s + x.totalSeconds, 0);
+  const hasAnyActive = subTimeData.some(s => s.hasActiveTimer);
+
+  if (totalBase === 0 && !hasAnyActive) return null;
+
+  return <LiveTotal subs={subTimeData} />;
+}
