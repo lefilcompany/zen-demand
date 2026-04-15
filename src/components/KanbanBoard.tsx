@@ -900,7 +900,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         },
       }
     );
-  }, [statuses, demands, stopAllTimersForDemand, startTimerForDemand, updateDemand, queryClient, isOffline, user]);
+  }, [statuses, demands, stopAllTimersForDemand, startTimerForDemand, updateDemand, queryClient, isOffline, user, autoCheckParentStatus]);
 
   // Handle drag start only from the drag handle
   const handleDragHandleMouseDown = useCallback((e: React.MouseEvent) => {
