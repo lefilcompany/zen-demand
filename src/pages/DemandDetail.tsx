@@ -867,6 +867,24 @@ export default function DemandDetail() {
             )}
 
 
+          {/* Dependency info banner */}
+          {demandDeps && demandDeps.length > 0 && (() => {
+            const blocked = demandDeps.find(d => d.isBlocked);
+            return (
+              <div className={cn(
+                "flex items-center gap-2 text-sm rounded-lg px-3 py-2",
+                blocked ? "bg-red-500/10 text-red-700 dark:text-red-400" : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+              )}>
+                {blocked ? <Lock className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
+                {blocked ? (
+                  <span>Bloqueada — depende de <strong>"{blocked.dependsOnTitle}"</strong> ({blocked.dependsOnStatusName})</span>
+                ) : (
+                  <span>Dependência concluída — <strong>"{demandDeps[0].dependsOnTitle}"</strong> entregue</span>
+                )}
+              </div>
+            );
+          })()}
+
           {/* Parent demand link */}
           {demand.parent_demand_id && (
             <div className="flex items-center gap-2 text-sm bg-muted/50 rounded-lg px-3 py-2">
