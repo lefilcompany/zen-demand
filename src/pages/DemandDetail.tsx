@@ -500,7 +500,7 @@ export default function DemandDetail() {
   })) || [];
   return <>
       <RealtimeUpdateIndicator show={showUpdateIndicator} updateType={lastUpdate?.type} onDismiss={clearUpdateIndicator} />
-      <div className="space-y-4 md:space-y-6 animate-fade-in">
+      <div className="space-y-2 md:space-y-3 animate-fade-in">
       {/* Breadcrumbs */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <PageBreadcrumb items={[{
