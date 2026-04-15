@@ -417,6 +417,45 @@ export function AttachmentUploader({ demandId, readOnly = false, demandTitle, de
           ))}
         </div>
       )}
+
+      {/* Subdemand attachments */}
+      {showSubdemandAttachments && subdemandAttachments && subdemandAttachments.length > 0 && (() => {
+        // Group by subdemand
+        const grouped = subdemandAttachments.reduce<Record<string, { title: string; attachments: typeof subdemandAttachments }>>((acc, a) => {
+          if (!acc[a.demand_id]) {
+            acc[a.demand_id] = { title: a.subdemandTitle, attachments: [] };
+          }
+          acc[a.demand_id].attachments.push(a);
+          return acc;
+        }, {});
+
+        return (
+          <div className="space-y-3 mt-4 pt-4 border-t border-border">
+            <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+              <GitBranch className="h-3.5 w-3.5" />
+              Anexos de Subdemandas
+            </h5>
+            {Object.entries(grouped).map(([subId, group]) => (
+              <div key={subId} className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground pl-1">
+                  {group.title}
+                </p>
+                <div className="space-y-2">
+                  {group.attachments.map((attachment) => (
+                    <AttachmentItem
+                      key={attachment.id}
+                      attachment={attachment}
+                      readOnly={true}
+                      onDelete={handleDelete}
+                      onAvailabilityChange={handleAvailabilityChange}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
     </div>
   );
 }
