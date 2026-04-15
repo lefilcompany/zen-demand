@@ -34,15 +34,38 @@ export function useRealtimeDemands(boardId?: string) {
         (payload) => {
           console.log('Realtime demand change:', payload.eventType, payload);
           
-          // Invalidate only essential queries for this board
+          // Invalidate board-level queries
           queryClient.invalidateQueries({ queryKey: ["demands", boardId] });
           queryClient.invalidateQueries({ queryKey: ["demands-list", boardId] });
+          
+          // Invalidate subdemand-related queries so parent cards + dependency status update in realtime
+          queryClient.invalidateQueries({ queryKey: ["subdemands"] });
+          queryClient.invalidateQueries({ queryKey: ["batch-dependency-info"] });
+          queryClient.invalidateQueries({ queryKey: ["demand-dependency-info"] });
+          queryClient.invalidateQueries({ queryKey: ["subdemands-time-entries"] });
+          queryClient.invalidateQueries({ queryKey: ["kanban-parent-time"] });
+          queryClient.invalidateQueries({ queryKey: ["kanban-parent-subdemand-ids"] });
           
           if (payload.new && (payload.new as any).id) {
             queryClient.invalidateQueries({ 
               queryKey: ["demand", (payload.new as any).id] 
             });
           }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'demand_time_entries',
+        },
+        () => {
+          // Timer entries changed — refresh time displays
+          queryClient.invalidateQueries({ queryKey: ["subdemands-time-entries"] });
+          queryClient.invalidateQueries({ queryKey: ["kanban-parent-time"] });
+          queryClient.invalidateQueries({ queryKey: ["board-time-entries"] });
+          queryClient.invalidateQueries({ queryKey: ["demand-time-entries"] });
         }
       )
       .subscribe((status) => {
@@ -77,9 +100,14 @@ export function useRealtimeAllDemands() {
         (payload) => {
           console.log('Realtime demand change (all):', payload.eventType);
           
-          // Invalidate only essential queries
           queryClient.invalidateQueries({ queryKey: ["demands"] });
           queryClient.invalidateQueries({ queryKey: ["demands-list"] });
+          queryClient.invalidateQueries({ queryKey: ["subdemands"] });
+          queryClient.invalidateQueries({ queryKey: ["batch-dependency-info"] });
+          queryClient.invalidateQueries({ queryKey: ["demand-dependency-info"] });
+          queryClient.invalidateQueries({ queryKey: ["subdemands-time-entries"] });
+          queryClient.invalidateQueries({ queryKey: ["kanban-parent-time"] });
+          queryClient.invalidateQueries({ queryKey: ["kanban-parent-subdemand-ids"] });
           
           if (payload.new && (payload.new as any).id) {
             queryClient.invalidateQueries({ 
