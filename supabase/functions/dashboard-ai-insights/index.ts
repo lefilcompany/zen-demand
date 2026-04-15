@@ -14,7 +14,7 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "No authorization header" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -27,13 +27,16 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const userId = claimsData.claims.sub as string;
 
     const { board_id, is_requester } = await req.json();
     if (!board_id) {
@@ -53,7 +56,7 @@ serve(async (req) => {
       .limit(100);
 
     if (is_requester) {
-      demandsQuery.eq("created_by", user.id);
+      demandsQuery.eq("created_by", userId);
     }
 
     const [demandsRes, membersRes, boardRes, requestsRes] = await Promise.all([
@@ -71,7 +74,7 @@ serve(async (req) => {
         ? supabase
             .from("demand_requests")
             .select("id, status, created_at, title")
-            .eq("created_by", user.id)
+            .eq("created_by", userId)
             .eq("board_id", board_id)
             .order("created_at", { ascending: false })
             .limit(20)
