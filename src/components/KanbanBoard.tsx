@@ -692,14 +692,17 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
     const isAdjustmentCompletion = prevStatusName === "Em Ajuste" && newStatusKey === "Aprovação do Cliente";
 
+    // Check if this demand is a parent (has children) - parents don't get their own timers
+    const isParentDemandMobile = demands.some(d => d.parent_demand_id === demandId);
+
     // Stop timer when leaving "Fazendo" or "Em Ajuste" for any other status
     const timerStatuses = ["Fazendo", "Em Ajuste"];
-    if (prevStatusName && timerStatuses.includes(prevStatusName) && !timerStatuses.includes(newStatusKey)) {
+    if (!isParentDemandMobile && prevStatusName && timerStatuses.includes(prevStatusName) && !timerStatuses.includes(newStatusKey)) {
       await stopAllTimersForDemand(demandId);
     }
 
-    // Start timer automatically when moving to "Fazendo"
-    if (newStatusKey === "Fazendo" && prevStatusName !== "Fazendo") {
+    // Start timer automatically when moving to "Fazendo" (skip for parent demands)
+    if (newStatusKey === "Fazendo" && prevStatusName !== "Fazendo" && !isParentDemandMobile) {
       await startTimerForDemand(demandId);
     }
 
