@@ -41,6 +41,8 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth";
 import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 import { KanbanSubdemandsList } from "@/components/KanbanSubdemandsList";
+import { checkDependencyBeforeStatusChange, useBatchDependencyInfo } from "@/hooks/useDependencyCheck";
+import { Link2, Lock } from "lucide-react";
 
 interface Assignee {
   user_id: string;
@@ -439,6 +441,17 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const handleDropWithStatusId = async (demandId: string, statusId: string, columnKey: string, demand: Demand | undefined) => {
     const previousStatusName = demand?.demand_statuses?.name;
 
+    // Check dependency before allowing status change (except going back to "A Iniciar")
+    if (columnKey !== "A Iniciar" && previousStatusName === "A Iniciar") {
+      const depCheck = await checkDependencyBeforeStatusChange(demandId);
+      if (depCheck.blocked) {
+        toast.error("Não é possível alterar o status", {
+          description: `Esta demanda depende de "${depCheck.blockedByTitle}" que ainda não foi concluída.`,
+        });
+        return;
+      }
+    }
+
     // Adicionar a aba de destino às abertas no modo desktop grande para acompanhar o card
     if (isLargeDesktop && !activeColumns.includes(columnKey)) {
       toggleColumn(columnKey);
@@ -554,6 +567,19 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
   // Handle mobile status change via dropdown
   const handleMobileStatusChange = async (demandId: string, newStatusKey: string) => {
+    // Check dependency before allowing status change
+    const demand = demands.find(d => d.id === demandId);
+    const previousStatusName = demand?.demand_statuses?.name;
+    if (newStatusKey !== "A Iniciar" && previousStatusName === "A Iniciar") {
+      const depCheck = await checkDependencyBeforeStatusChange(demandId);
+      if (depCheck.blocked) {
+        toast.error("Não é possível alterar o status", {
+          description: `Esta demanda depende de "${depCheck.blockedByTitle}" que ainda não foi concluída.`,
+        });
+        return;
+      }
+    }
+
     // Interceptar tentativa de mover para "Em Ajuste" - abrir diálogo ao invés de mover direto
     if (newStatusKey === "Em Ajuste") {
       setAdjustmentDemandId(demandId);
@@ -723,6 +749,15 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     
     const demand = demands.find(d => d.id === demandId);
     if (!demand) return;
+
+    // Check dependency before allowing completion
+    const depCheck = await checkDependencyBeforeStatusChange(demandId);
+    if (depCheck.blocked) {
+      toast.error("Não é possível alterar o status", {
+        description: `Esta demanda depende de "${depCheck.blockedByTitle}" que ainda não foi concluída.`,
+      });
+      return;
+    }
     
     // Stop any active timers
     await stopAllTimersForDemand(demandId);
