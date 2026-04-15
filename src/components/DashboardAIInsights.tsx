@@ -102,7 +102,20 @@ export function DashboardAIInsights({ boardId, isRequester = false }: DashboardA
       const { data, error } = await supabase.functions.invoke("dashboard-ai-insights", {
         body: { board_id: boardId, is_requester: isRequester },
       });
-      if (error) throw error;
+      if (error) {
+        const msg = typeof error === "object" && "message" in error ? (error as any).message : String(error);
+        if (msg.includes("401") || msg.includes("Unauthorized")) {
+          // Session may have expired, refresh and retry once
+          const { error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError) throw new Error("Session expired");
+          const { data: retryData, error: retryError } = await supabase.functions.invoke("dashboard-ai-insights", {
+            body: { board_id: boardId, is_requester: isRequester },
+          });
+          if (retryError) throw retryError;
+          return retryData as { insights: AIInsight[] };
+        }
+        throw error;
+      }
       return data as { insights: AIInsight[] };
     },
     enabled: !!boardId,
