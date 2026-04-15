@@ -26,7 +26,7 @@ import { useCreateRecurringDemand } from "@/hooks/useRecurringDemands";
 import { useCreateDemandWithSubdemands, SubdemandInput, DependencyInput } from "@/hooks/useSubdemands";
 import { AlertTriangle, Ban, WifiOff, Package, CheckCircle2, Plus, ExternalLink, LayoutGrid, FolderOpen, Users, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
 import { calculateBusinessDueDate, formatDueDateForInput } from "@/lib/dateUtils";
 import { supabase } from "@/integrations/supabase/client";
@@ -482,15 +482,23 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     return true;
   };
 
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const scrollContentToTop = () => {
+    contentRef.current?.scrollTo({ top: 0, behavior: "instant" });
+  };
+
   const handleNext = () => {
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1);
+      scrollContentToTop();
     }
   };
 
   const handlePrev = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+      scrollContentToTop();
     }
   };
 
