@@ -715,6 +715,10 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         onSuccess: async () => {
           // Invalidate and THEN clear optimistic update to prevent visual duplication
           await queryClient.invalidateQueries({ queryKey: ['demands'] });
+          
+          // Auto-move parent status based on sub-demand changes
+          await autoCheckParentStatus(demandId, newStatusKey);
+          
           setOptimisticUpdates(prev => {
             const newUpdates = { ...prev };
             delete newUpdates[demandId];
