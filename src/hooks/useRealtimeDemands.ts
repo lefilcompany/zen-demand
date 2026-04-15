@@ -85,9 +85,14 @@ export function useRealtimeAllDemands() {
         (payload) => {
           console.log('Realtime demand change (all):', payload.eventType);
           
-          // Invalidate only essential queries
           queryClient.invalidateQueries({ queryKey: ["demands"] });
           queryClient.invalidateQueries({ queryKey: ["demands-list"] });
+          queryClient.invalidateQueries({ queryKey: ["subdemands"] });
+          queryClient.invalidateQueries({ queryKey: ["batch-dependency-info"] });
+          queryClient.invalidateQueries({ queryKey: ["demand-dependency-info"] });
+          queryClient.invalidateQueries({ queryKey: ["subdemands-time-entries"] });
+          queryClient.invalidateQueries({ queryKey: ["kanban-parent-time"] });
+          queryClient.invalidateQueries({ queryKey: ["kanban-parent-subdemand-ids"] });
           
           if (payload.new && (payload.new as any).id) {
             queryClient.invalidateQueries({ 
