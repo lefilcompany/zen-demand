@@ -986,6 +986,8 @@ export default function DemandDetail() {
                       : null;
                     const priorityLabel = sub.priority === "alta" ? "Alta" : sub.priority === "baixa" ? "Baixa" : "Média";
                     const priorityColor = sub.priority === "alta" ? "#EF4444" : sub.priority === "baixa" ? "#3B82F6" : "#F59E0B";
+                    const subDeps = subDepsMap?.[sub.id] || [];
+                    const subIsBlocked = subDeps.some(d => d.isBlocked);
 
                     return (
                       <button
@@ -1039,6 +1041,22 @@ export default function DemandDetail() {
                               )}
                             </div>
                           </div>
+                          {/* Dependency indicator */}
+                          {subDeps.length > 0 && (
+                            <div className={cn(
+                              "flex items-center gap-1 px-2 py-1 text-[10px] font-medium",
+                              subIsBlocked
+                                ? "text-red-600 bg-red-500/5"
+                                : "text-emerald-600 bg-emerald-500/5"
+                            )}>
+                              {subIsBlocked ? <Lock className="h-3 w-3" /> : <Link2 className="h-3 w-3" />}
+                              <span className="truncate">
+                                {subIsBlocked
+                                  ? `Depende de: ${subDeps.find(d => d.isBlocked)?.dependsOnTitle}`
+                                  : `Dependência OK: ${subDeps[0]?.dependsOnTitle}`}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </button>
                     );
