@@ -28,6 +28,7 @@ import { useUpdateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { extractPlainText } from "@/components/ui/rich-text-editor";
 import { KanbanTimeDisplay } from "@/components/KanbanTimeDisplay";
+import { KanbanParentTimeDisplay } from "@/components/KanbanParentTimeDisplay";
 import { KanbanAdjustmentDialog } from "@/components/KanbanAdjustmentDialog";
 import { toast } from "sonner";
 import { useAdjustmentCounts, AdjustmentInfo } from "@/hooks/useAdjustmentCount";
