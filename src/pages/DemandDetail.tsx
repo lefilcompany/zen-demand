@@ -157,6 +157,9 @@ export default function DemandDetail() {
     enabled: !!demand?.parent_demand_id,
   });
   const addSubdemand = useAddSubdemand();
+  const { data: demandDeps } = useDemandDependencyInfo(id || null);
+  const subdemandIds = useMemo(() => (subdemands || []).map(s => s.id), [subdemands]);
+  const { data: subDepsMap } = useBatchDependencyInfo(subdemandIds);
   const [newSubdemandTitle, setNewSubdemandTitle] = useState("");
   const [showAddSubdemand, setShowAddSubdemand] = useState(false);
   const [showSubdemandDialog, setShowSubdemandDialog] = useState(false);
