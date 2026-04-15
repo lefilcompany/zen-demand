@@ -603,21 +603,21 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     const demandObj = demands.find((d) => d.id === demandId);
     const prevStatusName = demandObj?.demand_statuses?.name;
     
-    if (previousStatusName === newStatusKey) return;
+    if (prevStatusName === newStatusKey) return;
 
     // Apply optimistic update immediately
     setOptimisticUpdates(prev => ({ ...prev, [demandId]: newStatusKey }));
 
-    const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && newStatusKey === "Aprovação do Cliente";
+    const isAdjustmentCompletion = prevStatusName === "Em Ajuste" && newStatusKey === "Aprovação do Cliente";
 
     // Stop timer when leaving "Fazendo" or "Em Ajuste" for any other status
     const timerStatuses = ["Fazendo", "Em Ajuste"];
-    if (previousStatusName && timerStatuses.includes(previousStatusName) && !timerStatuses.includes(newStatusKey)) {
+    if (prevStatusName && timerStatuses.includes(prevStatusName) && !timerStatuses.includes(newStatusKey)) {
       await stopAllTimersForDemand(demandId);
     }
 
     // Start timer automatically when moving to "Fazendo"
-    if (newStatusKey === "Fazendo" && previousStatusName !== "Fazendo") {
+    if (newStatusKey === "Fazendo" && prevStatusName !== "Fazendo") {
       await startTimerForDemand(demandId);
     }
 
