@@ -1049,7 +1049,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   </span>
                 </div>
               )}
-              </div>
 
               {(columnKey === "Entregue" || columnKey === "Aprovação do Cliente" || columnKey === "Fazendo" || columnKey === "Em Ajuste") && (() => {
                 const canControlTimer = !readOnly && 
