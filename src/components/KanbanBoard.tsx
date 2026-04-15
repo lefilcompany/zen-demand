@@ -1046,7 +1046,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                       <TooltipContent side="top" className="max-w-[260px]">
                         <p className="text-xs">
                           {isBlocked
-                            ? `Bloqueada - depende da demanda '${demandDeps.find(d => d.isBlocked)?.dependsOnTitle}' ser concluída`
+                            ? `Bloqueada - Aguardando demanda '${demandDeps.find(d => d.isBlocked)?.dependsOnTitle}' ser concluída`
                             : `Dependência "${demandDeps[0]?.dependsOnTitle}" concluída`}
                         </p>
                       </TooltipContent>
