@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -41,6 +41,55 @@ const typeConfig = {
     titleColor: "text-primary",
   },
 };
+function InsightCard({ insight, isExpanded, onToggle }: { insight: AIInsight; isExpanded: boolean; onToggle: () => void }) {
+  const config = typeConfig[insight.type] || typeConfig.info;
+  const Icon = config.icon;
+  const descRef = useRef<HTMLParagraphElement>(null);
+  const [isTruncated, setIsTruncated] = useState(false);
+
+  const checkTruncation = useCallback(() => {
+    const el = descRef.current;
+    if (el) {
+      setIsTruncated(el.scrollHeight > el.clientHeight + 1);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkTruncation();
+    window.addEventListener("resize", checkTruncation);
+    return () => window.removeEventListener("resize", checkTruncation);
+  }, [checkTruncation]);
+
+  return (
+    <Card className={`p-3 md:p-4 border ${config.border} ${config.bg} transition-all duration-300 hover:shadow-md`}>
+      <div className="flex items-start gap-2.5">
+        <div className="p-1.5 rounded-lg bg-background/60 shrink-0">
+          <Icon className={`h-4 w-4 ${config.iconColor}`} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className={`text-sm font-semibold leading-tight ${config.titleColor}`}>
+            {insight.title}
+          </p>
+          <p
+            ref={descRef}
+            className={`text-xs text-muted-foreground mt-1 whitespace-pre-line ${isExpanded ? "" : "line-clamp-2"}`}
+          >
+            {insight.description}
+          </p>
+          {(isTruncated || isExpanded) && (
+            <button
+              onClick={onToggle}
+              className="text-[11px] font-medium text-primary hover:underline mt-1.5 inline-block"
+            >
+              {isExpanded ? "Ver menos" : "Ler mais"}
+            </button>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 
 export function DashboardAIInsights({ boardId, isRequester = false }: DashboardAIInsightsProps) {
   const navigate = useNavigate();
@@ -108,37 +157,14 @@ export function DashboardAIInsights({ boardId, isRequester = false }: DashboardA
         </button>
       </div>
       <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
-        {insights.map((insight, i) => {
-          const config = typeConfig[insight.type] || typeConfig.info;
-          const Icon = config.icon;
-          const isExpanded = expandedIndexes.has(i);
-          return (
-            <Card
-              key={i}
-              className={`p-3 md:p-4 border ${config.border} ${config.bg} transition-all duration-300 hover:shadow-md`}
-            >
-              <div className="flex items-start gap-2.5">
-                <div className="p-1.5 rounded-lg bg-background/60 shrink-0">
-                  <Icon className={`h-4 w-4 ${config.iconColor}`} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className={`text-sm font-semibold leading-tight ${config.titleColor}`}>
-                    {insight.title}
-                  </p>
-                  <p className={`text-xs text-muted-foreground mt-1 whitespace-pre-line ${isExpanded ? "" : "line-clamp-2"}`}>
-                    {insight.description}
-                  </p>
-                  <button
-                    onClick={() => toggleIndex(i)}
-                    className="text-[11px] font-medium text-primary hover:underline mt-1.5 inline-block"
-                  >
-                    {isExpanded ? "Ver menos" : "Ler mais"}
-                  </button>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
+        {insights.map((insight, i) => (
+          <InsightCard
+            key={i}
+            insight={insight}
+            isExpanded={expandedIndexes.has(i)}
+            onToggle={() => toggleIndex(i)}
+          />
+        ))}
 
         {/* CTA Card */}
         <Card className="p-3 md:p-4 border-0 bg-primary flex flex-col justify-between transition-shadow hover:shadow-lg shadow-md">
