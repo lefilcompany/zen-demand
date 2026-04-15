@@ -23,6 +23,7 @@ interface AttachmentUploaderProps {
   readOnly?: boolean;
   demandTitle?: string;
   demandCreatedBy?: string;
+  showSubdemandAttachments?: boolean;
 }
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
@@ -238,10 +239,41 @@ function AttachmentItem({ attachment, readOnly, onDelete, onAvailabilityChange }
   );
 }
 
-export function AttachmentUploader({ demandId, readOnly = false, demandTitle, demandCreatedBy }: AttachmentUploaderProps) {
+export function AttachmentUploader({ demandId, readOnly = false, demandTitle, demandCreatedBy, showSubdemandAttachments = false }: AttachmentUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [availableIds, setAvailableIds] = useState<Set<string>>(new Set());
   const { data: attachments, isLoading } = useAttachments(demandId);
+
+  // Fetch subdemand attachments when viewing a parent demand
+  const { data: subdemandAttachments } = useQuery({
+    queryKey: ["subdemand-attachments", demandId],
+    queryFn: async () => {
+      // Get subdemands
+      const { data: subdemands, error: subError } = await supabase
+        .from("demands")
+        .select("id, title, board_sequence_number")
+        .eq("parent_demand_id", demandId)
+        .eq("archived", false)
+        .order("created_at", { ascending: true });
+      if (subError || !subdemands || subdemands.length === 0) return [];
+
+      const subIds = subdemands.map(s => s.id);
+      const { data: attachData, error: attachError } = await supabase
+        .from("demand_attachments")
+        .select("*")
+        .in("demand_id", subIds)
+        .is("interaction_id", null)
+        .order("created_at", { ascending: false });
+      if (attachError) return [];
+
+      return (attachData || []).map(a => ({
+        ...a,
+        subdemandTitle: subdemands.find(s => s.id === a.demand_id)?.title || "Subdemanda",
+        subdemandSequence: subdemands.find(s => s.id === a.demand_id)?.board_sequence_number,
+      }));
+    },
+    enabled: showSubdemandAttachments,
+  });
 
   const handleAvailabilityChange = useCallback((id: string, available: boolean) => {
     setAvailableIds(prev => {
