@@ -1027,35 +1027,28 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
                 {/* Dependency indicator */}
                 {demandDeps.length > 0 && (
-                  <TooltipProvider delayDuration={300}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div tabIndex={0} className="inline-flex cursor-default">
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "text-xs pointer-events-none",
-                              isBlocked
-                                ? "bg-red-500/10 text-red-600 border-red-500/20"
-                                : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                            )}
-                          >
-                            {isBlocked ? <Lock className="h-3 w-3 mr-1" /> : <Link2 className="h-3 w-3 mr-1" />}
-                            {isBlocked ? "Bloqueada" : "Dependência OK"}
-                          </Badge>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-[260px] z-[9999]">
-                        <p className="text-xs">
-                          {isBlocked
-                            ? `Bloqueada - Aguardando demanda '${demandDeps.find(d => d.isBlocked)?.dependsOnTitle}' ser concluída`
-                            : `Dependência "${demandDeps[0]?.dependsOnTitle}" concluída`}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "text-xs",
+                      isBlocked
+                        ? "bg-red-500/10 text-red-600 border-red-500/20"
+                        : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                    )}
+                  >
+                    {isBlocked ? <Lock className="h-3 w-3 mr-1" /> : <Link2 className="h-3 w-3 mr-1" />}
+                    {isBlocked ? "Bloqueada" : "Dependência OK"}
+                  </Badge>
                 )}
               </div>
+              {demandDeps.length > 0 && isBlocked && (
+                <div className="rounded-md bg-red-500/10 px-2.5 py-1.5 flex items-center gap-1.5 mb-2">
+                  <Lock className="h-3 w-3 text-red-500 shrink-0" />
+                  <span className="text-[11px] text-red-600 dark:text-red-400 font-medium">
+                    Aguardando demanda '{demandDeps.find(d => d.isBlocked)?.dependsOnTitle}' ser concluída
+                  </span>
+                </div>
+              )}
 
               {(columnKey === "Entregue" || columnKey === "Aprovação do Cliente" || columnKey === "Fazendo" || columnKey === "Em Ajuste") && (() => {
                 const canControlTimer = !readOnly && 
