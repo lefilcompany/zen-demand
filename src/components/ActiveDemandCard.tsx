@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Play, ExternalLink, Clock, Zap } from "lucide-react";
+import { Pause, ExternalLink, Clock, Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -50,7 +50,7 @@ export function ActiveDemandCard({ entry, demandTotalSeconds }: ActiveDemandCard
             </Avatar>
             {/* Active indicator */}
             <span className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 border-3 border-background rounded-full flex items-center justify-center shadow-lg animate-pulse">
-              <Play className="h-3 w-3 fill-white text-white" />
+              <Pause className="h-3 w-3 fill-white text-white" />
             </span>
           </div>
 
