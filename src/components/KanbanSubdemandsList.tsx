@@ -62,7 +62,7 @@ export function KanbanSubdemandsList({ demandId, onSubdemandClick }: KanbanSubde
         const color = sub.demand_statuses?.color || "#6B7280";
         const statusName = sub.demand_statuses?.name || "Sem status";
         const assignees = sub.demand_assignees || [];
-        const timeStr = formatTimeSeconds(sub.time_in_progress_seconds);
+        const timeStr = formatTimeSeconds(timeEntriesMap?.[sub.id] || 0);
         const code = sub.board_sequence_number ? formatDemandCode(sub.board_sequence_number) : null;
         const deps = depsMap?.[sub.id] || [];
         const isBlocked = deps.some(d => d.isBlocked);
