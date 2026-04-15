@@ -56,7 +56,7 @@ export default function FolderDetail() {
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [openBoards, setOpenBoards] = useState<Record<string, boolean>>({});
   const [hideDelivered, setHideDelivered] = useState(false);
-  const [groupByBoard, setGroupByBoard] = useState(false);
+  const [groupByBoard, setGroupByBoard] = useState(true);
   const [shareOpen, setShareOpen] = useState(false);
   const [managerOpen, setManagerOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
