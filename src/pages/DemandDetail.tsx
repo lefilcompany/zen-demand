@@ -690,6 +690,18 @@ export default function DemandDetail() {
                     {statuses?.map(status => <DropdownMenuItem key={status.id} onClick={async () => {
                     if (status.id !== demand.status_id) {
                       const previousStatusName = demand.demand_statuses?.name;
+
+                      // Check dependency before allowing status change
+                      if (status.name !== "A Iniciar" && previousStatusName === "A Iniciar") {
+                        const depCheck = await checkDependencyBeforeStatusChange(demand.id);
+                        if (depCheck.blocked) {
+                          toast.error("Não é possível alterar o status", {
+                            description: `Esta demanda depende de "${depCheck.blockedByTitle}" que ainda não foi concluída.`,
+                          });
+                          return;
+                        }
+                      }
+
                       const timerStatuses = ["Fazendo", "Em Ajuste"];
                       const isEnteringTimerStatus = timerStatuses.includes(status.name);
                       const isLeavingTimerStatus = previousStatusName && timerStatuses.includes(previousStatusName) && !isEnteringTimerStatus;
