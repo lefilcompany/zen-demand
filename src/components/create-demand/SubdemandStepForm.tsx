@@ -138,7 +138,7 @@ export function SubdemandStepForm({
       {/* Dependency */}
       {availableDeps.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap">
-          <Label className="whitespace-nowrap text-sm">Pode iniciar quando</Label>
+          <Label className="whitespace-nowrap text-sm text-muted-foreground">Pode iniciar quando</Label>
           <Select
             value={data.dependsOnIndex !== undefined ? String(data.dependsOnIndex) : "none"}
             onValueChange={(v) => update({ dependsOnIndex: v === "none" ? undefined : Number(v) })}
