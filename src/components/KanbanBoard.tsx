@@ -419,30 +419,10 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       return name === "Fazendo" || name === "Em Ajuste";
     });
     
+    // Only auto-move parent OUT of "Fazendo" if no siblings are active
+    // Do NOT auto-move parent to "Entregue" — parent may need other stages (adjustment, approval, etc.)
     if (!anySiblingActive && newStatusKey !== "Fazendo" && newStatusKey !== "Em Ajuste") {
-      const { data: parentDemand } = await supabase
-        .from("demands")
-        .select("id, demand_statuses(name)")
-        .eq("id", demand.parent_demand_id)
-        .single();
-        
-      if (parentDemand && (parentDemand.demand_statuses as any)?.name === "Fazendo") {
-        const allDelivered = (siblings || []).every(s => {
-          return (s.demand_statuses as any)?.name === "Entregue";
-        }) && newStatusKey === "Entregue";
-        
-        if (allDelivered) {
-          const entregueStatus = statuses?.find(s => s.name === "Entregue");
-          if (entregueStatus) {
-            updateDemand.mutate({
-              id: demand.parent_demand_id!,
-              status_id: entregueStatus.id,
-              status_changed_by: user?.id || null,
-              status_changed_at: new Date().toISOString(),
-            });
-          }
-        }
-      }
+      // No automatic parent status change — leave it for manual control
     }
   }, [statuses, updateDemand, user, autoMoveParentToFazendo]);
 
