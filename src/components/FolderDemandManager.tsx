@@ -170,13 +170,13 @@ export function FolderDemandManager({
                     <span className="text-sm font-semibold text-foreground truncate flex-1">
                       {group.boardName}
                     </span>
-                    <span className="text-[10px] text-muted-foreground shrink-0">
+                    <span className="flex items-center gap-1.5 shrink-0">
                       {boardSelected > 0 && (
-                        <Badge variant="secondary" className="text-[10px] h-5 px-1.5 mr-1">
-                          {boardSelected}
+                        <Badge className="text-[10px] h-5 px-1.5 bg-[#F28705] hover:bg-[#F28705] text-white border-0">
+                          {boardSelected} na pasta
                         </Badge>
                       )}
-                      {group.demands.length}
+                      <span className="text-[10px] text-muted-foreground">{group.demands.length} total</span>
                     </span>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
