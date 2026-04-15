@@ -1215,6 +1215,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                     demandId={demand.id}
                     canControl={canControlTimer}
                     forceShow={shouldForceShow}
+                    hideIfHasSubdemands
                   />
                 );
               })()}
