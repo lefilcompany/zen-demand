@@ -313,6 +313,16 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
               if (subAssigneeInserts.length > 0) {
                 await supabase.from("demand_assignees").insert(subAssigneeInserts);
               }
+
+              // Upload subdemand attachments
+              for (let idx = 0; idx < validSubdemands.length; idx++) {
+                const sub = validSubdemands[idx];
+                const subId = result.subdemand_ids[idx];
+                if (subId && sub.pendingFiles && sub.pendingFiles.length > 0) {
+                  const { success, failed } = await uploadPendingFiles(subId, sub.pendingFiles, uploadAttachment);
+                  if (failed > 0) toast.warning(`Subdemanda ${idx + 1}: ${success} arquivo(s) enviado(s), ${failed} falhou(ram)`);
+                }
+              }
             }
 
             if (pendingFiles.length > 0 && parentId) {

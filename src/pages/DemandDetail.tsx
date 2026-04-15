@@ -1099,7 +1099,7 @@ export default function DemandDetail() {
           {/* Attachments section - result/deliverables - only agents/admins can upload */}
           <div>
             
-            <AttachmentUploader demandId={demand.id} readOnly={!(boardRole === "admin" || boardRole === "moderator" || boardRole === "executor")} demandTitle={demand.title} demandCreatedBy={demand.created_by} />
+            <AttachmentUploader demandId={demand.id} readOnly={!(boardRole === "admin" || boardRole === "moderator" || boardRole === "executor")} demandTitle={demand.title} demandCreatedBy={demand.created_by} showSubdemandAttachments={!!(subdemands && subdemands.length > 0)} />
           </div>
         </CardContent>
       </Card>
