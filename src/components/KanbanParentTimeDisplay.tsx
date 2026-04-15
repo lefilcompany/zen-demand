@@ -85,7 +85,7 @@ export function KanbanParentTimeDisplay({ demandId, subdemandIds }: KanbanParent
       });
     },
     enabled: subdemandIds.length > 0,
-    refetchInterval: 30000,
+    refetchInterval: 5000,
   });
 
   if (!subTimeData || subTimeData.length === 0) return null;
