@@ -52,8 +52,7 @@ export function SubdemandStepForm({
 
   const availableDeps = allSubdemands
     .map((s, i) => ({ ...s, idx: i }))
-    .filter(({ idx, title: t }) => idx < index && t.trim() !== "");
-    
+    .filter(({ idx }) => idx !== index);
 
   return (
     <div className="space-y-4">
@@ -137,35 +136,38 @@ export function SubdemandStepForm({
 
       {/* Dependency */}
       {availableDeps.length > 0 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <Label className="whitespace-nowrap text-sm text-muted-foreground">Pode iniciar quando</Label>
-          <Select
-            value={data.dependsOnIndex !== undefined ? String(data.dependsOnIndex) : "none"}
-            onValueChange={(v) => update({ dependsOnIndex: v === "none" ? undefined : Number(v) })}
-          >
-            <SelectTrigger className="h-8 w-auto min-w-[180px] max-w-[240px]">
-              <SelectValue placeholder="Selecionar" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Nenhuma</SelectItem>
-              {availableDeps.map(({ idx, title: t }) => (
-                <SelectItem key={idx} value={String(idx)}>
-                  Sub {idx + 1}: {t || "(sem título)"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <span className="text-sm text-muted-foreground whitespace-nowrap">for concluída</span>
-          <TooltipProvider delayDuration={300}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help shrink-0" />
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-[240px] text-xs">
-                Esta subdemanda só poderá ser iniciada após a subdemanda selecionada ser concluída.
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+        <div className="space-y-2">
+          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Dependência entre subdemandas</Label>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Label className="whitespace-nowrap text-sm text-muted-foreground">Pode iniciar quando</Label>
+            <Select
+              value={data.dependsOnIndex !== undefined ? String(data.dependsOnIndex) : "none"}
+              onValueChange={(v) => update({ dependsOnIndex: v === "none" ? undefined : Number(v) })}
+            >
+              <SelectTrigger className="h-8 w-auto min-w-[180px] max-w-[240px]">
+                <SelectValue placeholder="Selecionar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhuma</SelectItem>
+                {availableDeps.map(({ idx, title: t }) => (
+                  <SelectItem key={idx} value={String(idx)}>
+                    Sub {idx + 1}: {t || "(sem título)"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-sm text-muted-foreground whitespace-nowrap">for concluída</span>
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help shrink-0" />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[240px] text-xs">
+                  Esta subdemanda só poderá ser iniciada após a subdemanda selecionada ser concluída.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
       )}
 
