@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { ServiceSelector } from "@/components/ServiceSelector";
+import { InlineFileUploader, PendingFile } from "@/components/InlineFileUploader";
 import { Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { SubdemandInput } from "@/hooks/useSubdemands";
@@ -13,6 +14,7 @@ export interface SubdemandFormData extends SubdemandInput {
   tempId: string;
   dependsOnIndex?: number;
   assigneeIds?: string[];
+  pendingFiles?: PendingFile[];
 }
 
 interface StatusOption {
