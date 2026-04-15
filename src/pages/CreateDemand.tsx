@@ -590,7 +590,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
               )}
             </DialogHeader>
 
-            <div className="flex-1 overflow-y-auto px-2 pb-6">
+            <div ref={contentRef} className="flex-1 overflow-y-auto px-2 pb-6">
               {/* ── STEP 0: Parent Demand ── */}
               {isParentStep && (
                 <>
