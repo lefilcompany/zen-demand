@@ -41,29 +41,19 @@ function ActiveTimerItem({ demand, isCollapsed, isMobile, onClose }: ActiveTimer
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors border border-primary/20 relative group">
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors border border-primary/20 relative">
             <NavLink
               to={`/demands/${demand.id}`}
               onClick={onClose}
               className="absolute inset-0 flex items-center justify-center"
             >
-              <Play className="h-4 w-4 text-primary fill-primary group-hover:opacity-0 transition-opacity" />
-            </NavLink>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handlePause}
-              disabled={stopTimer.isPending}
-              className="h-full w-full opacity-0 group-hover:opacity-100 transition-opacity absolute inset-0 hover:bg-destructive/20"
-            >
               <Pause className="h-4 w-4 text-destructive" />
-            </Button>
+            </NavLink>
           </div>
         </TooltipTrigger>
         <TooltipContent side="right" className="max-w-48">
           <p className="font-medium truncate">{demand.title}</p>
           <p className="text-xs text-primary font-mono">{formattedTime}</p>
-          <p className="text-xs text-muted-foreground mt-1">Passe o mouse para pausar</p>
         </TooltipContent>
       </Tooltip>
     );
