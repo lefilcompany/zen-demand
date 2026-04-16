@@ -1190,7 +1190,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           isParentDemand && "bg-primary/10 dark:bg-primary/15 ring-1 ring-primary/25 shadow-sm",
         )}
       >
-        <CardContent className="p-3 sm:p-4">
+        <CardContent className={cn("p-3 sm:p-4", isParentDemand && "p-2.5 sm:p-3")}>
           <div className="flex items-start gap-2">
             {showDragHandle && (
               <div
