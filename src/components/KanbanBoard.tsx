@@ -42,6 +42,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth";
 import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 import { KanbanSubdemandsList } from "@/components/KanbanSubdemandsList";
+import { KanbanCardMenu } from "@/components/KanbanCardMenu";
 import { checkDependencyBeforeStatusChange, useBatchDependencyInfo, type DependencyInfo } from "@/hooks/useDependencyCheck";
 import { Link2, Lock } from "lucide-react";
 
