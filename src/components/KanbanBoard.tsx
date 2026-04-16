@@ -355,42 +355,43 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     }
   }, [user, queryClient]);
   
-  // Helper: auto-move parent demand to "Fazendo" when a sub-demand moves there (no timer on parent)
-  const autoMoveParentToFazendo = useCallback(async (demandId: string) => {
-    // Fetch demand directly to avoid stale closure data
-    const { data: demand } = await supabase
-      .from("demands")
-      .select("id, parent_demand_id")
-      .eq("id", demandId)
-      .single();
-    
-    if (!demand?.parent_demand_id) return;
-    
-    const { data: parentDemand } = await supabase
-      .from("demands")
-      .select("id, status_id, demand_statuses(name)")
-      .eq("id", demand.parent_demand_id)
-      .single();
-    
-    if (!parentDemand) return;
-    
-    const parentStatusName = (parentDemand.demand_statuses as any)?.name;
-    if (parentStatusName === "Fazendo") return; // Already in Fazendo
-    
-    // Find "Fazendo" status for the parent's board
-    const fazendoStatus = statuses?.find(s => s.name === "Fazendo");
-    if (!fazendoStatus) return;
-    
-    // Move parent to "Fazendo" without starting a timer
-    updateDemand.mutate({
-      id: demand.parent_demand_id,
-      status_id: fazendoStatus.id,
-      status_changed_by: user?.id || null,
-      status_changed_at: new Date().toISOString(),
-    });
-  }, [statuses, updateDemand, user]);
+  // Helper: auto-move parent demand to a target status (no timer on parent)
+  const autoMoveParent = useCallback(async (parentDemandId: string, targetStatusName: string, toastMsg?: string) => {
+    const targetStatus = statuses?.find(s => s.name === targetStatusName);
+    if (!targetStatus) return;
 
-  // Helper: when a sub-demand leaves "Fazendo", check if all siblings are also out, then move parent back
+    // Set optimistic update for parent immediately
+    setOptimisticUpdates(prev => ({ ...prev, [parentDemandId]: targetStatusName }));
+
+    updateDemand.mutate(
+      {
+        id: parentDemandId,
+        status_id: targetStatus.id,
+        status_changed_by: user?.id || null,
+        status_changed_at: new Date().toISOString(),
+      },
+      {
+        onSuccess: () => {
+          setOptimisticUpdates(prev => {
+            const next = { ...prev };
+            delete next[parentDemandId];
+            return next;
+          });
+          queryClient.invalidateQueries({ queryKey: ['demands'] });
+          if (toastMsg) toast.success(toastMsg);
+        },
+        onError: () => {
+          setOptimisticUpdates(prev => {
+            const next = { ...prev };
+            delete next[parentDemandId];
+            return next;
+          });
+        },
+      }
+    );
+  }, [statuses, updateDemand, user, queryClient]);
+
+  // Helper: when a sub-demand status changes, auto-adjust the parent
   const autoCheckParentStatus = useCallback(async (demandId: string, newStatusKey: string) => {
     // Fetch demand directly to avoid stale closure data
     const { data: demand } = await supabase
@@ -400,10 +401,20 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       .single();
     
     if (!demand?.parent_demand_id) return;
-    
-    // If the sub-demand is moving TO Fazendo, auto-move parent
-    if (newStatusKey === "Fazendo") {
-      await autoMoveParentToFazendo(demandId);
+
+    // Fetch parent current status
+    const { data: parentDemand } = await supabase
+      .from("demands")
+      .select("id, demand_statuses(name)")
+      .eq("id", demand.parent_demand_id)
+      .single();
+
+    if (!parentDemand) return;
+    const parentStatusName = (parentDemand.demand_statuses as any)?.name;
+
+    // If the sub-demand is moving TO Fazendo or Em Ajuste, auto-move parent to Fazendo
+    if ((newStatusKey === "Fazendo" || newStatusKey === "Em Ajuste") && parentStatusName !== "Fazendo") {
+      await autoMoveParent(demand.parent_demand_id, "Fazendo");
       return;
     }
     
@@ -421,22 +432,35 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       });
       
       if (allSiblingsDelivered) {
-        // All subdemands are now Entregue — auto-deliver parent
-        const entregueStatus = statuses?.find(s => s.name === "Entregue");
-        if (entregueStatus) {
-          updateDemand.mutate({
-            id: demand.parent_demand_id,
-            status_id: entregueStatus.id,
-            status_changed_by: user?.id || null,
-            status_changed_at: new Date().toISOString(),
-          });
-          toast.success("Demanda principal concluída automaticamente", {
-            description: "Todas as subdemandas foram entregues.",
-          });
-        }
+        await autoMoveParent(
+          demand.parent_demand_id,
+          "Entregue",
+          "Demanda principal concluída automaticamente"
+        );
+      }
+      return;
+    }
+
+    // If sub-demand is moving BACK (e.g. to A Iniciar), check if NO sibling is in active statuses
+    // If so, move parent back to A Iniciar
+    const activeStatuses = ["Fazendo", "Em Ajuste", "Aprovação do Cliente", "Entregue"];
+    if (!activeStatuses.includes(newStatusKey) && parentStatusName !== "A Iniciar") {
+      const { data: siblings } = await supabase
+        .from("demands")
+        .select("id, demand_statuses(name)")
+        .eq("parent_demand_id", demand.parent_demand_id)
+        .neq("id", demandId);
+
+      const anySiblingActive = (siblings || []).some(s => {
+        const name = (s.demand_statuses as any)?.name;
+        return activeStatuses.includes(name || "");
+      });
+
+      if (!anySiblingActive) {
+        await autoMoveParent(demand.parent_demand_id, "A Iniciar");
       }
     }
-  }, [statuses, updateDemand, user, autoMoveParentToFazendo]);
+  }, [statuses, updateDemand, user, autoMoveParent]);
 
   const adjustmentDemand = demands.find(d => d.id === adjustmentDemandId);
 
