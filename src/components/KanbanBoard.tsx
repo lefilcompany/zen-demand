@@ -1511,10 +1511,17 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     const columnDemands = getFilteredDemandsForColumn(columnKey);
     const adjType = columnAdjustmentType || columns.find(c => c.key === columnKey)?.adjustmentType || 'none';
 
-    // Group demands: identify parent IDs that have children in this column
-    const parentIdsInColumn = new Set(
-      columnDemands.filter(d => d.parent_demand_id).map(d => d.parent_demand_id!)
-    );
+    // Group demands: identify parent IDs that have children in this column AND the parent itself is also in this column
+    // Only group visually in "A Iniciar" column
+    const isGroupableColumn = columnKey === "A Iniciar";
+    const columnDemandIds = new Set(columnDemands.map(d => d.id));
+    const parentIdsInColumn = isGroupableColumn
+      ? new Set(
+          columnDemands
+            .filter(d => d.parent_demand_id && columnDemandIds.has(d.parent_demand_id))
+            .map(d => d.parent_demand_id!)
+        )
+      : new Set<string>();
 
     // Build grouped rendering
     const rendered: React.ReactNode[] = [];
@@ -1523,7 +1530,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     for (const demand of columnDemands) {
       if (renderedIds.has(demand.id)) continue;
 
-      // If this is a parent with children in this column, render group
+      // If this is a parent with children in this column (only in "A Iniciar"), render group
       if (parentIdsInColumn.has(demand.id)) {
         const children = columnDemands.filter(d => d.parent_demand_id === demand.id);
         renderedIds.add(demand.id);
@@ -1560,13 +1567,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           </div>
         );
       }
-      // If this is a sub-demand whose parent is NOT in this column, render with a small indicator
-      else if (demand.parent_demand_id && !parentIdsInColumn.has(demand.parent_demand_id)) {
-        renderedIds.add(demand.id);
-        rendered.push(renderDemandCard(demand, columnKey, showMoveMenu, adjType));
-      }
-      // Normal demand
-      else if (!demand.parent_demand_id) {
+      // Any other demand (sub-demand without parent in column, or normal demand)
+      else {
         renderedIds.add(demand.id);
         rendered.push(renderDemandCard(demand, columnKey, showMoveMenu, adjType));
       }
