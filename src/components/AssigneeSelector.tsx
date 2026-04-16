@@ -51,6 +51,7 @@ interface AssigneeSelectorProps {
   onChange: (userIds: string[]) => void;
   disabled?: boolean;
   hideIcon?: boolean;
+  restrictToUserIds?: string[];
 }
 
 export function AssigneeSelector({
@@ -60,6 +61,7 @@ export function AssigneeSelector({
   onChange,
   disabled = false,
   hideIcon = false,
+  restrictToUserIds,
 }: AssigneeSelectorProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -70,7 +72,7 @@ export function AssigneeSelector({
   );
 
   // Use board members if boardId is provided, otherwise use team members
-  const members = boardId
+  const allMembers = boardId
     ? boardMembers?.map((m) => ({
         id: m.id,
         user_id: m.user_id,
@@ -83,6 +85,11 @@ export function AssigneeSelector({
         role: m.role as Role,
         profile: m.profile,
       }));
+
+  // Filter to only specific user IDs if restrictToUserIds is provided
+  const members = restrictToUserIds && restrictToUserIds.length > 0
+    ? allMembers?.filter((m) => restrictToUserIds.includes(m.user_id))
+    : allMembers;
 
   const isLoading = boardId ? loadingBoard : loadingTeam;
 

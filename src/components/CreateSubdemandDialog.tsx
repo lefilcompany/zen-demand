@@ -36,6 +36,7 @@ interface CreateSubdemandDialogProps {
   defaultStatusId: string;
   teamId: string | null;
   boardId: string | null;
+  parentAssigneeIds?: string[];
 }
 
 export function CreateSubdemandDialog({
@@ -51,6 +52,7 @@ export function CreateSubdemandDialog({
   defaultStatusId,
   teamId,
   boardId,
+  parentAssigneeIds,
 }: CreateSubdemandDialogProps) {
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState("média");
@@ -149,6 +151,7 @@ export function CreateSubdemandDialog({
                 selectedUserIds={assigneeIds}
                 onChange={setAssigneeIds}
                 hideIcon
+                restrictToUserIds={parentAssigneeIds}
               />
             </div>
           </div>
