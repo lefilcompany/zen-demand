@@ -942,16 +942,19 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       { id: demandId, status_id: entregueStatus.id, status_changed_by: user?.id || null, status_changed_at: new Date().toISOString() },
       {
         onSuccess: async () => {
-          await queryClient.invalidateQueries({ queryKey: ['demands'] });
-          
-          // Auto-move parent status based on sub-demand changes
-          await autoCheckParentStatus(demandId, "Entregue");
-          
+          // Clear optimistic state immediately
           setOptimisticUpdates(prev => {
             const newUpdates = { ...prev };
             delete newUpdates[demandId];
             return newUpdates;
           });
+
+          // Non-blocking invalidation
+          queryClient.invalidateQueries({ queryKey: ['demands'] });
+          
+          // Auto-move parent status based on sub-demand changes
+          await autoCheckParentStatus(demandId, "Entregue");
+          
           toast.success("Demanda marcada como concluída!");
           
           // Notify assignees about completion
