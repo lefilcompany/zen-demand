@@ -1104,27 +1104,43 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   );
                 })()}
 
-                {/* Parent reference */}
-                {parent && (
-                  <div
-                    className="mt-1.5 rounded border border-primary/15 bg-primary/[0.04] px-2 py-1.5 cursor-pointer hover:bg-primary/[0.08] transition-colors"
-                    onClick={(e) => { e.stopPropagation(); onDemandClick(parent.id); }}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span className="text-[9px] text-primary/50 font-medium uppercase tracking-wider">Demanda pai</span>
-                      {parent.board_sequence_number && (
-                        <Badge variant="outline" className="text-[9px] bg-primary/10 text-primary border-primary/20 font-mono px-1 py-0 h-[14px]">
-                          {formatDemandCode(parent.board_sequence_number)}
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-[11px] font-medium mt-0.5 line-clamp-1 text-foreground/80">{parent.title}</p>
-                  </div>
-                )}
-
-                {/* Footer row */}
+                {/* Footer row: status changed info + due date + assignees */}
                 <div className="flex items-center justify-between mt-1.5">
                   <div className="flex items-center gap-1.5 flex-wrap">
+                    {demand.status_changed_at && (
+                      <div className="flex items-center gap-1">
+                        <TooltipProvider delayDuration={300}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground cursor-default">
+                                <ArrowRight className="h-2.5 w-2.5" />
+                                {formatDateOnlyBR(demand.status_changed_at)}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <p>Entrou nesta etapa em {format(new Date(demand.status_changed_at), "dd/MM/yyyy 'às' HH:mm")}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        {demand.status_changed_by_profile && (
+                          <TooltipProvider delayDuration={300}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Avatar className="h-4 w-4 cursor-default ring-1 ring-primary/30">
+                                  <AvatarImage src={demand.status_changed_by_profile.avatar_url || undefined} alt={demand.status_changed_by_profile.full_name} />
+                                  <AvatarFallback className="text-[6px] bg-primary/10 text-primary">
+                                    {demand.status_changed_by_profile.full_name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">
+                                <p>Movido por {demand.status_changed_by_profile.full_name}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                    )}
                     {demand.due_date && (
                       <div className={cn("flex items-center gap-0.5 text-[10px] cursor-default", isOverdue(demand.due_date) && columnKey !== "Entregue" ? "text-destructive" : "text-muted-foreground")}>
                         {isOverdue(demand.due_date) && columnKey !== "Entregue" ? <Clock className="h-2.5 w-2.5" /> : <Calendar className="h-2.5 w-2.5" />}
@@ -1138,6 +1154,24 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                     <AssigneeAvatars assignees={[{ user_id: "legacy", profile: { full_name: demand.assigned_profile.full_name, avatar_url: demand.assigned_profile.avatar_url || null } }]} size="sm" />
                   ) : null}
                 </div>
+
+                {/* Parent reference */}
+                {parent && (
+                  <div
+                    className="mt-2 rounded border border-primary/15 bg-primary/[0.04] px-2 py-1.5 cursor-pointer hover:bg-primary/[0.08] transition-colors"
+                    onClick={(e) => { e.stopPropagation(); onDemandClick(parent.id); }}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span className="text-[9px] text-primary/50 font-medium uppercase tracking-wider">Demanda pai</span>
+                      {parent.board_sequence_number && (
+                        <Badge variant="outline" className="text-[9px] bg-primary/10 text-primary border-primary/20 font-mono px-1 py-0 h-[14px]">
+                          {formatDemandCode(parent.board_sequence_number)}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-[11px] font-medium mt-0.5 line-clamp-1 text-foreground/80">{parent.title}</p>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
