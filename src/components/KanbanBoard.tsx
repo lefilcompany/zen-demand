@@ -1378,7 +1378,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
               {isParentDemand && (
                 <div className="flex items-center gap-1.5 mb-2">
-                  <div className="flex items-center gap-1 text-[10px] text-primary bg-primary/10 rounded-md px-1.5 py-0.5 min-w-0">
+                  <div className="flex items-center gap-1 text-[10px] text-blue-700 dark:text-blue-400 bg-blue-500/10 rounded-md px-1.5 py-0.5 min-w-0">
                     <GitBranch className="h-2.5 w-2.5 shrink-0" />
                     <span className="font-medium shrink-0">Subdemandas: {childDemandIds.length}</span>
                   </div>
