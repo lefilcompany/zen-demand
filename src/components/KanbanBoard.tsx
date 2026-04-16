@@ -378,6 +378,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
             return next;
           });
           queryClient.invalidateQueries({ queryKey: ['demands'] });
+          queryClient.invalidateQueries({ queryKey: ['batch-dependency-info'] });
+          queryClient.invalidateQueries({ queryKey: ['demand-dependency-info'] });
           if (toastMsg) toast.success(toastMsg);
         },
         onError: () => {
@@ -642,6 +644,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           // Non-blocking invalidation
           queryClient.invalidateQueries({ queryKey: ['demands'] });
           queryClient.invalidateQueries({ queryKey: ['subdemands'] });
+          queryClient.invalidateQueries({ queryKey: ['batch-dependency-info'] });
+          queryClient.invalidateQueries({ queryKey: ['demand-dependency-info'] });
           
           // Auto-move parent status based on sub-demand changes
           await autoCheckParentStatus(demandId, columnKey);
@@ -805,6 +809,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
           // Non-blocking invalidation
           queryClient.invalidateQueries({ queryKey: ['demands'] });
+          queryClient.invalidateQueries({ queryKey: ['batch-dependency-info'] });
+          queryClient.invalidateQueries({ queryKey: ['demand-dependency-info'] });
           
           // Auto-move parent status based on sub-demand changes
           await autoCheckParentStatus(demandId, newStatusKey);
@@ -951,6 +957,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
           // Non-blocking invalidation
           queryClient.invalidateQueries({ queryKey: ['demands'] });
+          queryClient.invalidateQueries({ queryKey: ['batch-dependency-info'] });
+          queryClient.invalidateQueries({ queryKey: ['demand-dependency-info'] });
           
           // Auto-move parent status based on sub-demand changes
           await autoCheckParentStatus(demandId, "Entregue");
