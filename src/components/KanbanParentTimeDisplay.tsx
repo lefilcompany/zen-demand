@@ -32,7 +32,7 @@ function LiveTotal({ subs, inline }: { subs: SubTimeInfo[]; inline?: boolean }) 
 
   if (inline) {
     return (
-      <div className="flex items-center gap-1 text-[10px] text-primary bg-primary/10 rounded-md px-1.5 py-0.5 min-w-0">
+      <div className="flex items-center gap-1 text-[10px] text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 rounded-md px-1.5 py-0.5 min-w-0">
         <Clock className="h-2.5 w-2.5 shrink-0" />
         <span className="font-mono font-medium truncate min-w-0">{displayTime}</span>
         {hasAnyActive && (
