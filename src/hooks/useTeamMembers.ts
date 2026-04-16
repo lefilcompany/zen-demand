@@ -103,6 +103,12 @@ export function useUpdateMemberRole() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["team-members"] });
       queryClient.invalidateQueries({ queryKey: ["team-role"] });
+      // When promoting to admin, the DB trigger adds the user to all boards
+      // so we must refresh board members lists across all boards
+      queryClient.invalidateQueries({ queryKey: ["board-members"] });
+      queryClient.invalidateQueries({ queryKey: ["boards"] });
+      queryClient.invalidateQueries({ queryKey: ["board-role"] });
+      queryClient.invalidateQueries({ queryKey: ["available-team-members"] });
     },
   });
 }
