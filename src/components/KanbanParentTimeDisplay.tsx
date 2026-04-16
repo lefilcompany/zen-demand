@@ -32,7 +32,7 @@ function LiveTotal({ subs }: { subs: SubTimeInfo[] }) {
   const displayTime = formatTimeDisplay(grandTotal) || "00:00:00";
 
   return (
-    <div className="flex items-center gap-1.5 text-xs text-white bg-white/15 rounded-md px-2 py-1 mb-2 overflow-hidden min-w-0">
+    <div className="flex items-center gap-1.5 text-xs text-primary bg-primary/10 rounded-md px-2 py-1 mb-2 overflow-hidden min-w-0">
       <Clock className="h-3 w-3 shrink-0" />
       <span className="text-[10px] uppercase font-medium shrink-0 flex items-center gap-0.5">
         <GitBranch className="h-2.5 w-2.5" />

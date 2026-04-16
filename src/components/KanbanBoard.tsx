@@ -1187,7 +1187,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           "hover:shadow-md transition-all cursor-pointer group relative",
           draggedId === demand.id && "opacity-50 scale-95",
           showOfflineIndicator && "ring-2 ring-amber-500/50 bg-amber-500/5",
-          isParentDemand && "bg-primary text-primary-foreground ring-1 ring-primary/30 shadow-md",
+          isParentDemand && "bg-primary/10 dark:bg-primary/15 ring-1 ring-primary/25 shadow-sm",
         )}
       >
         <CardContent className="p-3 sm:p-4">
@@ -1237,7 +1237,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Badge variant="outline" className={cn("text-xs font-mono", isParentDemand ? "bg-white/20 text-white border-white/30" : "bg-muted/50 text-muted-foreground border-muted-foreground/20")}>
+                        <Badge variant="outline" className={cn("text-xs font-mono", isParentDemand ? "bg-primary/15 text-primary border-primary/25" : "bg-muted/50 text-muted-foreground border-muted-foreground/20")}>
                           {formatDemandCode(demand.board_sequence_number)}
                         </Badge>
                       </TooltipTrigger>
@@ -1246,7 +1246,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   </TooltipProvider>
                 )}
                 {isParentDemand && (
-                  <Badge className="text-[10px] bg-white/20 text-white border-white/30 px-1.5 py-0 h-[18px] font-semibold" variant="outline">
+                  <Badge className="text-[10px] bg-primary/15 text-primary border-primary/25 px-1.5 py-0 h-[18px] font-semibold" variant="outline">
                     Demanda Principal
                   </Badge>
                 )}
@@ -1265,7 +1265,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 if (!plainText) return null;
                 const truncated = plainText.length > 50 ? plainText.slice(0, 50) + "..." : plainText;
                 return (
-                  <p className={cn("text-xs mb-2 line-clamp-1", isParentDemand ? "text-white/70" : "text-muted-foreground")} title={plainText}>
+                  <p className={cn("text-xs mb-2 line-clamp-1", "text-muted-foreground")} title={plainText}>
                     {truncated}
                   </p>
                 );
@@ -1282,7 +1282,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Badge variant="outline" className={cn("text-xs capitalize", isParentDemand ? "bg-white/20 text-white border-white/30" : (priorityColors[demand.priority] || "bg-muted text-muted-foreground"))}>
+                        <Badge variant="outline" className={cn("text-xs capitalize", isParentDemand ? "bg-primary/15 text-primary border-primary/25" : (priorityColors[demand.priority] || "bg-muted text-muted-foreground"))}>
                           {demand.priority}
                         </Badge>
                       </TooltipTrigger>
@@ -1295,7 +1295,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Badge variant="outline" className={cn("text-xs flex items-center gap-1", isParentDemand ? "bg-white/20 text-white border-white/30" : "bg-primary/5 text-primary border-primary/20")}>
+                        <Badge variant="outline" className={cn("text-xs flex items-center gap-1", isParentDemand ? "bg-primary/15 text-primary border-primary/25" : "bg-primary/5 text-primary border-primary/20")}>
                           <Wrench className="h-3 w-3" />{demand.services.name}
                         </Badge>
                       </TooltipTrigger>
@@ -1308,7 +1308,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Badge variant="outline" className={cn("text-xs", isParentDemand ? "bg-white/20 text-white border-white/30" : "bg-purple-500/10 text-purple-600 border-purple-500/20")}>
+                        <Badge variant="outline" className={cn("text-xs", isParentDemand ? "bg-primary/15 text-primary border-primary/25" : "bg-purple-500/10 text-purple-600 border-purple-500/20")}>
                           <RefreshCw className="h-3 w-3 mr-1" />{adjustmentCount}
                         </Badge>
                       </TooltipTrigger>
@@ -1334,7 +1334,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               )}
 
               {isParentDemand && (
-                <div className="flex items-center gap-1.5 text-xs text-white bg-white/15 rounded-md px-2 py-1 mb-2 overflow-hidden min-w-0">
+                <div className="flex items-center gap-1.5 text-xs text-primary bg-primary/10 rounded-md px-2 py-1 mb-2 overflow-hidden min-w-0">
                   <GitBranch className="h-3 w-3 shrink-0" />
                   <span className="text-[10px] uppercase font-medium shrink-0">Subdemandas:</span>
                   <span className="font-mono font-medium">{childDemandIds.length}</span>
@@ -1387,7 +1387,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                       <TooltipProvider delayDuration={300}>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <div className={cn("flex items-center gap-1 text-xs cursor-default", isParentDemand ? "text-white/80" : "text-muted-foreground")}>
+                            <div className={cn("flex items-center gap-1 text-xs cursor-default", "text-muted-foreground")}>
                               <ArrowRight className="h-3 w-3" />
                               {formatDateOnlyBR(demand.status_changed_at)}
                             </div>
@@ -1420,7 +1420,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                     <TooltipProvider delayDuration={300}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className={cn("flex items-center gap-1 text-xs cursor-default", isOverdue(demand.due_date) && columnKey !== "Entregue" ? "text-destructive" : isParentDemand ? "text-white/80" : "text-muted-foreground")}>
+                          <div className={cn("flex items-center gap-1 text-xs cursor-default", isOverdue(demand.due_date) && columnKey !== "Entregue" ? "text-destructive" : "text-muted-foreground")}>
                             {isOverdue(demand.due_date) && columnKey !== "Entregue" ? <Clock className="h-3 w-3" /> : <Calendar className="h-3 w-3" />}
                             {formatDateOnlyBR(demand.due_date) || ""}
                           </div>
