@@ -1,58 +1,47 @@
 
 
-# Plano: Destacar visualmente a Demanda Principal no Kanban
+# Visual Connector Between Parent and Sub-demand Cards
 
-## Contexto
-Atualmente, a demanda principal tem apenas um `bg-primary/10` e `ring-1 ring-primary/25` — diferença sutil demais. Precisamos de uma distinção clara entre os 3 tipos de card: **demanda principal**, **subdemanda** e **demanda normal**.
+## What we're building
+A vertical connector line on the left side of sub-demand cards that visually links them to their parent demand, creating a tree-like hierarchy view in the Kanban column.
 
-## Abordagem
+## Approach
+Instead of modifying each card individually, we'll update `renderColumnContent` to wrap groups of parent + sub-demands with a visual connector. Each sub-demand card will get a left border line with a small branch connector, similar to a file tree view.
 
-Criar uma borda lateral esquerda colorida (left border accent) na demanda principal, similar a um padrão visual de "card com indicador lateral", que é elegante e não exagerado.
+## Technical Plan
 
-### Mudanças no `KanbanBoard.tsx`
+### 1. Update `renderColumnContent` in `KanbanBoard.tsx`
+- Instead of flat-mapping demands, detect groups (parent + its children)
+- Wrap sub-demand cards in a container with a left vertical line (`border-l-2 border-primary/30`) and small horizontal branch indicators
+- The parent card stays normal; sub-demands below get the tree connector treatment
 
-**Demanda Principal — card com destaque refinado:**
-- Adicionar `border-l-[3px] border-l-primary` — borda esquerda laranja sólida como indicador visual forte
-- Manter `bg-primary/5` (tom bem leve) ao invés de `bg-primary/10`
-- Remover o `ring-1 ring-primary/25` (redundante com a borda lateral)
-- Trocar o label "Demanda Principal" por um ícone `Crown` (coroa) ou `Star` ao lado do código, em tom laranja — mais visual, menos textual
-- Manter os chips de subdemandas e tempo como estão
+### 2. Add connector styling to sub-demand cards
+- Each sub-demand will be wrapped in a `relative` div with:
+  - A vertical line on the left (`before` pseudo-element or border-left)
+  - A small horizontal branch line connecting to the card
+  - Last sub-demand gets a shorter vertical line (L-shaped end)
+- Use `ml-4` indent + `border-l-2 border-primary/25` on the group wrapper
+- Each sub-demand gets a small horizontal line via `before` pseudo-element
 
-**Subdemanda — sem mudança visual significativa:**
-- Já possui o bloco "Vinculada a" na parte inferior, o que a diferencia
-- Mantém o estilo atual compacto
-
-**Demanda Normal — baseline sem indicadores:**
-- Sem borda lateral, sem tint de fundo
-- Comportamento atual
-
-### Resumo visual
-
+### 3. Visual details
 ```text
-┌─────────────────────┐
-│ Demanda Normal      │  Sem borda, fundo neutro
-│                     │
-└─────────────────────┘
-
-┌─────────────────────┐
-│ Subdemanda          │  Sem borda, fundo neutro
-│ ┌─ Vinculada a ───┐ │  + bloco de referência pai
-│ └─────────────────┘ │
-└─────────────────────┘
-
-┃─────────────────────┐
-┃ ★ #0045             │  Borda laranja esquerda 3px
-┃ Título da demanda   │  bg-primary/5 (leve)
-┃ Subdemandas: 2      │  Ícone estrela no header
-┃─────────────────────┘
+┌──────────────────┐
+│ #0049 PRINCIPAL  │  ← Parent card (normal)
+│ teste            │
+└──────────────────┘
+  │
+  ├─ ┌──────────────┐
+  │  │ #0050 SUB    │  ← Sub-demand with connector
+  │  │ teste 2      │
+  │  └──────────────┘
+  │
+  └─ ┌──────────────┐
+     │ #0051 SUB    │  ← Last sub-demand (L-connector)
+     │ teste 3      │
+     └──────────────┘
 ```
 
-### Detalhes técnicos
-1. Substituir as classes do Card para demanda principal:
-   - De: `bg-primary/10 ring-1 ring-primary/25 shadow-sm`
-   - Para: `border-l-[3px] border-l-primary bg-primary/5 dark:bg-primary/10`
-
-2. Trocar o texto "Demanda Principal" por ícone `Star` com tamanho `h-3 w-3 text-primary fill-primary/30`
-
-3. Manter os badges de código, prioridade e serviço com as cores originais (não mais forçar `bg-primary/15` em todos) — isso diferencia visualmente do card normal pelo contexto da borda, não pela cor dos badges
+### Files to modify
+- **`src/components/KanbanBoard.tsx`**: Update `renderColumnContent` to group demands and render tree connectors around sub-demand cards using relative positioning and CSS borders/pseudo-elements
+- **`src/index.css`** (optional): Add a small utility class for the horizontal branch line if Tailwind alone isn't sufficient
 
