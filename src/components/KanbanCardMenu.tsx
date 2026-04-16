@@ -2,16 +2,15 @@ import { useState } from "react";
 import { MoreVertical, ExternalLink, Share2, FolderOpen, Archive, Pencil, Copy } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useDemandFolders, useAddDemandToFolder, useRemoveDemandFromFolder } from "@/hooks/useDemandFolders";
-import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 import { useUpdateDemand } from "@/hooks/useDemands";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
+import { ShareDemandButton } from "@/components/ShareDemandButton";
 import { useNavigate } from "react-router-dom";
 
 interface KanbanCardMenuProps {
