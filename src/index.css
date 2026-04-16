@@ -127,6 +127,7 @@ All colors MUST be HSL.
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
     --shadow-primary: 0 4px 14px -3px hsl(33 95% 49% / 0.35);
+    --focus-ring: 0 0 0 1px hsl(var(--ring)), 0 0 0 3px hsl(var(--ring) / 0.16);
     
     /* Transitions */
     --transition-base: all 0.2s ease-in-out;
@@ -179,7 +180,7 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 0 0% 18%;
     --sidebar-ring: 33 95% 49%;
-  }
+    --focus-ring: 0 0 0 1px hsl(var(--ring)), 0 0 0 3px hsl(var(--ring) / 0.22);
 }
 
 @layer base {

@@ -771,8 +771,8 @@ export function MentionInput({
         }}
         onFocus={() => setIsEmpty(checkIsEmpty())}
         className={cn(
-          "min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          "min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-none",
+          "placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:[box-shadow:var(--focus-ring)] transition-[border-color,box-shadow] duration-200",
           "overflow-auto",
           className
         )}
