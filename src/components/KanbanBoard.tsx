@@ -16,7 +16,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight, X, WifiOff, CloudOff, Check, GitBranch } from "lucide-react";
+import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ChevronDown, ArrowRight, X, WifiOff, CloudOff, Check, GitBranch, Info } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { KanbanColumnToolbar, KanbanSortOption, filterAndSortDemands } from "@/components/KanbanColumnToolbar";
 import { format } from "date-fns";
@@ -1350,7 +1351,16 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 );
               })()}
 
-              <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-3">
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <button className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors mb-1 w-full group/info">
+                    <Info className="h-3 w-3" />
+                    <span className="font-medium">Informações da demanda</span>
+                    <ChevronDown className="h-3 w-3 ml-auto transition-transform group-data-[state=open]/info:rotate-180" />
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2 animate-in fade-in-0 slide-in-from-top-1 duration-200">
+              <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-3 mt-1.5">
                 {showOfflineIndicator && (
                   <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-5 bg-amber-500/10 text-amber-600 border-amber-500/20 animate-pulse" title={t("sync.offlineDescription")}>
                     <CloudOff className="h-2.5 w-2.5 mr-0.5" />{t("sync.offlinePending")}
@@ -1459,7 +1469,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   </div>
                 );
               })()}
-
+                </CollapsibleContent>
+              </Collapsible>
               <div className="flex items-center justify-between mt-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   {demand.status_changed_at && (
