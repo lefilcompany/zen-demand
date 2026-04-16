@@ -1353,7 +1353,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
               <Collapsible>
                 <CollapsibleTrigger asChild>
-                  <button className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors mb-1 w-full group/info">
+                  <button onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors mb-1 w-full group/info">
                     <Info className="h-3 w-3" />
                     <span className="font-medium">Informações da demanda</span>
                     <ChevronDown className="h-3 w-3 ml-auto transition-transform group-data-[state=open]/info:rotate-180" />
