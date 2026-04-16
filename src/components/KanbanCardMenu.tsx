@@ -110,8 +110,8 @@ export function KanbanCardMenu({ demandId, teamId, boardId, isDelivered, readOnl
             Abrir
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleShare}>
-            <Copy className="h-4 w-4 mr-2" />
-            Copiar link
+            <Share2 className="h-4 w-4 mr-2" />
+            Compartilhar
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -178,6 +178,13 @@ export function KanbanCardMenu({ demandId, teamId, boardId, isDelivered, readOnl
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Share dialog - reuses the same component from demand detail */}
+      {shareOpen && (
+        <div onClick={(e) => e.stopPropagation()}>
+          <ShareDemandDialog demandId={demandId} open={shareOpen} onOpenChange={setShareOpen} />
         </div>
       )}
     </>
