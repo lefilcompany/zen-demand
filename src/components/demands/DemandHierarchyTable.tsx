@@ -37,6 +37,12 @@ interface DemandHierarchyTableProps {
   onRowClick?: (row: HierarchicalDemand) => void;
 }
 
+const priorityOrder: Record<string, number> = { baixa: 1, média: 2, alta: 3 };
+const statusOrder: Record<string, number> = { "A Iniciar": 1, "Fazendo": 2, "Aprovação do Cliente": 3, "Em Ajuste": 4, "Entregue": 5 };
+
+type SortKey = "code" | "title" | "service" | "creator" | "status" | "due_date" | "board" | "priority";
+type SortDir = "asc" | "desc";
+
 const priorityConfig: Record<string, { label: string; className: string }> = {
   baixa: { label: "Baixa", className: "bg-emerald-500/20 border-emerald-500/30 text-emerald-700 dark:text-emerald-400" },
   média: { label: "Média", className: "bg-amber-500/20 border-amber-500/30 text-amber-700 dark:text-amber-400" },
