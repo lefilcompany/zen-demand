@@ -407,22 +407,35 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       return;
     }
     
-    // Fetch all siblings from DB
-    const { data: siblings } = await supabase
-      .from("demands")
-      .select("id, demand_statuses(name)")
-      .eq("parent_demand_id", demand.parent_demand_id)
-      .neq("id", demandId);
+    // If sub-demand is moving to Entregue, check if ALL siblings are now Entregue
+    if (newStatusKey === "Entregue") {
+      const { data: siblings } = await supabase
+        .from("demands")
+        .select("id, demand_statuses(name)")
+        .eq("parent_demand_id", demand.parent_demand_id)
+        .neq("id", demandId);
 
-    const anySiblingActive = (siblings || []).some(s => {
-      const name = (s.demand_statuses as any)?.name;
-      return name === "Fazendo" || name === "Em Ajuste";
-    });
-    
-    // Only auto-move parent OUT of "Fazendo" if no siblings are active
-    // Do NOT auto-move parent to "Entregue" — parent may need other stages (adjustment, approval, etc.)
-    if (!anySiblingActive && newStatusKey !== "Fazendo" && newStatusKey !== "Em Ajuste") {
-      // No automatic parent status change — leave it for manual control
+      const allSiblingsDelivered = (siblings || []).every(s => {
+        const name = (s.demand_statuses as any)?.name;
+        return name === "Entregue";
+      });
+      
+      if (allSiblingsDelivered) {
+        // All subdemands are now Entregue — auto-deliver parent
+        const entregueStatus = statuses?.find(s => s.name === "Entregue");
+        if (entregueStatus) {
+          updateDemand.mutate({
+            id: demand.parent_demand_id,
+            status_id: entregueStatus.id,
+            status_changed_by: user?.id || null,
+            status_changed_at: new Date().toISOString(),
+            delivered_at: new Date().toISOString(),
+          });
+          toast.success("Demanda principal concluída automaticamente", {
+            description: "Todas as subdemandas foram entregues.",
+          });
+        }
+      }
     }
   }, [statuses, updateDemand, user, autoMoveParentToFazendo]);
 
