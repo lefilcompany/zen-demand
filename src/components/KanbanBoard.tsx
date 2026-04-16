@@ -642,6 +642,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           // Non-blocking invalidation
           queryClient.invalidateQueries({ queryKey: ['demands'] });
           queryClient.invalidateQueries({ queryKey: ['subdemands'] });
+          queryClient.invalidateQueries({ queryKey: ['batch-dependency-info'] });
+          queryClient.invalidateQueries({ queryKey: ['demand-dependency-info'] });
           
           // Auto-move parent status based on sub-demand changes
           await autoCheckParentStatus(demandId, columnKey);
