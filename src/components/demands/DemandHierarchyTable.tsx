@@ -271,11 +271,11 @@ export function DemandHierarchyTable({ data, onRowClick }: DemandHierarchyTableP
           <TableBody>
             {paginatedParents.length > 0 ? (
               paginatedParents.map((parent) => (
-                <>
+                <Fragment key={parent.id}>
                   {renderRow(parent, false)}
                   {expandedIds.has(parent.id) &&
                     parent.children?.map((child) => renderRow(child, true))}
-                </>
+                </Fragment>
               ))
             ) : (
               <TableRow>
