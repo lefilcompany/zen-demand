@@ -5,7 +5,7 @@ import { DemandFolderStrip } from "@/components/DemandFolderStrip";
 import { useFolderDemandIds } from "@/hooks/useDemandFolders";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DemandCard } from "@/components/DemandCard";
+
 import { useDemands, useUpdateDemand } from "@/hooks/useDemands";
 import { useAllTeamDemands } from "@/hooks/useAllTeamDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
@@ -15,8 +15,8 @@ import { useMembersByPosition } from "@/hooks/useMembersByPosition";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Plus, Briefcase, LayoutList, LayoutGrid, List, Search, Eye, EyeOff, CalendarDays, User, Layers, Archive } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { DataTable } from "@/components/ui/data-table";
-import { demandColumns, DemandTableRow } from "@/components/demands/columns";
+import { DemandHierarchyTable, HierarchicalDemand } from "@/components/demands/DemandHierarchyTable";
+import { DemandHierarchyGrid } from "@/components/demands/DemandHierarchyGrid";
 import { DemandFilters, DemandFiltersState } from "@/components/DemandFilters";
 import { StatusFilterTabs } from "@/components/StatusFilterTabs";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
@@ -289,14 +289,9 @@ export default function Demands() {
       }} onDayClick={handleDayClick} isRequester={isReadOnly} onDemandDateChange={handleDemandDateChange} initialDate={calendarMonth} onDateChange={setCalendarMonth} />;
     }
     if (effectiveViewMode === "table") {
-      return <DataTable columns={demandColumns} data={demandList as unknown as DemandTableRow[]} onRowClick={row => handleDemandClick(row.id, (row as any).board_id, "table")} defaultSorting={[{
-        id: "board_sequence_number",
-        desc: false
-      }]} />;
+      return <DemandHierarchyTable data={demandList as unknown as HierarchicalDemand[]} onRowClick={row => handleDemandClick(row.id, (row as any).board_id, "table")} />;
     }
-    return <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {demandList.map(demand => <DemandCard key={demand.id} demand={demand} onClick={() => handleDemandClick(demand.id, (demand as any).board_id, "grid")} showFullDetails />)}
-      </div>;
+    return <DemandHierarchyGrid data={demandList as any[]} onDemandClick={(demandId, boardId) => handleDemandClick(demandId, boardId, "grid")} />;
   };
   return <div className="space-y-4 md:space-y-6 animate-fade-in">
       <PageBreadcrumb
