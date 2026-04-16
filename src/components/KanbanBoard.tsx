@@ -1162,7 +1162,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                     <div className="flex items-center gap-1">
                       <span className="text-[9px] text-primary/50 font-medium uppercase tracking-wider">Vinculada a</span>
                       {parent.board_sequence_number && (
-                        <Badge variant="outline" className="text-[9px] bg-primary/10 text-primary border-primary/20 font-mono px-1 py-0 h-[14px]">
+                        <Badge variant="outline" className="text-[9px] bg-primary text-white border-primary font-mono px-1 py-0 h-[14px]">
                           {formatDemandCode(parent.board_sequence_number)}
                         </Badge>
                       )}
