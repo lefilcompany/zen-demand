@@ -1,5 +1,5 @@
 import { useState, Fragment } from "react";
-import { ChevronRight, ChevronDown } from "lucide-react";
+import { ChevronRight, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -25,6 +25,7 @@ import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Wrench } from "lucide-react";
+import { parseDateOnly, toDateOnly } from "@/lib/dateUtils";
 
 export interface HierarchicalDemand extends DemandTableRow {
   parent_demand_id?: string | null;
@@ -35,6 +36,12 @@ interface DemandHierarchyTableProps {
   data: HierarchicalDemand[];
   onRowClick?: (row: HierarchicalDemand) => void;
 }
+
+const priorityOrder: Record<string, number> = { baixa: 1, média: 2, alta: 3 };
+const statusOrder: Record<string, number> = { "A Iniciar": 1, "Fazendo": 2, "Aprovação do Cliente": 3, "Em Ajuste": 4, "Entregue": 5 };
+
+type SortKey = "code" | "title" | "service" | "creator" | "status" | "due_date" | "board" | "priority";
+type SortDir = "asc" | "desc";
 
 const priorityConfig: Record<string, { label: string; className: string }> = {
   baixa: { label: "Baixa", className: "bg-emerald-500/20 border-emerald-500/30 text-emerald-700 dark:text-emerald-400" },
@@ -71,15 +78,55 @@ function buildHierarchy(demands: HierarchicalDemand[]): HierarchicalDemand[] {
   return topLevel;
 }
 
+function sortHierarchy(items: HierarchicalDemand[], sortKey: SortKey, sortDir: SortDir): HierarchicalDemand[] {
+  const sorted = [...items].sort((a, b) => {
+    let cmp = 0;
+    switch (sortKey) {
+      case "code":
+        cmp = (a.board_sequence_number || 0) - (b.board_sequence_number || 0);
+        break;
+      case "title":
+        cmp = (a.title || "").localeCompare(b.title || "");
+        break;
+      case "service":
+        cmp = (a.services?.name || "").localeCompare(b.services?.name || "");
+        break;
+      case "creator":
+        cmp = (a.profiles?.full_name || "").localeCompare(b.profiles?.full_name || "");
+        break;
+      case "status":
+        cmp = (statusOrder[a.demand_statuses?.name || ""] || 99) - (statusOrder[b.demand_statuses?.name || ""] || 99);
+        break;
+      case "due_date": {
+        const da = parseDateOnly(toDateOnly(a.due_date))?.getTime() ?? Infinity;
+        const db = parseDateOnly(toDateOnly(b.due_date))?.getTime() ?? Infinity;
+        cmp = da - db;
+        break;
+      }
+      case "board":
+        cmp = ((a as any).boards?.name || "").localeCompare((b as any).boards?.name || "");
+        break;
+      case "priority":
+        cmp = (priorityOrder[a.priority?.toLowerCase() || ""] || 0) - (priorityOrder[b.priority?.toLowerCase() || ""] || 0);
+        break;
+    }
+    return sortDir === "desc" ? -cmp : cmp;
+  });
+  return sorted;
+}
+
 export function DemandHierarchyTable({ data, onRowClick }: DemandHierarchyTableProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const [sortKey, setSortKey] = useState<SortKey>("code");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   const hierarchy = buildHierarchy(data);
+  const sorted = sortHierarchy(hierarchy, sortKey, sortDir);
 
-  const totalPages = Math.ceil(hierarchy.length / pageSize);
-  const paginatedParents = hierarchy.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
+  const totalPages = Math.ceil(sorted.length / pageSize);
+  const paginatedParents = sorted.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
 
   const toggleExpand = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -251,21 +298,51 @@ export function DemandHierarchyTable({ data, onRowClick }: DemandHierarchyTableP
 
   const currentPage = pageIndex + 1;
 
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+    setPageIndex(0);
+  };
+
+  const SortIcon = ({ col }: { col: SortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown className="h-3 w-3 ml-1 text-muted-foreground" />;
+    return sortDir === "asc" ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
+
+  const cols: { key: SortKey; label: string; sortable: boolean }[] = [
+    { key: "code", label: "Código", sortable: true },
+    { key: "title", label: "Título", sortable: true },
+    { key: "service", label: "Serviço", sortable: true },
+    { key: "creator", label: "Solicitante", sortable: true },
+    { key: "code", label: "Responsável", sortable: false },
+    { key: "status", label: "Status", sortable: true },
+    { key: "due_date", label: "Data de Expiração", sortable: true },
+    { key: "board", label: "Quadro", sortable: true },
+    { key: "priority", label: "Prioridade", sortable: true },
+  ];
+
   return (
     <div className="space-y-4">
       <div className="rounded-md border border-border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-center">Código</TableHead>
-              <TableHead className="text-center">Título</TableHead>
-              <TableHead className="text-center">Serviço</TableHead>
-              <TableHead className="text-center">Solicitante</TableHead>
-              <TableHead className="text-center">Responsável</TableHead>
-              <TableHead className="text-center">Status</TableHead>
-              <TableHead className="text-center">Data de Expiração</TableHead>
-              <TableHead className="text-center">Quadro</TableHead>
-              <TableHead className="text-center">Prioridade</TableHead>
+              {cols.map((col, idx) => (
+                <TableHead
+                  key={idx}
+                  className={`text-center ${col.sortable ? "cursor-pointer select-none hover:bg-muted/50 transition-colors" : ""}`}
+                  onClick={col.sortable ? () => handleSort(col.key) : undefined}
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    {col.label}
+                    {col.sortable && <SortIcon col={col.key} />}
+                  </div>
+                </TableHead>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>
