@@ -989,6 +989,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     // Determine if this is a parent demand (has children in the dataset)
     const childDemandIds = demands.filter(d => d.parent_demand_id === demand.id).map(d => d.id);
     const isParentDemand = childDemandIds.length > 0;
+    const showDragHandle = showDragHandleBase && !isParentDemand;
+    const showMoveMenuFinal = showMoveMenu && !isParentDemand;
     // Determine if this is a sub-demand
     const isSubDemand = !!demand.parent_demand_id;
 
