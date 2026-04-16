@@ -29,6 +29,7 @@ export function KanbanCardMenu({ demandId, teamId, boardId, isDelivered, readOnl
   const queryClient = useQueryClient();
   const updateDemand = useUpdateDemand();
   const [folderOpen, setFolderOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const { data: allFolders } = useDemandFolders(teamId || null, user?.id);
   const addToFolder = useAddDemandToFolder();
   const removeFromFolder = useRemoveDemandFromFolder();
