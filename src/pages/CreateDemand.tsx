@@ -119,6 +119,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
 
   // Step state: 0 = parent, 1..N = subdemand config, N+1 = review
   const [currentStep, setCurrentStep] = useState(0);
+  const [maxVisitedStep, setMaxVisitedStep] = useState(0);
 
   const totalSteps = 1 + subdemandCount + (subdemandCount > 0 ? 1 : 0); // parent + subs + review (only if subs > 0)
 
