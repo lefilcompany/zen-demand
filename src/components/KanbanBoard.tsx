@@ -16,7 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight, X, WifiOff, CloudOff, Check, GitBranch } from "lucide-react";
+import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight, X, WifiOff, CloudOff, Check, GitBranch, Star } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { KanbanColumnToolbar, KanbanSortOption, filterAndSortDemands } from "@/components/KanbanColumnToolbar";
 import { format } from "date-fns";
@@ -1187,7 +1187,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           "hover:shadow-md transition-all cursor-pointer group relative",
           draggedId === demand.id && "opacity-50 scale-95",
           showOfflineIndicator && "ring-2 ring-amber-500/50 bg-amber-500/5",
-          isParentDemand && "bg-primary/10 dark:bg-primary/15 ring-1 ring-primary/25 shadow-sm",
+          isParentDemand && "border-l-[3px] border-l-primary bg-primary/5 dark:bg-primary/10 shadow-sm",
         )}
       >
         <CardContent className={cn("p-3 sm:p-4", isParentDemand && "p-2.5 sm:p-3")}>
@@ -1237,7 +1237,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Badge variant="outline" className={cn("text-xs font-mono", isParentDemand ? "bg-primary/15 text-primary border-primary/25" : "bg-muted/50 text-muted-foreground border-muted-foreground/20")}>
+                        <Badge variant="outline" className="text-xs font-mono bg-muted/50 text-muted-foreground border-muted-foreground/20">
                           {formatDemandCode(demand.board_sequence_number)}
                         </Badge>
                       </TooltipTrigger>
@@ -1246,7 +1246,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   </TooltipProvider>
                 )}
                 {isParentDemand && (
-                  <span className="text-[10px] text-primary/60 font-medium uppercase tracking-wider">Demanda Principal</span>
+                  <Star className="h-3 w-3 text-primary fill-primary/30" />
                 )}
                 {showBoardBadge && demand.boards?.name && (
                   <Badge variant="outline" className="text-xs bg-accent/50 text-accent-foreground border-accent-foreground/20">
@@ -1280,7 +1280,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Badge variant="outline" className={cn("text-xs capitalize", isParentDemand ? "bg-primary/15 text-primary border-primary/25" : (priorityColors[demand.priority] || "bg-muted text-muted-foreground"))}>
+                        <Badge variant="outline" className={cn("text-xs capitalize", priorityColors[demand.priority] || "bg-muted text-muted-foreground")}>
                           {demand.priority}
                         </Badge>
                       </TooltipTrigger>
@@ -1293,7 +1293,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Badge variant="outline" className={cn("text-xs flex items-center gap-1", isParentDemand ? "bg-primary/15 text-primary border-primary/25" : "bg-primary/5 text-primary border-primary/20")}>
+                        <Badge variant="outline" className="text-xs flex items-center gap-1 bg-primary/5 text-primary border-primary/20">
                           <Wrench className="h-3 w-3" />{demand.services.name}
                         </Badge>
                       </TooltipTrigger>
@@ -1306,7 +1306,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Badge variant="outline" className={cn("text-xs", isParentDemand ? "bg-primary/15 text-primary border-primary/25" : "bg-purple-500/10 text-purple-600 border-purple-500/20")}>
+                        <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/20">
                           <RefreshCw className="h-3 w-3 mr-1" />{adjustmentCount}
                         </Badge>
                       </TooltipTrigger>
