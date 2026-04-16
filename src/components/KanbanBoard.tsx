@@ -978,8 +978,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     const demandDeps = batchDeps?.[demand.id] || [];
     const isBlocked = demandDeps.some(d => d.isBlocked);
     const isDelivered = columnKey === "Entregue";
-    const isParentDemand = demands.some(d => d.parent_demand_id === demand.id);
-    const showDragHandle = !readOnly && !isMobile && !isDelivered && !isParentDemand;
+    const showDragHandleBase = !readOnly && !isMobile && !isDelivered;
     const currentStatus = demand.demand_statuses?.name;
     const availableStatuses = columns.filter(col => col.key !== currentStatus);
     const hasPendingSync = !!optimisticUpdates[demand.id];
