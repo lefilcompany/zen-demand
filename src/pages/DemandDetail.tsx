@@ -833,6 +833,14 @@ export default function DemandDetail() {
               </Badge>
             </div>
 
+            {/* Folder picker */}
+            <DemandFolderPicker
+              demandId={demand.id}
+              teamId={demand.team_id}
+              subdemandIds={!demand.parent_demand_id ? (subdemands || []).map(s => s.id) : undefined}
+              canEdit={canEdit}
+            />
+
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
