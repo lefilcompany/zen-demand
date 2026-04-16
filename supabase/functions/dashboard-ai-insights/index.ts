@@ -130,10 +130,10 @@ Demandas atrasadas: ${overdueCount}
 Status: ${Object.entries(statusCounts).map(([k, v]) => `${k}: ${v}`).join(", ")}`;
     }
 
-    // Call Lovable AI
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), {
+    // Call Google Gemini AI
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) {
+      return new Response(JSON.stringify({ error: "GEMINI_API_KEY not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -152,48 +152,36 @@ Cada objeto deve ter: "title" (máx 6 palavras), "description" (máx 2 frases cu
 Foque em: prazos, gargalos, produtividade e distribuição de carga.
 Se não houver dados suficientes, crie insights genéricos sobre boas práticas de gestão.`;
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    
+    const aiResponse = await fetch(geminiUrl, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: summaryText },
+        contents: [
+          { role: "user", parts: [{ text: `${systemPrompt}\n\nDados:\n${summaryText}` }] },
         ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "return_insights",
-              description: "Return 3 AI insights about the board",
-              parameters: {
-                type: "object",
-                properties: {
-                  insights: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        title: { type: "string" },
-                        description: { type: "string" },
-                        type: { type: "string", enum: ["warning", "success", "info"] },
-                      },
-                      required: ["title", "description", "type"],
-                      additionalProperties: false,
-                    },
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              insights: {
+                type: "ARRAY",
+                items: {
+                  type: "OBJECT",
+                  properties: {
+                    title: { type: "STRING" },
+                    description: { type: "STRING" },
+                    type: { type: "STRING", enum: ["warning", "success", "info"] },
                   },
+                  required: ["title", "description", "type"],
                 },
-                required: ["insights"],
-                additionalProperties: false,
               },
             },
+            required: ["insights"],
           },
-        ],
-        tool_choice: { type: "function", function: { name: "return_insights" } },
+        },
       }),
     });
 
@@ -205,13 +193,7 @@ Se não houver dados suficientes, crie insights genéricos sobre boas práticas 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (status === 402) {
-        return new Response(JSON.stringify({ error: "Payment required" }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      console.error("AI error:", status, await aiResponse.text());
+      console.error("Gemini AI error:", status, await aiResponse.text());
       return new Response(JSON.stringify({ error: "AI service error" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -222,13 +204,13 @@ Se não houver dados suficientes, crie insights genéricos sobre boas práticas 
     let insights = [];
 
     try {
-      const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-      if (toolCall) {
-        const parsed = JSON.parse(toolCall.function.arguments);
+      const textContent = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (textContent) {
+        const parsed = JSON.parse(textContent);
         insights = parsed.insights || [];
       }
     } catch (e) {
-      console.error("Failed to parse AI response:", e);
+      console.error("Failed to parse Gemini response:", e);
       insights = [
         { title: "Acompanhe os prazos", description: "Verifique regularmente as demandas com prazo próximo para evitar atrasos.", type: "info" },
         { title: "Distribua a carga", description: "Equilibre as demandas entre os membros da equipe para maior produtividade.", type: "info" },

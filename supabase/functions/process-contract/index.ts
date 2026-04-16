@@ -16,7 +16,7 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!;
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY')!;
 
     // 1. Verify authentication
     const authHeader = req.headers.get('Authorization');
@@ -108,19 +108,18 @@ Deno.serve(async (req: Request) => {
       .update({ status: 'processing', original_content: originalContent })
       .eq('id', contractId);
 
-    // Call Lovable AI to process the contract
-    const aiResponse = await fetch('https://api.lovable.dev/v1/chat/completions', {
+    // Call Google Gemini to process the contract
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+    
+    const aiResponse = await fetch(geminiUrl, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
+        contents: [
           {
-            role: 'system',
-            content: `Você é um especialista em análise e reescrita de contratos. Sua tarefa é:
+            role: 'user',
+            parts: [{
+              text: `Você é um especialista em análise e reescrita de contratos. Sua tarefa é:
 1. Analisar o contrato fornecido
 2. Reescrever de forma clara, organizada e profissional
 3. Manter todos os termos e condições originais
@@ -129,15 +128,16 @@ Deno.serve(async (req: Request) => {
 6. Destacar pontos importantes com negrito
 7. Corrigir erros gramaticais se houver
 
-Responda APENAS com o contrato reescrito, sem comentários adicionais.`
-          },
-          {
-            role: 'user',
-            content: `Por favor, analise e reescreva o seguinte contrato:\n\n${originalContent}`
+Responda APENAS com o contrato reescrito, sem comentários adicionais.
+
+Por favor, analise e reescreva o seguinte contrato:\n\n${originalContent}`
+            }]
           }
         ],
-        temperature: 0.3,
-        max_tokens: 4000,
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 4000,
+        },
       }),
     });
 
@@ -155,7 +155,7 @@ Responda APENAS com o contrato reescrito, sem comentários adicionais.`
     }
 
     const aiData = await aiResponse.json();
-    const processedContent = aiData.choices?.[0]?.message?.content || '';
+    const processedContent = aiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
     console.log(`Contract processed successfully, result length: ${processedContent.length}`);
 
