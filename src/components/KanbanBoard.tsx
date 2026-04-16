@@ -1022,7 +1022,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               )}
               <div className="flex-1 min-w-0" onClick={() => onDemandClick(demand.id)}>
                 {/* Code + label row */}
-                <div className="flex items-center gap-1.5 mb-1">
+                <div className="flex items-center gap-1.5 mb-1.5">
                   {demand.board_sequence_number && (
                     <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20 font-mono px-1.5 py-0 h-[18px]">
                       {formatDemandCode(demand.board_sequence_number)}
@@ -1030,10 +1030,10 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   )}
                   <span className="text-[10px] text-primary/60 font-medium uppercase tracking-wider">Subdemanda</span>
                 </div>
-                <h4 className="font-medium text-xs line-clamp-2 mb-1 break-words">{truncateText(demand.title, 60)}</h4>
+                <h4 className="font-medium text-xs line-clamp-2 mb-1.5 break-words">{truncateText(demand.title, 60)}</h4>
                 
                 {/* Compact badges */}
-                <div className="flex flex-wrap gap-1 mb-2">
+                <div className="flex flex-wrap gap-1 mb-2.5">
                   {demand.priority && (
                     <Badge variant="outline" className={cn("text-[10px] capitalize px-1.5 py-0 h-[18px]", priorityColors[demand.priority] || "bg-muted text-muted-foreground")}>
                       {demand.priority}
@@ -1103,7 +1103,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 })()}
 
                 {/* Footer row: status changed info + due date + assignees */}
-                <div className="flex items-center justify-between mt-1.5">
+                <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {demand.status_changed_at && (
                       <div className="flex items-center gap-1">
