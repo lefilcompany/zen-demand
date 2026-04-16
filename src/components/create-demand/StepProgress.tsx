@@ -5,15 +5,16 @@ interface StepProgressProps {
   currentStep: number;
   totalSteps: number; // 1 (parent) + N (subdemands) + 1 (review)
   subdemandCount: number;
+  stepTitles?: Record<number, string>; // index -> configured title
 }
 
-export function StepProgress({ currentStep, totalSteps, subdemandCount }: StepProgressProps) {
-  const steps: { label: string; icon?: React.ReactNode }[] = [
-    { label: "Demanda Principal" },
+export function StepProgress({ currentStep, totalSteps, subdemandCount, stepTitles = {} }: StepProgressProps) {
+  const steps: { label: string; icon?: React.ReactNode; configuredTitle?: string }[] = [
+    { label: "Demanda Principal", configuredTitle: stepTitles[0] },
   ];
 
   for (let i = 0; i < subdemandCount; i++) {
-    steps.push({ label: `Subdemanda ${i + 1}`, icon: <GitBranch className="h-3 w-3" /> });
+    steps.push({ label: `Subdemanda ${i + 1}`, icon: <GitBranch className="h-3 w-3" />, configuredTitle: stepTitles[i + 1] });
   }
 
   steps.push({ label: "Revisão" });
@@ -43,6 +44,11 @@ export function StepProgress({ currentStep, totalSteps, subdemandCount }: StepPr
                 step.icon
               ) : null}
               <span className="whitespace-nowrap">{step.label}</span>
+              {isCompleted && step.configuredTitle && (
+                <span className="max-w-[80px] truncate text-[10px] opacity-70 font-normal" title={step.configuredTitle}>
+                  · {step.configuredTitle}
+                </span>
+              )}
             </div>
           </div>
         );
