@@ -16,7 +16,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ArrowRight, X, WifiOff, CloudOff, Check, GitBranch } from "lucide-react";
+import { Calendar, Clock, GripVertical, RefreshCw, Wrench, ChevronRight, ChevronDown, ArrowRight, X, WifiOff, CloudOff, Check, GitBranch, Info } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { KanbanColumnToolbar, KanbanSortOption, filterAndSortDemands } from "@/components/KanbanColumnToolbar";
 import { format } from "date-fns";
