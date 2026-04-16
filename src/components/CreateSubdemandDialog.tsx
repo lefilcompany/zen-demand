@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { ServiceSelector } from "@/components/ServiceSelector";
+import { InlineFileUploader, PendingFile } from "@/components/InlineFileUploader";
 import { GitBranch, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { SubdemandInput } from "@/hooks/useSubdemands";
@@ -15,6 +16,7 @@ export interface SubdemandFormData extends SubdemandInput {
   tempId: string;
   dependsOnIndex?: number;
   assigneeIds?: string[];
+  pendingFiles?: PendingFile[];
 }
 
 interface StatusOption {
@@ -62,6 +64,7 @@ export function CreateSubdemandDialog({
   const [serviceId, setServiceId] = useState("");
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [dependsOnIndex, setDependsOnIndex] = useState<number | undefined>(undefined);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
 
   const isEditing = editingData != null;
 
@@ -75,6 +78,7 @@ export function CreateSubdemandDialog({
       setServiceId(editingData.service_id || parentServiceId || "");
       setAssigneeIds(editingData.assigneeIds || []);
       setDependsOnIndex(editingData.dependsOnIndex);
+      setPendingFiles(editingData.pendingFiles || []);
     } else if (open) {
       setTitle("");
       setPriority("média");
@@ -84,6 +88,7 @@ export function CreateSubdemandDialog({
       setServiceId(parentServiceId || "");
       setAssigneeIds([]);
       setDependsOnIndex(undefined);
+      setPendingFiles([]);
     }
   }, [open, editingData, defaultStatusId, parentServiceId]);
 
@@ -100,6 +105,7 @@ export function CreateSubdemandDialog({
       assigned_to: assigneeIds[0] || undefined,
       assigneeIds,
       dependsOnIndex,
+      pendingFiles: pendingFiles.length > 0 ? pendingFiles : undefined,
     });
     onClose();
   };
@@ -110,7 +116,7 @@ export function CreateSubdemandDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <GitBranch className="h-4 w-4 text-[#F28705]" />
@@ -241,6 +247,16 @@ export function CreateSubdemandDialog({
               onChange={setDescription}
               placeholder="Descreva os detalhes da subdemanda..."
               minHeight="80px"
+            />
+          </div>
+
+          {/* Attachments */}
+          <div className="space-y-2">
+            <Label>Anexos</Label>
+            <InlineFileUploader
+              pendingFiles={pendingFiles}
+              onFilesChange={setPendingFiles}
+              disabled={false}
             />
           </div>
         </div>
