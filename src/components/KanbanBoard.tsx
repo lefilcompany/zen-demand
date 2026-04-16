@@ -1485,10 +1485,71 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const renderColumnContent = (columnKey: string, showMoveMenu: boolean = false, columnAdjustmentType?: AdjustmentTypeColumn) => {
     const columnDemands = getFilteredDemandsForColumn(columnKey);
     const adjType = columnAdjustmentType || columns.find(c => c.key === columnKey)?.adjustmentType || 'none';
-    
+
+    // Group demands: identify parent IDs that have children in this column
+    const parentIdsInColumn = new Set(
+      columnDemands.filter(d => d.parent_demand_id).map(d => d.parent_demand_id!)
+    );
+
+    // Build grouped rendering
+    const rendered: React.ReactNode[] = [];
+    const renderedIds = new Set<string>();
+
+    for (const demand of columnDemands) {
+      if (renderedIds.has(demand.id)) continue;
+
+      // If this is a parent with children in this column, render group
+      if (parentIdsInColumn.has(demand.id)) {
+        const children = columnDemands.filter(d => d.parent_demand_id === demand.id);
+        renderedIds.add(demand.id);
+        children.forEach(c => renderedIds.add(c.id));
+
+        rendered.push(
+          <div key={`group-${demand.id}`} className="space-y-0">
+            {renderDemandCard(demand, columnKey, showMoveMenu, adjType)}
+            {children.length > 0 && (
+              <div className="relative ml-4 mt-1 space-y-0">
+                {/* Vertical connector line */}
+                <div className="absolute left-[7px] top-0 bottom-[22px] w-[2px] bg-primary/20 rounded-full" />
+                {children.map((child, idx) => {
+                  const isLast = idx === children.length - 1;
+                  return (
+                    <div key={child.id} className="relative pl-5 py-1">
+                      {/* Horizontal branch line */}
+                      <div className={cn(
+                        "absolute left-[7px] top-[22px] w-[14px] h-[2px] bg-primary/20 rounded-full",
+                      )} />
+                      {/* Curved corner for last item */}
+                      {isLast && (
+                        <div className="absolute left-[7px] top-0 w-[2px] h-[22px] bg-primary/20 rounded-full" />
+                      )}
+                      {!isLast && (
+                        <div className="absolute left-[7px] top-0 w-[2px] h-full bg-primary/20 rounded-full" />
+                      )}
+                      {renderDemandCard(child, columnKey, showMoveMenu, adjType)}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      }
+      // If this is a sub-demand whose parent is NOT in this column, render with a small indicator
+      else if (demand.parent_demand_id && !parentIdsInColumn.has(demand.parent_demand_id)) {
+        renderedIds.add(demand.id);
+        rendered.push(renderDemandCard(demand, columnKey, showMoveMenu, adjType));
+      }
+      // Normal demand
+      else if (!demand.parent_demand_id) {
+        renderedIds.add(demand.id);
+        rendered.push(renderDemandCard(demand, columnKey, showMoveMenu, adjType));
+      }
+    }
+
     return (
       <div className="space-y-3 flex-1 overflow-y-auto min-h-0">
-        {columnDemands.map((demand) => renderDemandCard(demand, columnKey, showMoveMenu, adjType))}
+        {rendered}
         {columnDemands.length === 0 && (
           <div className="text-center py-8 text-muted-foreground text-sm border-2 border-dashed rounded-lg">
             {getColumnSearch(columnKey) ? "Nenhum resultado" : (readOnly ? "Nenhuma demanda" : (isMobile ? "Nenhuma demanda" : "Arraste demandas aqui"))}
