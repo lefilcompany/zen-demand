@@ -1247,7 +1247,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 )}
                 {isParentDemand && (
                   <Badge className="text-[10px] bg-amber-500/15 text-amber-600 border-amber-500/25 px-1.5 py-0 h-[18px] font-semibold" variant="outline">
-                    Demanda Principal · {childDemandIds.length} sub
+                    Demanda Principal
                   </Badge>
                 )}
                 {showBoardBadge && demand.boards?.name && (
@@ -1330,6 +1330,14 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   <span className="text-[11px] text-red-600 dark:text-red-400 font-medium">
                     Aguardando demanda '{demandDeps.find(d => d.isBlocked)?.dependsOnTitle}' ser concluída
                   </span>
+                </div>
+              )}
+
+              {isParentDemand && (
+                <div className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 bg-blue-500/10 rounded-md px-2 py-1 mb-2 overflow-hidden min-w-0">
+                  <GitBranch className="h-3 w-3 shrink-0" />
+                  <span className="text-[10px] uppercase font-medium shrink-0">Subdemandas:</span>
+                  <span className="font-mono font-medium">{childDemandIds.length}</span>
                 </div>
               )}
 
