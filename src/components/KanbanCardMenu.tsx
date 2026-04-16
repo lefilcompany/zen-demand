@@ -2,16 +2,15 @@ import { useState } from "react";
 import { MoreVertical, ExternalLink, Share2, FolderOpen, Archive, Pencil, Copy } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useDemandFolders, useAddDemandToFolder, useRemoveDemandFromFolder } from "@/hooks/useDemandFolders";
-import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 import { useUpdateDemand } from "@/hooks/useDemands";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
+import { ShareDemandDialog } from "@/components/ShareDemandDialog";
 import { useNavigate } from "react-router-dom";
 
 interface KanbanCardMenuProps {
@@ -30,6 +29,7 @@ export function KanbanCardMenu({ demandId, teamId, boardId, isDelivered, readOnl
   const queryClient = useQueryClient();
   const updateDemand = useUpdateDemand();
   const [folderOpen, setFolderOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const { data: allFolders } = useDemandFolders(teamId || null, user?.id);
   const addToFolder = useAddDemandToFolder();
   const removeFromFolder = useRemoveDemandFromFolder();
@@ -46,15 +46,9 @@ export function KanbanCardMenu({ demandId, teamId, boardId, isDelivered, readOnl
     setLoadedLinks(true);
   };
 
-  const handleShare = async (e: React.MouseEvent) => {
+  const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const url = `${window.location.origin}/demands/${demandId}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.success("Link copiado!");
-    } catch {
-      toast.error("Erro ao copiar link");
-    }
+    setShareOpen(true);
   };
 
   const handleArchive = async (e: React.MouseEvent) => {
@@ -116,8 +110,8 @@ export function KanbanCardMenu({ demandId, teamId, boardId, isDelivered, readOnl
             Abrir
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleShare}>
-            <Copy className="h-4 w-4 mr-2" />
-            Copiar link
+            <Share2 className="h-4 w-4 mr-2" />
+            Compartilhar
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -184,6 +178,13 @@ export function KanbanCardMenu({ demandId, teamId, boardId, isDelivered, readOnl
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Share dialog - reuses the same component from demand detail */}
+      {shareOpen && (
+        <div onClick={(e) => e.stopPropagation()}>
+          <ShareDemandDialog demandId={demandId} open={shareOpen} onOpenChange={setShareOpen} />
         </div>
       )}
     </>
