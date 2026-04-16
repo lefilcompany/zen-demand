@@ -454,6 +454,16 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
   const handleDragStart = (e: React.DragEvent, demandId: string) => {
     if (readOnly) return;
+    // Block dragging parent demands
+    const demand = demands.find(d => d.id === demandId);
+    const isParent = demands.some(d => d.parent_demand_id === demandId);
+    if (isParent) {
+      e.preventDefault();
+      toast.info("Demanda principal não pode ser movida manualmente", {
+        description: "Ela será movida automaticamente conforme o progresso das subdemandas.",
+      });
+      return;
+    }
     setDraggedId(demandId);
     e.dataTransfer.effectAllowed = "move";
   };
