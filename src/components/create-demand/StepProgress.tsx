@@ -32,22 +32,26 @@ export function StepProgress({ currentStep, totalSteps, subdemandCount, stepTitl
             )}
             <div
               className={cn(
-                "flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium transition-colors",
+                "flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-colors",
                 isActive && "bg-primary text-primary-foreground",
                 isCompleted && "bg-primary/15 text-primary",
                 !isActive && !isCompleted && "bg-muted text-muted-foreground"
               )}
             >
               {isCompleted ? (
-                <Check className="h-3 w-3" />
+                <Check className="h-3 w-3 shrink-0" />
               ) : step.icon ? (
                 step.icon
               ) : null}
-              <span className="whitespace-nowrap">{step.label}</span>
-              {isCompleted && step.configuredTitle && (
-                <span className="max-w-[80px] truncate text-[10px] opacity-70 font-normal" title={step.configuredTitle}>
-                  · {step.configuredTitle}
-                </span>
+              {isCompleted && step.configuredTitle ? (
+                <div className="flex flex-col leading-tight">
+                  <span className="max-w-[100px] truncate text-[11px] font-semibold" title={step.configuredTitle}>
+                    {step.configuredTitle}
+                  </span>
+                  <span className="text-[9px] opacity-60 font-normal whitespace-nowrap">{step.label}</span>
+                </div>
+              ) : (
+                <span className="whitespace-nowrap text-[11px] font-medium">{step.label}</span>
               )}
             </div>
           </div>
