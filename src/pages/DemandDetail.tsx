@@ -763,6 +763,14 @@ export default function DemandDetail() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>}
+              {/* Folder picker button */}
+              <DemandFolderPicker
+                demandId={demand.id}
+                teamId={demand.team_id}
+                subdemandIds={!demand.parent_demand_id ? (subdemands || []).map(s => s.id) : undefined}
+                canEdit={canEdit}
+                variant="button"
+              />
             </div>
           </div>
         </CardHeader>
@@ -833,13 +841,7 @@ export default function DemandDetail() {
               </Badge>
             </div>
 
-            {/* Folder picker */}
-            <DemandFolderPicker
-              demandId={demand.id}
-              teamId={demand.team_id}
-              subdemandIds={!demand.parent_demand_id ? (subdemands || []).map(s => s.id) : undefined}
-              canEdit={canEdit}
-            />
+
 
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
               <div className="flex items-center gap-2">
