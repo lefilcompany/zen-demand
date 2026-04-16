@@ -597,6 +597,8 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                   currentStep={currentStep}
                   totalSteps={totalSteps}
                   subdemandCount={subdemandCount}
+                  maxVisitedStep={maxVisitedStep}
+                  onStepClick={handleStepClick}
                   stepTitles={{
                     0: title || "",
                     ...Object.fromEntries(
