@@ -1230,7 +1230,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               </div>
             )}
             
-            {showMoveMenu && !readOnly && !isDelivered && (
+            {showMoveMenuFinal && !readOnly && !isDelivered && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8 -ml-1 mt-0.5 bg-primary/10 hover:bg-primary/20" onClick={(e) => e.stopPropagation()}>
