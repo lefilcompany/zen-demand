@@ -9,7 +9,7 @@ interface SubTimeInfo {
   activeStartedAt: string | null;
 }
 
-function LiveTotal({ subs }: { subs: SubTimeInfo[] }) {
+function LiveTotal({ subs, inline }: { subs: SubTimeInfo[]; inline?: boolean }) {
   const totalBase = subs.reduce((sum, s) => sum + s.totalSeconds, 0);
   const activeSubs = subs.filter(s => s.hasActiveTimer);
   const hasAnyActive = activeSubs.length > 0;
@@ -21,7 +21,6 @@ function LiveTotal({ subs }: { subs: SubTimeInfo[] }) {
     return sum;
   }, 0);
 
-  // Trigger re-renders via live timer
   useLiveTimer({
     isActive: hasAnyActive,
     baseSeconds: 0,
@@ -30,6 +29,21 @@ function LiveTotal({ subs }: { subs: SubTimeInfo[] }) {
 
   const grandTotal = totalBase + totalActiveElapsed;
   const displayTime = formatTimeDisplay(grandTotal) || "00:00:00";
+
+  if (inline) {
+    return (
+      <div className="flex items-center gap-1 text-[10px] text-primary bg-primary/10 rounded-md px-1.5 py-0.5 min-w-0">
+        <Clock className="h-2.5 w-2.5 shrink-0" />
+        <span className="font-mono font-medium truncate min-w-0">{displayTime}</span>
+        {hasAnyActive && (
+          <span className="relative flex h-1.5 w-1.5 shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+          </span>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-1.5 text-xs text-primary bg-primary/10 rounded-md px-2 py-1 mb-2 overflow-hidden min-w-0">
@@ -55,9 +69,10 @@ function LiveTotal({ subs }: { subs: SubTimeInfo[] }) {
 interface KanbanParentTimeDisplayProps {
   demandId: string;
   subdemandIds?: string[];
+  inline?: boolean;
 }
 
-export function KanbanParentTimeDisplay({ demandId, subdemandIds }: KanbanParentTimeDisplayProps) {
+export function KanbanParentTimeDisplay({ demandId, subdemandIds, inline }: KanbanParentTimeDisplayProps) {
   const { data: resolvedSubdemandIds } = useQuery({
     queryKey: ["kanban-parent-subdemand-ids", demandId],
     queryFn: async () => {
@@ -113,5 +128,5 @@ export function KanbanParentTimeDisplay({ demandId, subdemandIds }: KanbanParent
 
   if (totalBase === 0 && !hasAnyActive) return null;
 
-  return <LiveTotal subs={subTimeData} />;
+  return <LiveTotal subs={subTimeData} inline={inline} />;
 }

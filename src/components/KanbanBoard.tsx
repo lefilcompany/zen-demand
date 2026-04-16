@@ -1190,7 +1190,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           isParentDemand && "bg-primary/10 dark:bg-primary/15 ring-1 ring-primary/25 shadow-sm",
         )}
       >
-        <CardContent className="p-3 sm:p-4">
+        <CardContent className={cn("p-3 sm:p-4", isParentDemand && "p-2.5 sm:p-3")}>
           <div className="flex items-start gap-2">
             {showDragHandle && (
               <div
@@ -1334,17 +1334,18 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               )}
 
               {isParentDemand && (
-                <div className="flex items-center gap-1.5 text-xs text-primary bg-primary/10 rounded-md px-2 py-1 mb-2 overflow-hidden min-w-0">
-                  <GitBranch className="h-3 w-3 shrink-0" />
-                  <span className="text-[10px] uppercase font-medium shrink-0">Subdemandas:</span>
-                  <span className="font-mono font-medium">{childDemandIds.length}</span>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <div className="flex items-center gap-1 text-[10px] text-primary bg-primary/10 rounded-md px-1.5 py-0.5 min-w-0">
+                    <GitBranch className="h-2.5 w-2.5 shrink-0" />
+                    <span className="font-medium shrink-0">{childDemandIds.length} sub</span>
+                  </div>
+                  {(columnKey === "Entregue" || columnKey === "Aprovação do Cliente" || columnKey === "Fazendo" || columnKey === "Em Ajuste") && (
+                    <KanbanParentTimeDisplay demandId={demand.id} subdemandIds={childDemandIds} inline />
+                  )}
                 </div>
               )}
 
-              {(columnKey === "Entregue" || columnKey === "Aprovação do Cliente" || columnKey === "Fazendo" || columnKey === "Em Ajuste") && (() => {
-                if (isParentDemand) {
-                  return <KanbanParentTimeDisplay demandId={demand.id} subdemandIds={childDemandIds} />;
-                }
+              {!isParentDemand && (columnKey === "Entregue" || columnKey === "Aprovação do Cliente" || columnKey === "Fazendo" || columnKey === "Em Ajuste") && (() => {
                 const canControlTimer = !readOnly && 
                   (userRole === "admin" || userRole === "moderator" || userRole === "executor") &&
                   (columnKey === "Fazendo" || columnKey === "Em Ajuste");
