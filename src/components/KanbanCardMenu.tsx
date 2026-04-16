@@ -46,15 +46,9 @@ export function KanbanCardMenu({ demandId, teamId, boardId, isDelivered, readOnl
     setLoadedLinks(true);
   };
 
-  const handleShare = async (e: React.MouseEvent) => {
+  const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const url = `${window.location.origin}/demands/${demandId}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.success("Link copiado!");
-    } catch {
-      toast.error("Erro ao copiar link");
-    }
+    setShareOpen(true);
   };
 
   const handleArchive = async (e: React.MouseEvent) => {
