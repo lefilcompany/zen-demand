@@ -407,22 +407,34 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       return;
     }
     
-    // Fetch all siblings from DB
-    const { data: siblings } = await supabase
-      .from("demands")
-      .select("id, demand_statuses(name)")
-      .eq("parent_demand_id", demand.parent_demand_id)
-      .neq("id", demandId);
+    // If sub-demand is moving to Entregue, check if ALL siblings are now Entregue
+    if (newStatusKey === "Entregue") {
+      const { data: siblings } = await supabase
+        .from("demands")
+        .select("id, demand_statuses(name)")
+        .eq("parent_demand_id", demand.parent_demand_id)
+        .neq("id", demandId);
 
-    const anySiblingActive = (siblings || []).some(s => {
-      const name = (s.demand_statuses as any)?.name;
-      return name === "Fazendo" || name === "Em Ajuste";
-    });
-    
-    // Only auto-move parent OUT of "Fazendo" if no siblings are active
-    // Do NOT auto-move parent to "Entregue" — parent may need other stages (adjustment, approval, etc.)
-    if (!anySiblingActive && newStatusKey !== "Fazendo" && newStatusKey !== "Em Ajuste") {
-      // No automatic parent status change — leave it for manual control
+      const allSiblingsDelivered = (siblings || []).every(s => {
+        const name = (s.demand_statuses as any)?.name;
+        return name === "Entregue";
+      });
+      
+      if (allSiblingsDelivered) {
+        // All subdemands are now Entregue — auto-deliver parent
+        const entregueStatus = statuses?.find(s => s.name === "Entregue");
+        if (entregueStatus) {
+          updateDemand.mutate({
+            id: demand.parent_demand_id,
+            status_id: entregueStatus.id,
+            status_changed_by: user?.id || null,
+            status_changed_at: new Date().toISOString(),
+          });
+          toast.success("Demanda principal concluída automaticamente", {
+            description: "Todas as subdemandas foram entregues.",
+          });
+        }
+      }
     }
   }, [statuses, updateDemand, user, autoMoveParentToFazendo]);
 
@@ -454,6 +466,16 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
   const handleDragStart = (e: React.DragEvent, demandId: string) => {
     if (readOnly) return;
+    // Block dragging parent demands
+    const demand = demands.find(d => d.id === demandId);
+    const isParent = demands.some(d => d.parent_demand_id === demandId);
+    if (isParent) {
+      e.preventDefault();
+      toast.info("Demanda principal não pode ser movida manualmente", {
+        description: "Ela será movida automaticamente conforme o progresso das subdemandas.",
+      });
+      return;
+    }
     setDraggedId(demandId);
     e.dataTransfer.effectAllowed = "move";
   };
@@ -531,14 +553,12 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
     const isParentDemandByDb = (childDemands?.length || 0) > 0;
 
-    if (columnKey === "Entregue" && isParentDemandByDb) {
-      const hasUndeliveredSubdemand = (childDemands || []).some((child) => (child.demand_statuses as any)?.name !== "Entregue");
-      if (hasUndeliveredSubdemand) {
-        toast.error("Finalização bloqueada", {
-          description: "Esta demanda possui subdemandas pendentes. Conclua todas as subdemandas antes de finalizar.",
-        });
-        return;
-      }
+    // Block ALL manual movement of parent demands
+    if (isParentDemandByDb) {
+      toast.info("Demanda principal não pode ser movida manualmente", {
+        description: "Ela será movida automaticamente conforme o progresso das subdemandas.",
+      });
+      return;
     }
 
     // Check dependency before allowing status change (except going back to "A Iniciar")
@@ -686,14 +706,12 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       .eq("archived", false);
 
     const isParentDemandByDb = (childDemands?.length || 0) > 0;
-    if (newStatusKey === "Entregue" && isParentDemandByDb) {
-      const hasUndeliveredSubdemand = (childDemands || []).some((child) => (child.demand_statuses as any)?.name !== "Entregue");
-      if (hasUndeliveredSubdemand) {
-        toast.error("Finalização bloqueada", {
-          description: "Esta demanda possui subdemandas pendentes. Conclua todas as subdemandas antes de finalizar.",
-        });
-        return;
-      }
+    // Block ALL manual movement of parent demands
+    if (isParentDemandByDb) {
+      toast.info("Demanda principal não pode ser movida manualmente", {
+        description: "Ela será movida automaticamente conforme o progresso das subdemandas.",
+      });
+      return;
     }
 
     if (newStatusKey !== "A Iniciar" && previousStatusName === "A Iniciar") {
@@ -960,7 +978,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     const demandDeps = batchDeps?.[demand.id] || [];
     const isBlocked = demandDeps.some(d => d.isBlocked);
     const isDelivered = columnKey === "Entregue";
-    const showDragHandle = !readOnly && !isMobile && !isDelivered;
+    const showDragHandleBase = !readOnly && !isMobile && !isDelivered;
     const currentStatus = demand.demand_statuses?.name;
     const availableStatuses = columns.filter(col => col.key !== currentStatus);
     const hasPendingSync = !!optimisticUpdates[demand.id];
@@ -971,6 +989,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     // Determine if this is a parent demand (has children in the dataset)
     const childDemandIds = demands.filter(d => d.parent_demand_id === demand.id).map(d => d.id);
     const isParentDemand = childDemandIds.length > 0;
+    const showDragHandle = showDragHandleBase && !isParentDemand;
+    const showMoveMenuFinal = showMoveMenu && !isParentDemand;
     // Determine if this is a sub-demand
     const isSubDemand = !!demand.parent_demand_id;
 
@@ -1210,7 +1230,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               </div>
             )}
             
-            {showMoveMenu && !readOnly && !isDelivered && (
+            {showMoveMenuFinal && !readOnly && !isDelivered && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8 -ml-1 mt-0.5 bg-primary/10 hover:bg-primary/20" onClick={(e) => e.stopPropagation()}>
@@ -1455,11 +1475,11 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     setColumnSorts(prev => ({ ...prev, [columnKey]: sort }));
   }, []);
 
-  // Get filtered and sorted demands for a column
+  // Get filtered and sorted demands for a column (with grouping)
   const getFilteredDemandsForColumn = useCallback((columnKey: string) => {
     const raw = getDemandsForColumn(columnKey);
-    return filterAndSortDemands(raw, getColumnSearch(columnKey), getColumnSort(columnKey));
-  }, [getDemandsForColumn, columnSearches, columnSorts]);
+    return filterAndSortDemands(raw, getColumnSearch(columnKey), getColumnSort(columnKey), batchDeps || undefined);
+  }, [getDemandsForColumn, columnSearches, columnSorts, batchDeps]);
 
   // Render column content
   const renderColumnContent = (columnKey: string, showMoveMenu: boolean = false, columnAdjustmentType?: AdjustmentTypeColumn) => {

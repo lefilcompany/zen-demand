@@ -137,6 +137,7 @@ const PRIORITY_WEIGHTS: Record<string, number> = {
 };
 
 export function filterAndSortDemands<T extends {
+  id?: string;
   title: string;
   description?: string | null;
   board_sequence_number?: number | null;
@@ -145,10 +146,12 @@ export function filterAndSortDemands<T extends {
   created_at?: string;
   updated_at?: string;
   status_changed_at?: string | null;
+  parent_demand_id?: string | null;
 }>(
   demands: T[],
   searchQuery: string,
-  sortOption: KanbanSortOption
+  sortOption: KanbanSortOption,
+  dependencyMap?: Record<string, { isBlocked: boolean }[]>
 ): T[] {
   let filtered = demands;
 
@@ -200,5 +203,51 @@ export function filterAndSortDemands<T extends {
     }
   });
 
-  return sorted;
+  // Group parent demands with their subdemands
+  // Order: parent first, then subdemands without deps, then subdemands with deps
+  const parentIds = new Set(sorted.filter(d => !d.parent_demand_id).map(d => (d as any).id as string).filter(Boolean));
+  const subsByParent = new Map<string, T[]>();
+  const standalone: T[] = [];
+
+  for (const d of sorted) {
+    if (d.parent_demand_id && parentIds.has(d.parent_demand_id)) {
+      if (!subsByParent.has(d.parent_demand_id)) subsByParent.set(d.parent_demand_id, []);
+      subsByParent.get(d.parent_demand_id)!.push(d);
+    } else {
+      standalone.push(d);
+    }
+  }
+
+  // Sort subdemands: non-blocked first, blocked last
+  if (dependencyMap) {
+    for (const [, subs] of subsByParent) {
+      subs.sort((a, b) => {
+        const aId = (a as any).id as string;
+        const bId = (b as any).id as string;
+        const aBlocked = dependencyMap[aId]?.some(dep => dep.isBlocked) ? 1 : 0;
+        const bBlocked = dependencyMap[bId]?.some(dep => dep.isBlocked) ? 1 : 0;
+        return aBlocked - bBlocked;
+      });
+    }
+  }
+
+  // Rebuild: for each standalone item, if it's a parent, insert its subs right after
+  const result: T[] = [];
+  for (const d of standalone) {
+    result.push(d);
+    const dId = (d as any).id as string;
+    const subs = subsByParent.get(dId);
+    if (subs) {
+      result.push(...subs);
+    }
+  }
+
+  // Add orphan subdemands (parent not in same column)
+  for (const d of sorted) {
+    if (d.parent_demand_id && !parentIds.has(d.parent_demand_id) && !result.includes(d)) {
+      result.push(d);
+    }
+  }
+
+  return result;
 }
