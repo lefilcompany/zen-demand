@@ -10,7 +10,7 @@ import { useDemandFolders, useAddDemandToFolder, useRemoveDemandFromFolder } fro
 import { useUpdateDemand } from "@/hooks/useDemands";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
-import { ShareDemandButton } from "@/components/ShareDemandButton";
+import { ShareDemandDialog } from "@/components/ShareDemandDialog";
 import { useNavigate } from "react-router-dom";
 
 interface KanbanCardMenuProps {
