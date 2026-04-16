@@ -1269,10 +1269,10 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 );
               })()}
 
-              <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
+              <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-3">
                 {showOfflineIndicator && (
-                  <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/20 animate-pulse" title={t("sync.offlineDescription")}>
-                    <CloudOff className="h-3 w-3 mr-1" />{t("sync.offlinePending")}
+                  <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-5 bg-amber-500/10 text-amber-600 border-amber-500/20 animate-pulse" title={t("sync.offlineDescription")}>
+                    <CloudOff className="h-2.5 w-2.5 mr-0.5" />{t("sync.offlinePending")}
                   </Badge>
                 )}
                 
@@ -1280,7 +1280,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Badge variant="outline" className={cn("text-xs capitalize", priorityColors[demand.priority] || "bg-muted text-muted-foreground")}>
+                        <Badge variant="outline" className={cn("text-[10px] py-0 px-1.5 h-5 capitalize", priorityColors[demand.priority] || "bg-muted text-muted-foreground")}>
                           {demand.priority}
                         </Badge>
                       </TooltipTrigger>
@@ -1293,8 +1293,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Badge variant="outline" className="text-xs flex items-center gap-1 bg-primary/5 text-primary border-primary/20">
-                          <Wrench className="h-3 w-3" />{demand.services.name}
+                        <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-5 flex items-center gap-0.5 bg-primary/5 text-primary border-primary/20">
+                          <Wrench className="h-2.5 w-2.5" />{demand.services.name}
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent side="top"><p>Serviço vinculado à demanda</p></TooltipContent>
@@ -1306,8 +1306,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/20">
-                          <RefreshCw className="h-3 w-3 mr-1" />{adjustmentCount}
+                        <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-5 bg-purple-500/10 text-purple-600 border-purple-500/20">
+                          <RefreshCw className="h-2.5 w-2.5 mr-0.5" />{adjustmentCount}
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent side="top"><p>Quantidade de ajustes realizados</p></TooltipContent>
@@ -1316,7 +1316,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 )}
 
                 {columnKey === "Em Ajuste" && latestAdjustmentType && (
-                  <Badge variant="outline" className={cn("text-xs", latestAdjustmentType === "internal" ? "bg-blue-500/10 text-blue-600 border-blue-500/20" : "bg-purple-500/10 text-purple-600 border-purple-500/20")}>
+                  <Badge variant="outline" className={cn("text-[10px] py-0 px-1.5 h-5", latestAdjustmentType === "internal" ? "bg-blue-500/10 text-blue-600 border-blue-500/20" : "bg-purple-500/10 text-purple-600 border-purple-500/20")}>
                     {latestAdjustmentType === "internal" ? "Interno" : "Externo"}
                   </Badge>
                 )}
