@@ -192,6 +192,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     setSubdemandCount(0);
     setSubdemands([]);
     setCurrentStep(0);
+    setMaxVisitedStep(0);
   };
 
   const isServiceValid = () => {
