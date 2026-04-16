@@ -853,6 +853,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                   teamId={selectedTeamId}
                   boardId={activeBoardId}
                   parentServiceId={serviceId && serviceId !== "none" ? serviceId : undefined}
+                  parentAssigneeIds={assigneeIds}
                 />
               )}
 
