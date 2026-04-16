@@ -25,7 +25,7 @@ export function StepProgress({ currentStep, totalSteps, subdemandCount, stepTitl
     <div className="flex items-center gap-1 overflow-x-auto pb-1">
       {steps.map((step, idx) => {
         const isActive = idx === currentStep;
-        const isCompleted = idx < currentStep;
+        const isCompleted = idx < currentStep || (idx <= maxVisitedStep && idx !== currentStep);
         const isClickable = onStepClick && idx <= maxVisitedStep && idx !== currentStep;
 
         return (
