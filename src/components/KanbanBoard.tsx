@@ -1246,7 +1246,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   </TooltipProvider>
                 )}
                 {isParentDemand && (
-                  <span className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider">Demanda Principal</span>
+                  <span className="text-[9px] text-primary font-semibold uppercase tracking-wider">Demanda Principal</span>
                 )}
                 {showBoardBadge && demand.boards?.name && (
                   <Badge variant="outline" className="text-xs bg-accent/50 text-accent-foreground border-accent-foreground/20">
