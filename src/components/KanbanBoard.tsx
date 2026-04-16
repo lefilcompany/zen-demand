@@ -42,7 +42,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth";
 import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 import { KanbanSubdemandsList } from "@/components/KanbanSubdemandsList";
-import { checkDependencyBeforeStatusChange, useBatchDependencyInfo } from "@/hooks/useDependencyCheck";
+import { checkDependencyBeforeStatusChange, useBatchDependencyInfo, type DependencyInfo } from "@/hooks/useDependencyCheck";
 import { Link2, Lock } from "lucide-react";
 
 interface Assignee {
@@ -231,6 +231,31 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const demandIds = useMemo(() => demands.map(d => d.id), [demands]);
   const { data: adjustmentCounts } = useAdjustmentCounts(demandIds);
   const { data: batchDeps } = useBatchDependencyInfo(demandIds);
+
+  const effectiveStatusByDemandId = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const demand of demands) {
+      map[demand.id] = optimisticUpdates[demand.id] || demand.demand_statuses?.name || "";
+    }
+    return map;
+  }, [demands, optimisticUpdates]);
+
+  const liveDependencyMap = useMemo(() => {
+    const result: Record<string, DependencyInfo[]> = {};
+
+    for (const [demandId, deps] of Object.entries(batchDeps || {})) {
+      result[demandId] = deps.map((dep) => {
+        const liveStatusName = effectiveStatusByDemandId[dep.dependsOnDemandId] || dep.dependsOnStatusName;
+        return {
+          ...dep,
+          dependsOnStatusName: liveStatusName,
+          isBlocked: liveStatusName !== "Entregue",
+        };
+      });
+    }
+
+    return result;
+  }, [batchDeps, effectiveStatusByDemandId]);
 
   // Build a lookup map for parent demands from the same data set
   const parentDemandMap = useMemo(() => {
@@ -1008,7 +1033,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     const adjustmentInfo = adjustmentCounts?.[demand.id];
     const adjustmentCount = adjustmentInfo?.count || 0;
     const latestAdjustmentType = adjustmentInfo?.latestType;
-    const demandDeps = batchDeps?.[demand.id] || [];
+    const demandDeps = liveDependencyMap[demand.id] || [];
     const isBlocked = demandDeps.some(d => d.isBlocked);
     const isDelivered = columnKey === "Entregue";
     const showDragHandleBase = !readOnly && !isMobile && !isDelivered;
@@ -1511,8 +1536,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   // Get filtered and sorted demands for a column (with grouping)
   const getFilteredDemandsForColumn = useCallback((columnKey: string) => {
     const raw = getDemandsForColumn(columnKey);
-    return filterAndSortDemands(raw, getColumnSearch(columnKey), getColumnSort(columnKey), batchDeps || undefined);
-  }, [getDemandsForColumn, columnSearches, columnSorts, batchDeps]);
+    return filterAndSortDemands(raw, getColumnSearch(columnKey), getColumnSort(columnKey), liveDependencyMap || undefined);
+  }, [getDemandsForColumn, columnSearches, columnSorts, liveDependencyMap]);
 
   // Render column content
   const renderColumnContent = (columnKey: string, showMoveMenu: boolean = false, columnAdjustmentType?: AdjustmentTypeColumn) => {
