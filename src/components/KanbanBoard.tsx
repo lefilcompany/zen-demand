@@ -983,8 +983,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           draggable={false}
           className={cn(
             "transition-all cursor-pointer group relative overflow-hidden",
-            "border-l-[3px] border-l-primary/60",
-            "bg-primary/[0.03] hover:bg-primary/[0.06]",
             "hover:shadow-sm",
             draggedId === demand.id && "opacity-50 scale-95",
             showOfflineIndicator && "ring-2 ring-amber-500/50",
@@ -1189,7 +1187,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           "hover:shadow-md transition-all cursor-pointer group relative",
           draggedId === demand.id && "opacity-50 scale-95",
           showOfflineIndicator && "ring-2 ring-amber-500/50 bg-amber-500/5",
-          isParentDemand && "border-t-[3px] border-t-amber-500 shadow-sm",
+          isParentDemand && "bg-primary/[0.04] dark:bg-primary/[0.08] ring-1 ring-primary/15 shadow-sm",
         )}
       >
         <CardContent className="p-3 sm:p-4">
