@@ -119,6 +119,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
 
   // Step state: 0 = parent, 1..N = subdemand config, N+1 = review
   const [currentStep, setCurrentStep] = useState(0);
+  const [maxVisitedStep, setMaxVisitedStep] = useState(0);
 
   const totalSteps = 1 + subdemandCount + (subdemandCount > 0 ? 1 : 0); // parent + subs + review (only if subs > 0)
 
@@ -191,6 +192,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     setSubdemandCount(0);
     setSubdemands([]);
     setCurrentStep(0);
+    setMaxVisitedStep(0);
   };
 
   const isServiceValid = () => {
@@ -490,7 +492,9 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
 
   const handleNext = () => {
     if (currentStep < totalSteps - 1) {
-      setCurrentStep(currentStep + 1);
+      const nextStep = currentStep + 1;
+      setCurrentStep(nextStep);
+      setMaxVisitedStep(prev => Math.max(prev, nextStep));
       scrollContentToTop();
     }
   };
@@ -498,6 +502,13 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const handlePrev = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+      scrollContentToTop();
+    }
+  };
+
+  const handleStepClick = (stepIndex: number) => {
+    if (stepIndex <= maxVisitedStep) {
+      setCurrentStep(stepIndex);
       scrollContentToTop();
     }
   };
@@ -586,6 +597,8 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                   currentStep={currentStep}
                   totalSteps={totalSteps}
                   subdemandCount={subdemandCount}
+                  maxVisitedStep={maxVisitedStep}
+                  onStepClick={handleStepClick}
                   stepTitles={{
                     0: title || "",
                     ...Object.fromEntries(
