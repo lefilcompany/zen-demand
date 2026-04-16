@@ -78,15 +78,55 @@ function buildHierarchy(demands: HierarchicalDemand[]): HierarchicalDemand[] {
   return topLevel;
 }
 
+function sortHierarchy(items: HierarchicalDemand[], sortKey: SortKey, sortDir: SortDir): HierarchicalDemand[] {
+  const sorted = [...items].sort((a, b) => {
+    let cmp = 0;
+    switch (sortKey) {
+      case "code":
+        cmp = (a.board_sequence_number || 0) - (b.board_sequence_number || 0);
+        break;
+      case "title":
+        cmp = (a.title || "").localeCompare(b.title || "");
+        break;
+      case "service":
+        cmp = (a.services?.name || "").localeCompare(b.services?.name || "");
+        break;
+      case "creator":
+        cmp = (a.profiles?.full_name || "").localeCompare(b.profiles?.full_name || "");
+        break;
+      case "status":
+        cmp = (statusOrder[a.demand_statuses?.name || ""] || 99) - (statusOrder[b.demand_statuses?.name || ""] || 99);
+        break;
+      case "due_date": {
+        const da = parseDateOnly(toDateOnly(a.due_date))?.getTime() ?? Infinity;
+        const db = parseDateOnly(toDateOnly(b.due_date))?.getTime() ?? Infinity;
+        cmp = da - db;
+        break;
+      }
+      case "board":
+        cmp = ((a as any).boards?.name || "").localeCompare((b as any).boards?.name || "");
+        break;
+      case "priority":
+        cmp = (priorityOrder[a.priority?.toLowerCase() || ""] || 0) - (priorityOrder[b.priority?.toLowerCase() || ""] || 0);
+        break;
+    }
+    return sortDir === "desc" ? -cmp : cmp;
+  });
+  return sorted;
+}
+
 export function DemandHierarchyTable({ data, onRowClick }: DemandHierarchyTableProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const [sortKey, setSortKey] = useState<SortKey>("code");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   const hierarchy = buildHierarchy(data);
+  const sorted = sortHierarchy(hierarchy, sortKey, sortDir);
 
-  const totalPages = Math.ceil(hierarchy.length / pageSize);
-  const paginatedParents = hierarchy.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
+  const totalPages = Math.ceil(sorted.length / pageSize);
+  const paginatedParents = sorted.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
 
   const toggleExpand = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
