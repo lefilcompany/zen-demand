@@ -137,6 +137,7 @@ const PRIORITY_WEIGHTS: Record<string, number> = {
 };
 
 export function filterAndSortDemands<T extends {
+  id?: string;
   title: string;
   description?: string | null;
   board_sequence_number?: number | null;
@@ -145,10 +146,12 @@ export function filterAndSortDemands<T extends {
   created_at?: string;
   updated_at?: string;
   status_changed_at?: string | null;
+  parent_demand_id?: string | null;
 }>(
   demands: T[],
   searchQuery: string,
-  sortOption: KanbanSortOption
+  sortOption: KanbanSortOption,
+  dependencyMap?: Record<string, { isBlocked: boolean }[]>
 ): T[] {
   let filtered = demands;
 
