@@ -42,6 +42,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth";
 import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 import { KanbanSubdemandsList } from "@/components/KanbanSubdemandsList";
+import { KanbanCardMenu } from "@/components/KanbanCardMenu";
 import { checkDependencyBeforeStatusChange, useBatchDependencyInfo, type DependencyInfo } from "@/hooks/useDependencyCheck";
 import { Link2, Lock } from "lucide-react";
 
@@ -1067,6 +1068,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           )}
         >
           <CardContent className="p-2.5 sm:p-3">
+            <KanbanCardMenu demandId={demand.id} teamId={demand.team_id} boardId={demand.board_id} isDelivered={isDelivered} readOnly={readOnly} compact onDemandClick={onDemandClick} />
             <div className="flex items-start gap-2">
               {showDragHandle && (
                 <div
@@ -1269,6 +1271,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         )}
       >
         <CardContent className={cn("p-3 sm:p-4", isParentDemand && "p-2.5 sm:p-3")}>
+          <KanbanCardMenu demandId={demand.id} teamId={demand.team_id} boardId={demand.board_id} isDelivered={isDelivered} readOnly={readOnly} onDemandClick={onDemandClick} />
           <div className="flex items-start gap-2">
             {showDragHandle && (
               <div
