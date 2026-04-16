@@ -3,12 +3,14 @@ import { cn } from "@/lib/utils";
 
 interface StepProgressProps {
   currentStep: number;
-  totalSteps: number; // 1 (parent) + N (subdemands) + 1 (review)
+  totalSteps: number;
   subdemandCount: number;
-  stepTitles?: Record<number, string>; // index -> configured title
+  stepTitles?: Record<number, string>;
+  onStepClick?: (stepIndex: number) => void;
+  maxVisitedStep?: number;
 }
 
-export function StepProgress({ currentStep, totalSteps, subdemandCount, stepTitles = {} }: StepProgressProps) {
+export function StepProgress({ currentStep, totalSteps, subdemandCount, stepTitles = {}, onStepClick, maxVisitedStep = 0 }: StepProgressProps) {
   const steps: { label: string; icon?: React.ReactNode; configuredTitle?: string }[] = [
     { label: "Demanda Principal", configuredTitle: stepTitles[0] },
   ];
@@ -24,18 +26,25 @@ export function StepProgress({ currentStep, totalSteps, subdemandCount, stepTitl
       {steps.map((step, idx) => {
         const isActive = idx === currentStep;
         const isCompleted = idx < currentStep;
+        const isClickable = onStepClick && idx <= maxVisitedStep && idx !== currentStep;
 
         return (
           <div key={idx} className="flex items-center gap-1 shrink-0">
             {idx > 0 && (
               <div className={cn("w-4 h-px", isCompleted ? "bg-primary" : "bg-border")} />
             )}
-            <div
+            <button
+              type="button"
+              disabled={!isClickable}
+              onClick={() => isClickable && onStepClick(idx)}
               className={cn(
                 "flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-colors",
                 isActive && "bg-primary text-primary-foreground",
                 isCompleted && "bg-primary/15 text-primary",
-                !isActive && !isCompleted && "bg-muted text-muted-foreground"
+                !isActive && !isCompleted && idx <= maxVisitedStep && "bg-muted text-muted-foreground",
+                !isActive && !isCompleted && idx > maxVisitedStep && "bg-muted text-muted-foreground opacity-50",
+                isClickable && "cursor-pointer hover:ring-2 hover:ring-primary/30",
+                !isClickable && "cursor-default"
               )}
             >
               {isCompleted ? (
@@ -53,7 +62,7 @@ export function StepProgress({ currentStep, totalSteps, subdemandCount, stepTitl
               ) : (
                 <span className="whitespace-nowrap text-[11px] font-medium">{step.label}</span>
               )}
-            </div>
+            </button>
           </div>
         );
       })}
