@@ -1455,11 +1455,11 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     setColumnSorts(prev => ({ ...prev, [columnKey]: sort }));
   }, []);
 
-  // Get filtered and sorted demands for a column
+  // Get filtered and sorted demands for a column (with grouping)
   const getFilteredDemandsForColumn = useCallback((columnKey: string) => {
     const raw = getDemandsForColumn(columnKey);
-    return filterAndSortDemands(raw, getColumnSearch(columnKey), getColumnSort(columnKey));
-  }, [getDemandsForColumn, columnSearches, columnSorts]);
+    return filterAndSortDemands(raw, getColumnSearch(columnKey), getColumnSort(columnKey), batchDeps || undefined);
+  }, [getDemandsForColumn, columnSearches, columnSorts, batchDeps]);
 
   // Render column content
   const renderColumnContent = (columnKey: string, showMoveMenu: boolean = false, columnAdjustmentType?: AdjustmentTypeColumn) => {
