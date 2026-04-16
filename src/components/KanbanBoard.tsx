@@ -694,14 +694,12 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       .eq("archived", false);
 
     const isParentDemandByDb = (childDemands?.length || 0) > 0;
-    if (newStatusKey === "Entregue" && isParentDemandByDb) {
-      const hasUndeliveredSubdemand = (childDemands || []).some((child) => (child.demand_statuses as any)?.name !== "Entregue");
-      if (hasUndeliveredSubdemand) {
-        toast.error("Finalização bloqueada", {
-          description: "Esta demanda possui subdemandas pendentes. Conclua todas as subdemandas antes de finalizar.",
-        });
-        return;
-      }
+    // Block ALL manual movement of parent demands
+    if (isParentDemandByDb) {
+      toast.info("Demanda principal não pode ser movida manualmente", {
+        description: "Ela será movida automaticamente conforme o progresso das subdemandas.",
+      });
+      return;
     }
 
     if (newStatusKey !== "A Iniciar" && previousStatusName === "A Iniciar") {
