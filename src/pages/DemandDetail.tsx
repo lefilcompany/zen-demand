@@ -990,6 +990,7 @@ export default function DemandDetail() {
                 boardId={demand?.board_id || null}
                 parentServiceId={demand?.service_id || undefined}
                 parentServiceName={(demand as any)?.services?.name || undefined}
+                parentAssigneeIds={assignees?.map(a => a.user_id) || []}
               />
 
               {subdemands && subdemands.length > 0 ? (
