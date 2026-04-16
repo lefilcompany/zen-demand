@@ -33,6 +33,7 @@ interface SubdemandStepFormProps {
   teamId: string | null;
   boardId: string | null;
   parentServiceId?: string;
+  parentAssigneeIds?: string[];
 }
 
 export function SubdemandStepForm({
@@ -45,6 +46,7 @@ export function SubdemandStepForm({
   teamId,
   boardId,
   parentServiceId,
+  parentAssigneeIds,
 }: SubdemandStepFormProps) {
   const update = (partial: Partial<SubdemandFormData>) => {
     onChange({ ...data, ...partial });
@@ -87,6 +89,7 @@ export function SubdemandStepForm({
             selectedUserIds={data.assigneeIds || []}
             onChange={(ids) => update({ assigneeIds: ids, assigned_to: ids[0] || undefined })}
             hideIcon
+            restrictToUserIds={parentAssigneeIds}
           />
         </div>
       </div>
