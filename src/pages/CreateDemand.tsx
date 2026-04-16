@@ -586,6 +586,12 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                   currentStep={currentStep}
                   totalSteps={totalSteps}
                   subdemandCount={subdemandCount}
+                  stepTitles={{
+                    0: title || "",
+                    ...Object.fromEntries(
+                      subdemands.map((s, i) => [i + 1, s.title || ""])
+                    ),
+                  }}
                 />
               )}
             </DialogHeader>
