@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,6 +58,7 @@ export default function DemandDetail() {
   }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
 
   // Check origin view mode from location state
   const fromState = location.state as {
@@ -949,30 +950,65 @@ export default function DemandDetail() {
                       boardId: demand.board_id,
                       statusId: data.status_id || defaultStatus.id,
                       priority: data.priority,
+                      description: data.description,
+                      dueDate: data.due_date,
+                      serviceId: data.service_id,
                     });
-                    // Insert assignees if provided
-                    if (data.assigneeIds && data.assigneeIds.length > 0 && result?.id) {
+
+                    if (!result?.id) {
+                      toast.success("Subdemanda criada!");
+                      return;
+                    }
+
+                    // Insert assignees
+                    if (data.assigneeIds && data.assigneeIds.length > 0) {
                       const inserts = data.assigneeIds.map(userId => ({
                         demand_id: result.id,
                         user_id: userId,
                       }));
                       await supabase.from("demand_assignees").insert(inserts);
                     }
-                    // Update description/due_date/service if provided
-                    if (result?.id && (data.description || data.due_date || data.service_id)) {
-                      await supabase.from("demands").update({
-                        ...(data.description && { description: data.description }),
-                        ...(data.due_date && { due_date: data.due_date }),
-                        ...(data.service_id && { service_id: data.service_id }),
-                      }).eq("id", result.id);
-                    }
-                    // Insert dependency if selected
-                    if (result?.id && data.dependsOnIndex !== undefined && subdemands && subdemands[data.dependsOnIndex]) {
+
+                    // Insert dependency
+                    if (data.dependsOnIndex !== undefined && subdemands && subdemands[data.dependsOnIndex]) {
                       await supabase.from("demand_dependencies").insert({
                         demand_id: result.id,
                         depends_on_demand_id: subdemands[data.dependsOnIndex].id,
                       });
                     }
+
+                    // Upload pending files as attachments
+                    if (data.pendingFiles && data.pendingFiles.length > 0) {
+                      const { data: { user: currentUser } } = await supabase.auth.getUser();
+                      if (currentUser) {
+                        for (const pf of data.pendingFiles) {
+                          const ext = pf.file.name.split(".").pop();
+                          const filePath = `demand-${result.id}/${crypto.randomUUID()}.${ext}`;
+                          const { error: uploadError } = await supabase.storage
+                            .from("demand-attachments")
+                            .upload(filePath, pf.file);
+                          if (uploadError) {
+                            console.error("Upload error:", uploadError);
+                            continue;
+                          }
+                          await supabase.from("demand_attachments").insert({
+                            demand_id: result.id,
+                            file_name: pf.file.name,
+                            file_path: filePath,
+                            file_type: pf.file.type,
+                            file_size: pf.file.size,
+                            uploaded_by: currentUser.id,
+                          });
+                        }
+                      }
+                    }
+
+                    // Invalidate all related queries after all operations
+                    queryClient.invalidateQueries({ queryKey: ["subdemands", demand.id] });
+                    queryClient.invalidateQueries({ queryKey: ["demand-dependencies"] });
+                    queryClient.invalidateQueries({ queryKey: ["demands"] });
+                    queryClient.invalidateQueries({ queryKey: ["attachments"] });
+
                     toast.success("Subdemanda criada!");
                   } catch (err) {
                     toast.error(getErrorMessage(err));

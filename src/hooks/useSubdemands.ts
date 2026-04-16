@@ -135,6 +135,9 @@ export function useAddSubdemand() {
       boardId,
       statusId,
       priority,
+      description,
+      dueDate,
+      serviceId,
     }: {
       parentDemandId: string;
       title: string;
@@ -142,6 +145,9 @@ export function useAddSubdemand() {
       boardId: string;
       statusId: string;
       priority?: string;
+      description?: string;
+      dueDate?: string;
+      serviceId?: string;
     }) => {
       const { data, error } = await supabase
         .from("demands")
@@ -153,6 +159,9 @@ export function useAddSubdemand() {
           priority: priority || "média",
           parent_demand_id: parentDemandId,
           created_by: user!.id,
+          description: description || null,
+          due_date: dueDate || null,
+          service_id: serviceId || null,
         })
         .select()
         .single();
