@@ -491,7 +491,9 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
 
   const handleNext = () => {
     if (currentStep < totalSteps - 1) {
-      setCurrentStep(currentStep + 1);
+      const nextStep = currentStep + 1;
+      setCurrentStep(nextStep);
+      setMaxVisitedStep(prev => Math.max(prev, nextStep));
       scrollContentToTop();
     }
   };
@@ -499,6 +501,13 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const handlePrev = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+      scrollContentToTop();
+    }
+  };
+
+  const handleStepClick = (stepIndex: number) => {
+    if (stepIndex <= maxVisitedStep) {
+      setCurrentStep(stepIndex);
       scrollContentToTop();
     }
   };
