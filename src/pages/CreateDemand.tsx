@@ -605,6 +605,12 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                       subdemands.map((s, i) => [i + 1, s.title || ""])
                     ),
                   }}
+                  savedSteps={new Set([
+                    ...(title?.trim() ? [0] : []),
+                    ...subdemands
+                      .map((s, i) => (s.title?.trim() ? i + 1 : -1))
+                      .filter((i) => i >= 0),
+                  ])}
                 />
               )}
             </DialogHeader>
