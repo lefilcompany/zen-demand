@@ -959,51 +959,218 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     const latestAdjustmentType = adjustmentInfo?.latestType;
     const demandDeps = batchDeps?.[demand.id] || [];
     const isBlocked = demandDeps.some(d => d.isBlocked);
-    // Demandas em "Entregue" não podem ser movidas
     const isDelivered = columnKey === "Entregue";
-    // Show drag handle on desktop and tablet (medium screens), not on mobile, and not for delivered demands
     const showDragHandle = !readOnly && !isMobile && !isDelivered;
     const currentStatus = demand.demand_statuses?.name;
     const availableStatuses = columns.filter(col => col.key !== currentStatus);
-    // Check if this demand has a pending optimistic update (offline change)
     const hasPendingSync = !!optimisticUpdates[demand.id];
-    // Check if this demand was created offline
     const isOfflineDemand = (demand as Demand)._isOffline === true;
     const showOfflineIndicator = hasPendingSync || isOfflineDemand;
-    
-    // Get the column's adjustment type
     const colAdjType = columnAdjustmentType || columns.find(c => c.key === columnKey)?.adjustmentType || 'none';
     
+    // Determine if this is a parent demand (has children in the dataset)
+    const childDemandIds = demands.filter(d => d.parent_demand_id === demand.id).map(d => d.id);
+    const isParentDemand = childDemandIds.length > 0;
+    // Determine if this is a sub-demand
+    const isSubDemand = !!demand.parent_demand_id;
+
+    // ─── SUB-DEMAND: compact card ───
+    if (isSubDemand) {
+      const parent = demand.parent_demand_id ? parentDemandMap[demand.parent_demand_id] : null;
+      return (
+        <Card
+          key={demand.id}
+          draggable={false}
+          className={cn(
+            "transition-all cursor-pointer group relative overflow-hidden",
+            "border-l-[3px] border-l-primary/60",
+            "bg-primary/[0.03] hover:bg-primary/[0.06]",
+            "hover:shadow-sm",
+            draggedId === demand.id && "opacity-50 scale-95",
+            showOfflineIndicator && "ring-2 ring-amber-500/50",
+          )}
+        >
+          <CardContent className="p-2.5 sm:p-3">
+            <div className="flex items-start gap-2">
+              {showDragHandle && (
+                <div
+                  draggable
+                  onDragStart={(e) => { e.stopPropagation(); handleDragStart(e, demand.id); }}
+                  onDragEnd={handleDragEnd}
+                  onMouseDown={handleDragHandleMouseDown}
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center justify-center rounded-md p-1 -ml-0.5 mt-0.5 bg-primary/10 hover:bg-primary/20 cursor-grab active:cursor-grabbing transition-all opacity-80 group-hover:opacity-100 touch-none select-none"
+                  title="Arraste para mover"
+                >
+                  <GripVertical className="h-3.5 w-3.5 text-primary" />
+                </div>
+              )}
+              {showMoveMenu && !readOnly && !isDelivered && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 -ml-0.5 bg-primary/10 hover:bg-primary/20" onClick={(e) => e.stopPropagation()}>
+                      <ArrowRight className="h-3.5 w-3.5 text-primary" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="bg-background">
+                    {availableStatuses.map((status) => (
+                      <DropdownMenuItem key={status.key} onClick={(e) => { e.stopPropagation(); handleMobileStatusChange(demand.id, status.key); }} className="cursor-pointer">
+                        <div className={cn("w-2 h-2 rounded-full mr-2", status.color.replace('/10', ''))} />
+                        Mover para {status.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+              <div className="flex-1 min-w-0" onClick={() => onDemandClick(demand.id)}>
+                {/* Code + label row */}
+                <div className="flex items-center gap-1.5 mb-1">
+                  {demand.board_sequence_number && (
+                    <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20 font-mono px-1.5 py-0 h-[18px]">
+                      {formatDemandCode(demand.board_sequence_number)}
+                    </Badge>
+                  )}
+                  <span className="text-[10px] text-primary/60 font-medium uppercase tracking-wider">Subdemanda</span>
+                </div>
+                <h4 className="font-medium text-xs line-clamp-2 mb-1 break-words">{truncateText(demand.title, 60)}</h4>
+                
+                {/* Compact badges */}
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {demand.priority && (
+                    <Badge variant="outline" className={cn("text-[10px] capitalize px-1.5 py-0 h-[18px]", priorityColors[demand.priority] || "bg-muted text-muted-foreground")}>
+                      {demand.priority}
+                    </Badge>
+                  )}
+                  {demand.services?.name && (
+                    <Badge variant="outline" className="text-[10px] bg-primary/5 text-primary border-primary/20 px-1.5 py-0 h-[18px] gap-0.5">
+                      <Wrench className="h-2.5 w-2.5" />
+                      {demand.services.name}
+                    </Badge>
+                  )}
+                  {adjustmentCount > 0 && (
+                    <Badge variant="outline" className="text-[10px] bg-purple-500/10 text-purple-600 border-purple-500/20 px-1.5 py-0 h-[18px]">
+                      <RefreshCw className="h-2.5 w-2.5 mr-0.5" />{adjustmentCount}
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Blocked indicator */}
+                {demandDeps.length > 0 && isBlocked && (
+                  <div className="rounded-md bg-red-500/10 px-2 py-1 flex items-center gap-1 mb-2">
+                    <Lock className="h-2.5 w-2.5 text-red-500 shrink-0" />
+                    <span className="text-[10px] text-red-600 dark:text-red-400 font-medium truncate">
+                      Aguardando: {demandDeps.find(d => d.isBlocked)?.dependsOnTitle}
+                    </span>
+                  </div>
+                )}
+
+                {/* Time display */}
+                {(columnKey === "Entregue" || columnKey === "Aprovação do Cliente" || columnKey === "Fazendo" || columnKey === "Em Ajuste") && (() => {
+                  const canControlTimer = !readOnly && 
+                    (userRole === "admin" || userRole === "moderator" || userRole === "executor") &&
+                    (columnKey === "Fazendo" || columnKey === "Em Ajuste");
+                  const shouldForceShow = canControlTimer && (columnKey === "Fazendo" || columnKey === "Em Ajuste");
+                  return (
+                    <KanbanTimeDisplay demandId={demand.id} canControl={canControlTimer} forceShow={shouldForceShow} hideIfHasSubdemands />
+                  );
+                })()}
+
+                {/* Adjustment buttons */}
+                {colAdjType !== 'none' && (() => {
+                  const canRequestInternal = colAdjType === 'internal' && (userRole === "admin" || userRole === "moderator");
+                  const canRequestExternal = colAdjType === 'external' && userRole === "requester";
+                  const canMarkComplete = colAdjType === 'external' && userRole === "requester";
+                  if (!canRequestInternal && !canRequestExternal) return null;
+                  return (
+                    <div className="flex flex-col gap-1 mt-1.5">
+                      {canRequestInternal && (
+                        <Button variant="outline" size="sm" onClick={(e) => handleOpenAdjustmentDialog(e, demand.id)} className="w-full border-blue-500/30 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 text-[10px] h-7">
+                          <Wrench className="h-2.5 w-2.5 mr-1" />Ajuste Interno
+                        </Button>
+                      )}
+                      {canRequestExternal && (
+                        <>
+                          <Button variant="outline" size="sm" onClick={(e) => handleOpenAdjustmentDialog(e, demand.id)} className="w-full border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 text-[10px] h-7">
+                            <Wrench className="h-2.5 w-2.5 mr-1" />Solicitar Ajuste
+                          </Button>
+                          {canMarkComplete && (
+                            <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleMarkAsComplete(demand.id); }} className="w-full border-emerald-500/30 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950 text-[10px] h-7">
+                              <Check className="h-2.5 w-2.5 mr-1" />Concluída
+                            </Button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Parent reference */}
+                {parent && (
+                  <div
+                    className="mt-1.5 rounded border border-primary/15 bg-primary/[0.04] px-2 py-1.5 cursor-pointer hover:bg-primary/[0.08] transition-colors"
+                    onClick={(e) => { e.stopPropagation(); onDemandClick(parent.id); }}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span className="text-[9px] text-primary/50 font-medium uppercase tracking-wider">Demanda pai</span>
+                      {parent.board_sequence_number && (
+                        <Badge variant="outline" className="text-[9px] bg-primary/10 text-primary border-primary/20 font-mono px-1 py-0 h-[14px]">
+                          {formatDemandCode(parent.board_sequence_number)}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-[11px] font-medium mt-0.5 line-clamp-1 text-foreground/80">{parent.title}</p>
+                  </div>
+                )}
+
+                {/* Footer row */}
+                <div className="flex items-center justify-between mt-1.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {demand.due_date && (
+                      <div className={cn("flex items-center gap-0.5 text-[10px] cursor-default", isOverdue(demand.due_date) && columnKey !== "Entregue" ? "text-destructive" : "text-muted-foreground")}>
+                        {isOverdue(demand.due_date) && columnKey !== "Entregue" ? <Clock className="h-2.5 w-2.5" /> : <Calendar className="h-2.5 w-2.5" />}
+                        {formatDateOnlyBR(demand.due_date)}
+                      </div>
+                    )}
+                  </div>
+                  {assignees.length > 0 ? (
+                    <AssigneeAvatars assignees={assignees} size="sm" maxVisible={2} />
+                  ) : demand.assigned_profile ? (
+                    <AssigneeAvatars assignees={[{ user_id: "legacy", profile: { full_name: demand.assigned_profile.full_name, avatar_url: demand.assigned_profile.avatar_url || null } }]} size="sm" />
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    // ─── PARENT DEMAND: distinctive card ───
+    // ─── REGULAR DEMAND: standard card ───
     return (
       <Card
         key={demand.id}
         draggable={false}
         className={cn(
-          "hover:shadow-md transition-all cursor-pointer",
+          "hover:shadow-md transition-all cursor-pointer group relative",
           draggedId === demand.id && "opacity-50 scale-95",
           showOfflineIndicator && "ring-2 ring-amber-500/50 bg-amber-500/5",
-          "group relative"
+          isParentDemand && "border-t-[3px] border-t-amber-500 shadow-sm",
         )}
       >
         <CardContent className="p-3 sm:p-4">
           <div className="flex items-start gap-2">
-            {/* Drag handle for desktop and tablet */}
             {showDragHandle && (
               <div
                 draggable
-                onDragStart={(e) => {
-                  e.stopPropagation();
-                  handleDragStart(e, demand.id);
-                }}
+                onDragStart={(e) => { e.stopPropagation(); handleDragStart(e, demand.id); }}
                 onDragEnd={handleDragEnd}
                 onMouseDown={handleDragHandleMouseDown}
                 onClick={(e) => e.stopPropagation()}
                 className={cn(
                   "flex items-center justify-center rounded-md p-1.5 -ml-1 mt-0.5",
                   "bg-primary/10 hover:bg-primary/20 cursor-grab active:cursor-grabbing",
-                  "transition-all duration-200",
-                  "opacity-80 group-hover:opacity-100",
-                  "touch-none select-none"
+                  "transition-all duration-200 opacity-80 group-hover:opacity-100 touch-none select-none"
                 )}
                 title="Arraste para mover"
               >
@@ -1011,29 +1178,16 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               </div>
             )}
             
-            {/* Mobile move menu - dropdown to change status (not for delivered) */}
             {showMoveMenu && !readOnly && !isDelivered && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 -ml-1 mt-0.5 bg-primary/10 hover:bg-primary/20"
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  <Button variant="ghost" size="icon" className="h-8 w-8 -ml-1 mt-0.5 bg-primary/10 hover:bg-primary/20" onClick={(e) => e.stopPropagation()}>
                     <ArrowRight className="h-4 w-4 text-primary" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="bg-background">
                   {availableStatuses.map((status) => (
-                    <DropdownMenuItem
-                      key={status.key}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMobileStatusChange(demand.id, status.key);
-                      }}
-                      className="cursor-pointer"
-                    >
+                    <DropdownMenuItem key={status.key} onClick={(e) => { e.stopPropagation(); handleMobileStatusChange(demand.id, status.key); }} className="cursor-pointer">
                       <div className={cn("w-2 h-2 rounded-full mr-2", status.color.replace('/10', ''))} />
                       Mover para {status.label}
                     </DropdownMenuItem>
@@ -1059,6 +1213,11 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                     </Tooltip>
                   </TooltipProvider>
                 )}
+                {isParentDemand && (
+                  <Badge className="text-[10px] bg-amber-500/15 text-amber-600 border-amber-500/25 px-1.5 py-0 h-[18px] font-semibold" variant="outline">
+                    Demanda Principal · {childDemandIds.length} sub
+                  </Badge>
+                )}
                 {showBoardBadge && demand.boards?.name && (
                   <Badge variant="outline" className="text-xs bg-accent/50 text-accent-foreground border-accent-foreground/20">
                     {demand.boards.name}
@@ -1082,13 +1241,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
               <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
                 {showOfflineIndicator && (
-                  <Badge
-                    variant="outline"
-                    className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/20 animate-pulse"
-                    title={t("sync.offlineDescription")}
-                  >
-                    <CloudOff className="h-3 w-3 mr-1" />
-                    {t("sync.offlinePending")}
+                  <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-600 border-amber-500/20 animate-pulse" title={t("sync.offlineDescription")}>
+                    <CloudOff className="h-3 w-3 mr-1" />{t("sync.offlinePending")}
                   </Badge>
                 )}
                 
@@ -1096,14 +1250,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "text-xs capitalize",
-                            priorityColors[demand.priority] ||
-                              "bg-muted text-muted-foreground"
-                          )}
-                        >
+                        <Badge variant="outline" className={cn("text-xs capitalize", priorityColors[demand.priority] || "bg-muted text-muted-foreground")}>
                           {demand.priority}
                         </Badge>
                       </TooltipTrigger>
@@ -1112,17 +1259,12 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   </TooltipProvider>
                 )}
 
-                {/* Service badge */}
                 {demand.services?.name && (
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Badge
-                          variant="outline"
-                          className="text-xs bg-primary/5 text-primary border-primary/20 flex items-center gap-1"
-                        >
-                          <Wrench className="h-3 w-3" />
-                          {demand.services.name}
+                        <Badge variant="outline" className="text-xs bg-primary/5 text-primary border-primary/20 flex items-center gap-1">
+                          <Wrench className="h-3 w-3" />{demand.services.name}
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent side="top"><p>Serviço vinculado à demanda</p></TooltipContent>
@@ -1134,12 +1276,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Badge
-                          variant="outline"
-                          className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/20"
-                        >
-                          <RefreshCw className="h-3 w-3 mr-1" />
-                          {adjustmentCount}
+                        <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/20">
+                          <RefreshCw className="h-3 w-3 mr-1" />{adjustmentCount}
                         </Badge>
                       </TooltipTrigger>
                       <TooltipContent side="top"><p>Quantidade de ajustes realizados</p></TooltipContent>
@@ -1148,20 +1286,12 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 )}
 
                 {columnKey === "Em Ajuste" && latestAdjustmentType && (
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "text-xs",
-                      latestAdjustmentType === "internal"
-                        ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
-                        : "bg-purple-500/10 text-purple-600 border-purple-500/20"
-                    )}
-                  >
+                  <Badge variant="outline" className={cn("text-xs", latestAdjustmentType === "internal" ? "bg-blue-500/10 text-blue-600 border-blue-500/20" : "bg-purple-500/10 text-purple-600 border-purple-500/20")}>
                     {latestAdjustmentType === "internal" ? "Interno" : "Externo"}
                   </Badge>
                 )}
-
               </div>
+              
               {demandDeps.length > 0 && isBlocked && (
                 <div className="rounded-md bg-red-500/10 px-2.5 py-1.5 flex items-center gap-1.5 mb-2">
                   <Lock className="h-3 w-3 text-red-500 shrink-0" />
@@ -1172,80 +1302,36 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               )}
 
               {(columnKey === "Entregue" || columnKey === "Aprovação do Cliente" || columnKey === "Fazendo" || columnKey === "Em Ajuste") && (() => {
-                const childDemandIds = demands.filter(d => d.parent_demand_id === demand.id).map(d => d.id);
-                const isParent = childDemandIds.length > 0;
-
-                if (isParent) {
-                  return (
-                    <KanbanParentTimeDisplay
-                      demandId={demand.id}
-                      subdemandIds={childDemandIds}
-                    />
-                  );
+                if (isParentDemand) {
+                  return <KanbanParentTimeDisplay demandId={demand.id} subdemandIds={childDemandIds} />;
                 }
-
                 const canControlTimer = !readOnly && 
                   (userRole === "admin" || userRole === "moderator" || userRole === "executor") &&
                   (columnKey === "Fazendo" || columnKey === "Em Ajuste");
-                
                 const shouldForceShow = canControlTimer && (columnKey === "Fazendo" || columnKey === "Em Ajuste");
-                
-                return (
-                  <KanbanTimeDisplay
-                    demandId={demand.id}
-                    canControl={canControlTimer}
-                    forceShow={shouldForceShow}
-                    hideIfHasSubdemands
-                  />
-                );
+                return <KanbanTimeDisplay demandId={demand.id} canControl={canControlTimer} forceShow={shouldForceShow} hideIfHasSubdemands />;
               })()}
 
-              {/* Dynamic adjustment buttons based on column's adjustmentType */}
               {colAdjType !== 'none' && (() => {
-                // For internal adjustment columns: only admin/moderator can request
-                // For external adjustment columns: only requester can request (and can also mark as complete)
                 const canRequestInternal = colAdjType === 'internal' && (userRole === "admin" || userRole === "moderator");
                 const canRequestExternal = colAdjType === 'external' && userRole === "requester";
                 const canMarkComplete = colAdjType === 'external' && userRole === "requester";
-                
                 if (!canRequestInternal && !canRequestExternal) return null;
-                
                 return (
                   <div className="flex flex-col gap-1 mt-2">
                     {canRequestInternal && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => handleOpenAdjustmentDialog(e, demand.id)}
-                        className="w-full border-blue-500/30 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 text-xs"
-                      >
-                        <Wrench className="h-3 w-3 mr-1" />
-                        Ajuste Interno
+                      <Button variant="outline" size="sm" onClick={(e) => handleOpenAdjustmentDialog(e, demand.id)} className="w-full border-blue-500/30 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 text-xs">
+                        <Wrench className="h-3 w-3 mr-1" />Ajuste Interno
                       </Button>
                     )}
                     {canRequestExternal && (
                       <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => handleOpenAdjustmentDialog(e, demand.id)}
-                          className="w-full border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 text-xs"
-                        >
-                          <Wrench className="h-3 w-3 mr-1" />
-                          Solicitar Ajuste
+                        <Button variant="outline" size="sm" onClick={(e) => handleOpenAdjustmentDialog(e, demand.id)} className="w-full border-amber-500/30 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 text-xs">
+                          <Wrench className="h-3 w-3 mr-1" />Solicitar Ajuste
                         </Button>
                         {canMarkComplete && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleMarkAsComplete(demand.id);
-                            }}
-                            className="w-full border-emerald-500/30 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950 text-xs"
-                          >
-                            <Check className="h-3 w-3 mr-1" />
-                            Marcar como Concluída
+                          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleMarkAsComplete(demand.id); }} className="w-full border-emerald-500/30 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950 text-xs">
+                            <Check className="h-3 w-3 mr-1" />Marcar como Concluída
                           </Button>
                         )}
                       </>
@@ -1253,40 +1339,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   </div>
                 );
               })()}
-
-              {/* Parent demand reference (for subdemands) */}
-              {demand.parent_demand_id && parentDemandMap[demand.parent_demand_id] && (() => {
-                const parent = parentDemandMap[demand.parent_demand_id!];
-                return (
-                  <div
-                    className="mt-2 rounded-md border border-border/60 bg-muted/30 p-2 cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDemandClick(parent.id);
-                    }}
-                  >
-                    <span className="text-[10px] text-muted-foreground font-medium">Dentro da demanda:</span>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      {parent.board_sequence_number && (
-                        <Badge variant="outline" className="text-[10px] bg-muted/50 text-muted-foreground border-muted-foreground/20 font-mono px-1.5 py-0">
-                          {formatDemandCode(parent.board_sequence_number)}
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs font-medium mt-1 line-clamp-1">{parent.title}</p>
-                    {parent.description && (() => {
-                      const txt = extractPlainText(parent.description);
-                      if (!txt) return null;
-                      return <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5">{txt.length > 60 ? txt.slice(0, 60) + "..." : txt}</p>;
-                    })()}
-                  </div>
-                );
-              })()}
-
-              {/* Subdemands list (only for parent demands) */}
-              {!demand.parent_demand_id && (
-                <KanbanSubdemandsList demandId={demand.id} onSubdemandClick={onDemandClick} />
-              )}
 
               <div className="flex items-center justify-between mt-2">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -1328,19 +1380,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                     <TooltipProvider delayDuration={300}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div
-                            className={cn(
-                              "flex items-center gap-1 text-xs cursor-default",
-                              isOverdue(demand.due_date) && columnKey !== "Entregue"
-                                ? "text-destructive"
-                                : "text-muted-foreground"
-                            )}
-                          >
-                            {isOverdue(demand.due_date) && columnKey !== "Entregue" ? (
-                              <Clock className="h-3 w-3" />
-                            ) : (
-                              <Calendar className="h-3 w-3" />
-                            )}
+                          <div className={cn("flex items-center gap-1 text-xs cursor-default", isOverdue(demand.due_date) && columnKey !== "Entregue" ? "text-destructive" : "text-muted-foreground")}>
+                            {isOverdue(demand.due_date) && columnKey !== "Entregue" ? <Clock className="h-3 w-3" /> : <Calendar className="h-3 w-3" />}
                             {formatDateOnlyBR(demand.due_date) || ""}
                           </div>
                         </TooltipTrigger>
@@ -1355,16 +1396,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 {assignees.length > 0 ? (
                   <AssigneeAvatars assignees={assignees} size="sm" maxVisible={2} />
                 ) : demand.assigned_profile ? (
-                  <AssigneeAvatars 
-                    assignees={[{ 
-                      user_id: "legacy", 
-                      profile: { 
-                        full_name: demand.assigned_profile.full_name, 
-                        avatar_url: demand.assigned_profile.avatar_url || null 
-                      } 
-                    }]} 
-                    size="sm" 
-                  />
+                  <AssigneeAvatars assignees={[{ user_id: "legacy", profile: { full_name: demand.assigned_profile.full_name, avatar_url: demand.assigned_profile.avatar_url || null } }]} size="sm" />
                 ) : null}
               </div>
             </div>
