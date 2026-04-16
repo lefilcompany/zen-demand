@@ -298,21 +298,51 @@ export function DemandHierarchyTable({ data, onRowClick }: DemandHierarchyTableP
 
   const currentPage = pageIndex + 1;
 
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+    setPageIndex(0);
+  };
+
+  const SortIcon = ({ col }: { col: SortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown className="h-3 w-3 ml-1 text-muted-foreground" />;
+    return sortDir === "asc" ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
+
+  const cols: { key: SortKey; label: string; sortable: boolean }[] = [
+    { key: "code", label: "Código", sortable: true },
+    { key: "title", label: "Título", sortable: true },
+    { key: "service", label: "Serviço", sortable: true },
+    { key: "creator", label: "Solicitante", sortable: true },
+    { key: "code", label: "Responsável", sortable: false },
+    { key: "status", label: "Status", sortable: true },
+    { key: "due_date", label: "Data de Expiração", sortable: true },
+    { key: "board", label: "Quadro", sortable: true },
+    { key: "priority", label: "Prioridade", sortable: true },
+  ];
+
   return (
     <div className="space-y-4">
       <div className="rounded-md border border-border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-center">Código</TableHead>
-              <TableHead className="text-center">Título</TableHead>
-              <TableHead className="text-center">Serviço</TableHead>
-              <TableHead className="text-center">Solicitante</TableHead>
-              <TableHead className="text-center">Responsável</TableHead>
-              <TableHead className="text-center">Status</TableHead>
-              <TableHead className="text-center">Data de Expiração</TableHead>
-              <TableHead className="text-center">Quadro</TableHead>
-              <TableHead className="text-center">Prioridade</TableHead>
+              {cols.map((col, idx) => (
+                <TableHead
+                  key={idx}
+                  className={`text-center ${col.sortable ? "cursor-pointer select-none hover:bg-muted/50 transition-colors" : ""}`}
+                  onClick={col.sortable ? () => handleSort(col.key) : undefined}
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    {col.label}
+                    {col.sortable && <SortIcon col={col.key} />}
+                  </div>
+                </TableHead>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>
