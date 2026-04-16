@@ -1337,7 +1337,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 <div className="flex items-center gap-1.5 mb-2">
                   <div className="flex items-center gap-1 text-[10px] text-primary bg-primary/10 rounded-md px-1.5 py-0.5 min-w-0">
                     <GitBranch className="h-2.5 w-2.5 shrink-0" />
-                    <span className="font-medium shrink-0">{childDemandIds.length} sub</span>
+                    <span className="font-medium shrink-0">Subdemandas: {childDemandIds.length}</span>
                   </div>
                   {(columnKey === "Entregue" || columnKey === "Aprovação do Cliente" || columnKey === "Fazendo" || columnKey === "Em Ajuste") && (
                     <KanbanParentTimeDisplay demandId={demand.id} subdemandIds={childDemandIds} inline />
