@@ -1069,7 +1069,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 {/* Code + label row */}
                 <div className="flex items-center gap-1.5 mb-1.5">
                   {demand.board_sequence_number && (
-                    <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20 font-mono px-2 py-0.5 h-auto shrink-0">
+                    <Badge variant="outline" className="text-xs bg-muted text-muted-foreground border-border font-mono px-2 py-0.5 h-auto shrink-0">
                       {formatDemandCode(demand.board_sequence_number)}
                     </Badge>
                   )}
