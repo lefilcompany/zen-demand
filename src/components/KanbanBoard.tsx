@@ -1068,6 +1068,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           )}
         >
           <CardContent className="p-2.5 sm:p-3">
+            <KanbanCardMenu demandId={demand.id} teamId={demand.team_id} boardId={demand.board_id} isDelivered={isDelivered} readOnly={readOnly} compact onDemandClick={onDemandClick} />
             <div className="flex items-start gap-2">
               {showDragHandle && (
                 <div
