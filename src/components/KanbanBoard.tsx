@@ -1024,11 +1024,11 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 {/* Code + label row */}
                 <div className="flex items-center gap-1.5 mb-1.5">
                   {demand.board_sequence_number && (
-                    <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20 font-mono px-1.5 py-0 h-[18px]">
+                    <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20 font-mono px-1.5 py-0 h-[18px] shrink-0">
                       {formatDemandCode(demand.board_sequence_number)}
                     </Badge>
                   )}
-                  <span className="text-[10px] text-primary/60 font-medium uppercase tracking-wider">Subdemanda</span>
+                  <span className="text-[10px] text-primary/60 font-medium uppercase tracking-wider shrink-0">Subdemanda</span>
                 </div>
                 <h4 className="font-medium text-xs line-clamp-2 mb-1.5 break-words">{truncateText(demand.title, 60)}</h4>
                 
@@ -1232,12 +1232,12 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               className="flex-1 min-w-0"
               onClick={() => onDemandClick(demand.id)}
             >
-              <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
+              <div className="flex items-center gap-1.5 mb-1.5">
                 {demand.board_sequence_number && (
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Badge variant="outline" className="text-xs font-mono bg-muted/50 text-muted-foreground border-muted-foreground/20">
+                        <Badge variant="outline" className="text-xs font-mono bg-muted/50 text-muted-foreground border-muted-foreground/20 shrink-0">
                           {formatDemandCode(demand.board_sequence_number)}
                         </Badge>
                       </TooltipTrigger>
@@ -1246,10 +1246,10 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   </TooltipProvider>
                 )}
                 {isParentDemand && (
-                  <span className="text-[9px] text-primary font-semibold uppercase tracking-wider">Demanda Principal</span>
+                  <span className="text-[9px] text-primary font-semibold uppercase tracking-wider shrink-0">Demanda Principal</span>
                 )}
                 {showBoardBadge && demand.boards?.name && (
-                  <Badge variant="outline" className="text-xs bg-accent/50 text-accent-foreground border-accent-foreground/20">
+                  <Badge variant="outline" className="text-xs bg-accent/50 text-accent-foreground border-accent-foreground/20 shrink-0">
                     {demand.boards.name}
                   </Badge>
                 )}
