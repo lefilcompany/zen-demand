@@ -5,7 +5,7 @@ import { DemandFolderStrip } from "@/components/DemandFolderStrip";
 import { useFolderDemandIds } from "@/hooks/useDemandFolders";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DemandCard } from "@/components/DemandCard";
+
 import { useDemands, useUpdateDemand } from "@/hooks/useDemands";
 import { useAllTeamDemands } from "@/hooks/useAllTeamDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
