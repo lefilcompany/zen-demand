@@ -20,6 +20,7 @@ import { useUserTimerControl } from "@/hooks/useUserTimeTracking";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { DemandEditForm } from "@/components/DemandEditForm";
+import { DemandFolderPicker } from "@/components/DemandFolderPicker";
 import { AttachmentUploader } from "@/components/AttachmentUploader";
 import { Calendar, Users, Archive, Pencil, Wrench, AlertTriangle, LayoutGrid, List, ChevronDown, Kanban, CalendarDays, LucideIcon, Check, X, ArrowRight, UserCircle, GitBranch, Plus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
