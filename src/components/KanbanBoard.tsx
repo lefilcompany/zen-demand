@@ -429,7 +429,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
             status_id: entregueStatus.id,
             status_changed_by: user?.id || null,
             status_changed_at: new Date().toISOString(),
-            delivered_at: new Date().toISOString(),
           });
           toast.success("Demanda principal concluída automaticamente", {
             description: "Todas as subdemandas foram entregues.",
