@@ -25,6 +25,7 @@ import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Wrench } from "lucide-react";
+import { parseDateOnly, toDateOnly } from "@/lib/dateUtils";
 
 export interface HierarchicalDemand extends DemandTableRow {
   parent_demand_id?: string | null;
