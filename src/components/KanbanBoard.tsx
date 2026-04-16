@@ -545,13 +545,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const handleDropWithStatusId = async (demandId: string, statusId: string, columnKey: string, demand: Demand | undefined) => {
     const previousStatusName = demand?.demand_statuses?.name;
 
-    const { data: childDemands } = await supabase
-      .from("demands")
-      .select("id, demand_statuses(name)")
-      .eq("parent_demand_id", demandId)
-      .eq("archived", false);
-
-    const isParentDemandByDb = (childDemands?.length || 0) > 0;
+    // Synchronous parent check using in-memory data
+    const isParentDemandByDb = demands.some(d => d.parent_demand_id === demandId);
 
     // Block ALL manual movement of parent demands
     if (isParentDemandByDb) {
@@ -561,10 +556,19 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       return;
     }
 
+    // Apply optimistic update immediately for smooth UX
+    setOptimisticUpdates(prev => ({ ...prev, [demandId]: columnKey }));
+
     // Check dependency before allowing status change (except going back to "A Iniciar")
     if (columnKey !== "A Iniciar" && previousStatusName === "A Iniciar") {
       const depCheck = await checkDependencyBeforeStatusChange(demandId);
       if (depCheck.blocked) {
+        // Roll back optimistic update
+        setOptimisticUpdates(prev => {
+          const next = { ...prev };
+          delete next[demandId];
+          return next;
+        });
         toast.error("Não é possível alterar o status", {
           description: `Esta demanda depende de "${depCheck.blockedByTitle}" que ainda não foi concluída.`,
         });
@@ -578,9 +582,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     } else if (isTabletOrSmallDesktop) {
       setActiveColumns([columnKey]);
     }
-
-    // Apply optimistic update immediately for smooth UX (especially offline)
-    setOptimisticUpdates(prev => ({ ...prev, [demandId]: columnKey }));
 
     const isAdjustmentCompletion = previousStatusName === "Em Ajuste" && columnKey === "Aprovação do Cliente";
 
@@ -607,18 +608,19 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       },
       {
         onSuccess: async () => {
-          // Invalidate and THEN clear optimistic update to prevent visual duplication
-           await queryClient.invalidateQueries({ queryKey: ['demands'] });
-          queryClient.invalidateQueries({ queryKey: ['subdemands'] });
-          
-          // Auto-move parent status based on sub-demand changes
-          await autoCheckParentStatus(demandId, columnKey);
-          
+          // Clear optimistic state immediately
           setOptimisticUpdates(prev => {
             const newUpdates = { ...prev };
             delete newUpdates[demandId];
             return newUpdates;
           });
+
+          // Non-blocking invalidation
+          queryClient.invalidateQueries({ queryKey: ['demands'] });
+          queryClient.invalidateQueries({ queryKey: ['subdemands'] });
+          
+          // Auto-move parent status based on sub-demand changes
+          await autoCheckParentStatus(demandId, columnKey);
 
           if (isOffline) {
             toast.success(`Status alterado para "${columnKey}"`, {
@@ -699,13 +701,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     const demand = demands.find(d => d.id === demandId);
     const previousStatusName = demand?.demand_statuses?.name;
 
-    const { data: childDemands } = await supabase
-      .from("demands")
-      .select("id, demand_statuses(name)")
-      .eq("parent_demand_id", demandId)
-      .eq("archived", false);
-
-    const isParentDemandByDb = (childDemands?.length || 0) > 0;
+    // Synchronous parent check using in-memory data
+    const isParentDemandByDb = demands.some(d => d.parent_demand_id === demandId);
     // Block ALL manual movement of parent demands
     if (isParentDemandByDb) {
       toast.info("Demanda principal não pode ser movida manualmente", {
@@ -775,17 +772,18 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       },
       {
         onSuccess: async () => {
-          // Invalidate and THEN clear optimistic update to prevent visual duplication
-          await queryClient.invalidateQueries({ queryKey: ['demands'] });
-          
-          // Auto-move parent status based on sub-demand changes
-          await autoCheckParentStatus(demandId, newStatusKey);
-          
+          // Clear optimistic state immediately
           setOptimisticUpdates(prev => {
             const newUpdates = { ...prev };
             delete newUpdates[demandId];
             return newUpdates;
           });
+
+          // Non-blocking invalidation
+          queryClient.invalidateQueries({ queryKey: ['demands'] });
+          
+          // Auto-move parent status based on sub-demand changes
+          await autoCheckParentStatus(demandId, newStatusKey);
 
           if (isOffline) {
             toast.success(`Status alterado para "${newStatusKey}"`, {
