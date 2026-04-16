@@ -104,17 +104,20 @@ export function DashboardAIInsights({ boardId, isRequester = false }: DashboardA
       });
       if (error) {
         const msg = typeof error === "object" && "message" in error ? (error as any).message : String(error);
+        // Silently return empty for payment/rate-limit errors
+        if (msg.includes("402") || msg.includes("Payment") || msg.includes("429") || msg.includes("Rate limit")) {
+          return { insights: [] };
+        }
         if (msg.includes("401") || msg.includes("Unauthorized")) {
-          // Session may have expired, refresh and retry once
           const { error: refreshError } = await supabase.auth.refreshSession();
-          if (refreshError) throw new Error("Session expired");
+          if (refreshError) return { insights: [] };
           const { data: retryData, error: retryError } = await supabase.functions.invoke("dashboard-ai-insights", {
             body: { board_id: boardId, is_requester: isRequester },
           });
-          if (retryError) throw retryError;
+          if (retryError) return { insights: [] };
           return retryData as { insights: AIInsight[] };
         }
-        throw error;
+        return { insights: [] };
       }
       return data as { insights: AIInsight[] };
     },
