@@ -1,47 +1,38 @@
 
 
-# Visual Connector Between Parent and Sub-demand Cards
+# Fix Kanban Drag-and-Drop Fluidity
 
-## What we're building
-A vertical connector line on the left side of sub-demand cards that visually links them to their parent demand, creating a tree-like hierarchy view in the Kanban column.
+## Problem
+Moving demands between columns is laggy and causes a "snap back" effect because:
+1. Before applying the optimistic update, the code makes an **async DB query** to check if the demand is a parent — this adds 200-500ms delay before the card visually moves.
+2. In `onSuccess`, `await queryClient.invalidateQueries` blocks the clearing of optimistic state, causing the card to briefly snap back to its old position before jumping forward again.
+3. The same blocking DB query exists in `handleMobileStatusChange`.
 
-## Approach
-Instead of modifying each card individually, we'll update `renderColumnContent` to wrap groups of parent + sub-demands with a visual connector. Each sub-demand card will get a left border line with a small branch connector, similar to a file tree view.
+## Solution
+Make all blocking checks synchronous (using in-memory data) and remove the `await` on query invalidation.
 
-## Technical Plan
+## Technical Changes
 
-### 1. Update `renderColumnContent` in `KanbanBoard.tsx`
-- Instead of flat-mapping demands, detect groups (parent + its children)
-- Wrap sub-demand cards in a container with a left vertical line (`border-l-2 border-primary/30`) and small horizontal branch indicators
-- The parent card stays normal; sub-demands below get the tree connector treatment
+### File: `src/components/KanbanBoard.tsx`
 
-### 2. Add connector styling to sub-demand cards
-- Each sub-demand will be wrapped in a `relative` div with:
-  - A vertical line on the left (`before` pseudo-element or border-left)
-  - A small horizontal branch line connecting to the card
-  - Last sub-demand gets a shorter vertical line (L-shaped end)
-- Use `ml-4` indent + `border-l-2 border-primary/25` on the group wrapper
-- Each sub-demand gets a small horizontal line via `before` pseudo-element
-
-### 3. Visual details
-```text
-┌──────────────────┐
-│ #0049 PRINCIPAL  │  ← Parent card (normal)
-│ teste            │
-└──────────────────┘
-  │
-  ├─ ┌──────────────┐
-  │  │ #0050 SUB    │  ← Sub-demand with connector
-  │  │ teste 2      │
-  │  └──────────────┘
-  │
-  └─ ┌──────────────┐
-     │ #0051 SUB    │  ← Last sub-demand (L-connector)
-     │ teste 3      │
-     └──────────────┘
+**1. Remove blocking DB queries for parent check in `handleDropWithStatusId` (lines 548-562)**
+Replace the async `supabase.from("demands").select(...)` call with a synchronous check using the existing `demands` array:
+```typescript
+const isParentDemandByDb = demands.some(d => d.parent_demand_id === demandId);
+if (isParentDemandByDb) { ... return; }
 ```
 
-### Files to modify
-- **`src/components/KanbanBoard.tsx`**: Update `renderColumnContent` to group demands and render tree connectors around sub-demand cards using relative positioning and CSS borders/pseudo-elements
-- **`src/index.css`** (optional): Add a small utility class for the horizontal branch line if Tailwind alone isn't sufficient
+**2. Same fix in `handleMobileStatusChange` (lines 702-715)**
+Replace the async DB query with the same synchronous check.
+
+**3. Move optimistic update BEFORE dependency check in `handleDropWithStatusId` (line 583)**
+Apply `setOptimisticUpdates` immediately after the same-column guard, then roll it back if dependency check fails.
+
+**4. Remove `await` from `queryClient.invalidateQueries` in both `onSuccess` handlers (lines 611, 779)**
+Change `await queryClient.invalidateQueries(...)` to just `queryClient.invalidateQueries(...)` so optimistic state clears immediately. The query will still refetch in background.
+
+**5. Clear optimistic state BEFORE invalidation, not after**
+Move `setOptimisticUpdates` cleanup to run right when `onSuccess` fires, before the invalidation and auto-parent-status checks.
+
+These changes eliminate all async delays from the drag-drop flow while preserving correctness.
 
