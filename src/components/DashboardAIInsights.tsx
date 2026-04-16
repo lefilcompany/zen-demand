@@ -99,27 +99,30 @@ export function DashboardAIInsights({ boardId, isRequester = false }: DashboardA
     queryKey: ["dashboard-ai-insights", boardId, isRequester],
     queryFn: async () => {
       if (!boardId) return { insights: [] };
-      const { data, error } = await supabase.functions.invoke("dashboard-ai-insights", {
-        body: { board_id: boardId, is_requester: isRequester },
-      });
-      if (error) {
-        const msg = typeof error === "object" && "message" in error ? (error as any).message : String(error);
-        // Silently return empty for payment/rate-limit errors
-        if (msg.includes("402") || msg.includes("Payment") || msg.includes("429") || msg.includes("Rate limit")) {
+      try {
+        const { data, error } = await supabase.functions.invoke("dashboard-ai-insights", {
+          body: { board_id: boardId, is_requester: isRequester },
+        });
+        if (error) {
+          const msg = typeof error === "object" && "message" in error ? (error as any).message : String(error);
+          if (msg.includes("402") || msg.includes("Payment") || msg.includes("429") || msg.includes("Rate limit")) {
+            return { insights: [] };
+          }
+          if (msg.includes("401") || msg.includes("Unauthorized")) {
+            const { error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError) return { insights: [] };
+            const { data: retryData, error: retryError } = await supabase.functions.invoke("dashboard-ai-insights", {
+              body: { board_id: boardId, is_requester: isRequester },
+            });
+            if (retryError) return { insights: [] };
+            return retryData as { insights: AIInsight[] };
+          }
           return { insights: [] };
         }
-        if (msg.includes("401") || msg.includes("Unauthorized")) {
-          const { error: refreshError } = await supabase.auth.refreshSession();
-          if (refreshError) return { insights: [] };
-          const { data: retryData, error: retryError } = await supabase.functions.invoke("dashboard-ai-insights", {
-            body: { board_id: boardId, is_requester: isRequester },
-          });
-          if (retryError) return { insights: [] };
-          return retryData as { insights: AIInsight[] };
-        }
+        return data as { insights: AIInsight[] };
+      } catch {
         return { insights: [] };
       }
-      return data as { insights: AIInsight[] };
     },
     enabled: !!boardId,
     staleTime: 60 * 60 * 1000,
