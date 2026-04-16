@@ -58,6 +58,7 @@ export default function DemandDetail() {
   }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
 
   // Check origin view mode from location state
   const fromState = location.state as {
