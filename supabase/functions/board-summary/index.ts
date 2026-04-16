@@ -720,20 +720,47 @@ Por favor, gere o relatório de análise completo seguindo a estrutura definida,
     const { readable, writable } = new TransformStream();
     const writer = writable.getWriter();
     const encoder = new TextEncoder();
+    const geminiDecoder = new TextDecoder();
 
     // Write analytics first
     writer.write(encoder.encode(analyticsEvent));
 
-    // Then pipe AI response
+    // Transform Gemini SSE stream to OpenAI-compatible format
     const reader = response.body!.getReader();
     
     (async () => {
       try {
+        let buffer = "";
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          await writer.write(value);
+          buffer += geminiDecoder.decode(value, { stream: true });
+
+          let newlineIndex: number;
+          while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
+            const line = buffer.slice(0, newlineIndex).trim();
+            buffer = buffer.slice(newlineIndex + 1);
+
+            if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
+            const jsonStr = line.slice(6);
+            try {
+              const geminiData = JSON.parse(jsonStr);
+              const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (text) {
+                // Convert to OpenAI-compatible format
+                const openAIChunk = {
+                  choices: [{ delta: { content: text } }],
+                };
+                await writer.write(encoder.encode(`data: ${JSON.stringify(openAIChunk)}\n\n`));
+              }
+            } catch {
+              // partial JSON, put back
+              buffer = line + "\n" + buffer;
+              break;
+            }
+          }
         }
+        await writer.write(encoder.encode("data: [DONE]\n\n"));
       } finally {
         writer.close();
       }
