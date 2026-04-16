@@ -137,8 +137,9 @@ export function AssigneeSelector({
         onClick={handleOpen}
         disabled={disabled || (!teamId && !boardId)}
         className={cn(
-          "w-full h-8 flex items-center justify-start gap-2 px-3 py-1 rounded-md border border-input bg-background text-sm",
-          "hover:bg-accent hover:text-accent-foreground transition-colors",
+          "w-full h-8 flex items-center justify-start gap-2 px-3 py-1 rounded-md border border-input bg-background text-sm shadow-none",
+          "hover:bg-accent hover:text-accent-foreground transition-[border-color,box-shadow,background-color,color] duration-200",
+          "focus-visible:outline-none focus-visible:border-ring focus-visible:[box-shadow:var(--focus-ring)]",
           "disabled:opacity-50 disabled:pointer-events-none",
           !selectedUserIds.length && "text-muted-foreground"
         )}
