@@ -181,6 +181,7 @@ All colors MUST be HSL.
     --sidebar-border: 0 0% 18%;
     --sidebar-ring: 33 95% 49%;
     --focus-ring: 0 0 0 1px hsl(var(--ring)), 0 0 0 3px hsl(var(--ring) / 0.22);
+  }
 }
 
 @layer base {
