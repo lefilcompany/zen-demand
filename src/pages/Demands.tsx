@@ -289,14 +289,9 @@ export default function Demands() {
       }} onDayClick={handleDayClick} isRequester={isReadOnly} onDemandDateChange={handleDemandDateChange} initialDate={calendarMonth} onDateChange={setCalendarMonth} />;
     }
     if (effectiveViewMode === "table") {
-      return <DataTable columns={demandColumns} data={demandList as unknown as DemandTableRow[]} onRowClick={row => handleDemandClick(row.id, (row as any).board_id, "table")} defaultSorting={[{
-        id: "board_sequence_number",
-        desc: false
-      }]} />;
+      return <DemandHierarchyTable data={demandList as unknown as HierarchicalDemand[]} onRowClick={row => handleDemandClick(row.id, (row as any).board_id, "table")} />;
     }
-    return <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {demandList.map(demand => <DemandCard key={demand.id} demand={demand} onClick={() => handleDemandClick(demand.id, (demand as any).board_id, "grid")} showFullDetails />)}
-      </div>;
+    return <DemandHierarchyGrid data={demandList as any[]} onDemandClick={(demandId, boardId) => handleDemandClick(demandId, boardId, "grid")} />;
   };
   return <div className="space-y-4 md:space-y-6 animate-fade-in">
       <PageBreadcrumb
