@@ -55,8 +55,12 @@ export function ProtectedLayout() {
   const { hasBoards, isLoading: boardsLoading } = useSelectedBoardSafe();
 
   // Trial and subscription status
-  const { isTrialExpired, isLoading: trialLoading } = useTrialStatus();
-  const { data: subscription, isLoading: subLoading } = useTeamSubscription(currentTeam?.id);
+  // IMPORTANT: React Query keeps isLoading=true when `enabled: false` (status pending).
+  // We must only treat it as loading when the query is actually fetching for a real team id.
+  const { isTrialExpired, isLoading: trialLoadingRaw } = useTrialStatus();
+  const { data: subscription, isLoading: subLoadingRaw, fetchStatus: subFetchStatus } = useTeamSubscription(currentTeam?.id);
+  const trialLoading = !!currentTeam?.id && trialLoadingRaw;
+  const subLoading = !!currentTeam?.id && subLoadingRaw && subFetchStatus !== "idle";
 
   // Initialize data precaching for offline support
   useDataPrecache();
