@@ -259,7 +259,7 @@ export function CreateDemandQuickDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Prioridade</Label>
+              <Label>Prioridade *</Label>
               <Select value={priority} onValueChange={setPriority}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione" />
@@ -288,29 +288,52 @@ export function CreateDemandQuickDialog({
             </div>
 
             <div className="space-y-2">
-              <Label>Status</Label>
-              <Select
-                value={statusId || defaultStatusId}
-                onValueChange={setStatusId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {statuses?.map((status) => (
-                    <SelectItem key={status.id} value={status.id}>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: status.color }}
-                        />
-                        {status.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="quick-due-date">Data de Entrega *</Label>
+              <Input
+                id="quick-due-date"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                required
+              />
             </div>
+          </div>
+
+          {canAssignResponsibles && (
+            <div className="space-y-2">
+              <Label>Responsáveis *</Label>
+              <AssigneeSelector
+                teamId={currentTeamId}
+                boardId={selectedBoardId}
+                selectedUserIds={assigneeIds}
+                onChange={setAssigneeIds}
+              />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label>Status</Label>
+            <Select
+              value={statusId || defaultStatusId}
+              onValueChange={setStatusId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {statuses?.map((status) => (
+                  <SelectItem key={status.id} value={status.id}>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: status.color }}
+                      />
+                      {status.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {boardServices && boardServices.length > 0 && (
