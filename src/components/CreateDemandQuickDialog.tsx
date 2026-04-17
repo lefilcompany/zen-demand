@@ -99,6 +99,13 @@ export function CreateDemandQuickDialog({
   const defaultStatusId =
     statuses?.find((s) => s.name !== "Entregue")?.id || statuses?.[0]?.id || "";
 
+  // Initialize dueDate from selectedDate when dialog opens
+  useEffect(() => {
+    if (open && selectedDate && !dueDate) {
+      setDueDate(format(selectedDate, "yyyy-MM-dd"));
+    }
+  }, [open, selectedDate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -112,19 +119,39 @@ export function CreateDemandQuickDialog({
       return;
     }
 
+    if (canAssignResponsibles && assigneeIds.length === 0) {
+      toast.error("Selecione pelo menos um responsável");
+      return;
+    }
+
+    if (!priority) {
+      toast.error("Defina a prioridade");
+      return;
+    }
+
+    if (!dueDate) {
+      toast.error("Defina a data de entrega");
+      return;
+    }
+
     try {
       const result = await createDemand.mutateAsync({
         title: title.trim(),
         description: description.trim() || null,
         priority,
         status_id: statusId || defaultStatusId,
-        due_date: selectedDate
-          ? format(selectedDate, "yyyy-MM-dd'T'23:59:59")
-          : null,
+        due_date: dueDate,
         board_id: selectedBoardId,
         team_id: currentTeamId,
         service_id: serviceId || null,
       });
+
+      // Assign responsibles
+      if (result?.id && assigneeIds.length > 0) {
+        await supabase
+          .from("demand_assignees")
+          .insert(assigneeIds.map((userId) => ({ demand_id: result.id, user_id: userId })));
+      }
 
       // Clear draft on success
       clearDraft();
@@ -140,6 +167,7 @@ export function CreateDemandQuickDialog({
             priority,
             status_id: statusId || defaultStatusId,
             service_id: serviceId || null,
+            assignee_ids: assigneeIds,
             frequency: recurrence.frequency,
             weekdays: recurrence.frequency === "weekly" ? recurrence.weekdays : [],
             day_of_month: recurrence.frequency === "monthly" ? recurrence.dayOfMonth : null,
@@ -172,6 +200,8 @@ export function CreateDemandQuickDialog({
     setPriority("média");
     setServiceId("");
     setStatusId("");
+    setAssigneeIds([]);
+    setDueDate("");
     setRecurrence(defaultRecurrenceData);
   };
 
