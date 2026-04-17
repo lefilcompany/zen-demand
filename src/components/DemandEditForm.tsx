@@ -212,6 +212,8 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
       return next;
     });
   };
+
+  const handleSubdemandChange = (index: number, data: SubdemandFormData) => {
     setNewSubdemands((prev) => prev.map((s, i) => (i === index ? data : s)));
   };
 
