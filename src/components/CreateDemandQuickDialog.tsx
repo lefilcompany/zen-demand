@@ -26,6 +26,9 @@ import { useCreateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardServices } from "@/hooks/useBoardServices";
 import { useFormDraft } from "@/hooks/useFormDraft";
+import { useBoardRole } from "@/hooks/useBoardMembers";
+import { AssigneeSelector } from "@/components/AssigneeSelector";
+import { supabase } from "@/integrations/supabase/client";
 import { RecurrenceConfig, RecurrenceData, defaultRecurrenceData } from "@/components/RecurrenceConfig";
 import { useCreateRecurringDemand } from "@/hooks/useRecurringDemands";
 import { toast } from "sonner";
@@ -47,13 +50,18 @@ export function CreateDemandQuickDialog({
   const { selectedBoardId, currentTeamId } = useSelectedBoard();
   const { data: statuses } = useDemandStatuses();
   const { data: boardServices } = useBoardServices(selectedBoardId || undefined);
+  const { data: boardRole } = useBoardRole(selectedBoardId);
   const createDemand = useCreateDemand();
+
+  const canAssignResponsibles = boardRole !== "requester";
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<string>("média");
   const [serviceId, setServiceId] = useState<string>("");
   const [statusId, setStatusId] = useState<string>("");
+  const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
+  const [dueDate, setDueDate] = useState<string>("");
   const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
 
   const createRecurringDemand = useCreateRecurringDemand();
