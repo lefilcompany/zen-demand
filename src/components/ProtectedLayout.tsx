@@ -232,15 +232,19 @@ export function ProtectedLayout() {
               </AlertDialogDescription>
             </AlertDialogHeader>
           </div>
-          <AlertDialogFooter className="sm:justify-center gap-2">
-            <AlertDialogCancel className="mt-0">Ficar mais um pouco</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row sm:justify-center gap-2 pt-2">
+            <AlertDialogCancel className="mt-0 flex-1 sm:flex-initial sm:min-w-[160px] h-11 rounded-full font-medium border-border hover:bg-muted transition-all">
+              Ficar mais um pouco
+            </AlertDialogCancel>
             <Button
               variant="destructive"
               onClick={async () => {
                 setLogoutDialogOpen(false);
                 await signOut();
               }}
+              className="flex-1 sm:flex-initial sm:min-w-[160px] h-11 rounded-full font-medium shadow-md hover:shadow-lg hover:scale-[1.02] transition-all"
             >
+              <LogOut className="h-4 w-4" />
               {t("auth.logout")}
             </Button>
           </AlertDialogFooter>
