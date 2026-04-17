@@ -165,7 +165,7 @@ export function CreateSubdemandDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>Responsáveis</Label>
+              <Label>Responsáveis *</Label>
               <AssigneeSelector
                 teamId={teamId}
                 boardId={boardId}
@@ -196,7 +196,7 @@ export function CreateSubdemandDialog({
             </div>
 
             <div className="space-y-2">
-              <Label>Prioridade</Label>
+              <Label>Prioridade *</Label>
               <Select value={priority} onValueChange={setPriority}>
                 <SelectTrigger className="h-8">
                   <SelectValue />
@@ -210,12 +210,13 @@ export function CreateSubdemandDialog({
             </div>
 
             <div className="space-y-2">
-              <Label>Data de Entrega</Label>
+              <Label>Data de Entrega *</Label>
               <Input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
                 className="h-8"
+                required
               />
             </div>
           </div>
@@ -283,7 +284,7 @@ export function CreateSubdemandDialog({
           <Button
             type="button"
             onClick={handleSave}
-            disabled={!title.trim()}
+            disabled={!isFormValid}
             size="sm"
             className="bg-[#F28705] hover:bg-[#F28705]/90 text-white"
           >
