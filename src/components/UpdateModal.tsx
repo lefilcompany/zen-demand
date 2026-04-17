@@ -39,32 +39,15 @@ export function UpdateModal() {
   const handleUpdate = async () => {
     setUpdating(true);
     try {
-      // 1. Preserve Supabase auth tokens
-      const preserved: Record<string, string> = {};
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith("sb-") && key.includes("auth-token")) {
-          preserved[key] = localStorage.getItem(key) || "";
-        }
-      }
-
-      // 2. Clear all SW caches
+      // 1. Clear ONLY service worker caches (NOT localStorage/sessionStorage)
+      // This preserves the Supabase auth session so users don't get logged out.
       const cacheKeys = await caches.keys();
       await Promise.all(cacheKeys.map((k) => caches.delete(k)));
 
-      // 3. Clear storage
-      localStorage.clear();
-      sessionStorage.clear();
-
-      // 4. Restore auth tokens
-      Object.entries(preserved).forEach(([k, v]) => {
-        localStorage.setItem(k, v);
-      });
-
-      // 5. Activate new SW
+      // 2. Activate new SW
       await updateServiceWorker(true);
 
-      // 6. Force reload
+      // 3. Soft reload — keeps storage intact
       setTimeout(() => {
         window.location.reload();
       }, 300);
@@ -86,7 +69,7 @@ export function UpdateModal() {
           </div>
           <DialogDescription className="text-center">
             Uma nova versão está disponível com melhorias e correções.
-            Atualize agora para ter a melhor experiência.
+            Atualize agora para ter a melhor experiência. Sua sessão será mantida.
           </DialogDescription>
         </DialogHeader>
 
@@ -104,11 +87,7 @@ export function UpdateModal() {
             disabled={updating}
             className="sm:flex-1 bg-[#F28705] hover:bg-[#D97706] text-white"
           >
-            {updating ? (
-              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4 mr-2" />
-            )}
+            <RefreshCw className={`h-4 w-4 mr-2 ${updating ? "animate-spin" : ""}`} />
             {updating ? "Atualizando..." : "Atualizar agora"}
           </Button>
         </DialogFooter>
