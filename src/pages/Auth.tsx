@@ -10,10 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2, Mail, Check, X } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, Check, X, Info } from "lucide-react";
 import { lovable } from "@/integrations/lovable/index";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SEOHead } from "@/components/SEOHead";
+import { getLastEmail, looksLikeClearedCache } from "@/lib/lastUserEmail";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
 interface IBGEState {
@@ -52,10 +53,11 @@ export default function Auth() {
   const [rememberMe, setRememberMe] = useState(() => {
     return localStorage.getItem("rememberMe") === "true";
   });
-  const [loginData, setLoginData] = useState({
-    email: "",
+  const [loginData, setLoginData] = useState(() => ({
+    email: getLastEmail() || "",
     password: ""
-  });
+  }));
+  const [showClearedCacheNotice, setShowClearedCacheNotice] = useState(() => looksLikeClearedCache());
   const [signupData, setSignupData] = useState({
     fullName: "",
     email: "",
