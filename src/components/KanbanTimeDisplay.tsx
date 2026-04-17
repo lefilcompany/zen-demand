@@ -60,22 +60,40 @@ export function KanbanTimeDisplay({ demandId, canControl = false, forceShow = fa
   }
 
   return (
-    <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded-md px-2 py-1 mb-2 overflow-hidden min-w-0">
-      <Clock className="h-3 w-3 shrink-0" />
-      <span className="text-[10px] uppercase font-medium shrink-0">Execução:</span>
-      <span className="font-mono font-medium truncate min-w-0 flex-1">{displayTime}</span>
-      {isTimerRunning && (
-        <span className="relative flex h-2 w-2 shrink-0">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded-md px-2 py-1 mb-2 min-w-0">
+      <div className="flex items-center gap-1.5 min-w-0">
+        <Clock className="h-3 w-3 shrink-0" />
+        <span className="font-mono font-semibold tabular-nums text-[11px] leading-tight whitespace-nowrap">
+          {displayTime}
         </span>
-      )}
+        {isTimerRunning && (
+          <span className="relative flex h-2 w-2 shrink-0" title="Timer em execução">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+        )}
+        {activeUsersCount > 0 && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-0.5 text-emerald-600 shrink-0">
+                  <Users className="h-3 w-3" />
+                  <span className="text-[10px]">{activeUsersCount}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{activeUsersCount} {activeUsersCount === 1 ? "pessoa" : "pessoas"} trabalhando</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
       {canControl && (
         <Button
           variant="ghost"
           size="sm"
           className={cn(
-            "h-6 px-2 shrink-0 text-xs font-medium gap-1",
+            "h-6 px-2 shrink-0 text-[11px] font-medium gap-1 ml-auto",
             isTimerRunning 
               ? "bg-amber-500/20 text-amber-600 hover:bg-amber-500/30 hover:text-amber-700" 
               : "bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30 hover:text-emerald-700"
@@ -90,36 +108,22 @@ export function KanbanTimeDisplay({ demandId, canControl = false, forceShow = fa
             }
           }}
           disabled={isLoading}
+          title={isTimerRunning ? "Pausar timer" : "Iniciar timer"}
         >
           {isLoading ? (
             <Loader2 className="h-3 w-3 animate-spin" />
           ) : isTimerRunning ? (
             <>
               <Pause className="h-3 w-3" />
-              Pausar
+              <span>Pausar</span>
             </>
           ) : (
             <>
               <Play className="h-3 w-3" />
-              Iniciar
+              <span>Iniciar</span>
             </>
           )}
         </Button>
-      )}
-      {activeUsersCount > 0 && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-0.5 text-emerald-600 shrink-0">
-                <Users className="h-3 w-3" />
-                <span className="text-[10px]">{activeUsersCount}</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{activeUsersCount} {activeUsersCount === 1 ? "pessoa" : "pessoas"} trabalhando</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
       )}
     </div>
   );
