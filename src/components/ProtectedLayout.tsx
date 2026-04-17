@@ -219,13 +219,20 @@ export function ProtectedLayout() {
 
       {/* Logout confirmation dialog */}
       <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("auth.logoutConfirm")}</AlertDialogTitle>
-            <AlertDialogDescription>{t("auth.logoutDescription")}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+        <AlertDialogContent className="sm:max-w-md">
+          <div className="flex flex-col items-center text-center pt-2 pb-1">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/20">
+              <img src={logoSomaIcon} alt="SoMA" className="h-10 w-10 object-contain" />
+            </div>
+            <AlertDialogHeader className="space-y-2">
+              <AlertDialogTitle className="text-xl">Já vai? Vamos sentir sua falta 🧡</AlertDialogTitle>
+              <AlertDialogDescription className="text-sm leading-relaxed">
+                Tem certeza que deseja sair da sua conta SoMA? Suas demandas, quadros e progresso ficarão te esperando quando voltar.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+          </div>
+          <AlertDialogFooter className="sm:justify-center gap-2">
+            <AlertDialogCancel className="mt-0">Ficar mais um pouco</AlertDialogCancel>
             <Button
               variant="destructive"
               onClick={async () => {
