@@ -459,6 +459,12 @@ export default function DemandDetail() {
   };
   const handleSaveAssignees = () => {
     if (!id) return;
+    if (selectedAssignees.length === 0) {
+      toast.error("Selecione pelo menos um responsável", {
+        description: "A demanda precisa ter ao menos um responsável definido.",
+      });
+      return;
+    }
     setAssignees.mutate({
       demandId: id,
       userIds: selectedAssignees

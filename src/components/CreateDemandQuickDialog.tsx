@@ -26,6 +26,9 @@ import { useCreateDemand, useDemandStatuses } from "@/hooks/useDemands";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardServices } from "@/hooks/useBoardServices";
 import { useFormDraft } from "@/hooks/useFormDraft";
+import { useBoardRole } from "@/hooks/useBoardMembers";
+import { AssigneeSelector } from "@/components/AssigneeSelector";
+import { supabase } from "@/integrations/supabase/client";
 import { RecurrenceConfig, RecurrenceData, defaultRecurrenceData } from "@/components/RecurrenceConfig";
 import { useCreateRecurringDemand } from "@/hooks/useRecurringDemands";
 import { toast } from "sonner";
@@ -47,13 +50,18 @@ export function CreateDemandQuickDialog({
   const { selectedBoardId, currentTeamId } = useSelectedBoard();
   const { data: statuses } = useDemandStatuses();
   const { data: boardServices } = useBoardServices(selectedBoardId || undefined);
+  const { data: boardRole } = useBoardRole(selectedBoardId);
   const createDemand = useCreateDemand();
+
+  const canAssignResponsibles = boardRole !== "requester";
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<string>("média");
   const [serviceId, setServiceId] = useState<string>("");
   const [statusId, setStatusId] = useState<string>("");
+  const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
+  const [dueDate, setDueDate] = useState<string>("");
   const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
 
   const createRecurringDemand = useCreateRecurringDemand();
@@ -91,6 +99,13 @@ export function CreateDemandQuickDialog({
   const defaultStatusId =
     statuses?.find((s) => s.name !== "Entregue")?.id || statuses?.[0]?.id || "";
 
+  // Initialize dueDate from selectedDate when dialog opens
+  useEffect(() => {
+    if (open && selectedDate && !dueDate) {
+      setDueDate(format(selectedDate, "yyyy-MM-dd"));
+    }
+  }, [open, selectedDate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -104,19 +119,39 @@ export function CreateDemandQuickDialog({
       return;
     }
 
+    if (canAssignResponsibles && assigneeIds.length === 0) {
+      toast.error("Selecione pelo menos um responsável");
+      return;
+    }
+
+    if (!priority) {
+      toast.error("Defina a prioridade");
+      return;
+    }
+
+    if (!dueDate) {
+      toast.error("Defina a data de entrega");
+      return;
+    }
+
     try {
       const result = await createDemand.mutateAsync({
         title: title.trim(),
         description: description.trim() || null,
         priority,
         status_id: statusId || defaultStatusId,
-        due_date: selectedDate
-          ? format(selectedDate, "yyyy-MM-dd'T'23:59:59")
-          : null,
+        due_date: dueDate,
         board_id: selectedBoardId,
         team_id: currentTeamId,
         service_id: serviceId || null,
       });
+
+      // Assign responsibles
+      if (result?.id && assigneeIds.length > 0) {
+        await supabase
+          .from("demand_assignees")
+          .insert(assigneeIds.map((userId) => ({ demand_id: result.id, user_id: userId })));
+      }
 
       // Clear draft on success
       clearDraft();
@@ -132,6 +167,7 @@ export function CreateDemandQuickDialog({
             priority,
             status_id: statusId || defaultStatusId,
             service_id: serviceId || null,
+            assignee_ids: assigneeIds,
             frequency: recurrence.frequency,
             weekdays: recurrence.frequency === "weekly" ? recurrence.weekdays : [],
             day_of_month: recurrence.frequency === "monthly" ? recurrence.dayOfMonth : null,
@@ -164,6 +200,8 @@ export function CreateDemandQuickDialog({
     setPriority("média");
     setServiceId("");
     setStatusId("");
+    setAssigneeIds([]);
+    setDueDate("");
     setRecurrence(defaultRecurrenceData);
   };
 
@@ -221,7 +259,7 @@ export function CreateDemandQuickDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Prioridade</Label>
+              <Label>Prioridade *</Label>
               <Select value={priority} onValueChange={setPriority}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione" />
@@ -250,29 +288,52 @@ export function CreateDemandQuickDialog({
             </div>
 
             <div className="space-y-2">
-              <Label>Status</Label>
-              <Select
-                value={statusId || defaultStatusId}
-                onValueChange={setStatusId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {statuses?.map((status) => (
-                    <SelectItem key={status.id} value={status.id}>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: status.color }}
-                        />
-                        {status.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="quick-due-date">Data de Entrega *</Label>
+              <Input
+                id="quick-due-date"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                required
+              />
             </div>
+          </div>
+
+          {canAssignResponsibles && (
+            <div className="space-y-2">
+              <Label>Responsáveis *</Label>
+              <AssigneeSelector
+                teamId={currentTeamId}
+                boardId={selectedBoardId}
+                selectedUserIds={assigneeIds}
+                onChange={setAssigneeIds}
+              />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label>Status</Label>
+            <Select
+              value={statusId || defaultStatusId}
+              onValueChange={setStatusId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {statuses?.map((status) => (
+                  <SelectItem key={status.id} value={status.id}>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: status.color }}
+                      />
+                      {status.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {boardServices && boardServices.length > 0 && (

@@ -10,6 +10,7 @@ import { ServiceSelector } from "@/components/ServiceSelector";
 import { InlineFileUploader, PendingFile } from "@/components/InlineFileUploader";
 import { GitBranch, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { toast } from "sonner";
 import type { SubdemandInput } from "@/hooks/useSubdemands";
 
 export interface SubdemandFormData extends SubdemandInput {
@@ -94,6 +95,18 @@ export function CreateSubdemandDialog({
 
   const handleSave = () => {
     if (!title.trim()) return;
+    if (assigneeIds.length === 0) {
+      toast.error("Selecione pelo menos um responsável");
+      return;
+    }
+    if (!priority) {
+      toast.error("Defina a prioridade");
+      return;
+    }
+    if (!dueDate) {
+      toast.error("Defina a data de entrega");
+      return;
+    }
     onSave({
       tempId: editingData?.tempId || crypto.randomUUID(),
       title: title.trim(),
@@ -109,6 +122,8 @@ export function CreateSubdemandDialog({
     });
     onClose();
   };
+
+  const isFormValid = !!title.trim() && assigneeIds.length > 0 && !!priority && !!dueDate;
 
   const availableDeps = existingSubdemands
     .map((s, i) => ({ ...s, idx: i }))
@@ -150,7 +165,7 @@ export function CreateSubdemandDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>Responsáveis</Label>
+              <Label>Responsáveis *</Label>
               <AssigneeSelector
                 teamId={teamId}
                 boardId={boardId}
@@ -181,7 +196,7 @@ export function CreateSubdemandDialog({
             </div>
 
             <div className="space-y-2">
-              <Label>Prioridade</Label>
+              <Label>Prioridade *</Label>
               <Select value={priority} onValueChange={setPriority}>
                 <SelectTrigger className="h-8">
                   <SelectValue />
@@ -195,12 +210,13 @@ export function CreateSubdemandDialog({
             </div>
 
             <div className="space-y-2">
-              <Label>Data de Entrega</Label>
+              <Label>Data de Entrega *</Label>
               <Input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
                 className="h-8"
+                required
               />
             </div>
           </div>
@@ -268,7 +284,7 @@ export function CreateSubdemandDialog({
           <Button
             type="button"
             onClick={handleSave}
-            disabled={!title.trim()}
+            disabled={!isFormValid}
             size="sm"
             className="bg-[#F28705] hover:bg-[#F28705]/90 text-white"
           >

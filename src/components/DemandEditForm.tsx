@@ -143,6 +143,20 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
     e.preventDefault();
     if (!title.trim() || !statusId) return;
 
+    // Required fields: priority, due date, and (when applicable) assignees
+    if (!priority) {
+      toast.error("Defina a prioridade da demanda");
+      return;
+    }
+    if (!dueDate) {
+      toast.error("A data de entrega é obrigatória");
+      return;
+    }
+    if (canAssignResponsibles && selectedAssignees.length === 0) {
+      toast.error("Selecione pelo menos um responsável");
+      return;
+    }
+
     try {
       await updateDemand.mutateAsync({
         id: demand.id,
@@ -150,7 +164,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
         description: description.trim() || null,
         status_id: statusId,
         priority,
-        due_date: dueDate || null,
+        due_date: dueDate,
         service_id: serviceId && serviceId !== "none" ? serviceId : null,
       });
 
@@ -271,7 +285,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-priority">Prioridade</Label>
+            <Label htmlFor="edit-priority">Prioridade *</Label>
             <Select value={priority} onValueChange={setPriority}>
               <SelectTrigger>
                 <SelectValue />
@@ -285,12 +299,13 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-dueDate">Data de Vencimento</Label>
+            <Label htmlFor="edit-dueDate">Data de Vencimento *</Label>
             <Input
               id="edit-dueDate"
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
+              required
             />
           </div>
         </div>
@@ -309,7 +324,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
 
           {canAssignResponsibles && (
             <div className="space-y-2">
-              <Label>Responsáveis</Label>
+              <Label>Responsáveis *</Label>
               <AssigneeSelector
                 teamId={demand.team_id}
                 boardId={demand.board_id}
@@ -335,7 +350,14 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
           </Button>
           <Button
             type="submit"
-            disabled={isSaving || !title.trim() || !statusId}
+            disabled={
+              isSaving ||
+              !title.trim() ||
+              !statusId ||
+              !priority ||
+              !dueDate ||
+              (canAssignResponsibles && selectedAssignees.length === 0)
+            }
             className="flex-1"
           >
             {isSaving ? "Salvando..." : "Salvar Alterações"}

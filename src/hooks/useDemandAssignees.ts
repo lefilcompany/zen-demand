@@ -83,6 +83,11 @@ export function useSetAssignees() {
 
   return useMutation({
     mutationFn: async ({ demandId, userIds }: { demandId: string; userIds: string[] }) => {
+      // Guard: a demand must always have at least one responsible
+      if (!userIds || userIds.length === 0) {
+        throw new Error("A demanda precisa ter ao menos um responsável.");
+      }
+
       // Get current assignees
       const { data: currentAssignees, error: fetchError } = await supabase
         .from("demand_assignees")

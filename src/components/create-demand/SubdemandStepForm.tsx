@@ -82,7 +82,7 @@ export function SubdemandStepForm({
           />
         </div>
         <div className="space-y-2">
-          <Label>Responsáveis</Label>
+          <Label>Responsáveis *</Label>
           <AssigneeSelector
             teamId={teamId}
             boardId={boardId}
@@ -113,7 +113,7 @@ export function SubdemandStepForm({
         </div>
 
         <div className="space-y-2">
-          <Label>Prioridade</Label>
+          <Label>Prioridade *</Label>
           <Select value={data.priority || "média"} onValueChange={(v) => update({ priority: v })}>
             <SelectTrigger className="h-8">
               <SelectValue />
@@ -127,12 +127,13 @@ export function SubdemandStepForm({
         </div>
 
         <div className="space-y-2">
-          <Label>Data de Entrega</Label>
+          <Label>Data de Entrega *</Label>
           <Input
             type="date"
             value={data.due_date || ""}
             onChange={(e) => update({ due_date: e.target.value || undefined })}
             className="h-8"
+            required
           />
         </div>
       </div>
