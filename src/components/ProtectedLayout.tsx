@@ -228,7 +228,7 @@ export function ProtectedLayout() {
             <AlertDialogHeader className="space-y-2">
               <AlertDialogTitle className="text-xl">Já vai? Vamos sentir sua falta 🧡</AlertDialogTitle>
               <AlertDialogDescription className="text-sm leading-relaxed">
-                Tem certeza que deseja sair da sua conta SoMA? Suas demandas, quadros e progresso ficarão te esperando quando voltar.
+                Suas demandas, quadros e progresso ficarão te esperando quando voltar.
               </AlertDialogDescription>
             </AlertDialogHeader>
           </div>
