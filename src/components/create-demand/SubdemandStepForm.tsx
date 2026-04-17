@@ -87,9 +87,15 @@ export function SubdemandStepForm({
             teamId={teamId}
             boardId={boardId}
             selectedUserIds={data.assigneeIds || []}
-            onChange={(ids) => update({ assigneeIds: ids, assigned_to: ids[0] || undefined })}
+            onChange={(ids) => update({ assigneeIds: ids, assigned_to: undefined })}
             hideIcon
+            restrictToUserIds={parentAssigneeIds}
           />
+          {parentAssigneeIds && parentAssigneeIds.length > 0 && (
+            <p className="text-[11px] text-muted-foreground">
+              Apenas responsáveis da demanda principal podem ser selecionados.
+            </p>
+          )}
         </div>
       </div>
 

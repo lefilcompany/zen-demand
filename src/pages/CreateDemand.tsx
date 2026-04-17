@@ -303,17 +303,25 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
         service_id: serviceId && serviceId !== "none" ? serviceId : undefined,
       };
 
-      const subInputs: SubdemandInput[] = validSubdemands.map(s => ({
+      // Filter sub assignees to only include those also selected on the parent
+      const parentAssigneeSet = new Set(assigneeIds);
+      const sanitizedSubdemands = validSubdemands.map((s) => ({
+        ...s,
+        assigneeIds: (s.assigneeIds || []).filter((id) => parentAssigneeSet.has(id)),
+      }));
+
+      const subInputs: SubdemandInput[] = sanitizedSubdemands.map(s => ({
         title: s.title,
         description: s.description || undefined,
         priority: s.priority || "média",
         status_id: s.status_id || statusId,
         service_id: s.service_id || (serviceId && serviceId !== "none" ? serviceId : undefined),
-        assigned_to: s.assigned_to || undefined,
+        // Do not set assigned_to here — assignees are managed exclusively via demand_assignees
+        assigned_to: undefined,
         due_date: s.due_date || undefined,
       }));
 
-      const deps: DependencyInput[] = validSubdemands
+      const deps: DependencyInput[] = sanitizedSubdemands
         .map((s, idx) => {
           if (s.dependsOnIndex !== undefined && s.dependsOnIndex >= 0) {
             return { demand_index: idx + 1, depends_on_index: s.dependsOnIndex + 1 };
@@ -336,10 +344,12 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
 
             if (result.subdemand_ids && result.subdemand_ids.length > 0) {
               const subAssigneeInserts: { demand_id: string; user_id: string }[] = [];
-              validSubdemands.forEach((sub, idx) => {
+              sanitizedSubdemands.forEach((sub, idx) => {
                 const subId = result.subdemand_ids[idx];
                 if (subId && sub.assigneeIds && sub.assigneeIds.length > 0) {
-                  sub.assigneeIds.forEach(userId => {
+                  // Dedupe per subdemand
+                  const uniqueIds = Array.from(new Set(sub.assigneeIds));
+                  uniqueIds.forEach(userId => {
                     subAssigneeInserts.push({ demand_id: subId, user_id: userId });
                   });
                 }
