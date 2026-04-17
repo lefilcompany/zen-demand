@@ -10,10 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2, Mail, Check, X } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, Check, X, Info } from "lucide-react";
 import { lovable } from "@/integrations/lovable/index";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SEOHead } from "@/components/SEOHead";
+import { getLastEmail, looksLikeClearedCache } from "@/lib/lastUserEmail";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
 interface IBGEState {
@@ -52,10 +53,11 @@ export default function Auth() {
   const [rememberMe, setRememberMe] = useState(() => {
     return localStorage.getItem("rememberMe") === "true";
   });
-  const [loginData, setLoginData] = useState({
-    email: "",
+  const [loginData, setLoginData] = useState(() => ({
+    email: getLastEmail() || "",
     password: ""
-  });
+  }));
+  const [showClearedCacheNotice, setShowClearedCacheNotice] = useState(() => looksLikeClearedCache());
   const [signupData, setSignupData] = useState({
     fullName: "",
     email: "",
@@ -460,6 +462,28 @@ export default function Auth() {
               </TabsList>
 
               <TabsContent value="login" className="mt-0">
+                {showClearedCacheNotice && (
+                  <div className="mb-4 rounded-lg border border-primary/30 bg-primary/5 p-3 flex gap-2.5 items-start animate-in fade-in slide-in-from-top-2 duration-300">
+                    <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                    <div className="flex-1 space-y-1">
+                      <p className="text-sm font-medium text-foreground">
+                        Sua conta continua aqui!
+                      </p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Detectamos que os dados do navegador foram limpos. Sua conta, equipes e demandas estão preservadas — basta entrar novamente.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 -mt-1 -mr-1 shrink-0"
+                      onClick={() => setShowClearedCacheNotice(false)}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
                 <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
                   <div className="space-y-2">
                     <Label htmlFor="login-email">{t("common.email")}</Label>
