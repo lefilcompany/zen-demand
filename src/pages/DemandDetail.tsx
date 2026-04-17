@@ -1099,15 +1099,51 @@ export default function DemandDetail() {
                       <button
                         key={sub.id}
                         onClick={() => navigate(`/demands/${sub.id}`)}
-                        className="w-full h-full text-left rounded-lg overflow-hidden transition-opacity hover:opacity-90 cursor-pointer border flex flex-col"
+                        draggable={hasEditPermission}
+                        onDragStart={(e) => {
+                          if (!hasEditPermission) return;
+                          setDraggedSubId(sub.id);
+                          e.dataTransfer.effectAllowed = "move";
+                          e.dataTransfer.setData("application/x-subdemand-id", sub.id);
+                        }}
+                        onDragEnd={() => {
+                          setDraggedSubId(null);
+                          setDragOverSubId(null);
+                        }}
+                        onDragOver={(e) => {
+                          if (!hasEditPermission) return;
+                          if (!e.dataTransfer.types.includes("application/x-subdemand-id")) return;
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                          if (dragOverSubId !== sub.id) setDragOverSubId(sub.id);
+                        }}
+                        onDragLeave={() => {
+                          if (dragOverSubId === sub.id) setDragOverSubId(null);
+                        }}
+                        onDrop={(e) => {
+                          if (!hasEditPermission) return;
+                          e.preventDefault();
+                          handleReorderSubdemand(sub.id);
+                        }}
+                        className={cn(
+                          "w-full h-full text-left rounded-lg overflow-hidden transition-all hover:opacity-90 cursor-pointer border flex flex-col",
+                          dragOverSubId === sub.id && "ring-2 ring-primary ring-offset-1",
+                          draggedSubId === sub.id && "opacity-50"
+                        )}
                         style={{ borderColor: `${bgColor}33` }}
-                        title={`${sub.title} — ${statusName}`}
+                        title={`${sub.title} — ${statusName}${hasEditPermission ? " (arraste para reordenar)" : ""}`}
                       >
                         {/* Color header bar */}
-                        <div className="px-3 py-1.5 text-white text-xs font-semibold truncate" style={{ backgroundColor: bgColor }}>
-                          {sub.board_sequence_number ? `#${String(sub.board_sequence_number).padStart(4, "0")} · ` : ""}
-                          {sub.title}
+                        <div className="px-3 py-1.5 text-white text-xs font-semibold truncate flex items-center gap-1.5" style={{ backgroundColor: bgColor }}>
+                          {hasEditPermission && (
+                            <GripVertical className="h-3 w-3 opacity-60 shrink-0 cursor-grab active:cursor-grabbing" />
+                          )}
+                          <span className="truncate">
+                            {sub.board_sequence_number ? `#${String(sub.board_sequence_number).padStart(4, "0")} · ` : ""}
+                            {sub.title}
+                          </span>
                         </div>
+
                         {/* Details */}
                         <div className="px-3 py-2 bg-card space-y-1.5 flex-1">
                           <div className="flex items-center justify-between gap-2">
