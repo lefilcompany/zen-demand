@@ -50,7 +50,7 @@ import { SubdemandTimer } from "@/components/SubdemandTimer";
 import { CreateSubdemandDialog, type SubdemandFormData } from "@/components/CreateSubdemandDialog";
 import { ParentDemandTimeDisplay } from "@/components/ParentDemandTimeDisplay";
 import { checkDependencyBeforeStatusChange, useDemandDependencyInfo, useBatchDependencyInfo } from "@/hooks/useDependencyCheck";
-import { Lock, Link2 } from "lucide-react";
+import { Lock, Link2, GripVertical } from "lucide-react";
 export default function DemandDetail() {
   const {
     id
