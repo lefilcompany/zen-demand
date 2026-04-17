@@ -220,20 +220,23 @@ export function ProtectedLayout() {
 
       {/* Logout confirmation dialog */}
       <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
-        <AlertDialogContent className="sm:max-w-md">
-          <div className="flex flex-col items-center text-center pt-2 pb-1">
-            <div className="mb-5 flex items-center justify-center">
-              <img src={logoSomaIcon} alt="SoMA+" className="h-16 w-auto object-contain" />
+        <AlertDialogContent className="sm:max-w-lg p-8 rounded-2xl border-border/60 shadow-2xl">
+          <div className="flex flex-col items-center text-center pt-2 pb-2 relative">
+            <div className="absolute top-4 h-32 w-32 rounded-full bg-primary/5 blur-2xl -z-10" />
+            <div className="mb-6 flex items-center justify-center">
+              <img src={logoSomaIcon} alt="SoMA+" className="h-20 w-auto object-contain drop-shadow-sm" />
             </div>
-            <AlertDialogHeader className="space-y-2">
-              <AlertDialogTitle className="text-xl">Já vai? Vamos sentir sua falta 🧡</AlertDialogTitle>
-              <AlertDialogDescription className="text-sm leading-relaxed">
+            <AlertDialogHeader className="space-y-3">
+              <AlertDialogTitle className="text-2xl font-semibold tracking-tight">
+                Já vai? Vamos sentir sua falta 🧡
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-base leading-relaxed text-muted-foreground max-w-sm mx-auto">
                 Suas demandas, quadros e progresso ficarão te esperando quando voltar.
               </AlertDialogDescription>
             </AlertDialogHeader>
           </div>
-          <AlertDialogFooter className="flex-col-reverse sm:flex-row sm:justify-center gap-2 pt-2">
-            <AlertDialogCancel className="mt-0 flex-1 sm:flex-initial sm:min-w-[160px] h-11 rounded-full font-medium border-border hover:bg-muted transition-all">
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row sm:justify-center gap-3 pt-4">
+            <AlertDialogCancel className="mt-0 flex-1 sm:flex-initial sm:min-w-[180px] h-12 rounded-full font-medium border-border hover:bg-muted transition-all">
               Ficar mais um pouco
             </AlertDialogCancel>
             <Button
@@ -242,7 +245,7 @@ export function ProtectedLayout() {
                 setLogoutDialogOpen(false);
                 await signOut();
               }}
-              className="flex-1 sm:flex-initial sm:min-w-[160px] h-11 rounded-full font-medium shadow-md hover:shadow-lg hover:scale-[1.02] transition-all"
+              className="flex-1 sm:flex-initial sm:min-w-[180px] h-12 rounded-full font-medium shadow-md hover:shadow-lg hover:scale-[1.02] transition-all"
             >
               <LogOut className="h-4 w-4" />
               {t("auth.logout")}
