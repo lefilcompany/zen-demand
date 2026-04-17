@@ -44,13 +44,13 @@ import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 import { useRealtimeDemandDetail } from "@/hooks/useRealtimeDemandDetail";
 import { DemandPresenceIndicator } from "@/components/DemandPresenceIndicator";
 import { RealtimeUpdateIndicator } from "@/components/RealtimeUpdateIndicator";
-import { useSubdemands, useAddSubdemand } from "@/hooks/useSubdemands";
+import { useSubdemands, useAddSubdemand, useReorderSubdemands } from "@/hooks/useSubdemands";
 import { SubdemandBadge } from "@/components/SubdemandBadge";
 import { SubdemandTimer } from "@/components/SubdemandTimer";
 import { CreateSubdemandDialog, type SubdemandFormData } from "@/components/CreateSubdemandDialog";
 import { ParentDemandTimeDisplay } from "@/components/ParentDemandTimeDisplay";
 import { checkDependencyBeforeStatusChange, useDemandDependencyInfo, useBatchDependencyInfo } from "@/hooks/useDependencyCheck";
-import { Lock, Link2 } from "lucide-react";
+import { Lock, Link2, GripVertical } from "lucide-react";
 export default function DemandDetail() {
   const {
     id
@@ -161,12 +161,35 @@ export default function DemandDetail() {
     enabled: !!demand?.parent_demand_id,
   });
   const addSubdemand = useAddSubdemand();
+  const reorderSubdemands = useReorderSubdemands();
   const { data: demandDeps } = useDemandDependencyInfo(id || null);
   const subdemandIds = useMemo(() => (subdemands || []).map(s => s.id), [subdemands]);
   const { data: subDepsMap } = useBatchDependencyInfo(subdemandIds);
   const [newSubdemandTitle, setNewSubdemandTitle] = useState("");
   const [showAddSubdemand, setShowAddSubdemand] = useState(false);
   const [showSubdemandDialog, setShowSubdemandDialog] = useState(false);
+  const [draggedSubId, setDraggedSubId] = useState<string | null>(null);
+  const [dragOverSubId, setDragOverSubId] = useState<string | null>(null);
+
+  const handleReorderSubdemand = async (targetId: string) => {
+    const sourceId = draggedSubId;
+    setDraggedSubId(null);
+    setDragOverSubId(null);
+    if (!sourceId || sourceId === targetId || !subdemands || !id) return;
+    const ids = subdemands.map((s) => s.id);
+    const from = ids.indexOf(sourceId);
+    const to = ids.indexOf(targetId);
+    if (from === -1 || to === -1) return;
+    const next = [...ids];
+    next.splice(from, 1);
+    next.splice(to, 0, sourceId);
+    try {
+      await reorderSubdemands.mutateAsync({ parentDemandId: id, orderedIds: next });
+    } catch {
+      toast.error("Não foi possível reordenar as subdemandas");
+    }
+  };
+
   const [editingAssignees, setEditingAssignees] = useState(false);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -1076,15 +1099,51 @@ export default function DemandDetail() {
                       <button
                         key={sub.id}
                         onClick={() => navigate(`/demands/${sub.id}`)}
-                        className="w-full h-full text-left rounded-lg overflow-hidden transition-opacity hover:opacity-90 cursor-pointer border flex flex-col"
+                        draggable={hasEditPermission}
+                        onDragStart={(e) => {
+                          if (!hasEditPermission) return;
+                          setDraggedSubId(sub.id);
+                          e.dataTransfer.effectAllowed = "move";
+                          e.dataTransfer.setData("application/x-subdemand-id", sub.id);
+                        }}
+                        onDragEnd={() => {
+                          setDraggedSubId(null);
+                          setDragOverSubId(null);
+                        }}
+                        onDragOver={(e) => {
+                          if (!hasEditPermission) return;
+                          if (!e.dataTransfer.types.includes("application/x-subdemand-id")) return;
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                          if (dragOverSubId !== sub.id) setDragOverSubId(sub.id);
+                        }}
+                        onDragLeave={() => {
+                          if (dragOverSubId === sub.id) setDragOverSubId(null);
+                        }}
+                        onDrop={(e) => {
+                          if (!hasEditPermission) return;
+                          e.preventDefault();
+                          handleReorderSubdemand(sub.id);
+                        }}
+                        className={cn(
+                          "w-full h-full text-left rounded-lg overflow-hidden transition-all hover:opacity-90 cursor-pointer border flex flex-col",
+                          dragOverSubId === sub.id && "ring-2 ring-primary ring-offset-1",
+                          draggedSubId === sub.id && "opacity-50"
+                        )}
                         style={{ borderColor: `${bgColor}33` }}
-                        title={`${sub.title} — ${statusName}`}
+                        title={`${sub.title} — ${statusName}${hasEditPermission ? " (arraste para reordenar)" : ""}`}
                       >
                         {/* Color header bar */}
-                        <div className="px-3 py-1.5 text-white text-xs font-semibold truncate" style={{ backgroundColor: bgColor }}>
-                          {sub.board_sequence_number ? `#${String(sub.board_sequence_number).padStart(4, "0")} · ` : ""}
-                          {sub.title}
+                        <div className="px-3 py-1.5 text-white text-xs font-semibold truncate flex items-center gap-1.5" style={{ backgroundColor: bgColor }}>
+                          {hasEditPermission && (
+                            <GripVertical className="h-3 w-3 opacity-60 shrink-0 cursor-grab active:cursor-grabbing" />
+                          )}
+                          <span className="truncate">
+                            {sub.board_sequence_number ? `#${String(sub.board_sequence_number).padStart(4, "0")} · ` : ""}
+                            {sub.title}
+                          </span>
                         </div>
+
                         {/* Details */}
                         <div className="px-3 py-2 bg-card space-y-1.5 flex-1">
                           <div className="flex items-center justify-between gap-2">
