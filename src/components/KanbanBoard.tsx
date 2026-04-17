@@ -1350,17 +1350,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 {truncateText(demand.title, 80)}
               </h4>
 
-              {demand.description && (() => {
-                const plainText = extractPlainText(demand.description);
-                if (!plainText) return null;
-                const truncated = plainText.length > 50 ? plainText.slice(0, 50) + "..." : plainText;
-                return (
-                  <p className={cn("text-xs mb-2 line-clamp-1", "text-muted-foreground")} title={plainText}>
-                    {truncated}
-                  </p>
-                );
-              })()}
-
               <Collapsible>
                 <CollapsibleTrigger asChild>
                   <button onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors mb-1 w-full group/info">
@@ -1370,6 +1359,16 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   </button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-2 animate-in fade-in-0 slide-in-from-top-1 duration-200">
+              {!isParentDemand && demand.description && (() => {
+                const plainText = extractPlainText(demand.description);
+                if (!plainText) return null;
+                const truncated = plainText.length > 80 ? plainText.slice(0, 80) + "..." : plainText;
+                return (
+                  <p className={cn("text-xs mb-2 line-clamp-2", "text-muted-foreground")} title={plainText}>
+                    {truncated}
+                  </p>
+                );
+              })()}
               <div className="flex flex-wrap gap-1 sm:gap-1.5 mb-3 mt-1.5">
                 {showOfflineIndicator && (
                   <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-5 bg-amber-500/10 text-amber-600 border-amber-500/20 animate-pulse" title={t("sync.offlineDescription")}>
@@ -1443,13 +1442,19 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   )}
                 </div>
               )}
+                </CollapsibleContent>
+              </Collapsible>
 
               {!isParentDemand && (columnKey === "Entregue" || columnKey === "Aprovação do Cliente" || columnKey === "Fazendo" || columnKey === "Em Ajuste") && (() => {
                 const canControlTimer = !readOnly && 
                   (userRole === "admin" || userRole === "moderator" || userRole === "executor") &&
                   (columnKey === "Fazendo" || columnKey === "Em Ajuste");
                 const shouldForceShow = canControlTimer && (columnKey === "Fazendo" || columnKey === "Em Ajuste");
-                return <KanbanTimeDisplay demandId={demand.id} canControl={canControlTimer} forceShow={shouldForceShow} hideIfHasSubdemands />;
+                return (
+                  <div className="mt-2">
+                    <KanbanTimeDisplay demandId={demand.id} canControl={canControlTimer} forceShow={shouldForceShow} hideIfHasSubdemands />
+                  </div>
+                );
               })()}
 
               {colAdjType !== 'none' && (() => {
@@ -1479,8 +1484,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   </div>
                 );
               })()}
-                </CollapsibleContent>
-              </Collapsible>
               <div className="flex items-center justify-between mt-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   {demand.status_changed_at && (
