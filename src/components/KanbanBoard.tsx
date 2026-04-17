@@ -1484,8 +1484,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   </div>
                 );
               })()}
-                </CollapsibleContent>
-              </Collapsible>
               <div className="flex items-center justify-between mt-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   {demand.status_changed_at && (
