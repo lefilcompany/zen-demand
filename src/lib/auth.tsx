@@ -25,6 +25,20 @@ const TOKEN_REFRESH_MARGIN = 5 * 60 * 1000; // 5 minutes in ms
 // Session duration without "remember me" (4 hours)
 const SHORT_SESSION_DURATION = 4 * 60 * 60 * 1000;
 
+// Clear per-user UI session state (e.g. Kanban filters) on logout / session expiry
+const clearUserSessionState = () => {
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("kanban_filters:")) keysToRemove.push(key);
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+  } catch {
+    // ignore storage errors
+  }
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -139,6 +153,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("getSession error (likely stale token):", error.message);
         localStorage.removeItem("rememberMe");
         localStorage.removeItem("sessionExpiresAt");
+        clearUserSessionState();
         setSession(null);
         setUser(null);
         setLoading(false);
@@ -151,6 +166,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (existingSession && isShortSessionExpired && !isPasswordResetPage) {
         console.log("Short session expired, signing out locally");
         localStorage.removeItem("sessionExpiresAt");
+        clearUserSessionState();
         supabase.auth.signOut({ scope: 'local' }).then(() => {
           setSession(null);
           setUser(null);
@@ -251,16 +267,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem("sessionExpiresAt");
 
     // Clear per-user UI session state (e.g. Kanban filters)
-    try {
-      const keysToRemove: string[] = [];
-      for (let i = 0; i < sessionStorage.length; i++) {
-        const key = sessionStorage.key(i);
-        if (key && key.startsWith("kanban_filters:")) keysToRemove.push(key);
-      }
-      keysToRemove.forEach((k) => sessionStorage.removeItem(k));
-    } catch {
-      // ignore storage errors
-    }
+    clearUserSessionState();
 
     // Clear local state first
     setSession(null);

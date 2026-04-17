@@ -47,9 +47,8 @@ export default function Kanban() {
   const { columns: kanbanColumns } = useKanbanColumns(selectedBoardId, role);
   const { preferences, toggleDefaultColumnsOpen, isSaving, isLoading: isLoadingPrefs } = useKanbanPreferences();
   
-  // Persist filters in sessionStorage scoped per user.
-  // sessionStorage clears automatically when the tab/session ends, and we also
-  // clear it explicitly on signOut (see src/lib/auth.tsx).
+  // Persist filters per user across board switches and tab reloads.
+  // Cleared explicitly on signOut and on short-session expiry (see src/lib/auth.tsx).
   const filtersStorageKey = user?.id ? `kanban_filters:${user.id}` : null;
   const defaultFilters: KanbanFiltersState = {
     myTasks: false,
@@ -60,30 +59,24 @@ export default function Kanban() {
     service: null,
   };
 
-  const [filters, setFilters] = useState<KanbanFiltersState>(() => {
-    if (typeof window === "undefined" || !filtersStorageKey) return defaultFilters;
+  const readStoredFilters = (key: string | null): KanbanFiltersState => {
+    if (!key || typeof window === "undefined") return defaultFilters;
     try {
-      const stored = sessionStorage.getItem(filtersStorageKey);
+      const stored = localStorage.getItem(key);
       if (!stored) return defaultFilters;
       const parsed = JSON.parse(stored) as Partial<KanbanFiltersState>;
       return { ...defaultFilters, ...parsed };
     } catch {
       return defaultFilters;
     }
-  });
+  };
 
-  // If the user changes (e.g. logs in after mount) re-hydrate from their stored filters.
+  const [filters, setFilters] = useState<KanbanFiltersState>(() => readStoredFilters(filtersStorageKey));
+
+  // Re-hydrate when the user becomes available after the initial mount.
   useEffect(() => {
-    if (!filtersStorageKey || typeof window === "undefined") return;
-    try {
-      const stored = sessionStorage.getItem(filtersStorageKey);
-      if (stored) {
-        const parsed = JSON.parse(stored) as Partial<KanbanFiltersState>;
-        setFilters({ ...defaultFilters, ...parsed });
-      }
-    } catch {
-      // ignore
-    }
+    if (!filtersStorageKey) return;
+    setFilters(readStoredFilters(filtersStorageKey));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtersStorageKey]);
 
@@ -91,7 +84,7 @@ export default function Kanban() {
   useEffect(() => {
     if (!filtersStorageKey || typeof window === "undefined") return;
     try {
-      sessionStorage.setItem(filtersStorageKey, JSON.stringify(filters));
+      localStorage.setItem(filtersStorageKey, JSON.stringify(filters));
     } catch {
       // ignore quota errors
     }
