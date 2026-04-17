@@ -269,11 +269,14 @@ export default function DemandDetail() {
 
   // Demandas entregues são apenas visualizáveis
   const isDeliveredStatus = demand?.status_id === deliveredStatusId;
-  const canManageAssignees = !isDeliveredStatus && (boardRole === "admin" || boardRole === "moderator");
-  const canEdit = !isDeliveredStatus;
-  const canArchive = !isDeliveredStatus;
-  const canChangeBoard = !isDeliveredStatus && (boardRole === "admin" || boardRole === "moderator" || boardRole === "executor");
   const isCreator = demand?.created_by === user?.id;
+  const isCurrentAssignee = !!assignees?.some((a: any) => a.user_id === user?.id);
+  // Pode editar: admin/moderador do quadro, criador da demanda ou responsável atual
+  const hasEditPermission = boardRole === "admin" || boardRole === "moderator" || isCreator || isCurrentAssignee;
+  const canManageAssignees = !isDeliveredStatus && hasEditPermission;
+  const canEdit = !isDeliveredStatus && hasEditPermission;
+  const canArchive = !isDeliveredStatus && hasEditPermission;
+  const canChangeBoard = !isDeliveredStatus && (boardRole === "admin" || boardRole === "moderator" || boardRole === "executor");
 
   // Permissões de ajuste baseadas no boardRole
   const canRequestInternalAdjustment = demand?.status_id === approvalStatusId && (boardRole === "admin" || boardRole === "moderator");
