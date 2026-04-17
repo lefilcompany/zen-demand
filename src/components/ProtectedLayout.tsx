@@ -42,7 +42,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useTranslation } from "react-i18next";
-import logoSomaIcon from "@/assets/logo-soma-dark.png";
+import logoSomaIcon from "@/assets/logo-soma-logout.png";
 
 export function ProtectedLayout() {
   const { user, signOut } = useAuth();
