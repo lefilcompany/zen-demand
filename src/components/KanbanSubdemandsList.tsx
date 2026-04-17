@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef } from "react";
 import { useSubdemands, useReorderSubdemands } from "@/hooks/useSubdemands";
 import { useBatchDependencyInfo } from "@/hooks/useDependencyCheck";
+import { validateSubdemandOrder } from "@/lib/subdemandOrderUtils";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { cn } from "@/lib/utils";
@@ -74,6 +75,12 @@ export function KanbanSubdemandsList({ demandId, onSubdemandClick, canReorder = 
     const next = [...ids];
     next.splice(from, 1);
     next.splice(to, 0, sourceId);
+
+    const violation = validateSubdemandOrder(next, depsMap);
+    if (violation) {
+      toast.error(violation);
+      return;
+    }
 
     try {
       await reorder.mutateAsync({ parentDemandId: demandId, orderedIds: next });

@@ -45,6 +45,7 @@ import { useRealtimeDemandDetail } from "@/hooks/useRealtimeDemandDetail";
 import { DemandPresenceIndicator } from "@/components/DemandPresenceIndicator";
 import { RealtimeUpdateIndicator } from "@/components/RealtimeUpdateIndicator";
 import { useSubdemands, useAddSubdemand, useReorderSubdemands } from "@/hooks/useSubdemands";
+import { validateSubdemandOrder } from "@/lib/subdemandOrderUtils";
 import { SubdemandBadge } from "@/components/SubdemandBadge";
 import { SubdemandTimer } from "@/components/SubdemandTimer";
 import { CreateSubdemandDialog, type SubdemandFormData } from "@/components/CreateSubdemandDialog";
