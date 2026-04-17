@@ -771,7 +771,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                         <div className="space-y-2">
                           <Label className="flex items-center gap-2">
                             <Users className="h-4 w-4" />
-                            Responsáveis
+                            Responsáveis *
                           </Label>
                           <AssigneeSelector
                             teamId={selectedTeamId}
@@ -831,7 +831,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="priority">Prioridade</Label>
+                        <Label htmlFor="priority">Prioridade *</Label>
                         <Select value={priority} onValueChange={setPriority}>
                           <SelectTrigger className="h-8">
                             <SelectValue />
@@ -845,13 +845,14 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="dueDate">Data de Entrega</Label>
+                        <Label htmlFor="dueDate">Data de Entrega *</Label>
                         <Input
                           id="dueDate"
                           type="date"
                           value={dueDate}
                           onChange={(e) => setDueDate(e.target.value)}
                           className="h-8"
+                          required
                         />
                       </div>
                     </div>
