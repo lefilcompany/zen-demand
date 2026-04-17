@@ -1188,6 +1188,7 @@ export type Database = {
           status_changed_at: string | null
           status_changed_by: string | null
           status_id: string
+          subdemand_sort_order: number | null
           team_id: string
           time_in_progress_seconds: number | null
           title: string
@@ -1213,6 +1214,7 @@ export type Database = {
           status_changed_at?: string | null
           status_changed_by?: string | null
           status_id: string
+          subdemand_sort_order?: number | null
           team_id: string
           time_in_progress_seconds?: number | null
           title: string
@@ -1238,6 +1240,7 @@ export type Database = {
           status_changed_at?: string | null
           status_changed_by?: string | null
           status_id?: string
+          subdemand_sort_order?: number | null
           team_id?: string
           time_in_progress_seconds?: number | null
           title?: string
@@ -2640,6 +2643,10 @@ export type Database = {
       redeem_trial_coupon: {
         Args: { p_code: string; p_team_id: string }
         Returns: Json
+      }
+      reorder_subdemands: {
+        Args: { p_ordered_ids: string[]; p_parent_id: string }
+        Returns: undefined
       }
       update_trial_coupon: {
         Args: {
