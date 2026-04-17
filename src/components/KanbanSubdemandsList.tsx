@@ -1,16 +1,18 @@
-import { useState, useMemo } from "react";
-import { useSubdemands } from "@/hooks/useSubdemands";
+import { useState, useMemo, useRef } from "react";
+import { useSubdemands, useReorderSubdemands } from "@/hooks/useSubdemands";
 import { useBatchDependencyInfo } from "@/hooks/useDependencyCheck";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { cn } from "@/lib/utils";
-import { Lock, Link2 } from "lucide-react";
+import { Lock, Link2, GripVertical } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface KanbanSubdemandsListProps {
   demandId: string;
   onSubdemandClick?: (id: string) => void;
+  canReorder?: boolean;
 }
 
 const MAX_VISIBLE = 2;
@@ -23,14 +25,16 @@ function formatTimeSeconds(seconds: number | null | undefined): string | null {
   return `${m}m`;
 }
 
-export function KanbanSubdemandsList({ demandId, onSubdemandClick }: KanbanSubdemandsListProps) {
+export function KanbanSubdemandsList({ demandId, onSubdemandClick, canReorder = true }: KanbanSubdemandsListProps) {
   const { data: subdemands } = useSubdemands(demandId);
+  const reorder = useReorderSubdemands();
   const [expanded, setExpanded] = useState(false);
-  
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const draggingIdRef = useRef<string | null>(null);
+
   const subIds = useMemo(() => (subdemands || []).map(s => s.id), [subdemands]);
   const { data: depsMap } = useBatchDependencyInfo(subIds);
 
-  // Fetch real time from demand_time_entries instead of stale time_in_progress_seconds
   const { data: timeEntriesMap } = useQuery({
     queryKey: ["subdemands-time-entries", subIds],
     queryFn: async () => {
@@ -56,6 +60,28 @@ export function KanbanSubdemandsList({ demandId, onSubdemandClick }: KanbanSubde
   const visible = expanded ? subdemands : subdemands.slice(0, MAX_VISIBLE);
   const hiddenCount = subdemands.length - MAX_VISIBLE;
 
+  const handleDrop = async (targetId: string) => {
+    const sourceId = draggingIdRef.current;
+    draggingIdRef.current = null;
+    setDragOverId(null);
+    if (!sourceId || sourceId === targetId || !subdemands) return;
+
+    const ids = subdemands.map(s => s.id);
+    const from = ids.indexOf(sourceId);
+    const to = ids.indexOf(targetId);
+    if (from === -1 || to === -1) return;
+
+    const next = [...ids];
+    next.splice(from, 1);
+    next.splice(to, 0, sourceId);
+
+    try {
+      await reorder.mutateAsync({ parentDemandId: demandId, orderedIds: next });
+    } catch (e: any) {
+      toast.error("Não foi possível reordenar as subdemandas");
+    }
+  };
+
   return (
     <div className="mt-3 space-y-2">
       {visible.map((sub) => {
@@ -66,51 +92,96 @@ export function KanbanSubdemandsList({ demandId, onSubdemandClick }: KanbanSubde
         const code = sub.board_sequence_number ? formatDemandCode(sub.board_sequence_number) : null;
         const deps = depsMap?.[sub.id] || [];
         const isBlocked = deps.some(d => d.isBlocked);
+        const isDragOver = dragOverId === sub.id;
 
         return (
-          <button
+          <div
             key={sub.id}
-            type="button"
-            onClick={(e) => {
+            draggable={canReorder}
+            onDragStart={(e) => {
+              if (!canReorder) return;
               e.stopPropagation();
-              onSubdemandClick?.(sub.id);
+              draggingIdRef.current = sub.id;
+              e.dataTransfer.effectAllowed = "move";
+              // Mark with a custom mime so kanban column drop ignores it
+              e.dataTransfer.setData("application/x-subdemand-id", sub.id);
             }}
-            className="w-full rounded-md overflow-hidden text-left transition-opacity hover:opacity-80"
-            title={`${sub.title} — ${statusName}`}
+            onDragEnd={(e) => {
+              e.stopPropagation();
+              draggingIdRef.current = null;
+              setDragOverId(null);
+            }}
+            onDragOver={(e) => {
+              if (!canReorder) return;
+              if (!e.dataTransfer.types.includes("application/x-subdemand-id")) return;
+              e.preventDefault();
+              e.stopPropagation();
+              e.dataTransfer.dropEffect = "move";
+              setDragOverId(sub.id);
+            }}
+            onDragLeave={(e) => {
+              e.stopPropagation();
+              if (dragOverId === sub.id) setDragOverId(null);
+            }}
+            onDrop={(e) => {
+              if (!canReorder) return;
+              if (!e.dataTransfer.types.includes("application/x-subdemand-id")) return;
+              e.preventDefault();
+              e.stopPropagation();
+              handleDrop(sub.id);
+            }}
+            className={cn(
+              "group relative rounded-md overflow-hidden transition-all",
+              isDragOver && "ring-2 ring-primary ring-offset-1"
+            )}
           >
-            <div
-              className="px-3 py-2 flex items-center gap-2"
-              style={{ backgroundColor: color }}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSubdemandClick?.(sub.id);
+              }}
+              className="w-full text-left transition-opacity hover:opacity-80"
+              title={`${sub.title} — ${statusName}`}
             >
-              {/* Dependency icon */}
-              {deps.length > 0 && (
-                isBlocked
-                  ? <Lock className="h-3 w-3 text-white/90 shrink-0" />
-                  : <Link2 className="h-3 w-3 text-white/70 shrink-0" />
-              )}
-              <span className="text-xs font-semibold text-white truncate flex-1 drop-shadow-sm">
-                {code && <span className="opacity-80 mr-1.5">{code}</span>}
-                {sub.title}
-              </span>
-              {timeStr && (
-                <span className="text-[10px] text-white/80 font-mono shrink-0">
-                  {timeStr}
+              <div
+                className="px-3 py-2 flex items-center gap-2"
+                style={{ backgroundColor: color }}
+              >
+                {canReorder && (
+                  <GripVertical
+                    className="h-3 w-3 text-white/70 shrink-0 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                )}
+                {deps.length > 0 && (
+                  isBlocked
+                    ? <Lock className="h-3 w-3 text-white/90 shrink-0" />
+                    : <Link2 className="h-3 w-3 text-white/70 shrink-0" />
+                )}
+                <span className="text-xs font-semibold text-white truncate flex-1 drop-shadow-sm">
+                  {code && <span className="opacity-80 mr-1.5">{code}</span>}
+                  {sub.title}
                 </span>
-              )}
-              {assignees.length > 0 && (
-                <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
-                  <AssigneeAvatars assignees={assignees} size="sm" maxVisible={2} />
+                {timeStr && (
+                  <span className="text-[10px] text-white/80 font-mono shrink-0">
+                    {timeStr}
+                  </span>
+                )}
+                {assignees.length > 0 && (
+                  <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <AssigneeAvatars assignees={assignees} size="sm" maxVisible={2} />
+                  </div>
+                )}
+              </div>
+              {deps.length > 0 && isBlocked && (
+                <div className="px-2.5 py-1 bg-red-500/10 text-[10px] text-red-600 font-medium truncate flex items-center gap-1">
+                  <Lock className="h-2.5 w-2.5 shrink-0" />
+                  Depende de: {deps.find(d => d.isBlocked)?.dependsOnTitle}
                 </div>
               )}
-            </div>
-            {/* Dependency detail line */}
-            {deps.length > 0 && isBlocked && (
-              <div className="px-2.5 py-1 bg-red-500/10 text-[10px] text-red-600 font-medium truncate flex items-center gap-1">
-                <Lock className="h-2.5 w-2.5 shrink-0" />
-                Depende de: {deps.find(d => d.isBlocked)?.dependsOnTitle}
-              </div>
-            )}
-          </button>
+            </button>
+          </div>
         );
       })}
       {!expanded && hiddenCount > 0 && (
