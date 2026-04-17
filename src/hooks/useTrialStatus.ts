@@ -13,7 +13,11 @@ export interface TrialStatus {
 
 export function useTrialStatus(): TrialStatus {
   const { currentTeam } = useSelectedTeam();
-  const { data: subscription, isLoading } = useTeamSubscription(currentTeam?.id);
+  const { data: subscription, isLoading: isLoadingRaw, fetchStatus } = useTeamSubscription(currentTeam?.id);
+
+  // React Query keeps isLoading=true when `enabled: false` (status pending + fetchStatus idle).
+  // Treat as loading only when there's a team AND a request is actually in-flight.
+  const isLoading = !!currentTeam?.id && isLoadingRaw && fetchStatus !== "idle";
 
   // If subscription is trialing, use subscription.trial_ends_at
   const isTrialing = subscription?.status === "trialing";
