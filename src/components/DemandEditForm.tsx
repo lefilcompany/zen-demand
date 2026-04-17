@@ -3,12 +3,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useDemandStatuses, useUpdateDemand } from "@/hooks/useDemands";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { useDemandAssignees, useSetAssignees } from "@/hooks/useDemandAssignees";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useBoardStatuses } from "@/hooks/useBoardStatuses";
+import { useHasBoardServices } from "@/hooks/useBoardServices";
 import { UnsavedChangesDialog } from "@/components/UnsavedChangesDialog";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { useNavigationBlock } from "@/hooks/useNavigationBlock";
@@ -16,10 +18,10 @@ import { calculateBusinessDueDate, formatDueDateForInput, toDateOnly } from "@/l
 import { RecurrenceConfig, RecurrenceData, defaultRecurrenceData } from "@/components/RecurrenceConfig";
 import { useRecurringDemands, useCreateRecurringDemand, useUpdateRecurringDemand, useDeleteRecurringDemand } from "@/hooks/useRecurringDemands";
 import { useAddSubdemand } from "@/hooks/useSubdemands";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
-import { GitBranch, Plus, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { GitBranch, Plus, ChevronLeft, ChevronRight, Trash2, Package, Users, Loader2 } from "lucide-react";
 import { StepProgress, SubdemandStepForm } from "@/components/create-demand";
 import type { SubdemandFormData } from "@/components/create-demand";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,6 +51,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
   const { data: boardStatuses } = useBoardStatuses(demand.board_id);
   const { data: currentAssignees } = useDemandAssignees(demand.id);
   const { data: boardRole } = useBoardRole(demand.board_id);
+  const { hasBoardServices } = useHasBoardServices(demand.board_id);
 
   // Recurring demands
   const { data: recurringDemands } = useRecurringDemands(demand.board_id);
@@ -59,7 +62,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
 
   const canAssignResponsibles = boardRole !== "requester";
 
-  // Parent state
+  // Parent state — pre-populated from demand
   const [title, setTitle] = useState(demand.title);
   const [description, setDescription] = useState(demand.description || "");
   const [statusId, setStatusId] = useState(demand.status_id);
@@ -78,8 +81,13 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
   const [maxVisitedStep, setMaxVisitedStep] = useState(0);
 
   const totalSteps = 1 + newSubdemands.length;
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  // Derive status options from board statuses (filtered properly)
+  const scrollContentToTop = () => {
+    contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Status options
   const statusOptions = useMemo(() => {
     if (boardStatuses && boardStatuses.length > 0) {
       return boardStatuses.map((bs) => ({
@@ -162,6 +170,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
 
   // Subdemand handlers
   const handleAddSubdemandSlot = () => {
+    const newIdx = newSubdemands.length + 1;
     setNewSubdemands((prev) => [
       ...prev,
       {
@@ -173,11 +182,10 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
         assigneeIds: [],
       },
     ]);
-    // Jump to that step
     setTimeout(() => {
-      const newStepIdx = newSubdemands.length + 1;
-      setCurrentStep(newStepIdx);
-      setMaxVisitedStep((prev) => Math.max(prev, newStepIdx));
+      setCurrentStep(newIdx);
+      setMaxVisitedStep((prev) => Math.max(prev, newIdx));
+      scrollContentToTop();
     }, 0);
   };
 
@@ -187,13 +195,10 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
 
   const handleRemoveSubdemand = (index: number) => {
     setNewSubdemands((prev) => prev.filter((_, i) => i !== index));
-    // Adjust step
-    if (currentStep > newSubdemands.length) {
-      setCurrentStep(Math.max(0, currentStep - 1));
-    }
+    setCurrentStep((prev) => (prev > index ? prev - 1 : prev));
   };
 
-  // Saved steps tracking (for StepProgress visual)
+  // Saved steps tracking (visual)
   const savedSteps = useMemo(() => {
     const set = new Set<number>();
     if (title.trim() && statusId && priority && dueDate) set.add(0);
@@ -219,11 +224,36 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
       const next = currentStep + 1;
       setCurrentStep(next);
       setMaxVisitedStep((prev) => Math.max(prev, next));
+      scrollContentToTop();
     }
   };
 
   const goPrev = () => {
-    if (currentStep > 0) setCurrentStep(currentStep - 1);
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+      scrollContentToTop();
+    }
+  };
+
+  const handleStepClick = (idx: number) => {
+    if (idx <= maxVisitedStep) {
+      setCurrentStep(idx);
+      scrollContentToTop();
+    }
+  };
+
+  const isParentValid = !!title.trim() && !!statusId && !!priority && !!dueDate && (!canAssignResponsibles || selectedAssignees.length > 0);
+
+  const isOnSubdemandStep = currentStep > 0 && currentStep <= newSubdemands.length;
+  const currentSubIndex = isOnSubdemandStep ? currentStep - 1 : -1;
+
+  const canGoNext = () => {
+    if (currentStep === 0) return isParentValid;
+    if (isOnSubdemandStep) {
+      const sub = newSubdemands[currentSubIndex];
+      return !!sub?.title.trim() && !!sub?.priority && !!sub?.due_date && (sub?.assigneeIds?.length || 0) > 0;
+    }
+    return false;
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -232,14 +262,17 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
 
     if (!priority) {
       toast.error("Defina a prioridade da demanda");
+      setCurrentStep(0);
       return;
     }
     if (!dueDate) {
       toast.error("A data de entrega é obrigatória");
+      setCurrentStep(0);
       return;
     }
     if (canAssignResponsibles && selectedAssignees.length === 0) {
       toast.error("Selecione pelo menos um responsável");
+      setCurrentStep(0);
       return;
     }
 
@@ -247,17 +280,20 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
     const validSubs = newSubdemands.filter((s) => s.title.trim());
     for (let i = 0; i < validSubs.length; i++) {
       const s = validSubs[i];
+      const originalIdx = newSubdemands.indexOf(s);
       if (!s.assigneeIds || s.assigneeIds.length === 0) {
         toast.error(`Subdemanda ${i + 1}: selecione pelo menos um responsável`);
-        setCurrentStep(newSubdemands.indexOf(s) + 1);
+        setCurrentStep(originalIdx + 1);
         return;
       }
       if (!s.priority) {
         toast.error(`Subdemanda ${i + 1}: defina a prioridade`);
+        setCurrentStep(originalIdx + 1);
         return;
       }
       if (!s.due_date) {
         toast.error(`Subdemanda ${i + 1}: defina a data de entrega`);
+        setCurrentStep(originalIdx + 1);
         return;
       }
     }
@@ -292,7 +328,6 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
           dueDate: sub.due_date,
           serviceId: sub.service_id,
         });
-        // Sanitize and assign
         const sanitized = (sub.assigneeIds || []).filter((id) => parentAssigneeSet.has(id));
         if (created && sanitized.length > 0) {
           await supabase
@@ -358,9 +393,16 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
     deleteRecurring.isPending ||
     addSubdemand.isPending;
 
-  const isParentValid = !!title.trim() && !!statusId && !!priority && !!dueDate && (!canAssignResponsibles || selectedAssignees.length > 0);
-  const isOnSubdemandStep = currentStep > 0 && currentStep <= newSubdemands.length;
-  const currentSubIndex = isOnSubdemandStep ? currentStep - 1 : -1;
+  // Step title/description (mirrors CreateDemand)
+  const getStepTitle = () => {
+    if (currentStep === 0) return "Editar Demanda";
+    return `Nova Subdemanda ${currentSubIndex + 1} de ${newSubdemands.length}`;
+  };
+
+  const getStepDescription = () => {
+    if (currentStep === 0) return "Atualize os dados da demanda principal";
+    return "Configure os detalhes desta nova subdemanda";
+  };
 
   return (
     <>
@@ -371,190 +413,236 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
         onDontShowAgain={setDontShowAgain}
       />
 
-      {/* Step navigation header */}
-      <div className="border-b pb-3 mb-4 -mt-1">
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <StepProgress
-            currentStep={currentStep}
-            totalSteps={totalSteps}
-            subdemandCount={newSubdemands.length}
-            stepTitles={stepTitles}
-            savedSteps={savedSteps}
-            maxVisitedStep={maxVisitedStep}
-            onStepClick={(idx) => setCurrentStep(idx)}
-          />
+      <DialogHeader className="shrink-0 px-6 pt-6 pb-3 space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1 flex-1 min-w-0">
+            <DialogTitle className="text-xl font-bold">{getStepTitle()}</DialogTitle>
+            <p className="text-sm text-muted-foreground">{getStepDescription()}</p>
+          </div>
           <Button
             type="button"
             size="sm"
             onClick={handleAddSubdemandSlot}
             disabled={!isParentValid}
             className="h-8 gap-1.5 bg-[#F28705] hover:bg-[#F28705]/90 text-white shadow-sm shrink-0"
-            title={!isParentValid ? "Preencha os campos obrigatórios da demanda" : "Adicionar subdemanda"}
+            title={!isParentValid ? "Preencha os campos obrigatórios da demanda" : "Adicionar nova subdemanda"}
           >
             <Plus className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Subdemanda</span>
           </Button>
         </div>
-      </div>
+        {newSubdemands.length > 0 && (
+          <StepProgress
+            currentStep={currentStep}
+            totalSteps={totalSteps}
+            subdemandCount={newSubdemands.length}
+            maxVisitedStep={maxVisitedStep}
+            onStepClick={handleStepClick}
+            stepTitles={stepTitles}
+            savedSteps={savedSteps}
+          />
+        )}
+      </DialogHeader>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* STEP 0 — Parent demand */}
-        {currentStep === 0 && (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="edit-title">Título *</Label>
-              <Input
-                id="edit-title"
-                placeholder="Ex: Implementar nova funcionalidade"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-description">Descrição</Label>
-              <RichTextEditor
-                value={description}
-                onChange={setDescription}
-                placeholder="Descreva os detalhes da demanda..."
-                minHeight="180px"
-              />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
+      <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+        <div ref={contentRef} className="flex-1 overflow-y-auto px-6 pb-4">
+          {/* STEP 0 — Parent demand (mirrors CreateDemand layout) */}
+          {currentStep === 0 && (
+            <div className="space-y-4">
+              {/* Title */}
               <div className="space-y-2">
-                <Label htmlFor="edit-status">Status *</Label>
-                <Select value={statusId} onValueChange={setStatusId} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions?.map((status) => (
-                      <SelectItem key={status.id} value={status.id}>
-                        {status.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-priority">Prioridade *</Label>
-                <Select value={priority} onValueChange={setPriority}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="baixa">Baixa</SelectItem>
-                    <SelectItem value="média">Média</SelectItem>
-                    <SelectItem value="alta">Alta</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-dueDate">Data de Vencimento *</Label>
+                <Label htmlFor="edit-title">Título *</Label>
                 <Input
-                  id="edit-dueDate"
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
+                  id="edit-title"
+                  placeholder="Ex: Implementar nova funcionalidade"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
                   required
-                />
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Serviço</Label>
-                <ServiceSelector
-                  teamId={demand.team_id}
-                  boardId={demand.board_id}
-                  value={serviceId}
-                  onChange={handleServiceChange}
+                  className="h-8"
                 />
               </div>
 
-              {canAssignResponsibles && (
+              {/* Service + Assignees */}
+              <div className={`grid gap-4 grid-cols-1 ${canAssignResponsibles ? "sm:grid-cols-2" : ""}`}>
                 <div className="space-y-2">
-                  <Label>Responsáveis *</Label>
-                  <AssigneeSelector
+                  <Label className="flex items-center gap-2">
+                    <Package className="h-4 w-4" />
+                    Serviço {hasBoardServices ? "*" : ""}
+                  </Label>
+                  <ServiceSelector
                     teamId={demand.team_id}
                     boardId={demand.board_id}
-                    selectedUserIds={selectedAssignees}
-                    onChange={setSelectedAssignees}
+                    value={serviceId}
+                    onChange={handleServiceChange}
+                    userRole={boardRole}
                   />
                 </div>
-              )}
-            </div>
 
-            <RecurrenceConfig value={recurrence} onChange={setRecurrence} compact />
-          </>
-        )}
-
-        {/* STEP N — Subdemand form */}
-        {isOnSubdemandStep && newSubdemands[currentSubIndex] && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between gap-2 bg-[#F28705]/5 border border-[#F28705]/20 rounded-lg px-3 py-2">
-              <div className="flex items-center gap-2">
-                <GitBranch className="h-4 w-4 text-[#F28705]" />
-                <span className="text-sm font-semibold">Nova Subdemanda {currentSubIndex + 1}</span>
+                {canAssignResponsibles && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Responsáveis *
+                    </Label>
+                    <AssigneeSelector
+                      teamId={demand.team_id}
+                      boardId={demand.board_id}
+                      selectedUserIds={selectedAssignees}
+                      onChange={setSelectedAssignees}
+                      hideIcon
+                    />
+                  </div>
+                )}
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => handleRemoveSubdemand(currentSubIndex)}
-                className="h-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="h-3.5 w-3.5 mr-1" />
-                Remover
-              </Button>
+
+              {/* Status + Priority + Due Date */}
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-status">Status *</Label>
+                  <Select value={statusId} onValueChange={setStatusId} required>
+                    <SelectTrigger className="h-8">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusOptions?.map((status) => (
+                        <SelectItem key={status.id} value={status.id}>
+                          {status.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-priority">Prioridade *</Label>
+                  <Select value={priority} onValueChange={setPriority}>
+                    <SelectTrigger className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="baixa">Baixa</SelectItem>
+                      <SelectItem value="média">Média</SelectItem>
+                      <SelectItem value="alta">Alta</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-dueDate">Data de Entrega *</Label>
+                  <Input
+                    id="edit-dueDate"
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="h-8"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="edit-description">Descrição</Label>
+                <RichTextEditor
+                  value={description}
+                  onChange={setDescription}
+                  placeholder="Descreva os detalhes da demanda..."
+                  minHeight="140px"
+                />
+              </div>
+
+              {/* Recurrence */}
+              <div className="space-y-2">
+                <Label>Recorrência</Label>
+                <RecurrenceConfig value={recurrence} onChange={setRecurrence} compact />
+              </div>
             </div>
-            <SubdemandStepForm
-              index={currentSubIndex}
-              data={newSubdemands[currentSubIndex]}
-              onChange={(d) => handleSubdemandChange(currentSubIndex, d)}
-              allSubdemands={newSubdemands}
-              statuses={statusOptions}
-              defaultStatusId={defaultSubStatusId}
-              teamId={demand.team_id}
-              boardId={demand.board_id}
-              parentServiceId={serviceId && serviceId !== "none" ? serviceId : undefined}
-              parentAssigneeIds={selectedAssignees}
-            />
-          </div>
-        )}
+          )}
 
-        {/* Actions */}
-        <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4 sticky bottom-0 bg-background pb-1 border-t">
-          <Button type="button" variant="outline" onClick={onClose} className="flex-1 sm:flex-initial">
-            Cancelar
-          </Button>
+          {/* SUBDEMAND STEPS */}
+          {isOnSubdemandStep && newSubdemands[currentSubIndex] && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-2 bg-[#F28705]/5 border border-[#F28705]/20 rounded-lg px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <GitBranch className="h-4 w-4 text-[#F28705]" />
+                  <span className="text-sm font-semibold">Nova Subdemanda {currentSubIndex + 1}</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleRemoveSubdemand(currentSubIndex)}
+                  className="h-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" />
+                  Remover
+                </Button>
+              </div>
+              <SubdemandStepForm
+                index={currentSubIndex}
+                data={newSubdemands[currentSubIndex]}
+                onChange={(d) => handleSubdemandChange(currentSubIndex, d)}
+                allSubdemands={newSubdemands}
+                statuses={statusOptions}
+                defaultStatusId={defaultSubStatusId}
+                teamId={demand.team_id}
+                boardId={demand.board_id}
+                parentServiceId={serviceId && serviceId !== "none" ? serviceId : undefined}
+                parentAssigneeIds={selectedAssignees}
+              />
+            </div>
+          )}
+        </div>
 
-          <div className="flex-1 flex gap-2">
+        {/* Footer */}
+        <div className="shrink-0 px-6 py-2 flex items-center justify-between bg-card border-t border-border">
+          <div>
             {currentStep > 0 && (
-              <Button type="button" variant="outline" onClick={goPrev} className="gap-1">
+              <Button type="button" variant="ghost" size="sm" onClick={goPrev} className="gap-1">
                 <ChevronLeft className="h-4 w-4" />
-                Anterior
+                Voltar
               </Button>
             )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={onClose}>
+              Cancelar
+            </Button>
 
+            {/* Show "Próximo" while not on the last step */}
             {currentStep < totalSteps - 1 && (
-              <Button type="button" variant="outline" onClick={goNext} className="gap-1 ml-auto">
-                Próxima
+              <Button
+                type="button"
+                size="sm"
+                disabled={!canGoNext()}
+                onClick={goNext}
+                className="gap-1"
+              >
+                Próximo
                 <ChevronRight className="h-4 w-4" />
               </Button>
             )}
 
-            <Button
-              type="submit"
-              disabled={isSaving || !isParentValid}
-              className="flex-1 bg-[#F28705] hover:bg-[#F28705]/90 text-white"
-            >
-              {isSaving ? "Salvando..." : newSubdemands.length > 0 ? `Salvar + ${newSubdemands.length} subdemanda(s)` : "Salvar Alterações"}
-            </Button>
+            {/* Show "Salvar" on the last step */}
+            {currentStep === totalSteps - 1 && (
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isSaving || !isParentValid}
+                className="bg-[#F28705] hover:bg-[#F28705]/90 text-white"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : newSubdemands.length > 0 ? (
+                  `Salvar + ${newSubdemands.length} subdemanda(s)`
+                ) : (
+                  "Salvar Alterações"
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </form>
