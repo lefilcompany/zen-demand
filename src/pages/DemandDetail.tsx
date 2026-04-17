@@ -973,13 +973,12 @@ export default function DemandDetail() {
                 </h3>
                 {canEdit && (
                   <Button
-                    variant="outline"
                     size="sm"
-                    className="h-7 text-xs gap-1"
+                    className="h-8 text-xs gap-1.5 bg-[#F28705] hover:bg-[#F28705]/90 text-white shadow-sm font-medium"
                     onClick={() => setShowSubdemandDialog(true)}
                   >
-                    <Plus className="h-3 w-3" />
-                    Adicionar
+                    <Plus className="h-3.5 w-3.5" />
+                    Adicionar subdemanda
                   </Button>
                 )}
               </div>
