@@ -205,7 +205,10 @@ export default function Welcome() {
           <div className="mt-8 pt-6 border-t border-border text-center">
             <Button 
               variant="ghost" 
-              onClick={signOut}
+              onClick={async () => {
+                await signOut();
+                navigate("/auth", { replace: true });
+              }}
               className="text-muted-foreground hover:text-foreground"
             >
               <LogOut className="mr-2 h-4 w-4" />
