@@ -89,7 +89,6 @@ export function SubdemandStepForm({
             selectedUserIds={data.assigneeIds || []}
             onChange={(ids) => update({ assigneeIds: ids, assigned_to: ids[0] || undefined })}
             hideIcon
-            restrictToUserIds={parentAssigneeIds}
           />
         </div>
       </div>
