@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -47,14 +47,55 @@ export default function Kanban() {
   const { columns: kanbanColumns } = useKanbanColumns(selectedBoardId, role);
   const { preferences, toggleDefaultColumnsOpen, isSaving, isLoading: isLoadingPrefs } = useKanbanPreferences();
   
-  const [filters, setFilters] = useState<KanbanFiltersState>({
+  // Persist filters in sessionStorage scoped per user.
+  // sessionStorage clears automatically when the tab/session ends, and we also
+  // clear it explicitly on signOut (see src/lib/auth.tsx).
+  const filtersStorageKey = user?.id ? `kanban_filters:${user.id}` : null;
+  const defaultFilters: KanbanFiltersState = {
     myTasks: false,
     priority: null,
     dueDate: null,
     position: null,
     assignee: null,
     service: null,
+  };
+
+  const [filters, setFilters] = useState<KanbanFiltersState>(() => {
+    if (typeof window === "undefined" || !filtersStorageKey) return defaultFilters;
+    try {
+      const stored = sessionStorage.getItem(filtersStorageKey);
+      if (!stored) return defaultFilters;
+      const parsed = JSON.parse(stored) as Partial<KanbanFiltersState>;
+      return { ...defaultFilters, ...parsed };
+    } catch {
+      return defaultFilters;
+    }
   });
+
+  // If the user changes (e.g. logs in after mount) re-hydrate from their stored filters.
+  useEffect(() => {
+    if (!filtersStorageKey || typeof window === "undefined") return;
+    try {
+      const stored = sessionStorage.getItem(filtersStorageKey);
+      if (stored) {
+        const parsed = JSON.parse(stored) as Partial<KanbanFiltersState>;
+        setFilters({ ...defaultFilters, ...parsed });
+      }
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtersStorageKey]);
+
+  // Persist filters whenever they change.
+  useEffect(() => {
+    if (!filtersStorageKey || typeof window === "undefined") return;
+    try {
+      sessionStorage.setItem(filtersStorageKey, JSON.stringify(filters));
+    } catch {
+      // ignore quota errors
+    }
+  }, [filters, filtersStorageKey]);
   
   // Fetch members with selected position for filtering
   const { data: membersByPosition } = useMembersByPosition(currentTeamId, filters.position);

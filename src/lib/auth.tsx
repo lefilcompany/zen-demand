@@ -249,7 +249,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Clear remember me preferences on logout
     localStorage.removeItem("rememberMe");
     localStorage.removeItem("sessionExpiresAt");
-    
+
+    // Clear per-user UI session state (e.g. Kanban filters)
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key && key.startsWith("kanban_filters:")) keysToRemove.push(key);
+      }
+      keysToRemove.forEach((k) => sessionStorage.removeItem(k));
+    } catch {
+      // ignore storage errors
+    }
+
     // Clear local state first
     setSession(null);
     setUser(null);
