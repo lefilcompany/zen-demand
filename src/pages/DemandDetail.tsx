@@ -183,6 +183,11 @@ export default function DemandDetail() {
     const next = [...ids];
     next.splice(from, 1);
     next.splice(to, 0, sourceId);
+    const violation = validateSubdemandOrder(next, subDepsMap);
+    if (violation) {
+      toast.error(violation);
+      return;
+    }
     try {
       await reorderSubdemands.mutateAsync({ parentDemandId: id, orderedIds: next });
     } catch {
