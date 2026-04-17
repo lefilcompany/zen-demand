@@ -158,12 +158,15 @@ export function RequireTeam({ children }: RequireTeamProps) {
     return <Navigate to="/auth" replace />;
   }
 
-  // System admin should always access admin panel directly
-  if (userRole === "admin") {
+  // System admin should access admin panel — but only if they have no team to work with.
+  // If a system admin also belongs to a team, they can use the regular app via /admin manually.
+  // CRITICAL: never trap admins without a team in /admin; let them through to /welcome instead.
+  if (userRole === "admin" && hasTeams) {
     return <Navigate to="/admin" replace />;
   }
 
-  // Redirect to welcome if user has no teams
+  // Redirect to welcome if user has no teams (regardless of role).
+  // This prevents users — including misclassified admins — from being stuck on a loading screen.
   if (!hasTeams) {
     return <Navigate to="/welcome" replace />;
   }
