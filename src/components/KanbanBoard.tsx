@@ -1592,12 +1592,38 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         const children = columnDemands.filter(d => d.parent_demand_id === demand.id);
         renderedIds.add(demand.id);
         children.forEach(c => renderedIds.add(c.id));
+        const isCollapsed = collapsedGroups.has(demand.id);
 
         rendered.push(
           <div key={`group-${demand.id}`} className="space-y-0">
-            {renderDemandCard(demand, columnKey, showMoveMenu, adjType)}
-            {children.length > 0 && (
-              <div className="relative ml-4 mt-1 space-y-0">
+            <div className="relative">
+              {renderDemandCard(demand, columnKey, showMoveMenu, adjType)}
+              {children.length > 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleGroupCollapsed(demand.id);
+                  }}
+                  className={cn(
+                    "absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10",
+                    "flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold",
+                    "bg-primary text-primary-foreground shadow-md hover:bg-primary/90 transition-all"
+                  )}
+                  title={isCollapsed ? "Expandir subdemandas" : "Recolher subdemandas"}
+                  aria-label={isCollapsed ? "Expandir subdemandas" : "Recolher subdemandas"}
+                >
+                  {isCollapsed ? (
+                    <ChevronDown className="h-3 w-3" />
+                  ) : (
+                    <ChevronUp className="h-3 w-3" />
+                  )}
+                  <span>{children.length}</span>
+                </button>
+              )}
+            </div>
+            {children.length > 0 && !isCollapsed && (
+              <div className="relative ml-4 mt-3 space-y-0">
                 {/* Vertical connector line */}
                 <div className="absolute left-[7px] top-0 bottom-[22px] w-[2px] bg-primary/20 rounded-full" />
                 {children.map((child, idx) => {
