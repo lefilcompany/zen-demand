@@ -189,7 +189,29 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
     }, 0);
   };
 
-  const handleSubdemandChange = (index: number, data: SubdemandFormData) => {
+  const handleSetSubdemandCount = (count: number) => {
+    const clamped = Math.max(0, Math.min(20, count));
+    setNewSubdemands((prev) => {
+      if (clamped === prev.length) return prev;
+      if (clamped > prev.length) {
+        const toAdd = clamped - prev.length;
+        const additions: SubdemandFormData[] = Array.from({ length: toAdd }, () => ({
+          tempId: crypto.randomUUID(),
+          title: "",
+          priority: "média",
+          status_id: defaultSubStatusId,
+          service_id: serviceId && serviceId !== "none" ? serviceId : undefined,
+          assigneeIds: [],
+        }));
+        return [...prev, ...additions];
+      }
+      // shrinking
+      const next = prev.slice(0, clamped);
+      setCurrentStep((cs) => Math.min(cs, clamped));
+      setMaxVisitedStep((mv) => Math.min(mv, clamped));
+      return next;
+    });
+  };
     setNewSubdemands((prev) => prev.map((s, i) => (i === index ? data : s)));
   };
 
