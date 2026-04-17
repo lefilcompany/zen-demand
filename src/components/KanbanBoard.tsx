@@ -227,6 +227,16 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, string>>({});
   const [columnSearches, setColumnSearches] = useState<Record<string, string>>({});
   const [columnSorts, setColumnSorts] = useState<Record<string, KanbanSortOption>>({});
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroupCollapsed = (parentId: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(parentId)) next.delete(parentId);
+      else next.add(parentId);
+      return next;
+    });
+  };
   const { data: statuses } = useDemandStatuses();
   const updateDemand = useUpdateDemand();
   
