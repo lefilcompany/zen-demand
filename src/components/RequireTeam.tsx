@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useAuth } from "@/lib/auth";
