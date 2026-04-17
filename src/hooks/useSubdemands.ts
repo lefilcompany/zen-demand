@@ -12,6 +12,7 @@ export interface Subdemand {
   parent_demand_id: string;
   board_sequence_number: number | null;
   time_in_progress_seconds: number | null;
+  subdemand_sort_order: number | null;
   demand_statuses: { name: string; color: string } | null;
   demand_assignees?: { user_id: string; profile: { full_name: string; avatar_url: string | null } }[];
 }
@@ -24,17 +25,54 @@ export function useSubdemands(parentDemandId: string | null) {
       const { data, error } = await supabase
         .from("demands")
         .select(`
-          id, title, status_id, priority, due_date, created_at, parent_demand_id, board_sequence_number, time_in_progress_seconds,
+          id, title, status_id, priority, due_date, created_at, parent_demand_id, board_sequence_number, time_in_progress_seconds, subdemand_sort_order,
           demand_statuses(name, color),
           demand_assignees(user_id, profile:profiles(full_name, avatar_url))
         `)
         .eq("parent_demand_id", parentDemandId)
         .eq("archived", false)
+        .order("subdemand_sort_order", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data || []) as Subdemand[];
     },
     enabled: !!parentDemandId,
+  });
+}
+
+export function useReorderSubdemands() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ parentDemandId, orderedIds }: { parentDemandId: string; orderedIds: string[] }) => {
+      const { error } = await supabase.rpc("reorder_subdemands", {
+        p_parent_id: parentDemandId,
+        p_ordered_ids: orderedIds,
+      });
+      if (error) throw error;
+    },
+    onMutate: async ({ parentDemandId, orderedIds }) => {
+      await queryClient.cancelQueries({ queryKey: ["subdemands", parentDemandId] });
+      const previous = queryClient.getQueryData<Subdemand[]>(["subdemands", parentDemandId]);
+      if (previous) {
+        const map = new Map(previous.map((s) => [s.id, s]));
+        const reordered = orderedIds
+          .map((id, idx) => {
+            const s = map.get(id);
+            return s ? { ...s, subdemand_sort_order: idx + 1 } : null;
+          })
+          .filter(Boolean) as Subdemand[];
+        queryClient.setQueryData(["subdemands", parentDemandId], reordered);
+      }
+      return { previous };
+    },
+    onError: (_err, { parentDemandId }, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["subdemands", parentDemandId], context.previous);
+      }
+    },
+    onSettled: (_data, _err, { parentDemandId }) => {
+      queryClient.invalidateQueries({ queryKey: ["subdemands", parentDemandId] });
+    },
   });
 }
 
