@@ -45,6 +45,7 @@ import { useRealtimeDemandDetail } from "@/hooks/useRealtimeDemandDetail";
 import { DemandPresenceIndicator } from "@/components/DemandPresenceIndicator";
 import { RealtimeUpdateIndicator } from "@/components/RealtimeUpdateIndicator";
 import { useSubdemands, useAddSubdemand, useReorderSubdemands } from "@/hooks/useSubdemands";
+import { validateSubdemandOrder } from "@/lib/subdemandOrderUtils";
 import { SubdemandBadge } from "@/components/SubdemandBadge";
 import { SubdemandTimer } from "@/components/SubdemandTimer";
 import { CreateSubdemandDialog, type SubdemandFormData } from "@/components/CreateSubdemandDialog";
@@ -183,6 +184,11 @@ export default function DemandDetail() {
     const next = [...ids];
     next.splice(from, 1);
     next.splice(to, 0, sourceId);
+    const violation = validateSubdemandOrder(next, subDepsMap);
+    if (violation) {
+      toast.error(violation);
+      return;
+    }
     try {
       await reorderSubdemands.mutateAsync({ parentDemandId: id, orderedIds: next });
     } catch {
