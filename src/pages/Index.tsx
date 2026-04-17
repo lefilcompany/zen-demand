@@ -42,8 +42,11 @@ const Index = () => {
   const { selectedBoardId, currentTeamId } = useSelectedBoard();
   const { data: demands } = useDemands(selectedBoardId || undefined);
   const { data: teams } = useTeams();
-  const { data: role, isLoading: roleLoading } = useBoardRole(selectedBoardId);
-  const { data: teamMembershipRole, isLoading: teamRoleLoading } = useTeamMembershipRole(selectedTeamId);
+  const { data: role, isLoading: roleLoadingRaw, fetchStatus: roleFetchStatus } = useBoardRole(selectedBoardId);
+  const { data: teamMembershipRole, isLoading: teamRoleLoadingRaw, fetchStatus: teamRoleFetchStatus } = useTeamMembershipRole(selectedTeamId);
+  // Avoid the React Query "enabled:false → isLoading:true" trap that freezes the UI in a skeleton
+  const roleLoading = !!selectedBoardId && roleLoadingRaw && roleFetchStatus !== "idle";
+  const teamRoleLoading = !!selectedTeamId && teamRoleLoadingRaw && teamRoleFetchStatus !== "idle";
   const { data: scope, isLoading: scopeLoading } = useTeamScope();
   const { 
     canCreate, 

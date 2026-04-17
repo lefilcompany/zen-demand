@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useAuth } from "@/lib/auth";
@@ -126,11 +126,26 @@ function SelectTeamPrompt() {
 
 export function RequireTeam({ children }: RequireTeamProps) {
   const { user, loading: authLoading } = useAuth();
-  const { hasTeams, selectedTeamId, isLoading } = useSelectedTeam();
-  const { data: userRole, isLoading: roleLoading } = useUserRole();
+  const { hasTeams, selectedTeamId, isLoading: teamsLoading } = useSelectedTeam();
+  const { data: userRole, isLoading: roleLoadingRaw, fetchStatus: roleFetchStatus } = useUserRole();
+
+  // Only treat role query as loading when it's actually fetching (avoid pending+idle deadlock)
+  const roleLoading = !!user && roleLoadingRaw && roleFetchStatus !== "idle";
+  // Same for teams: only loading if user is logged in and the query is actively fetching
+  const isLoading = !!user && teamsLoading;
+
+  // Safety timeout: if we've been "loading" for >8s, just let user through to avoid being stuck forever
+  const [forceContinue, setForceContinue] = useState(false);
+  useEffect(() => {
+    if (!authLoading && (isLoading || roleLoading)) {
+      const t = setTimeout(() => setForceContinue(true), 8000);
+      return () => clearTimeout(t);
+    }
+    setForceContinue(false);
+  }, [authLoading, isLoading, roleLoading]);
 
   // Show loading while checking auth, teams, and role
-  if (authLoading || isLoading || roleLoading) {
+  if (authLoading || ((isLoading || roleLoading) && !forceContinue)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-sidebar">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
