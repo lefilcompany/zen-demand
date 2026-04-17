@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
+import { rememberLastEmail } from "@/lib/lastUserEmail";
 
 interface AuthContextType {
   user: User | null;
@@ -241,6 +242,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) throw error;
+      rememberLastEmail(email);
       navigate("/");
     } catch (error: any) {
       throw error;
@@ -255,6 +257,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) throw error;
+      rememberLastEmail(email);
       navigate("/");
     } catch (error: any) {
       throw error;
