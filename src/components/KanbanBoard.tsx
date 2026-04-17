@@ -1572,16 +1572,13 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     const adjType = columnAdjustmentType || columns.find(c => c.key === columnKey)?.adjustmentType || 'none';
 
     // Group demands: identify parent IDs that have children in this column AND the parent itself is also in this column
-    // Only group visually in "A Iniciar" column
-    const isGroupableColumn = columnKey === "A Iniciar";
+    // Grouping works in ALL columns so subdemands appear right under their parent with a visual connector
     const columnDemandIds = new Set(columnDemands.map(d => d.id));
-    const parentIdsInColumn = isGroupableColumn
-      ? new Set(
-          columnDemands
-            .filter(d => d.parent_demand_id && columnDemandIds.has(d.parent_demand_id))
-            .map(d => d.parent_demand_id!)
-        )
-      : new Set<string>();
+    const parentIdsInColumn = new Set(
+      columnDemands
+        .filter(d => d.parent_demand_id && columnDemandIds.has(d.parent_demand_id))
+        .map(d => d.parent_demand_id!)
+    );
 
     // Build grouped rendering
     const rendered: React.ReactNode[] = [];
