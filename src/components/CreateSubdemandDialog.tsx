@@ -172,6 +172,7 @@ export function CreateSubdemandDialog({
                 selectedUserIds={assigneeIds}
                 onChange={setAssigneeIds}
                 hideIcon
+                restrictToUserIds={parentAssigneeIds}
               />
             </div>
           </div>
