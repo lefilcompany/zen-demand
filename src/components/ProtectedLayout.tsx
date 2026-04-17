@@ -42,7 +42,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useTranslation } from "react-i18next";
-import logoSomaIcon from "@/assets/logo-soma-icon.png";
+import logoSomaIcon from "@/assets/logo-soma-dark.png";
 
 export function ProtectedLayout() {
   const { user, signOut } = useAuth();
@@ -222,8 +222,8 @@ export function ProtectedLayout() {
       <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
         <AlertDialogContent className="sm:max-w-md">
           <div className="flex flex-col items-center text-center pt-2 pb-1">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/20">
-              <img src={logoSomaIcon} alt="SoMA" className="h-10 w-10 object-contain" />
+            <div className="mb-5 flex items-center justify-center">
+              <img src={logoSomaIcon} alt="SoMA+" className="h-16 w-auto object-contain" />
             </div>
             <AlertDialogHeader className="space-y-2">
               <AlertDialogTitle className="text-xl">Já vai? Vamos sentir sua falta 🧡</AlertDialogTitle>
