@@ -1602,27 +1602,35 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
             <div className="relative">
               {renderDemandCard(demand, columnKey, showMoveMenu, adjType)}
               {children.length > 0 && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleGroupCollapsed(demand.id);
-                  }}
-                  className={cn(
-                    "absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10",
-                    "flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold",
-                    "bg-primary text-primary-foreground shadow-md hover:bg-primary/90 transition-all"
-                  )}
-                  title={isCollapsed ? "Expandir subdemandas" : "Recolher subdemandas"}
-                  aria-label={isCollapsed ? "Expandir subdemandas" : "Recolher subdemandas"}
-                >
-                  {isCollapsed ? (
-                    <ChevronDown className="h-3 w-3" />
-                  ) : (
-                    <ChevronUp className="h-3 w-3" />
-                  )}
-                  <span>{children.length}</span>
-                </button>
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleGroupCollapsed(demand.id);
+                        }}
+                        className={cn(
+                          "absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10",
+                          "flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold",
+                          "bg-primary text-primary-foreground shadow-md hover:bg-primary/90 transition-all"
+                        )}
+                        aria-label={isCollapsed ? "Expandir subdemandas" : "Recolher subdemandas"}
+                      >
+                        {isCollapsed ? (
+                          <ChevronDown className="h-3 w-3" />
+                        ) : (
+                          <ChevronUp className="h-3 w-3" />
+                        )}
+                        <span>{children.length} {children.length === 1 ? "subdemanda" : "subdemandas"}</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>{isCollapsed ? "Expandir subdemandas" : "Recolher subdemandas"}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </div>
             {children.length > 0 && !isCollapsed && (
