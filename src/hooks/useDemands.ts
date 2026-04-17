@@ -378,6 +378,14 @@ export function useUpdateDemand() {
         return { id, ...data };
       }
 
+      // Guard: forbid clearing required fields (priority, due_date)
+      if (data.priority !== undefined && (data.priority === null || data.priority === "")) {
+        throw new Error("A prioridade é obrigatória e não pode ser removida.");
+      }
+      if (data.due_date !== undefined && (data.due_date === null || data.due_date === "")) {
+        throw new Error("A data de entrega é obrigatória e não pode ser removida.");
+      }
+
       // Validate input data before database operation
       const validatedData = validateData(DemandUpdateSchema, { id, ...data });
       const { id: validatedId, ...updateData } = validatedData;
