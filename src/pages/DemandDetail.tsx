@@ -44,7 +44,7 @@ import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 import { useRealtimeDemandDetail } from "@/hooks/useRealtimeDemandDetail";
 import { DemandPresenceIndicator } from "@/components/DemandPresenceIndicator";
 import { RealtimeUpdateIndicator } from "@/components/RealtimeUpdateIndicator";
-import { useSubdemands, useAddSubdemand } from "@/hooks/useSubdemands";
+import { useSubdemands, useAddSubdemand, useReorderSubdemands } from "@/hooks/useSubdemands";
 import { SubdemandBadge } from "@/components/SubdemandBadge";
 import { SubdemandTimer } from "@/components/SubdemandTimer";
 import { CreateSubdemandDialog, type SubdemandFormData } from "@/components/CreateSubdemandDialog";
@@ -161,12 +161,35 @@ export default function DemandDetail() {
     enabled: !!demand?.parent_demand_id,
   });
   const addSubdemand = useAddSubdemand();
+  const reorderSubdemands = useReorderSubdemands();
   const { data: demandDeps } = useDemandDependencyInfo(id || null);
   const subdemandIds = useMemo(() => (subdemands || []).map(s => s.id), [subdemands]);
   const { data: subDepsMap } = useBatchDependencyInfo(subdemandIds);
   const [newSubdemandTitle, setNewSubdemandTitle] = useState("");
   const [showAddSubdemand, setShowAddSubdemand] = useState(false);
   const [showSubdemandDialog, setShowSubdemandDialog] = useState(false);
+  const [draggedSubId, setDraggedSubId] = useState<string | null>(null);
+  const [dragOverSubId, setDragOverSubId] = useState<string | null>(null);
+
+  const handleReorderSubdemand = async (targetId: string) => {
+    const sourceId = draggedSubId;
+    setDraggedSubId(null);
+    setDragOverSubId(null);
+    if (!sourceId || sourceId === targetId || !subdemands || !id) return;
+    const ids = subdemands.map((s) => s.id);
+    const from = ids.indexOf(sourceId);
+    const to = ids.indexOf(targetId);
+    if (from === -1 || to === -1) return;
+    const next = [...ids];
+    next.splice(from, 1);
+    next.splice(to, 0, sourceId);
+    try {
+      await reorderSubdemands.mutateAsync({ parentDemandId: id, orderedIds: next });
+    } catch {
+      toast.error("Não foi possível reordenar as subdemandas");
+    }
+  };
+
   const [editingAssignees, setEditingAssignees] = useState(false);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
