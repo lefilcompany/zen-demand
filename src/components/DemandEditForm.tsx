@@ -443,17 +443,36 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
             <DialogTitle className="text-xl font-bold">{getStepTitle()}</DialogTitle>
             <p className="text-sm text-muted-foreground">{getStepDescription()}</p>
           </div>
-          <Button
-            type="button"
-            size="sm"
-            onClick={handleAddSubdemandSlot}
-            disabled={!isParentValid}
-            className="h-8 gap-1.5 bg-[#F28705] hover:bg-[#F28705]/90 text-white shadow-sm shrink-0"
-            title={!isParentValid ? "Preencha os campos obrigatórios da demanda" : "Adicionar nova subdemanda"}
+          <div
+            className="flex items-center gap-1.5 shrink-0 rounded-md border border-[#F28705]/30 bg-[#F28705]/10 px-2 py-1"
+            title={!isParentValid ? "Preencha os campos obrigatórios da demanda" : "Definir quantidade de subdemandas"}
           >
-            <Plus className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Subdemanda</span>
-          </Button>
+            <GitBranch className="h-3.5 w-3.5 text-[#F28705]" />
+            <span className="text-xs font-medium text-[#F28705] hidden sm:inline mr-1">Subdemandas</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-[#F28705] hover:bg-[#F28705]/20 hover:text-[#F28705]"
+              onClick={() => handleSetSubdemandCount(newSubdemands.length - 1)}
+              disabled={newSubdemands.length <= 0 || !isParentValid}
+            >
+              <Minus className="h-3.5 w-3.5" />
+            </Button>
+            <span className="text-sm font-bold text-[#F28705] min-w-[18px] text-center">
+              {newSubdemands.length}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-[#F28705] hover:bg-[#F28705]/20 hover:text-[#F28705]"
+              onClick={() => handleSetSubdemandCount(newSubdemands.length + 1)}
+              disabled={newSubdemands.length >= 20 || !isParentValid}
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
         {newSubdemands.length > 0 && (
           <StepProgress
