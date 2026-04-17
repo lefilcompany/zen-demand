@@ -244,6 +244,38 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
       return;
     }
 
+    // Required fields: assignees, priority, due date
+    if (canAssignResponsibles && assigneeIds.length === 0) {
+      toast.error("Selecione pelo menos um responsável para a demanda");
+      return;
+    }
+    if (!priority) {
+      toast.error("Defina a prioridade da demanda");
+      return;
+    }
+    if (!dueDate) {
+      toast.error("Defina a data de entrega da demanda");
+      return;
+    }
+
+    // Validate subdemand required fields
+    const validSubdemandsCheck = subdemands.filter(s => s.title.trim());
+    for (let i = 0; i < validSubdemandsCheck.length; i++) {
+      const s = validSubdemandsCheck[i];
+      if (!s.assigneeIds || s.assigneeIds.length === 0) {
+        toast.error(`Subdemanda ${i + 1}: selecione pelo menos um responsável`);
+        return;
+      }
+      if (!s.priority) {
+        toast.error(`Subdemanda ${i + 1}: defina a prioridade`);
+        return;
+      }
+      if (!s.due_date) {
+        toast.error(`Subdemanda ${i + 1}: defina a data de entrega`);
+        return;
+      }
+    }
+
     let finalDescription = description.trim() || undefined;
     if (finalDescription && finalDescription.includes('data:image')) {
       try {
@@ -473,13 +505,20 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   // Navigation
   const canGoNext = () => {
     if (currentStep === 0) {
-      // Parent step — require minimum fields
-      return !!(title.trim() && statusId && activeBoardId && canCreate !== false && isServiceValid());
+      // Parent step — require minimum fields + assignees + priority + due date
+      const baseValid = !!(title.trim() && statusId && activeBoardId && canCreate !== false && (hasBoardServices ? isServiceValid() : true));
+      const assigneesValid = canAssignResponsibles ? assigneeIds.length > 0 : true;
+      return baseValid && assigneesValid && !!priority && !!dueDate;
     }
     if (currentStep > 0 && currentStep <= subdemandCount) {
-      // Subdemand step — require title
+      // Subdemand step — require title + assignees + priority + due date
       const subIdx = currentStep - 1;
-      return !!(subdemands[subIdx]?.title?.trim());
+      const sub = subdemands[subIdx];
+      if (!sub?.title?.trim()) return false;
+      if (!sub.assigneeIds || sub.assigneeIds.length === 0) return false;
+      if (!sub.priority) return false;
+      if (!sub.due_date) return false;
+      return true;
     }
     return true;
   };
@@ -528,7 +567,9 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
 
   const parentFormValid = !!(
     title.trim() && statusId && activeBoardId && canCreate !== false &&
-    (hasBoardServices ? isServiceValid() : true)
+    (hasBoardServices ? isServiceValid() : true) &&
+    (canAssignResponsibles ? assigneeIds.length > 0 : true) &&
+    !!priority && !!dueDate
   );
 
   // Step title
