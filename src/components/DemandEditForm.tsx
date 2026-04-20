@@ -110,13 +110,15 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
     }
   }, [currentAssignees]);
 
-  // Load existing recurring demand
+  // Load existing recurring demand — vincula primeiro por ID (vínculo robusto), depois fallback por título
   useEffect(() => {
     if (recurringDemands && (recurringDemands as any[]).length > 0) {
       const items = recurringDemands as any[];
-      const match = items.find(
-        (rd) => rd.title === demand.title && rd.board_id === demand.board_id
-      );
+      const recurringId = (demand as any).recurring_demand_id;
+      const match =
+        (recurringId && items.find((rd) => rd.id === recurringId)) ||
+        items.find((rd) => rd.title === demand.title && rd.board_id === demand.board_id);
+
       if (match) {
         setMatchedRecurringId(match.id);
         setRecurrence({
@@ -129,7 +131,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
         });
       }
     }
-  }, [recurringDemands, demand.title, demand.board_id]);
+  }, [recurringDemands, demand.title, demand.board_id, (demand as any).recurring_demand_id]);
 
   // Draft persistence
   const draftFields = useMemo(
@@ -403,9 +405,10 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
         await deleteRecurring.mutateAsync(matchedRecurringId);
         setMatchedRecurringId(null);
       }
-    } catch (recError) {
+    } catch (recError: any) {
       console.error("Erro ao salvar recorrência:", recError);
-      toast.warning("Demanda atualizada, mas houve um erro ao salvar a recorrência");
+      const msg = recError?.message || "Erro desconhecido";
+      toast.error(`Demanda atualizada, mas a recorrência falhou: ${msg}`);
     }
   };
 
