@@ -114,17 +114,29 @@ export function useSetAssignees() {
       }
 
       // Add new assignees (only those not already assigned)
+      // Use upsert with ignoreDuplicates to avoid 500 errors on race conditions
+      // (e.g. double-click, stale local state vs. realtime updates)
       if (toAdd.length > 0) {
         const { error: insertError } = await supabase
           .from("demand_assignees")
-          .insert(
+          .upsert(
             toAdd.map((userId) => ({
               demand_id: demandId,
               user_id: userId,
-            }))
+            })),
+            { onConflict: "demand_id,user_id", ignoreDuplicates: true }
           );
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          // Surface a clearer message instead of a generic 500
+          const msg = (insertError as any)?.message || "";
+          if (msg.includes("row-level security")) {
+            throw new Error(
+              "Você não tem permissão para alterar os responsáveis desta demanda."
+            );
+          }
+          throw insertError;
+        }
       }
     },
     onSuccess: (_, variables) => {
