@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
           ? calculateBusinessDueDate(rd.next_run_date, estimatedHours)
           : adjustDueDateToBusinessDay(rd.next_run_date);
 
-        // Create the demand
+        // Create the demand (linked to the recurrence rule via recurring_demand_id)
         const { data: newDemand, error: createError } = await supabase
           .from("demands")
           .insert({
@@ -93,6 +93,7 @@ Deno.serve(async (req) => {
             team_id: rd.team_id,
             created_by: rd.created_by,
             due_date: dueDate,
+            recurring_demand_id: rd.id,
           })
           .select("id")
           .single();
