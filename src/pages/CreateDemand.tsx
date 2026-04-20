@@ -447,7 +447,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
 
           if (!wasCreatedOffline && recurrence.enabled && demand && selectedTeamId && activeBoardId) {
             try {
-              await createRecurringDemand.mutateAsync({
+              const createdRecurring = await createRecurringDemand.mutateAsync({
                 team_id: selectedTeamId,
                 board_id: activeBoardId,
                 title: title.trim(),
@@ -462,9 +462,18 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                 start_date: recurrence.startDate,
                 end_date: recurrence.endDate || null,
               });
-            } catch (recError) {
+
+              // Vincula a demanda recém-criada à regra de recorrência (vínculo persistente por ID)
+              if (createdRecurring?.id && demand?.id) {
+                await supabase
+                  .from("demands")
+                  .update({ recurring_demand_id: createdRecurring.id })
+                  .eq("id", demand.id);
+              }
+            } catch (recError: any) {
               console.error("Erro ao criar recorrência:", recError);
-              toast.warning("Demanda criada, mas houve um erro ao configurar a recorrência");
+              const msg = recError?.message || "Erro desconhecido";
+              toast.error(`Demanda criada, mas a recorrência falhou: ${msg}`);
             }
           }
 

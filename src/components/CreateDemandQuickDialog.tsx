@@ -159,7 +159,7 @@ export function CreateDemandQuickDialog({
       // Create recurring demand if recurrence is enabled
       if (recurrence.enabled && result && selectedBoardId && currentTeamId) {
         try {
-          await createRecurringDemand.mutateAsync({
+          const created = await createRecurringDemand.mutateAsync({
             team_id: currentTeamId,
             board_id: selectedBoardId,
             title: title.trim(),
@@ -169,14 +169,26 @@ export function CreateDemandQuickDialog({
             service_id: serviceId || null,
             assignee_ids: assigneeIds,
             frequency: recurrence.frequency,
-            weekdays: recurrence.frequency === "weekly" ? recurrence.weekdays : [],
+            weekdays:
+              recurrence.frequency === "weekly" || recurrence.frequency === "biweekly"
+                ? recurrence.weekdays
+                : [],
             day_of_month: recurrence.frequency === "monthly" ? recurrence.dayOfMonth : null,
             start_date: recurrence.startDate,
             end_date: recurrence.endDate || null,
           });
-        } catch (recError) {
+
+          // Vincula a demanda recém-criada à regra de recorrência (vínculo persistente por ID)
+          if (created?.id && result?.id) {
+            await supabase
+              .from("demands")
+              .update({ recurring_demand_id: created.id })
+              .eq("id", result.id);
+          }
+        } catch (recError: any) {
           console.error("Erro ao criar recorrência:", recError);
-          toast.warning("Demanda criada, mas erro ao configurar recorrência");
+          const msg = recError?.message || "Erro desconhecido";
+          toast.error(`Demanda criada, mas a recorrência falhou: ${msg}`);
         }
       }
 
