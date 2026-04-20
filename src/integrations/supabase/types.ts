@@ -1184,6 +1184,7 @@ export type Database = {
           meet_link: string | null
           parent_demand_id: string | null
           priority: string | null
+          recurring_demand_id: string | null
           service_id: string | null
           status_changed_at: string | null
           status_changed_by: string | null
@@ -1210,6 +1211,7 @@ export type Database = {
           meet_link?: string | null
           parent_demand_id?: string | null
           priority?: string | null
+          recurring_demand_id?: string | null
           service_id?: string | null
           status_changed_at?: string | null
           status_changed_by?: string | null
@@ -1236,6 +1238,7 @@ export type Database = {
           meet_link?: string | null
           parent_demand_id?: string | null
           priority?: string | null
+          recurring_demand_id?: string | null
           service_id?: string | null
           status_changed_at?: string | null
           status_changed_by?: string | null
@@ -1273,6 +1276,13 @@ export type Database = {
             columns: ["parent_demand_id"]
             isOneToOne: false
             referencedRelation: "demands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demands_recurring_demand_id_fkey"
+            columns: ["recurring_demand_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_demands"
             referencedColumns: ["id"]
           },
           {
