@@ -97,25 +97,20 @@ export function useSetAssignees() {
       if (fetchError) throw fetchError;
 
       const currentUserIds = currentAssignees?.map(a => a.user_id) || [];
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const currentActorId = user?.id ?? null;
       
       // Find users to remove and users to add
       const toRemove = currentUserIds.filter(id => !userIds.includes(id));
       const toAdd = userIds.filter(id => !currentUserIds.includes(id));
 
-      // Remove assignees that are no longer selected
-      if (toRemove.length > 0) {
-        const { error: deleteError } = await supabase
-          .from("demand_assignees")
-          .delete()
-          .eq("demand_id", demandId)
-          .in("user_id", toRemove);
-
-        if (deleteError) throw deleteError;
-      }
-
       // Add new assignees (only those not already assigned)
       // Use upsert with ignoreDuplicates to avoid 500 errors on race conditions
-      // (e.g. double-click, stale local state vs. realtime updates)
+      // (e.g. double-click, stale local state vs. realtime updates).
+      // Important: add before remove so a current assignee does not lose
+      // permission mid-operation when replacing the assignee list.
       if (toAdd.length > 0) {
         const { error: insertError } = await supabase
           .from("demand_assignees")
@@ -136,6 +131,36 @@ export function useSetAssignees() {
             );
           }
           throw insertError;
+        }
+      }
+
+      // Remove assignees that are no longer selected.
+      // If the acting user is removing themselves, do that as the last step
+      // so permission checks continue to pass for the rest of the update.
+      if (toRemove.length > 0) {
+        const otherUsersToRemove = currentActorId
+          ? toRemove.filter((id) => id !== currentActorId)
+          : toRemove;
+        const shouldRemoveSelfLast = !!currentActorId && toRemove.includes(currentActorId);
+
+        if (otherUsersToRemove.length > 0) {
+          const { error: deleteOthersError } = await supabase
+            .from("demand_assignees")
+            .delete()
+            .eq("demand_id", demandId)
+            .in("user_id", otherUsersToRemove);
+
+          if (deleteOthersError) throw deleteOthersError;
+        }
+
+        if (shouldRemoveSelfLast && currentActorId) {
+          const { error: deleteSelfError } = await supabase
+            .from("demand_assignees")
+            .delete()
+            .eq("demand_id", demandId)
+            .eq("user_id", currentActorId);
+
+          if (deleteSelfError) throw deleteSelfError;
         }
       }
     },
