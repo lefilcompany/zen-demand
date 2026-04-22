@@ -138,7 +138,7 @@ export function BoardSelector() {
               className={cn(
                 "flex h-7 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-2 py-1 text-[11px] shadow-none sm:text-xs",
                 "max-w-[160px] sm:max-w-[240px] md:max-w-[300px]",
-                "hover:bg-accent hover:text-accent-foreground transition-colors",
+                "hover:bg-muted transition-colors",
                 "focus-visible:outline-none focus-visible:border-ring focus-visible:[box-shadow:var(--focus-ring)]"
               )}
             >
