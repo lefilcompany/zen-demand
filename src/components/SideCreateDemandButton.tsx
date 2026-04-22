@@ -12,7 +12,7 @@ export function SideCreateDemandButton() {
 
   return (
     <button
-      onClick={openCreateDemand}
+      onClick={() => openCreateDemand()}
       className="fixed right-0 bottom-16 z-40 group flex items-center
         bg-primary text-primary-foreground shadow-lg
         rounded-l-lg overflow-hidden cursor-pointer
