@@ -2461,6 +2461,10 @@ export type Database = {
         Args: { _note_id: string; _user_id: string }
         Returns: boolean
       }
+      can_manage_demand_assignees: {
+        Args: { _demand_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_view_demand_channel: {
         Args: { _channel: string; _demand_id: string; _user_id: string }
         Returns: boolean
