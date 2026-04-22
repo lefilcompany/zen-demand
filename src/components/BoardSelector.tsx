@@ -3,12 +3,18 @@ import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,8 +27,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { LayoutGrid, Loader2 } from "lucide-react";
+import { LayoutGrid, Loader2, ChevronDown, Check } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 const roleLabels: Record<string, string> = {
   admin: "Administrador",
@@ -50,6 +57,7 @@ export function BoardSelector() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dontAskAgain, setDontAskAgain] = useState(false);
   const pendingBoardIdRef = useRef<string | null>(null);
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   const isDemandDetail = /^\/demands\/[^/]+$/.test(location.pathname);
 
@@ -70,7 +78,11 @@ export function BoardSelector() {
   };
 
   const handleBoardChange = (newBoardId: string) => {
-    if (newBoardId === selectedBoardId) return;
+    if (newBoardId === selectedBoardId) {
+      setPopoverOpen(false);
+      return;
+    }
+    setPopoverOpen(false);
 
     if (!isDemandDetail) {
       setSelectedBoardId(newBoardId);
@@ -117,23 +129,64 @@ export function BoardSelector() {
   return (
     <>
       <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-        <Select value={selectedBoardId || ""} onValueChange={handleBoardChange}>
-          <SelectTrigger className="max-w-[160px] sm:max-w-[240px] md:max-w-[300px] h-7 text-[11px] sm:text-xs">
-            <div className="flex items-center gap-1 min-w-0 overflow-hidden">
-              <LayoutGrid className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground shrink-0" />
-              <span className="truncate block">{currentBoard?.name || "Quadro"}</span>
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            {boards.map((board) => (
-              <SelectItem key={board.id} value={board.id}>
-                <div className="flex items-center gap-2">
-                  <span>{board.name}</span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              role="combobox"
+              aria-expanded={popoverOpen}
+              className={cn(
+                "flex h-7 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-2 py-1 text-[11px] shadow-none sm:text-xs",
+                "max-w-[160px] sm:max-w-[240px] md:max-w-[300px]",
+                "hover:bg-accent hover:text-accent-foreground transition-colors",
+                "focus-visible:outline-none focus-visible:border-ring focus-visible:[box-shadow:var(--focus-ring)]"
+              )}
+            >
+              <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+                <LayoutGrid className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground shrink-0" />
+                <span className="truncate block">{currentBoard?.name || "Quadro"}</span>
+              </div>
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="start"
+            className="w-[260px] p-0"
+            onOpenAutoFocus={(e) => {
+              // Let CommandInput receive focus naturally
+              e.preventDefault();
+            }}
+          >
+            <Command>
+              <CommandInput placeholder="Buscar quadro..." className="h-9" />
+              <CommandList>
+                <CommandEmpty>Nenhum quadro encontrado.</CommandEmpty>
+                <CommandGroup>
+                  {boards.map((board) => {
+                    const isSelected = board.id === selectedBoardId;
+                    return (
+                      <CommandItem
+                        key={board.id}
+                        value={board.name}
+                        onSelect={() => handleBoardChange(board.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <span className="truncate flex-1">{board.name}</span>
+                        <Check
+                          className={cn(
+                            "h-4 w-4 shrink-0",
+                            isSelected ? "opacity-100 text-primary" : "opacity-0"
+                          )}
+                        />
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
 
         {roleLoading ? (
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground hidden sm:block" />
