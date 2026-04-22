@@ -71,7 +71,11 @@ function CardTooltip({
           side="right"
           align="start"
           sideOffset={8}
-          className="max-w-[280px] p-0 overflow-hidden border border-border bg-card text-card-foreground shadow-xl opacity-100"
+          className="max-w-[280px] p-0 overflow-hidden border border-border shadow-2xl !bg-background text-foreground"
+          style={{
+            backgroundColor: "hsl(var(--background))",
+            backdropFilter: "none",
+          }}
         >
           {/* Color bar from status */}
           {demand.demand_statuses && (
