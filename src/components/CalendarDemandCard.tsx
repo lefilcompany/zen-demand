@@ -71,10 +71,14 @@ function CardTooltip({
           side="right"
           align="start"
           sideOffset={8}
-          className="max-w-[280px] p-0 overflow-hidden border border-border shadow-2xl !bg-background text-foreground"
+          className="max-w-[280px] p-0 overflow-hidden border border-border shadow-2xl text-foreground"
           style={{
             backgroundColor: "hsl(var(--background))",
+            backgroundImage: "linear-gradient(hsl(var(--background)), hsl(var(--background)))",
             backdropFilter: "none",
+            WebkitBackdropFilter: "none",
+            opacity: 1,
+            isolation: "isolate",
           }}
         >
           {/* Color bar from status */}
