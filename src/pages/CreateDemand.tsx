@@ -147,6 +147,9 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
       resetForm();
       setSuccessState(null);
       setCurrentStep(0);
+      if (initialDueDate) {
+        setDueDate(formatDueDateForInput(initialDueDate));
+      }
     }
   }, [isOpen]);
 
