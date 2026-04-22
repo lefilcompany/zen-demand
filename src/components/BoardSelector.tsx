@@ -169,7 +169,7 @@ export function BoardSelector() {
                         key={board.id}
                         value={board.name}
                         onSelect={() => handleBoardChange(board.id)}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 data-[selected=true]:bg-muted data-[selected=true]:text-foreground"
                       >
                         <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                         <span className="truncate flex-1">{board.name}</span>
