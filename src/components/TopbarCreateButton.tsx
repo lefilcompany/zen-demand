@@ -21,7 +21,7 @@ export function TopbarCreateButton() {
   const label = isRequester ? "Nova Solicitação" : "Nova Demanda";
   const tooltip = isRequester ? "Criar nova solicitação" : "Criar nova demanda (Ctrl+Shift+D)";
 
-  const handleClick = isRequester ? () => setRequestDialogOpen(true) : openCreateDemand;
+  const handleClick = isRequester ? () => setRequestDialogOpen(true) : () => openCreateDemand();
 
   return (
     <>
