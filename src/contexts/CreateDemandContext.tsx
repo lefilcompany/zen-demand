@@ -2,12 +2,14 @@ import { createContext, useContext, useState, useCallback, useEffect, ReactNode 
 
 interface CreateDemandContextType {
   isOpen: boolean;
-  openCreateDemand: () => void;
+  initialDueDate: Date | null;
+  openCreateDemand: (options?: { initialDueDate?: Date | null }) => void;
   closeCreateDemand: () => void;
 }
 
 const CreateDemandContext = createContext<CreateDemandContextType>({
   isOpen: false,
+  initialDueDate: null,
   openCreateDemand: () => {},
   closeCreateDemand: () => {},
 });
@@ -18,9 +20,16 @@ export function useCreateDemandModal() {
 
 export function CreateDemandProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [initialDueDate, setInitialDueDate] = useState<Date | null>(null);
 
-  const openCreateDemand = useCallback(() => setIsOpen(true), []);
-  const closeCreateDemand = useCallback(() => setIsOpen(false), []);
+  const openCreateDemand = useCallback((options?: { initialDueDate?: Date | null }) => {
+    setInitialDueDate(options?.initialDueDate ?? null);
+    setIsOpen(true);
+  }, []);
+  const closeCreateDemand = useCallback(() => {
+    setIsOpen(false);
+    setInitialDueDate(null);
+  }, []);
 
   // Listen for custom events from CommandMenu/KeyboardShortcuts
   useEffect(() => {
@@ -30,7 +39,7 @@ export function CreateDemandProvider({ children }: { children: ReactNode }) {
   }, [openCreateDemand]);
 
   return (
-    <CreateDemandContext.Provider value={{ isOpen, openCreateDemand, closeCreateDemand }}>
+    <CreateDemandContext.Provider value={{ isOpen, initialDueDate, openCreateDemand, closeCreateDemand }}>
       {children}
     </CreateDemandContext.Provider>
   );

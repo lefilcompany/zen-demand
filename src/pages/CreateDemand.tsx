@@ -48,7 +48,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { isOpen: contextOpen, closeCreateDemand } = useCreateDemandModal();
+  const { isOpen: contextOpen, initialDueDate, closeCreateDemand } = useCreateDemandModal();
 
   const isOpen = open ?? contextOpen;
   const handleClose = () => {
@@ -147,6 +147,9 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
       resetForm();
       setSuccessState(null);
       setCurrentStep(0);
+      if (initialDueDate) {
+        setDueDate(formatDueDateForInput(initialDueDate));
+      }
     }
   }, [isOpen]);
 
