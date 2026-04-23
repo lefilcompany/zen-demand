@@ -183,7 +183,7 @@ export function DashboardAIInsights({ boardId, isRequester = false }: DashboardA
         return { insights: [] as AIInsight[] };
       }
 
-      const fingerprint = getTokenFingerprint(session.access_token);
+      const fingerprint = await getSessionFingerprint(session.refresh_token);
       const cacheKey = getCacheKey(session.user.id, boardId, isRequester);
 
       // Try cache first — only generates again on logout / token rotation invalidation
