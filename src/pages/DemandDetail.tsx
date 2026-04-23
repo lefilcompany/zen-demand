@@ -200,6 +200,17 @@ export default function DemandDetail() {
   const [editingAssignees, setEditingAssignees] = useState(false);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  // Open edit dialog automatically if URL has ?edit=1 (used by subdemand "Editar" action)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("edit") === "1") {
+      setIsEditDialogOpen(true);
+      // Clean the query param so refresh/back doesn't keep reopening
+      params.delete("edit");
+      const newSearch = params.toString();
+      navigate(`${location.pathname}${newSearch ? `?${newSearch}` : ""}`, { replace: true });
+    }
+  }, [location.search, location.pathname, navigate]);
   const [isAdjustmentDialogOpen, setIsAdjustmentDialogOpen] = useState(false);
   const [adjustmentReason, setAdjustmentReason] = useState("");
   const [isChangeBoardDialogOpen, setIsChangeBoardDialogOpen] = useState(false);
