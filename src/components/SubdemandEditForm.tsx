@@ -165,6 +165,37 @@ export function SubdemandEditForm({ demand, onClose, onSuccess }: SubdemandEditF
     setDependsOnId(NONE_VALUE);
   };
 
+  const initialAssigneeIds = useMemo(
+    () => (currentAssignees || []).map((a) => a.user_id).sort(),
+    [currentAssignees]
+  );
+
+  const hasChanges = useMemo(() => {
+    if (title !== demand.title) return true;
+    if ((description || "") !== (demand.description || "")) return true;
+    if (statusId !== demand.status_id) return true;
+    if (priority !== (demand.priority || "média")) return true;
+    if (dueDate !== (toDateOnly(demand.due_date) || "")) return true;
+    if ((serviceId || "") !== (demand.service_id || "")) return true;
+    if (dependsOnId !== initialDependsOnId) return true;
+    const sortedSelected = [...selectedAssignees].sort();
+    if (sortedSelected.length !== initialAssigneeIds.length) return true;
+    if (sortedSelected.some((id, i) => id !== initialAssigneeIds[i])) return true;
+    return false;
+  }, [
+    title,
+    description,
+    statusId,
+    priority,
+    dueDate,
+    serviceId,
+    dependsOnId,
+    initialDependsOnId,
+    selectedAssignees,
+    initialAssigneeIds,
+    demand,
+  ]);
+
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!title.trim() || !statusId) return;
@@ -397,7 +428,7 @@ export function SubdemandEditForm({ demand, onClose, onSuccess }: SubdemandEditF
           <Button
             type="submit"
             size="sm"
-            disabled={isSaving}
+            disabled={isSaving || !hasChanges}
             className="bg-[#F28705] hover:bg-[#F28705]/90 text-white"
           >
             {isSaving ? (
