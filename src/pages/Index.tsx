@@ -65,6 +65,7 @@ const Index = () => {
   if (roleLoading || teamRoleLoading) {
     return (
       <div className="space-y-6 animate-fade-in">
+        <SEOHead title="Dashboard" path="/" />
         <Skeleton className="h-8 w-48" />
         <div className="grid gap-4 md:grid-cols-4">
           {[1, 2, 3, 4].map(i => (
@@ -119,6 +120,7 @@ const Index = () => {
   if (isRequester && (scopeLoading || boardScopeLoading || demandsLoading)) {
     return (
       <div className="space-y-6">
+        <SEOHead title="Dashboard" path="/" />
         <Skeleton className="h-8 w-48" />
         <div className="grid gap-4 md:grid-cols-4">
           {[1, 2, 3, 4].map(i => (
@@ -134,6 +136,7 @@ const Index = () => {
   if (isRequester) {
     return (
       <div className="space-y-4 md:space-y-6 animate-fade-in">
+        <SEOHead title="Dashboard" path="/" />
         {/* Banner with filters inside */}
         <DashboardBanner 
           actions={
@@ -197,6 +200,7 @@ const Index = () => {
   // Default Dashboard View (Admin, Moderator, Executor)
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
+      <SEOHead title="Dashboard" path="/" />
       {/* Banner with customizer inside */}
       <DashboardBanner 
         actions={
