@@ -74,15 +74,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           const { data, error } = await supabase.auth.refreshSession();
           if (error) {
             console.error("Auto token refresh failed:", error.message);
-            // If refresh token is invalid/not found, clear local state gracefully
-            if (error.message.includes("Refresh Token") || error.message.includes("refresh_token")) {
-              console.log("Clearing invalid session data...");
-              // Don't show error toast - just silently clear the invalid session
-              // The onAuthStateChange SIGNED_OUT event will handle state cleanup
+            const m = error.message || "";
+            // If refresh token is invalid/expired, force a clean local sign-out
+            // so the app doesn't keep making 401 requests. SIGNED_OUT will reset state.
+            if (
+              m.includes("Refresh Token") ||
+              m.includes("refresh_token") ||
+              m.includes("Invalid") ||
+              m.includes("expired")
+            ) {
+              console.log("Refresh token invalid — clearing local session");
+              await supabase.auth.signOut({ scope: "local" }).catch(() => {});
             }
           } else if (data.session) {
             console.log("Token refreshed successfully");
-            // The onAuthStateChange listener will handle state updates
+            // The onAuthStateChange (TOKEN_REFRESHED) listener will reschedule the next refresh
           }
         } catch (err) {
           console.error("Token refresh error:", err);
@@ -214,12 +220,62 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
+    // Refresh token when tab becomes visible again — covers cases where the tab
+    // was inactive past expiry and the in-memory timer was throttled by the browser.
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (!currentSession?.expires_at) return;
+        const expiresAtMs = currentSession.expires_at * 1000;
+        const msUntilExpiry = expiresAtMs - Date.now();
+        // If token is already expired OR will expire within the refresh margin, refresh now
+        if (msUntilExpiry < TOKEN_REFRESH_MARGIN) {
+          const { data, error } = await supabase.auth.refreshSession();
+          if (error) {
+            const m = error.message || "";
+            // Stale refresh_token — let SIGNED_OUT handle cleanup; don't toast
+            if (m.includes("Refresh Token") || m.includes("refresh_token") || m.includes("Invalid")) {
+              console.log("Refresh token invalid on visibility change, clearing session");
+              await supabase.auth.signOut({ scope: "local" }).catch(() => {});
+            }
+          } else if (data.session) {
+            scheduleTokenRefresh(data.session);
+          }
+        } else {
+          // Reschedule timer in case the original timeout was paused while inactive
+          scheduleTokenRefresh(currentSession);
+        }
+      } catch (err) {
+        console.error("Visibility refresh error:", err);
+      }
+    };
+
+    // Refresh on reconnect — network may have been down past expiry
+    const handleOnline = async () => {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (!currentSession?.expires_at) return;
+        const msUntilExpiry = currentSession.expires_at * 1000 - Date.now();
+        if (msUntilExpiry < TOKEN_REFRESH_MARGIN) {
+          const { data, error } = await supabase.auth.refreshSession();
+          if (!error && data.session) scheduleTokenRefresh(data.session);
+        }
+      } catch (err) {
+        console.error("Online refresh error:", err);
+      }
+    };
+
     window.addEventListener('storage', handleStorageChange);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('online', handleOnline);
 
     // Cleanup on unmount
     return () => {
       subscription.unsubscribe();
       window.removeEventListener('storage', handleStorageChange);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('online', handleOnline);
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
       }
