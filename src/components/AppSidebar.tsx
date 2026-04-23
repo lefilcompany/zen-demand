@@ -124,11 +124,25 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" data-tour="sidebar">
       <SidebarContent className="overflow-y-auto flex flex-col">
         <NavLink to="/" onClick={closeMobileSidebar} className={`items-center justify-center flex flex-col hover:opacity-80 transition-opacity cursor-pointer my-4 md:my-6 ${isCollapsed && !isMobile ? 'mx-auto w-full' : 'px-0 py-0 mx-0'}`}>
-          {isCollapsed && !isMobile ? (
-            <img alt="SoMA" src="/lovable-uploads/8967ad53-156a-4e31-a5bd-b472b7cde839.png" className="h-5 w-5 object-scale-down mx-auto" />
-          ) : (
-            <img src={logoSoma} alt="SoMA" className="h-8 md:h-10 w-auto" />
-          )}
+          {/* Both logos are always mounted to avoid reload flicker when toggling sidebar */}
+          <img
+            alt="SoMA"
+            src="/lovable-uploads/8967ad53-156a-4e31-a5bd-b472b7cde839.png"
+            width={20}
+            height={20}
+            decoding="sync"
+            loading="eager"
+            fetchPriority="high"
+            className={`h-5 w-5 object-scale-down mx-auto ${isCollapsed && !isMobile ? "block" : "hidden"}`}
+          />
+          <img
+            src={logoSoma}
+            alt="SoMA"
+            decoding="sync"
+            loading="eager"
+            fetchPriority="high"
+            className={`h-8 md:h-10 w-auto ${isCollapsed && !isMobile ? "hidden" : "block"}`}
+          />
         </NavLink>
 
         <SidebarGroup>
