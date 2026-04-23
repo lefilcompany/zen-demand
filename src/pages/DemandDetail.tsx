@@ -301,11 +301,19 @@ export default function DemandDetail() {
   const isDeliveredStatus = demand?.status_id === deliveredStatusId;
   const isCreator = demand?.created_by === user?.id;
   const isCurrentAssignee = !!assignees?.some((a: any) => a.user_id === user?.id);
-  // Pode editar: admin/moderador do quadro, criador da demanda ou responsável atual
-  const hasEditPermission = boardRole === "admin" || boardRole === "moderator" || isCreator || isCurrentAssignee;
+  // Pode editar: admin/moderador/agente do quadro, criador da demanda ou responsável atual
+  const hasEditPermission =
+    boardRole === "admin" ||
+    boardRole === "moderator" ||
+    boardRole === "executor" ||
+    isCreator ||
+    isCurrentAssignee;
   const canManageAssignees = !isDeliveredStatus && hasEditPermission;
   const canEdit = !isDeliveredStatus && hasEditPermission;
-  const canArchive = !isDeliveredStatus && hasEditPermission;
+  // Arquivar continua restrito a admin/moderator/criador/responsável (não a qualquer agente)
+  const canArchive =
+    !isDeliveredStatus &&
+    (boardRole === "admin" || boardRole === "moderator" || isCreator || isCurrentAssignee);
   const canChangeBoard = !isDeliveredStatus && (boardRole === "admin" || boardRole === "moderator" || boardRole === "executor");
 
   // Permissões de ajuste baseadas no boardRole
