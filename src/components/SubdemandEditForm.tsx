@@ -381,32 +381,34 @@ export function SubdemandEditForm({ demand, onClose, onSuccess }: SubdemandEditF
                 </div>
               )}
 
-              <div className="space-y-1">
-                <Label
-                  htmlFor="edit-sub-dependency"
-                  className="text-xs text-muted-foreground font-normal"
-                >
-                  Pode iniciar quando esta subdemanda for entregue:
-                </Label>
-                <Select value={dependsOnId} onValueChange={setDependsOnId}>
-                  <SelectTrigger id="edit-sub-dependency" className="h-8">
-                    <SelectValue placeholder="Selecionar subdemanda" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NONE_VALUE}>Nenhuma (sem dependência)</SelectItem>
-                    {dependencyOptions.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {dependencyOptions.length === 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    Não há outras subdemandas elegíveis para vincular como dependência.
-                  </p>
-                )}
-              </div>
+              {!(dependsOnId !== NONE_VALUE && currentDependencyTitle) && (
+                <div className="space-y-1">
+                  <Label
+                    htmlFor="edit-sub-dependency"
+                    className="text-xs text-muted-foreground font-normal"
+                  >
+                    Pode iniciar quando esta subdemanda for entregue:
+                  </Label>
+                  <Select value={dependsOnId} onValueChange={setDependsOnId}>
+                    <SelectTrigger id="edit-sub-dependency" className="h-8">
+                      <SelectValue placeholder="Selecionar subdemanda" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NONE_VALUE}>Nenhuma (sem dependência)</SelectItem>
+                      {dependencyOptions.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {dependencyOptions.length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Não há outras subdemandas elegíveis para vincular como dependência.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
