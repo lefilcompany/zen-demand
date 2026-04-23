@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useSelectedTeam } from "@/contexts/TeamContext";
-import { useSelectedBoard } from "@/contexts/BoardContext";
+import { useSelectedBoard, useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { sendDemandRequestPushNotification } from "./useSendPushNotification";
 
 interface DemandRequest {
@@ -153,7 +153,7 @@ export function useMyDemandRequests() {
 
 // Count pending requests for badge - filtered by board
 export function usePendingRequestsCount() {
-  const { selectedBoardId } = useSelectedBoard();
+  const { selectedBoardId } = useSelectedBoardSafe();
 
   return useQuery({
     queryKey: ["demand-requests", "count", selectedBoardId],
