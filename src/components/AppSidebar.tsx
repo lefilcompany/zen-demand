@@ -144,7 +144,6 @@ export function AppSidebar() {
             className={`h-8 md:h-10 w-auto ${isCollapsed && !isMobile ? "hidden" : "block"}`}
           />
         </NavLink>
-        </NavLink>
 
         <SidebarGroup>
           <SidebarGroupLabel>{t("common.actions")}</SidebarGroupLabel>
