@@ -16,7 +16,9 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import logoSomaIcon from "@/assets/logo-soma-icon.png";
+import logoSomaLight from "@/assets/logo-soma.png";
+import logoSomaDark from "@/assets/logo-soma-dark.png";
+import { useTheme } from "next-themes";
 import {
   AlertDialog,
   AlertDialogCancel,
