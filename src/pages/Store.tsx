@@ -11,6 +11,7 @@ import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Clock, ShoppingCart, AlertTriangle, Infinity as InfinityIcon, Package, Folder } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useMemo } from "react";
+import { SEOHead } from "@/components/SEOHead";
 
 interface DisplayService {
   id: string;
@@ -168,6 +169,7 @@ export default function Store() {
   if (isLoading) {
     return (
       <div className="space-y-6 animate-fade-in">
+        <SEOHead title="Loja" path="/store" />
         <div className="flex items-center gap-3">
           <Skeleton className="h-8 w-8" />
           <Skeleton className="h-8 w-48" />
@@ -185,6 +187,7 @@ export default function Store() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <SEOHead title="Loja" path="/store" />
       <PageBreadcrumb
         items={[
           { label: "Loja de Serviços", icon: ShoppingCart, isCurrent: true },

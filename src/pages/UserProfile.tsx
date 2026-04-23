@@ -20,6 +20,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { usePresence } from "@/contexts/PresenceContext";
+import { SEOHead } from "@/components/SEOHead";
 
 const INITIAL_BADGES_COUNT = 12;
 
@@ -278,6 +279,7 @@ export default function UserProfile() {
 
   return (
     <div className="space-y-6 animate-fade-in pb-8">
+      <SEOHead title={profile.full_name || "Perfil do Usuário"} />
       <PageBreadcrumb
         items={[
           { label: profile?.full_name || "Perfil do Usuário", icon: User, isCurrent: true },

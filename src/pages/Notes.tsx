@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
+import { SEOHead } from "@/components/SEOHead";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -256,6 +257,7 @@ export default function Notes() {
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-6">
+      <SEOHead title="Notas" path="/notes" />
       <PageBreadcrumb 
         items={[
           { label: "Soma Notes", href: "/notes", icon: StickyNote }

@@ -4,6 +4,7 @@ import { useTeams } from "@/hooks/useTeams";
 import { Plus, Users as UsersIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function Teams() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export default function Teams() {
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
+      <SEOHead title="Equipes" path="/teams" />
       {/* Breadcrumbs */}
       <PageBreadcrumb
         items={[

@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { SEOHead } from "@/components/SEOHead";
 
 const statusLabels: Record<string, string> = {
   active: "Ativo",
@@ -19,6 +20,7 @@ export default function AdminTeams() {
 
   return (
     <div className="p-6 space-y-6">
+      <SEOHead title="Admin - Equipes" />
       <div>
         <h1 className="text-2xl font-bold">Equipes</h1>
         <p className="text-muted-foreground">Todas as equipes do sistema</p>
@@ -51,6 +53,7 @@ export default function AdminTeams() {
                   const sub = t.subscriptions?.[0];
                   return (
                     <TableRow key={t.id}>
+                      <SEOHead title="Admin - Equipes" />
                       <TableCell className="font-medium">{t.name}</TableCell>
                       <TableCell>{format(new Date(t.created_at), "dd/MM/yyyy", { locale: ptBR })}</TableCell>
                       <TableCell>{sub?.plans?.name ?? "Sem plano"}</TableCell>

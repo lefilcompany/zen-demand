@@ -32,6 +32,7 @@ import { isToday, isThisWeek, isPast } from "date-fns";
 import { ScheduledDemandsModal } from "@/components/ScheduledDemandsModal";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
 import { useTeamMembershipRole } from "@/hooks/useTeamRole";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function Kanban() {
   const { t } = useTranslation();
@@ -191,6 +192,7 @@ export default function Kanban() {
 
   return (
     <div className="flex flex-col h-full animate-fade-in space-y-4">
+      <SEOHead title="Kanban" path="/kanban" />
       <PageBreadcrumb
         items={[
           { label: "Kanban", icon: KanbanIcon, isCurrent: true },

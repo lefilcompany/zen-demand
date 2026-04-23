@@ -28,6 +28,7 @@ import {
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { SEOHead } from "@/components/SEOHead";
 import { debounce } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -235,6 +236,7 @@ export default function NoteDetail() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead title={note.title || "Nota sem título"} />
       <input
         ref={coverInputRef}
         type="file"

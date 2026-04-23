@@ -28,6 +28,7 @@ import { AlertTriangle, Ban, WifiOff, Package, CheckCircle2, Plus, ExternalLink,
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
+import { SEOHead } from "@/components/SEOHead";
 import { calculateBusinessDueDate, formatDueDateForInput } from "@/lib/dateUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -611,6 +612,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => { if (!o) handleClose(); }}>
+      <SEOHead title="Nova Demanda" />
       <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
         {successState ? (
           <>

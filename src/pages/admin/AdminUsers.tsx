@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Users } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { SEOHead } from "@/components/SEOHead";
 
 const roleLabels: Record<string, string> = {
   admin: "System Admin",
@@ -18,6 +19,7 @@ export default function AdminUsers() {
 
   return (
     <div className="p-6 space-y-6">
+      <SEOHead title="Admin - Usuários" />
       <div>
         <h1 className="text-2xl font-bold">Usuários</h1>
         <p className="text-muted-foreground">Todos os usuários do sistema</p>
@@ -50,6 +52,7 @@ export default function AdminUsers() {
                   const teams = u.team_members ?? [];
                   return (
                     <TableRow key={u.id}>
+                      <SEOHead title="Admin - Usuários" />
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8">

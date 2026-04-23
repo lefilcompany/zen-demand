@@ -53,6 +53,7 @@ import { CreateSubdemandDialog, type SubdemandFormData } from "@/components/Crea
 import { ParentDemandTimeDisplay } from "@/components/ParentDemandTimeDisplay";
 import { checkDependencyBeforeStatusChange, useDemandDependencyInfo, useBatchDependencyInfo } from "@/hooks/useDependencyCheck";
 import { Lock, Link2, GripVertical } from "lucide-react";
+import { SEOHead } from "@/components/SEOHead";
 export default function DemandDetail() {
   const {
     id
@@ -558,7 +559,10 @@ export default function DemandDetail() {
     user_id: a.user_id,
     profile: a.profile
   })) || [];
+  const shortTitle = demand?.title ? (demand.title.length > 50 ? demand.title.substring(0, 50) + "…" : demand.title) : "Demanda";
+  const seoTitle = demand?.board_sequence_number ? `${formatDemandCode(demand.board_sequence_number)} ${shortTitle}` : shortTitle;
   return <>
+      <SEOHead title={seoTitle} />
       <RealtimeUpdateIndicator show={showUpdateIndicator} updateType={lastUpdate?.type} onDismiss={clearUpdateIndicator} />
       <div className="space-y-2 md:space-y-3 animate-fade-in">
       {/* Breadcrumbs */}

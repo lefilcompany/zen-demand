@@ -29,6 +29,7 @@ import { ScheduledDemandsModal } from "@/components/ScheduledDemandsModal";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
 import { useTeamMembershipRole } from "@/hooks/useTeamRole";
 import { ArchivedDemandsModal } from "@/components/ArchivedDemandsModal";
+import { SEOHead } from "@/components/SEOHead";
 type ViewMode = "table" | "grid" | "calendar";
 const TABLET_BREAKPOINT = 1024;
 export default function Demands() {
@@ -298,6 +299,7 @@ export default function Demands() {
     return <DemandHierarchyGrid data={demandList as any[]} onDemandClick={(demandId, boardId) => handleDemandClick(demandId, boardId, "grid")} />;
   };
   return <div className="space-y-4 md:space-y-6 animate-fade-in">
+      <SEOHead title="Demandas" path="/demands" />
       <PageBreadcrumb
         items={[
           { label: t("demands.title"), icon: LayoutList, isCurrent: true },

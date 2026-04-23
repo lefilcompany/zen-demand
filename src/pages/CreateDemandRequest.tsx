@@ -23,6 +23,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function CreateDemandRequest() {
   const navigate = useNavigate();
@@ -159,6 +160,7 @@ export default function CreateDemandRequest() {
   if (createdRequestId) {
     return (
       <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fade-in px-1">
+        <SEOHead title="Nova Solicitação" path="/demand-requests/new" />
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Adicionar Anexos</h1>
           <p className="text-sm md:text-base text-muted-foreground">
@@ -200,6 +202,7 @@ export default function CreateDemandRequest() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-4 md:space-y-6 animate-fade-in px-1">
+      <SEOHead title="Nova Solicitação" path="/demand-requests/new" />
       {/* Unsaved Changes Dialog */}
       <UnsavedChangesDialog
         open={isBlocked}

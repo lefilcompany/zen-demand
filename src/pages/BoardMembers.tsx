@@ -34,6 +34,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Users, Trash2, Shield, UserCog, User, Briefcase, Loader2, LayoutGrid } from "lucide-react";
 import { AddBoardMemberDialog } from "@/components/AddBoardMemberDialog";
+import { SEOHead } from "@/components/SEOHead";
 
 const roleLabels: Record<string, string> = {
   admin: "Administrador",
@@ -86,6 +87,7 @@ export default function BoardMembers() {
   if (boardLoading || membersLoading) {
     return (
       <div className="space-y-6 animate-fade-in">
+        <SEOHead title={board ? `Membros - ${board.name}` : "Membros do Quadro"} />
         <Skeleton className="h-10 w-64" />
         <div className="grid gap-4">
           {[1, 2, 3].map((i) => (
@@ -99,6 +101,7 @@ export default function BoardMembers() {
   if (!board) {
     return (
       <div className="text-center py-12">
+        <SEOHead title={board ? `Membros - ${board.name}` : "Membros do Quadro"} />
         <h2 className="text-xl font-semibold">Quadro não encontrado</h2>
         <Button variant="link" onClick={() => navigate(-1)}>
           Voltar
@@ -109,6 +112,7 @@ export default function BoardMembers() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <SEOHead title={board ? `Membros - ${board.name}` : "Membros do Quadro"} />
       <PageBreadcrumb
         items={[
           { label: "Quadros", href: "/boards", icon: LayoutGrid },
@@ -155,6 +159,7 @@ export default function BoardMembers() {
                   key={member.id}
                   className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-lg border bg-card"
                 >
+                  <SEOHead title={board ? `Membros - ${board.name}` : "Membros do Quadro"} />
                   <div className="flex items-center gap-3 min-w-0">
                     <Avatar className="h-10 w-10 shrink-0">
                       <AvatarImage src={member.profile?.avatar_url || undefined} />

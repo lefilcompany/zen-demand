@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
+import { SEOHead } from "@/components/SEOHead";
 
 type ViewMode = "table" | "grid" | "calendar";
 const TABLET_BREAKPOINT = 1024;
@@ -221,6 +222,7 @@ export default function FolderDetail() {
 
   return (
     <div className="space-y-4 max-w-[1400px] mx-auto">
+      <SEOHead title={`Pasta - ${folder.name}`} />
       <PageBreadcrumb
         items={[
           { label: "Demandas", href: "/demands", icon: LayoutList },

@@ -19,6 +19,7 @@ import { AddBoardMemberDialog } from "@/components/AddBoardMemberDialog";
 import { useAuth } from "@/lib/auth";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { toast } from "sonner";
+import { SEOHead } from "@/components/SEOHead";
 
 const roleLabels: Record<string, string> = {
   admin: "Administrador",
@@ -307,6 +308,7 @@ export default function BoardDetail() {
   if (isRequester) {
     return (
       <div className="space-y-4 sm:space-y-6">
+        <SEOHead title={`Quadro - ${board.name}`} />
         {/* Breadcrumbs */}
         <PageBreadcrumb
           items={[
@@ -401,6 +403,7 @@ export default function BoardDetail() {
   // Admin/Moderator/Executor view - full view
   return (
     <div className="space-y-4 sm:space-y-6">
+      <SEOHead title={`Quadro - ${board.name}`} />
       {/* Breadcrumbs */}
       <PageBreadcrumb
         items={[

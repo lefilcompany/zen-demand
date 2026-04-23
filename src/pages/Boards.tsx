@@ -24,6 +24,7 @@ import { useBoardMembers, useBoardRole } from "@/hooks/useBoardMembers";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { CreateBoardDialog } from "@/components/CreateBoardDialog";
+import { SEOHead } from "@/components/SEOHead";
 
 function BoardCard({ board }: { board: { id: string; name: string; description: string | null; monthly_demand_limit: number; team_id: string } }) {
   const navigate = useNavigate();
@@ -185,6 +186,7 @@ export default function Boards() {
   if (isLoading) {
     return (
       <div className="space-y-6">
+        <SEOHead title="Quadros" path="/boards" />
         <div className="flex items-center justify-between">
           <div>
             <Skeleton className="h-8 w-48 mb-2" />
@@ -202,6 +204,7 @@ export default function Boards() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      <SEOHead title="Quadros" path="/boards" />
       <PageBreadcrumb
         items={[
           { label: "Quadros", icon: LayoutGrid, isCurrent: true },

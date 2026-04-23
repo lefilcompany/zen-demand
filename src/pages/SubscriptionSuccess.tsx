@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, ArrowRight, Sparkles, Loader2 } from "lucide-react";
 import { useTeams } from "@/hooks/useTeams";
 import { useUserSubscription } from "@/hooks/useUserSubscription";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function SubscriptionSuccess() {
   const { t } = useTranslation();
@@ -39,6 +40,7 @@ export default function SubscriptionSuccess() {
   if (teamsLoading || subLoading) {
     return (
       <div className="container max-w-2xl py-12 flex items-center justify-center min-h-[60vh]">
+        <SEOHead title="Assinatura Ativada" path="/subscription-success" />
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
           <p className="text-muted-foreground">{t("common.loading")}</p>
@@ -49,6 +51,7 @@ export default function SubscriptionSuccess() {
 
   return (
     <div className="container max-w-2xl py-12">
+      <SEOHead title="Assinatura Ativada" path="/subscription-success" />
       <Card className="text-center">
         <CardHeader className="pb-4">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/10 success-animation">

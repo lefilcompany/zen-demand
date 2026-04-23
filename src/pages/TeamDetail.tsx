@@ -22,6 +22,7 @@ import { MemberCard } from "@/components/MemberCard";
 import { TeamScopeConfig } from "@/components/TeamScopeConfig";
 import { TeamPositionsManager } from "@/components/TeamPositionsManager";
 import { TeamRole } from "@/hooks/useTeamRole";
+import { SEOHead } from "@/components/SEOHead";
 export default function TeamDetail() {
   const {
     id
@@ -139,6 +140,7 @@ export default function TeamDetail() {
       </div>;
   }
   return <div className="space-y-6 animate-fade-in">
+      <SEOHead title={`Equipe - ${team.name}`} />
       {/* Breadcrumbs */}
       <PageBreadcrumb
         items={[

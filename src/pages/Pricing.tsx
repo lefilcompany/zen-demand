@@ -14,6 +14,7 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useCreateCheckout } from "@/hooks/useCheckout";
 import { toast } from "sonner";
 import { Loader2, Sparkles, Zap, Shield, Clock } from "lucide-react";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function Pricing() {
   const { t } = useTranslation();
@@ -83,6 +84,7 @@ export default function Pricing() {
   if (plansLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
+        <SEOHead title="Planos e Preços" path="/pricing" />
         <div className="text-center space-y-4">
           <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
           <p className="text-muted-foreground animate-pulse">Carregando planos...</p>

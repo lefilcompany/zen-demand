@@ -30,6 +30,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useRedeemCoupon } from "@/hooks/useTrialCoupon";
 import { Ticket, CheckCircle2 } from "lucide-react";
+import { SEOHead } from "@/components/SEOHead";
 
 const roleLabels: Record<string, string> = {
   admin: "Administrador",
@@ -185,6 +186,7 @@ export default function TeamConfig() {
   if (teamsLoading || roleLoading) {
     return (
       <div className="space-y-6">
+        <SEOHead title="Configurações da Equipe" />
         <Skeleton className="h-8 w-48" />
         <div className="grid gap-6 md:grid-cols-2">
           <Skeleton className="h-64" />
@@ -197,6 +199,7 @@ export default function TeamConfig() {
   if (!team) {
     return (
       <div className="text-center py-12">
+        <SEOHead title="Configurações da Equipe" />
         <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
         <h2 className="text-xl font-semibold mb-2">Equipe não encontrada</h2>
         <p className="text-muted-foreground">Selecione uma equipe para ver suas configurações.</p>
@@ -206,6 +209,7 @@ export default function TeamConfig() {
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
+      <SEOHead title="Configurações da Equipe" />
       <PageBreadcrumb
         items={[
           { label: t("teams.title"), href: "/teams", icon: Users },
@@ -451,6 +455,7 @@ export default function TeamConfig() {
                       key={member.id} 
                       className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border bg-card"
                     >
+                      <SEOHead title="Configurações da Equipe" />
                       <div className="flex items-center gap-3 min-w-0">
                         <Avatar className="h-10 w-10 shrink-0">
                           <AvatarImage src={member.profile?.avatar_url || undefined} />

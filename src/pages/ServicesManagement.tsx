@@ -47,6 +47,7 @@ import {
   ServiceWithHierarchy,
 } from "@/hooks/useServices";
 import { useIsTeamAdmin } from "@/hooks/useTeamRole";
+import { SEOHead } from "@/components/SEOHead";
 import {
   Plus,
   Clock,
@@ -378,6 +379,7 @@ export default function ServicesManagement() {
   if (teamsLoading || servicesLoading) {
     return (
       <div className="space-y-6">
+        <SEOHead title="Gerenciar Serviços" path="/services" />
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-32 w-full" />
       </div>
@@ -387,6 +389,7 @@ export default function ServicesManagement() {
   if (!team) {
     return (
       <div className="text-center py-12">
+        <SEOHead title="Gerenciar Serviços" path="/services" />
         <h2 className="text-xl font-semibold">Equipe não encontrada</h2>
         <Button onClick={() => navigate("/teams")} className="mt-4">
           Voltar para Equipes
@@ -401,6 +404,7 @@ export default function ServicesManagement() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <SEOHead title="Gerenciar Serviços" path="/services" />
       <PageBreadcrumb
         items={[
           { label: "Equipes", href: "/teams", icon: Users },

@@ -22,6 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SEOHead } from "@/components/SEOHead";
 
 interface LateDemandDetail {
   title: string;
@@ -396,6 +397,7 @@ export default function BoardSummary() {
   if (!currentBoard) {
     return (
       <div className="container mx-auto py-6 px-4">
+        <SEOHead title="Análise IA" />
         <PageBreadcrumb items={[{ label: "Análise IA", icon: Sparkles }]} />
         <Card className="mt-6">
           <CardContent className="flex flex-col items-center justify-center py-12">
@@ -411,6 +413,7 @@ export default function BoardSummary() {
 
   return (
     <div className="container mx-auto max-w-5xl px-2 sm:px-4">
+      <SEOHead title={`Análise IA - ${currentBoard.name}`} />
       <PageBreadcrumb items={[{ label: "Análise IA", icon: Sparkles }]} />
       
       <div className="mt-4 sm:mt-6 space-y-4 sm:space-y-6">

@@ -36,6 +36,7 @@ import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { DemandsCalendarView } from "@/components/DemandsCalendarView";
 import { isDateOverdue } from "@/lib/dateUtils";
 import { InfoTooltip } from "@/components/InfoTooltip";
+import { SEOHead } from "@/components/SEOHead";
 import {
   Select,
   SelectContent,
@@ -241,6 +242,7 @@ export default function TeamDemands() {
     if (isLoading) {
       return (
         <div className="text-center py-12">
+          <SEOHead title="Visão Geral - Demandas" path="/team-demands" />
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
           <p className="text-muted-foreground mt-4">{t("common.loading")}</p>
         </div>
@@ -251,6 +253,7 @@ export default function TeamDemands() {
       if (searchQuery) {
         return (
           <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-muted/20">
+            <SEOHead title="Visão Geral - Demandas" path="/team-demands" />
             <Search className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold text-foreground">
               {t("common.noResults")}
@@ -263,6 +266,7 @@ export default function TeamDemands() {
       }
       return (
         <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-muted/20">
+          <SEOHead title="Visão Geral - Demandas" path="/team-demands" />
           <Layers className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-lg font-semibold text-foreground">
             Nenhuma demanda encontrada
@@ -289,6 +293,7 @@ export default function TeamDemands() {
     if (effectiveViewMode === "table") {
       return (
         <Card className="border-border/50 shadow-sm">
+          <SEOHead title="Visão Geral - Demandas" path="/team-demands" />
           <CardContent className="p-0">
             <DataTable
               columns={teamDemandColumns}
@@ -303,6 +308,7 @@ export default function TeamDemands() {
 
     return (
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <SEOHead title="Visão Geral - Demandas" path="/team-demands" />
         {demandList.map((demand) => (
           <DemandCard
             key={demand.id}
@@ -319,6 +325,7 @@ export default function TeamDemands() {
   if (isRoleLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
+        <SEOHead title="Visão Geral - Demandas" path="/team-demands" />
         <div className="text-center">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
           <p className="text-muted-foreground mt-4">Verificando permissões...</p>
@@ -331,6 +338,7 @@ export default function TeamDemands() {
   if (!selectedTeamId) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
+        <SEOHead title="Visão Geral - Demandas" path="/team-demands" />
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center">
             <Layers className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -348,6 +356,7 @@ export default function TeamDemands() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <SEOHead title="Visão Geral - Demandas" path="/team-demands" />
       <PageBreadcrumb
         items={[
           { label: "Visão Geral da Equipe", icon: Layers, isCurrent: true },

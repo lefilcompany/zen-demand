@@ -18,6 +18,7 @@ import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWi
 import { ptBR } from "date-fns/locale";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { SEOHead } from "@/components/SEOHead";
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "#10b981", "#f59e0b", "#ef4444"];
 
@@ -143,6 +144,7 @@ export default function Reports() {
   if (!selectedTeamId) {
     return (
       <div className="text-center py-12">
+        <SEOHead title="Relatórios" path="/reports" />
         <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground" />
         <h3 className="mt-4 text-lg font-semibold">Selecione uma equipe</h3>
         <p className="text-muted-foreground">Use o seletor no menu para ver relatórios</p>
@@ -152,6 +154,7 @@ export default function Reports() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <SEOHead title="Relatórios" path="/reports" />
       {/* Breadcrumbs */}
       <PageBreadcrumb
         items={[
