@@ -1,6 +1,60 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+
+// Cache key tied to user session — cleared on logout / token loss
+const CACHE_PREFIX = "soma:ai-insights:";
+const getCacheKey = (userId: string, boardId: string, isRequester: boolean) =>
+  `${CACHE_PREFIX}${userId}:${boardId}:${isRequester ? "req" : "adm"}`;
+
+interface CachedInsights {
+  insights: AIInsight[];
+  tokenFingerprint: string;
+  cachedAt: number;
+}
+
+// Use last 16 chars of access token as fingerprint — if token changes (logout/refresh-fail), cache invalidates
+function getTokenFingerprint(accessToken: string | undefined): string {
+  if (!accessToken) return "";
+  return accessToken.slice(-16);
+}
+
+function readCache(key: string, currentFingerprint: string): AIInsight[] | null {
+  try {
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CachedInsights;
+    if (parsed.tokenFingerprint !== currentFingerprint) {
+      sessionStorage.removeItem(key);
+      return null;
+    }
+    return parsed.insights;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(key: string, insights: AIInsight[], tokenFingerprint: string) {
+  try {
+    const payload: CachedInsights = { insights, tokenFingerprint, cachedAt: Date.now() };
+    sessionStorage.setItem(key, JSON.stringify(payload));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+function clearAllInsightsCache() {
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (k && k.startsWith(CACHE_PREFIX)) keys.push(k);
+    }
+    keys.forEach((k) => sessionStorage.removeItem(k));
+  } catch {
+    // ignore
+  }
+}
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
