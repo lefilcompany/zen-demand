@@ -428,7 +428,7 @@ export function SubdemandEditForm({ demand, onClose, onSuccess }: SubdemandEditF
           <Button
             type="submit"
             size="sm"
-            disabled={isSaving}
+            disabled={isSaving || !hasChanges}
             className="bg-[#F28705] hover:bg-[#F28705]/90 text-white"
           >
             {isSaving ? (
