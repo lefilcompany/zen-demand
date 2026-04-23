@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2, Mail, Check, X, Info } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, Check, X, Info, Lock, Shield, Sparkles, Zap } from "lucide-react";
 import { lovable } from "@/integrations/lovable/index";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SEOHead } from "@/components/SEOHead";
