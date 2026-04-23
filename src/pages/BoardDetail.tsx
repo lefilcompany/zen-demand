@@ -308,6 +308,7 @@ export default function BoardDetail() {
   if (isRequester) {
     return (
       <div className="space-y-4 sm:space-y-6">
+        <SEOHead title={`Quadro - ${board.name}`} />
         {/* Breadcrumbs */}
         <PageBreadcrumb
           items={[
@@ -402,6 +403,7 @@ export default function BoardDetail() {
   // Admin/Moderator/Executor view - full view
   return (
     <div className="space-y-4 sm:space-y-6">
+      <SEOHead title={`Quadro - ${board.name}`} />
       {/* Breadcrumbs */}
       <PageBreadcrumb
         items={[

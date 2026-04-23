@@ -140,6 +140,7 @@ export default function TeamDetail() {
       </div>;
   }
   return <div className="space-y-6 animate-fade-in">
+      <SEOHead title={`Equipe - ${team.name}`} />
       {/* Breadcrumbs */}
       <PageBreadcrumb
         items={[

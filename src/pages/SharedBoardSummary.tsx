@@ -170,6 +170,7 @@ export default function SharedBoardSummary() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead title={summary.board?.name ? `Análise IA - ${summary.board.name}` : "Análise IA Compartilhada"} />
       <div className="container mx-auto py-6 px-4 max-w-5xl">
         {/* Header with Logo */}
         <div className="flex items-center justify-between mb-6">

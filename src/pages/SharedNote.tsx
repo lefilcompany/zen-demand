@@ -43,6 +43,7 @@ export default function SharedNote() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead title={note.title || "Nota Compartilhada"} />
       {/* Cover Image */}
       <div className="h-40 w-full">
         {note.cover_url ? (

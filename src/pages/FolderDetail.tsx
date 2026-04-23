@@ -222,6 +222,7 @@ export default function FolderDetail() {
 
   return (
     <div className="space-y-4 max-w-[1400px] mx-auto">
+      <SEOHead title={`Pasta - ${folder.name}`} />
       <PageBreadcrumb
         items={[
           { label: "Demandas", href: "/demands", icon: LayoutList },

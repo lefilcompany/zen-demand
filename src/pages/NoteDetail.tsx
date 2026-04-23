@@ -236,6 +236,7 @@ export default function NoteDetail() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead title={note.title || "Nota sem título"} />
       <input
         ref={coverInputRef}
         type="file"

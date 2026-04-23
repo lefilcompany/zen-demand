@@ -127,8 +127,10 @@ export default function SharedDemand() {
     );
   }
 
+  const sharedShortTitle = demand.title ? (demand.title.length > 50 ? demand.title.substring(0, 50) + "…" : demand.title) : "Demanda";
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead title={sharedShortTitle} />
       <header className="border-b bg-card">
         <div className="container max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">

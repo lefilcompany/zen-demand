@@ -612,6 +612,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => { if (!o) handleClose(); }}>
+      <SEOHead title="Nova Demanda" />
       <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
         {successState ? (
           <>
