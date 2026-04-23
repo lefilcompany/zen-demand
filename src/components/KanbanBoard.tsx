@@ -230,6 +230,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const [columnSearches, setColumnSearches] = useState<Record<string, string>>({});
   const [columnSorts, setColumnSorts] = useState<Record<string, KanbanSortOption>>({});
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [subReorderDragOverId, setSubReorderDragOverId] = useState<string | null>(null);
+  const subReorderSourceIdRef = useState<{ current: string | null }>({ current: null })[0];
 
   const toggleGroupCollapsed = (parentId: string) => {
     setCollapsedGroups(prev => {
