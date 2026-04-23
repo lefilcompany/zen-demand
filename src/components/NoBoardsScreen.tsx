@@ -67,7 +67,7 @@ export function NoBoardsScreen() {
         {/* Minimal header */}
         <header className="flex h-12 shrink-0 items-center justify-between px-4 border-b border-border rounded-t-xl">
           <div className="flex items-center gap-3 min-w-0">
-            <img src={logoSrc} alt="SoMA" className="h-6 w-auto object-contain shrink-0" />
+            <img src={logoSrc} alt="SoMA" className="h-9 w-auto object-contain shrink-0" />
             {currentTeam?.name && (
               <>
                 <span className="h-4 w-px bg-border shrink-0" aria-hidden="true" />
