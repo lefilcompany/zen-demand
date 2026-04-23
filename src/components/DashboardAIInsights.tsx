@@ -2,30 +2,40 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-// Cache key tied to user session — cleared on logout / token loss
+// Cache key tied to user's refresh_token — survives access_token rotation (~1h),
+// only invalidated on real logout or refresh_token expiry (~30 days)
 const CACHE_PREFIX = "soma:ai-insights:";
 const getCacheKey = (userId: string, boardId: string, isRequester: boolean) =>
   `${CACHE_PREFIX}${userId}:${boardId}:${isRequester ? "req" : "adm"}`;
 
 interface CachedInsights {
   insights: AIInsight[];
-  tokenFingerprint: string;
+  sessionFingerprint: string;
   cachedAt: number;
 }
 
-// Use last 16 chars of access token as fingerprint — if token changes (logout/refresh-fail), cache invalidates
-function getTokenFingerprint(accessToken: string | undefined): string {
-  if (!accessToken) return "";
-  return accessToken.slice(-16);
+// Hash the refresh_token to a short, non-sensitive fingerprint.
+// We never store the raw token — only its SHA-256 fingerprint to detect session changes.
+async function getSessionFingerprint(refreshToken: string | undefined): Promise<string> {
+  if (!refreshToken) return "";
+  try {
+    const data = new TextEncoder().encode(refreshToken);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.slice(0, 16).map((b) => b.toString(16).padStart(2, "0")).join("");
+  } catch {
+    // Fallback for older browsers — last 24 chars of refresh_token
+    return refreshToken.slice(-24);
+  }
 }
 
 function readCache(key: string, currentFingerprint: string): AIInsight[] | null {
   try {
-    const raw = sessionStorage.getItem(key);
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as CachedInsights;
-    if (parsed.tokenFingerprint !== currentFingerprint) {
-      sessionStorage.removeItem(key);
+    if (parsed.sessionFingerprint !== currentFingerprint) {
+      localStorage.removeItem(key);
       return null;
     }
     return parsed.insights;
@@ -34,10 +44,10 @@ function readCache(key: string, currentFingerprint: string): AIInsight[] | null 
   }
 }
 
-function writeCache(key: string, insights: AIInsight[], tokenFingerprint: string) {
+function writeCache(key: string, insights: AIInsight[], sessionFingerprint: string) {
   try {
-    const payload: CachedInsights = { insights, tokenFingerprint, cachedAt: Date.now() };
-    sessionStorage.setItem(key, JSON.stringify(payload));
+    const payload: CachedInsights = { insights, sessionFingerprint, cachedAt: Date.now() };
+    localStorage.setItem(key, JSON.stringify(payload));
   } catch {
     // ignore quota errors
   }
@@ -46,11 +56,11 @@ function writeCache(key: string, insights: AIInsight[], tokenFingerprint: string
 function clearAllInsightsCache() {
   try {
     const keys: string[] = [];
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const k = sessionStorage.key(i);
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
       if (k && k.startsWith(CACHE_PREFIX)) keys.push(k);
     }
-    keys.forEach((k) => sessionStorage.removeItem(k));
+    keys.forEach((k) => localStorage.removeItem(k));
   } catch {
     // ignore
   }
