@@ -244,6 +244,10 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const { data: statuses } = useDemandStatuses();
   const updateDemand = useUpdateDemand();
   const reorderSubdemands = useReorderSubdemands();
+  
+  const demandIds = useMemo(() => demands.map(d => d.id), [demands]);
+  const { data: adjustmentCounts } = useAdjustmentCounts(demandIds);
+  const { data: batchDeps } = useBatchDependencyInfo(demandIds);
 
   // Reorder subdemandas dentro do grupo expandido (mesmo pai)
   const handleSubReorder = useCallback(async (
@@ -279,10 +283,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       toast.error(getErrorMessage(err) || "Não foi possível reordenar as subdemandas.");
     }
   }, [batchDeps, reorderSubdemands]);
-  
-  const demandIds = useMemo(() => demands.map(d => d.id), [demands]);
-  const { data: adjustmentCounts } = useAdjustmentCounts(demandIds);
-  const { data: batchDeps } = useBatchDependencyInfo(demandIds);
 
   const effectiveStatusByDemandId = useMemo(() => {
     const map: Record<string, string> = {};
