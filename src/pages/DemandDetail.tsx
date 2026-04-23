@@ -20,6 +20,7 @@ import { useUserTimerControl } from "@/hooks/useUserTimeTracking";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
 import { DemandEditForm } from "@/components/DemandEditForm";
+import { SubdemandEditForm } from "@/components/SubdemandEditForm";
 import { DemandFolderPicker } from "@/components/DemandFolderPicker";
 import { AttachmentUploader } from "@/components/AttachmentUploader";
 import { Calendar, Users, Archive, Pencil, Wrench, AlertTriangle, LayoutGrid, List, ChevronDown, Kanban, CalendarDays, LucideIcon, Check, X, ArrowRight, UserCircle, GitBranch, Plus } from "lucide-react";
@@ -1236,20 +1237,43 @@ export default function DemandDetail() {
         boardName={currentBoard?.name}
       />
 
-      {/* Edit Dialog */}
+      {/* Edit Dialog — different form for subdemands vs parent demands */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
-          <DemandEditForm demand={{
-            id: demand.id,
-            title: demand.title,
-            description: demand.description,
-            status_id: demand.status_id,
-            priority: demand.priority,
-            due_date: demand.due_date,
-            service_id: demand.service_id,
-            team_id: demand.team_id,
-            board_id: demand.board_id
-          }} onClose={() => setIsEditDialogOpen(false)} onSuccess={() => setIsEditDialogOpen(false)} />
+          {demand.parent_demand_id ? (
+            <SubdemandEditForm
+              demand={{
+                id: demand.id,
+                title: demand.title,
+                description: demand.description,
+                status_id: demand.status_id,
+                priority: demand.priority,
+                due_date: demand.due_date,
+                service_id: demand.service_id,
+                team_id: demand.team_id,
+                board_id: demand.board_id,
+                parent_demand_id: demand.parent_demand_id,
+              }}
+              onClose={() => setIsEditDialogOpen(false)}
+              onSuccess={() => setIsEditDialogOpen(false)}
+            />
+          ) : (
+            <DemandEditForm
+              demand={{
+                id: demand.id,
+                title: demand.title,
+                description: demand.description,
+                status_id: demand.status_id,
+                priority: demand.priority,
+                due_date: demand.due_date,
+                service_id: demand.service_id,
+                team_id: demand.team_id,
+                board_id: demand.board_id,
+              }}
+              onClose={() => setIsEditDialogOpen(false)}
+              onSuccess={() => setIsEditDialogOpen(false)}
+            />
+          )}
         </DialogContent>
       </Dialog>
 
