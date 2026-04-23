@@ -298,6 +298,7 @@ export default function Demands() {
     return <DemandHierarchyGrid data={demandList as any[]} onDemandClick={(demandId, boardId) => handleDemandClick(demandId, boardId, "grid")} />;
   };
   return <div className="space-y-4 md:space-y-6 animate-fade-in">
+      <SEOHead title="Demandas" path="/demands" />
       <PageBreadcrumb
         items={[
           { label: t("demands.title"), icon: LayoutList, isCurrent: true },
