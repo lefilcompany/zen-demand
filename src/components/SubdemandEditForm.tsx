@@ -126,17 +126,16 @@ export function SubdemandEditForm({ demand, onClose, onSuccess }: SubdemandEditF
     });
   }, [siblingSubdemands, demand.id, reverseDependents]);
 
-  // Hide entire dependency section if this is the first subdemand (no older siblings)
-  // AND there is no existing dependency to manage.
-  const hasNoEligibleOptions = dependencyOptions.length === 0;
-  const hasExistingDependency = dependsOnId !== NONE_VALUE && !!currentDependencyTitle;
-  const showDependencySection = hasExistingDependency || !hasNoEligibleOptions;
-
   const currentDependencyTitle = useMemo(() => {
     if (dependsOnId === NONE_VALUE) return null;
     const found = siblingSubdemands?.find((s) => s.id === dependsOnId);
     return found?.title ?? currentDeps?.[0]?.dependsOnTitle ?? "Subdemanda";
   }, [dependsOnId, siblingSubdemands, currentDeps]);
+
+  // Hide entire dependency section if this is the first subdemand (no older siblings)
+  // AND there is no existing dependency to manage.
+  const hasExistingDependency = dependsOnId !== NONE_VALUE && !!currentDependencyTitle;
+  const showDependencySection = hasExistingDependency || dependencyOptions.length > 0;
 
   const draftFields = useMemo(
     () => ({ title, description, statusId, priority, dueDate, serviceId, selectedAssignees, dependsOnId }),
