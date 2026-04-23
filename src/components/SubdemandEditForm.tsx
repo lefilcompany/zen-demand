@@ -366,6 +366,7 @@ export function SubdemandEditForm({ demand, onClose, onSuccess }: SubdemandEditF
               </div>
             </div>
 
+            {showDependencySection && (
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Link2 className="h-4 w-4 text-[#F28705]" />
