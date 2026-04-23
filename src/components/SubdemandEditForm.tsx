@@ -113,9 +113,17 @@ export function SubdemandEditForm({ demand, onClose, onSuccess }: SubdemandEditF
 
   const dependencyOptions = useMemo(() => {
     if (!siblingSubdemands) return [];
-    return siblingSubdemands.filter(
-      (s) => s.id !== demand.id && !reverseDependents.has(s.id)
-    );
+    const self = siblingSubdemands.find((s) => s.id === demand.id);
+    const selfCreatedAt = self?.created_at ? new Date(self.created_at).getTime() : null;
+    return siblingSubdemands.filter((s) => {
+      if (s.id === demand.id) return false;
+      if (reverseDependents.has(s.id)) return false;
+      // Only allow depending on siblings created BEFORE the current subdemand
+      if (selfCreatedAt !== null && s.created_at) {
+        if (new Date(s.created_at).getTime() >= selfCreatedAt) return false;
+      }
+      return true;
+    });
   }, [siblingSubdemands, demand.id, reverseDependents]);
 
   const currentDependencyTitle = useMemo(() => {
@@ -123,6 +131,11 @@ export function SubdemandEditForm({ demand, onClose, onSuccess }: SubdemandEditF
     const found = siblingSubdemands?.find((s) => s.id === dependsOnId);
     return found?.title ?? currentDeps?.[0]?.dependsOnTitle ?? "Subdemanda";
   }, [dependsOnId, siblingSubdemands, currentDeps]);
+
+  // Hide entire dependency section if this is the first subdemand (no older siblings)
+  // AND there is no existing dependency to manage.
+  const hasExistingDependency = dependsOnId !== NONE_VALUE && !!currentDependencyTitle;
+  const showDependencySection = hasExistingDependency || dependencyOptions.length > 0;
 
   const draftFields = useMemo(
     () => ({ title, description, statusId, priority, dueDate, serviceId, selectedAssignees, dependsOnId }),
@@ -353,6 +366,7 @@ export function SubdemandEditForm({ demand, onClose, onSuccess }: SubdemandEditF
               </div>
             </div>
 
+            {showDependencySection && (
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Link2 className="h-4 w-4 text-[#F28705]" />
@@ -410,6 +424,7 @@ export function SubdemandEditForm({ demand, onClose, onSuccess }: SubdemandEditF
                 </div>
               )}
             </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="edit-sub-description">Descrição</Label>
