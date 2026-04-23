@@ -74,15 +74,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           const { data, error } = await supabase.auth.refreshSession();
           if (error) {
             console.error("Auto token refresh failed:", error.message);
-            // If refresh token is invalid/not found, clear local state gracefully
-            if (error.message.includes("Refresh Token") || error.message.includes("refresh_token")) {
-              console.log("Clearing invalid session data...");
-              // Don't show error toast - just silently clear the invalid session
-              // The onAuthStateChange SIGNED_OUT event will handle state cleanup
+            const m = error.message || "";
+            // If refresh token is invalid/expired, force a clean local sign-out
+            // so the app doesn't keep making 401 requests. SIGNED_OUT will reset state.
+            if (
+              m.includes("Refresh Token") ||
+              m.includes("refresh_token") ||
+              m.includes("Invalid") ||
+              m.includes("expired")
+            ) {
+              console.log("Refresh token invalid — clearing local session");
+              await supabase.auth.signOut({ scope: "local" }).catch(() => {});
             }
           } else if (data.session) {
             console.log("Token refreshed successfully");
-            // The onAuthStateChange listener will handle state updates
+            // The onAuthStateChange (TOKEN_REFRESHED) listener will reschedule the next refresh
           }
         } catch (err) {
           console.error("Token refresh error:", err);
