@@ -65,12 +65,17 @@ export function NoBoardsScreen() {
     <div className="flex h-[100dvh] w-full bg-sidebar p-2 md:p-3 overflow-hidden">
       <main className="flex-1 flex flex-col bg-background rounded-xl shadow-xl overflow-hidden">
         {/* Minimal header */}
-        <header className="flex h-11 shrink-0 items-center justify-between px-4 border-b border-border rounded-t-xl">
-          <div className="flex items-center gap-2">
-            <img src={logoSomaIcon} alt="SoMA" className="h-5 w-5 object-contain" />
-            <span className="text-sm font-medium text-foreground hidden sm:inline">
-              {currentTeam?.name}
-            </span>
+        <header className="flex h-12 shrink-0 items-center justify-between px-4 border-b border-border rounded-t-xl">
+          <div className="flex items-center gap-3 min-w-0">
+            <img src={logoSrc} alt="SoMA" className="h-6 w-auto object-contain shrink-0" />
+            {currentTeam?.name && (
+              <>
+                <span className="h-4 w-px bg-border shrink-0" aria-hidden="true" />
+                <span className="text-sm font-medium text-foreground truncate hidden sm:inline">
+                  {currentTeam.name}
+                </span>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <DropdownMenu>
