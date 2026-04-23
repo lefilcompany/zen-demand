@@ -53,6 +53,7 @@ import { CreateSubdemandDialog, type SubdemandFormData } from "@/components/Crea
 import { ParentDemandTimeDisplay } from "@/components/ParentDemandTimeDisplay";
 import { checkDependencyBeforeStatusChange, useDemandDependencyInfo, useBatchDependencyInfo } from "@/hooks/useDependencyCheck";
 import { Lock, Link2, GripVertical } from "lucide-react";
+import { SEOHead } from "@/components/SEOHead";
 export default function DemandDetail() {
   const {
     id
