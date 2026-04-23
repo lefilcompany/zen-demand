@@ -23,7 +23,7 @@ import { DemandEditForm } from "@/components/DemandEditForm";
 import { SubdemandEditForm } from "@/components/SubdemandEditForm";
 import { DemandFolderPicker } from "@/components/DemandFolderPicker";
 import { AttachmentUploader } from "@/components/AttachmentUploader";
-import { Calendar, Users, Archive, Pencil, Wrench, AlertTriangle, LayoutGrid, List, ChevronDown, Kanban, CalendarDays, LucideIcon, Check, X, ArrowRight, UserCircle, GitBranch, Plus } from "lucide-react";
+import { Calendar, Users, Archive, Pencil, Wrench, AlertTriangle, LayoutGrid, List, ChevronDown, Kanban, CalendarDays, LucideIcon, Check, X, ArrowRight, UserCircle, GitBranch, Plus, MoreVertical, ExternalLink } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { ShareDemandButton } from "@/components/ShareDemandButton";
@@ -200,6 +200,17 @@ export default function DemandDetail() {
   const [editingAssignees, setEditingAssignees] = useState(false);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  // Open edit dialog automatically if URL has ?edit=1 (used by subdemand "Editar" action)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("edit") === "1") {
+      setIsEditDialogOpen(true);
+      // Clean the query param so refresh/back doesn't keep reopening
+      params.delete("edit");
+      const newSearch = params.toString();
+      navigate(`${location.pathname}${newSearch ? `?${newSearch}` : ""}`, { replace: true });
+    }
+  }, [location.search, location.pathname, navigate]);
   const [isAdjustmentDialogOpen, setIsAdjustmentDialogOpen] = useState(false);
   const [adjustmentReason, setAdjustmentReason] = useState("");
   const [isChangeBoardDialogOpen, setIsChangeBoardDialogOpen] = useState(false);
@@ -1110,113 +1121,146 @@ export default function DemandDetail() {
                     const subIsBlocked = subDeps.some(d => d.isBlocked);
 
                     return (
-                      <button
-                        key={sub.id}
-                        onClick={() => navigate(`/demands/${sub.id}`)}
-                        draggable={hasEditPermission}
-                        onDragStart={(e) => {
-                          if (!hasEditPermission) return;
-                          setDraggedSubId(sub.id);
-                          e.dataTransfer.effectAllowed = "move";
-                          e.dataTransfer.setData("application/x-subdemand-id", sub.id);
-                        }}
-                        onDragEnd={() => {
-                          setDraggedSubId(null);
-                          setDragOverSubId(null);
-                        }}
-                        onDragOver={(e) => {
-                          if (!hasEditPermission) return;
-                          if (!e.dataTransfer.types.includes("application/x-subdemand-id")) return;
-                          e.preventDefault();
-                          e.dataTransfer.dropEffect = "move";
-                          if (dragOverSubId !== sub.id) setDragOverSubId(sub.id);
-                        }}
-                        onDragLeave={() => {
-                          if (dragOverSubId === sub.id) setDragOverSubId(null);
-                        }}
-                        onDrop={(e) => {
-                          if (!hasEditPermission) return;
-                          e.preventDefault();
-                          handleReorderSubdemand(sub.id);
-                        }}
-                        className={cn(
-                          "w-full h-full text-left rounded-lg overflow-hidden transition-all hover:opacity-90 cursor-pointer border flex flex-col",
-                          dragOverSubId === sub.id && "ring-2 ring-primary ring-offset-1",
-                          draggedSubId === sub.id && "opacity-50"
-                        )}
-                        style={{ borderColor: `${bgColor}33` }}
-                        title={`${sub.title} — ${statusName}${hasEditPermission ? " (arraste para reordenar)" : ""}`}
-                      >
-                        {/* Color header bar */}
-                        <div className="px-3 py-1.5 text-white text-xs font-semibold truncate flex items-center gap-1.5" style={{ backgroundColor: bgColor }}>
-                          {hasEditPermission && (
-                            <GripVertical className="h-3 w-3 opacity-60 shrink-0 cursor-grab active:cursor-grabbing" />
+                      <div key={sub.id} className="relative group">
+                        <button
+                          onClick={() => navigate(`/demands/${sub.id}`)}
+                          draggable={hasEditPermission}
+                          onDragStart={(e) => {
+                            if (!hasEditPermission) return;
+                            setDraggedSubId(sub.id);
+                            e.dataTransfer.effectAllowed = "move";
+                            e.dataTransfer.setData("application/x-subdemand-id", sub.id);
+                          }}
+                          onDragEnd={() => {
+                            setDraggedSubId(null);
+                            setDragOverSubId(null);
+                          }}
+                          onDragOver={(e) => {
+                            if (!hasEditPermission) return;
+                            if (!e.dataTransfer.types.includes("application/x-subdemand-id")) return;
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = "move";
+                            if (dragOverSubId !== sub.id) setDragOverSubId(sub.id);
+                          }}
+                          onDragLeave={() => {
+                            if (dragOverSubId === sub.id) setDragOverSubId(null);
+                          }}
+                          onDrop={(e) => {
+                            if (!hasEditPermission) return;
+                            e.preventDefault();
+                            handleReorderSubdemand(sub.id);
+                          }}
+                          className={cn(
+                            "w-full h-full text-left rounded-lg overflow-hidden transition-all hover:opacity-90 cursor-pointer border flex flex-col",
+                            dragOverSubId === sub.id && "ring-2 ring-primary ring-offset-1",
+                            draggedSubId === sub.id && "opacity-50"
                           )}
-                          <span className="truncate">
-                            {sub.board_sequence_number ? `#${String(sub.board_sequence_number).padStart(4, "0")} · ` : ""}
-                            {sub.title}
-                          </span>
-                        </div>
+                          style={{ borderColor: `${bgColor}33` }}
+                          title={`${sub.title} — ${statusName}${hasEditPermission ? " (arraste para reordenar)" : ""}`}
+                        >
+                          {/* Color header bar */}
+                          <div className="px-3 py-1.5 pr-8 text-white text-xs font-semibold truncate flex items-center gap-1.5" style={{ backgroundColor: bgColor }}>
+                            {hasEditPermission && (
+                              <GripVertical className="h-3 w-3 opacity-60 shrink-0 cursor-grab active:cursor-grabbing" />
+                            )}
+                            <span className="truncate">
+                              {sub.board_sequence_number ? `#${String(sub.board_sequence_number).padStart(4, "0")} · ` : ""}
+                              {sub.title}
+                            </span>
+                          </div>
 
-                        {/* Details */}
-                        <div className="px-3 py-2 bg-card space-y-1.5 flex-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-[10px] font-medium uppercase tracking-wide" style={{ color: bgColor }}>
-                              {statusName}
-                            </span>
-                            <span className="text-[10px] font-medium uppercase" style={{ color: priorityColor }}>
-                              {priorityLabel}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
-                            {/* Assignees */}
-                            <div className="flex items-center gap-1 min-w-0">
-                              {assignees.length > 0 ? (
-                                <div className="flex -space-x-1.5">
-                                  {assignees.slice(0, 3).map((a) => (
-                                    <Avatar key={a.user_id} className="h-4 w-4 border border-background">
-                                      <AvatarImage src={a.profile?.avatar_url || undefined} />
-                                      <AvatarFallback className="text-[6px]">
-                                        {a.profile?.full_name?.charAt(0) || "?"}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                  ))}
-                                  {assignees.length > 3 && (
-                                    <span className="text-[9px] ml-1">+{assignees.length - 3}</span>
-                                  )}
-                                </div>
-                              ) : (
-                                <span className="truncate">Sem responsável</span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <SubdemandTimer demandId={sub.id} />
-                              {!sub.time_in_progress_seconds && (
-                                <span className="font-mono text-[10px] text-muted-foreground">0h</span>
-                              )}
-                              {sub.due_date && (
-                                <span>{formatDateOnlyBR(sub.due_date)}</span>
-                              )}
-                            </div>
-                          </div>
-                          {/* Dependency indicator */}
-                          {subDeps.length > 0 && (
-                            <div className={cn(
-                              "flex items-center gap-1 px-2 py-1 text-[10px] font-medium",
-                              subIsBlocked
-                                ? "text-red-600 bg-red-500/5"
-                                : "text-emerald-600 bg-emerald-500/5"
-                            )}>
-                              {subIsBlocked ? <Lock className="h-3 w-3" /> : <Link2 className="h-3 w-3" />}
-                              <span className="truncate">
-                                {subIsBlocked
-                                  ? `Depende de: ${subDeps.find(d => d.isBlocked)?.dependsOnTitle}`
-                                  : `Dependência OK: ${subDeps[0]?.dependsOnTitle}`}
+                          {/* Details */}
+                          <div className="px-3 py-2 bg-card space-y-1.5 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[10px] font-medium uppercase tracking-wide" style={{ color: bgColor }}>
+                                {statusName}
+                              </span>
+                              <span className="text-[10px] font-medium uppercase" style={{ color: priorityColor }}>
+                                {priorityLabel}
                               </span>
                             </div>
-                          )}
+                            <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+                              {/* Assignees */}
+                              <div className="flex items-center gap-1 min-w-0">
+                                {assignees.length > 0 ? (
+                                  <div className="flex -space-x-1.5">
+                                    {assignees.slice(0, 3).map((a) => (
+                                      <Avatar key={a.user_id} className="h-4 w-4 border border-background">
+                                        <AvatarImage src={a.profile?.avatar_url || undefined} />
+                                        <AvatarFallback className="text-[6px]">
+                                          {a.profile?.full_name?.charAt(0) || "?"}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                    ))}
+                                    {assignees.length > 3 && (
+                                      <span className="text-[9px] ml-1">+{assignees.length - 3}</span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="truncate">Sem responsável</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <SubdemandTimer demandId={sub.id} />
+                                {!sub.time_in_progress_seconds && (
+                                  <span className="font-mono text-[10px] text-muted-foreground">0h</span>
+                                )}
+                                {sub.due_date && (
+                                  <span>{formatDateOnlyBR(sub.due_date)}</span>
+                                )}
+                              </div>
+                            </div>
+                            {/* Dependency indicator */}
+                            {subDeps.length > 0 && (
+                              <div className={cn(
+                                "flex items-center gap-1 px-2 py-1 text-[10px] font-medium",
+                                subIsBlocked
+                                  ? "text-red-600 bg-red-500/5"
+                                  : "text-emerald-600 bg-emerald-500/5"
+                              )}>
+                                {subIsBlocked ? <Lock className="h-3 w-3" /> : <Link2 className="h-3 w-3" />}
+                                <span className="truncate">
+                                  {subIsBlocked
+                                    ? `Depende de: ${subDeps.find(d => d.isBlocked)?.dependsOnTitle}`
+                                    : `Dependência OK: ${subDeps[0]?.dependsOnTitle}`}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </button>
+
+                        {/* Settings dropdown — overlay top-right */}
+                        <div className="absolute top-1 right-1 z-10">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                onClick={(e) => e.stopPropagation()}
+                                className="h-6 w-6 inline-flex items-center justify-center rounded-md text-white/90 hover:bg-white/20 transition-colors"
+                                aria-label="Opções da subdemanda"
+                                title="Opções"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="end"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <DropdownMenuItem onSelect={() => navigate(`/demands/${sub.id}`)}>
+                                <ExternalLink className="h-4 w-4" />
+                                Abrir
+                              </DropdownMenuItem>
+                              {hasEditPermission && (
+                                <DropdownMenuItem onSelect={() => navigate(`/demands/${sub.id}?edit=1`)}>
+                                  <Pencil className="h-4 w-4" />
+                                  Editar
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
