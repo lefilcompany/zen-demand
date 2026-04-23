@@ -29,7 +29,7 @@ export function GlobalSearchBar() {
   const containerRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { currentBoard } = useSelectedBoard();
+  const { currentBoard } = useSelectedBoardSafe();
   const { openCreateDemand } = useCreateDemandModal();
   const isMobile = useIsMobile();
 
