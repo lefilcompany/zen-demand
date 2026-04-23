@@ -1,6 +1,6 @@
 import { LayoutDashboard, Users, User, Briefcase, Kanban, ChevronUp, Settings, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock, Sparkles, ShoppingCart, Layers, StickyNote, LayoutList } from "lucide-react";
 import { useTranslation } from "react-i18next";
-const logoSoma = "/lovable-uploads/2c7c25a3-682b-4526-b7f8-41f2197c8f60.png";
+const logoSoma = "/logo-soma-sidebar.png";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
