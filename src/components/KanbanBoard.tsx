@@ -1124,12 +1124,24 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
               {showDragHandle && (
                 <div
                   draggable
-                  onDragStart={(e) => { e.stopPropagation(); handleDragStart(e, demand.id); }}
-                  onDragEnd={handleDragEnd}
+                  onDragStart={(e) => {
+                    e.stopPropagation();
+                    handleDragStart(e, demand.id);
+                    // Also expose subdemand-reorder MIME so this same handle can reorder within the parent group
+                    try {
+                      e.dataTransfer.setData("application/x-subdemand-reorder", demand.id);
+                      subReorderSourceIdRef.current = demand.id;
+                    } catch {}
+                  }}
+                  onDragEnd={(e) => {
+                    handleDragEnd();
+                    setSubReorderDragOverId(null);
+                    subReorderSourceIdRef.current = null;
+                  }}
                   onMouseDown={handleDragHandleMouseDown}
                   onClick={(e) => e.stopPropagation()}
                   className="flex items-center justify-center rounded-md p-1 -ml-0.5 mt-0.5 bg-primary/10 hover:bg-primary/20 cursor-grab active:cursor-grabbing transition-all opacity-80 group-hover:opacity-100 touch-none select-none"
-                  title="Arraste para mover"
+                  title="Arraste para mover ou reordenar"
                 >
                   <GripVertical className="h-3.5 w-3.5 text-primary" />
                 </div>
@@ -1744,29 +1756,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                         )}
                         {!isLast && (
                           <div className="absolute left-[7px] top-0 w-[2px] h-full bg-primary/20 rounded-full" />
-                        )}
-
-                        {/* Subdemand reorder handle (drag inside group) */}
-                        {canReorderSubs && (
-                          <div
-                            draggable
-                            onDragStart={(e) => {
-                              e.stopPropagation();
-                              e.dataTransfer.effectAllowed = "move";
-                              e.dataTransfer.setData(SUB_REORDER_MIME, child.id);
-                              subReorderSourceIdRef.current = child.id;
-                            }}
-                            onDragEnd={(e) => {
-                              e.stopPropagation();
-                              setSubReorderDragOverId(null);
-                              subReorderSourceIdRef.current = null;
-                            }}
-                            className="absolute left-[22px] top-1/2 -translate-y-1/2 z-20 p-0.5 rounded cursor-grab active:cursor-grabbing opacity-40 hover:opacity-100 hover:bg-primary/10 transition-opacity"
-                            title="Arraste para reordenar dentro do grupo"
-                            aria-label="Reordenar subdemanda"
-                          >
-                            <GripVertical className="h-3.5 w-3.5 text-primary" />
-                          </div>
                         )}
 
                         {renderDemandCard(child, columnKey, showMoveMenu, adjType)}
