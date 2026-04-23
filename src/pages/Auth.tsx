@@ -762,13 +762,16 @@ export default function Auth() {
               </TabsContent>
             </Tabs>
 
+              </Tabs>
+            </div>
+            {/* /Auth card */}
+
             {/* Password Reset Dialog - Outside of login form to prevent form submission conflicts */}
             <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
-              <DialogContent 
-                className="sm:max-w-md" 
+              <DialogContent
+                className="sm:max-w-md"
                 onPointerDownOutside={(e) => e.preventDefault()}
                 onKeyDown={(e) => {
-                  // Prevent Enter key from propagating to any parent forms
                   if (e.key === 'Enter') {
                     e.stopPropagation();
                   }
@@ -786,16 +789,15 @@ export default function Auth() {
                 <form onSubmit={handleResetPassword} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="reset-email">Email</Label>
-                    <Input 
-                      id="reset-email" 
-                      type="email" 
-                      placeholder="seu@email.com" 
-                      value={resetEmail} 
-                      onChange={e => setResetEmail(e.target.value)} 
-                      required 
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={resetEmail}
+                      onChange={e => setResetEmail(e.target.value)}
+                      required
                       autoFocus
                       onKeyDown={(e) => {
-                        // Prevent Enter from bubbling up to any parent form
                         if (e.key === 'Enter') {
                           e.stopPropagation();
                         }
@@ -829,12 +831,19 @@ export default function Auth() {
               </DialogContent>
             </Dialog>
 
-            <p className="text-center text-xs text-muted-foreground mt-4">
-              Ao continuar, você concorda com nossa{" "}
-              <a href="/privacy-policy" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Política de Privacidade</a>{" "}
-              e{" "}
-              <a href="/terms-of-service" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Termos de Serviço</a>.
-            </p>
+            {/* Trust footer outside the card */}
+            <div className="mt-5 flex flex-col items-center gap-2 text-center">
+              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <Lock className="h-3 w-3" />
+                <span>Conexão criptografada de ponta a ponta</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed max-w-xs">
+                Ao continuar, você concorda com nossa{" "}
+                <a href="/privacy-policy" className="text-foreground hover:text-primary underline-offset-2 hover:underline transition-colors" target="_blank" rel="noopener noreferrer">Política de Privacidade</a>{" "}
+                e{" "}
+                <a href="/terms-of-service" className="text-foreground hover:text-primary underline-offset-2 hover:underline transition-colors" target="_blank" rel="noopener noreferrer">Termos de Serviço</a>.
+              </p>
+            </div>
           </div>
         </div>
       </div>
