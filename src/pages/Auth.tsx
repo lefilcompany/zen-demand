@@ -396,70 +396,131 @@ export default function Auth() {
   const passwordsMatch = signupData.password && signupData.confirmPassword && signupData.password === signupData.confirmPassword;
   const passwordsDontMatch = signupData.confirmPassword && signupData.password !== signupData.confirmPassword;
   return <>
-    <SEOHead title="Entrar ou Criar Conta" description="Acesse o SoMA - Sistema Operacional de Marketing. Faça login ou crie sua conta para gerenciar demandas e produtividade." path="/auth" />
-    <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen lg:overflow-hidden">
-      {/* Mobile/Tablet Header with Image - Fixed height */}
-      <div className="lg:hidden relative h-40 sm:h-48 md:h-56 flex-shrink-0 overflow-hidden" style={{
-      backgroundImage: `url(${authBackground})`,
-      backgroundSize: "cover",
-      backgroundPosition: "center"
-    }}>
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/70 via-primary/50 to-background" />
-        <div className="relative z-10 flex flex-col items-center justify-center h-full text-white px-6 text-center">
-          <img src={logoSomaDark} alt="SoMA" className="h-10 sm:h-12 w-auto mb-3" />
-          <h2 className="text-lg sm:text-xl font-semibold">{t("settings.description")}</h2>
+    <SEOHead title="Acesse sua conta" description="Acesse o SoMA - Sistema Operacional de Marketing. Faça login para gerenciar suas demandas com clareza e produtividade." path="/auth" />
+    <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen bg-muted/30 lg:overflow-hidden">
+      {/* Mobile compact brand strip */}
+      <div className="lg:hidden flex items-center justify-between px-5 py-4 bg-sidebar text-sidebar-foreground flex-shrink-0">
+        <img src={logoSomaDark} alt="SoMA" className="h-8 w-auto" />
+        <div className="flex items-center gap-1.5 text-xs text-sidebar-foreground/70">
+          <Shield className="h-3.5 w-3.5" />
+          <span>Conexão segura</span>
         </div>
       </div>
 
-      {/* Desktop Left side - Image - Fixed full height */}
-      <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 h-full relative overflow-hidden" style={{
-      backgroundImage: `url(${authBackground})`,
-      backgroundSize: "cover",
-      backgroundPosition: "center"
-    }}>
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary/50 to-transparent" />
-        <div className="relative z-10 flex flex-col justify-between p-12 text-white">
-          <div />
-          <div className="max-w-md">
-            <h1 className="text-4xl xl:text-5xl font-bold mb-6 leading-tight">{t("settings.description")}</h1>
-            <p className="text-lg xl:text-xl text-white/90 leading-relaxed">
-              {t("welcome.subtitle")}
-            </p>
+      {/* Desktop Left side - Brand panel (smaller, 2/5) */}
+      <aside
+        className="hidden lg:flex lg:w-2/5 xl:w-[42%] h-full relative overflow-hidden"
+        style={{
+          backgroundImage: `url(${authBackground})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        {/* Refined overlay: dark + brand tint, less dominant */}
+        <div className="absolute inset-0 bg-gradient-to-br from-sidebar/95 via-sidebar/85 to-primary/40" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.25),transparent_55%)]" />
+
+        <div className="relative z-10 flex flex-col justify-between p-10 xl:p-12 text-white w-full">
+          {/* Top: logo */}
+          <div className="flex items-center justify-between">
+            <img src={logoSomaDark} alt="SoMA" className="h-9 w-auto" />
+            <div className="hidden xl:flex items-center gap-1.5 text-xs text-white/70 px-2.5 py-1 rounded-full border border-white/15 bg-white/5 backdrop-blur-sm">
+              <Shield className="h-3 w-3" />
+              <span>SOC 2 · LGPD</span>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex -space-x-3">
-              <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur border-2 border-white/30" />
-              <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur border-2 border-white/30" />
-              <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur border-2 border-white/30" />
-              <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur border-2 border-white/30 flex items-center justify-center text-sm font-medium">
+
+          {/* Middle: contextual headline + value props */}
+          <div className="space-y-8 max-w-md">
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-medium text-white/80 px-2.5 py-1 rounded-full border border-white/15 bg-white/5 backdrop-blur-sm mb-5">
+                <Sparkles className="h-3 w-3" />
+                <span>Plataforma de produtividade</span>
+              </div>
+              <h1 className="text-3xl xl:text-[2.5rem] font-bold leading-[1.15] tracking-tight">
+                Sua operação de marketing,{" "}
+                <span className="text-primary-glow" style={{ color: "hsl(var(--primary-glow))" }}>
+                  organizada
+                </span>{" "}
+                e em movimento.
+              </h1>
+              <p className="mt-4 text-base text-white/75 leading-relaxed">
+                Centralize demandas, acompanhe entregas e mantenha seu time alinhado em um só lugar.
+              </p>
+            </div>
+
+            {/* Compact value list */}
+            <ul className="space-y-3 text-sm">
+              <li className="flex items-start gap-3 text-white/85">
+                <div className="mt-0.5 h-7 w-7 rounded-lg bg-white/10 border border-white/10 flex items-center justify-center flex-shrink-0">
+                  <Zap className="h-3.5 w-3.5 text-primary-glow" style={{ color: "hsl(var(--primary-glow))" }} />
+                </div>
+                <span>Fluxos Kanban com tempo real e automações de status</span>
+              </li>
+              <li className="flex items-start gap-3 text-white/85">
+                <div className="mt-0.5 h-7 w-7 rounded-lg bg-white/10 border border-white/10 flex items-center justify-center flex-shrink-0">
+                  <Check className="h-3.5 w-3.5 text-primary-glow" style={{ color: "hsl(var(--primary-glow))" }} />
+                </div>
+                <span>Relatórios de produtividade por agente e por quadro</span>
+              </li>
+              <li className="flex items-start gap-3 text-white/85">
+                <div className="mt-0.5 h-7 w-7 rounded-lg bg-white/10 border border-white/10 flex items-center justify-center flex-shrink-0">
+                  <Shield className="h-3.5 w-3.5 text-primary-glow" style={{ color: "hsl(var(--primary-glow))" }} />
+                </div>
+                <span>Permissões granulares por equipe, quadro e papel</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Bottom: social proof */}
+          <div className="flex items-center gap-4 pt-2">
+            <div className="flex -space-x-2">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-white/30 to-white/10 backdrop-blur border-2 border-sidebar" />
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/40 to-primary/10 backdrop-blur border-2 border-sidebar" />
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-white/20 to-white/5 backdrop-blur border-2 border-sidebar" />
+              <div className="w-9 h-9 rounded-full bg-white/10 backdrop-blur border-2 border-sidebar flex items-center justify-center text-[10px] font-semibold text-white">
                 +30
               </div>
             </div>
-            <p className="text-white/80 text-sm">{t("teams.title")}</p>
+            <div className="text-xs text-white/70 leading-snug">
+              <p className="font-medium text-white/90">Mais de 30 equipes</p>
+              <p>já operam com o SoMA todos os dias</p>
+            </div>
           </div>
         </div>
-      </div>
+      </aside>
 
-      {/* Form Section - Scrollable on mobile */}
-      <div className="flex-1 lg:w-1/2 xl:w-2/5 flex flex-col bg-background overflow-y-auto lg:overflow-y-auto">
-        <div className="flex-1 flex items-start lg:items-center justify-center p-4 sm:p-6 md:p-8 lg:p-12">
-          <div className="w-full max-w-md py-4 pb-8">
-            <div className="mb-5 sm:mb-6 text-center">
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 flex items-center justify-center gap-2">
-                {t("auth.welcomeBack")} <img alt="SoMA+" src="/lovable-uploads/9889f524-0819-424e-9185-2cc441526116.png" className="h-10 w-20 inline-block items-center justify-center" />
-              </h1>
-              <p className="text-sm sm:text-base text-muted-foreground">{t("auth.loginDescription")}</p>
-            </div>
+      {/* Form Section - 3/5, prioritized */}
+      <div className="flex-1 lg:w-3/5 xl:w-[58%] flex flex-col bg-muted/30 overflow-y-auto">
+        <div className="flex-1 flex items-start lg:items-center justify-center p-4 sm:p-6 md:p-8 lg:p-10">
+          <div className="w-full max-w-[440px] py-4 pb-8">
+            {/* Auth card */}
+            <div className="bg-card rounded-2xl border border-border/60 shadow-[0_8px_30px_-12px_hsl(0_0%_0%/0.12)] p-6 sm:p-8">
+              {/* Header */}
+              <div className="mb-6">
+                <h1 className="text-[1.6rem] sm:text-[1.75rem] font-bold text-foreground tracking-tight leading-tight">
+                  Acesse sua conta
+                </h1>
+                <p className="text-sm text-muted-foreground mt-1.5">
+                  Entre para continuar sua jornada no SoMA.
+                </p>
+              </div>
 
-            <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-5 h-10 sm:h-11 bg-muted/50 p-1 rounded-xl">
-                <TabsTrigger value="login" className="text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
-                  {t("auth.login")}
-                </TabsTrigger>
-                <TabsTrigger value="signup" className="text-sm font-medium rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
-                  {t("auth.signup")}
-                </TabsTrigger>
-              </TabsList>
+              <Tabs defaultValue="login" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-5 h-11 bg-muted p-1 rounded-xl">
+                  <TabsTrigger
+                    value="login"
+                    className="text-sm font-semibold rounded-lg text-muted-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all"
+                  >
+                    {t("auth.login")}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="signup"
+                    className="text-sm font-semibold rounded-lg text-muted-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all"
+                  >
+                    {t("auth.signup")}
+                  </TabsTrigger>
+                </TabsList>
 
               <TabsContent value="login" className="mt-0">
                 {showClearedCacheNotice && (
