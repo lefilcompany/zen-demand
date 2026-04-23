@@ -241,6 +241,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   };
   const { data: statuses } = useDemandStatuses();
   const updateDemand = useUpdateDemand();
+  const reorderSubdemands = useReorderSubdemands();
   
   const demandIds = useMemo(() => demands.map(d => d.id), [demands]);
   const { data: adjustmentCounts } = useAdjustmentCounts(demandIds);
