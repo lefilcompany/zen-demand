@@ -45,6 +45,8 @@ import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 import { KanbanSubdemandsList } from "@/components/KanbanSubdemandsList";
 import { KanbanCardMenu } from "@/components/KanbanCardMenu";
 import { checkDependencyBeforeStatusChange, useBatchDependencyInfo, type DependencyInfo } from "@/hooks/useDependencyCheck";
+import { useReorderSubdemands } from "@/hooks/useSubdemands";
+import { validateSubdemandOrder } from "@/lib/subdemandOrderUtils";
 import { Link2, Lock } from "lucide-react";
 
 interface Assignee {
