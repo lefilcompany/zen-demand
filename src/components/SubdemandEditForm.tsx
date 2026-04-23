@@ -165,13 +165,6 @@ export function SubdemandEditForm({ demand, onClose, onSuccess }: SubdemandEditF
     setDependsOnId(NONE_VALUE);
   };
 
-  const isValid =
-    !!title.trim() &&
-    !!statusId &&
-    !!priority &&
-    !!dueDate &&
-    (!canAssignResponsibles || selectedAssignees.length > 0);
-
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!title.trim() || !statusId) return;
