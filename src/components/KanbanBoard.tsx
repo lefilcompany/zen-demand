@@ -45,6 +45,8 @@ import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 import { KanbanSubdemandsList } from "@/components/KanbanSubdemandsList";
 import { KanbanCardMenu } from "@/components/KanbanCardMenu";
 import { checkDependencyBeforeStatusChange, useBatchDependencyInfo, type DependencyInfo } from "@/hooks/useDependencyCheck";
+import { useReorderSubdemands } from "@/hooks/useSubdemands";
+import { validateSubdemandOrder } from "@/lib/subdemandOrderUtils";
 import { Link2, Lock } from "lucide-react";
 
 interface Assignee {
@@ -228,6 +230,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const [columnSearches, setColumnSearches] = useState<Record<string, string>>({});
   const [columnSorts, setColumnSorts] = useState<Record<string, KanbanSortOption>>({});
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [subReorderDragOverId, setSubReorderDragOverId] = useState<string | null>(null);
+  const subReorderSourceIdRef = useState<{ current: string | null }>({ current: null })[0];
 
   const toggleGroupCollapsed = (parentId: string) => {
     setCollapsedGroups(prev => {
@@ -239,10 +243,46 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   };
   const { data: statuses } = useDemandStatuses();
   const updateDemand = useUpdateDemand();
+  const reorderSubdemands = useReorderSubdemands();
   
   const demandIds = useMemo(() => demands.map(d => d.id), [demands]);
   const { data: adjustmentCounts } = useAdjustmentCounts(demandIds);
   const { data: batchDeps } = useBatchDependencyInfo(demandIds);
+
+  // Reorder subdemandas dentro do grupo expandido (mesmo pai)
+  const handleSubReorder = useCallback(async (
+    parentId: string,
+    siblings: Demand[],
+    sourceId: string,
+    targetIndex: number,
+  ) => {
+    const ids = siblings.map(s => s.id);
+    const fromIdx = ids.indexOf(sourceId);
+    if (fromIdx === -1 || fromIdx === targetIndex) return;
+
+    const next = [...ids];
+    next.splice(fromIdx, 1);
+    const insertAt = targetIndex > fromIdx ? targetIndex - 1 : targetIndex;
+    next.splice(insertAt, 0, sourceId);
+
+    const depsForSiblings: Record<string, DependencyInfo[]> = {};
+    if (batchDeps) {
+      for (const id of ids) {
+        if (batchDeps[id]) depsForSiblings[id] = batchDeps[id];
+      }
+    }
+    const violation = validateSubdemandOrder(next, depsForSiblings);
+    if (violation) {
+      toast.error(violation);
+      return;
+    }
+
+    try {
+      await reorderSubdemands.mutateAsync({ parentDemandId: parentId, orderedIds: next });
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Não foi possível reordenar as subdemandas.");
+    }
+  }, [batchDeps, reorderSubdemands]);
 
   const effectiveStatusByDemandId = useMemo(() => {
     const map: Record<string, string> = {};
@@ -1630,31 +1670,149 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 </TooltipProvider>
               )}
             </div>
-            {children.length > 0 && !isCollapsed && (
-              <div className="relative ml-4 mt-3 space-y-0">
-                {/* Vertical connector line */}
-                <div className="absolute left-[7px] top-0 bottom-[22px] w-[2px] bg-primary/20 rounded-full" />
-                {children.map((child, idx) => {
-                  const isLast = idx === children.length - 1;
-                  return (
-                    <div key={child.id} className="relative pl-5 py-1">
-                      {/* Horizontal branch line */}
-                      <div className={cn(
-                        "absolute left-[7px] top-[22px] w-[14px] h-[2px] bg-primary/20 rounded-full",
-                      )} />
-                      {/* Curved corner for last item */}
-                      {isLast && (
-                        <div className="absolute left-[7px] top-0 w-[2px] h-[22px] bg-primary/20 rounded-full" />
-                      )}
-                      {!isLast && (
-                        <div className="absolute left-[7px] top-0 w-[2px] h-full bg-primary/20 rounded-full" />
-                      )}
-                      {renderDemandCard(child, columnKey, showMoveMenu, adjType)}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            {children.length > 0 && !isCollapsed && (() => {
+              const SUB_REORDER_MIME = "application/x-subdemand-reorder";
+              const canReorderSubs = !readOnly && (
+                userRole === "admin" ||
+                userRole === "moderator" ||
+                userRole === "executor" ||
+                demand.created_by === user?.id
+              ) && children.length > 1;
+
+              return (
+                <div className="relative ml-4 mt-3 space-y-0">
+                  {/* Vertical connector line */}
+                  <div className="absolute left-[7px] top-0 bottom-[22px] w-[2px] bg-primary/20 rounded-full" />
+                  {children.map((child, idx) => {
+                    const isLast = idx === children.length - 1;
+                    const isDragOver = subReorderDragOverId === child.id;
+                    const isFirst = idx === 0;
+
+                    const moveUp = (e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      if (isFirst) return;
+                      handleSubReorder(demand.id, children, child.id, idx - 1);
+                    };
+                    const moveDown = (e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      if (isLast) return;
+                      // targetIndex is the slot AFTER the next sibling => idx + 2
+                      handleSubReorder(demand.id, children, child.id, idx + 2);
+                    };
+
+                    return (
+                      <div
+                        key={child.id}
+                        className={cn(
+                          "relative pl-5 py-1 transition-all",
+                          isDragOver && "before:absolute before:left-5 before:right-0 before:top-0 before:h-0.5 before:bg-primary before:rounded-full"
+                        )}
+                        onDragOver={(e) => {
+                          if (!canReorderSubs) return;
+                          if (e.dataTransfer.types.includes(SUB_REORDER_MIME)) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.dataTransfer.dropEffect = "move";
+                            setSubReorderDragOverId(child.id);
+                          }
+                        }}
+                        onDragLeave={(e) => {
+                          if (!canReorderSubs) return;
+                          if (e.dataTransfer.types.includes(SUB_REORDER_MIME)) {
+                            setSubReorderDragOverId((curr) => (curr === child.id ? null : curr));
+                          }
+                        }}
+                        onDrop={(e) => {
+                          if (!canReorderSubs) return;
+                          const sourceId = e.dataTransfer.getData(SUB_REORDER_MIME);
+                          if (!sourceId) return;
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSubReorderDragOverId(null);
+                          subReorderSourceIdRef.current = null;
+                          if (sourceId === child.id) return;
+                          handleSubReorder(demand.id, children, sourceId, idx);
+                        }}
+                      >
+                        {/* Horizontal branch line */}
+                        <div className={cn(
+                          "absolute left-[7px] top-[22px] w-[14px] h-[2px] bg-primary/20 rounded-full",
+                        )} />
+                        {/* Curved corner for last item */}
+                        {isLast && (
+                          <div className="absolute left-[7px] top-0 w-[2px] h-[22px] bg-primary/20 rounded-full" />
+                        )}
+                        {!isLast && (
+                          <div className="absolute left-[7px] top-0 w-[2px] h-full bg-primary/20 rounded-full" />
+                        )}
+
+                        {/* Subdemand reorder handle (drag inside group) */}
+                        {canReorderSubs && (
+                          <div
+                            draggable
+                            onDragStart={(e) => {
+                              e.stopPropagation();
+                              e.dataTransfer.effectAllowed = "move";
+                              e.dataTransfer.setData(SUB_REORDER_MIME, child.id);
+                              subReorderSourceIdRef.current = child.id;
+                            }}
+                            onDragEnd={(e) => {
+                              e.stopPropagation();
+                              setSubReorderDragOverId(null);
+                              subReorderSourceIdRef.current = null;
+                            }}
+                            className="absolute left-[22px] top-1/2 -translate-y-1/2 z-20 p-0.5 rounded cursor-grab active:cursor-grabbing opacity-40 hover:opacity-100 hover:bg-primary/10 transition-opacity"
+                            title="Arraste para reordenar dentro do grupo"
+                            aria-label="Reordenar subdemanda"
+                          >
+                            <GripVertical className="h-3.5 w-3.5 text-primary" />
+                          </div>
+                        )}
+
+                        {renderDemandCard(child, columnKey, showMoveMenu, adjType)}
+
+                        {/* Reorder arrows (top-right of card area) */}
+                        {canReorderSubs && (
+                          <div
+                            className="absolute right-1 top-1 z-20 flex flex-col gap-0.5 opacity-0 group-hover/sub:opacity-100 hover:opacity-100 transition-opacity"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              type="button"
+                              onClick={moveUp}
+                              disabled={isFirst || reorderSubdemands.isPending}
+                              className={cn(
+                                "h-5 w-5 flex items-center justify-center rounded bg-background/95 border border-border shadow-sm",
+                                "hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors",
+                                "disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-background/95 disabled:hover:text-foreground"
+                              )}
+                              title="Mover para cima"
+                              aria-label="Mover subdemanda para cima"
+                            >
+                              <ChevronUp className="h-3 w-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={moveDown}
+                              disabled={isLast || reorderSubdemands.isPending}
+                              className={cn(
+                                "h-5 w-5 flex items-center justify-center rounded bg-background/95 border border-border shadow-sm",
+                                "hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors",
+                                "disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-background/95 disabled:hover:text-foreground"
+                              )}
+                              title="Mover para baixo"
+                              aria-label="Mover subdemanda para baixo"
+                            >
+                              <ChevronDown className="h-3 w-3" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         );
       }
