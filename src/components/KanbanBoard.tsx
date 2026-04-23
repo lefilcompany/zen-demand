@@ -244,6 +244,41 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const { data: statuses } = useDemandStatuses();
   const updateDemand = useUpdateDemand();
   const reorderSubdemands = useReorderSubdemands();
+
+  // Reorder subdemandas dentro do grupo expandido (mesmo pai)
+  const handleSubReorder = useCallback(async (
+    parentId: string,
+    siblings: Demand[],
+    sourceId: string,
+    targetIndex: number,
+  ) => {
+    const ids = siblings.map(s => s.id);
+    const fromIdx = ids.indexOf(sourceId);
+    if (fromIdx === -1 || fromIdx === targetIndex) return;
+
+    const next = [...ids];
+    next.splice(fromIdx, 1);
+    const insertAt = targetIndex > fromIdx ? targetIndex - 1 : targetIndex;
+    next.splice(insertAt, 0, sourceId);
+
+    const depsForSiblings: Record<string, DependencyInfo[]> = {};
+    if (batchDeps) {
+      for (const id of ids) {
+        if (batchDeps[id]) depsForSiblings[id] = batchDeps[id];
+      }
+    }
+    const violation = validateSubdemandOrder(next, depsForSiblings);
+    if (violation) {
+      toast.error(violation);
+      return;
+    }
+
+    try {
+      await reorderSubdemands.mutateAsync({ parentDemandId: parentId, orderedIds: next });
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Não foi possível reordenar as subdemandas.");
+    }
+  }, [batchDeps, reorderSubdemands]);
   
   const demandIds = useMemo(() => demands.map(d => d.id), [demands]);
   const { data: adjustmentCounts } = useAdjustmentCounts(demandIds);
