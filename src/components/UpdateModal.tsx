@@ -60,32 +60,44 @@ export function UpdateModal() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
-        <DialogHeader className="items-center text-center gap-4">
-          <img src={logo} alt="SoMA" className="h-10 w-auto mx-auto" />
-          <div className="flex items-center justify-center gap-2">
-            <Sparkles className="h-5 w-5 text-[#F28705]" />
-            <DialogTitle className="text-xl">Novidades no SoMA!</DialogTitle>
-          </div>
-          <DialogDescription className="text-center">
-            Uma nova versão está disponível com melhorias e correções.
-            Atualize agora para ter a melhor experiência. Sua sessão será mantida.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent
+        className="sm:max-w-md p-0 overflow-hidden border-border/60 rounded-2xl shadow-2xl"
+        onPointerDownOutside={(e) => e.preventDefault()}
+      >
+        {/* Decorative header band */}
+        <div className="relative bg-gradient-to-br from-[#F28705]/10 via-background to-background pt-8 pb-6 px-6 border-b border-border/50">
+          <div className="absolute inset-x-0 -top-16 h-32 bg-[#F28705]/10 blur-3xl rounded-full pointer-events-none" aria-hidden="true" />
+          <DialogHeader className="items-center text-center gap-5 relative">
+            <img src={logo} alt="SoMA" className="h-16 w-auto mx-auto drop-shadow-sm" />
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F28705]/10 border border-[#F28705]/20">
+                <Sparkles className="h-3.5 w-3.5 text-[#F28705]" />
+                <span className="text-xs font-medium text-[#F28705]">Nova versão disponível</span>
+              </div>
+              <DialogTitle className="text-2xl font-bold tracking-tight">
+                Novidades no SoMA!
+              </DialogTitle>
+              <DialogDescription className="text-center text-sm leading-relaxed text-muted-foreground max-w-sm mx-auto">
+                Uma nova versão está disponível com melhorias e correções.
+                Atualize agora para ter a melhor experiência. Sua sessão será mantida.
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+        </div>
 
-        <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-2">
+        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 p-4 bg-background">
           <Button
             variant="ghost"
             onClick={() => setOpen(false)}
             disabled={updating}
-            className="sm:flex-1"
+            className="sm:flex-1 h-11 rounded-xl"
           >
             Depois
           </Button>
           <Button
             onClick={handleUpdate}
             disabled={updating}
-            className="sm:flex-1 bg-[#F28705] hover:bg-[#D97706] text-white"
+            className="sm:flex-1 h-11 rounded-xl bg-[#F28705] hover:bg-[#D97706] text-white shadow-lg shadow-[#F28705]/25 transition-all"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${updating ? "animate-spin" : ""}`} />
             {updating ? "Atualizando..." : "Atualizar agora"}
