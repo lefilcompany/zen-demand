@@ -1,62 +1,76 @@
 
 
-## Subdemandas: Modal dedicado + edição de dependência
+## Reordenar subdemandas dentro do grupo no Kanban
 
-Atualmente o componente `DemandEditForm` é usado tanto para demandas pai quanto para subdemandas, exibindo o controle "Subdemandas (+/-)" mesmo quando estamos editando uma subdemanda — o que não faz sentido. Além disso, não há como remover/alterar a dependência ("Pode iniciar quando…") de uma subdemanda já existente.
+Hoje, no Kanban, quando uma demanda principal está expandida (botão "X subdemandas"), as subdemandas aparecem como cartões completos abaixo da demanda pai. Porém, **não é possível reordená-las** ali — a alça de arraste (`GripVertical`) move o cartão entre colunas do Kanban, e não reordena dentro do grupo.
 
-A solução é separar os fluxos de edição em dois modais distintos e criar um seletor de dependência dentro do modal de subdemanda.
+A reordenação só existe hoje no `KanbanSubdemandsList` (lista compacta dentro do cartão pai), o que é confuso e pouco descoberto. Vou trazer a reordenação para o lugar onde o usuário realmente espera: o grupo expandido de subdemandas no Kanban.
 
-### O que será feito
+### Solução: setas + drag dedicado dentro do grupo
 
-**1. Criar `SubdemandEditForm` (novo componente)**
-- Baseado em `DemandEditForm`, mas:
-  - **Sem** o controle de "Subdemandas (+/-)" no header.
-  - **Sem** o sistema de steps (não há criação de novas subdemandas).
-  - **Sem** a seção de "Recorrência" (subdemandas não recorrem).
-  - Mantém todos os demais campos: Título, Serviço, Responsáveis, Status, Prioridade, Data de Entrega, Descrição.
-  - Adiciona uma nova seção **"Dependência"** com:
-    - Select listando as outras subdemandas irmãs (mesmo `parent_demand_id`), com opção "Nenhuma" para remover.
-    - Aviso visual mostrando a dependência atual (se houver) com o botão de remoção rápida.
-- Header passa a ser "Editar Subdemanda" + descrição "Atualize os dados desta subdemanda".
+Adicionarei dois mecanismos complementares (sem quebrar o drag-and-drop entre colunas):
 
-**2. Lógica de dependência (CRUD)**
-- Novo hook `useUpdateSubdemandDependency` em `src/hooks/useSubdemands.ts`:
-  - Recebe `{ demandId, dependsOnDemandId | null }`.
-  - Faz `delete from demand_dependencies where demand_id = X` e, se houver novo valor, faz `insert`.
-  - Invalida queries: `subdemands`, `demand-dependencies`, `batch-dependency-info`, `demand-dependency-info`.
+**1. Setas de reordenar (sempre visíveis ao passar o mouse)**
 
-**3. Roteamento do modal em `DemandDetail.tsx`**
-- Detectar se a demanda aberta é uma subdemanda (`demand.parent_demand_id !== null`).
-- Se for subdemanda → renderizar `<SubdemandEditForm>` no Dialog de edição.
-- Se for demanda pai → manter `<DemandEditForm>` como hoje.
+Em cada cartão de subdemanda dentro de um grupo expandido, no canto direito do cabeçalho, aparecerá um par discreto de setas `↑ ↓` (ChevronUp / ChevronDown):
 
-**4. Limpeza em `DemandEditForm`**
-- Sem mudanças funcionais grandes; apenas garantir que continua dedicado a demandas pai (nenhuma alteração no comportamento de subdemandas via steps de criação).
+- `↑` move a subdemanda uma posição acima entre as irmãs do mesmo pai.
+- `↓` move uma posição abaixo.
+- Botões ficam desabilitados quando a subdemanda já está na primeira/última posição.
+- Validação automática contra dependências (uma subdemanda dependente nunca pode ficar antes da que ela depende) — se a troca violar, exibe toast amigável e não persiste.
+- Persistência via RPC já existente `reorder_subdemands` (hook `useReorderSubdemands`).
 
-### Arquivos afetados
+**2. Drag-and-drop interno dedicado (opcional/visual)**
 
-- **Criar**: `src/components/SubdemandEditForm.tsx`
-- **Editar**: `src/hooks/useSubdemands.ts` (adicionar hook de update da dependência)
-- **Editar**: `src/pages/DemandDetail.tsx` (escolher qual form renderizar com base em `parent_demand_id`)
+Adicionarei um pequeno handle de "reordenar grupo" (ícone `GripVertical` em opacidade reduzida) à esquerda de cada cartão filho expandido. Esse handle:
 
-### UX de remoção/alteração de dependência
+- Usa um MIME type customizado `application/x-subdemand-reorder` (igual ao padrão já adotado em `KanbanSubdemandsList`).
+- Não interfere com o drag entre colunas, que continua usando o handle existente do cartão e o MIME `text/plain`.
+- Mostra indicador visual (linha azul) entre cartões durante o hover.
+- Aplica a mesma validação de dependências antes de persistir.
 
-Dentro do `SubdemandEditForm`, na seção "Dependência":
+### Por que duas formas?
 
+- **Setas** são o caminho mais confiável e descoberto, principalmente em telas de toque/trackpad onde drag preciso é difícil. Resolve "sem erros" para 100% dos casos.
+- **Drag interno** é mais natural para quem está acostumado e mantém paridade com a lista compacta.
+
+### Detalhes técnicos
+
+Arquivos a alterar:
+
+- **`src/components/KanbanBoard.tsx`**:
+  - No bloco de renderização do grupo expandido (linhas ~1633–1656), envolver cada `renderDemandCard(child, ...)` com:
+    - Um wrapper `<div>` com listeners `onDragOver` / `onDrop` que respondem somente a `application/x-subdemand-reorder`.
+    - Um pequeno overlay no topo direito do cartão com botões `↑`/`↓` (somente quando `children.length > 1` e o usuário tem permissão de edição).
+    - Um handle de drag à esquerda, ao lado da linha de conexão, com `draggable` e mime customizado.
+  - Importar `useReorderSubdemands` e chamar `mutateAsync({ parentDemandId: demand.id, orderedIds })`.
+  - Importar `useBatchDependencyInfo` e `validateSubdemandOrder` para validar a nova ordem.
+  - Implementar `handleSubReorder(parentId, fromIndex, toIndex, siblings)` reutilizável pelos dois mecanismos.
+
+- **`src/components/KanbanSubdemandsList.tsx`**: nenhuma mudança — segue funcional como visão compacta.
+
+- **`src/hooks/useSubdemands.ts`**: nada a alterar (`useReorderSubdemands` + RPC `reorder_subdemands` já existem e fazem optimistic update).
+
+### Permissões
+
+Reordenar exige:
+- Usuário ser membro do quadro com papel `admin`, `moderator` (Coordenador) ou `executor` (Agente), OU
+- Ser o criador da demanda pai.
+
+Se o usuário não tem permissão, as setas e o handle de reorder não são renderizados (mas ele continua vendo a lista normalmente).
+
+### Comportamento esperado
+
+```text
+[ DEMANDA PAI #0065 ]
+        │
+        ├── ⋮⋮  [#0066] teste 2     ↑ ↓     ← setas + handle reorder
+        │
+        └── ⋮⋮  [#0067] teste 3     ↑ ↓
+              🔒 Aguardando: teste 2
 ```
-Dependência
-┌──────────────────────────────────────────────┐
-│ 🔒 Atualmente depende de: "teste 2"   [✕]   │
-└──────────────────────────────────────────────┘
-Pode iniciar quando: [ Selecionar subdemanda ▾ ]
-                     [ Nenhuma (sem dependência) ]
-```
 
-O `[✕]` limpa o select para "Nenhuma" e a alteração é persistida ao clicar em "Salvar Alterações" (junto com os outros campos), garantindo uma única transação visual e evitando estados inconsistentes.
+Ao clicar em `↑` no cartão "teste 3" tentando colocá-lo antes de "teste 2": toast "Não é possível mover: esta subdemanda depende de 'teste 2' e precisa vir depois dela." A operação não é persistida e a UI não muda.
 
-### Validação
-
-- Não permitir selecionar a própria subdemanda como dependência.
-- Não permitir ciclos simples (se A depende de B, B não pode depender de A) — validado no front-end com aviso amigável.
-- Apenas subdemandas irmãs (mesmo `parent_demand_id`) aparecem no select.
+Em caso de sucesso, a UI atualiza otimisticamente (sem flicker) e a nova ordem é confirmada pelo Realtime para todos os usuários conectados.
 
