@@ -1,6 +1,60 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+
+// Cache key tied to user session — cleared on logout / token loss
+const CACHE_PREFIX = "soma:ai-insights:";
+const getCacheKey = (userId: string, boardId: string, isRequester: boolean) =>
+  `${CACHE_PREFIX}${userId}:${boardId}:${isRequester ? "req" : "adm"}`;
+
+interface CachedInsights {
+  insights: AIInsight[];
+  tokenFingerprint: string;
+  cachedAt: number;
+}
+
+// Use last 16 chars of access token as fingerprint — if token changes (logout/refresh-fail), cache invalidates
+function getTokenFingerprint(accessToken: string | undefined): string {
+  if (!accessToken) return "";
+  return accessToken.slice(-16);
+}
+
+function readCache(key: string, currentFingerprint: string): AIInsight[] | null {
+  try {
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CachedInsights;
+    if (parsed.tokenFingerprint !== currentFingerprint) {
+      sessionStorage.removeItem(key);
+      return null;
+    }
+    return parsed.insights;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(key: string, insights: AIInsight[], tokenFingerprint: string) {
+  try {
+    const payload: CachedInsights = { insights, tokenFingerprint, cachedAt: Date.now() };
+    sessionStorage.setItem(key, JSON.stringify(payload));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+function clearAllInsightsCache() {
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (k && k.startsWith(CACHE_PREFIX)) keys.push(k);
+    }
+    keys.forEach((k) => sessionStorage.removeItem(k));
+  } catch {
+    // ignore
+  }
+}
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -93,12 +147,41 @@ function InsightCard({ insight, isExpanded, onToggle }: { insight: AIInsight; is
 
 export function DashboardAIInsights({ boardId, isRequester = false }: DashboardAIInsightsProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [expandedIndexes, setExpandedIndexes] = useState<Set<number>>(new Set());
+
+  // Listen to auth changes — clear cache on sign out / token loss
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT" || event === "USER_UPDATED") {
+        clearAllInsightsCache();
+        queryClient.removeQueries({ queryKey: ["dashboard-ai-insights"] });
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [queryClient]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["dashboard-ai-insights", boardId, isRequester],
     queryFn: async () => {
-      if (!boardId) return { insights: [] };
+      if (!boardId) return { insights: [] as AIInsight[] };
+
+      // Get current session — if missing, no cache and no call
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData.session;
+      if (!session?.user?.id || !session.access_token) {
+        return { insights: [] as AIInsight[] };
+      }
+
+      const fingerprint = getTokenFingerprint(session.access_token);
+      const cacheKey = getCacheKey(session.user.id, boardId, isRequester);
+
+      // Try cache first — only generates again on logout / token rotation invalidation
+      const cached = readCache(cacheKey, fingerprint);
+      if (cached && cached.length > 0) {
+        return { insights: cached };
+      }
+
       try {
         const { data, error } = await supabase.functions.invoke("dashboard-ai-insights", {
           body: { board_id: boardId, is_requester: isRequester },
@@ -106,27 +189,36 @@ export function DashboardAIInsights({ boardId, isRequester = false }: DashboardA
         if (error) {
           const msg = typeof error === "object" && "message" in error ? (error as any).message : String(error);
           if (msg.includes("402") || msg.includes("Payment") || msg.includes("429") || msg.includes("Rate limit")) {
-            return { insights: [] };
+            return { insights: [] as AIInsight[] };
           }
           if (msg.includes("401") || msg.includes("Unauthorized")) {
-            const { error: refreshError } = await supabase.auth.refreshSession();
-            if (refreshError) return { insights: [] };
+            const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError || !refreshed.session) return { insights: [] as AIInsight[] };
             const { data: retryData, error: retryError } = await supabase.functions.invoke("dashboard-ai-insights", {
               body: { board_id: boardId, is_requester: isRequester },
             });
-            if (retryError) return { insights: [] };
-            return retryData as { insights: AIInsight[] };
+            if (retryError) return { insights: [] as AIInsight[] };
+            const result = retryData as { insights: AIInsight[] };
+            const newFingerprint = getTokenFingerprint(refreshed.session.access_token);
+            const newKey = getCacheKey(refreshed.session.user.id, boardId, isRequester);
+            if (result?.insights?.length) writeCache(newKey, result.insights, newFingerprint);
+            return result;
           }
-          return { insights: [] };
+          return { insights: [] as AIInsight[] };
         }
-        return data as { insights: AIInsight[] };
+        const result = data as { insights: AIInsight[] };
+        if (result?.insights?.length) writeCache(cacheKey, result.insights, fingerprint);
+        return result;
       } catch {
-        return { insights: [] };
+        return { insights: [] as AIInsight[] };
       }
     },
     enabled: !!boardId,
-    staleTime: 60 * 60 * 1000,
+    staleTime: Infinity, // never auto-refetch — cache lives until logout
+    gcTime: Infinity,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 
   if (isLoading) {
