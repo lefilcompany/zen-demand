@@ -29,6 +29,7 @@ import { ScheduledDemandsModal } from "@/components/ScheduledDemandsModal";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
 import { useTeamMembershipRole } from "@/hooks/useTeamRole";
 import { ArchivedDemandsModal } from "@/components/ArchivedDemandsModal";
+import { SEOHead } from "@/components/SEOHead";
 type ViewMode = "table" | "grid" | "calendar";
 const TABLET_BREAKPOINT = 1024;
 export default function Demands() {
