@@ -113,10 +113,24 @@ export function SubdemandEditForm({ demand, onClose, onSuccess }: SubdemandEditF
 
   const dependencyOptions = useMemo(() => {
     if (!siblingSubdemands) return [];
-    return siblingSubdemands.filter(
-      (s) => s.id !== demand.id && !reverseDependents.has(s.id)
-    );
+    const self = siblingSubdemands.find((s) => s.id === demand.id);
+    const selfCreatedAt = self?.created_at ? new Date(self.created_at).getTime() : null;
+    return siblingSubdemands.filter((s) => {
+      if (s.id === demand.id) return false;
+      if (reverseDependents.has(s.id)) return false;
+      // Only allow depending on siblings created BEFORE the current subdemand
+      if (selfCreatedAt !== null && s.created_at) {
+        if (new Date(s.created_at).getTime() >= selfCreatedAt) return false;
+      }
+      return true;
+    });
   }, [siblingSubdemands, demand.id, reverseDependents]);
+
+  // Hide entire dependency section if this is the first subdemand (no older siblings)
+  // AND there is no existing dependency to manage.
+  const hasNoEligibleOptions = dependencyOptions.length === 0;
+  const hasExistingDependency = dependsOnId !== NONE_VALUE && !!currentDependencyTitle;
+  const showDependencySection = hasExistingDependency || !hasNoEligibleOptions;
 
   const currentDependencyTitle = useMemo(() => {
     if (dependsOnId === NONE_VALUE) return null;
