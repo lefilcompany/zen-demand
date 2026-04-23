@@ -761,8 +761,6 @@ export default function Auth() {
                 </form>
               </TabsContent>
             </Tabs>
-
-              </Tabs>
             </div>
             {/* /Auth card */}
 
