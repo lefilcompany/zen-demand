@@ -1,38 +1,62 @@
 
 
-# Fix Kanban Drag-and-Drop Fluidity
+## Subdemandas: Modal dedicado + edição de dependência
 
-## Problem
-Moving demands between columns is laggy and causes a "snap back" effect because:
-1. Before applying the optimistic update, the code makes an **async DB query** to check if the demand is a parent — this adds 200-500ms delay before the card visually moves.
-2. In `onSuccess`, `await queryClient.invalidateQueries` blocks the clearing of optimistic state, causing the card to briefly snap back to its old position before jumping forward again.
-3. The same blocking DB query exists in `handleMobileStatusChange`.
+Atualmente o componente `DemandEditForm` é usado tanto para demandas pai quanto para subdemandas, exibindo o controle "Subdemandas (+/-)" mesmo quando estamos editando uma subdemanda — o que não faz sentido. Além disso, não há como remover/alterar a dependência ("Pode iniciar quando…") de uma subdemanda já existente.
 
-## Solution
-Make all blocking checks synchronous (using in-memory data) and remove the `await` on query invalidation.
+A solução é separar os fluxos de edição em dois modais distintos e criar um seletor de dependência dentro do modal de subdemanda.
 
-## Technical Changes
+### O que será feito
 
-### File: `src/components/KanbanBoard.tsx`
+**1. Criar `SubdemandEditForm` (novo componente)**
+- Baseado em `DemandEditForm`, mas:
+  - **Sem** o controle de "Subdemandas (+/-)" no header.
+  - **Sem** o sistema de steps (não há criação de novas subdemandas).
+  - **Sem** a seção de "Recorrência" (subdemandas não recorrem).
+  - Mantém todos os demais campos: Título, Serviço, Responsáveis, Status, Prioridade, Data de Entrega, Descrição.
+  - Adiciona uma nova seção **"Dependência"** com:
+    - Select listando as outras subdemandas irmãs (mesmo `parent_demand_id`), com opção "Nenhuma" para remover.
+    - Aviso visual mostrando a dependência atual (se houver) com o botão de remoção rápida.
+- Header passa a ser "Editar Subdemanda" + descrição "Atualize os dados desta subdemanda".
 
-**1. Remove blocking DB queries for parent check in `handleDropWithStatusId` (lines 548-562)**
-Replace the async `supabase.from("demands").select(...)` call with a synchronous check using the existing `demands` array:
-```typescript
-const isParentDemandByDb = demands.some(d => d.parent_demand_id === demandId);
-if (isParentDemandByDb) { ... return; }
+**2. Lógica de dependência (CRUD)**
+- Novo hook `useUpdateSubdemandDependency` em `src/hooks/useSubdemands.ts`:
+  - Recebe `{ demandId, dependsOnDemandId | null }`.
+  - Faz `delete from demand_dependencies where demand_id = X` e, se houver novo valor, faz `insert`.
+  - Invalida queries: `subdemands`, `demand-dependencies`, `batch-dependency-info`, `demand-dependency-info`.
+
+**3. Roteamento do modal em `DemandDetail.tsx`**
+- Detectar se a demanda aberta é uma subdemanda (`demand.parent_demand_id !== null`).
+- Se for subdemanda → renderizar `<SubdemandEditForm>` no Dialog de edição.
+- Se for demanda pai → manter `<DemandEditForm>` como hoje.
+
+**4. Limpeza em `DemandEditForm`**
+- Sem mudanças funcionais grandes; apenas garantir que continua dedicado a demandas pai (nenhuma alteração no comportamento de subdemandas via steps de criação).
+
+### Arquivos afetados
+
+- **Criar**: `src/components/SubdemandEditForm.tsx`
+- **Editar**: `src/hooks/useSubdemands.ts` (adicionar hook de update da dependência)
+- **Editar**: `src/pages/DemandDetail.tsx` (escolher qual form renderizar com base em `parent_demand_id`)
+
+### UX de remoção/alteração de dependência
+
+Dentro do `SubdemandEditForm`, na seção "Dependência":
+
+```
+Dependência
+┌──────────────────────────────────────────────┐
+│ 🔒 Atualmente depende de: "teste 2"   [✕]   │
+└──────────────────────────────────────────────┘
+Pode iniciar quando: [ Selecionar subdemanda ▾ ]
+                     [ Nenhuma (sem dependência) ]
 ```
 
-**2. Same fix in `handleMobileStatusChange` (lines 702-715)**
-Replace the async DB query with the same synchronous check.
+O `[✕]` limpa o select para "Nenhuma" e a alteração é persistida ao clicar em "Salvar Alterações" (junto com os outros campos), garantindo uma única transação visual e evitando estados inconsistentes.
 
-**3. Move optimistic update BEFORE dependency check in `handleDropWithStatusId` (line 583)**
-Apply `setOptimisticUpdates` immediately after the same-column guard, then roll it back if dependency check fails.
+### Validação
 
-**4. Remove `await` from `queryClient.invalidateQueries` in both `onSuccess` handlers (lines 611, 779)**
-Change `await queryClient.invalidateQueries(...)` to just `queryClient.invalidateQueries(...)` so optimistic state clears immediately. The query will still refetch in background.
-
-**5. Clear optimistic state BEFORE invalidation, not after**
-Move `setOptimisticUpdates` cleanup to run right when `onSuccess` fires, before the invalidation and auto-parent-status checks.
-
-These changes eliminate all async delays from the drag-drop flow while preserving correctness.
+- Não permitir selecionar a própria subdemanda como dependência.
+- Não permitir ciclos simples (se A depende de B, B não pode depender de A) — validado no front-end com aviso amigável.
+- Apenas subdemandas irmãs (mesmo `parent_demand_id`) aparecem no select.
 
