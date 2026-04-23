@@ -12,8 +12,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
-import {
 import { SEOHead } from "@/components/SEOHead";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,

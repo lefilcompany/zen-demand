@@ -10,8 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
 import { SEOHead } from "@/components/SEOHead";
+import {
   Camera, Loader2, Save, User, Mail, Lock, Eye, EyeOff,
   MapPin, Link as LinkIcon, Github, Linkedin, Briefcase, Phone,
   CheckCircle2, XCircle,

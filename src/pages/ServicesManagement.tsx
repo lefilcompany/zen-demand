@@ -47,6 +47,7 @@ import {
   ServiceWithHierarchy,
 } from "@/hooks/useServices";
 import { useIsTeamAdmin } from "@/hooks/useTeamRole";
+import { SEOHead } from "@/components/SEOHead";
 import {
   Plus,
   Clock,
@@ -63,7 +64,6 @@ import {
   FolderOpen,
 } from "lucide-react";
 import {
-import { SEOHead } from "@/components/SEOHead";
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,

@@ -10,8 +10,8 @@ import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useContract, useCreateContract, useDeleteContract } from "@/hooks/useContracts";
-import {
 import { SEOHead } from "@/components/SEOHead";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,

@@ -24,8 +24,8 @@ import { AnimatedBadge } from "@/components/AnimatedBadge";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { useUserStats, badges, calculateLevel } from "@/hooks/useUserStats";
-import { 
 import { SEOHead } from "@/components/SEOHead";
+import { 
   Settings, User, Calendar, MapPin, Briefcase, 
   Link as LinkIcon, Github, Linkedin, Target, CheckCircle2, 
   Clock, MessageSquare, Users, Loader2, Award, TrendingUp,

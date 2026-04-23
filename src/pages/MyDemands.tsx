@@ -32,8 +32,8 @@ import { DemandsCalendarView } from "@/components/DemandsCalendarView";
 import { isDateOverdue } from "@/lib/dateUtils";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { SelectedBoardChips, BoardMultiSelectButton } from "@/components/TeamDemandsFilters";
-import {
 import { SEOHead } from "@/components/SEOHead";
+import {
   Select,
   SelectContent,
   SelectItem,
