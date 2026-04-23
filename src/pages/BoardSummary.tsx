@@ -22,6 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SEOHead } from "@/components/SEOHead";
 
 interface LateDemandDetail {
   title: string;

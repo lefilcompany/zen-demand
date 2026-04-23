@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { TeamContext } from "@/contexts/TeamContext";
 import { useSelectedBoardSafe } from "@/contexts/BoardContext";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function SharedDemand() {
   const { token } = useParams<{ token: string }>();

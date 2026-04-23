@@ -22,6 +22,7 @@ import { MemberCard } from "@/components/MemberCard";
 import { TeamScopeConfig } from "@/components/TeamScopeConfig";
 import { TeamPositionsManager } from "@/components/TeamPositionsManager";
 import { TeamRole } from "@/hooks/useTeamRole";
+import { SEOHead } from "@/components/SEOHead";
 export default function TeamDetail() {
   const {
     id

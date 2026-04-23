@@ -19,6 +19,7 @@ import { AddBoardMemberDialog } from "@/components/AddBoardMemberDialog";
 import { useAuth } from "@/lib/auth";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { toast } from "sonner";
+import { SEOHead } from "@/components/SEOHead";
 
 const roleLabels: Record<string, string> = {
   admin: "Administrador",

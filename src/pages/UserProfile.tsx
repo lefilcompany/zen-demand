@@ -20,6 +20,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { usePresence } from "@/contexts/PresenceContext";
+import { SEOHead } from "@/components/SEOHead";
 
 const INITIAL_BADGES_COUNT = 12;
 

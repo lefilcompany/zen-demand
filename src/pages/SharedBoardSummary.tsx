@@ -12,6 +12,7 @@ import { getSharedSummary, BoardSummaryHistoryItem } from "@/hooks/useBoardSumma
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import logoSoma from "@/assets/logo-soma.png";
+import { SEOHead } from "@/components/SEOHead";
 
 type SummaryData = {
   id: string;

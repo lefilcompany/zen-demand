@@ -7,6 +7,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { FileText, Lock } from "lucide-react";
 import DOMPurify from "dompurify";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function SharedNote() {
   const { token } = useParams();

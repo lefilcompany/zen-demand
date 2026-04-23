@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
+import { SEOHead } from "@/components/SEOHead";
 
 type ViewMode = "table" | "grid" | "calendar";
 const TABLET_BREAKPOINT = 1024;
