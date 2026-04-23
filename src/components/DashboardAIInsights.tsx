@@ -209,7 +209,7 @@ export function DashboardAIInsights({ boardId, isRequester = false }: DashboardA
             });
             if (retryError) return { insights: [] as AIInsight[] };
             const result = retryData as { insights: AIInsight[] };
-            const newFingerprint = getTokenFingerprint(refreshed.session.access_token);
+            const newFingerprint = await getSessionFingerprint(refreshed.session.refresh_token);
             const newKey = getCacheKey(refreshed.session.user.id, boardId, isRequester);
             if (result?.insights?.length) writeCache(newKey, result.insights, newFingerprint);
             return result;
