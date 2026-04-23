@@ -102,7 +102,7 @@ export function KanbanColumnToolbar({ searchQuery, onSearchChange, sortOption, o
             onClick={(e) => e.stopPropagation()}
             title={`Ordenar: ${currentSort.label}`}
           >
-            <ArrowUpDown className={cn("h-3 w-3", sortOption !== "newest" ? "text-primary" : "text-muted-foreground")} />
+            <ArrowUpDown className={cn("h-3 w-3", sortOption !== "due_date_asc" ? "text-primary" : "text-muted-foreground")} />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="bg-background min-w-[200px]" onClick={(e) => e.stopPropagation()}>
