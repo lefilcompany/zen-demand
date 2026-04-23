@@ -153,7 +153,7 @@ export function useMyDemandRequests() {
 
 // Count pending requests for badge - filtered by board
 export function usePendingRequestsCount() {
-  const { selectedBoardId } = useSelectedBoard();
+  const { selectedBoardId } = useSelectedBoardSafe();
 
   return useQuery({
     queryKey: ["demand-requests", "count", selectedBoardId],
