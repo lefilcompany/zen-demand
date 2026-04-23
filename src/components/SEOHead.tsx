@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
 interface SEOHeadProps {
@@ -15,6 +16,12 @@ export function SEOHead({ title, description, path = "/", noindex = false }: SEO
   const fullTitle = title ? `${title} | SoMA` : DEFAULT_TITLE;
   const desc = description || DEFAULT_DESCRIPTION;
   const canonicalUrl = `${BASE_URL}${path}`;
+
+  // Imperatively update document.title so it always reflects the latest mounted
+  // SEOHead, even when multiple Helmet instances mount/unmount during route changes.
+  useEffect(() => {
+    document.title = fullTitle;
+  }, [fullTitle]);
 
   return (
     <Helmet>
