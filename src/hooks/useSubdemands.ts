@@ -161,6 +161,44 @@ export function useCreateDemandWithSubdemands() {
   });
 }
 
+/**
+ * Update (set, change or remove) the dependency of a subdemand.
+ * Strategy: delete all existing dependencies for the demand_id, then insert the new one (if any).
+ */
+export function useUpdateSubdemandDependency() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      demandId,
+      dependsOnDemandId,
+    }: {
+      demandId: string;
+      dependsOnDemandId: string | null;
+    }) => {
+      // Always clear existing dependencies for this demand first
+      const { error: deleteError } = await supabase
+        .from("demand_dependencies")
+        .delete()
+        .eq("demand_id", demandId);
+      if (deleteError) throw deleteError;
+
+      if (dependsOnDemandId) {
+        const { error: insertError } = await supabase
+          .from("demand_dependencies")
+          .insert({ demand_id: demandId, depends_on_demand_id: dependsOnDemandId });
+        if (insertError) throw insertError;
+      }
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["subdemands"] });
+      queryClient.invalidateQueries({ queryKey: ["demand-dependencies"] });
+      queryClient.invalidateQueries({ queryKey: ["batch-dependency-info"] });
+      queryClient.invalidateQueries({ queryKey: ["demand-dependency-info", variables.demandId] });
+    },
+  });
+}
+
 export function useAddSubdemand() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
