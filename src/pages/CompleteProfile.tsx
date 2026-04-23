@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
+import { SEOHead } from "@/components/SEOHead";
 
 interface IBGEState {
   id: number;
@@ -113,6 +114,7 @@ export default function CompleteProfile() {
   if (authLoading || checkingProfile) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
+        <SEOHead title="Completar Perfil" path="/complete-profile" />
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
@@ -158,6 +160,7 @@ export default function CompleteProfile() {
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen">
+      <SEOHead title="Completar Perfil" path="/complete-profile" />
       {/* Mobile Header */}
       <div
         className="lg:hidden relative h-40 sm:h-48 overflow-hidden"

@@ -10,6 +10,7 @@ import { AreaChart, Area, XAxis, YAxis, PieChart, Pie, Cell, ResponsiveContainer
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
+import { SEOHead } from "@/components/SEOHead";
 
 const PIE_COLORS = [
   "hsl(var(--primary))",
@@ -36,6 +37,7 @@ function StatCard({
 }) {
   return (
     <Card className="relative overflow-hidden">
+      <SEOHead title="Admin - Dashboard" />
       <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 space-y-0 p-3 sm:p-4 md:p-6">
         <CardTitle className="text-[10px] sm:text-xs font-medium text-muted-foreground tracking-wide uppercase leading-tight">
           {label}
@@ -101,6 +103,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 max-w-[1400px] mx-auto">
+      <SEOHead title="Admin - Dashboard" />
       {/* Header */}
       <div className="flex items-end justify-between gap-2">
         <div className="min-w-0">
@@ -233,6 +236,7 @@ export default function AdminDashboard() {
                   const st = sub ? statusLabel(sub.status) : null;
                   return (
                     <div key={team.id} className="flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors">
+                      <SEOHead title="Admin - Dashboard" />
                       <div className="min-w-0">
                         <p className="text-sm font-medium truncate">{team.name}</p>
                         <p className="text-xs text-muted-foreground">
@@ -283,6 +287,7 @@ export default function AdminDashboard() {
                   const expiresIn = formatDistanceToNow(new Date(trial.trial_ends_at), { locale: ptBR, addSuffix: true });
                   return (
                     <div key={trial.id} className="flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors">
+                      <SEOHead title="Admin - Dashboard" />
                       <div className="min-w-0">
                         <p className="text-sm font-medium truncate">{teamName}</p>
                         <p className="text-xs text-muted-foreground">Expira {expiresIn}</p>

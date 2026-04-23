@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { truncateText } from "@/lib/utils";
 import { RichTextDisplay } from "@/components/ui/rich-text-editor";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function ArchivedDemands() {
   const navigate = useNavigate();
@@ -43,6 +44,7 @@ export default function ArchivedDemands() {
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
+      <SEOHead title="Demandas Arquivadas" path="/archived-demands" />
       <PageBreadcrumb
         items={[
           { label: "Arquivadas", icon: Archive, isCurrent: true },

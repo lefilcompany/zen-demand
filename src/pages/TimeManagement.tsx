@@ -19,6 +19,7 @@ import { PeriodFilter, getPeriodDates } from "@/components/time-management/TimeF
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
+import { SEOHead } from "@/components/SEOHead";
 
 interface GroupedByDemand {
   demand: BoardTimeEntry["demand"];
@@ -388,6 +389,7 @@ export default function TimeManagement() {
   if (!roleLoading && !canManage && selectedBoardId) {
     return (
       <div className="container mx-auto py-6">
+        <SEOHead title="Gerenciamento de Tempo" path="/time-management" />
         <PageBreadcrumb items={[{ label: "Gerenciamento de Tempo", icon: Clock }]} />
         <Card className="mt-6 border-destructive/50 bg-gradient-to-br from-destructive/5 to-transparent">
           <CardContent className="py-16 text-center">
@@ -410,6 +412,7 @@ export default function TimeManagement() {
 
   return (
     <div className="container mx-auto space-y-6 px-0">
+      <SEOHead title="Gerenciamento de Tempo" path="/time-management" />
       <PageBreadcrumb items={[{ label: "Gerenciamento de Tempo", icon: Clock }]} />
 
       {/* Header */}

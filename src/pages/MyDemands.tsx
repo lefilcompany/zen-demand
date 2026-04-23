@@ -33,6 +33,7 @@ import { isDateOverdue } from "@/lib/dateUtils";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { SelectedBoardChips, BoardMultiSelectButton } from "@/components/TeamDemandsFilters";
 import {
+import { SEOHead } from "@/components/SEOHead";
   Select,
   SelectContent,
   SelectItem,
@@ -171,6 +172,7 @@ export default function MyDemands() {
     if (isLoading) {
       return (
         <div className="text-center py-12">
+          <SEOHead title="Minhas Demandas" path="/my-demands" />
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
           <p className="text-muted-foreground mt-4">{t("common.loading")}</p>
         </div>
@@ -181,6 +183,7 @@ export default function MyDemands() {
       if (searchQuery) {
         return (
           <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-muted/20">
+            <SEOHead title="Minhas Demandas" path="/my-demands" />
             <Search className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold text-foreground">
               {t("common.noResults")}
@@ -193,6 +196,7 @@ export default function MyDemands() {
       }
       return (
         <div className="text-center py-12 border-2 border-dashed border-border rounded-lg bg-muted/20">
+          <SEOHead title="Minhas Demandas" path="/my-demands" />
           <User className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-lg font-semibold text-foreground">
             Nenhuma demanda encontrada
@@ -218,6 +222,7 @@ export default function MyDemands() {
     if (effectiveViewMode === "table") {
       return (
         <Card className="border-border/50 shadow-sm">
+          <SEOHead title="Minhas Demandas" path="/my-demands" />
           <CardContent className="p-0">
             <DataTable
               columns={teamDemandColumns}
@@ -232,6 +237,7 @@ export default function MyDemands() {
 
     return (
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <SEOHead title="Minhas Demandas" path="/my-demands" />
         {demandList.map((demand: any) => (
           <DemandCard
             key={demand.id}
@@ -247,6 +253,7 @@ export default function MyDemands() {
   if (!selectedTeamId) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
+        <SEOHead title="Minhas Demandas" path="/my-demands" />
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center">
             <User className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -264,6 +271,7 @@ export default function MyDemands() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <SEOHead title="Minhas Demandas" path="/my-demands" />
       <PageBreadcrumb
         items={[
           { label: "Minhas Demandas", icon: User, isCurrent: true },

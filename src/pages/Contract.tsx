@@ -11,6 +11,7 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { useContract, useCreateContract, useDeleteContract } from "@/hooks/useContracts";
 import {
+import { SEOHead } from "@/components/SEOHead";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -66,6 +67,7 @@ export default function Contract() {
   if (isLoading) {
     return (
       <div className="space-y-6">
+        <SEOHead title="Contrato" path="/contract" />
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -74,6 +76,7 @@ export default function Contract() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      <SEOHead title="Contrato" path="/contract" />
       <PageBreadcrumb
         items={[
           { label: "Meu Contrato", icon: FileText, isCurrent: true },

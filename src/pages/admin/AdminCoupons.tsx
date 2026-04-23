@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { TrialCoupon } from "@/hooks/admin/useAdminCoupons";
+import { SEOHead } from "@/components/SEOHead";
 
 function generateCode() {
   return "SOMA-" + Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -146,6 +147,7 @@ export default function AdminCoupons() {
 
   return (
     <div className="p-6 space-y-6">
+      <SEOHead title="Admin - Cupons" />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Cupons</h1>
@@ -306,6 +308,7 @@ function CouponFormDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      <SEOHead title="Admin - Cupons" />
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -418,6 +421,7 @@ function CouponCard({
     if (isMaxed) {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-destructive/10 text-destructive border border-destructive/20">
+          <SEOHead title="Admin - Cupons" />
           <AlertTriangle className="h-3 w-3" />
           Esgotado
         </span>
@@ -426,6 +430,7 @@ function CouponCard({
     if (isExpired) {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-destructive/10 text-destructive border border-destructive/20">
+          <SEOHead title="Admin - Cupons" />
           Expirado
         </span>
       );
@@ -433,12 +438,14 @@ function CouponCard({
     if (!coupon.is_active) {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-muted text-muted-foreground border border-border">
+          <SEOHead title="Admin - Cupons" />
           Inativo
         </span>
       );
     }
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+        <SEOHead title="Admin - Cupons" />
         Ativo
       </span>
     );
@@ -446,6 +453,7 @@ function CouponCard({
 
   return (
     <div className="relative group">
+      <SEOHead title="Admin - Cupons" />
       <div
         className={`relative overflow-hidden rounded-2xl border-2 transition-all duration-300 ${
           isUsable
@@ -557,6 +565,7 @@ function CouponListView({
 
   return (
     <div className="rounded-xl border border-border overflow-hidden bg-card">
+      <SEOHead title="Admin - Cupons" />
       <Table>
         <TableHeader>
           <TableRow>

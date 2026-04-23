@@ -10,6 +10,7 @@ import { Eye, EyeOff, KeyRound, CheckCircle2, AlertCircle, Mail, Loader2, Check,
 import { supabase } from "@/integrations/supabase/client";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
+import { SEOHead } from "@/components/SEOHead";
 
 type PageState = "loading" | "ready" | "expired" | "invalid" | "success" | "request-link";
 
@@ -53,6 +54,7 @@ function getPasswordStrength(password: string): { level: number; text: string; c
 function PageWrapper({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col lg:flex-row min-h-screen">
+      <SEOHead title="Redefinir Senha" path="/reset-password" />
       {/* Mobile Header */}
       <div 
         className="lg:hidden relative h-48 sm:h-64 overflow-hidden" 
@@ -297,6 +299,7 @@ export default function ResetPassword() {
   if (pageState === "loading") {
     return (
       <PageWrapper>
+        <SEOHead title="Redefinir Senha" path="/reset-password" />
         <Card>
           <CardContent className="pt-8 pb-8 flex flex-col items-center text-center space-y-4">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -316,6 +319,7 @@ export default function ResetPassword() {
   if (pageState === "success") {
     return (
       <PageWrapper>
+        <SEOHead title="Redefinir Senha" path="/reset-password" />
         <Card>
           <CardContent className="pt-8 pb-8 flex flex-col items-center text-center space-y-4">
             <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
@@ -349,6 +353,7 @@ export default function ResetPassword() {
 
     return (
       <PageWrapper>
+        <SEOHead title="Redefinir Senha" path="/reset-password" />
         <Card>
           <CardHeader className="text-center">
             {pageState !== "request-link" && (
@@ -413,6 +418,7 @@ export default function ResetPassword() {
   // Ready State - Password Reset Form
   return (
     <PageWrapper>
+      <SEOHead title="Redefinir Senha" path="/reset-password" />
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Nova Senha</CardTitle>

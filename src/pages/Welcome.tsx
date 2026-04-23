@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Plus, Users, ArrowRight, Sparkles } from "lucide-react";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function Welcome() {
   const { t } = useTranslation();
@@ -61,6 +62,7 @@ export default function Welcome() {
   if (isLoading || checkingProfile || roleLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
+        <SEOHead title="Bem-vindo" path="/welcome" />
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );

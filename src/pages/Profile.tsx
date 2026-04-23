@@ -25,6 +25,7 @@ import { ImageCropDialog } from "@/components/ImageCropDialog";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { useUserStats, badges, calculateLevel } from "@/hooks/useUserStats";
 import { 
+import { SEOHead } from "@/components/SEOHead";
   Settings, User, Calendar, MapPin, Briefcase, 
   Link as LinkIcon, Github, Linkedin, Target, CheckCircle2, 
   Clock, MessageSquare, Users, Loader2, Award, TrendingUp,
@@ -188,6 +189,7 @@ export default function Profile() {
   if (profileLoading || statsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
+        <SEOHead title="Meu Perfil" path="/profile" />
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -195,6 +197,7 @@ export default function Profile() {
 
   return (
     <div className="space-y-6 animate-fade-in pb-8">
+      <SEOHead title="Meu Perfil" path="/profile" />
       <PageBreadcrumb
         items={[
           { label: "Meu Perfil", icon: User, isCurrent: true },

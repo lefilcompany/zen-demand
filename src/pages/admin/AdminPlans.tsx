@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { SEOHead } from "@/components/SEOHead";
 
 interface PlanFormData {
   name: string;
@@ -214,6 +215,7 @@ function LimitLine({ label, value }: { label: string; value: number | null }) {
     value === -1 ? "Ilimitado" : value === 0 ? "Desabilitado" : `${value}`;
   return (
     <div className="flex items-start gap-2 text-sm">
+      <SEOHead title="Admin - Planos" />
       <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
       <span className="text-foreground/80">
         <span className="font-semibold uppercase">{display}</span>{" "}
@@ -320,6 +322,7 @@ export default function AdminPlans() {
 
   return (
     <div className="space-y-6">
+      <SEOHead title="Admin - Planos" />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -359,6 +362,7 @@ export default function AdminPlans() {
                   !plan.is_active ? "opacity-40 grayscale" : ""
                 }`}
               >
+                <SEOHead title="Admin - Planos" />
                 {/* Left accent bar */}
                 <div
                   className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl"

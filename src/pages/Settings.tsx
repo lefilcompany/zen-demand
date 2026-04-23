@@ -46,6 +46,7 @@ import { useTeamRole } from "@/hooks/useTeamRole";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -255,6 +256,7 @@ export default function Settings() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <SEOHead title="Configurações" path="/settings" />
       <PageBreadcrumb
         items={[
           { label: t("settings.title"), icon: SettingsIcon, isCurrent: true },

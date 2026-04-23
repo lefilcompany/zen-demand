@@ -11,6 +11,7 @@ import { getErrorMessage } from "@/lib/errorUtils";
 import { supabase } from "@/integrations/supabase/client";
 import logoSomaDark from "@/assets/logo-soma-dark.png";
 import authBackground from "@/assets/auth-background.jpg";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function JoinTeam() {
   const navigate = useNavigate();
@@ -71,6 +72,7 @@ export default function JoinTeam() {
     if (existingRequest.status === "approved" && !isActiveMember) {
       return (
         <div className="flex items-center gap-3 px-4 py-3 rounded-xl border bg-amber-500/10 text-amber-600 border-amber-500/20">
+          <SEOHead title="Entrar em Equipe" path="/join-team" />
           <UserMinus className="h-5 w-5 flex-shrink-0" />
           <span className="font-medium text-sm">
             Você foi removido desta equipe. Solicite entrada novamente.
@@ -103,6 +105,7 @@ export default function JoinTeam() {
     const Icon = config.icon;
     return (
       <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${config.className}`}>
+        <SEOHead title="Entrar em Equipe" path="/join-team" />
         <Icon className="h-5 w-5 flex-shrink-0" />
         <span className="font-medium text-sm">{config.text}</span>
       </div>
@@ -111,6 +114,7 @@ export default function JoinTeam() {
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen">
+      <SEOHead title="Entrar em Equipe" path="/join-team" />
       {/* Mobile/Tablet Header with Image */}
       <div 
         className="lg:hidden relative h-40 sm:h-48 overflow-hidden"

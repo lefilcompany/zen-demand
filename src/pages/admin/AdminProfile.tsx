@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
+import { SEOHead } from "@/components/SEOHead";
   Camera, Loader2, Save, User, Mail, Lock, Eye, EyeOff,
   MapPin, Link as LinkIcon, Github, Linkedin, Briefcase, Phone,
   CheckCircle2, XCircle,
@@ -211,6 +212,7 @@ export default function AdminProfile() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
+        <SEOHead title="Admin - Perfil" />
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -221,6 +223,7 @@ export default function AdminProfile() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
+      <SEOHead title="Admin - Perfil" />
       <div>
         <h1 className="text-2xl font-bold">Meu Perfil</h1>
         <p className="text-muted-foreground text-sm">

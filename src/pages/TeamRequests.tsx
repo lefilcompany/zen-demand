@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function TeamRequests() {
   const { id: teamId } = useParams<{ id: string }>();
@@ -72,6 +73,7 @@ export default function TeamRequests() {
   if (isLoadingRole) {
     return (
       <div className="flex items-center justify-center h-64">
+        <SEOHead title="Solicitações da Equipe" path="/team-requests" />
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -80,6 +82,7 @@ export default function TeamRequests() {
   if (!isOwner) {
     return (
       <div className="max-w-2xl mx-auto">
+        <SEOHead title="Solicitações da Equipe" path="/team-requests" />
         <Card>
           <CardContent className="pt-6">
             <div className="text-center text-muted-foreground">
@@ -94,6 +97,7 @@ export default function TeamRequests() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <SEOHead title="Solicitações da Equipe" path="/team-requests" />
       <PageBreadcrumb
         items={[
           { label: "Equipes", href: "/teams", icon: Users },

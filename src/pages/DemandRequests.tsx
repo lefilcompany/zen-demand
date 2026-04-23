@@ -49,6 +49,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { useTeamMembershipRole } from "@/hooks/useTeamRole";
 import { cn } from "@/lib/utils";
+import { SEOHead } from "@/components/SEOHead";
 
 const priorityColors: Record<string, string> = {
   baixa: "bg-blue-500/20 text-blue-700 border-blue-500/30",
@@ -464,6 +465,7 @@ export default function DemandRequests() {
       case "approved":
         return (
           <Badge className="bg-green-500/20 text-green-700 border border-green-500/30">
+            <SEOHead title="Solicitações de Demanda" path="/demand-requests" />
             <CheckCircle className="h-3 w-3 mr-1" />
             Aprovada
           </Badge>
@@ -471,6 +473,7 @@ export default function DemandRequests() {
       case "returned":
         return (
           <Badge className="bg-orange-500/20 text-orange-700 border border-orange-500/30">
+            <SEOHead title="Solicitações de Demanda" path="/demand-requests" />
             <XCircle className="h-3 w-3 mr-1" />
             Devolvida
           </Badge>
@@ -478,6 +481,7 @@ export default function DemandRequests() {
       case "rejected":
         return (
           <Badge className="bg-destructive/20 text-destructive border border-destructive/30">
+            <SEOHead title="Solicitações de Demanda" path="/demand-requests" />
             <XCircle className="h-3 w-3 mr-1" />
             Rejeitada
           </Badge>
@@ -485,6 +489,7 @@ export default function DemandRequests() {
       default:
         return (
           <Badge className="bg-yellow-500/20 text-yellow-700 border border-yellow-500/30">
+            <SEOHead title="Solicitações de Demanda" path="/demand-requests" />
             <Clock className="h-3 w-3 mr-1" />
             Pendente
           </Badge>
@@ -694,6 +699,7 @@ export default function DemandRequests() {
   const renderPaginationBar = (page: number, setPage: (fn: (p: number) => number) => void, totalPages: number, totalItems: number) => {
     return (
       <div className="flex items-center justify-between border-t border-border pt-3 mt-4">
+        <SEOHead title="Solicitações de Demanda" path="/demand-requests" />
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>Itens por página</span>
           <Select value={String(itemsPerPage)} onValueChange={handleItemsPerPageChange}>
@@ -728,6 +734,7 @@ export default function DemandRequests() {
     if (totalPages <= 1) return null;
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <SEOHead title="Solicitações de Demanda" path="/demand-requests" />
         <span>Página {page} de {totalPages}</span>
         <div className="flex items-center">
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
@@ -758,6 +765,7 @@ export default function DemandRequests() {
   const renderUnifiedAdminToolbar = () => {
     return (
       <div className="space-y-3">
+        <SEOHead title="Solicitações de Demanda" path="/demand-requests" />
         {/* Horizontal filter row with search */}
         <div className="flex items-center gap-2">
           {/* Search button */}
@@ -909,6 +917,7 @@ export default function DemandRequests() {
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
+      <SEOHead title="Solicitações de Demanda" path="/demand-requests" />
       <PageBreadcrumb
         items={[
           { label: pageTitle, icon: Send, isCurrent: true },

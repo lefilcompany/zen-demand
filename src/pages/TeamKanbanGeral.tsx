@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Kanban, Search, Info } from "lucide-react";
 import { InfoTooltip } from "@/components/InfoTooltip";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function TeamKanbanGeral() {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ export default function TeamKanbanGeral() {
   if (!selectedTeamId) {
     return (
       <div className="text-center py-12">
+        <SEOHead title="Kanban Geral" path="/team-kanban" />
         <p className="text-muted-foreground">Selecione uma equipe primeiro.</p>
       </div>
     );
@@ -43,6 +45,7 @@ export default function TeamKanbanGeral() {
 
   return (
     <div className="space-y-6 p-4 md:p-6 max-w-full overflow-x-hidden">
+      <SEOHead title="Kanban Geral" path="/team-kanban" />
       <PageBreadcrumb
         items={[
           { label: currentTeam?.name || "Equipe" },
