@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useGlobalSearch } from "@/hooks/useGlobalSearch";
-import { useSelectedBoard } from "@/contexts/BoardContext";
+import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
 import { cn } from "@/lib/utils";
