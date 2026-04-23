@@ -119,8 +119,8 @@ export function DemandHierarchyTable({ data, onRowClick }: DemandHierarchyTableP
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const [sortKey, setSortKey] = useState<SortKey>("code");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [sortKey, setSortKey] = useState<SortKey>("due_date");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   const hierarchy = buildHierarchy(data);
   const sorted = sortHierarchy(hierarchy, sortKey, sortDir);
