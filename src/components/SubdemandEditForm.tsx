@@ -424,6 +424,7 @@ export function SubdemandEditForm({ demand, onClose, onSuccess }: SubdemandEditF
                 </div>
               )}
             </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="edit-sub-description">Descrição</Label>
