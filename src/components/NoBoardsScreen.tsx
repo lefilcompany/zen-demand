@@ -36,6 +36,8 @@ export function NoBoardsScreen() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const logoSrc = resolvedTheme === "dark" ? logoSomaLight : logoSomaDark;
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
