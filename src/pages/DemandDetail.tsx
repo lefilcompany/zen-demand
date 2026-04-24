@@ -850,6 +850,15 @@ export default function DemandDetail() {
                       const targetBoardStatus = boardStatuses?.find(bs => bs.status_id === status.id);
                       const shouldPropagate = isParent && isFinalizationStatus(targetBoardStatus, deliveredStatusId);
 
+                      console.log("[Status Change]", {
+                        statusName: status.name,
+                        isParent,
+                        subdemandsCount: subdemands?.length ?? 0,
+                        adjustmentType: targetBoardStatus?.adjustment_type,
+                        deliveredStatusId,
+                        shouldPropagate,
+                      });
+
                       if (shouldPropagate) {
                         const analysis = analyzeSubdemandsForPropagation(subdemands, status.id);
                         if (analysis.toMoveCount === 0) {
@@ -857,21 +866,15 @@ export default function DemandDetail() {
                           applyParentStatusChange(status);
                           return;
                         }
-                        if (analysis.needsConfirmation) {
-                          // Abre modal: usuário decide entre "só a principal" ou "principal + subdemandas"
-                          setPropagateDialog({
-                            statusId: status.id,
-                            statusName: status.name,
-                            statusColor: status.color,
-                            toMoveCount: analysis.toMoveCount,
-                            activeCount: analysis.activeCount,
-                          });
-                          return;
-                        }
-                        // Sem confirmação necessária: propaga direto e atualiza a pai
-                        const result = await propagateStatusToSubs(status.id, status.name);
-                        if (!result.ok) return;
-                        applyParentStatusChange(status);
+                        // Sempre abre o modal para que o usuário tenha visibilidade
+                        // e possa decidir entre "só a principal" ou "principal + subdemandas".
+                        setPropagateDialog({
+                          statusId: status.id,
+                          statusName: status.name,
+                          statusColor: status.color,
+                          toMoveCount: analysis.toMoveCount,
+                          activeCount: analysis.activeCount,
+                        });
                         return;
                       }
 
