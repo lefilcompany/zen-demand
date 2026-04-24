@@ -193,7 +193,7 @@ export function DependencyMenuItems({ demandId, isDelivered, onActionDone, showE
 
   return (
     <>
-      <DropdownMenuSeparator />
+      {!showEmptyHint && <DropdownMenuSeparator />}
       <DropdownMenuLabel className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
         Dependências
       </DropdownMenuLabel>
