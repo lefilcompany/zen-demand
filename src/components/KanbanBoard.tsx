@@ -838,6 +838,19 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         return;
       }
 
+      // Block move when any subdemanda has an unresolved dependency.
+      // Only "Fazendo" stays allowed; finalization columns require all
+      // dependencies to be cleared first.
+      const blockers = getBlockingSubdemandDeps(demandId);
+      if (blockers.length > 0) {
+        const first = blockers[0];
+        const extra = blockers.length > 1 ? ` e mais ${blockers.length - 1}` : "";
+        toast.error("Demanda principal bloqueada por dependências", {
+          description: `"${first.subdemandTitle}" depende de "${first.blockedByTitle}"${extra}. Conclua as dependências antes de finalizar.`,
+        });
+        return;
+      }
+
       const subs = demands.filter((d) => d.parent_demand_id === demandId);
       const subsToMove = subs.filter((s) => s.status_id !== statusId);
       const activeStatusNames = new Set(["Fazendo", "Em Ajuste"]);
