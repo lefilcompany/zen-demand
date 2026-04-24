@@ -135,6 +135,9 @@ export function KanbanCardMenu({ demandId, teamId, boardId, isDelivered, readOnl
               </DropdownMenuItem>
             </>
           )}
+          {!readOnly && (
+            <DependencyMenuItems demandId={demandId} isDelivered={isDelivered} />
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
