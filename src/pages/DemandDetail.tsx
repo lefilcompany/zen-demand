@@ -54,6 +54,7 @@ import { ParentDemandTimeDisplay } from "@/components/ParentDemandTimeDisplay";
 import { checkDependencyBeforeStatusChange, useDemandDependencyInfo, useBatchDependencyInfo } from "@/hooks/useDependencyCheck";
 import { Lock, Link2, GripVertical } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
+import { isFinalizationStatus, analyzeSubdemandsForPropagation } from "@/lib/subdemandStatusPropagation";
 export default function DemandDetail() {
   const {
     id
@@ -217,6 +218,14 @@ export default function DemandDetail() {
   const [isChangeBoardDialogOpen, setIsChangeBoardDialogOpen] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitle, setEditingTitle] = useState("");
+  const [propagateDialog, setPropagateDialog] = useState<null | {
+    statusId: string;
+    statusName: string;
+    statusColor: string;
+    toMoveCount: number;
+    activeCount: number;
+  }>(null);
+  const [isPropagating, setIsPropagating] = useState(false);
   const { selectedBoardId, setSelectedBoardId } = useSelectedBoard();
 
   // Auto-switch board context to match the demand being viewed (only on initial mount)
@@ -483,6 +492,73 @@ export default function DemandDetail() {
       });
     }
   };
+  /**
+   * Atualiza o status da própria demanda principal (lógica original).
+   * Encapsulada para ser chamada do dropdown direto OU após o usuário decidir
+   * propagar (ou não) para as subdemandas.
+   */
+  const applyParentStatusChange = (status: { id: string; name: string }) => {
+    if (!demand) return;
+    const previousStatusName = demand.demand_statuses?.name;
+    const timerStatuses = ["Fazendo", "Em Ajuste"];
+    const isEnteringTimerStatus = timerStatuses.includes(status.name);
+    const isLeavingTimerStatus = previousStatusName && timerStatuses.includes(previousStatusName) && !isEnteringTimerStatus;
+
+    if (isLeavingTimerStatus && isTimerRunning) {
+      stopTimer();
+    }
+
+    updateDemand.mutate({
+      id: demand.id,
+      status_id: status.id,
+      status_changed_by: user?.id || null,
+      status_changed_at: new Date().toISOString(),
+    }, {
+      onSuccess: () => {
+        toast.success(`Status alterado para "${status.name}"!`);
+        if (isEnteringTimerStatus && !isTimerRunning) {
+          startTimer();
+        }
+      },
+    });
+  };
+
+  /**
+   * Propaga o status alvo para todas as subdemandas via RPC.
+   * Encerra timers ativos no servidor.
+   */
+  const propagateStatusToSubs = async (statusId: string, statusName: string) => {
+    if (!demand) return { ok: false as const };
+    setIsPropagating(true);
+    try {
+      const { data, error } = await supabase.rpc("propagate_status_to_subdemands", {
+        p_parent_id: demand.id,
+        p_new_status_id: statusId,
+      });
+      if (error) throw error;
+      const updated = (data as any)?.updated_count ?? 0;
+      const stopped = (data as any)?.stopped_timers ?? 0;
+      if (updated > 0) {
+        toast.success(
+          `${updated} subdemanda${updated > 1 ? "s" : ""} ${updated > 1 ? "movidas" : "movida"} para "${statusName}"` +
+          (stopped > 0 ? ` (${stopped} cronômetro${stopped > 1 ? "s" : ""} encerrado${stopped > 1 ? "s" : ""})` : "")
+        );
+      }
+      // Refresh subdemand list and timers
+      queryClient.invalidateQueries({ queryKey: ["subdemands", demand.id] });
+      queryClient.invalidateQueries({ queryKey: ["demands"] });
+      queryClient.invalidateQueries({ queryKey: ["batch-dependency-info"] });
+      return { ok: true as const };
+    } catch (err) {
+      toast.error("Não foi possível propagar o status para as subdemandas", {
+        description: getErrorMessage(err),
+      });
+      return { ok: false as const };
+    } finally {
+      setIsPropagating(false);
+    }
+  };
+
   const handleArchive = () => {
     if (!id) return;
     updateDemand.mutate({
@@ -768,27 +844,39 @@ export default function DemandDetail() {
                         }
                       }
 
-                      const timerStatuses = ["Fazendo", "Em Ajuste"];
-                      const isEnteringTimerStatus = timerStatuses.includes(status.name);
-                      const isLeavingTimerStatus = previousStatusName && timerStatuses.includes(previousStatusName) && !isEnteringTimerStatus;
+                      // Propagação automática para subdemandas em status de finalização.
+                      // Aplicável apenas se ESTA demanda for principal (não tem pai) e tiver subdemandas.
+                      const isParent = !demand.parent_demand_id && (subdemands?.length ?? 0) > 0;
+                      const targetBoardStatus = boardStatuses?.find(bs => bs.status_id === status.id);
+                      const shouldPropagate = isParent && isFinalizationStatus(targetBoardStatus, deliveredStatusId);
 
-                      if (isLeavingTimerStatus && isTimerRunning) {
-                        stopTimer();
+                      if (shouldPropagate) {
+                        const analysis = analyzeSubdemandsForPropagation(subdemands, status.id);
+                        if (analysis.toMoveCount === 0) {
+                          // Todas as subdemandas já estão no status alvo — segue só com a pai
+                          applyParentStatusChange(status);
+                          return;
+                        }
+                        if (analysis.needsConfirmation) {
+                          // Abre modal: usuário decide entre "só a principal" ou "principal + subdemandas"
+                          setPropagateDialog({
+                            statusId: status.id,
+                            statusName: status.name,
+                            statusColor: status.color,
+                            toMoveCount: analysis.toMoveCount,
+                            activeCount: analysis.activeCount,
+                          });
+                          return;
+                        }
+                        // Sem confirmação necessária: propaga direto e atualiza a pai
+                        const result = await propagateStatusToSubs(status.id, status.name);
+                        if (!result.ok) return;
+                        applyParentStatusChange(status);
+                        return;
                       }
 
-                      updateDemand.mutate({
-                        id: demand.id,
-                        status_id: status.id,
-                        status_changed_by: user?.id || null,
-                        status_changed_at: new Date().toISOString()
-                      }, {
-                        onSuccess: () => {
-                          toast.success(`Status alterado para "${status.name}"!`);
-                          if (isEnteringTimerStatus && !isTimerRunning) {
-                            startTimer();
-                          }
-                        }
-                      });
+                      // Comportamento padrão: só atualiza a própria demanda
+                      applyParentStatusChange(status);
                     }
                   }} disabled={status.id === demand.status_id} className={status.id === demand.status_id ? "bg-muted font-medium" : ""}>
                         <div className="w-3 h-3 rounded-full mr-2 flex-shrink-0" style={{
@@ -1345,6 +1433,80 @@ export default function DemandDetail() {
           isPending={updateDemand.isPending}
         />
       )}
+
+      {/* Propagate status to subdemands - confirmation dialog */}
+      <AlertDialog
+        open={!!propagateDialog}
+        onOpenChange={(open) => { if (!open && !isPropagating) setPropagateDialog(null); }}
+      >
+        <AlertDialogContent className="w-[calc(100vw-2rem)] max-w-lg mx-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <span
+                className="inline-block w-3 h-3 rounded-full"
+                style={{ backgroundColor: propagateDialog?.statusColor }}
+              />
+              Mover subdemandas para "{propagateDialog?.statusName}"?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>
+                  Esta demanda principal possui{" "}
+                  <strong>{propagateDialog?.toMoveCount} subdemanda{(propagateDialog?.toMoveCount ?? 0) > 1 ? "s" : ""}</strong>
+                  {" "}que ainda não estão neste status.
+                </p>
+                {!!propagateDialog?.activeCount && propagateDialog.activeCount > 0 && (
+                  <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+                    ⚠️ <strong>{propagateDialog.activeCount}</strong>{" "}
+                    {propagateDialog.activeCount > 1 ? "estão" : "está"} em andamento.
+                    Os cronômetros ativos serão encerrados automaticamente.
+                  </p>
+                )}
+                <p className="text-muted-foreground">
+                  Você pode mover apenas a demanda principal ou mover principal + subdemandas juntas.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel disabled={isPropagating}>Cancelar</AlertDialogCancel>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPropagating}
+              onClick={() => {
+                if (!propagateDialog) return;
+                const status = {
+                  id: propagateDialog.statusId,
+                  name: propagateDialog.statusName,
+                };
+                setPropagateDialog(null);
+                applyParentStatusChange(status);
+              }}
+            >
+              Mover apenas a principal
+            </Button>
+            <AlertDialogAction
+              disabled={isPropagating}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!propagateDialog) return;
+                const status = {
+                  id: propagateDialog.statusId,
+                  name: propagateDialog.statusName,
+                };
+                const result = await propagateStatusToSubs(status.id, status.name);
+                if (result.ok) {
+                  applyParentStatusChange(status);
+                  setPropagateDialog(null);
+                }
+              }}
+            >
+              {isPropagating ? "Movendo..." : "Mover principal + subdemandas"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
     </>;
 }
