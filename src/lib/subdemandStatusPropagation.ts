@@ -53,8 +53,8 @@ export interface SubdemandPropagationAnalysis {
 
 /**
  * Analisa as subdemandas e decide se a propagação precisa de confirmação do usuário.
- * Confirmação é exigida quando há subdemandas em execução ativa ou com timer rodando,
- * para alertar o usuário de que cronômetros serão encerrados.
+ * Sempre exige confirmação quando há subdemandas a serem movidas — assim o usuário
+ * tem visibilidade clara da ação e pode optar por mover apenas a principal.
  */
 export function analyzeSubdemandsForPropagation(
   subdemands: Subdemand[] | null | undefined,
@@ -63,23 +63,23 @@ export function analyzeSubdemandsForPropagation(
   const list = (subdemands || []).filter((s) => s.status_id !== targetStatusId);
 
   let activeCount = 0;
-  let runningTimerCount = 0;
 
   for (const sub of list) {
     const statusName = sub.demand_statuses?.name ?? "";
     if (ACTIVE_STATUS_NAMES.has(statusName)) activeCount += 1;
-    // last_started_at é populado quando a subdemanda está em "Fazendo"/"Em Ajuste".
-    // Subdemand interface não expõe esse campo no tipo, mas o backend já encerra
-    // qualquer timer aberto via demand_time_entries — usamos o status como proxy.
   }
 
   // Como proxy para "tem timer rodando", contamos quantas estão em status ativo.
-  runningTimerCount = activeCount;
+  // O backend (RPC propagate_status_to_subdemands) encerra qualquer timer aberto
+  // independentemente do status, via demand_time_entries.
+  const runningTimerCount = activeCount;
 
   return {
     toMoveCount: list.length,
     activeCount,
     runningTimerCount,
-    needsConfirmation: activeCount > 0,
+    // Sempre confirmar quando houver subdemandas a mover — garante visibilidade
+    // da operação e oferece ao usuário a opção "mover apenas a principal".
+    needsConfirmation: list.length > 0,
   };
 }
