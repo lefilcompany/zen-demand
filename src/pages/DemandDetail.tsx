@@ -39,6 +39,7 @@ import { getErrorMessage } from "@/lib/errorUtils";
 import { cn } from "@/lib/utils";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DependencyMenuItems } from "@/components/DependencyMenuItems";
 import { sendAdjustmentPushNotification } from "@/hooks/useSendPushNotification";
 import { useSendEmail } from "@/hooks/useSendEmail";
 import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
@@ -962,6 +963,17 @@ export default function DemandDetail() {
                 canEdit={canEdit}
                 variant="button"
               />
+              {/* Three-dot menu — dependency actions */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-9 w-9 shrink-0" aria-label="Mais opções">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64 bg-popover">
+                  <DependencyMenuItems demandId={demand.id} isDelivered={isDelivered} showEmptyHint />
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </CardHeader>
@@ -1390,6 +1402,10 @@ export default function DemandDetail() {
                                   Editar
                                 </DropdownMenuItem>
                               )}
+                              <DependencyMenuItems
+                                demandId={sub.id}
+                                isDelivered={sub.demand_statuses?.name === "Entregue"}
+                              />
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
