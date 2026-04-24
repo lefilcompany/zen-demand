@@ -672,6 +672,55 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     [demands, queryClient, statuses, user?.id]
   );
 
+  /**
+   * Updates ONLY the parent demand's status (no sub-demand propagation).
+   * Used by the Kanban when the parent is dropped on a finalization column
+   * and the user opts to move only the parent, OR when there are no
+   * sub-demands to move.
+   */
+  const applyParentMoveOnly = useCallback(
+    async (parentId: string, statusId: string, columnKey: string, statusColor?: string) => {
+      const statusChangedAt = new Date().toISOString();
+      setOptimisticUpdates((prev) => ({ ...prev, [parentId]: columnKey }));
+      patchDemandStatusByIds(queryClient, [parentId], {
+        statusId,
+        statusName: columnKey,
+        statusColor,
+        statusChangedAt,
+        statusChangedBy: user?.id || null,
+      });
+
+      return new Promise<void>((resolve) => {
+        updateDemand.mutate(
+          {
+            id: parentId,
+            status_id: statusId,
+            status_changed_by: user?.id || null,
+            status_changed_at: statusChangedAt,
+          },
+          {
+            onSuccess: () => {
+              toast.success(`Status alterado para "${columnKey}"`);
+              resolve();
+            },
+            onError: (error: any) => {
+              setOptimisticUpdates((prev) => {
+                const next = { ...prev };
+                delete next[parentId];
+                return next;
+              });
+              toast.error("Erro ao alterar status", {
+                description: getErrorMessage(error),
+              });
+              resolve();
+            },
+          }
+        );
+      });
+    },
+    [queryClient, updateDemand, user?.id]
+  );
+
   const handleDragStart = (e: React.DragEvent, demandId: string) => {
     if (readOnly) return;
     // Parent demands can be dragged, but only dropped into a finalization column.
