@@ -990,10 +990,40 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
     // Synchronous parent check using in-memory data
     const isParentDemandByDb = demands.some(d => d.parent_demand_id === demandId);
-    // Block ALL manual movement of parent demands
+    // Parent demands can ONLY be moved to finalization columns; for other targets,
+    // the parent follows sub-demand progress automatically.
     if (isParentDemandByDb) {
-      toast.info("Demanda principal não pode ser movida manualmente", {
-        description: "Ela será movida automaticamente conforme o progresso das subdemandas.",
+      const targetCol = columns.find((c) => c.key === newStatusKey);
+      if (!isFinalizationColumn(newStatusKey, targetCol?.adjustmentType)) {
+        toast.info("Demanda principal só pode ser movida para etapas de revisão", {
+          description: "Mova as subdemandas — a principal acompanha o progresso automaticamente.",
+        });
+        return;
+      }
+
+      const targetStatusIdParent = targetCol?.statusId
+        ?? statuses?.find((s) => s.name === newStatusKey)?.id;
+      if (!targetStatusIdParent) return;
+
+      const subs = demands.filter((d) => d.parent_demand_id === demandId);
+      const subsToMove = subs.filter((s) => s.status_id !== targetStatusIdParent);
+      const activeStatusNames = new Set(["Fazendo", "Em Ajuste"]);
+      const activeCount = subsToMove.filter((s) => activeStatusNames.has(s.demand_statuses?.name ?? "")).length;
+      const targetStatus = statuses?.find((s) => s.id === targetStatusIdParent);
+
+      if (subsToMove.length === 0) {
+        await applyParentMoveOnly(demandId, targetStatusIdParent, newStatusKey, targetStatus?.color);
+        return;
+      }
+
+      setPropagateDialog({
+        parentId: demandId,
+        statusId: targetStatusIdParent,
+        statusName: newStatusKey,
+        statusColor: targetStatus?.color,
+        columnKey: newStatusKey,
+        toMoveCount: subsToMove.length,
+        activeCount,
       });
       return;
     }
