@@ -1493,6 +1493,7 @@ export default function DemandDetail() {
                 type="button"
                 variant="outline"
                 disabled={isPropagating}
+                className="hover:bg-background hover:border-primary hover:text-primary"
                 onClick={() => {
                   if (!propagateDialog) return;
                   const status = {
