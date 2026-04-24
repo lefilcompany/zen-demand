@@ -1041,6 +1041,17 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         return;
       }
 
+      // Block move when any subdemanda has an unresolved dependency.
+      const blockers = getBlockingSubdemandDeps(demandId);
+      if (blockers.length > 0) {
+        const first = blockers[0];
+        const extra = blockers.length > 1 ? ` e mais ${blockers.length - 1}` : "";
+        toast.error("Demanda principal bloqueada por dependências", {
+          description: `"${first.subdemandTitle}" depende de "${first.blockedByTitle}"${extra}. Conclua as dependências antes de finalizar.`,
+        });
+        return;
+      }
+
       const targetStatusIdParent = targetCol?.statusId
         ?? statuses?.find((s) => s.name === newStatusKey)?.id;
       if (!targetStatusIdParent) return;
