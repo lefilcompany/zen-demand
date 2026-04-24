@@ -243,6 +243,18 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const [subReorderDragOverId, setSubReorderDragOverId] = useState<string | null>(null);
   const subReorderSourceIdRef = useState<{ current: string | null }>({ current: null })[0];
 
+  // State for parent-to-subdemand status propagation confirmation
+  const [propagateDialog, setPropagateDialog] = useState<{
+    parentId: string;
+    statusId: string;
+    statusName: string;
+    statusColor?: string;
+    columnKey: string;
+    toMoveCount: number;
+    activeCount: number;
+  } | null>(null);
+  const [isPropagating, setIsPropagating] = useState(false);
+
   const toggleGroupCollapsed = (parentId: string) => {
     setCollapsedGroups(prev => {
       const next = new Set(prev);
