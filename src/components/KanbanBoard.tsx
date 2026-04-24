@@ -749,10 +749,40 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     // Synchronous parent check using in-memory data
     const isParentDemandByDb = demands.some(d => d.parent_demand_id === demandId);
 
-    // Block ALL manual movement of parent demands
+    // Parent demands can ONLY be moved manually to finalization columns
+    // (Aprovação Interna / Aprovação do Cliente / Entregue). Any other target
+    // is blocked because non-finalization moves are driven automatically by
+    // the progress of sub-demands.
     if (isParentDemandByDb) {
-      toast.info("Demanda principal não pode ser movida manualmente", {
-        description: "Ela será movida automaticamente conforme o progresso das subdemandas.",
+      const targetColumn = columns.find((c) => c.key === columnKey);
+      if (!isFinalizationColumn(columnKey, targetColumn?.adjustmentType)) {
+        toast.info("Demanda principal só pode ser movida para etapas de revisão", {
+          description: "Mova as subdemandas — a principal acompanha o progresso automaticamente.",
+        });
+        return;
+      }
+
+      const subs = demands.filter((d) => d.parent_demand_id === demandId);
+      const subsToMove = subs.filter((s) => s.status_id !== statusId);
+      const activeStatusNames = new Set(["Fazendo", "Em Ajuste"]);
+      const activeCount = subsToMove.filter((s) => activeStatusNames.has(s.demand_statuses?.name ?? "")).length;
+      const targetStatus = statuses?.find((s) => s.id === statusId);
+
+      if (subsToMove.length === 0) {
+        // Nothing to propagate — just move the parent
+        await applyParentMoveOnly(demandId, statusId, columnKey, targetStatus?.color);
+        return;
+      }
+
+      // Open confirmation dialog: "only parent" vs "parent + subdemandas"
+      setPropagateDialog({
+        parentId: demandId,
+        statusId,
+        statusName: columnKey,
+        statusColor: targetStatus?.color,
+        columnKey,
+        toMoveCount: subsToMove.length,
+        activeCount,
       });
       return;
     }
