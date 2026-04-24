@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { notifyBoardMemberChange } from "@/lib/boardMemberNotifications";
 
 export type BoardRole = "admin" | "moderator" | "executor" | "requester";
 
@@ -19,6 +20,26 @@ export interface BoardMember {
     email: string | null;
     job_title: string | null;
   };
+}
+
+// Helper: busca o nome do quadro
+async function fetchBoardName(boardId: string): Promise<string> {
+  const { data } = await supabase
+    .from("boards")
+    .select("name")
+    .eq("id", boardId)
+    .maybeSingle();
+  return data?.name ?? "Quadro";
+}
+
+// Helper: busca o nome do ator (do profiles)
+async function fetchActorName(actorId: string): Promise<string> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", actorId)
+    .maybeSingle();
+  return data?.full_name ?? "Um administrador";
 }
 
 // Fetch board members with their board role
@@ -133,6 +154,26 @@ export function useAddBoardMember() {
         .single();
 
       if (error) throw error;
+
+      // Disparar notificações multicanal (não-bloqueante para a UX)
+      try {
+        const [boardName, actorName] = await Promise.all([
+          fetchBoardName(boardId),
+          fetchActorName(addedBy),
+        ]);
+        await notifyBoardMemberChange({
+          event: "added",
+          userId,
+          boardId,
+          boardName,
+          newRole: role,
+          actorId: addedBy,
+          actorName,
+        });
+      } catch (notifyErr) {
+        console.warn("[useAddBoardMember] notification failed:", notifyErr);
+      }
+
       return data;
     },
     onSuccess: (data) => {
@@ -152,6 +193,7 @@ export function useAddBoardMember() {
 // Update member role in board
 export function useUpdateBoardMemberRole() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async ({
@@ -163,6 +205,19 @@ export function useUpdateBoardMemberRole() {
       boardId: string;
       newRole: BoardRole;
     }) => {
+      // Buscar dados antes do update para conseguir oldRole + user_id
+      const { data: existing, error: fetchErr } = await supabase
+        .from("board_members")
+        .select("user_id, role")
+        .eq("id", memberId)
+        .maybeSingle();
+
+      if (fetchErr) throw fetchErr;
+      if (!existing) throw new Error("Membro não encontrado");
+
+      const oldRole = existing.role as BoardRole;
+      const targetUserId = existing.user_id as string;
+
       const { data, error } = await supabase
         .from("board_members")
         .update({ role: newRole })
@@ -171,6 +226,29 @@ export function useUpdateBoardMemberRole() {
         .single();
 
       if (error) throw error;
+
+      // Notificar somente se realmente mudou
+      if (oldRole !== newRole && user?.id) {
+        try {
+          const [boardName, actorName] = await Promise.all([
+            fetchBoardName(boardId),
+            fetchActorName(user.id),
+          ]);
+          await notifyBoardMemberChange({
+            event: "role_changed",
+            userId: targetUserId,
+            boardId,
+            boardName,
+            newRole,
+            oldRole,
+            actorId: user.id,
+            actorName,
+          });
+        } catch (notifyErr) {
+          console.warn("[useUpdateBoardMemberRole] notification failed:", notifyErr);
+        }
+      }
+
       return { ...data, boardId };
     },
     onSuccess: (data) => {
@@ -187,6 +265,7 @@ export function useUpdateBoardMemberRole() {
 // Remove member from board
 export function useRemoveBoardMember() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async ({
@@ -196,12 +275,46 @@ export function useRemoveBoardMember() {
       memberId: string;
       boardId: string;
     }) => {
+      // Buscar dados antes do delete (precisamos do user_id e role para a notificação)
+      const { data: existing, error: fetchErr } = await supabase
+        .from("board_members")
+        .select("user_id, role")
+        .eq("id", memberId)
+        .maybeSingle();
+
+      if (fetchErr) throw fetchErr;
+
+      const removedUserId = existing?.user_id as string | undefined;
+      const removedRole = (existing?.role as BoardRole | undefined) ?? "executor";
+
       const { error } = await supabase
         .from("board_members")
         .delete()
         .eq("id", memberId);
 
       if (error) throw error;
+
+      // Notificar usuário removido (se diferente do ator)
+      if (removedUserId && user?.id) {
+        try {
+          const [boardName, actorName] = await Promise.all([
+            fetchBoardName(boardId),
+            fetchActorName(user.id),
+          ]);
+          await notifyBoardMemberChange({
+            event: "removed",
+            userId: removedUserId,
+            boardId,
+            boardName,
+            newRole: removedRole,
+            actorId: user.id,
+            actorName,
+          });
+        } catch (notifyErr) {
+          console.warn("[useRemoveBoardMember] notification failed:", notifyErr);
+        }
+      }
+
       return { memberId, boardId };
     },
     onSuccess: (data) => {
