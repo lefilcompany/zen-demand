@@ -2665,6 +2665,10 @@ export type Database = {
         Args: { p_email: string }
         Returns: undefined
       }
+      propagate_status_to_subdemands: {
+        Args: { p_new_status_id: string; p_parent_id: string }
+        Returns: Json
+      }
       redeem_trial_coupon: {
         Args: { p_code: string; p_team_id: string }
         Returns: Json
