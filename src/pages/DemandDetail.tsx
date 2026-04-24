@@ -492,6 +492,73 @@ export default function DemandDetail() {
       });
     }
   };
+  /**
+   * Atualiza o status da própria demanda principal (lógica original).
+   * Encapsulada para ser chamada do dropdown direto OU após o usuário decidir
+   * propagar (ou não) para as subdemandas.
+   */
+  const applyParentStatusChange = (status: { id: string; name: string }) => {
+    if (!demand) return;
+    const previousStatusName = demand.demand_statuses?.name;
+    const timerStatuses = ["Fazendo", "Em Ajuste"];
+    const isEnteringTimerStatus = timerStatuses.includes(status.name);
+    const isLeavingTimerStatus = previousStatusName && timerStatuses.includes(previousStatusName) && !isEnteringTimerStatus;
+
+    if (isLeavingTimerStatus && isTimerRunning) {
+      stopTimer();
+    }
+
+    updateDemand.mutate({
+      id: demand.id,
+      status_id: status.id,
+      status_changed_by: user?.id || null,
+      status_changed_at: new Date().toISOString(),
+    }, {
+      onSuccess: () => {
+        toast.success(`Status alterado para "${status.name}"!`);
+        if (isEnteringTimerStatus && !isTimerRunning) {
+          startTimer();
+        }
+      },
+    });
+  };
+
+  /**
+   * Propaga o status alvo para todas as subdemandas via RPC.
+   * Encerra timers ativos no servidor.
+   */
+  const propagateStatusToSubs = async (statusId: string, statusName: string) => {
+    if (!demand) return { ok: false as const };
+    setIsPropagating(true);
+    try {
+      const { data, error } = await supabase.rpc("propagate_status_to_subdemands", {
+        p_parent_id: demand.id,
+        p_new_status_id: statusId,
+      });
+      if (error) throw error;
+      const updated = (data as any)?.updated_count ?? 0;
+      const stopped = (data as any)?.stopped_timers ?? 0;
+      if (updated > 0) {
+        toast.success(
+          `${updated} subdemanda${updated > 1 ? "s" : ""} ${updated > 1 ? "movidas" : "movida"} para "${statusName}"` +
+          (stopped > 0 ? ` (${stopped} cronômetro${stopped > 1 ? "s" : ""} encerrado${stopped > 1 ? "s" : ""})` : "")
+        );
+      }
+      // Refresh subdemand list and timers
+      queryClient.invalidateQueries({ queryKey: ["subdemands", demand.id] });
+      queryClient.invalidateQueries({ queryKey: ["demands"] });
+      queryClient.invalidateQueries({ queryKey: ["batch-dependency-info"] });
+      return { ok: true as const };
+    } catch (err) {
+      toast.error("Não foi possível propagar o status para as subdemandas", {
+        description: getErrorMessage(err),
+      });
+      return { ok: false as const };
+    } finally {
+      setIsPropagating(false);
+    }
+  };
+
   const handleArchive = () => {
     if (!id) return;
     updateDemand.mutate({
