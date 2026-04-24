@@ -891,7 +891,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       },
       {
         onSuccess: async () => {
-          // Patch cache with new status FIRST so the card stays in the new column
+          // Patch cache with new status. Optimistic overlay stays active until
+          // the source data confirms the change (cleared by the watcher effect).
           const targetStatus = statuses?.find((s) => s.id === targetStatusId);
           patchDemandStatusByIds(queryClient, [demandId], {
             statusId: targetStatusId,
@@ -901,18 +902,9 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
             statusChangedBy: user?.id || null,
           });
 
-          // Now safe to clear optimistic overlay
-          setOptimisticUpdates(prev => {
-            const newUpdates = { ...prev };
-            delete newUpdates[demandId];
-            return newUpdates;
-          });
-
-          // Non-blocking invalidation
-          queryClient.invalidateQueries({ queryKey: ['demands'] });
           queryClient.invalidateQueries({ queryKey: ['batch-dependency-info'] });
           queryClient.invalidateQueries({ queryKey: ['demand-dependency-info'] });
-          
+
           // Auto-move parent status based on sub-demand changes
           await autoCheckParentStatus(demandId, newStatusKey);
 
