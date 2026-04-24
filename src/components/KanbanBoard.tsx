@@ -1653,8 +1653,9 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     const columnDemands = getFilteredDemandsForColumn(columnKey);
     const adjType = columnAdjustmentType || columns.find(c => c.key === columnKey)?.adjustmentType || 'none';
 
-    // Group demands: identify parent IDs that have children in this column AND the parent itself is also in this column
-    // Grouping works in ALL columns so subdemands appear right under their parent with a visual connector
+    // Group demands: identify parent IDs that have children in this column AND the parent itself is also in this column.
+    // Grouping is ENABLED IN EVERY COLUMN (A Iniciar, Fazendo, Em Ajuste, Entregue, etc.)
+    // so subdemandas always appear agrupadas (com conector visual + botão de recolher) sob a demanda pai.
     const columnDemandIds = new Set(columnDemands.map(d => d.id));
     const parentIdsInColumn = new Set(
       columnDemands
@@ -1669,7 +1670,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     for (const demand of columnDemands) {
       if (renderedIds.has(demand.id)) continue;
 
-      // If this is a parent with children in this column (only in "A Iniciar"), render group
+      // If this is a parent with children in this column, render the grouped block (works in ANY column)
       if (parentIdsInColumn.has(demand.id)) {
         const children = columnDemands.filter(d => d.parent_demand_id === demand.id);
         renderedIds.add(demand.id);
