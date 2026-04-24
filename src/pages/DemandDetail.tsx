@@ -844,27 +844,39 @@ export default function DemandDetail() {
                         }
                       }
 
-                      const timerStatuses = ["Fazendo", "Em Ajuste"];
-                      const isEnteringTimerStatus = timerStatuses.includes(status.name);
-                      const isLeavingTimerStatus = previousStatusName && timerStatuses.includes(previousStatusName) && !isEnteringTimerStatus;
+                      // Propagação automática para subdemandas em status de finalização.
+                      // Aplicável apenas se ESTA demanda for principal (não tem pai) e tiver subdemandas.
+                      const isParent = !demand.parent_demand_id && (subdemands?.length ?? 0) > 0;
+                      const targetBoardStatus = boardStatuses?.find(bs => bs.status_id === status.id);
+                      const shouldPropagate = isParent && isFinalizationStatus(targetBoardStatus, deliveredStatusId);
 
-                      if (isLeavingTimerStatus && isTimerRunning) {
-                        stopTimer();
+                      if (shouldPropagate) {
+                        const analysis = analyzeSubdemandsForPropagation(subdemands, status.id);
+                        if (analysis.toMoveCount === 0) {
+                          // Todas as subdemandas já estão no status alvo — segue só com a pai
+                          applyParentStatusChange(status);
+                          return;
+                        }
+                        if (analysis.needsConfirmation) {
+                          // Abre modal: usuário decide entre "só a principal" ou "principal + subdemandas"
+                          setPropagateDialog({
+                            statusId: status.id,
+                            statusName: status.name,
+                            statusColor: status.color,
+                            toMoveCount: analysis.toMoveCount,
+                            activeCount: analysis.activeCount,
+                          });
+                          return;
+                        }
+                        // Sem confirmação necessária: propaga direto e atualiza a pai
+                        const result = await propagateStatusToSubs(status.id, status.name);
+                        if (!result.ok) return;
+                        applyParentStatusChange(status);
+                        return;
                       }
 
-                      updateDemand.mutate({
-                        id: demand.id,
-                        status_id: status.id,
-                        status_changed_by: user?.id || null,
-                        status_changed_at: new Date().toISOString()
-                      }, {
-                        onSuccess: () => {
-                          toast.success(`Status alterado para "${status.name}"!`);
-                          if (isEnteringTimerStatus && !isTimerRunning) {
-                            startTimer();
-                          }
-                        }
-                      });
+                      // Comportamento padrão: só atualiza a própria demanda
+                      applyParentStatusChange(status);
                     }
                   }} disabled={status.id === demand.status_id} className={status.id === demand.status_id ? "bg-muted font-medium" : ""}>
                         <div className="w-3 h-3 rounded-full mr-2 flex-shrink-0" style={{
