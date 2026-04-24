@@ -450,6 +450,14 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       },
       {
         onSuccess: () => {
+          // Patch cache with new parent status BEFORE removing the optimistic overlay
+          patchDemandStatusByIds(queryClient, [parentDemandId], {
+            statusId: targetStatus.id,
+            statusName: targetStatus.name,
+            statusColor: targetStatus.color,
+            statusChangedAt: new Date().toISOString(),
+            statusChangedBy: user?.id || null,
+          });
           setOptimisticUpdates(prev => {
             const next = { ...prev };
             delete next[parentDemandId];
