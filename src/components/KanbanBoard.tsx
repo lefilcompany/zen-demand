@@ -592,21 +592,94 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     }
   }, []);
 
+  // Helpers for parent → subdemand status propagation in Kanban.
+  // A target column is "finalization" when it represents Aprovação Interna,
+  // Aprovação do Cliente or Entregue. Parent demands can ONLY be moved to
+  // these columns manually — moves to other columns stay blocked because
+  // they would conflict with the auto-move logic driven by subdemandas.
+  const isFinalizationColumn = useCallback(
+    (columnKey: string, columnAdjustmentType?: AdjustmentTypeColumn) => {
+      const adjType = columnAdjustmentType || columns.find((c) => c.key === columnKey)?.adjustmentType || "none";
+      return columnKey === "Entregue" || adjType === "internal" || adjType === "external";
+    },
+    [columns]
+  );
+
+  /**
+   * Propagates a finalization status to all sub-demands of a parent via RPC.
+   * Stops any active timer server-side. Returns ok flag.
+   */
+  const propagateFinalizationToSubdemands = useCallback(
+    async (parentId: string, statusId: string, statusName: string, statusColor?: string) => {
+      const subIdsToMove = demands
+        .filter((d) => d.parent_demand_id === parentId && d.status_id !== statusId)
+        .map((d) => d.id);
+
+      const statusChangedAt = new Date().toISOString();
+      const deliveredStatus = statuses?.find((s) => s.name === "Entregue");
+      const deliveredAt = deliveredStatus && deliveredStatus.id === statusId ? statusChangedAt : undefined;
+
+      // Optimistic patch so cards visually move immediately
+      patchDemandStatusByIds(queryClient, subIdsToMove, {
+        statusId,
+        statusName,
+        statusColor: statusColor ?? statuses?.find((s) => s.id === statusId)?.color,
+        statusChangedAt,
+        statusChangedBy: user?.id || null,
+        deliveredAt,
+        stopTimer: true,
+      });
+      patchParentAggregatedTime(queryClient, parentId, subIdsToMove);
+
+      setIsPropagating(true);
+      try {
+        const { data, error } = await supabase.rpc("propagate_status_to_subdemands", {
+          p_parent_id: parentId,
+          p_new_status_id: statusId,
+        });
+        if (error) throw error;
+        const updated = (data as any)?.updated_count ?? 0;
+        const stopped = (data as any)?.stopped_timers ?? 0;
+        if (updated > 0) {
+          toast.success(
+            `${updated} subdemanda${updated > 1 ? "s" : ""} ${updated > 1 ? "movidas" : "movida"} para "${statusName}"` +
+              (stopped > 0
+                ? ` (${stopped} cronômetro${stopped > 1 ? "s" : ""} encerrado${stopped > 1 ? "s" : ""})`
+                : "")
+          );
+        }
+        queryClient.invalidateQueries({ queryKey: ["subdemands", parentId] });
+        queryClient.invalidateQueries({ queryKey: ["demands"] });
+        queryClient.invalidateQueries({ queryKey: ["all-team-demands"] });
+        queryClient.invalidateQueries({ queryKey: ["batch-dependency-info"] });
+        queryClient.invalidateQueries({ queryKey: ["parent-aggregated-time", parentId] });
+        queryClient.invalidateQueries({ queryKey: ["subdemands-time-entries"] });
+        queryClient.invalidateQueries({ queryKey: ["kanban-parent-time"] });
+        queryClient.invalidateQueries({ queryKey: ["demand-time-entries"] });
+        return { ok: true as const };
+      } catch (err) {
+        queryClient.invalidateQueries({ queryKey: ["subdemands", parentId] });
+        queryClient.invalidateQueries({ queryKey: ["demands"] });
+        queryClient.invalidateQueries({ queryKey: ["all-team-demands"] });
+        toast.error("Não foi possível propagar o status para as subdemandas", {
+          description: getErrorMessage(err),
+        });
+        return { ok: false as const };
+      } finally {
+        setIsPropagating(false);
+      }
+    },
+    [demands, queryClient, statuses, user?.id]
+  );
+
   const handleDragStart = (e: React.DragEvent, demandId: string) => {
     if (readOnly) return;
-    // Block dragging parent demands
-    const demand = demands.find(d => d.id === demandId);
-    const isParent = demands.some(d => d.parent_demand_id === demandId);
-    if (isParent) {
-      e.preventDefault();
-      toast.info("Demanda principal não pode ser movida manualmente", {
-        description: "Ela será movida automaticamente conforme o progresso das subdemandas.",
-      });
-      return;
-    }
+    // Parent demands can be dragged, but only dropped into a finalization column.
+    // The check happens at drop time (handleDropWithStatusId).
     setDraggedId(demandId);
     e.dataTransfer.effectAllowed = "move";
   };
+
 
   const handleDragOver = (e: React.DragEvent, columnKey?: string) => {
     e.preventDefault();
