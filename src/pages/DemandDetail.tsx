@@ -1433,6 +1433,80 @@ export default function DemandDetail() {
           isPending={updateDemand.isPending}
         />
       )}
+
+      {/* Propagate status to subdemands - confirmation dialog */}
+      <AlertDialog
+        open={!!propagateDialog}
+        onOpenChange={(open) => { if (!open && !isPropagating) setPropagateDialog(null); }}
+      >
+        <AlertDialogContent className="w-[calc(100vw-2rem)] max-w-lg mx-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <span
+                className="inline-block w-3 h-3 rounded-full"
+                style={{ backgroundColor: propagateDialog?.statusColor }}
+              />
+              Mover subdemandas para "{propagateDialog?.statusName}"?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>
+                  Esta demanda principal possui{" "}
+                  <strong>{propagateDialog?.toMoveCount} subdemanda{(propagateDialog?.toMoveCount ?? 0) > 1 ? "s" : ""}</strong>
+                  {" "}que ainda não estão neste status.
+                </p>
+                {!!propagateDialog?.activeCount && propagateDialog.activeCount > 0 && (
+                  <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+                    ⚠️ <strong>{propagateDialog.activeCount}</strong>{" "}
+                    {propagateDialog.activeCount > 1 ? "estão" : "está"} em andamento.
+                    Os cronômetros ativos serão encerrados automaticamente.
+                  </p>
+                )}
+                <p className="text-muted-foreground">
+                  Você pode mover apenas a demanda principal ou mover principal + subdemandas juntas.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel disabled={isPropagating}>Cancelar</AlertDialogCancel>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPropagating}
+              onClick={() => {
+                if (!propagateDialog) return;
+                const status = {
+                  id: propagateDialog.statusId,
+                  name: propagateDialog.statusName,
+                };
+                setPropagateDialog(null);
+                applyParentStatusChange(status);
+              }}
+            >
+              Mover apenas a principal
+            </Button>
+            <AlertDialogAction
+              disabled={isPropagating}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!propagateDialog) return;
+                const status = {
+                  id: propagateDialog.statusId,
+                  name: propagateDialog.statusName,
+                };
+                const result = await propagateStatusToSubs(status.id, status.name);
+                if (result.ok) {
+                  applyParentStatusChange(status);
+                  setPropagateDialog(null);
+                }
+              }}
+            >
+              {isPropagating ? "Movendo..." : "Mover principal + subdemandas"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
     </>;
 }
