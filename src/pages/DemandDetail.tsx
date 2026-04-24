@@ -1390,6 +1390,10 @@ export default function DemandDetail() {
                                   Editar
                                 </DropdownMenuItem>
                               )}
+                              <DependencyMenuItems
+                                demandId={sub.id}
+                                isDelivered={sub.demand_statuses?.name === "Entregue"}
+                              />
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
