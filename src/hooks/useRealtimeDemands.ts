@@ -134,7 +134,6 @@ export function useRealtimeAllDemands() {
 
 export function useKanbanRealtimeNotifications(boardId?: string) {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [notifications, setNotifications] = useState<KanbanMoveNotification[]>([]);
 
   const clearNotification = useCallback((demandId: string) => {
@@ -192,7 +191,7 @@ export function useKanbanRealtimeNotifications(boardId?: string) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, boardId, queryClient]);
+  }, [user, boardId]);
 
   useEffect(() => {
     if (notifications.length === 0) return;
