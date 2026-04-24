@@ -45,10 +45,19 @@ import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 import { KanbanSubdemandsList } from "@/components/KanbanSubdemandsList";
 import { KanbanCardMenu } from "@/components/KanbanCardMenu";
 import { checkDependencyBeforeStatusChange, useBatchDependencyInfo, type DependencyInfo } from "@/hooks/useDependencyCheck";
-import { patchDemandStatusByIds } from "@/lib/demandRealtimeCache";
+import { patchDemandStatusByIds, patchParentAggregatedTime } from "@/lib/demandRealtimeCache";
 import { useReorderSubdemands } from "@/hooks/useSubdemands";
 import { validateSubdemandOrder } from "@/lib/subdemandOrderUtils";
-import { Link2, Lock } from "lucide-react";
+import { Link2, Lock, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Assignee {
   user_id: string;
@@ -233,6 +242,18 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [subReorderDragOverId, setSubReorderDragOverId] = useState<string | null>(null);
   const subReorderSourceIdRef = useState<{ current: string | null }>({ current: null })[0];
+
+  // State for parent-to-subdemand status propagation confirmation
+  const [propagateDialog, setPropagateDialog] = useState<{
+    parentId: string;
+    statusId: string;
+    statusName: string;
+    statusColor?: string;
+    columnKey: string;
+    toMoveCount: number;
+    activeCount: number;
+  } | null>(null);
+  const [isPropagating, setIsPropagating] = useState(false);
 
   const toggleGroupCollapsed = (parentId: string) => {
     setCollapsedGroups(prev => {
@@ -571,21 +592,143 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     }
   }, []);
 
+  // Helpers for parent → subdemand status propagation in Kanban.
+  // A target column is "finalization" when it represents Aprovação Interna,
+  // Aprovação do Cliente or Entregue. Parent demands can ONLY be moved to
+  // these columns manually — moves to other columns stay blocked because
+  // they would conflict with the auto-move logic driven by subdemandas.
+  const isFinalizationColumn = useCallback(
+    (columnKey: string, columnAdjustmentType?: AdjustmentTypeColumn) => {
+      const adjType = columnAdjustmentType || columns.find((c) => c.key === columnKey)?.adjustmentType || "none";
+      return columnKey === "Entregue" || adjType === "internal" || adjType === "external";
+    },
+    [columns]
+  );
+
+  /**
+   * Propagates a finalization status to all sub-demands of a parent via RPC.
+   * Stops any active timer server-side. Returns ok flag.
+   */
+  const propagateFinalizationToSubdemands = useCallback(
+    async (parentId: string, statusId: string, statusName: string, statusColor?: string) => {
+      const subIdsToMove = demands
+        .filter((d) => d.parent_demand_id === parentId && d.status_id !== statusId)
+        .map((d) => d.id);
+
+      const statusChangedAt = new Date().toISOString();
+      const deliveredStatus = statuses?.find((s) => s.name === "Entregue");
+      const deliveredAt = deliveredStatus && deliveredStatus.id === statusId ? statusChangedAt : undefined;
+
+      // Optimistic patch so cards visually move immediately
+      patchDemandStatusByIds(queryClient, subIdsToMove, {
+        statusId,
+        statusName,
+        statusColor: statusColor ?? statuses?.find((s) => s.id === statusId)?.color,
+        statusChangedAt,
+        statusChangedBy: user?.id || null,
+        deliveredAt,
+        stopTimer: true,
+      });
+      patchParentAggregatedTime(queryClient, parentId, subIdsToMove);
+
+      setIsPropagating(true);
+      try {
+        const { data, error } = await supabase.rpc("propagate_status_to_subdemands", {
+          p_parent_id: parentId,
+          p_new_status_id: statusId,
+        });
+        if (error) throw error;
+        const updated = (data as any)?.updated_count ?? 0;
+        const stopped = (data as any)?.stopped_timers ?? 0;
+        if (updated > 0) {
+          toast.success(
+            `${updated} subdemanda${updated > 1 ? "s" : ""} ${updated > 1 ? "movidas" : "movida"} para "${statusName}"` +
+              (stopped > 0
+                ? ` (${stopped} cronômetro${stopped > 1 ? "s" : ""} encerrado${stopped > 1 ? "s" : ""})`
+                : "")
+          );
+        }
+        queryClient.invalidateQueries({ queryKey: ["subdemands", parentId] });
+        queryClient.invalidateQueries({ queryKey: ["demands"] });
+        queryClient.invalidateQueries({ queryKey: ["all-team-demands"] });
+        queryClient.invalidateQueries({ queryKey: ["batch-dependency-info"] });
+        queryClient.invalidateQueries({ queryKey: ["parent-aggregated-time", parentId] });
+        queryClient.invalidateQueries({ queryKey: ["subdemands-time-entries"] });
+        queryClient.invalidateQueries({ queryKey: ["kanban-parent-time"] });
+        queryClient.invalidateQueries({ queryKey: ["demand-time-entries"] });
+        return { ok: true as const };
+      } catch (err) {
+        queryClient.invalidateQueries({ queryKey: ["subdemands", parentId] });
+        queryClient.invalidateQueries({ queryKey: ["demands"] });
+        queryClient.invalidateQueries({ queryKey: ["all-team-demands"] });
+        toast.error("Não foi possível propagar o status para as subdemandas", {
+          description: getErrorMessage(err),
+        });
+        return { ok: false as const };
+      } finally {
+        setIsPropagating(false);
+      }
+    },
+    [demands, queryClient, statuses, user?.id]
+  );
+
+  /**
+   * Updates ONLY the parent demand's status (no sub-demand propagation).
+   * Used by the Kanban when the parent is dropped on a finalization column
+   * and the user opts to move only the parent, OR when there are no
+   * sub-demands to move.
+   */
+  const applyParentMoveOnly = useCallback(
+    async (parentId: string, statusId: string, columnKey: string, statusColor?: string) => {
+      const statusChangedAt = new Date().toISOString();
+      setOptimisticUpdates((prev) => ({ ...prev, [parentId]: columnKey }));
+      patchDemandStatusByIds(queryClient, [parentId], {
+        statusId,
+        statusName: columnKey,
+        statusColor,
+        statusChangedAt,
+        statusChangedBy: user?.id || null,
+      });
+
+      return new Promise<void>((resolve) => {
+        updateDemand.mutate(
+          {
+            id: parentId,
+            status_id: statusId,
+            status_changed_by: user?.id || null,
+            status_changed_at: statusChangedAt,
+          },
+          {
+            onSuccess: () => {
+              toast.success(`Status alterado para "${columnKey}"`);
+              resolve();
+            },
+            onError: (error: any) => {
+              setOptimisticUpdates((prev) => {
+                const next = { ...prev };
+                delete next[parentId];
+                return next;
+              });
+              toast.error("Erro ao alterar status", {
+                description: getErrorMessage(error),
+              });
+              resolve();
+            },
+          }
+        );
+      });
+    },
+    [queryClient, updateDemand, user?.id]
+  );
+
   const handleDragStart = (e: React.DragEvent, demandId: string) => {
     if (readOnly) return;
-    // Block dragging parent demands
-    const demand = demands.find(d => d.id === demandId);
-    const isParent = demands.some(d => d.parent_demand_id === demandId);
-    if (isParent) {
-      e.preventDefault();
-      toast.info("Demanda principal não pode ser movida manualmente", {
-        description: "Ela será movida automaticamente conforme o progresso das subdemandas.",
-      });
-      return;
-    }
+    // Parent demands can be dragged, but only dropped into a finalization column.
+    // The check happens at drop time (handleDropWithStatusId).
     setDraggedId(demandId);
     e.dataTransfer.effectAllowed = "move";
   };
+
 
   const handleDragOver = (e: React.DragEvent, columnKey?: string) => {
     e.preventDefault();
@@ -655,10 +798,40 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     // Synchronous parent check using in-memory data
     const isParentDemandByDb = demands.some(d => d.parent_demand_id === demandId);
 
-    // Block ALL manual movement of parent demands
+    // Parent demands can ONLY be moved manually to finalization columns
+    // (Aprovação Interna / Aprovação do Cliente / Entregue). Any other target
+    // is blocked because non-finalization moves are driven automatically by
+    // the progress of sub-demands.
     if (isParentDemandByDb) {
-      toast.info("Demanda principal não pode ser movida manualmente", {
-        description: "Ela será movida automaticamente conforme o progresso das subdemandas.",
+      const targetColumn = columns.find((c) => c.key === columnKey);
+      if (!isFinalizationColumn(columnKey, targetColumn?.adjustmentType)) {
+        toast.info("Demanda principal só pode ser movida para etapas de revisão", {
+          description: "Mova as subdemandas — a principal acompanha o progresso automaticamente.",
+        });
+        return;
+      }
+
+      const subs = demands.filter((d) => d.parent_demand_id === demandId);
+      const subsToMove = subs.filter((s) => s.status_id !== statusId);
+      const activeStatusNames = new Set(["Fazendo", "Em Ajuste"]);
+      const activeCount = subsToMove.filter((s) => activeStatusNames.has(s.demand_statuses?.name ?? "")).length;
+      const targetStatus = statuses?.find((s) => s.id === statusId);
+
+      if (subsToMove.length === 0) {
+        // Nothing to propagate — just move the parent
+        await applyParentMoveOnly(demandId, statusId, columnKey, targetStatus?.color);
+        return;
+      }
+
+      // Open confirmation dialog: "only parent" vs "parent + subdemandas"
+      setPropagateDialog({
+        parentId: demandId,
+        statusId,
+        statusName: columnKey,
+        statusColor: targetStatus?.color,
+        columnKey,
+        toMoveCount: subsToMove.length,
+        activeCount,
       });
       return;
     }
@@ -817,10 +990,40 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
     // Synchronous parent check using in-memory data
     const isParentDemandByDb = demands.some(d => d.parent_demand_id === demandId);
-    // Block ALL manual movement of parent demands
+    // Parent demands can ONLY be moved to finalization columns; for other targets,
+    // the parent follows sub-demand progress automatically.
     if (isParentDemandByDb) {
-      toast.info("Demanda principal não pode ser movida manualmente", {
-        description: "Ela será movida automaticamente conforme o progresso das subdemandas.",
+      const targetCol = columns.find((c) => c.key === newStatusKey);
+      if (!isFinalizationColumn(newStatusKey, targetCol?.adjustmentType)) {
+        toast.info("Demanda principal só pode ser movida para etapas de revisão", {
+          description: "Mova as subdemandas — a principal acompanha o progresso automaticamente.",
+        });
+        return;
+      }
+
+      const targetStatusIdParent = targetCol?.statusId
+        ?? statuses?.find((s) => s.name === newStatusKey)?.id;
+      if (!targetStatusIdParent) return;
+
+      const subs = demands.filter((d) => d.parent_demand_id === demandId);
+      const subsToMove = subs.filter((s) => s.status_id !== targetStatusIdParent);
+      const activeStatusNames = new Set(["Fazendo", "Em Ajuste"]);
+      const activeCount = subsToMove.filter((s) => activeStatusNames.has(s.demand_statuses?.name ?? "")).length;
+      const targetStatus = statuses?.find((s) => s.id === targetStatusIdParent);
+
+      if (subsToMove.length === 0) {
+        await applyParentMoveOnly(demandId, targetStatusIdParent, newStatusKey, targetStatus?.color);
+        return;
+      }
+
+      setPropagateDialog({
+        parentId: demandId,
+        statusId: targetStatusIdParent,
+        statusName: newStatusKey,
+        statusColor: targetStatus?.color,
+        columnKey: newStatusKey,
+        toMoveCount: subsToMove.length,
+        activeCount,
       });
       return;
     }
@@ -1864,6 +2067,93 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       onSortChange={(s) => setColumnSort(columnKey, s)}
     />
   );
+
+  // Shared confirmation dialog: parent → subdemandas finalization propagation
+  const propagateDialogJsx = (
+    <AlertDialog
+      open={!!propagateDialog}
+      onOpenChange={(open) => {
+        if (!open && !isPropagating) setPropagateDialog(null);
+      }}
+    >
+      <AlertDialogContent className="w-[calc(100vw-2rem)] max-w-md mx-auto p-0 overflow-hidden gap-0">
+        <div className="px-6 pt-6 pb-4">
+          <AlertDialogHeader className="space-y-3">
+            <div className="flex items-start gap-3">
+              <span
+                className="mt-1 inline-block w-3 h-3 rounded-full ring-4 ring-offset-0 shrink-0"
+                style={{
+                  backgroundColor: propagateDialog?.statusColor,
+                  boxShadow: `0 0 0 4px ${propagateDialog?.statusColor}20`,
+                }}
+              />
+              <div className="flex-1 min-w-0">
+                <AlertDialogTitle className="text-base font-semibold leading-tight">
+                  Mover subdemandas para "{propagateDialog?.statusName}"?
+                </AlertDialogTitle>
+                <AlertDialogDescription className="mt-1.5 text-sm text-muted-foreground">
+                  Esta demanda principal possui{" "}
+                  <strong className="font-semibold text-foreground">
+                    {propagateDialog?.toMoveCount} subdemanda
+                    {(propagateDialog?.toMoveCount ?? 0) > 1 ? "s" : ""}
+                  </strong>{" "}
+                  que ainda não {(propagateDialog?.toMoveCount ?? 0) > 1 ? "estão" : "está"} neste status.
+                </AlertDialogDescription>
+              </div>
+            </div>
+
+            {!!propagateDialog?.activeCount && propagateDialog.activeCount > 0 && (
+              <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm dark:border-amber-900/50 dark:bg-amber-950/40">
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                <p className="text-amber-900 dark:text-amber-200 leading-snug">
+                  <strong className="font-semibold">{propagateDialog.activeCount}</strong>{" "}
+                  {propagateDialog.activeCount > 1 ? "estão" : "está"} em andamento. Os cronômetros ativos serão encerrados automaticamente.
+                </p>
+              </div>
+            )}
+          </AlertDialogHeader>
+        </div>
+
+        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 border-t bg-muted/30 px-6 py-4">
+          <AlertDialogCancel disabled={isPropagating} className="mt-0 sm:w-auto">
+            Cancelar
+          </AlertDialogCancel>
+          <div className="flex flex-col-reverse sm:flex-row gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPropagating}
+              className="hover:bg-background hover:border-primary hover:text-primary"
+              onClick={async () => {
+                if (!propagateDialog) return;
+                const { parentId, statusId, columnKey, statusColor } = propagateDialog;
+                setPropagateDialog(null);
+                await applyParentMoveOnly(parentId, statusId, columnKey, statusColor);
+              }}
+            >
+              Apenas a principal
+            </Button>
+            <AlertDialogAction
+              disabled={isPropagating}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!propagateDialog) return;
+                const { parentId, statusId, statusName, columnKey, statusColor } = propagateDialog;
+                const result = await propagateFinalizationToSubdemands(parentId, statusId, statusName, statusColor);
+                if (result.ok) {
+                  await applyParentMoveOnly(parentId, statusId, columnKey, statusColor);
+                  setPropagateDialog(null);
+                }
+              }}
+            >
+              {isPropagating ? "Movendo..." : "Mover tudo"}
+            </AlertDialogAction>
+          </div>
+        </div>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
 
   // Mobile view with dropdown selector - shows move menu on cards
   if (isMobile) {
