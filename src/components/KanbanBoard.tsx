@@ -1677,42 +1677,43 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         const isCollapsed = collapsedGroups.has(demand.id);
 
         rendered.push(
-          <div key={`group-${demand.id}`} className="space-y-2 pb-1">
+          <div key={`group-${demand.id}`} className="pb-1">
             <div className="relative">
               {renderDemandCard(demand, columnKey, showMoveMenu, adjType)}
+              {children.length > 0 && (
+                <div className="absolute left-1/2 -translate-x-1/2 -bottom-3 z-10">
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleGroupCollapsed(demand.id);
+                          }}
+                          className={cn(
+                            "inline-flex h-6 items-center gap-1 rounded-full px-2.5 text-[11px] font-semibold whitespace-nowrap",
+                            "bg-primary text-primary-foreground shadow-md ring-2 ring-background transition-colors hover:bg-primary/90"
+                          )}
+                          aria-label={isCollapsed ? "Expandir subdemandas" : "Recolher subdemandas"}
+                        >
+                          {isCollapsed ? (
+                            <ChevronDown className="h-3 w-3" />
+                          ) : (
+                            <ChevronUp className="h-3 w-3" />
+                          )}
+                          <span>{children.length} {children.length === 1 ? "subdemanda" : "subdemandas"}</span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>{isCollapsed ? "Expandir subdemandas" : "Recolher subdemandas"}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              )}
             </div>
-            {children.length > 0 && (
-              <div className="flex justify-center px-3">
-                <TooltipProvider delayDuration={200}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleGroupCollapsed(demand.id);
-                        }}
-                        className={cn(
-                          "inline-flex min-h-6 items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold",
-                          "bg-primary text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-                        )}
-                        aria-label={isCollapsed ? "Expandir subdemandas" : "Recolher subdemandas"}
-                      >
-                        {isCollapsed ? (
-                          <ChevronDown className="h-3 w-3" />
-                        ) : (
-                          <ChevronUp className="h-3 w-3" />
-                        )}
-                        <span>{children.length} {children.length === 1 ? "subdemanda" : "subdemandas"}</span>
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      <p>{isCollapsed ? "Expandir subdemandas" : "Recolher subdemandas"}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            )}
+            {children.length > 0 && <div className="h-4" />}
             {children.length > 0 && !isCollapsed && (() => {
               const SUB_REORDER_MIME = "application/x-subdemand-reorder";
               const canReorderSubs = !readOnly && (
