@@ -994,6 +994,25 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     );
   };
 
+  // Auto-clear optimistic updates once the source data confirms the change.
+  // This prevents the "snap-back" glitch caused by stale refetches arriving
+  // before the database trigger commit propagates to the cache.
+  useEffect(() => {
+    if (Object.keys(optimisticUpdates).length === 0) return;
+    setOptimisticUpdates(prev => {
+      let changed = false;
+      const next: Record<string, string> = { ...prev };
+      for (const demand of demands) {
+        const expected = next[demand.id];
+        if (expected && demand.demand_statuses?.name === expected) {
+          delete next[demand.id];
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [demands, optimisticUpdates]);
+
   // Pre-compute demand-to-column mapping for deduplication
   // Each demand is assigned to exactly one column (optimistic update takes priority)
   const demandColumnMap = useMemo(() => {
