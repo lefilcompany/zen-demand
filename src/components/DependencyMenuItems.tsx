@@ -177,8 +177,16 @@ export function DependencyMenuItems({ demandId, isDelivered, onActionDone, showE
     }
   };
 
-  if (loading) return null;
-  if (blocking.length === 0 && dependents.length === 0) return null;
+  if (loading) {
+    return showEmptyHint ? (
+      <DropdownMenuItem disabled>Carregando dependências…</DropdownMenuItem>
+    ) : null;
+  }
+  if (blocking.length === 0 && dependents.length === 0) {
+    return showEmptyHint ? (
+      <DropdownMenuItem disabled>Sem dependências</DropdownMenuItem>
+    ) : null;
+  }
 
   const blockedByOpen = blocking.filter((d) => d.dependsOnStatusName !== "Entregue");
   const showDelivered = !isDelivered && dependents.length > 0;
