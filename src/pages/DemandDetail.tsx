@@ -55,6 +55,7 @@ import { checkDependencyBeforeStatusChange, useDemandDependencyInfo, useBatchDep
 import { Lock, Link2, GripVertical } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
 import { isFinalizationStatus, analyzeSubdemandsForPropagation } from "@/lib/subdemandStatusPropagation";
+import { patchDemandStatusByIds, patchParentAggregatedTime } from "@/lib/demandRealtimeCache";
 export default function DemandDetail() {
   const {
     id
@@ -497,12 +498,24 @@ export default function DemandDetail() {
    * Encapsulada para ser chamada do dropdown direto OU após o usuário decidir
    * propagar (ou não) para as subdemandas.
    */
-  const applyParentStatusChange = (status: { id: string; name: string }) => {
+  const applyParentStatusChange = (status: { id: string; name: string; color?: string }) => {
     if (!demand) return;
     const previousStatusName = demand.demand_statuses?.name;
     const timerStatuses = ["Fazendo", "Em Ajuste"];
     const isEnteringTimerStatus = timerStatuses.includes(status.name);
     const isLeavingTimerStatus = previousStatusName && timerStatuses.includes(previousStatusName) && !isEnteringTimerStatus;
+    const statusChangedAt = new Date().toISOString();
+    const deliveredAt = status.id === deliveredStatusId ? statusChangedAt : demand.delivered_at;
+
+    patchDemandStatusByIds(queryClient, [demand.id], {
+      statusId: status.id,
+      statusName: status.name,
+      statusColor: status.color ?? demand.demand_statuses?.color,
+      statusChangedAt,
+      statusChangedBy: user?.id || null,
+      deliveredAt,
+      stopTimer: isLeavingTimerStatus,
+    });
 
     if (isLeavingTimerStatus && isTimerRunning) {
       stopTimer();
@@ -512,7 +525,7 @@ export default function DemandDetail() {
       id: demand.id,
       status_id: status.id,
       status_changed_by: user?.id || null,
-      status_changed_at: new Date().toISOString(),
+      status_changed_at: statusChangedAt,
     }, {
       onSuccess: () => {
         toast.success(`Status alterado para "${status.name}"!`);
@@ -529,6 +542,23 @@ export default function DemandDetail() {
    */
   const propagateStatusToSubs = async (statusId: string, statusName: string) => {
     if (!demand) return { ok: false as const };
+    const subIdsToMove = (subdemands || [])
+      .filter((sub) => sub.status_id !== statusId)
+      .map((sub) => sub.id);
+    const statusChangedAt = new Date().toISOString();
+    const deliveredAt = statusId === deliveredStatusId ? statusChangedAt : undefined;
+
+    patchDemandStatusByIds(queryClient, subIdsToMove, {
+      statusId,
+      statusName,
+      statusColor: statuses?.find((item) => item.id === statusId)?.color,
+      statusChangedAt,
+      statusChangedBy: user?.id || null,
+      deliveredAt,
+      stopTimer: true,
+    });
+    patchParentAggregatedTime(queryClient, demand.id, subIdsToMove);
+
     setIsPropagating(true);
     try {
       const { data, error } = await supabase.rpc("propagate_status_to_subdemands", {
@@ -544,12 +574,20 @@ export default function DemandDetail() {
           (stopped > 0 ? ` (${stopped} cronômetro${stopped > 1 ? "s" : ""} encerrado${stopped > 1 ? "s" : ""})` : "")
         );
       }
-      // Refresh subdemand list and timers
       queryClient.invalidateQueries({ queryKey: ["subdemands", demand.id] });
       queryClient.invalidateQueries({ queryKey: ["demands"] });
+      queryClient.invalidateQueries({ queryKey: ["all-team-demands"] });
       queryClient.invalidateQueries({ queryKey: ["batch-dependency-info"] });
+      queryClient.invalidateQueries({ queryKey: ["parent-aggregated-time", demand.id] });
+      queryClient.invalidateQueries({ queryKey: ["subdemands-time-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["kanban-parent-time"] });
+      queryClient.invalidateQueries({ queryKey: ["demand-time-entries"] });
       return { ok: true as const };
     } catch (err) {
+      queryClient.invalidateQueries({ queryKey: ["subdemands", demand.id] });
+      queryClient.invalidateQueries({ queryKey: ["demands"] });
+      queryClient.invalidateQueries({ queryKey: ["all-team-demands"] });
+      queryClient.invalidateQueries({ queryKey: ["parent-aggregated-time", demand.id] });
       toast.error("Não foi possível propagar o status para as subdemandas", {
         description: getErrorMessage(err),
       });
