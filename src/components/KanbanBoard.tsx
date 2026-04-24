@@ -2229,6 +2229,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           boardName={boardName}
           userRole={userRole}
         />
+        {propagateDialogJsx}
       </div>
     );
   }
@@ -2339,11 +2340,10 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           boardName={boardName}
           userRole={userRole}
         />
+        {propagateDialogJsx}
       </div>
     );
   }
-
-  // Large Desktop view - fixed width columns with horizontal scroll (carousel style)
   if (isLargeDesktop) {
     const closedColumnMinWidth = 56; // px - minimum width for closed columns
     const openColumnWidth = 380; // px - fixed width for open columns (increased for full timer display)
@@ -2456,6 +2456,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           boardName={boardName}
           userRole={userRole}
         />
+        {propagateDialogJsx}
       </div>
     );
   }
