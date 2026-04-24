@@ -2068,6 +2068,93 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
     />
   );
 
+  // Shared confirmation dialog: parent → subdemandas finalization propagation
+  const propagateDialogJsx = (
+    <AlertDialog
+      open={!!propagateDialog}
+      onOpenChange={(open) => {
+        if (!open && !isPropagating) setPropagateDialog(null);
+      }}
+    >
+      <AlertDialogContent className="w-[calc(100vw-2rem)] max-w-md mx-auto p-0 overflow-hidden gap-0">
+        <div className="px-6 pt-6 pb-4">
+          <AlertDialogHeader className="space-y-3">
+            <div className="flex items-start gap-3">
+              <span
+                className="mt-1 inline-block w-3 h-3 rounded-full ring-4 ring-offset-0 shrink-0"
+                style={{
+                  backgroundColor: propagateDialog?.statusColor,
+                  boxShadow: `0 0 0 4px ${propagateDialog?.statusColor}20`,
+                }}
+              />
+              <div className="flex-1 min-w-0">
+                <AlertDialogTitle className="text-base font-semibold leading-tight">
+                  Mover subdemandas para "{propagateDialog?.statusName}"?
+                </AlertDialogTitle>
+                <AlertDialogDescription className="mt-1.5 text-sm text-muted-foreground">
+                  Esta demanda principal possui{" "}
+                  <strong className="font-semibold text-foreground">
+                    {propagateDialog?.toMoveCount} subdemanda
+                    {(propagateDialog?.toMoveCount ?? 0) > 1 ? "s" : ""}
+                  </strong>{" "}
+                  que ainda não {(propagateDialog?.toMoveCount ?? 0) > 1 ? "estão" : "está"} neste status.
+                </AlertDialogDescription>
+              </div>
+            </div>
+
+            {!!propagateDialog?.activeCount && propagateDialog.activeCount > 0 && (
+              <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm dark:border-amber-900/50 dark:bg-amber-950/40">
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                <p className="text-amber-900 dark:text-amber-200 leading-snug">
+                  <strong className="font-semibold">{propagateDialog.activeCount}</strong>{" "}
+                  {propagateDialog.activeCount > 1 ? "estão" : "está"} em andamento. Os cronômetros ativos serão encerrados automaticamente.
+                </p>
+              </div>
+            )}
+          </AlertDialogHeader>
+        </div>
+
+        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 border-t bg-muted/30 px-6 py-4">
+          <AlertDialogCancel disabled={isPropagating} className="mt-0 sm:w-auto">
+            Cancelar
+          </AlertDialogCancel>
+          <div className="flex flex-col-reverse sm:flex-row gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPropagating}
+              className="hover:bg-background hover:border-primary hover:text-primary"
+              onClick={async () => {
+                if (!propagateDialog) return;
+                const { parentId, statusId, columnKey, statusColor } = propagateDialog;
+                setPropagateDialog(null);
+                await applyParentMoveOnly(parentId, statusId, columnKey, statusColor);
+              }}
+            >
+              Apenas a principal
+            </Button>
+            <AlertDialogAction
+              disabled={isPropagating}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!propagateDialog) return;
+                const { parentId, statusId, statusName, columnKey, statusColor } = propagateDialog;
+                const result = await propagateFinalizationToSubdemands(parentId, statusId, statusName, statusColor);
+                if (result.ok) {
+                  await applyParentMoveOnly(parentId, statusId, columnKey, statusColor);
+                  setPropagateDialog(null);
+                }
+              }}
+            >
+              {isPropagating ? "Movendo..." : "Mover tudo"}
+            </AlertDialogAction>
+          </div>
+        </div>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+
   // Mobile view with dropdown selector - shows move menu on cards
   if (isMobile) {
     const mobileActiveColumn = activeColumns[0];
