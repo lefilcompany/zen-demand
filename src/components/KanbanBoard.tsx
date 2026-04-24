@@ -1678,7 +1678,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
         rendered.push(
           <div key={`group-${demand.id}`} className="space-y-0">
-            <div className="relative pb-3">
+            <div className="relative">
               {renderDemandCard(demand, columnKey, showMoveMenu, adjType)}
               {children.length > 0 && (
                 <TooltipProvider delayDuration={200}>
