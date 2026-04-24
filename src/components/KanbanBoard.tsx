@@ -450,7 +450,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       },
       {
         onSuccess: () => {
-          // Patch cache with new parent status BEFORE removing the optimistic overlay
+          // Patch cache with new parent status. Optimistic overlay is auto-cleared
+          // by the watcher effect once the source data confirms the change.
           patchDemandStatusByIds(queryClient, [parentDemandId], {
             statusId: targetStatus.id,
             statusName: targetStatus.name,
@@ -458,12 +459,6 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
             statusChangedAt: new Date().toISOString(),
             statusChangedBy: user?.id || null,
           });
-          setOptimisticUpdates(prev => {
-            const next = { ...prev };
-            delete next[parentDemandId];
-            return next;
-          });
-          queryClient.invalidateQueries({ queryKey: ['demands'] });
           queryClient.invalidateQueries({ queryKey: ['batch-dependency-info'] });
           queryClient.invalidateQueries({ queryKey: ['demand-dependency-info'] });
           if (toastMsg) toast.success(toastMsg);
