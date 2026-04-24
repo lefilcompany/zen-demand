@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { mergeDemandRowIntoCache } from "@/lib/demandRealtimeCache";
 
 interface RealtimeUpdate {
   type: "demand" | "interaction" | "assignee" | "subtask";
@@ -23,8 +24,6 @@ export function useRealtimeDemandDetail(demandId?: string) {
   useEffect(() => {
     if (!user || !demandId) return;
 
-    console.log('Setting up realtime subscription for demand:', demandId);
-
     const channel = supabase
       .channel(`demand-detail-${demandId}`)
       .on(
@@ -33,11 +32,28 @@ export function useRealtimeDemandDetail(demandId?: string) {
           event: '*',
           schema: 'public',
           table: 'demands',
-          filter: `id=eq.${demandId}`,
         },
         (payload) => {
-          console.log('Realtime demand detail change:', payload.eventType);
-          queryClient.invalidateQueries({ queryKey: ["demand", demandId] });
+          const next = payload.new as Record<string, any> | null;
+          const previous = payload.old as Record<string, any> | null;
+          const touchedIds = [next?.id, next?.parent_demand_id, previous?.id, previous?.parent_demand_id].filter(Boolean) as string[];
+
+          if (next?.id) {
+            mergeDemandRowIntoCache(queryClient, next as any);
+          }
+
+          touchedIds.forEach((id) => {
+            queryClient.invalidateQueries({ queryKey: ["demand", id] });
+            queryClient.invalidateQueries({ queryKey: ["subdemands", id] });
+            queryClient.invalidateQueries({ queryKey: ["parent-aggregated-time", id] });
+          });
+
+          queryClient.invalidateQueries({ queryKey: ["demands"] });
+          queryClient.invalidateQueries({ queryKey: ["all-team-demands"] });
+          queryClient.invalidateQueries({ queryKey: ["subdemands-time-entries"] });
+          queryClient.invalidateQueries({ queryKey: ["kanban-parent-time"] });
+          queryClient.invalidateQueries({ queryKey: ["demand-time-entries"] });
+
           setLastUpdate({ type: "demand", eventType: payload.eventType, timestamp: new Date() });
           setShowUpdateIndicator(true);
         }
@@ -51,7 +67,6 @@ export function useRealtimeDemandDetail(demandId?: string) {
           filter: `demand_id=eq.${demandId}`,
         },
         (payload) => {
-          console.log('Realtime interaction change:', payload.eventType);
           queryClient.invalidateQueries({ queryKey: ["demand-interactions", demandId] });
           setLastUpdate({ type: "interaction", eventType: payload.eventType, timestamp: new Date() });
           setShowUpdateIndicator(true);
@@ -66,7 +81,6 @@ export function useRealtimeDemandDetail(demandId?: string) {
           filter: `demand_id=eq.${demandId}`,
         },
         (payload) => {
-          console.log('Realtime assignee change:', payload.eventType);
           queryClient.invalidateQueries({ queryKey: ["demand-assignees", demandId] });
           setLastUpdate({ type: "assignee", eventType: payload.eventType, timestamp: new Date() });
           setShowUpdateIndicator(true);
@@ -81,23 +95,18 @@ export function useRealtimeDemandDetail(demandId?: string) {
           filter: `demand_id=eq.${demandId}`,
         },
         (payload) => {
-          console.log('Realtime subtask change:', payload.eventType);
           queryClient.invalidateQueries({ queryKey: ["demand-subtasks", demandId] });
           setLastUpdate({ type: "subtask", eventType: payload.eventType, timestamp: new Date() });
           setShowUpdateIndicator(true);
         }
       )
-      .subscribe((status) => {
-        console.log('Demand detail realtime subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
-      console.log('Cleaning up realtime subscription for demand:', demandId);
       supabase.removeChannel(channel);
     };
   }, [user, demandId, queryClient]);
 
-  // Auto-hide indicator after 5 seconds
   useEffect(() => {
     if (showUpdateIndicator) {
       const timer = setTimeout(() => {
