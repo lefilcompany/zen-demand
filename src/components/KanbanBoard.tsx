@@ -2456,6 +2456,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           boardName={boardName}
           userRole={userRole}
         />
+        {propagateDialogJsx}
       </div>
     );
   }
