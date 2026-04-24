@@ -45,10 +45,19 @@ import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 import { KanbanSubdemandsList } from "@/components/KanbanSubdemandsList";
 import { KanbanCardMenu } from "@/components/KanbanCardMenu";
 import { checkDependencyBeforeStatusChange, useBatchDependencyInfo, type DependencyInfo } from "@/hooks/useDependencyCheck";
-import { patchDemandStatusByIds } from "@/lib/demandRealtimeCache";
+import { patchDemandStatusByIds, patchParentAggregatedTime } from "@/lib/demandRealtimeCache";
 import { useReorderSubdemands } from "@/hooks/useSubdemands";
 import { validateSubdemandOrder } from "@/lib/subdemandOrderUtils";
-import { Link2, Lock } from "lucide-react";
+import { Link2, Lock, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Assignee {
   user_id: string;
