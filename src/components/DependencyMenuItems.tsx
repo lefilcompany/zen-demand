@@ -32,6 +32,12 @@ interface Props {
   isDelivered?: boolean;
   /** Optional close handler triggered after a successful action */
   onActionDone?: () => void;
+  /**
+   * When true, renders a disabled "Sem dependências" hint instead of
+   * returning null when there are no incoming/outgoing deps. Use this when
+   * the menu would otherwise be empty (e.g. dedicated dependency dropdown).
+   */
+  showEmptyHint?: boolean;
 }
 
 /**
