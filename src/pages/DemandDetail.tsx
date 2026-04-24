@@ -39,6 +39,7 @@ import { getErrorMessage } from "@/lib/errorUtils";
 import { cn } from "@/lib/utils";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DependencyMenuItems } from "@/components/DependencyMenuItems";
 import { sendAdjustmentPushNotification } from "@/hooks/useSendPushNotification";
 import { useSendEmail } from "@/hooks/useSendEmail";
 import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
