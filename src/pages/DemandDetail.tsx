@@ -218,6 +218,14 @@ export default function DemandDetail() {
   const [isChangeBoardDialogOpen, setIsChangeBoardDialogOpen] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitle, setEditingTitle] = useState("");
+  const [propagateDialog, setPropagateDialog] = useState<null | {
+    statusId: string;
+    statusName: string;
+    statusColor: string;
+    toMoveCount: number;
+    activeCount: number;
+  }>(null);
+  const [isPropagating, setIsPropagating] = useState(false);
   const { selectedBoardId, setSelectedBoardId } = useSelectedBoard();
 
   // Auto-switch board context to match the demand being viewed (only on initial mount)
