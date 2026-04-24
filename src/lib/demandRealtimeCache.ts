@@ -80,6 +80,28 @@ function patchDemand<T extends DemandLike>(
   };
 }
 
+function applyToDemandQueries(
+  queryClient: QueryClient,
+  updater: (item: DemandLike) => DemandLike
+) {
+  queryClient.setQueriesData({ queryKey: ["demand"] }, (old: unknown) => {
+    if (!old || typeof old !== "object") return old;
+    return updater(old as DemandLike);
+  });
+
+  const patchArray = (old: unknown) => {
+    if (!Array.isArray(old)) return old;
+    return old.map((item) => {
+      if (!item || typeof item !== "object") return item;
+      return updater(item as DemandLike);
+    });
+  };
+
+  queryClient.setQueriesData({ queryKey: ["demands"] }, patchArray);
+  queryClient.setQueriesData({ queryKey: ["subdemands"] }, patchArray);
+  queryClient.setQueriesData({ queryKey: ["all-team-demands"] }, patchArray);
+}
+
 export function patchDemandStatusByIds(
   queryClient: QueryClient,
   demandIds: string[],
@@ -101,8 +123,10 @@ export function patchDemandStatusByIds(
     color: options.statusColor,
   });
 
-  const patchOne = <T extends DemandLike>(item: T) =>
-    patchDemand(
+  applyToDemandQueries(queryClient, (item) => {
+    if (!targetIds.has(item.id)) return item;
+
+    return patchDemand(
       item,
       options.statusId,
       statusSnapshot,
@@ -111,25 +135,26 @@ export function patchDemandStatusByIds(
       options.deliveredAt,
       options.stopTimer
     );
-
-  queryClient.setQueriesData({ queryKey: ["demand"] }, (old: unknown) => {
-    if (!old || typeof old !== "object") return old;
-    const item = old as DemandLike;
-    return targetIds.has(item.id) ? patchOne(item) : old;
   });
+}
 
-  const patchArray = (old: unknown) => {
-    if (!Array.isArray(old)) return old;
-    return old.map((item) => {
-      if (!item || typeof item !== "object") return item;
-      const demand = item as DemandLike;
-      return targetIds.has(demand.id) ? patchOne(demand) : item;
-    });
-  };
+export function mergeDemandRowIntoCache(
+  queryClient: QueryClient,
+  row: Partial<DemandLike> & { id: string }
+) {
+  const statusSnapshot = row.status_id
+    ? getStatusSnapshot(queryClient, row.status_id)
+    : null;
 
-  queryClient.setQueriesData({ queryKey: ["demands"] }, patchArray);
-  queryClient.setQueriesData({ queryKey: ["subdemands"] }, patchArray);
-  queryClient.setQueriesData({ queryKey: ["all-team-demands"] }, patchArray);
+  applyToDemandQueries(queryClient, (item) => {
+    if (item.id !== row.id) return item;
+
+    return {
+      ...item,
+      ...row,
+      demand_statuses: statusSnapshot ?? item.demand_statuses ?? null,
+    };
+  });
 }
 
 export function patchParentAggregatedTime(
