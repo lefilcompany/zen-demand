@@ -11,6 +11,7 @@ import { useUpdateDemand } from "@/hooks/useDemands";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 import { ShareDemandDialog } from "@/components/ShareDemandDialog";
+import { DependencyMenuItems } from "@/components/DependencyMenuItems";
 import { useNavigate } from "react-router-dom";
 
 interface KanbanCardMenuProps {
