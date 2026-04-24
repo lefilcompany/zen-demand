@@ -971,7 +971,7 @@ export default function DemandDetail() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-64 bg-popover">
-                  <DependencyMenuItems demandId={demand.id} isDelivered={isDelivered} />
+                  <DependencyMenuItems demandId={demand.id} isDelivered={isDelivered} showEmptyHint />
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
