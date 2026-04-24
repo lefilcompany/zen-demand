@@ -606,6 +606,33 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   );
 
   /**
+   * Returns the list of subdemandas of `parentId` that are blocked by an
+   * unresolved dependency (i.e. depend on a demanda that is not yet
+   * "Entregue"). Used to prevent moving a parent demand into a finalization
+   * column while its children still have pending blockers.
+   */
+  const getBlockingSubdemandDeps = useCallback(
+    (parentId: string): Array<{ subdemandTitle: string; blockedByTitle: string }> => {
+      const subs = demands.filter((d) => d.parent_demand_id === parentId);
+      const blockers: Array<{ subdemandTitle: string; blockedByTitle: string }> = [];
+      for (const sub of subs) {
+        const deps = batchDeps?.[sub.id];
+        if (!deps || deps.length === 0) continue;
+        for (const dep of deps) {
+          if (dep.isBlocked) {
+            blockers.push({
+              subdemandTitle: sub.title,
+              blockedByTitle: dep.dependsOnTitle,
+            });
+          }
+        }
+      }
+      return blockers;
+    },
+    [demands, batchDeps]
+  );
+
+  /**
    * Propagates a finalization status to all sub-demands of a parent via RPC.
    * Stops any active timer server-side. Returns ok flag.
    */
@@ -811,6 +838,19 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         return;
       }
 
+      // Block move when any subdemanda has an unresolved dependency.
+      // Only "Fazendo" stays allowed; finalization columns require all
+      // dependencies to be cleared first.
+      const blockers = getBlockingSubdemandDeps(demandId);
+      if (blockers.length > 0) {
+        const first = blockers[0];
+        const extra = blockers.length > 1 ? ` e mais ${blockers.length - 1}` : "";
+        toast.error("Demanda principal bloqueada por dependências", {
+          description: `"${first.subdemandTitle}" depende de "${first.blockedByTitle}"${extra}. Conclua as dependências antes de finalizar.`,
+        });
+        return;
+      }
+
       const subs = demands.filter((d) => d.parent_demand_id === demandId);
       const subsToMove = subs.filter((s) => s.status_id !== statusId);
       const activeStatusNames = new Set(["Fazendo", "Em Ajuste"]);
@@ -997,6 +1037,17 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       if (!isFinalizationColumn(newStatusKey, targetCol?.adjustmentType)) {
         toast.info("Demanda principal só pode ser movida para etapas de revisão", {
           description: "Mova as subdemandas — a principal acompanha o progresso automaticamente.",
+        });
+        return;
+      }
+
+      // Block move when any subdemanda has an unresolved dependency.
+      const blockers = getBlockingSubdemandDeps(demandId);
+      if (blockers.length > 0) {
+        const first = blockers[0];
+        const extra = blockers.length > 1 ? ` e mais ${blockers.length - 1}` : "";
+        toast.error("Demanda principal bloqueada por dependências", {
+          description: `"${first.subdemandTitle}" depende de "${first.blockedByTitle}"${extra}. Conclua as dependências antes de finalizar.`,
         });
         return;
       }
