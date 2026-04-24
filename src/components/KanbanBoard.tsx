@@ -45,6 +45,7 @@ import { buildPublicDemandUrl } from "@/lib/demandShareUtils";
 import { KanbanSubdemandsList } from "@/components/KanbanSubdemandsList";
 import { KanbanCardMenu } from "@/components/KanbanCardMenu";
 import { checkDependencyBeforeStatusChange, useBatchDependencyInfo, type DependencyInfo } from "@/hooks/useDependencyCheck";
+import { patchDemandStatusByIds } from "@/lib/demandRealtimeCache";
 import { useReorderSubdemands } from "@/hooks/useSubdemands";
 import { validateSubdemandOrder } from "@/lib/subdemandOrderUtils";
 import { Link2, Lock } from "lucide-react";
@@ -449,6 +450,14 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       },
       {
         onSuccess: () => {
+          // Patch cache with new parent status BEFORE removing the optimistic overlay
+          patchDemandStatusByIds(queryClient, [parentDemandId], {
+            statusId: targetStatus.id,
+            statusName: targetStatus.name,
+            statusColor: targetStatus.color,
+            statusChangedAt: new Date().toISOString(),
+            statusChangedBy: user?.id || null,
+          });
           setOptimisticUpdates(prev => {
             const next = { ...prev };
             delete next[parentDemandId];
@@ -711,7 +720,18 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       },
       {
         onSuccess: async () => {
-          // Clear optimistic state immediately
+          // Patch cache with new status FIRST so the card stays in the new column
+          // when we remove the optimistic overlay (avoids visual "snap-back")
+          const targetStatus = statuses?.find((s) => s.id === statusId);
+          patchDemandStatusByIds(queryClient, [demandId], {
+            statusId,
+            statusName: targetStatus?.name ?? columnKey,
+            statusColor: targetStatus?.color,
+            statusChangedAt: new Date().toISOString(),
+            statusChangedBy: user?.id || null,
+          });
+
+          // Now safe to clear optimistic overlay
           setOptimisticUpdates(prev => {
             const newUpdates = { ...prev };
             delete newUpdates[demandId];
@@ -877,7 +897,17 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       },
       {
         onSuccess: async () => {
-          // Clear optimistic state immediately
+          // Patch cache with new status FIRST so the card stays in the new column
+          const targetStatus = statuses?.find((s) => s.id === targetStatusId);
+          patchDemandStatusByIds(queryClient, [demandId], {
+            statusId: targetStatusId,
+            statusName: targetStatus?.name ?? newStatusKey,
+            statusColor: targetStatus?.color,
+            statusChangedAt: new Date().toISOString(),
+            statusChangedBy: user?.id || null,
+          });
+
+          // Now safe to clear optimistic overlay
           setOptimisticUpdates(prev => {
             const newUpdates = { ...prev };
             delete newUpdates[demandId];
