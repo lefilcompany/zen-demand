@@ -606,6 +606,33 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   );
 
   /**
+   * Returns the list of subdemandas of `parentId` that are blocked by an
+   * unresolved dependency (i.e. depend on a demanda that is not yet
+   * "Entregue"). Used to prevent moving a parent demand into a finalization
+   * column while its children still have pending blockers.
+   */
+  const getBlockingSubdemandDeps = useCallback(
+    (parentId: string): Array<{ subdemandTitle: string; blockedByTitle: string }> => {
+      const subs = demands.filter((d) => d.parent_demand_id === parentId);
+      const blockers: Array<{ subdemandTitle: string; blockedByTitle: string }> = [];
+      for (const sub of subs) {
+        const deps = batchDeps?.[sub.id];
+        if (!deps || deps.length === 0) continue;
+        for (const dep of deps) {
+          if (dep.isBlocked) {
+            blockers.push({
+              subdemandTitle: sub.title,
+              blockedByTitle: dep.dependsOnTitle,
+            });
+          }
+        }
+      }
+      return blockers;
+    },
+    [demands, batchDeps]
+  );
+
+  /**
    * Propagates a finalization status to all sub-demands of a parent via RPC.
    * Stops any active timer server-side. Returns ok flag.
    */
