@@ -194,7 +194,7 @@ export function DependencyMenuItems({ demandId, isDelivered, onActionDone }: Pro
             void markAsDelivered(dep.dependsOnDemandId, dep.dependsOnTitle);
           }}
         >
-          <CheckCircle2 className="h-4 w-4 mr-2 text-success" />
+          <CheckCircle2 className="h-4 w-4 mr-2" />
           <span className="truncate">Concluir “{dep.dependsOnTitle}”</span>
         </DropdownMenuItem>
       ))}
@@ -221,7 +221,7 @@ export function DependencyMenuItems({ demandId, isDelivered, onActionDone }: Pro
             void markAsDelivered(demandId, "Esta demanda");
           }}
         >
-          <CheckCircle2 className="h-4 w-4 mr-2 text-success" />
+          <CheckCircle2 className="h-4 w-4 mr-2" />
           <span className="truncate">
             Marcar como entregue (destrava {dependents.length})
           </span>
