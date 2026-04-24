@@ -55,6 +55,7 @@ import { checkDependencyBeforeStatusChange, useDemandDependencyInfo, useBatchDep
 import { Lock, Link2, GripVertical } from "lucide-react";
 import { SEOHead } from "@/components/SEOHead";
 import { isFinalizationStatus, analyzeSubdemandsForPropagation } from "@/lib/subdemandStatusPropagation";
+import { patchDemandStatusByIds, patchParentAggregatedTime } from "@/lib/demandRealtimeCache";
 export default function DemandDetail() {
   const {
     id
