@@ -1678,7 +1678,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         const isCollapsed = collapsedGroups.has(demand.id);
 
         rendered.push(
-          <div key={`group-${demand.id}`} className="space-y-0">
+          <div key={`group-${demand.id}`} className={cn("space-y-0", isCollapsed && "pb-3")}>
             <div className="relative">
               {renderDemandCard(demand, columnKey, showMoveMenu, adjType)}
               {children.length > 0 && (
