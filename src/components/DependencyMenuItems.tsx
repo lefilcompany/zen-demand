@@ -50,7 +50,7 @@ interface Props {
  * - Blocker (other demands depend on this one): mark THIS demand as
  *   delivered to unblock everyone, OR remove the inbound dependency links.
  */
-export function DependencyMenuItems({ demandId, isDelivered, onActionDone }: Props) {
+export function DependencyMenuItems({ demandId, isDelivered, onActionDone, showEmptyHint }: Props) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [blocking, setBlocking] = useState<BlockingDep[]>([]);
