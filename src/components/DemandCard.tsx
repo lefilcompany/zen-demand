@@ -180,9 +180,10 @@ export function DemandCard({ demand, onClick, showFullDetails = false }: DemandC
           {isDeliveredLate && (
             <Badge
               variant="outline"
-              className="text-[10px] py-0 h-5 bg-muted/50 text-muted-foreground border-muted-foreground/20 font-normal"
+              className="text-[10px] py-0 h-5 bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-400 font-medium inline-flex items-center gap-1"
             >
-              Concluída com atraso
+              <AlertTriangle className="h-3 w-3" />
+              Entregue com atraso
             </Badge>
           )}
         </div>

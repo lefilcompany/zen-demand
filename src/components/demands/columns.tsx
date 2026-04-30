@@ -156,8 +156,22 @@ function StatusCell({
   };
 }) {
   const status = row.original.demand_statuses;
+  const isDeliveredLate = isDemandDeliveredLate(row.original);
   if (!status) {
     return <div className="flex justify-center"><span className="text-muted-foreground text-sm">—</span></div>;
+  }
+  if (isDeliveredLate) {
+    return (
+      <div className="flex justify-center">
+        <Badge
+          variant="outline"
+          className="border bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-400 inline-flex items-center gap-1"
+        >
+          <AlertTriangle className="h-3 w-3" />
+          Entregue com atraso
+        </Badge>
+      </div>
+    );
   }
   return <div className="flex justify-center"><Badge variant="outline" className="border" style={{
     backgroundColor: `${status.color}20`,
