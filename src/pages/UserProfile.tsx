@@ -110,22 +110,23 @@ export default function UserProfile() {
         .select("*", { count: "exact", head: true })
         .eq("user_id", userId);
       
-      // Get completed demands
-      const { data: deliveredStatus } = await supabase
-        .from("demand_statuses")
+      // Get completed demands (created OR assigned, using delivered_at as the source of truth)
+      const { data: createdDelivered } = await supabase
+        .from("demands")
         .select("id")
-        .eq("name", "Entregue")
-        .single();
-      
-      let completedCount = 0;
-      if (deliveredStatus) {
-        const { count } = await supabase
-          .from("demands")
-          .select("*, demand_assignees!inner(*)", { count: "exact", head: true })
-          .eq("demand_assignees.user_id", userId)
-          .eq("status_id", deliveredStatus.id);
-        completedCount = count || 0;
-      }
+        .eq("created_by", userId)
+        .not("delivered_at", "is", null);
+
+      const { data: assignedDelivered } = await supabase
+        .from("demands")
+        .select("id, demand_assignees!inner(user_id)")
+        .eq("demand_assignees.user_id", userId)
+        .not("delivered_at", "is", null);
+
+      const deliveredIds = new Set<string>();
+      (createdDelivered || []).forEach((d: any) => deliveredIds.add(d.id));
+      (assignedDelivered || []).forEach((d: any) => deliveredIds.add(d.id));
+      const completedCount = deliveredIds.size;
 
       // Get total time tracked
       const { data: timeEntries } = await supabase
