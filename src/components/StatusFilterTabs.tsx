@@ -1,8 +1,12 @@
 import { useMemo } from "react";
+import { AlertTriangle } from "lucide-react";
 import { useBoardStatuses } from "@/hooks/useBoardStatuses";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { cn } from "@/lib/utils";
+
+// Sentinel ID used to represent the synthetic "Entregue com atraso" filter
+export const DELIVERED_LATE_FILTER_ID = "__delivered_late__";
 
 // Ordem fixa dos status do sistema
 const STATUS_ORDER = [
