@@ -782,7 +782,20 @@ export default function DemandDetail() {
                   </Badge>
                 )}
                 {demand.teams && <Badge variant="secondary">{demand.teams.name}</Badge>}
-                
+
+                {isDemandDeliveredLate(demand as any) && (
+                  <Badge
+                    variant="outline"
+                    className="border bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-400 inline-flex items-center gap-1"
+                    title={demand.delivered_at && demand.due_date
+                      ? `Entregue em ${formatDateOnlyBR(demand.delivered_at)} — após o prazo de ${formatDateOnlyBR(demand.due_date)}`
+                      : "Entregue após o prazo"}
+                  >
+                    <AlertTriangle className="h-3 w-3" />
+                    Entregue com atraso
+                  </Badge>
+                )}
+
                 {/* Board Badge - clickable if can change */}
                 {currentBoard && (
                   canChangeBoard ? (
@@ -929,18 +942,6 @@ export default function DemandDetail() {
                       </DropdownMenuItem>)}
                   </DropdownMenuContent>
                 </DropdownMenu>}
-              {isDemandDeliveredLate(demand as any) && (
-                <Badge
-                  variant="outline"
-                  className="border bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-400 inline-flex items-center gap-1 h-9 px-3"
-                  title={demand.delivered_at && demand.due_date
-                    ? `Entregue em ${formatDateOnlyBR(demand.delivered_at)} — após o prazo de ${formatDateOnlyBR(demand.due_date)}`
-                    : "Entregue após o prazo"}
-                >
-                  <AlertTriangle className="h-3.5 w-3.5" />
-                  Entregue com atraso
-                </Badge>
-              )}
               {canEdit && <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)} className="flex-1 sm:flex-none">
                   <Pencil className="mr-2 h-4 w-4" />
                   Editar
