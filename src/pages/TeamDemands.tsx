@@ -31,7 +31,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table";
 import { teamDemandColumns, TeamDemandTableRow } from "@/components/team-demands/columns";
 import { TeamDemandsFilters, TeamDemandsFiltersState, SelectedBoardChips, BoardMultiSelectButton } from "@/components/TeamDemandsFilters";
-import { StatusFilterTabs } from "@/components/StatusFilterTabs";
+import { StatusFilterTabs, DELIVERED_LATE_FILTER_ID } from "@/components/StatusFilterTabs";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { DemandsCalendarView } from "@/components/DemandsCalendarView";
 import { isDateOverdue } from "@/lib/dateUtils";
@@ -286,7 +286,13 @@ export default function TeamDemands() {
       
       // Status filter (multi-select takes precedence; falls back to single status)
       if (selectedStatuses.length > 0) {
-        if (!selectedStatuses.includes(d.status_id)) return false;
+        const isDelivered = d.demand_statuses?.name === "Entregue" || !!d.delivered_at;
+        const isDeliveredLate = isDelivered && d.is_overdue === true;
+        const wantsLate = selectedStatuses.includes(DELIVERED_LATE_FILTER_ID);
+        const realStatusIds = selectedStatuses.filter(s => s !== DELIVERED_LATE_FILTER_ID);
+        const matchesStatus = realStatusIds.includes(d.status_id);
+        const matchesLate = wantsLate && isDeliveredLate;
+        if (!matchesStatus && !matchesLate) return false;
       } else if (filters.status && d.status_id !== filters.status) {
         return false;
       }

@@ -1,8 +1,12 @@
 import { useMemo } from "react";
+import { AlertTriangle } from "lucide-react";
 import { useBoardStatuses } from "@/hooks/useBoardStatuses";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { useBoardRole } from "@/hooks/useBoardMembers";
 import { cn } from "@/lib/utils";
+
+// Sentinel ID used to represent the synthetic "Entregue com atraso" filter
+export const DELIVERED_LATE_FILTER_ID = "__delivered_late__";
 
 // Ordem fixa dos status do sistema
 const STATUS_ORDER = [
@@ -120,6 +124,28 @@ export function StatusFilterTabs({ value, onChange, values, onValuesChange, mult
           </button>
         );
       })}
+
+      {/* Synthetic filter: Delivered late */}
+      {(() => {
+        const isSelected = selectedSet.has(DELIVERED_LATE_FILTER_ID);
+        return (
+          <button
+            key={DELIVERED_LATE_FILTER_ID}
+            onClick={() => handleStatusClick(DELIVERED_LATE_FILTER_ID)}
+            className={cn(
+              "px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-medium transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap shrink-0",
+              "border hover:opacity-80",
+              isSelected
+                ? "bg-amber-500 text-white border-amber-500"
+                : "bg-background/50 text-foreground border-amber-500/60"
+            )}
+          >
+            <AlertTriangle className={cn("h-3 w-3 shrink-0", isSelected ? "text-white" : "text-amber-600")} />
+            <span className="hidden sm:inline">Entregue com atraso</span>
+            <span className="sm:hidden">Atraso</span>
+          </button>
+        );
+      })()}
     </div>
   );
 }

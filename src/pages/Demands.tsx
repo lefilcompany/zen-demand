@@ -18,7 +18,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { DemandHierarchyTable, HierarchicalDemand } from "@/components/demands/DemandHierarchyTable";
 import { DemandHierarchyGrid } from "@/components/demands/DemandHierarchyGrid";
 import { DemandFilters, DemandFiltersState } from "@/components/DemandFilters";
-import { StatusFilterTabs } from "@/components/StatusFilterTabs";
+import { StatusFilterTabs, DELIVERED_LATE_FILTER_ID } from "@/components/StatusFilterTabs";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { useRealtimeDemands } from "@/hooks/useRealtimeDemands";
 import { DemandsCalendarView } from "@/components/DemandsCalendarView";
@@ -96,6 +96,7 @@ export default function Demands() {
     dueDateTo: null,
     position: null
   });
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [hideDelivered, setHideDelivered] = useState(false);
   const [showOnlyMine, setShowOnlyMine] = useState(false);
   const [showAllBoards, setShowAllBoards] = useState(false);
@@ -175,8 +176,16 @@ export default function Demands() {
         if (!matchesSearch) return false;
       }
 
-      // Status filter
-      if (filters.status && d.status_id !== filters.status) {
+      // Status filter (multi-select; sentinel "delivered late" = entregue + is_overdue)
+      if (selectedStatuses.length > 0) {
+        const isDelivered = d.demand_statuses?.name === "Entregue" || !!d.delivered_at;
+        const isDeliveredLate = isDelivered && d.is_overdue === true;
+        const wantsLate = selectedStatuses.includes(DELIVERED_LATE_FILTER_ID);
+        const realStatusIds = selectedStatuses.filter(s => s !== DELIVERED_LATE_FILTER_ID);
+        const matchesStatus = realStatusIds.includes(d.status_id);
+        const matchesLate = wantsLate && isDeliveredLate;
+        if (!matchesStatus && !matchesLate) return false;
+      } else if (filters.status && d.status_id !== filters.status) {
         return false;
       }
 
@@ -232,7 +241,7 @@ export default function Demands() {
       const dateB = new Date(b.due_date).getTime();
       return dateA - dateB;
     });
-  }, [activeDemands, searchQuery, filters, hideDelivered, showOnlyMine, user?.id, membersByPosition, selectedFolderId, folderDemandIds]);
+  }, [activeDemands, searchQuery, filters, selectedStatuses, hideDelivered, showOnlyMine, user?.id, membersByPosition, selectedFolderId, folderDemandIds]);
 
   // Handle calendar day click — open the standard create demand modal with the chosen date pre-filled
   const handleDayClick = (date: Date) => {
@@ -502,10 +511,11 @@ export default function Demands() {
       {/* Status filter tabs - Scrollable horizontally */}
       <div className="w-full overflow-x-auto -mx-1 px-1">
         <div className="min-w-max pb-1">
-          <StatusFilterTabs value={filters.status} onChange={status => setFilters({
-          ...filters,
-          status
-        })} />
+          <StatusFilterTabs
+            values={selectedStatuses}
+            onValuesChange={setSelectedStatuses}
+            multiSelect
+          />
         </div>
       </div>
 
