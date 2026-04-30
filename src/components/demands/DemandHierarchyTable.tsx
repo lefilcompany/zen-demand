@@ -148,7 +148,8 @@ export function DemandHierarchyTable({ data, onRowClick }: DemandHierarchyTableP
     const pConfig = priority ? priorityConfig[priority] : null;
     const creator = demand.profiles;
     const dueDate = demand.due_date;
-    const isOverdue = dueDate ? isDateOverdue(dueDate) : false;
+    const isOverdue = isDemandOverdue(demand);
+    const isDeliveredLate = isDemandDeliveredLate(demand);
     const board = (demand as any).boards;
 
     const assignees = (demand.demand_assignees || [])
