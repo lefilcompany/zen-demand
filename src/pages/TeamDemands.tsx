@@ -284,8 +284,10 @@ export default function TeamDemands() {
         if (!matchesSearch) return false;
       }
       
-      // Status filter
-      if (filters.status && d.status_id !== filters.status) {
+      // Status filter (multi-select takes precedence; falls back to single status)
+      if (selectedStatuses.length > 0) {
+        if (!selectedStatuses.includes(d.status_id)) return false;
+      } else if (filters.status && d.status_id !== filters.status) {
         return false;
       }
       
