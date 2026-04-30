@@ -5,7 +5,7 @@ import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
 import { cn, truncateText } from "@/lib/utils";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
-import { formatDateOnlyBR, isDateOverdue } from "@/lib/dateUtils";
+import { formatDateOnlyBR, isDemandOverdue, isDemandDeliveredLate } from "@/lib/dateUtils";
 import { extractPlainText } from "@/components/ui/rich-text-editor";
 
 interface Assignee {
