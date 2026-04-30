@@ -21,7 +21,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { KanbanColumnToolbar, KanbanSortOption, filterAndSortDemands } from "@/components/KanbanColumnToolbar";
 import { format } from "date-fns";
-import { formatDateOnlyBR, isDateOverdue } from "@/lib/dateUtils";
+import { formatDateOnlyBR, isDateOverdue, isDemandDeliveredLate } from "@/lib/dateUtils";
 import { cn, truncateText } from "@/lib/utils";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
@@ -1680,6 +1680,22 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                   <Badge variant="outline" className="text-xs bg-accent/50 text-accent-foreground border-accent-foreground/20 shrink-0">
                     {demand.boards.name}
                   </Badge>
+                )}
+                {isDemandDeliveredLate(demand as any) && (
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] py-0 px-1.5 h-5 bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-400 inline-flex items-center gap-1 shrink-0"
+                        >
+                          <AlertTriangle className="h-2.5 w-2.5" />
+                          Entregue com atraso
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="top"><p>Esta demanda foi entregue após o prazo</p></TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
               <h4 className="font-medium text-sm line-clamp-2 mb-1 break-words overflow-hidden" title={demand.title}>

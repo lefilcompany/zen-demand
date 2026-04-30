@@ -190,6 +190,7 @@ Deno.serve(async (req: Request) => {
         created_at,
         delivered_at,
         due_date,
+        is_overdue,
         archived,
         time_in_progress_seconds,
         status:demand_statuses(name),

@@ -1,5 +1,5 @@
 import { useState, Fragment } from "react";
-import { ChevronRight, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { ChevronRight, ChevronDown, ArrowUpDown, ArrowUp, ArrowDown, AlertTriangle } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -19,7 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { DemandTableRow } from "./columns";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
-import { formatDateOnlyBR, isDateOverdue } from "@/lib/dateUtils";
+import { formatDateOnlyBR, isDateOverdue, isDemandOverdue, isDemandDeliveredLate } from "@/lib/dateUtils";
 import { truncateText } from "@/lib/utils";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -148,7 +148,8 @@ export function DemandHierarchyTable({ data, onRowClick }: DemandHierarchyTableP
     const pConfig = priority ? priorityConfig[priority] : null;
     const creator = demand.profiles;
     const dueDate = demand.due_date;
-    const isOverdue = dueDate ? isDateOverdue(dueDate) : false;
+    const isOverdue = isDemandOverdue(demand);
+    const isDeliveredLate = isDemandDeliveredLate(demand);
     const board = (demand as any).boards;
 
     const assignees = (demand.demand_assignees || [])
@@ -252,7 +253,17 @@ export function DemandHierarchyTable({ data, onRowClick }: DemandHierarchyTableP
         </TableCell>
         {/* Status */}
         <TableCell className="text-center">
-          {status ? (
+          {isDeliveredLate ? (
+            <div className="flex justify-center">
+              <Badge
+                variant="outline"
+                className="border bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-400 inline-flex items-center gap-1"
+              >
+                <AlertTriangle className="h-3 w-3" />
+                Entregue com atraso
+              </Badge>
+            </div>
+          ) : status ? (
             <div className="flex justify-center">
               <Badge variant="outline" className="border" style={{ backgroundColor: `${status.color}20`, borderColor: `${status.color}50`, color: status.color }}>
                 {status.name}
