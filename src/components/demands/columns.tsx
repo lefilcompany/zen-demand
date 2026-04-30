@@ -176,15 +176,30 @@ function DueDateCell({
     original: DemandTableRow;
   };
 }) {
-  const dueDate = row.original.due_date;
+  const demand = row.original;
+  const dueDate = demand.due_date;
   if (!dueDate) {
     return <div className="flex justify-center"><span className="text-muted-foreground text-sm">—</span></div>;
   }
-  const isOverdue = isDateOverdue(dueDate);
+  const isOverdue = isDemandOverdue(demand);
+  const isDeliveredLate = isDemandDeliveredLate(demand);
   const formattedDate = formatDateOnlyBR(dueDate);
-  return <div className="flex justify-center"><span className={isOverdue ? "text-destructive font-medium" : "text-foreground"}>
-      {formattedDate}
-    </span></div>;
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <span className={cn("inline-flex items-center gap-1", isOverdue ? "text-destructive font-medium" : "text-foreground")}>
+        {isOverdue && <AlertTriangle className="h-3 w-3" />}
+        {formattedDate}
+      </span>
+      {isDeliveredLate && (
+        <Badge
+          variant="outline"
+          className="text-[10px] py-0 h-5 bg-muted/50 text-muted-foreground border-muted-foreground/20 font-normal"
+        >
+          Concluída com atraso
+        </Badge>
+      )}
+    </div>
+  );
 }
 
 // Cell component for board name
