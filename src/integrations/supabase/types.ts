@@ -2477,6 +2477,17 @@ export type Database = {
         Args: { _resource_type: string; _team_id: string }
         Returns: boolean
       }
+      create_approval_notifications: {
+        Args: {
+          p_demand_id: string
+          p_link?: string
+          p_message: string
+          p_recipient_ids: string[]
+          p_title: string
+          p_type?: string
+        }
+        Returns: number
+      }
       create_board_membership_notification: {
         Args: {
           p_board_id: string
