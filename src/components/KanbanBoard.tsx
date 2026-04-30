@@ -1980,7 +1980,10 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const setColumnSearch = useCallback((columnKey: string, query: string) => {
     setColumnSearches(prev => ({ ...prev, [columnKey]: query }));
   }, []);
-  const getColumnSort = useCallback((columnKey: string): KanbanSortOption => columnSorts[columnKey] || "due_date_asc", [columnSorts]);
+  const getColumnSort = useCallback((columnKey: string): KanbanSortOption => {
+    if (columnSorts[columnKey]) return columnSorts[columnKey];
+    return columnKey === "Entregue" ? "newest" : "due_date_asc";
+  }, [columnSorts]);
   const setColumnSort = useCallback((columnKey: string, sort: KanbanSortOption) => {
     setColumnSorts(prev => ({ ...prev, [columnKey]: sort }));
   }, []);
