@@ -2616,6 +2616,16 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           boardName={boardName}
           userRole={userRole}
         />
+        <ApprovalNotifyDialog
+          open={!!approvalDialogState}
+          onOpenChange={(o) => { if (!o) setApprovalDialogState(null); }}
+          demandId={approvalDialogState?.demandId ?? null}
+          demandTitle={approvalDialogState?.demandTitle}
+          demandCreatedBy={approvalDialogState?.demandCreatedBy}
+          boardId={boardId}
+          boardName={boardName}
+          approvalType={approvalDialogState?.approvalType ?? "internal"}
+        />
         {propagateDialogJsx}
       </div>
     );
