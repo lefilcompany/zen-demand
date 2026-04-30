@@ -96,6 +96,7 @@ export default function Demands() {
     dueDateTo: null,
     position: null
   });
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [hideDelivered, setHideDelivered] = useState(false);
   const [showOnlyMine, setShowOnlyMine] = useState(false);
   const [showAllBoards, setShowAllBoards] = useState(false);
