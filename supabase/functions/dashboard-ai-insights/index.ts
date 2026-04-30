@@ -88,18 +88,30 @@ serve(async (req) => {
     // Calculate summary stats
     const statusCounts: Record<string, number> = {};
     const serviceCounts: Record<string, number> = {};
-    let overdueCount = 0;
-    let deliveredCount = 0;
+    let overdueCount = 0;            // não entregues e atrasadas
+    let deliveredCount = 0;          // total entregues (no prazo + com atraso)
+    let deliveredOnTimeCount = 0;    // entregues no prazo
+    let deliveredLateCount = 0;      // entregues com atraso
     const now = new Date();
 
     for (const d of demands) {
       const statusName = (d as any).demand_statuses?.name || "Sem status";
       const serviceName = (d as any).services?.name || "Sem serviço";
+      const isOverdueFlag = (d as any).is_overdue === true;
       statusCounts[statusName] = (statusCounts[statusName] || 0) + 1;
       serviceCounts[serviceName] = (serviceCounts[serviceName] || 0) + 1;
-      if (d.delivered_at) deliveredCount++;
-      if (d.due_date && new Date(d.due_date) < now && statusName !== "Entregue" && !d.delivered_at) {
-        overdueCount++;
+
+      const isDelivered = !!d.delivered_at || statusName === "Entregue";
+
+      if (isDelivered) {
+        deliveredCount++;
+        if (isOverdueFlag) deliveredLateCount++;
+        else deliveredOnTimeCount++;
+      } else {
+        // Não entregue: vencida se is_overdue=true (ou data passada como fallback)
+        if (isOverdueFlag || (d.due_date && new Date(d.due_date) < now)) {
+          overdueCount++;
+        }
       }
     }
 
@@ -117,8 +129,9 @@ serve(async (req) => {
       summaryText = `Quadro: ${boardName}
 Visão do Cliente/Solicitante:
 Total de demandas solicitadas: ${totalDemands}
-Demandas entregues: ${deliveredCount}
-Demandas atrasadas: ${overdueCount}
+Demandas entregues no prazo: ${deliveredOnTimeCount}
+Demandas entregues com atraso: ${deliveredLateCount}
+Demandas vencidas (ainda não entregues): ${overdueCount}
 Status das demandas: ${Object.entries(statusCounts).map(([k, v]) => `${k}: ${v}`).join(", ")}
 Serviços solicitados: ${Object.entries(serviceCounts).map(([k, v]) => `${k}: ${v}`).join(", ")}
 Solicitações recentes: ${(requests as any[]).length} (${Object.entries(requestStatusCounts).map(([k, v]) => `${k}: ${v}`).join(", ")})`;
@@ -126,8 +139,12 @@ Solicitações recentes: ${(requests as any[]).length} (${Object.entries(request
       summaryText = `Quadro: ${boardName}
 Total de demandas: ${totalDemands}
 Membros: ${totalMembers}
-Demandas atrasadas: ${overdueCount}
-Status: ${Object.entries(statusCounts).map(([k, v]) => `${k}: ${v}`).join(", ")}`;
+Entregues no prazo: ${deliveredOnTimeCount}
+Entregues com atraso: ${deliveredLateCount}
+Vencidas (não entregues): ${overdueCount}
+Status: ${Object.entries(statusCounts).map(([k, v]) => `${k}: ${v}`).join(", ")}
+
+IMPORTANTE: diferencie nos insights "entregues no prazo", "entregues com atraso" e "vencidas (ainda não entregues)". Não some essas categorias como se fossem a mesma coisa.`;
     }
 
     // Call Google Gemini AI
