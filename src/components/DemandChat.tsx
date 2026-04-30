@@ -50,7 +50,52 @@ export function DemandChat({
   const isRequester = boardRole === "requester";
   const canSeeInternal = !isRequester;
 
-  const [channel, setChannel] = useState<"general" | "internal">("general");
+  // Detect if all participants (creator + assignees) are internal members of this board.
+  // If so, the "Geral" channel is hidden so requesters who later access the demand
+  // (e.g. via shared link) cannot see internal discussion.
+  const participantIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (demandCreatedBy) ids.add(demandCreatedBy);
+    assignees.forEach((a) => a.user_id && ids.add(a.user_id));
+    return Array.from(ids);
+  }, [demandCreatedBy, assignees]);
+
+  const { data: allParticipantsInternal = false } = useQuery({
+    queryKey: ["demand-chat-participants-internal", boardId, participantIds.sort().join(",")],
+    queryFn: async () => {
+      if (!boardId || participantIds.length === 0) return false;
+      const { data, error } = await supabase
+        .from("board_members")
+        .select("user_id, role")
+        .eq("board_id", boardId)
+        .in("user_id", participantIds);
+      if (error) throw error;
+      // Every participant must be a board member AND not a requester
+      if (!data || data.length < participantIds.length) return false;
+      const roleByUser = new Map(data.map((m) => [m.user_id, m.role]));
+      return participantIds.every((uid) => {
+        const r = roleByUser.get(uid);
+        return r && r !== "requester";
+      });
+    },
+    enabled: !!boardId && participantIds.length > 0,
+    staleTime: 60_000,
+  });
+
+  const internalOnly = allParticipantsInternal && canSeeInternal;
+  const showGeneralTab = !internalOnly;
+
+  const [channel, setChannel] = useState<"general" | "internal">(
+    internalOnly ? "internal" : "general"
+  );
+
+  // Force channel to internal when demand becomes internal-only
+  useEffect(() => {
+    if (internalOnly && channel !== "internal") {
+      setChannel("internal");
+    }
+  }, [internalOnly, channel]);
+
   const [comment, setComment] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
