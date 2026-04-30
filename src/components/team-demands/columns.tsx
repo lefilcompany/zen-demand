@@ -6,6 +6,7 @@ import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { formatDateOnlyBR, isDateOverdue, toDateOnly, parseDateOnly, isDemandOverdue, isDemandDeliveredLate } from "@/lib/dateUtils";
 import { LayoutGrid, AlertTriangle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface TeamDemandTableRow {
   id: string;
