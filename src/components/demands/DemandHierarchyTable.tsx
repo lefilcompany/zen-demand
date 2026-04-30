@@ -19,7 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { DemandTableRow } from "./columns";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
-import { formatDateOnlyBR, isDateOverdue } from "@/lib/dateUtils";
+import { formatDateOnlyBR, isDateOverdue, isDemandOverdue, isDemandDeliveredLate } from "@/lib/dateUtils";
 import { truncateText } from "@/lib/utils";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
