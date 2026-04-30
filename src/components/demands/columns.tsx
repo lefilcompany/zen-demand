@@ -18,6 +18,7 @@ export interface DemandTableRow {
   priority?: string | null;
   due_date?: string | null;
   delivered_at?: string | null;
+  is_overdue?: boolean | null;
   created_at?: string;
   updated_at?: string;
   time_in_progress_seconds?: number | null;
