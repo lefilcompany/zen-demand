@@ -231,6 +231,13 @@ export default function DemandDetail() {
     activeCount: number;
   }>(null);
   const [isPropagating, setIsPropagating] = useState(false);
+  const [approvalDialogState, setApprovalDialogState] = useState<null | {
+    demandId: string;
+    demandTitle: string;
+    demandCreatedBy?: string;
+    approvalType: ApprovalKind;
+  }>(null);
+  const { preferences: notifyPrefs } = useNotificationPreferences();
   const { selectedBoardId, setSelectedBoardId } = useSelectedBoard();
 
   // Auto-switch board context to match the demand being viewed (only on initial mount)
