@@ -511,10 +511,11 @@ export default function Demands() {
       {/* Status filter tabs - Scrollable horizontally */}
       <div className="w-full overflow-x-auto -mx-1 px-1">
         <div className="min-w-max pb-1">
-          <StatusFilterTabs value={filters.status} onChange={status => setFilters({
-          ...filters,
-          status
-        })} />
+          <StatusFilterTabs
+            values={selectedStatuses}
+            onValuesChange={setSelectedStatuses}
+            multiSelect
+          />
         </div>
       </div>
 
