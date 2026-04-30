@@ -56,6 +56,7 @@ interface PersistedState {
   searchQuery: string;
   viewMode: ViewMode;
   hideDelivered: boolean;
+  selectedStatuses?: string[];
   filters: {
     status: string | null;
     priority: string | null;
