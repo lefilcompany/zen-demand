@@ -179,27 +179,34 @@ export function BoardSelector() {
               <CommandList>
                 <CommandEmpty>Nenhum quadro encontrado.</CommandEmpty>
                 <CommandGroup>
-                  {boards.map((board) => {
-                    const isSelected = board.id === selectedBoardId;
-                    return (
-                      <CommandItem
-                        key={board.id}
-                        value={board.name}
-                        onSelect={() => handleBoardChange(board.id)}
-                        title={board.name}
-                        className="flex items-center gap-2 data-[selected=true]:bg-muted data-[selected=true]:text-foreground"
-                      >
-                        <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                        <span className="truncate flex-1">{board.name}</span>
-                        <Check
-                          className={cn(
-                            "h-4 w-4 shrink-0",
-                            isSelected ? "opacity-100 text-primary" : "opacity-0"
-                          )}
-                        />
-                      </CommandItem>
-                    );
-                  })}
+                  <TooltipProvider delayDuration={300}>
+                    {boards.map((board) => {
+                      const isSelected = board.id === selectedBoardId;
+                      return (
+                        <Tooltip key={board.id}>
+                          <TooltipTrigger asChild>
+                            <CommandItem
+                              value={board.name}
+                              onSelect={() => handleBoardChange(board.id)}
+                              className="flex items-center gap-2 data-[selected=true]:bg-muted data-[selected=true]:text-foreground"
+                            >
+                              <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              <span className="truncate flex-1">{board.name}</span>
+                              <Check
+                                className={cn(
+                                  "h-4 w-4 shrink-0",
+                                  isSelected ? "opacity-100 text-primary" : "opacity-0"
+                                )}
+                              />
+                            </CommandItem>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-[320px] text-xs">
+                            <p className="break-words">{board.name}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
+                  </TooltipProvider>
                 </CommandGroup>
               </CommandList>
             </Command>
