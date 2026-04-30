@@ -136,25 +136,36 @@ export function BoardSelector() {
     <>
       <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
         <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              role="combobox"
-              aria-expanded={popoverOpen}
-              className={cn(
-                "flex h-7 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-2 py-1 text-[11px] shadow-none sm:text-xs",
-                "max-w-[160px] sm:max-w-[240px] md:max-w-[300px]",
-                "hover:bg-muted transition-colors",
-                "focus-visible:outline-none focus-visible:border-ring focus-visible:[box-shadow:var(--focus-ring)]"
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    role="combobox"
+                    aria-expanded={popoverOpen}
+                    className={cn(
+                      "flex h-7 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-2 py-1 text-[11px] shadow-none sm:text-xs",
+                      "max-w-[160px] sm:max-w-[240px] md:max-w-[300px]",
+                      "hover:bg-muted transition-colors",
+                      "focus-visible:outline-none focus-visible:border-ring focus-visible:[box-shadow:var(--focus-ring)]"
+                    )}
+                  >
+                    <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+                      <LayoutGrid className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground shrink-0" />
+                      <span className="truncate block">{currentBoard?.name || "Quadro"}</span>
+                    </div>
+                    <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
+                  </button>
+                </PopoverTrigger>
+              </TooltipTrigger>
+              {currentBoard?.name && (
+                <TooltipContent side="bottom" className="max-w-[320px] text-xs">
+                  <p className="break-words">{currentBoard.name}</p>
+                </TooltipContent>
               )}
-            >
-              <div className="flex items-center gap-1 min-w-0 overflow-hidden">
-                <LayoutGrid className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground shrink-0" />
-                <span className="truncate block">{currentBoard?.name || "Quadro"}</span>
-              </div>
-              <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
-            </button>
-          </PopoverTrigger>
+            </Tooltip>
+          </TooltipProvider>
           <PopoverContent
             align="start"
             className="w-[260px] p-0"
