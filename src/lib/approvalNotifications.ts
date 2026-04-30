@@ -47,16 +47,19 @@ export async function notifyApproval({
   const message = buildMessage(approvalType, demandTitle);
   const link = `/demands/${demandId}`;
 
-  // 1) In-app notifications (notifications table)
+  // 1) In-app notifications via SECURITY DEFINER RPC (bypasses cross-user RLS)
   try {
-    const rows = recipients.map((userId) => ({
-      user_id: userId,
-      title,
-      message,
-      type: "info",
-      link,
-    }));
-    await supabase.from("notifications").insert(rows);
+    const { error: rpcError } = await supabase.rpc("create_approval_notifications", {
+      p_demand_id: demandId,
+      p_recipient_ids: recipients,
+      p_title: title,
+      p_message: message,
+      p_link: link,
+      p_type: "info",
+    });
+    if (rpcError) {
+      console.error("Error inserting approval notifications (RPC):", rpcError);
+    }
   } catch (error) {
     console.error("Error inserting approval notifications:", error);
   }
