@@ -217,6 +217,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const isLargeDesktop = useIsLargeDesktop();
   const { isOffline } = useOfflineStatus();
   const queryClient = useQueryClient();
+  const { preferences: notifyPrefs } = useNotificationPreferences();
+  const { data: boardMembersForApproval } = useBoardMembers(boardId || null);
   
   // Track multiple active columns, using array to maintain order (FIFO)
   // Initialize based on user preference
