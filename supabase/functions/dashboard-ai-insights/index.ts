@@ -48,7 +48,7 @@ serve(async (req) => {
     // Fetch board data — for requesters, only their own demands
     const demandsQuery = supabase
       .from("demands")
-      .select("id, title, priority, due_date, created_at, delivered_at, status_id, service_id, services(name), demand_statuses(name)")
+      .select("id, title, priority, due_date, created_at, delivered_at, is_overdue, status_id, service_id, services(name), demand_statuses(name)")
       .eq("board_id", board_id)
       .eq("archived", false)
       .order("created_at", { ascending: false })
