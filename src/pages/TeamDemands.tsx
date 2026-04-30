@@ -134,6 +134,13 @@ export default function TeamDemands() {
 
   const [hideDelivered, setHideDelivered] = useState<boolean>(() => persisted?.hideDelivered ?? false);
 
+  // Multi-select status (overrides single filters.status when non-empty)
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(() => {
+    if (Array.isArray(persisted?.selectedStatuses)) return persisted!.selectedStatuses!;
+    if (persisted?.filters?.status) return [persisted.filters.status];
+    return [];
+  });
+
   // Persist state to sessionStorage whenever it changes (scoped per team)
   useEffect(() => {
     if (!selectedTeamId) return;
@@ -142,6 +149,7 @@ export default function TeamDemands() {
         searchQuery,
         viewMode,
         hideDelivered,
+        selectedStatuses,
         filters: {
           status: filters.status,
           priority: filters.priority,
@@ -157,7 +165,7 @@ export default function TeamDemands() {
     } catch {
       // ignore quota / serialization errors
     }
-  }, [selectedTeamId, searchQuery, viewMode, hideDelivered, filters]);
+  }, [selectedTeamId, searchQuery, viewMode, hideDelivered, selectedStatuses, filters]);
 
   // When team changes, reload persisted state for that team
   useEffect(() => {
@@ -166,6 +174,13 @@ export default function TeamDemands() {
     setSearchQuery(p.searchQuery ?? "");
     setViewMode(p.viewMode ?? "table");
     setHideDelivered(p.hideDelivered ?? false);
+    setSelectedStatuses(
+      Array.isArray(p.selectedStatuses)
+        ? p.selectedStatuses
+        : p.filters?.status
+        ? [p.filters.status]
+        : []
+    );
     setFilters({
       status: p.filters.status,
       priority: p.filters.priority,
