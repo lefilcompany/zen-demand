@@ -5,10 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
-import { Wrench } from "lucide-react";
+import { Wrench, AlertTriangle } from "lucide-react";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
-import { formatDateOnlyBR, isDateOverdue, toDateOnly, parseDateOnly } from "@/lib/dateUtils";
-import { truncateText } from "@/lib/utils";
+import { formatDateOnlyBR, isDateOverdue, toDateOnly, parseDateOnly, isDemandOverdue, isDemandDeliveredLate } from "@/lib/dateUtils";
+import { cn, truncateText } from "@/lib/utils";
 
 // Define the demand type based on what useDemands returns
 export interface DemandTableRow {
@@ -18,6 +18,7 @@ export interface DemandTableRow {
   priority?: string | null;
   due_date?: string | null;
   delivered_at?: string | null;
+  is_overdue?: boolean | null;
   created_at?: string;
   updated_at?: string;
   time_in_progress_seconds?: number | null;
@@ -175,15 +176,30 @@ function DueDateCell({
     original: DemandTableRow;
   };
 }) {
-  const dueDate = row.original.due_date;
+  const demand = row.original;
+  const dueDate = demand.due_date;
   if (!dueDate) {
     return <div className="flex justify-center"><span className="text-muted-foreground text-sm">—</span></div>;
   }
-  const isOverdue = isDateOverdue(dueDate);
+  const isOverdue = isDemandOverdue(demand);
+  const isDeliveredLate = isDemandDeliveredLate(demand);
   const formattedDate = formatDateOnlyBR(dueDate);
-  return <div className="flex justify-center"><span className={isOverdue ? "text-destructive font-medium" : "text-foreground"}>
-      {formattedDate}
-    </span></div>;
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <span className={cn("inline-flex items-center gap-1", isOverdue ? "text-destructive font-medium" : "text-foreground")}>
+        {isOverdue && <AlertTriangle className="h-3 w-3" />}
+        {formattedDate}
+      </span>
+      {isDeliveredLate && (
+        <Badge
+          variant="outline"
+          className="text-[10px] py-0 h-5 bg-muted/50 text-muted-foreground border-muted-foreground/20 font-normal"
+        >
+          Concluída com atraso
+        </Badge>
+      )}
+    </div>
+  );
 }
 
 // Cell component for board name

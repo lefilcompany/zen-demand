@@ -5,7 +5,7 @@ import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { DemandTimeDisplay } from "@/components/DemandTimeDisplay";
 import { cn, truncateText } from "@/lib/utils";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
-import { formatDateOnlyBR, isDateOverdue } from "@/lib/dateUtils";
+import { formatDateOnlyBR, isDemandOverdue, isDemandDeliveredLate } from "@/lib/dateUtils";
 import { extractPlainText } from "@/components/ui/rich-text-editor";
 
 interface Assignee {
@@ -24,6 +24,7 @@ interface DemandCardProps {
     priority?: string | null;
     due_date?: string | null;
     delivered_at?: string | null;
+    is_overdue?: boolean | null;
     created_at?: string;
     updated_at?: string;
     time_in_progress_seconds?: number | null;
@@ -68,12 +69,10 @@ export function DemandCard({ demand, onClick, showFullDetails = false }: DemandC
   const isInProgress = statusName === "Fazendo";
   const isDelivered = statusName === "Entregue";
   
-  // Check if due date is overdue (only for non-delivered demands)
-  const isOverdue = statusName !== "Entregue" && isDateOverdue(demand.due_date);
-  
-  // Check if delivered late (delivered after due date)
-  const isDeliveredLate = isDelivered && demand.due_date && demand.delivered_at &&
-    new Date(demand.delivered_at) > new Date(demand.due_date);
+  // "Atrasada" only applies while NOT delivered. Once delivered, use the discreet
+  // "entregue com atraso" badge instead.
+  const isOverdue = isDemandOverdue(demand);
+  const isDeliveredLate = isDemandDeliveredLate(demand);
   
   // Fallback to assigned_profile if no assignees
   const displayAssignees = assignees.length > 0 
@@ -168,23 +167,23 @@ export function DemandCard({ demand, onClick, showFullDetails = false }: DemandC
           {demand.due_date && (
             <div className={cn(
               "flex items-center gap-1",
-              isOverdue && "text-destructive font-medium",
-              isDeliveredLate && "text-amber-600 font-medium"
+              isOverdue && "text-destructive font-medium"
             )}>
               {isOverdue ? (
-                <Clock className="h-3.5 w-3.5" />
-              ) : isDeliveredLate ? (
                 <AlertTriangle className="h-3.5 w-3.5" />
               ) : (
                 <Calendar className="h-3.5 w-3.5" />
               )}
-              <span>
-                {formatDateOnlyBR(demand.due_date)}
-              </span>
-              {isDeliveredLate && (
-                <span className="text-[10px]">(entregue com atraso)</span>
-              )}
+              <span>{formatDateOnlyBR(demand.due_date)}</span>
             </div>
+          )}
+          {isDeliveredLate && (
+            <Badge
+              variant="outline"
+              className="text-[10px] py-0 h-5 bg-muted/50 text-muted-foreground border-muted-foreground/20 font-normal"
+            >
+              Concluída com atraso
+            </Badge>
           )}
         </div>
 

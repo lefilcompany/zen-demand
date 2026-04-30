@@ -4,8 +4,9 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
-import { formatDateOnlyBR, isDateOverdue, toDateOnly, parseDateOnly } from "@/lib/dateUtils";
-import { LayoutGrid } from "lucide-react";
+import { formatDateOnlyBR, isDateOverdue, toDateOnly, parseDateOnly, isDemandOverdue, isDemandDeliveredLate } from "@/lib/dateUtils";
+import { LayoutGrid, AlertTriangle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export interface TeamDemandTableRow {
   id: string;
@@ -13,6 +14,8 @@ export interface TeamDemandTableRow {
   description?: string | null;
   priority?: string | null;
   due_date?: string | null;
+  delivered_at?: string | null;
+  is_overdue?: boolean | null;
   board_sequence_number?: number | null;
   service_id?: string | null;
   demand_statuses?: {
@@ -152,17 +155,28 @@ function StatusCell({ row }: { row: { original: TeamDemandTableRow } }) {
 }
 
 function DueDateCell({ row }: { row: { original: TeamDemandTableRow } }) {
-  const dueDate = row.original.due_date;
+  const demand = row.original;
+  const dueDate = demand.due_date;
   if (!dueDate) {
     return <div className="flex justify-center"><span className="text-muted-foreground text-sm">—</span></div>;
   }
-  const isOverdue = isDateOverdue(dueDate);
+  const isOverdue = isDemandOverdue(demand);
+  const isDeliveredLate = isDemandDeliveredLate(demand);
   const formattedDate = formatDateOnlyBR(dueDate);
   return (
-    <div className="flex justify-center">
-      <span className={isOverdue ? "text-destructive font-medium" : "text-foreground"}>
+    <div className="flex flex-col items-center gap-1">
+      <span className={cn("inline-flex items-center gap-1", isOverdue ? "text-destructive font-medium" : "text-foreground")}>
+        {isOverdue && <AlertTriangle className="h-3 w-3" />}
         {formattedDate}
       </span>
+      {isDeliveredLate && (
+        <Badge
+          variant="outline"
+          className="text-[10px] py-0 h-5 bg-muted/50 text-muted-foreground border-muted-foreground/20 font-normal"
+        >
+          Concluída com atraso
+        </Badge>
+      )}
     </div>
   );
 }
