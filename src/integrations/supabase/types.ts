@@ -1180,6 +1180,7 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          is_overdue: boolean
           last_started_at: string | null
           meet_link: string | null
           parent_demand_id: string | null
@@ -1207,6 +1208,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          is_overdue?: boolean
           last_started_at?: string | null
           meet_link?: string | null
           parent_demand_id?: string | null
@@ -1234,6 +1236,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          is_overdue?: boolean
           last_started_at?: string | null
           meet_link?: string | null
           parent_demand_id?: string | null
@@ -2673,6 +2676,7 @@ export type Database = {
         Args: { p_code: string; p_team_id: string }
         Returns: Json
       }
+      refresh_overdue_demands: { Args: never; Returns: number }
       reorder_subdemands: {
         Args: { p_ordered_ids: string[]; p_parent_id: string }
         Returns: undefined
