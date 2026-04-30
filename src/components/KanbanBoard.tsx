@@ -1015,8 +1015,10 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 demandId: demand.id,
                 demandTitle: demand.title,
                 boardName,
-              }).catch(err => console.error("Erro ao enviar push de ajuste concluído:", err));
             }
+
+            // Approval transition handling: open dialog or auto-notify per user preference
+            await handleApprovalTransition(demand.id, demand.title, demand.created_by ?? undefined, columnKey);
           }
         },
         onError: (error: any) => {
