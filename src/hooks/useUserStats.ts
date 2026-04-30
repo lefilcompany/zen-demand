@@ -94,11 +94,11 @@ export function useUserStats(userId: string | undefined) {
       );
 
       const deliveredDemands = uniqueDemands.filter(
-        (d: any) => d.demand_statuses?.name === "Entregue"
+        (d: any) => d.delivered_at != null || d.demand_statuses?.name === "Entregue"
       ).length;
 
       const inProgressDemands = uniqueDemands.filter(
-        (d: any) => d.demand_statuses?.name === "Em Andamento"
+        (d: any) => d.delivered_at == null && d.demand_statuses?.name === "Em Andamento"
       ).length;
 
       const totalTimeSpent = (timeEntries || []).reduce(
