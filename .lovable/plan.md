@@ -1,82 +1,54 @@
-## Objetivo
+## Problema
 
-Reorganizar **/settings** e **/profile** num layout único de duas colunas (mini-card de identidade + sidebar à esquerda, conteúdo da seção à direita), seguindo o padrão visual das imagens enviadas. Tudo que já existe é preservado — apenas reorganizado, modularizado e com edição mais visível e direta (inline, não escondida em drawer).
+No modal "Gerenciar Etapas do Kanban", o painel lateral "Criar Nova Etapa / Editar Etapa" não permite digitar no input, selecionar cor, abrir o select de "Tipo de Aprovação" nem rolar a área interna.
 
-## Estrutura final
+## Causa raiz
 
-Rota `/settings` passa a ter um shell com sidebar e conteúdo. Cada item da sidebar carrega uma seção (componente isolado em `src/components/settings/`).
+O Radix `Dialog` está configurado com `modal={true}`. Nesse modo o Radix instala uma **focus trap** + **pointer-events guard** que só libera interações para descendentes do `DialogPrimitive.Content`. O painel lateral foi propositalmente renderizado **fora** do `Content` (como um card "irmão" dentro do `DialogPortal`, para visual de dois cards lado a lado). Resultado: o focus trap bloqueia foco em inputs/select/color picker, e o guard intercepta cliques no painel — exatamente o comportamento relatado.
 
-```text
-/settings
-├─ [SettingsSidebar]              ┌─ [Section content]
-│   • Card identidade (avatar,    │   Cabeçalho com ícone + título +
-│     nome, e-mail, plano,        │   descrição + botão "Salvar" quando
-│     botão "Ver perfil público") │   aplicável (padrão das imagens).
-│   • Perfil                      │
-│   • Segurança                   │
-│   • Preferências                │
-│   • Notificações                │
-│   • Equipe (se houver)          │
-│   • Conta                       │
-```
+`onPointerDown` com `stopPropagation` não resolve porque o bloqueio acontece no nível do guard global do Radix, antes dos handlers do painel.
 
-`/profile` continua existindo e mantém o perfil público com banner, nível, XP, conquistas, badges e estatísticas (gamificação) — acessível via link "Ver perfil público" no card de identidade da sidebar e via avatar.
+## Solução
 
-## Seções (todas mantêm a lógica atual)
+1. Trocar `modal={true}` por `modal={false}` no `Dialog` raiz. O modal atualmente já implementa manualmente o que precisa:
+   - Overlay próprio (`DialogOverlay` com `bg-black/60`).
+   - Bloqueio de fechamento por clique fora via `onPointerDownOutside` / `onInteractOutside` (que continuam funcionando).
+   - `pointer-events: none` no wrapper externo + `pointer-events-auto` nos cards — garante que cliques no overlay não interajam com a página atrás.
 
-1. **Perfil** — `ProfileSection.tsx`
-   Edição inline (sem drawer): nome, cargo/função, bio, localização, e-mail (read-only com selo "verificado"), telefone, estado/cidade (placeholders já visíveis na referência), website, LinkedIn, GitHub. Upload/troca de avatar inline. Botão "Salvar alterações" no topo direito do card (padrão da imagem).
-   Reaproveita a lógica de `ProfileEditDrawer.tsx` (mutations, upload de avatar) movida para o componente da seção. O `ProfileEditDrawer` antigo é descontinuado (mantemos as funções extraídas).
+2. Garantir pointer-events explícitos no overlay para que ele continue capturando cliques fora dos cards, mantendo o efeito visual de modal:
+   - Adicionar `pointer-events-auto` ao `DialogOverlay`.
 
-2. **Segurança** — `SecuritySection.tsx`
-   Alterar senha (atual → nova → confirmar) reutilizando o fluxo `verifyPassword` + `updateUser` já existente. Layout idêntico à imagem 2 (campos empilhados, botão "Atualizar senha" no rodapé direito).
+3. Manter `autoFocus` no input "Nome da Etapa" — sem o focus trap do Radix, o `autoFocus` do `<Input>` passa a funcionar normalmente.
 
-3. **Preferências** — `PreferencesSection.tsx`
-   Tema (claro/escuro/sistema) com toggle/segmented, idioma (PT/EN/ES) e toggle global "Notificações" (atalho que liga/desliga e-mail+push). Layout linha-a-linha como imagem 3.
+4. Pequena melhoria: remover o `onPointerDown={(e) => e.stopPropagation()}` do painel lateral, que deixa de ser necessário (sem focus trap, não há mais guard a evitar). O painel passa a ser um nó pointer-events-auto comum dentro do portal.
 
-4. **Notificações** — `NotificationsSection.tsx`
-   Toda a lógica atual: canais (e-mail, push, ativação push do navegador, botão de teste) + tipos (demandas, equipe, prazos, ajustes, menções) + bloco "Aprovações" (modo `ask|all|none` + incluir criador). Sem perdas.
-
-5. **Equipe** — `TeamSection.tsx` (só aparece se `currentTeam`)
-   Sair da equipe (com fluxo de transferência de admin se for owner) + Excluir equipe (com verificação de senha) — exatamente o que existe hoje.
-
-6. **Conta** — `AccountSection.tsx`
-   Bloco "Informações Legais" (Política de Privacidade, Termos de Uso, Central de Ajuda) + "Zona de Perigo" (Sair da conta, Excluir conta) — como na imagem 4. "Excluir conta" abre AlertDialog com confirmação por senha (mesmo padrão de excluir equipe).
-
-## Componentes novos
-
-- `src/pages/Settings.tsx` — vira shell que gerencia seção ativa (via `useState` + querystring `?tab=`).
-- `src/components/settings/SettingsSidebar.tsx` — card de identidade (avatar, nome, e-mail, badge do plano via `useSubscription`, botão "Ver perfil público" → `navigate('/profile')`) + lista de seções com ícone, título, descrição e chevron, item ativo com borda esquerda accent (#F28705) como na referência.
-- `src/components/settings/SectionShell.tsx` — wrapper padrão (ícone redondo + título + descrição + slot de ação no topo direito + corpo).
-- `src/components/settings/{Profile,Security,Preferences,Notifications,Team,Account}Section.tsx`.
-
-## Detalhes de UX/Design
-
-- Layout `grid grid-cols-[280px_1fr] gap-6` em ≥ md; em mobile vira accordion/lista vertical (sidebar acima, seção abaixo).
-- Cards `rounded-xl shadow-sm border` em fundo `bg-card`, conforme padrão SoMA já em uso.
-- Item ativo da sidebar: `text-primary` + barra lateral 3px `#F28705` + chevron preenchido.
-- Topo da página mantém `<PageBreadcrumb>` + título "Configurações" e descrição.
-- Toda string passa por `useTranslation` (chaves já existentes; novas em `pt-BR/en-US/es`).
-- Acessibilidade: navegação por teclado entre itens da sidebar, `aria-current="page"` no item ativo.
+5. Verificar que `Select` (Radix), `ColorPicker` (popover/inputs) e scroll na área `overflow-y-auto` do `StageForm` voltam a funcionar tanto na visão lado-a-lado (lg+) quanto no fallback mobile.
 
 ## Detalhes técnicos
 
-- Rota: `/settings` aceita `?tab=profile|security|preferences|notifications|team|account` para deep-link (e os links no Topbar/Sidebar global continuam funcionando).
-- O `ProfileEditDrawer.tsx` deixa de ser aberto a partir de `Profile.tsx`; o botão "Editar Perfil" em `/profile` passa a navegar para `/settings?tab=profile`. O arquivo do drawer permanece (não removido) para evitar quebra, mas sem consumidores — ou removido se não houver outros usos (verificar com `rg ProfileEditDrawer`).
-- Em `/profile`, o card de identidade do topo ganha um link discreto "Editar no painel de configurações".
-- Plano do usuário no card da sidebar: usa `useSubscription` (já existente) com fallback "Plano Gratuito".
-- "Excluir conta": chama `supabase.auth.admin`-equivalente via edge function existente OU exibe instrução; se não houver função, criar `delete-account` edge function (security-definer) que apaga `profiles` do usuário e chama `auth.admin.deleteUser` (service role). Confirmar via `tool_search` se já existe; senão, criar.
-- Nada na lógica de notificações, push, idiomas, tema, equipe, aprovação é alterado — apenas movido.
+Arquivo único: `src/components/KanbanStagesManager.tsx`
 
-## Não-objetivos
+```text
+[Dialog modal=false]
+  └─ DialogPortal
+      ├─ DialogOverlay (pointer-events-auto, capta clique fora)
+      └─ <div fixed inset-0 flex pointer-events-none>
+           ├─ DialogPrimitive.Content (pointer-events-auto)  ← lista de etapas
+           └─ <div data-stage-form-panel pointer-events-auto> ← painel lateral
+                └─ <StageForm />  (Input, ColorPicker, Select, scroll OK)
+```
 
-- Não mexer no schema do banco.
-- Não alterar a página pública `/profile` e `/user/:userId` além do botão de editar.
-- Não remover funcionalidades existentes.
+Mudanças mínimas:
 
-## Entregáveis
+- Linha 583: `modal={true}` → `modal={false}`.
+- Linha 591: adicionar `pointer-events-auto` ao `DialogOverlay`.
+- Linhas 811-812 e 831-832: remover `onPointerDown`/`onMouseDown` `stopPropagation` (não mais necessários).
+- Os handlers `onPointerDownOutside`/`onInteractOutside` no `Content` continuam tratando o caso de não fechar o modal quando o painel lateral / popovers Radix recebem clique.
 
-- Settings.tsx refatorado + 6 componentes de seção + sidebar + shell.
-- `/profile` ajustado (botão de editar aponta para `/settings?tab=profile`).
-- Traduções novas (apenas rótulos novos das seções).
-- (Se necessário) edge function `delete-account`.
+## Validação
+
+Após aplicar, testar no preview:
+- Abrir "Etapas" → "Criar Nova Etapa": digitar nome, escolher cor (incluindo input hex), abrir Select de "Tipo de Aprovação", rolar a área do formulário.
+- Editar uma etapa existente: mesmas interações.
+- Clicar fora dos dois cards (no overlay escuro): NÃO deve fechar enquanto o painel está aberto; deve fechar quando só a lista está aberta.
+- Mobile (lg-): o painel substitui o card principal e mantém todas as interações.
