@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Settings as SettingsIcon, User, KeyRound, Palette, Bell, Users, Shield } from "lucide-react";
