@@ -20,14 +20,35 @@ const STATUS_ORDER = [
 const REQUESTER_HIDDEN_STATUSES = ["Tarefas Internas"];
 
 interface StatusFilterTabsProps {
-  value: string | null;
-  onChange: (value: string | null) => void;
+  value?: string | null;
+  onChange?: (value: string | null) => void;
+  // Multi-select API (preferred when provided)
+  values?: string[];
+  onValuesChange?: (values: string[]) => void;
+  multiSelect?: boolean;
 }
 
-export function StatusFilterTabs({ value, onChange }: StatusFilterTabsProps) {
-  const { selectedBoardId } = useSelectedBoard();
-  const { data: boardStatuses } = useBoardStatuses(selectedBoardId);
-  const { data: boardRole } = useBoardRole(selectedBoardId);
+export function StatusFilterTabs({ value, onChange, values, onValuesChange, multiSelect }: StatusFilterTabsProps) {
+  const isMulti = multiSelect ?? Array.isArray(values);
+  const selectedSet = new Set(isMulti ? (values ?? []) : value ? [value] : []);
+  const isAllSelected = selectedSet.size === 0;
+
+  const handleAllClick = () => {
+    if (isMulti) onValuesChange?.([]);
+    else onChange?.(null);
+  };
+
+  const handleStatusClick = (statusId: string) => {
+    if (isMulti) {
+      const next = new Set(selectedSet);
+      if (next.has(statusId)) next.delete(statusId);
+      else next.add(statusId);
+      onValuesChange?.(Array.from(next));
+    } else {
+      // Single-select toggle: clicking the active one clears it
+      onChange?.(value === statusId ? null : statusId);
+    }
+  };
 
   // Ordenar status conforme ordem definida, usando os status do quadro atual
   const orderedStatuses = useMemo(() => {
