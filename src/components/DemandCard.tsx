@@ -69,12 +69,10 @@ export function DemandCard({ demand, onClick, showFullDetails = false }: DemandC
   const isInProgress = statusName === "Fazendo";
   const isDelivered = statusName === "Entregue";
   
-  // Check if due date is overdue (only for non-delivered demands)
-  const isOverdue = statusName !== "Entregue" && isDateOverdue(demand.due_date);
-  
-  // Check if delivered late (delivered after due date)
-  const isDeliveredLate = isDelivered && demand.due_date && demand.delivered_at &&
-    new Date(demand.delivered_at) > new Date(demand.due_date);
+  // "Atrasada" only applies while NOT delivered. Once delivered, use the discreet
+  // "entregue com atraso" badge instead.
+  const isOverdue = isDemandOverdue(demand);
+  const isDeliveredLate = isDemandDeliveredLate(demand);
   
   // Fallback to assigned_profile if no assignees
   const displayAssignees = assignees.length > 0 
