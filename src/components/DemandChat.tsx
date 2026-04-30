@@ -394,7 +394,7 @@ export function DemandChat({
           >
             <Lock className="h-3 w-3" />
             Interno
-            {internalOnly && <span className="ml-1 text-[9px] opacity-70">(somente)</span>}
+            
           </button>
         )}
         <div className="flex-1" />
