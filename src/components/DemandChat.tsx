@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,7 +50,52 @@ export function DemandChat({
   const isRequester = boardRole === "requester";
   const canSeeInternal = !isRequester;
 
-  const [channel, setChannel] = useState<"general" | "internal">("general");
+  // Detect if all participants (creator + assignees) are internal members of this board.
+  // If so, the "Geral" channel is hidden so requesters who later access the demand
+  // (e.g. via shared link) cannot see internal discussion.
+  const participantIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (demandCreatedBy) ids.add(demandCreatedBy);
+    assignees.forEach((a) => a.user_id && ids.add(a.user_id));
+    return Array.from(ids);
+  }, [demandCreatedBy, assignees]);
+
+  const { data: allParticipantsInternal = false } = useQuery({
+    queryKey: ["demand-chat-participants-internal", boardId, participantIds.sort().join(",")],
+    queryFn: async () => {
+      if (!boardId || participantIds.length === 0) return false;
+      const { data, error } = await supabase
+        .from("board_members")
+        .select("user_id, role")
+        .eq("board_id", boardId)
+        .in("user_id", participantIds);
+      if (error) throw error;
+      // Every participant must be a board member AND not a requester
+      if (!data || data.length < participantIds.length) return false;
+      const roleByUser = new Map(data.map((m) => [m.user_id, m.role]));
+      return participantIds.every((uid) => {
+        const r = roleByUser.get(uid);
+        return r && r !== "requester";
+      });
+    },
+    enabled: !!boardId && participantIds.length > 0,
+    staleTime: 60_000,
+  });
+
+  const internalOnly = allParticipantsInternal && canSeeInternal;
+  const showGeneralTab = !internalOnly;
+
+  const [channel, setChannel] = useState<"general" | "internal">(
+    internalOnly ? "internal" : "general"
+  );
+
+  // Force channel to internal when demand becomes internal-only
+  useEffect(() => {
+    if (internalOnly && channel !== "internal") {
+      setChannel("internal");
+    }
+  }, [internalOnly, channel]);
+
   const [comment, setComment] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
@@ -321,18 +367,20 @@ export function DemandChat({
     <div className="relative flex flex-col rounded-xl border border-border/60 bg-card shadow-sm min-h-[400px]" style={{ height: "min(700px, 70vh)" }}>
       {/* Channel tabs */}
       <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-border/40 bg-muted/20">
-        <button
-          onClick={() => setChannel("general")}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold tracking-wide uppercase transition-all",
-            channel === "general"
-              ? "bg-primary/10 text-primary shadow-sm"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
-          )}
-        >
-          <Hash className="h-3 w-3" />
-          Geral
-        </button>
+        {showGeneralTab && (
+          <button
+            onClick={() => setChannel("general")}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold tracking-wide uppercase transition-all",
+              channel === "general"
+                ? "bg-primary/10 text-primary shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+            )}
+          >
+            <Hash className="h-3 w-3" />
+            Geral
+          </button>
+        )}
         {canSeeInternal && (
           <button
             onClick={() => setChannel("internal")}
@@ -342,9 +390,11 @@ export function DemandChat({
                 ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 shadow-sm border border-blue-500/20"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
             )}
+            title={internalOnly ? "Esta demanda só tem participantes internos — apenas o canal interno está disponível" : undefined}
           >
             <Lock className="h-3 w-3" />
             Interno
+            {internalOnly && <span className="ml-1 text-[9px] opacity-70">(somente)</span>}
           </button>
         )}
         <div className="flex-1" />
