@@ -21,7 +21,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { KanbanColumnToolbar, KanbanSortOption, filterAndSortDemands } from "@/components/KanbanColumnToolbar";
 import { format } from "date-fns";
-import { formatDateOnlyBR, isDateOverdue } from "@/lib/dateUtils";
+import { formatDateOnlyBR, isDateOverdue, isDemandDeliveredLate } from "@/lib/dateUtils";
 import { cn, truncateText } from "@/lib/utils";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
