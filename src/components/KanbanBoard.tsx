@@ -580,6 +580,61 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
 
   const adjustmentDemand = demands.find(d => d.id === adjustmentDemandId);
 
+  // Handle approval transition: opens dialog or auto-notifies based on user preference.
+  // Called after a successful status update into "Aprovação Interna" or "Aprovação do Cliente".
+  const handleApprovalTransition = useCallback(
+    async (
+      demandId: string,
+      demandTitle: string,
+      demandCreatedBy: string | undefined,
+      newStatusName: string,
+    ) => {
+      const approvalType = approvalKindFromStatusName(newStatusName);
+      if (!approvalType || !user?.id) return;
+
+      const mode = notifyPrefs.approvalNotifyMode;
+      if (mode === "none") return;
+
+      if (mode === "ask") {
+        setApprovalDialogState({
+          demandId,
+          demandTitle,
+          demandCreatedBy,
+          approvalType,
+        });
+        return;
+      }
+
+      // mode === "all": auto-notify all eligible board members
+      const allowed = approvalType === "internal"
+        ? new Set(["admin", "moderator", "executor"])
+        : new Set(["requester"]);
+      const recipients = (boardMembersForApproval || [])
+        .filter((m) => allowed.has(m.role) && m.user_id !== user.id)
+        .map((m) => m.user_id);
+
+      if (notifyPrefs.approvalNotifyIncludeCreator && demandCreatedBy && demandCreatedBy !== user.id) {
+        recipients.push(demandCreatedBy);
+      }
+
+      if (recipients.length === 0) return;
+
+      try {
+        await notifyApproval({
+          demandId,
+          demandTitle,
+          boardName,
+          approvalType,
+          recipientIds: recipients,
+          senderId: user.id,
+        });
+      } catch (err) {
+        console.error("Erro ao enviar notificações automáticas de aprovação:", err);
+      }
+    },
+    [user?.id, notifyPrefs.approvalNotifyMode, notifyPrefs.approvalNotifyIncludeCreator, boardMembersForApproval, boardName],
+  );
+
   // Handle column toggle - no limit, users can open all columns
   const toggleColumn = useCallback((columnKey: string) => {
     setActiveColumns(prev => {
