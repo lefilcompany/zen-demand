@@ -56,6 +56,7 @@ interface PersistedState {
   searchQuery: string;
   viewMode: ViewMode;
   hideDelivered: boolean;
+  selectedStatuses?: string[];
   filters: {
     status: string | null;
     priority: string | null;
@@ -133,6 +134,13 @@ export default function TeamDemands() {
 
   const [hideDelivered, setHideDelivered] = useState<boolean>(() => persisted?.hideDelivered ?? false);
 
+  // Multi-select status (overrides single filters.status when non-empty)
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(() => {
+    if (Array.isArray(persisted?.selectedStatuses)) return persisted!.selectedStatuses!;
+    if (persisted?.filters?.status) return [persisted.filters.status];
+    return [];
+  });
+
   // Persist state to sessionStorage whenever it changes (scoped per team)
   useEffect(() => {
     if (!selectedTeamId) return;
@@ -141,6 +149,7 @@ export default function TeamDemands() {
         searchQuery,
         viewMode,
         hideDelivered,
+        selectedStatuses,
         filters: {
           status: filters.status,
           priority: filters.priority,
@@ -156,7 +165,7 @@ export default function TeamDemands() {
     } catch {
       // ignore quota / serialization errors
     }
-  }, [selectedTeamId, searchQuery, viewMode, hideDelivered, filters]);
+  }, [selectedTeamId, searchQuery, viewMode, hideDelivered, selectedStatuses, filters]);
 
   // When team changes, reload persisted state for that team
   useEffect(() => {
@@ -165,6 +174,13 @@ export default function TeamDemands() {
     setSearchQuery(p.searchQuery ?? "");
     setViewMode(p.viewMode ?? "table");
     setHideDelivered(p.hideDelivered ?? false);
+    setSelectedStatuses(
+      Array.isArray(p.selectedStatuses)
+        ? p.selectedStatuses
+        : p.filters?.status
+        ? [p.filters.status]
+        : []
+    );
     setFilters({
       status: p.filters.status,
       priority: p.filters.priority,
@@ -268,8 +284,10 @@ export default function TeamDemands() {
         if (!matchesSearch) return false;
       }
       
-      // Status filter
-      if (filters.status && d.status_id !== filters.status) {
+      // Status filter (multi-select takes precedence; falls back to single status)
+      if (selectedStatuses.length > 0) {
+        if (!selectedStatuses.includes(d.status_id)) return false;
+      } else if (filters.status && d.status_id !== filters.status) {
         return false;
       }
       
@@ -330,7 +348,7 @@ export default function TeamDemands() {
       const dateB = new Date(b.due_date).getTime();
       return dateA - dateB;
     });
-  }, [demands, searchQuery, filters, hideDelivered, membersByPosition]);
+  }, [demands, searchQuery, filters, selectedStatuses, hideDelivered, membersByPosition]);
 
   const renderDemandList = (demandList: typeof filteredDemands) => {
     if (isLoading) {
@@ -676,8 +694,9 @@ export default function TeamDemands() {
       {/* Status Filter Tabs */}
       <div className="flex items-center gap-3 overflow-x-auto pb-2 -mb-2">
         <StatusFilterTabs
-          value={filters.status}
-          onChange={(status) => setFilters({ ...filters, status })}
+          values={selectedStatuses}
+          onValuesChange={setSelectedStatuses}
+          multiSelect
         />
       </div>
 
