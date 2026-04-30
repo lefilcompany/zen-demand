@@ -48,6 +48,39 @@ type ViewMode = "table" | "grid" | "calendar";
 
 const TABLET_BREAKPOINT = 1024;
 const POSITION_FILTER_KEY = "teamDemandsPositionFilter";
+// sessionStorage keys — persist filters until the browser session ends
+// (i.e., until the user fully closes the tab/browser or logs out)
+const SESSION_STATE_PREFIX = "teamDemandsState:";
+
+interface PersistedState {
+  searchQuery: string;
+  viewMode: ViewMode;
+  hideDelivered: boolean;
+  filters: {
+    status: string | null;
+    priority: string | null;
+    assignee: string | null;
+    service: string | null;
+    dueDateFrom: string | null;
+    dueDateTo: string | null;
+    position: string | null;
+    boards: string[];
+  };
+}
+
+function getSessionKey(teamId: string | null) {
+  return `${SESSION_STATE_PREFIX}${teamId ?? "none"}`;
+}
+
+function loadPersistedState(teamId: string | null): PersistedState | null {
+  try {
+    const raw = sessionStorage.getItem(getSessionKey(teamId));
+    if (!raw) return null;
+    return JSON.parse(raw) as PersistedState;
+  } catch {
+    return null;
+  }
+}
 
 export default function TeamDemands() {
   const { t } = useTranslation();
@@ -58,17 +91,33 @@ export default function TeamDemands() {
   const isTeamAdminOrModerator = role === "owner";
   const { data: demands, isLoading } = useAllTeamDemands(selectedTeamId);
   const { data: boards } = useBoards(selectedTeamId);
-  
-  const [searchQuery, setSearchQuery] = useState("");
-  
-  // Initialize viewMode from location state or default to "table"
+
+  // Load persisted state for current team (session-scoped)
+  const persisted = loadPersistedState(selectedTeamId);
+
+  const [searchQuery, setSearchQuery] = useState<string>(() => persisted?.searchQuery ?? "");
+
+  // Initialize viewMode from location state, then session, then default to "table"
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const stateViewMode = (location.state as { viewMode?: ViewMode })?.viewMode;
-    return stateViewMode || "table";
+    return stateViewMode || persisted?.viewMode || "table";
   });
 
-  // Initialize position filter from localStorage
+  // Initialize filters from session (preferred) or localStorage (legacy position only)
   const [filters, setFilters] = useState<TeamDemandsFiltersState>(() => {
+    if (persisted?.filters) {
+      const f = persisted.filters;
+      return {
+        status: f.status,
+        priority: f.priority,
+        assignee: f.assignee,
+        service: f.service,
+        dueDateFrom: f.dueDateFrom ? new Date(f.dueDateFrom) : null,
+        dueDateTo: f.dueDateTo ? new Date(f.dueDateTo) : null,
+        position: f.position,
+        boards: Array.isArray(f.boards) ? f.boards : [],
+      };
+    }
     const savedPosition = localStorage.getItem(POSITION_FILTER_KEY);
     return {
       status: null,
@@ -81,8 +130,53 @@ export default function TeamDemands() {
       boards: [],
     };
   });
-  
-  const [hideDelivered, setHideDelivered] = useState(false);
+
+  const [hideDelivered, setHideDelivered] = useState<boolean>(() => persisted?.hideDelivered ?? false);
+
+  // Persist state to sessionStorage whenever it changes (scoped per team)
+  useEffect(() => {
+    if (!selectedTeamId) return;
+    try {
+      const payload: PersistedState = {
+        searchQuery,
+        viewMode,
+        hideDelivered,
+        filters: {
+          status: filters.status,
+          priority: filters.priority,
+          assignee: filters.assignee,
+          service: filters.service,
+          dueDateFrom: filters.dueDateFrom ? filters.dueDateFrom.toISOString() : null,
+          dueDateTo: filters.dueDateTo ? filters.dueDateTo.toISOString() : null,
+          position: filters.position,
+          boards: filters.boards,
+        },
+      };
+      sessionStorage.setItem(getSessionKey(selectedTeamId), JSON.stringify(payload));
+    } catch {
+      // ignore quota / serialization errors
+    }
+  }, [selectedTeamId, searchQuery, viewMode, hideDelivered, filters]);
+
+  // When team changes, reload persisted state for that team
+  useEffect(() => {
+    const p = loadPersistedState(selectedTeamId);
+    if (!p) return;
+    setSearchQuery(p.searchQuery ?? "");
+    setViewMode(p.viewMode ?? "table");
+    setHideDelivered(p.hideDelivered ?? false);
+    setFilters({
+      status: p.filters.status,
+      priority: p.filters.priority,
+      assignee: p.filters.assignee,
+      service: p.filters.service,
+      dueDateFrom: p.filters.dueDateFrom ? new Date(p.filters.dueDateFrom) : null,
+      dueDateTo: p.filters.dueDateTo ? new Date(p.filters.dueDateTo) : null,
+      position: p.filters.position,
+      boards: Array.isArray(p.filters.boards) ? p.filters.boards : [],
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTeamId]);
   
   
   
