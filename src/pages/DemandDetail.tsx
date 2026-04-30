@@ -31,7 +31,7 @@ import { UserTimeTrackingDisplay } from "@/components/UserTimeTrackingDisplay";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { formatDateOnlyBR } from "@/lib/dateUtils";
+import { formatDateOnlyBR, isDemandDeliveredLate } from "@/lib/dateUtils";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useSelectedBoard } from "@/contexts/BoardContext";
 import { toast } from "sonner";
