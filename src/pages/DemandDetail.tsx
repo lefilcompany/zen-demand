@@ -1548,6 +1548,17 @@ export default function DemandDetail() {
         />
       )}
 
+      <ApprovalNotifyDialog
+        open={!!approvalDialogState}
+        onOpenChange={(o) => { if (!o) setApprovalDialogState(null); }}
+        demandId={approvalDialogState?.demandId ?? null}
+        demandTitle={approvalDialogState?.demandTitle}
+        demandCreatedBy={approvalDialogState?.demandCreatedBy}
+        boardId={demand?.board_id ?? null}
+        boardName={currentBoard?.name}
+        approvalType={approvalDialogState?.approvalType ?? "internal"}
+      />
+
       {/* Propagate status to subdemands - confirmation dialog */}
       <AlertDialog
         open={!!propagateDialog}
