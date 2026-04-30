@@ -238,6 +238,7 @@ export default function DemandDetail() {
     approvalType: ApprovalKind;
   }>(null);
   const { preferences: notifyPrefs } = useNotificationPreferences();
+  const { data: boardMembersForApproval } = useBoardMembers(demand?.board_id || null);
   const { selectedBoardId, setSelectedBoardId } = useSelectedBoard();
 
   // Auto-switch board context to match the demand being viewed (only on initial mount)
