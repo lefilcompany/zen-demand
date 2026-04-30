@@ -33,7 +33,7 @@ interface ApprovalNotifyDialogProps {
   approvalType: ApprovalKind;
 }
 
-const INTERNAL_ROLES = new Set(["admin", "moderator", "executor"]);
+const INTERNAL_ROLES = new Set(["admin", "moderator"]);
 const EXTERNAL_ROLES = new Set(["requester"]);
 
 const roleLabel = (role: string) => {
@@ -240,7 +240,7 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
                 </Label>
                 <p className="text-xs text-muted-foreground">
                   {approvalType === "internal"
-                    ? "Owners, Coordenadores e Agentes deste quadro"
+                    ? "Owners e Coordenadores deste quadro"
                     : "Solicitantes deste quadro"}
                   {eligibleMembers.length > 0 && ` (${eligibleMembers.length})`}
                 </p>
