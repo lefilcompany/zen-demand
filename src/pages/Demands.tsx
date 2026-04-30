@@ -176,8 +176,16 @@ export default function Demands() {
         if (!matchesSearch) return false;
       }
 
-      // Status filter
-      if (filters.status && d.status_id !== filters.status) {
+      // Status filter (multi-select; sentinel "delivered late" = entregue + is_overdue)
+      if (selectedStatuses.length > 0) {
+        const isDelivered = d.demand_statuses?.name === "Entregue" || !!d.delivered_at;
+        const isDeliveredLate = isDelivered && d.is_overdue === true;
+        const wantsLate = selectedStatuses.includes(DELIVERED_LATE_FILTER_ID);
+        const realStatusIds = selectedStatuses.filter(s => s !== DELIVERED_LATE_FILTER_ID);
+        const matchesStatus = realStatusIds.includes(d.status_id);
+        const matchesLate = wantsLate && isDeliveredLate;
+        if (!matchesStatus && !matchesLate) return false;
+      } else if (filters.status && d.status_id !== filters.status) {
         return false;
       }
 
