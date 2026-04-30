@@ -13,6 +13,8 @@ export interface TeamDemandTableRow {
   description?: string | null;
   priority?: string | null;
   due_date?: string | null;
+  delivered_at?: string | null;
+  is_overdue?: boolean | null;
   board_sequence_number?: number | null;
   service_id?: string | null;
   demand_statuses?: {
