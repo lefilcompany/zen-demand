@@ -169,3 +169,41 @@ export const isDateOverdue = (isoString: string | null | undefined): boolean => 
   const today = startOfDay(new Date());
   return dueDate < today;
 };
+
+/**
+ * Determines whether a demand is "overdue" (atrasada).
+ * Prefers the persisted `is_overdue` flag (kept up-to-date by trigger + daily cron),
+ * falling back to a date comparison for safety.
+ *
+ * Important: a demand that has been delivered is NEVER considered "currently overdue".
+ * Use `isDemandDeliveredLate` for the post-delivery state.
+ */
+export const isDemandOverdue = (demand: {
+  is_overdue?: boolean | null;
+  due_date?: string | null;
+  delivered_at?: string | null;
+  demand_statuses?: { name?: string } | null;
+}): boolean => {
+  const isDelivered =
+    !!demand.delivered_at || demand.demand_statuses?.name === "Entregue";
+  if (isDelivered) return false;
+  if (typeof demand.is_overdue === "boolean") return demand.is_overdue;
+  return isDateOverdue(demand.due_date);
+};
+
+/**
+ * True when a demand has been delivered AFTER its due date ("entregue com atraso").
+ */
+export const isDemandDeliveredLate = (demand: {
+  is_overdue?: boolean | null;
+  due_date?: string | null;
+  delivered_at?: string | null;
+  demand_statuses?: { name?: string } | null;
+}): boolean => {
+  const isDelivered =
+    !!demand.delivered_at || demand.demand_statuses?.name === "Entregue";
+  if (!isDelivered) return false;
+  if (typeof demand.is_overdue === "boolean") return demand.is_overdue;
+  if (!demand.due_date || !demand.delivered_at) return false;
+  return new Date(demand.delivered_at) > new Date(demand.due_date);
+};
