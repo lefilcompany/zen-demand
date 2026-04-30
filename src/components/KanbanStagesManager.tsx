@@ -580,7 +580,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
 
   return (
     <>
-      <Dialog open={open} onOpenChange={handleOpenChange} modal={true}>
+      <Dialog open={open} onOpenChange={handleOpenChange} modal={false}>
         <DialogTrigger asChild>
           <Button variant="outline" size="sm" className="gap-2">
             <Settings className="h-4 w-4" />
@@ -588,7 +588,7 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
           </Button>
         </DialogTrigger>
         <DialogPortal>
-          <DialogOverlay className="bg-black/60 backdrop-blur-sm" />
+          <DialogOverlay className="bg-black/60 backdrop-blur-sm pointer-events-auto" />
           {/* Custom layout: two visually separate cards side by side */}
           <div className={cn("fixed inset-0 z-50 flex items-center justify-center transition-[gap] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]", panelVisible ? "gap-3" : "gap-0")} style={{ pointerEvents: 'none' }}>
             {/* ===== MAIN CARD: Stage List ===== */}
