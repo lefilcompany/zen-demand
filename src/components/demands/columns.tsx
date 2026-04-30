@@ -9,7 +9,6 @@ import { Wrench, AlertTriangle } from "lucide-react";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
 import { formatDateOnlyBR, isDateOverdue, toDateOnly, parseDateOnly, isDemandOverdue, isDemandDeliveredLate } from "@/lib/dateUtils";
 import { cn, truncateText } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 
 // Define the demand type based on what useDemands returns
 export interface DemandTableRow {
