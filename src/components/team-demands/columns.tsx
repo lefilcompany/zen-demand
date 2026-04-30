@@ -4,8 +4,8 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { formatDemandCode } from "@/lib/demandCodeUtils";
-import { formatDateOnlyBR, isDateOverdue, toDateOnly, parseDateOnly } from "@/lib/dateUtils";
-import { LayoutGrid } from "lucide-react";
+import { formatDateOnlyBR, isDateOverdue, toDateOnly, parseDateOnly, isDemandOverdue, isDemandDeliveredLate } from "@/lib/dateUtils";
+import { LayoutGrid, AlertTriangle } from "lucide-react";
 
 export interface TeamDemandTableRow {
   id: string;
