@@ -253,7 +253,17 @@ export function DemandHierarchyTable({ data, onRowClick }: DemandHierarchyTableP
         </TableCell>
         {/* Status */}
         <TableCell className="text-center">
-          {status ? (
+          {isDeliveredLate ? (
+            <div className="flex justify-center">
+              <Badge
+                variant="outline"
+                className="border bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-400 inline-flex items-center gap-1"
+              >
+                <AlertTriangle className="h-3 w-3" />
+                Entregue com atraso
+              </Badge>
+            </div>
+          ) : status ? (
             <div className="flex justify-center">
               <Badge variant="outline" className="border" style={{ backgroundColor: `${status.color}20`, borderColor: `${status.color}50`, color: status.color }}>
                 {status.name}
