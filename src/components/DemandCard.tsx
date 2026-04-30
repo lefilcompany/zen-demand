@@ -167,23 +167,23 @@ export function DemandCard({ demand, onClick, showFullDetails = false }: DemandC
           {demand.due_date && (
             <div className={cn(
               "flex items-center gap-1",
-              isOverdue && "text-destructive font-medium",
-              isDeliveredLate && "text-amber-600 font-medium"
+              isOverdue && "text-destructive font-medium"
             )}>
               {isOverdue ? (
-                <Clock className="h-3.5 w-3.5" />
-              ) : isDeliveredLate ? (
                 <AlertTriangle className="h-3.5 w-3.5" />
               ) : (
                 <Calendar className="h-3.5 w-3.5" />
               )}
-              <span>
-                {formatDateOnlyBR(demand.due_date)}
-              </span>
-              {isDeliveredLate && (
-                <span className="text-[10px]">(entregue com atraso)</span>
-              )}
+              <span>{formatDateOnlyBR(demand.due_date)}</span>
             </div>
+          )}
+          {isDeliveredLate && (
+            <Badge
+              variant="outline"
+              className="text-[10px] py-0 h-5 bg-muted/50 text-muted-foreground border-muted-foreground/20 font-normal"
+            >
+              Concluída com atraso
+            </Badge>
           )}
         </div>
 
