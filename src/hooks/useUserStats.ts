@@ -108,7 +108,7 @@ export function useUserStats(userId: string | undefined) {
 
       // Calculate average delivery time
       const deliveredWithTime = uniqueDemands.filter(
-        (d: any) => d.delivered_at && d.created_at && d.demand_statuses?.name === "Entregue"
+        (d: any) => d.delivered_at && d.created_at
       );
       
       const avgDeliveryTime = deliveredWithTime.length > 0
