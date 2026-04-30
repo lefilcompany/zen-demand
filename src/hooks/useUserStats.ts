@@ -39,6 +39,7 @@ export function useUserStats(userId: string | undefined) {
           demand_id,
           demands!inner(
             id,
+            created_at,
             delivered_at,
             status_id,
             demand_statuses(name)
