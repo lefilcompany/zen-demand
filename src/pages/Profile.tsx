@@ -205,7 +205,7 @@ export default function Profile() {
       />
       {/* Header */}
       <div className="flex items-center justify-end">
-        <Button onClick={() => setEditDrawerOpen(true)}>
+        <Button onClick={() => navigate("/settings?tab=profile")}>
           <Settings className="mr-2 h-4 w-4" />
           Editar Perfil
         </Button>

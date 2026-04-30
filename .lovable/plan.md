@@ -1,118 +1,82 @@
 ## Objetivo
 
-Quando uma demanda for movida para uma coluna de aprovação (interna ou do cliente) — tanto pelo Kanban quanto pela tela de detalhe — abrir um **modal de seleção de quem deve ser notificado**. O usuário poderá:
+Reorganizar **/settings** e **/profile** num layout único de duas colunas (mini-card de identidade + sidebar à esquerda, conteúdo da seção à direita), seguindo o padrão visual das imagens enviadas. Tudo que já existe é preservado — apenas reorganizado, modularizado e com edição mais visível e direta (inline, não escondida em drawer).
 
-1. Escolher destinatários específicos para aquela aprovação;
-2. Marcar "notificar todos do quadro";
-3. Salvar uma **preferência padrão na sua conta** para não precisar escolher toda vez (a regra padrão será aplicada automaticamente nas próximas mudanças).
+## Estrutura final
 
-## Regras por tipo de aprovação
-
-- **Aprovação Interna** (`adjustmentType: "internal"` / status "Aprovação Interna"):
-  - Destinatários elegíveis: membros do quadro com role `admin` (Owner), `moderator` (Coordenador) e `executor` (Agente).
-  - Solicitantes do quadro **não** aparecem.
-
-- **Aprovação do Cliente** (`adjustmentType: "external"` / status "Aprovação do Cliente"):
-  - Destinatários elegíveis: membros do quadro com role `requester` (Solicitante).
-
-Em ambos os casos: opção "Notificar todos os elegíveis do quadro" e opção "Notificar também o criador da demanda" (marcada por padrão).
-
-## Comportamento e disparo
-
-O modal aparece **apenas** quando a demanda transita PARA "Aprovação Interna" ou "Aprovação do Cliente" (não em outros movimentos). Se já estiver na coluna, não dispara.
-
-Pontos de integração:
-- `src/components/KanbanBoard.tsx` — em `handleStatusChange` (drag & drop) e `handleMobileStatusChange` (dropdown).
-- `src/pages/DemandDetail.tsx` — no handler de troca de status no `Select` (junto à lógica que já existe para `approvalStatusId`).
-
-Sequência:
-1. Disparar a atualização de status normalmente (otimista, como já é hoje).
-2. **Após** sucesso da atualização, se `behavior = "ask"`, abrir o modal `ApprovalNotifyDialog`.
-3. Se `behavior = "auto"`, montar a lista a partir da preferência do usuário e enviar notificações sem abrir modal.
-4. Se `behavior = "none"`, não notificar ninguém adicional (mantém apenas notificações já existentes do sistema).
-
-## Modal `ApprovalNotifyDialog`
-
-Novo componente em `src/components/ApprovalNotifyDialog.tsx`. Layout:
+Rota `/settings` passa a ter um shell com sidebar e conteúdo. Cada item da sidebar carrega uma seção (componente isolado em `src/components/settings/`).
 
 ```text
-┌─ Notificar sobre aprovação ─────────────────────┐
-│  A demanda "<título>" foi movida para           │
-│  <Aprovação Interna | Aprovação do Cliente>.    │
-│                                                 │
-│  Selecione quem será notificado:                │
-│  ◉ Todos os elegíveis do quadro                 │
-│  ○ Selecionar manualmente                       │
-│     ☐ João (Owner)                              │
-│     ☐ Maria (Coordenadora)                      │
-│     ☐ Pedro (Agente)                            │
-│  ☑ Notificar também o criador da demanda        │
-│                                                 │
-│  ─────────────────────────────────────────────  │
-│  ☐ Salvar como padrão para futuras aprovações   │
-│     (se marcado, aparece um seletor:            │
-│      "Sempre perguntar / Notificar todos /       │
-│       Não notificar")                            │
-│                                                 │
-│  [ Pular ]              [ Notificar (N) ]        │
-└─────────────────────────────────────────────────┘
+/settings
+├─ [SettingsSidebar]              ┌─ [Section content]
+│   • Card identidade (avatar,    │   Cabeçalho com ícone + título +
+│     nome, e-mail, plano,        │   descrição + botão "Salvar" quando
+│     botão "Ver perfil público") │   aplicável (padrão das imagens).
+│   • Perfil                      │
+│   • Segurança                   │
+│   • Preferências                │
+│   • Notificações                │
+│   • Equipe (se houver)          │
+│   • Conta                       │
 ```
 
-- Campo de busca acima da lista quando há mais de 8 membros.
-- Mostra badge da role ao lado do nome (cores já existentes: laranja para Owner, etc).
-- Botão "Notificar" desabilitado quando lista final está vazia.
-- "Pular" fecha sem enviar notificações extras.
+`/profile` continua existindo e mantém o perfil público com banner, nível, XP, conquistas, badges e estatísticas (gamificação) — acessível via link "Ver perfil público" no card de identidade da sidebar e via avatar.
 
-## Preferências do usuário
+## Seções (todas mantêm a lógica atual)
 
-Estender `src/hooks/useNotificationPreferences.ts` (já usa `user_preferences` com `preference_key = 'notification_preferences'`) para incluir dois novos campos:
+1. **Perfil** — `ProfileSection.tsx`
+   Edição inline (sem drawer): nome, cargo/função, bio, localização, e-mail (read-only com selo "verificado"), telefone, estado/cidade (placeholders já visíveis na referência), website, LinkedIn, GitHub. Upload/troca de avatar inline. Botão "Salvar alterações" no topo direito do card (padrão da imagem).
+   Reaproveita a lógica de `ProfileEditDrawer.tsx` (mutations, upload de avatar) movida para o componente da seção. O `ProfileEditDrawer` antigo é descontinuado (mantemos as funções extraídas).
 
-```ts
-approvalNotifyMode: 'ask' | 'all' | 'none';   // padrão: 'ask'
-approvalNotifyIncludeCreator: boolean;        // padrão: true
-```
+2. **Segurança** — `SecuritySection.tsx`
+   Alterar senha (atual → nova → confirmar) reutilizando o fluxo `verifyPassword` + `updateUser` já existente. Layout idêntico à imagem 2 (campos empilhados, botão "Atualizar senha" no rodapé direito).
 
-Adicionar nova seção em `src/pages/Settings.tsx` ("Aprovações"):
-- Select: "Ao mover demanda para aprovação..." → `Sempre perguntar` / `Notificar todos os elegíveis automaticamente` / `Não notificar ninguém`.
-- Switch: "Incluir criador da demanda nas notificações de aprovação".
+3. **Preferências** — `PreferencesSection.tsx`
+   Tema (claro/escuro/sistema) com toggle/segmented, idioma (PT/EN/ES) e toggle global "Notificações" (atalho que liga/desliga e-mail+push). Layout linha-a-linha como imagem 3.
 
-Quando o usuário marca "Salvar como padrão" no modal, gravamos `approvalNotifyMode = 'all'` (se escolheu "Todos") ou `'none'` (se "Pular") via o mesmo hook.
+4. **Notificações** — `NotificationsSection.tsx`
+   Toda a lógica atual: canais (e-mail, push, ativação push do navegador, botão de teste) + tipos (demandas, equipe, prazos, ajustes, menções) + bloco "Aprovações" (modo `ask|all|none` + incluir criador). Sem perdas.
 
-## Notificações enviadas
+5. **Equipe** — `TeamSection.tsx` (só aparece se `currentTeam`)
+   Sair da equipe (com fluxo de transferência de admin se for owner) + Excluir equipe (com verificação de senha) — exatamente o que existe hoje.
 
-Para cada usuário escolhido, criar:
-1. Linha em `notifications` (in-app) — `type: 'info'`, link `/demands/<id>`.
-2. Push notification via `send-push-notification` edge function (já existe).
-3. Email via `send-email` edge function com template `notification` (igual ao padrão usado em `KanbanAdjustmentDialog.tsx`).
+6. **Conta** — `AccountSection.tsx`
+   Bloco "Informações Legais" (Política de Privacidade, Termos de Uso, Central de Ajuda) + "Zona de Perigo" (Sair da conta, Excluir conta) — como na imagem 4. "Excluir conta" abre AlertDialog com confirmação por senha (mesmo padrão de excluir equipe).
 
-Título: `[<Board>] Aprovação <interna | do cliente> pendente`
-Mensagem: `A demanda "<título>" aguarda sua aprovação.`
+## Componentes novos
 
-Excluir o `auth.uid()` atual da lista (não notificar a si mesmo). Usar `Set<string>` para deduplicar.
+- `src/pages/Settings.tsx` — vira shell que gerencia seção ativa (via `useState` + querystring `?tab=`).
+- `src/components/settings/SettingsSidebar.tsx` — card de identidade (avatar, nome, e-mail, badge do plano via `useSubscription`, botão "Ver perfil público" → `navigate('/profile')`) + lista de seções com ícone, título, descrição e chevron, item ativo com borda esquerda accent (#F28705) como na referência.
+- `src/components/settings/SectionShell.tsx` — wrapper padrão (ícone redondo + título + descrição + slot de ação no topo direito + corpo).
+- `src/components/settings/{Profile,Security,Preferences,Notifications,Team,Account}Section.tsx`.
+
+## Detalhes de UX/Design
+
+- Layout `grid grid-cols-[280px_1fr] gap-6` em ≥ md; em mobile vira accordion/lista vertical (sidebar acima, seção abaixo).
+- Cards `rounded-xl shadow-sm border` em fundo `bg-card`, conforme padrão SoMA já em uso.
+- Item ativo da sidebar: `text-primary` + barra lateral 3px `#F28705` + chevron preenchido.
+- Topo da página mantém `<PageBreadcrumb>` + título "Configurações" e descrição.
+- Toda string passa por `useTranslation` (chaves já existentes; novas em `pt-BR/en-US/es`).
+- Acessibilidade: navegação por teclado entre itens da sidebar, `aria-current="page"` no item ativo.
 
 ## Detalhes técnicos
 
-**Arquivos novos:**
-- `src/components/ApprovalNotifyDialog.tsx` — modal reutilizável. Props: `open`, `onOpenChange`, `demandId`, `demandTitle`, `boardId`, `boardName`, `approvalType: 'internal' | 'external'`, `demandCreatedBy`.
+- Rota: `/settings` aceita `?tab=profile|security|preferences|notifications|team|account` para deep-link (e os links no Topbar/Sidebar global continuam funcionando).
+- O `ProfileEditDrawer.tsx` deixa de ser aberto a partir de `Profile.tsx`; o botão "Editar Perfil" em `/profile` passa a navegar para `/settings?tab=profile`. O arquivo do drawer permanece (não removido) para evitar quebra, mas sem consumidores — ou removido se não houver outros usos (verificar com `rg ProfileEditDrawer`).
+- Em `/profile`, o card de identidade do topo ganha um link discreto "Editar no painel de configurações".
+- Plano do usuário no card da sidebar: usa `useSubscription` (já existente) com fallback "Plano Gratuito".
+- "Excluir conta": chama `supabase.auth.admin`-equivalente via edge function existente OU exibe instrução; se não houver função, criar `delete-account` edge function (security-definer) que apaga `profiles` do usuário e chama `auth.admin.deleteUser` (service role). Confirmar via `tool_search` se já existe; senão, criar.
+- Nada na lógica de notificações, push, idiomas, tema, equipe, aprovação é alterado — apenas movido.
 
-**Arquivos modificados:**
-- `src/hooks/useNotificationPreferences.ts` — adicionar `approvalNotifyMode` e `approvalNotifyIncludeCreator` no `NotificationPreferences`, defaults e merge.
-- `src/pages/Settings.tsx` — nova subseção "Aprovações" dentro do card de Notificações.
-- `src/components/KanbanBoard.tsx` — após sucesso do `updateDemand.mutate` em `handleStatusChange` e `handleMobileStatusChange`, se `columnKey === "Aprovação Interna" || "Aprovação do Cliente"` e `previousStatusName !== columnKey`, aplicar lógica `ask | auto | none`.
-- `src/pages/DemandDetail.tsx` — no handler do Select de status, mesma lógica.
+## Não-objetivos
 
-**Detecção do tipo de aprovação:**
-- Se status name = "Aprovação Interna" → `internal`.
-- Se status name = "Aprovação do Cliente" → `external`.
-- Alternativamente usar `board_statuses.adjustment_type` (`'internal'` / `'external'`) para suportar status customizados que herdem a semântica.
+- Não mexer no schema do banco.
+- Não alterar a página pública `/profile` e `/user/:userId` além do botão de editar.
+- Não remover funcionalidades existentes.
 
-**Carregamento de membros elegíveis:**
-- Utilizar `useBoardMembers(boardId)` (já existente) e filtrar por `role` conforme o tipo de aprovação. Carregar só quando o modal estiver aberto.
+## Entregáveis
 
-**Sem mudanças de schema/DB:** tudo cabe na coluna `preference_value` (jsonb) já existente em `user_preferences`. Sem migração SQL necessária.
-
-## Fora do escopo
-
-- Não alteramos a lógica do `KanbanAdjustmentDialog` (ajustes/retorno) — esse modal continua igual.
-- Não criamos uma nova tabela de "notificação por demanda" — o disparo é pontual no momento da troca.
-- Não mudamos a lógica de quem vê o chat interno/externo.
+- Settings.tsx refatorado + 6 componentes de seção + sidebar + shell.
+- `/profile` ajustado (botão de editar aponta para `/settings?tab=profile`).
+- Traduções novas (apenas rótulos novos das seções).
+- (Se necessário) edge function `delete-account`.
