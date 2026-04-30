@@ -236,6 +236,12 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
   const [adjustmentDemandId, setAdjustmentDemandId] = useState<string | null>(null);
+  const [approvalDialogState, setApprovalDialogState] = useState<{
+    demandId: string;
+    demandTitle: string;
+    demandCreatedBy?: string;
+    approvalType: "internal" | "external";
+  } | null>(null);
   const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, string>>({});
   const [columnSearches, setColumnSearches] = useState<Record<string, string>>({});
   const [columnSorts, setColumnSorts] = useState<Record<string, KanbanSortOption>>({});
