@@ -556,6 +556,62 @@ export default function Settings() {
                 />
               </div>
             </div>
+
+            <Separator />
+
+            {/* Approval notifications */}
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-medium text-foreground">Aprovações</h4>
+                <p className="text-xs text-muted-foreground">
+                  Defina o que acontece quando uma demanda é movida para Aprovação Interna ou Aprovação do Cliente.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex-1">
+                  <Label htmlFor="approval-notify-mode" className="cursor-pointer">
+                    Ao mover demanda para aprovação
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Escolha o comportamento padrão para essas mudanças.
+                  </p>
+                </div>
+                <Select
+                  value={preferences.approvalNotifyMode}
+                  onValueChange={(value) =>
+                    updatePreferences({ ...preferences, approvalNotifyMode: value as NotificationPreferences["approvalNotifyMode"] })
+                  }
+                  disabled={isLoading}
+                >
+                  <SelectTrigger id="approval-notify-mode" className="w-full sm:w-[260px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ask">Sempre perguntar (recomendado)</SelectItem>
+                    <SelectItem value="all">Notificar todos os elegíveis</SelectItem>
+                    <SelectItem value="none">Não notificar ninguém</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="approval-include-creator" className="cursor-pointer">
+                    Incluir criador da demanda
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Notifica também quem criou a demanda quando ela vai para aprovação.
+                  </p>
+                </div>
+                <Switch
+                  id="approval-include-creator"
+                  checked={preferences.approvalNotifyIncludeCreator}
+                  onCheckedChange={(checked) => handleNotificationChange("approvalNotifyIncludeCreator", checked)}
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
 

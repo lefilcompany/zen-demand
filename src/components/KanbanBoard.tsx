@@ -31,6 +31,10 @@ import { extractPlainText } from "@/components/ui/rich-text-editor";
 import { KanbanTimeDisplay } from "@/components/KanbanTimeDisplay";
 import { KanbanParentTimeDisplay } from "@/components/KanbanParentTimeDisplay";
 import { KanbanAdjustmentDialog } from "@/components/KanbanAdjustmentDialog";
+import { ApprovalNotifyDialog } from "@/components/ApprovalNotifyDialog";
+import { useNotificationPreferences } from "@/hooks/useNotificationPreferences";
+import { notifyApproval, approvalKindFromStatusName } from "@/lib/approvalNotifications";
+import { useBoardMembers } from "@/hooks/useBoardMembers";
 import { toast } from "sonner";
 import { useAdjustmentCounts, AdjustmentInfo } from "@/hooks/useAdjustmentCount";
 import { supabase } from "@/integrations/supabase/client";
@@ -213,6 +217,8 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const isLargeDesktop = useIsLargeDesktop();
   const { isOffline } = useOfflineStatus();
   const queryClient = useQueryClient();
+  const { preferences: notifyPrefs } = useNotificationPreferences();
+  const { data: boardMembersForApproval } = useBoardMembers(boardId || null);
   
   // Track multiple active columns, using array to maintain order (FIFO)
   // Initialize based on user preference
@@ -236,6 +242,12 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
   const [adjustmentDemandId, setAdjustmentDemandId] = useState<string | null>(null);
+  const [approvalDialogState, setApprovalDialogState] = useState<{
+    demandId: string;
+    demandTitle: string;
+    demandCreatedBy?: string;
+    approvalType: "internal" | "external";
+  } | null>(null);
   const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, string>>({});
   const [columnSearches, setColumnSearches] = useState<Record<string, string>>({});
   const [columnSorts, setColumnSorts] = useState<Record<string, KanbanSortOption>>({});
@@ -567,6 +579,61 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
   }, [statuses, updateDemand, user, autoMoveParent]);
 
   const adjustmentDemand = demands.find(d => d.id === adjustmentDemandId);
+
+  // Handle approval transition: opens dialog or auto-notifies based on user preference.
+  // Called after a successful status update into "Aprovação Interna" or "Aprovação do Cliente".
+  const handleApprovalTransition = useCallback(
+    async (
+      demandId: string,
+      demandTitle: string,
+      demandCreatedBy: string | undefined,
+      newStatusName: string,
+    ) => {
+      const approvalType = approvalKindFromStatusName(newStatusName);
+      if (!approvalType || !user?.id) return;
+
+      const mode = notifyPrefs.approvalNotifyMode;
+      if (mode === "none") return;
+
+      if (mode === "ask") {
+        setApprovalDialogState({
+          demandId,
+          demandTitle,
+          demandCreatedBy,
+          approvalType,
+        });
+        return;
+      }
+
+      // mode === "all": auto-notify all eligible board members
+      const allowed = approvalType === "internal"
+        ? new Set(["admin", "moderator", "executor"])
+        : new Set(["requester"]);
+      const recipients = (boardMembersForApproval || [])
+        .filter((m) => allowed.has(m.role) && m.user_id !== user.id)
+        .map((m) => m.user_id);
+
+      if (notifyPrefs.approvalNotifyIncludeCreator && demandCreatedBy && demandCreatedBy !== user.id) {
+        recipients.push(demandCreatedBy);
+      }
+
+      if (recipients.length === 0) return;
+
+      try {
+        await notifyApproval({
+          demandId,
+          demandTitle,
+          boardName,
+          approvalType,
+          recipientIds: recipients,
+          senderId: user.id,
+        });
+      } catch (err) {
+        console.error("Erro ao enviar notificações automáticas de aprovação:", err);
+      }
+    },
+    [user?.id, notifyPrefs.approvalNotifyMode, notifyPrefs.approvalNotifyIncludeCreator, boardMembersForApproval, boardName],
+  );
 
   // Handle column toggle - no limit, users can open all columns
   const toggleColumn = useCallback((columnKey: string) => {
@@ -1005,6 +1072,9 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 boardName,
               }).catch(err => console.error("Erro ao enviar push de ajuste concluído:", err));
             }
+
+            // Approval transition handling: open dialog or auto-notify per user preference
+            await handleApprovalTransition(demand.id, demand.title, demand.created_by ?? undefined, columnKey);
           }
         },
         onError: (error: any) => {
@@ -1212,6 +1282,9 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 boardName,
               }).catch(err => console.error("Erro ao enviar push de ajuste concluído:", err));
             }
+
+            // Approval transition handling
+            await handleApprovalTransition(demand.id, demand.title, demand.created_by ?? undefined, newStatusKey);
           }
         },
         onError: (error: any) => {
@@ -2296,6 +2369,16 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           boardName={boardName}
           userRole={userRole}
         />
+        <ApprovalNotifyDialog
+          open={!!approvalDialogState}
+          onOpenChange={(o) => { if (!o) setApprovalDialogState(null); }}
+          demandId={approvalDialogState?.demandId ?? null}
+          demandTitle={approvalDialogState?.demandTitle}
+          demandCreatedBy={approvalDialogState?.demandCreatedBy}
+          boardId={boardId}
+          boardName={boardName}
+          approvalType={approvalDialogState?.approvalType ?? "internal"}
+        />
         {propagateDialogJsx}
       </div>
     );
@@ -2406,6 +2489,16 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           teamId={adjustmentDemand?.team_id}
           boardName={boardName}
           userRole={userRole}
+        />
+        <ApprovalNotifyDialog
+          open={!!approvalDialogState}
+          onOpenChange={(o) => { if (!o) setApprovalDialogState(null); }}
+          demandId={approvalDialogState?.demandId ?? null}
+          demandTitle={approvalDialogState?.demandTitle}
+          demandCreatedBy={approvalDialogState?.demandCreatedBy}
+          boardId={boardId}
+          boardName={boardName}
+          approvalType={approvalDialogState?.approvalType ?? "internal"}
         />
         {propagateDialogJsx}
       </div>
@@ -2522,6 +2615,16 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
           teamId={adjustmentDemand?.team_id}
           boardName={boardName}
           userRole={userRole}
+        />
+        <ApprovalNotifyDialog
+          open={!!approvalDialogState}
+          onOpenChange={(o) => { if (!o) setApprovalDialogState(null); }}
+          demandId={approvalDialogState?.demandId ?? null}
+          demandTitle={approvalDialogState?.demandTitle}
+          demandCreatedBy={approvalDialogState?.demandCreatedBy}
+          boardId={boardId}
+          boardName={boardName}
+          approvalType={approvalDialogState?.approvalType ?? "internal"}
         />
         {propagateDialogJsx}
       </div>
