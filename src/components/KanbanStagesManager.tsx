@@ -588,7 +588,13 @@ export function KanbanStagesManager({ boardId }: KanbanStagesManagerProps) {
           </Button>
         </DialogTrigger>
         <DialogPortal>
-          <DialogOverlay className="bg-black/60 backdrop-blur-sm pointer-events-auto" />
+          {/* Custom backdrop (modal={false} so we render our own to guarantee visibility) */}
+          <div
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-in fade-in-0"
+            onClick={() => {
+              if (!panelMounted) handleOpenChange(false);
+            }}
+          />
           {/* Custom layout: two visually separate cards side by side */}
           <div className={cn("fixed inset-0 z-50 flex items-center justify-center transition-[gap] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]", panelVisible ? "gap-3" : "gap-0")} style={{ pointerEvents: 'none' }}>
             {/* ===== MAIN CARD: Stage List ===== */}
