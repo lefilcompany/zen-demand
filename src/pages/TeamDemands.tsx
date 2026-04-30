@@ -348,7 +348,7 @@ export default function TeamDemands() {
       const dateB = new Date(b.due_date).getTime();
       return dateA - dateB;
     });
-  }, [demands, searchQuery, filters, hideDelivered, membersByPosition]);
+  }, [demands, searchQuery, filters, selectedStatuses, hideDelivered, membersByPosition]);
 
   const renderDemandList = (demandList: typeof filteredDemands) => {
     if (isLoading) {
