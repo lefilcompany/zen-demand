@@ -367,18 +367,20 @@ export function DemandChat({
     <div className="relative flex flex-col rounded-xl border border-border/60 bg-card shadow-sm min-h-[400px]" style={{ height: "min(700px, 70vh)" }}>
       {/* Channel tabs */}
       <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-border/40 bg-muted/20">
-        <button
-          onClick={() => setChannel("general")}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold tracking-wide uppercase transition-all",
-            channel === "general"
-              ? "bg-primary/10 text-primary shadow-sm"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
-          )}
-        >
-          <Hash className="h-3 w-3" />
-          Geral
-        </button>
+        {showGeneralTab && (
+          <button
+            onClick={() => setChannel("general")}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold tracking-wide uppercase transition-all",
+              channel === "general"
+                ? "bg-primary/10 text-primary shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+            )}
+          >
+            <Hash className="h-3 w-3" />
+            Geral
+          </button>
+        )}
         {canSeeInternal && (
           <button
             onClick={() => setChannel("internal")}
@@ -388,9 +390,11 @@ export function DemandChat({
                 ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 shadow-sm border border-blue-500/20"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
             )}
+            title={internalOnly ? "Esta demanda só tem participantes internos — apenas o canal interno está disponível" : undefined}
           >
             <Lock className="h-3 w-3" />
             Interno
+            {internalOnly && <span className="ml-1 text-[9px] opacity-70">(somente)</span>}
           </button>
         )}
         <div className="flex-1" />
