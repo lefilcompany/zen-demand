@@ -24,7 +24,7 @@ import { useUploadAttachment } from "@/hooks/useAttachments";
 import { RecurrenceConfig, RecurrenceData, defaultRecurrenceData } from "@/components/RecurrenceConfig";
 import { useCreateRecurringDemand } from "@/hooks/useRecurringDemands";
 import { useCreateDemandWithSubdemands, SubdemandInput, DependencyInput } from "@/hooks/useSubdemands";
-import { AlertTriangle, Ban, WifiOff, Package, CheckCircle2, Plus, ExternalLink, LayoutGrid, FolderOpen, Users, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { AlertTriangle, Ban, WifiOff, Package, CheckCircle2, Plus, ExternalLink, LayoutGrid, FolderOpen, Users, ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
@@ -68,6 +68,13 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const { data: allFolders } = useDemandFolders(selectedTeamId, user?.id);
 
   const [formBoardId, setFormBoardId] = useState<string>("");
+  const [boardSearch, setBoardSearch] = useState<string>("");
+  const filteredBoards = useMemo(() => {
+    if (!allBoards) return [];
+    const q = boardSearch.trim().toLowerCase();
+    if (!q) return allBoards;
+    return allBoards.filter((b) => b.name.toLowerCase().includes(q));
+  }, [allBoards, boardSearch]);
   const { data: boardStatuses } = useBoardStatuses(formBoardId || null);
 
   const statuses = useMemo(() => {
@@ -744,14 +751,38 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                           <SelectValue placeholder="Selecione o quadro" />
                         </SelectTrigger>
                         <SelectContent>
-                          {allBoards?.map((board) => (
-                            <SelectItem key={board.id} value={board.id}>
-                              <div className="flex items-center gap-2">
-                                <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
-                                {board.name}
+                          {(allBoards?.length ?? 0) > 5 && (
+                            <div
+                              className="sticky top-0 z-10 bg-popover p-2 border-b"
+                              onPointerDown={(e) => e.stopPropagation()}
+                              onKeyDown={(e) => e.stopPropagation()}
+                            >
+                              <div className="relative">
+                                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                                <Input
+                                  value={boardSearch}
+                                  onChange={(e) => setBoardSearch(e.target.value)}
+                                  placeholder="Buscar quadro..."
+                                  className="h-8 pl-7"
+                                  autoFocus
+                                />
                               </div>
-                            </SelectItem>
-                          ))}
+                            </div>
+                          )}
+                          {filteredBoards.length === 0 ? (
+                            <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                              Nenhum quadro encontrado
+                            </div>
+                          ) : (
+                            filteredBoards.map((board) => (
+                              <SelectItem key={board.id} value={board.id}>
+                                <div className="flex items-center gap-2">
+                                  <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
+                                  {board.name}
+                                </div>
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
