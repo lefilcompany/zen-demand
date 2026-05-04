@@ -245,12 +245,26 @@ export function AssigneeSelector({
       <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setSearch(""); setStep(1); } }}>
         <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
           <DialogHeader>
-            <DialogTitle>Definir Responsável e Acompanhantes</DialogTitle>
+            <DialogTitle>
+              {step === 1 ? "Passo 1: Definir Responsável" : "Passo 2: Adicionar Acompanhantes"}
+            </DialogTitle>
             <p className="text-xs text-muted-foreground mt-1">
-              Cada demanda tem <strong>1 responsável</strong> (quem deve executar) e pode ter
-              vários <strong>acompanhantes</strong> (que também podem executar e recebem atualizações).
+              {step === 1
+                ? <>Escolha <strong>1 responsável</strong> que deve executar a demanda.</>
+                : <>Selecione quem deve <strong>acompanhar</strong> a demanda (opcional). Acompanhantes também podem executar.</>}
             </p>
-          </DialogHeader>
+            {/* Stepper indicator */}
+            <div className="flex items-center gap-2 mt-3">
+              <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium", step === 1 ? "bg-primary text-primary-foreground" : effectivePrimary ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground")}>
+                {effectivePrimary && step !== 1 ? <Check className="h-3 w-3" /> : <Crown className="h-3 w-3" />}
+                Responsável
+              </div>
+              <div className="h-px w-4 bg-border" />
+              <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium", step === 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
+                <Eye className="h-3 w-3" />
+                Acompanhantes
+              </div>
+            </div>
 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
