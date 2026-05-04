@@ -80,6 +80,7 @@ export function SubdemandEditForm({ demand, onClose, onSuccess }: SubdemandEditF
   const [dueDate, setDueDate] = useState(toDateOnly(demand.due_date) || "");
   const [serviceId, setServiceId] = useState(demand.service_id || "");
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
+  const [primaryAssignee, setPrimaryAssignee] = useState<string | null>(null);
   const [dependsOnId, setDependsOnId] = useState<string>(NONE_VALUE);
   const [initialDependsOnId, setInitialDependsOnId] = useState<string>(NONE_VALUE);
 
