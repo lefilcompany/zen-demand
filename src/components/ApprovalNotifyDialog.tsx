@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Search, Bell, Save } from "lucide-react";
+import { Loader2, Search, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { useBoardMembers, useBoardRole } from "@/hooks/useBoardMembers";
@@ -168,16 +168,6 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
     });
   };
 
-  const handleSaveBoardDefaultOnly = async () => {
-    if (!canManageBoardDefault || !boardId) return;
-    try {
-      await persistBoardDefault();
-      toast.success("Configuração padrão do quadro salva");
-    } catch (e) {
-      console.error(e);
-      toast.error("Erro ao salvar configuração do quadro");
-    }
-  };
 
   const handleSkip = () => {
     onOpenChange(false);
@@ -388,31 +378,15 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
         </div>
 
         <DialogFooter className="flex-shrink-0 gap-2 sm:gap-2 flex-wrap">
-          {canManageBoardDefault && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handleSaveBoardDefaultOnly}
-              disabled={submitting || upsertBoardSetting.isPending}
-              className="mr-auto"
-            >
-              {upsertBoardSetting.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="mr-2 h-4 w-4" />
-              )}
-              Salvar padrão do quadro
-            </Button>
-          )}
           <Button variant="outline" onClick={handleSkip} disabled={submitting}>
             Pular
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={submitting || finalRecipients.length === 0}
+            disabled={submitting || upsertBoardSetting.isPending || finalRecipients.length === 0}
             className="bg-primary hover:bg-primary/90"
           >
-            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {(submitting || upsertBoardSetting.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Notificar ({finalRecipients.length})
           </Button>
         </DialogFooter>
