@@ -70,6 +70,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
   const [dueDate, setDueDate] = useState(toDateOnly(demand.due_date) || "");
   const [serviceId, setServiceId] = useState(demand.service_id || "");
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
+  const [primaryAssignee, setPrimaryAssignee] = useState<string | null>(null);
   const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
   const [matchedRecurringId, setMatchedRecurringId] = useState<string | null>(null);
 
