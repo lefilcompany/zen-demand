@@ -592,47 +592,16 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       const approvalType = approvalKindFromStatusName(newStatusName);
       if (!approvalType || !user?.id) return;
 
-      const mode = notifyPrefs.approvalNotifyMode;
-      if (mode === "none") return;
-
-      if (mode === "ask") {
-        setApprovalDialogState({
-          demandId,
-          demandTitle,
-          demandCreatedBy,
-          approvalType,
-        });
-        return;
-      }
-
-      // mode === "all": auto-notify all eligible board members
-      const allowed = approvalType === "internal"
-        ? new Set(["admin", "moderator", "executor"])
-        : new Set(["requester"]);
-      const recipients = (boardMembersForApproval || [])
-        .filter((m) => allowed.has(m.role) && m.user_id !== user.id)
-        .map((m) => m.user_id);
-
-      if (notifyPrefs.approvalNotifyIncludeCreator && demandCreatedBy && demandCreatedBy !== user.id) {
-        recipients.push(demandCreatedBy);
-      }
-
-      if (recipients.length === 0) return;
-
-      try {
-        await notifyApproval({
-          demandId,
-          demandTitle,
-          boardName,
-          approvalType,
-          recipientIds: recipients,
-          senderId: user.id,
-        });
-      } catch (err) {
-        console.error("Erro ao enviar notificações automáticas de aprovação:", err);
-      }
+      // Always open the dialog — it will pre-select the board's saved default
+      // (when present) or fall back to "all eligible".
+      setApprovalDialogState({
+        demandId,
+        demandTitle,
+        demandCreatedBy,
+        approvalType,
+      });
     },
-    [user?.id, notifyPrefs.approvalNotifyMode, notifyPrefs.approvalNotifyIncludeCreator, boardMembersForApproval, boardName],
+    [user?.id],
   );
 
   // Handle column toggle - no limit, users can open all columns
