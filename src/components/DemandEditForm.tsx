@@ -108,6 +108,8 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
   useEffect(() => {
     if (currentAssignees) {
       setSelectedAssignees(currentAssignees.map((a) => a.user_id));
+      const primary = currentAssignees.find((a) => a.is_primary)?.user_id ?? currentAssignees[0]?.user_id ?? null;
+      setPrimaryAssignee(primary);
     }
   }, [currentAssignees]);
 
