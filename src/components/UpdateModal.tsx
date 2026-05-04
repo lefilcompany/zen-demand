@@ -61,20 +61,20 @@ export function UpdateModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent
-        className="sm:max-w-md p-0 overflow-hidden border-border/60 rounded-2xl shadow-2xl"
+        className="sm:max-w-md p-0 overflow-hidden border-border/60 rounded-2xl shadow-2xl bg-gradient-to-br from-[#F28705]/15 via-background to-[#F28705]/5"
         onPointerDownOutside={(e) => e.preventDefault()}
       >
-        {/* Decorative header band */}
-        <div className="relative bg-gradient-to-br from-[#F28705]/10 via-background to-background pt-8 pb-6 px-6 border-b border-border/50">
-          <div className="absolute inset-x-0 -top-16 h-32 bg-[#F28705]/10 blur-3xl rounded-full pointer-events-none" aria-hidden="true" />
+        {/* Decorative glow */}
+        <div className="relative pt-8 pb-6 px-6">
+          <div className="absolute inset-x-0 -top-16 h-32 bg-[#F28705]/20 blur-3xl rounded-full pointer-events-none" aria-hidden="true" />
           <DialogHeader className="items-center text-center gap-5 relative">
             <img src={logo} alt="SoMA" className="h-16 w-auto mx-auto drop-shadow-sm" />
-            <div className="space-y-2">
+            <div className="space-y-2 flex flex-col items-center text-center w-full">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F28705]/10 border border-[#F28705]/20">
                 <Sparkles className="h-3.5 w-3.5 text-[#F28705]" />
                 <span className="text-xs font-medium text-[#F28705]">Nova versão disponível</span>
               </div>
-              <DialogTitle className="text-2xl font-bold tracking-tight">
+              <DialogTitle className="text-2xl font-bold tracking-tight text-center w-full">
                 Novidades no SoMA!
               </DialogTitle>
               <DialogDescription className="text-center text-sm leading-relaxed text-muted-foreground max-w-sm mx-auto">
@@ -85,7 +85,7 @@ export function UpdateModal() {
           </DialogHeader>
         </div>
 
-        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 p-4 bg-background">
+        <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 p-4 justify-center sm:justify-center border-t border-border/40">
           <Button
             variant="ghost"
             onClick={() => setOpen(false)}
