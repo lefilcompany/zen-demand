@@ -378,31 +378,15 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
         </div>
 
         <DialogFooter className="flex-shrink-0 gap-2 sm:gap-2 flex-wrap">
-          {canManageBoardDefault && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handleSaveBoardDefaultOnly}
-              disabled={submitting || upsertBoardSetting.isPending}
-              className="mr-auto"
-            >
-              {upsertBoardSetting.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="mr-2 h-4 w-4" />
-              )}
-              Salvar padrão do quadro
-            </Button>
-          )}
           <Button variant="outline" onClick={handleSkip} disabled={submitting}>
             Pular
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={submitting || finalRecipients.length === 0}
+            disabled={submitting || upsertBoardSetting.isPending || finalRecipients.length === 0}
             className="bg-primary hover:bg-primary/90"
           >
-            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {(submitting || upsertBoardSetting.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Notificar ({finalRecipients.length})
           </Button>
         </DialogFooter>
