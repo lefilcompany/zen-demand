@@ -68,6 +68,13 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const { data: allFolders } = useDemandFolders(selectedTeamId, user?.id);
 
   const [formBoardId, setFormBoardId] = useState<string>("");
+  const [boardSearch, setBoardSearch] = useState<string>("");
+  const filteredBoards = useMemo(() => {
+    if (!allBoards) return [];
+    const q = boardSearch.trim().toLowerCase();
+    if (!q) return allBoards;
+    return allBoards.filter((b) => b.name.toLowerCase().includes(q));
+  }, [allBoards, boardSearch]);
   const { data: boardStatuses } = useBoardStatuses(formBoardId || null);
 
   const statuses = useMemo(() => {
