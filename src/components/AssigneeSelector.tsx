@@ -3,6 +3,7 @@ import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useBoardMembers } from "@/hooks/useBoardMembers";
 import { Users, X, Check, ShieldCheck, Shield, Zap, User, Search, Crown, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { InfoTooltip } from "@/components/InfoTooltip";
 import {
   Dialog,
   DialogContent,
@@ -346,8 +347,9 @@ export function AssigneeSelector({
                 <section>
                   <div className="flex items-center gap-2 mb-2 px-1">
                     <Eye className="h-4 w-4 text-muted-foreground" />
-                    <h3 className="text-sm font-semibold">
-                      Acompanhantes <span className="text-muted-foreground font-normal">(opcional)</span>
+                    <h3 className="text-sm font-semibold flex items-center gap-1.5">
+                      Acompanhantes
+                      <InfoTooltip text="Acompanhantes recebem atualizações da demanda e podem executá-la, mas a execução é preferencialmente feita pelo responsável." />
                     </h3>
                   </div>
                   {followersAreaMembers.length === 0 ? (
