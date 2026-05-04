@@ -320,6 +320,8 @@ export function SubdemandEditForm({ demand, onClose, onSuccess }: SubdemandEditF
                     boardId={demand.board_id}
                     selectedUserIds={selectedAssignees}
                     onChange={setSelectedAssignees}
+                    primaryUserId={primaryAssignee}
+                    onPrimaryChange={setPrimaryAssignee}
                     hideIcon
                   />
                 </div>
