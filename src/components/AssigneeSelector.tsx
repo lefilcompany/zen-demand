@@ -288,7 +288,6 @@ export function AssigneeSelector({
             ) : (
               <>
                 {step === 1 && (
-                {/* SECTION 1: Responsável (1) */}
                 <section>
                   <div className="flex items-center gap-2 mb-2 px-1">
                     <Crown className="h-4 w-4 text-primary" />
