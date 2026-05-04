@@ -512,18 +512,21 @@ export type Database = {
           assigned_at: string | null
           demand_id: string
           id: string
+          is_primary: boolean
           user_id: string
         }
         Insert: {
           assigned_at?: string | null
           demand_id: string
           id?: string
+          is_primary?: boolean
           user_id: string
         }
         Update: {
           assigned_at?: string | null
           demand_id?: string
           id?: string
+          is_primary?: boolean
           user_id?: string
         }
         Relationships: [
