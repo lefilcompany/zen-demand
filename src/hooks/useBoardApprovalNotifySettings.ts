@@ -80,7 +80,7 @@ export function useUpsertBoardApprovalNotifySetting() {
         const { error } = await supabase
           .from("board_approval_notify_settings" as any)
           .update(payload)
-          .eq("id", (existing as any).id);
+          .eq("id", existing.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
