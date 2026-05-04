@@ -71,6 +71,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
 
   const [formBoardId, setFormBoardId] = useState<string>("");
   const [boardSearch, setBoardSearch] = useState<string>("");
+  const [boardPopoverOpen, setBoardPopoverOpen] = useState(false);
   const filteredBoards = useMemo(() => {
     if (!allBoards) return [];
     const q = boardSearch.trim().toLowerCase();
