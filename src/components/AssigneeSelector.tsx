@@ -401,6 +401,7 @@ export function AssigneeSelector({
                     </div>
                   )}
                 </section>
+                )}
               </>
             )}
           </div>
