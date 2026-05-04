@@ -154,8 +154,10 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     }
   }, [isOpen]);
 
+  // Sync form board with currently selected board whenever the modal opens
+  // or when the user changes the active board while the modal is open.
   useEffect(() => {
-    if (isOpen && selectedBoardId && !formBoardId) {
+    if (isOpen && selectedBoardId) {
       setFormBoardId(selectedBoardId);
     }
   }, [isOpen, selectedBoardId]);
