@@ -242,7 +242,7 @@ export function AssigneeSelector({
       </button>
 
       {/* Dialog */}
-      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setSearch(""); }}>
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setSearch(""); setStep(1); } }}>
         <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>Definir Responsável e Acompanhantes</DialogTitle>
