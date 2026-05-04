@@ -87,20 +87,20 @@ export function UpdateModal() {
 
         <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 p-4 justify-center sm:justify-center border-t border-border/40">
           <Button
-            variant="ghost"
-            onClick={() => setOpen(false)}
-            disabled={updating}
-            className="sm:flex-1 h-11 rounded-xl"
-          >
-            Depois
-          </Button>
-          <Button
             onClick={handleUpdate}
             disabled={updating}
             className="sm:flex-1 h-11 rounded-xl bg-[#F28705] hover:bg-[#D97706] text-white shadow-lg shadow-[#F28705]/25 transition-all"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${updating ? "animate-spin" : ""}`} />
             {updating ? "Atualizando..." : "Atualizar agora"}
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => setOpen(false)}
+            disabled={updating}
+            className="sm:flex-1 h-11 rounded-xl"
+          >
+            Depois
           </Button>
         </DialogFooter>
       </DialogContent>
