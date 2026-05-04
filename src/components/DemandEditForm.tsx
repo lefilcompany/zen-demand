@@ -341,6 +341,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
       await setAssignees.mutateAsync({
         demandId: demand.id,
         userIds: selectedAssignees,
+        primaryUserId: primaryAssignee,
       });
 
       // Add new subdemands
