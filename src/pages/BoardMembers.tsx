@@ -34,6 +34,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Users, Trash2, Shield, UserCog, User, Briefcase, Loader2, LayoutGrid } from "lucide-react";
 import { AddBoardMemberDialog } from "@/components/AddBoardMemberDialog";
+import { BoardApprovalNotifySettingsCard } from "@/components/board/BoardApprovalNotifySettingsCard";
 import { SEOHead } from "@/components/SEOHead";
 
 const roleLabels: Record<string, string> = {
