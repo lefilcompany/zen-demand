@@ -61,6 +61,7 @@ export function CreateDemandQuickDialog({
   const [serviceId, setServiceId] = useState<string>("");
   const [statusId, setStatusId] = useState<string>("");
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
+  const [primaryAssigneeId, setPrimaryAssigneeId] = useState<string | null>(null);
   const [dueDate, setDueDate] = useState<string>("");
   const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
 
