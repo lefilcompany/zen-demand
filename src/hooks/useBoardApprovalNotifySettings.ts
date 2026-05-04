@@ -60,12 +60,12 @@ export function useUpsertBoardApprovalNotifySetting() {
     mutationFn: async (input: UpsertBoardApprovalNotifyInput) => {
       if (!user?.id) throw new Error("Não autenticado");
 
-      const { data: existing } = await supabase
+      const { data: existing } = (await supabase
         .from("board_approval_notify_settings" as any)
         .select("id")
         .eq("board_id", input.boardId)
         .eq("approval_type", input.approvalType)
-        .maybeSingle();
+        .maybeSingle()) as { data: { id: string } | null };
 
       const payload = {
         board_id: input.boardId,
