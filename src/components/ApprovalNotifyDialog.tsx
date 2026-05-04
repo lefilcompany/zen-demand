@@ -312,7 +312,12 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
             </div>
 
             <DialogFooter className="flex-shrink-0 gap-2 sm:gap-2 flex-wrap">
-              <Button variant="outline" onClick={handleSkip} disabled={submitting}>
+              <Button
+                variant="outline"
+                onClick={handleSkip}
+                disabled={submitting}
+                className="hover:bg-white hover:text-primary hover:border-primary"
+              >
                 Pular
               </Button>
               <Button variant="outline" onClick={() => setView("edit")} disabled={submitting}>
