@@ -763,45 +763,44 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" align="start">
-                          <Command shouldFilter={false}>
-                            <div className="flex items-center border-b px-2">
-                              <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <div className="p-2 border-b">
+                            <div className="relative">
+                              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
                               <Input
                                 value={boardSearch}
                                 onChange={(e) => setBoardSearch(e.target.value)}
                                 placeholder="Buscar quadro..."
-                                className="h-9 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+                                className="h-8 pl-7 focus-visible:ring-0 focus-visible:ring-offset-0"
                                 autoFocus
                               />
                             </div>
-                            <CommandList className="max-h-60">
-                              {filteredBoards.length === 0 ? (
-                                <CommandEmpty>Nenhum quadro encontrado</CommandEmpty>
-                              ) : (
-                                <CommandGroup>
-                                  {filteredBoards.map((board) => (
-                                    <CommandItem
-                                      key={board.id}
-                                      value={board.id}
-                                      onSelect={() => {
-                                        setFormBoardId(board.id);
-                                        setServiceId("");
-                                        setAssigneeIds([]);
-                                        setStatusId("");
-                                        setBoardPopoverOpen(false);
-                                        setBoardSearch("");
-                                      }}
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
-                                        {board.name}
-                                      </div>
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              )}
-                            </CommandList>
-                          </Command>
+                          </div>
+                          <div className="max-h-60 overflow-y-auto p-1">
+                            {filteredBoards.length === 0 ? (
+                              <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                                Nenhum quadro encontrado
+                              </div>
+                            ) : (
+                              filteredBoards.map((board) => (
+                                <button
+                                  key={board.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormBoardId(board.id);
+                                    setServiceId("");
+                                    setAssigneeIds([]);
+                                    setStatusId("");
+                                    setBoardPopoverOpen(false);
+                                    setBoardSearch("");
+                                  }}
+                                  className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-muted transition-colors text-left"
+                                >
+                                  <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                  <span className="truncate">{board.name}</span>
+                                </button>
+                              ))
+                            )}
+                          </div>
                         </PopoverContent>
                       </Popover>
                     </div>
