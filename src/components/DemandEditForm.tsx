@@ -539,6 +539,8 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
                       boardId={demand.board_id}
                       selectedUserIds={selectedAssignees}
                       onChange={setSelectedAssignees}
+                      primaryUserId={primaryAssignee}
+                      onPrimaryChange={setPrimaryAssignee}
                       hideIcon
                     />
                   </div>
