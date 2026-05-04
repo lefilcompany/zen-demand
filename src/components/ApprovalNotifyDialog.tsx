@@ -115,6 +115,7 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
       setSearch("");
       setSubmitting(false);
       setHydrated(false);
+      setView("confirm");
     }
   }, [open]);
 
@@ -125,10 +126,12 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
       setMode(boardSetting.mode);
       setSelected(new Set(boardSetting.recipient_ids ?? []));
       setIncludeCreator(boardSetting.include_creator);
+      setView("confirm");
     } else {
       setMode("all");
       setSelected(new Set());
       setIncludeCreator(preferences.approvalNotifyIncludeCreator);
+      setView("edit");
     }
     setHydrated(true);
   }, [open, hydrated, settingLoading, boardSetting, preferences.approvalNotifyIncludeCreator]);
