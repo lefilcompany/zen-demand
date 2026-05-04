@@ -441,12 +441,14 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
           const wasCreatedOffline = (demand as any)?._isOffline;
 
           if (!wasCreatedOffline && assigneeIds.length > 0 && demand) {
+            const primary = primaryAssigneeId && assigneeIds.includes(primaryAssigneeId) ? primaryAssigneeId : assigneeIds[0];
             const { error: assignError } = await supabase
               .from("demand_assignees")
               .insert(
                 assigneeIds.map((userId) => ({
                   demand_id: demand.id,
                   user_id: userId,
+                  is_primary: userId === primary,
                 }))
               );
             if (assignError) {
