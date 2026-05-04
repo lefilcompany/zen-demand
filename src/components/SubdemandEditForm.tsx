@@ -243,6 +243,7 @@ export function SubdemandEditForm({ demand, onClose, onSuccess }: SubdemandEditF
       await setAssignees.mutateAsync({
         demandId: demand.id,
         userIds: selectedAssignees,
+        primaryUserId: primaryAssignee,
       });
 
       if (dependsOnId !== initialDependsOnId) {
