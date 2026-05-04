@@ -859,6 +859,8 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                             boardId={activeBoardId}
                             selectedUserIds={assigneeIds}
                             onChange={setAssigneeIds}
+                            primaryUserId={primaryAssigneeId}
+                            onPrimaryChange={setPrimaryAssigneeId}
                             hideIcon
                           />
                         </div>
