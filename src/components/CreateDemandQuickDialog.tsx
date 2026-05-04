@@ -149,9 +149,10 @@ export function CreateDemandQuickDialog({
 
       // Assign responsibles
       if (result?.id && assigneeIds.length > 0) {
+        const primary = primaryAssigneeId && assigneeIds.includes(primaryAssigneeId) ? primaryAssigneeId : assigneeIds[0];
         await supabase
           .from("demand_assignees")
-          .insert(assigneeIds.map((userId) => ({ demand_id: result.id, user_id: userId })));
+          .insert(assigneeIds.map((userId) => ({ demand_id: result.id, user_id: userId, is_primary: userId === primary })));
       }
 
       // Clear draft on success
