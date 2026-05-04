@@ -70,6 +70,7 @@ export function AssigneeSelector({
 }: AssigneeSelectorProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [step, setStep] = useState<1 | 2>(1);
 
   const { data: teamMembers, isLoading: loadingTeam } = useTeamMembers(teamId);
   const { data: boardMembers, isLoading: loadingBoard } = useBoardMembers(
@@ -241,14 +242,29 @@ export function AssigneeSelector({
       </button>
 
       {/* Dialog */}
-      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setSearch(""); }}>
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setSearch(""); setStep(1); } }}>
         <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
           <DialogHeader>
-            <DialogTitle>Definir Responsável e Acompanhantes</DialogTitle>
+            <DialogTitle>
+              {step === 1 ? "Passo 1: Definir Responsável" : "Passo 2: Adicionar Acompanhantes"}
+            </DialogTitle>
             <p className="text-xs text-muted-foreground mt-1">
-              Cada demanda tem <strong>1 responsável</strong> (quem deve executar) e pode ter
-              vários <strong>acompanhantes</strong> (que também podem executar e recebem atualizações).
+              {step === 1
+                ? <>Escolha <strong>1 responsável</strong> que deve executar a demanda.</>
+                : <>Selecione quem deve <strong>acompanhar</strong> a demanda (opcional). Acompanhantes também podem executar.</>}
             </p>
+            {/* Stepper indicator */}
+            <div className="flex items-center gap-2 mt-3">
+              <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium", step === 1 ? "bg-primary text-primary-foreground" : effectivePrimary ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground")}>
+                {effectivePrimary && step !== 1 ? <Check className="h-3 w-3" /> : <Crown className="h-3 w-3" />}
+                Responsável
+              </div>
+              <div className="h-px w-4 bg-border" />
+              <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium", step === 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
+                <Eye className="h-3 w-3" />
+                Acompanhantes
+              </div>
+            </div>
           </DialogHeader>
 
           <div className="relative">
@@ -271,7 +287,7 @@ export function AssigneeSelector({
               </p>
             ) : (
               <>
-                {/* SECTION 1: Responsável (1) */}
+                {step === 1 && (
                 <section>
                   <div className="flex items-center gap-2 mb-2 px-1">
                     <Crown className="h-4 w-4 text-primary" />
@@ -324,8 +340,9 @@ export function AssigneeSelector({
                     })}
                   </div>
                 </section>
+                )}
 
-                {/* SECTION 2: Acompanhantes (N) */}
+                {step === 2 && (
                 <section>
                   <div className="flex items-center gap-2 mb-2 px-1">
                     <Eye className="h-4 w-4 text-muted-foreground" />
@@ -384,6 +401,7 @@ export function AssigneeSelector({
                     </div>
                   )}
                 </section>
+                )}
               </>
             )}
           </div>
@@ -394,19 +412,39 @@ export function AssigneeSelector({
                 type="button"
                 variant="outline"
                 onClick={() => { onChange([]); setPrimary(null); }}
-                className="flex-1 sm:flex-none hover:bg-white hover:text-primary hover:border-primary"
+                className="hover:bg-white hover:text-primary hover:border-primary"
               >
                 <X className="h-4 w-4 mr-2" />
                 Limpar
               </Button>
             )}
-            <Button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="flex-1 sm:flex-none"
-            >
-              Confirmar
-            </Button>
+            <div className="flex-1" />
+            {step === 2 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStep(1)}
+                className="hover:bg-white hover:text-primary hover:border-primary"
+              >
+                Voltar
+              </Button>
+            )}
+            {step === 1 ? (
+              <Button
+                type="button"
+                disabled={!effectivePrimary}
+                onClick={() => setStep(2)}
+              >
+                Próximo
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={() => setOpen(false)}
+              >
+                Confirmar
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
