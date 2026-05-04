@@ -354,9 +354,10 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
             const parentId = result.parent_id;
 
             if (assigneeIds.length > 0 && parentId) {
+              const primary = primaryAssigneeId && assigneeIds.includes(primaryAssigneeId) ? primaryAssigneeId : assigneeIds[0];
               await supabase
                 .from("demand_assignees")
-                .insert(assigneeIds.map((userId) => ({ demand_id: parentId, user_id: userId })));
+                .insert(assigneeIds.map((userId) => ({ demand_id: parentId, user_id: userId, is_primary: userId === primary })));
             }
 
             if (result.subdemand_ids && result.subdemand_ids.length > 0) {
