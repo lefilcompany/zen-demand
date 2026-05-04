@@ -361,14 +361,16 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
             }
 
             if (result.subdemand_ids && result.subdemand_ids.length > 0) {
-              const subAssigneeInserts: { demand_id: string; user_id: string }[] = [];
+              const subAssigneeInserts: { demand_id: string; user_id: string; is_primary: boolean }[] = [];
               sanitizedSubdemands.forEach((sub, idx) => {
                 const subId = result.subdemand_ids[idx];
                 if (subId && sub.assigneeIds && sub.assigneeIds.length > 0) {
-                  // Dedupe per subdemand
                   const uniqueIds = Array.from(new Set(sub.assigneeIds));
-                  uniqueIds.forEach(userId => {
-                    subAssigneeInserts.push({ demand_id: subId, user_id: userId });
+                  const subPrimary = (sub as any).primaryAssigneeId && uniqueIds.includes((sub as any).primaryAssigneeId)
+                    ? (sub as any).primaryAssigneeId
+                    : uniqueIds[0];
+                  uniqueIds.forEach((userId) => {
+                    subAssigneeInserts.push({ demand_id: subId, user_id: userId, is_primary: userId === subPrimary });
                   });
                 }
               });
