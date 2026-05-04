@@ -269,6 +269,8 @@ export default function BoardMembers() {
           </div>
         </CardContent>
       </Card>
+
+      {canManage && boardId && <BoardApprovalNotifySettingsCard boardId={boardId} />}
     </div>
   );
 }
