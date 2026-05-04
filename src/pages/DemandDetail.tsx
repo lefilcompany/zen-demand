@@ -645,6 +645,8 @@ export default function DemandDetail() {
   };
   const handleEditAssignees = () => {
     setSelectedAssignees(assignees?.map(a => a.user_id) || []);
+    const primary = assignees?.find((a) => a.is_primary)?.user_id ?? assignees?.[0]?.user_id ?? null;
+    setPrimaryAssignee(primary);
     setEditingAssignees(true);
   };
   const handleSaveAssignees = () => {
@@ -657,7 +659,8 @@ export default function DemandDetail() {
     }
     setAssignees.mutate({
       demandId: id,
-      userIds: selectedAssignees
+      userIds: selectedAssignees,
+      primaryUserId: primaryAssignee,
     }, {
       onSuccess: () => {
         toast.success("Responsáveis atualizados!");
