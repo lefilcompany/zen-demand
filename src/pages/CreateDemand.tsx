@@ -751,14 +751,38 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                           <SelectValue placeholder="Selecione o quadro" />
                         </SelectTrigger>
                         <SelectContent>
-                          {allBoards?.map((board) => (
-                            <SelectItem key={board.id} value={board.id}>
-                              <div className="flex items-center gap-2">
-                                <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
-                                {board.name}
+                          {(allBoards?.length ?? 0) > 5 && (
+                            <div
+                              className="sticky top-0 z-10 bg-popover p-2 border-b"
+                              onPointerDown={(e) => e.stopPropagation()}
+                              onKeyDown={(e) => e.stopPropagation()}
+                            >
+                              <div className="relative">
+                                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                                <Input
+                                  value={boardSearch}
+                                  onChange={(e) => setBoardSearch(e.target.value)}
+                                  placeholder="Buscar quadro..."
+                                  className="h-8 pl-7"
+                                  autoFocus
+                                />
                               </div>
-                            </SelectItem>
-                          ))}
+                            </div>
+                          )}
+                          {filteredBoards.length === 0 ? (
+                            <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                              Nenhum quadro encontrado
+                            </div>
+                          ) : (
+                            filteredBoards.map((board) => (
+                              <SelectItem key={board.id} value={board.id}>
+                                <div className="flex items-center gap-2">
+                                  <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
+                                  {board.name}
+                                </div>
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
