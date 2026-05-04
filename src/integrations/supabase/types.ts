@@ -106,6 +106,50 @@ export type Database = {
           },
         ]
       }
+      board_approval_notify_settings: {
+        Row: {
+          approval_type: string
+          board_id: string
+          created_at: string
+          id: string
+          include_creator: boolean
+          mode: string
+          recipient_ids: string[]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          approval_type: string
+          board_id: string
+          created_at?: string
+          id?: string
+          include_creator?: boolean
+          mode?: string
+          recipient_ids?: string[]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          approval_type?: string
+          board_id?: string
+          created_at?: string
+          id?: string
+          include_creator?: boolean
+          mode?: string
+          recipient_ids?: string[]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_approval_notify_settings_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       board_members: {
         Row: {
           added_by: string | null
