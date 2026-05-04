@@ -98,7 +98,7 @@ export function UpdateModal() {
             variant="ghost"
             onClick={() => setOpen(false)}
             disabled={updating}
-            className="sm:flex-1 h-11 rounded-xl"
+            className="sm:flex-1 h-11 rounded-xl border border-transparent hover:bg-white hover:text-[#F28705] hover:border-[#F28705]"
           >
             Depois
           </Button>
