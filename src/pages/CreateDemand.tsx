@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { useCreateDemand } from "@/hooks/useDemands";
 import { useBoardStatuses } from "@/hooks/useBoardStatuses";
 import { useSelectedTeam } from "@/contexts/TeamContext";
@@ -69,6 +71,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
 
   const [formBoardId, setFormBoardId] = useState<string>("");
   const [boardSearch, setBoardSearch] = useState<string>("");
+  const [boardPopoverOpen, setBoardPopoverOpen] = useState(false);
   const filteredBoards = useMemo(() => {
     if (!allBoards) return [];
     const q = boardSearch.trim().toLowerCase();
@@ -741,50 +744,66 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                         <LayoutGrid className="h-4 w-4" />
                         Quadro *
                       </Label>
-                      <Select value={formBoardId} onValueChange={(val) => {
-                        setFormBoardId(val);
-                        setServiceId("");
-                        setAssigneeIds([]);
-                        setStatusId("");
-                      }}>
-                        <SelectTrigger className="h-8">
-                          <SelectValue placeholder="Selecione o quadro" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(allBoards?.length ?? 0) > 5 && (
-                            <div
-                              className="sticky top-0 z-10 bg-popover p-2 border-b"
-                              onPointerDown={(e) => e.stopPropagation()}
-                              onKeyDown={(e) => e.stopPropagation()}
-                            >
-                              <div className="relative">
-                                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                                <Input
-                                  value={boardSearch}
-                                  onChange={(e) => setBoardSearch(e.target.value)}
-                                  placeholder="Buscar quadro..."
-                                  className="h-8 pl-7"
-                                  autoFocus
-                                />
-                              </div>
+                      <Popover open={boardPopoverOpen} onOpenChange={(o) => { setBoardPopoverOpen(o); if (!o) setBoardSearch(""); }}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={boardPopoverOpen}
+                            className="h-8 w-full justify-between font-normal"
+                          >
+                            <span className="flex items-center gap-2 truncate">
+                              <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              <span className="truncate">
+                                {allBoards?.find((b) => b.id === formBoardId)?.name || "Selecione o quadro"}
+                              </span>
+                            </span>
+                            <ChevronRight className="h-3.5 w-3.5 opacity-50 rotate-90" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" align="start">
+                          <Command shouldFilter={false}>
+                            <div className="flex items-center border-b px-2">
+                              <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              <Input
+                                value={boardSearch}
+                                onChange={(e) => setBoardSearch(e.target.value)}
+                                placeholder="Buscar quadro..."
+                                className="h-9 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+                                autoFocus
+                              />
                             </div>
-                          )}
-                          {filteredBoards.length === 0 ? (
-                            <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                              Nenhum quadro encontrado
-                            </div>
-                          ) : (
-                            filteredBoards.map((board) => (
-                              <SelectItem key={board.id} value={board.id}>
-                                <div className="flex items-center gap-2">
-                                  <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
-                                  {board.name}
-                                </div>
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
+                            <CommandList className="max-h-60">
+                              {filteredBoards.length === 0 ? (
+                                <CommandEmpty>Nenhum quadro encontrado</CommandEmpty>
+                              ) : (
+                                <CommandGroup>
+                                  {filteredBoards.map((board) => (
+                                    <CommandItem
+                                      key={board.id}
+                                      value={board.id}
+                                      onSelect={() => {
+                                        setFormBoardId(board.id);
+                                        setServiceId("");
+                                        setAssigneeIds([]);
+                                        setStatusId("");
+                                        setBoardPopoverOpen(false);
+                                        setBoardSearch("");
+                                      }}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
+                                        {board.name}
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              )}
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
 
                     {/* Title */}
