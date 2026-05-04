@@ -544,38 +544,15 @@ export default function DemandDetail() {
         if (isEnteringTimerStatus && !isTimerRunning) {
           startTimer();
         }
-        // Approval transition handling
+        // Approval transition handling — always open dialog (pre-selected with board defaults)
         const approvalType = approvalKindFromStatusName(status.name);
         if (approvalType && user?.id && demand) {
-          const mode = notifyPrefs.approvalNotifyMode;
-          if (mode === "ask") {
-            setApprovalDialogState({
-              demandId: demand.id,
-              demandTitle: demand.title,
-              demandCreatedBy: demand.created_by ?? undefined,
-              approvalType,
-            });
-          } else if (mode === "all") {
-            const allowed = approvalType === "internal"
-              ? new Set(["admin", "moderator", "executor"])
-              : new Set(["requester"]);
-            const recipients = (boardMembersForApproval || [])
-              .filter((m) => allowed.has(m.role) && m.user_id !== user.id)
-              .map((m) => m.user_id);
-            if (notifyPrefs.approvalNotifyIncludeCreator && demand.created_by && demand.created_by !== user.id) {
-              recipients.push(demand.created_by);
-            }
-            if (recipients.length > 0) {
-              notifyApproval({
-                demandId: demand.id,
-                demandTitle: demand.title,
-                boardName: currentBoard?.name,
-                approvalType,
-                recipientIds: recipients,
-                senderId: user.id,
-              }).catch((err) => console.error("Erro ao notificar aprovação:", err));
-            }
-          }
+          setApprovalDialogState({
+            demandId: demand.id,
+            demandTitle: demand.title,
+            demandCreatedBy: demand.created_by ?? undefined,
+            approvalType,
+          });
         }
       },
     });

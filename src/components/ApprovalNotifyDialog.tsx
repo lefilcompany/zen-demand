@@ -15,11 +15,15 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Search, Bell } from "lucide-react";
+import { Loader2, Search, Bell, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
-import { useBoardMembers } from "@/hooks/useBoardMembers";
+import { useBoardMembers, useBoardRole } from "@/hooks/useBoardMembers";
 import { useNotificationPreferences } from "@/hooks/useNotificationPreferences";
+import {
+  useBoardApprovalNotifySetting,
+  useUpsertBoardApprovalNotifySetting,
+} from "@/hooks/useBoardApprovalNotifySettings";
 import { notifyApproval, type ApprovalKind } from "@/lib/approvalNotifications";
 
 interface ApprovalNotifyDialogProps {
@@ -38,31 +42,21 @@ const EXTERNAL_ROLES = new Set(["requester"]);
 
 const roleLabel = (role: string) => {
   switch (role) {
-    case "admin":
-      return "Owner";
-    case "moderator":
-      return "Coordenador";
-    case "executor":
-      return "Agente";
-    case "requester":
-      return "Solicitante";
-    default:
-      return role;
+    case "admin": return "Owner";
+    case "moderator": return "Coordenador";
+    case "executor": return "Agente";
+    case "requester": return "Solicitante";
+    default: return role;
   }
 };
 
 const roleBadgeClass = (role: string) => {
   switch (role) {
-    case "admin":
-      return "bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/40";
-    case "moderator":
-      return "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/40";
-    case "executor":
-      return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40";
-    case "requester":
-      return "bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/40";
-    default:
-      return "";
+    case "admin": return "bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/40";
+    case "moderator": return "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/40";
+    case "executor": return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40";
+    case "requester": return "bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/40";
+    default: return "";
   }
 };
 
@@ -78,14 +72,21 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
 }: ApprovalNotifyDialogProps) {
   const { user } = useAuth();
   const { data: boardMembers, isLoading: membersLoading } = useBoardMembers(open ? boardId ?? null : null);
-  const { preferences, updatePreferencesAsync } = useNotificationPreferences();
+  const { data: myBoardRole } = useBoardRole(open ? boardId ?? null : null);
+  const { preferences } = useNotificationPreferences();
+  const { setting: boardSetting, isLoading: settingLoading } =
+    useBoardApprovalNotifySetting(open ? boardId ?? null : null, approvalType);
+  const upsertBoardSetting = useUpsertBoardApprovalNotifySetting();
+
+  const canManageBoardDefault = myBoardRole === "admin" || myBoardRole === "moderator";
 
   const [mode, setMode] = useState<"all" | "manual">("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [includeCreator, setIncludeCreator] = useState(true);
-  const [saveAsDefault, setSaveAsDefault] = useState(false);
+  const [saveAsBoardDefault, setSaveAsBoardDefault] = useState(false);
   const [search, setSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
   const allowedRoles = approvalType === "internal" ? INTERNAL_ROLES : EXTERNAL_ROLES;
 
@@ -106,17 +107,30 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
     });
   }, [eligibleMembers, search]);
 
-  // Reset state when opening
+  // Reset state when (re)opening
   useEffect(() => {
     if (open) {
+      setSaveAsBoardDefault(false);
+      setSearch("");
+      setSubmitting(false);
+      setHydrated(false);
+    }
+  }, [open]);
+
+  // Hydrate from board setting (or fall back to default) once data arrives
+  useEffect(() => {
+    if (!open || hydrated || settingLoading) return;
+    if (boardSetting) {
+      setMode(boardSetting.mode);
+      setSelected(new Set(boardSetting.recipient_ids ?? []));
+      setIncludeCreator(boardSetting.include_creator);
+    } else {
       setMode("all");
       setSelected(new Set());
       setIncludeCreator(preferences.approvalNotifyIncludeCreator);
-      setSaveAsDefault(false);
-      setSearch("");
-      setSubmitting(false);
     }
-  }, [open, preferences.approvalNotifyIncludeCreator]);
+    setHydrated(true);
+  }, [open, hydrated, settingLoading, boardSetting, preferences.approvalNotifyIncludeCreator]);
 
   const toggleMember = (userId: string) => {
     setSelected((prev) => {
@@ -143,26 +157,36 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
   const approvalLabel =
     approvalType === "internal" ? "Aprovação Interna" : "Aprovação do Cliente";
 
-  const handleSkip = async () => {
-    if (saveAsDefault) {
-      try {
-        await updatePreferencesAsync({
-          ...preferences,
-          approvalNotifyMode: "none",
-          approvalNotifyIncludeCreator: includeCreator,
-        });
-        toast.success("Preferência salva: não notificar em aprovações");
-      } catch (e) {
-        console.error(e);
-      }
+  const persistBoardDefault = async () => {
+    if (!boardId) return;
+    await upsertBoardSetting.mutateAsync({
+      boardId,
+      approvalType,
+      recipientIds: mode === "manual" ? Array.from(selected) : [],
+      includeCreator,
+      mode,
+    });
+  };
+
+  const handleSaveBoardDefaultOnly = async () => {
+    if (!canManageBoardDefault || !boardId) return;
+    try {
+      await persistBoardDefault();
+      toast.success("Configuração padrão do quadro salva");
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao salvar configuração do quadro");
     }
+  };
+
+  const handleSkip = () => {
     onOpenChange(false);
   };
 
   const handleSubmit = async () => {
     if (!demandId || !user?.id) return;
     if (finalRecipients.length === 0) {
-      toast.error("Selecione ao menos um destinatário ou marque 'Pular'");
+      toast.error("Selecione ao menos um destinatário ou clique 'Pular'");
       return;
     }
     setSubmitting(true);
@@ -176,13 +200,9 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
         senderId: user.id,
       });
 
-      if (saveAsDefault) {
+      if (saveAsBoardDefault && canManageBoardDefault) {
         try {
-          await updatePreferencesAsync({
-            ...preferences,
-            approvalNotifyMode: mode === "all" ? "all" : "ask",
-            approvalNotifyIncludeCreator: includeCreator,
-          });
+          await persistBoardDefault();
         } catch (e) {
           console.error(e);
         }
@@ -222,7 +242,7 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
             </span>{" "}
             foi movida para{" "}
             <span className="font-medium text-foreground">{approvalLabel}</span>.
-            Selecione quem deve ser avisado.
+            {boardSetting ? " Lista padrão do quadro pré-selecionada." : " Selecione quem deve ser avisado."}
           </DialogDescription>
         </DialogHeader>
 
@@ -346,22 +366,44 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
             </div>
           )}
 
-          <div className="flex items-center gap-2 rounded-md border border-dashed p-3 bg-muted/20">
-            <Checkbox
-              id="save-default"
-              checked={saveAsDefault}
-              onCheckedChange={(v) => setSaveAsDefault(!!v)}
-            />
-            <Label htmlFor="save-default" className="cursor-pointer text-xs">
-              Salvar essa escolha como padrão da minha conta
-              <span className="block text-muted-foreground">
-                Aplica automaticamente em próximas aprovações (alterável em Configurações).
-              </span>
-            </Label>
-          </div>
+          {canManageBoardDefault ? (
+            <div className="flex items-center gap-2 rounded-md border border-dashed p-3 bg-muted/20">
+              <Checkbox
+                id="save-board-default"
+                checked={saveAsBoardDefault}
+                onCheckedChange={(v) => setSaveAsBoardDefault(!!v)}
+              />
+              <Label htmlFor="save-board-default" className="cursor-pointer text-xs">
+                Salvar como padrão deste quadro
+                <span className="block text-muted-foreground">
+                  Próximas demandas movidas para {approvalLabel.toLowerCase()} virão com essa lista pré-selecionada.
+                </span>
+              </Label>
+            </div>
+          ) : boardSetting ? (
+            <p className="text-xs text-muted-foreground px-1">
+              Lista padrão configurada por um administrador do quadro.
+            </p>
+          ) : null}
         </div>
 
-        <DialogFooter className="flex-shrink-0 gap-2 sm:gap-2">
+        <DialogFooter className="flex-shrink-0 gap-2 sm:gap-2 flex-wrap">
+          {canManageBoardDefault && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleSaveBoardDefaultOnly}
+              disabled={submitting || upsertBoardSetting.isPending}
+              className="mr-auto"
+            >
+              {upsertBoardSetting.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              Salvar padrão do quadro
+            </Button>
+          )}
           <Button variant="outline" onClick={handleSkip} disabled={submitting}>
             Pular
           </Button>
