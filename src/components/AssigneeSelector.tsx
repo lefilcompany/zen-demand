@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useBoardMembers } from "@/hooks/useBoardMembers";
-import { Users, X, Check, ShieldCheck, Shield, Zap, User, Search } from "lucide-react";
+import { Users, X, Check, ShieldCheck, Shield, Zap, User, Search, Crown, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -11,7 +11,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
@@ -49,6 +48,10 @@ interface AssigneeSelectorProps {
   boardId?: string | null;
   selectedUserIds: string[];
   onChange: (userIds: string[]) => void;
+  /** Optional: explicit primary (responsible) user. If omitted, defaults to selectedUserIds[0]. */
+  primaryUserId?: string | null;
+  /** Optional: callback when the user changes the primary. */
+  onPrimaryChange?: (userId: string | null) => void;
   disabled?: boolean;
   hideIcon?: boolean;
   restrictToUserIds?: string[];
@@ -59,6 +62,8 @@ export function AssigneeSelector({
   boardId,
   selectedUserIds,
   onChange,
+  primaryUserId,
+  onPrimaryChange,
   disabled = false,
   hideIcon = false,
   restrictToUserIds,
@@ -71,7 +76,25 @@ export function AssigneeSelector({
     boardId || null
   );
 
-  // Use board members if boardId is provided, otherwise use team members
+  // Effective primary: explicit prop OR fallback to first selected
+  const effectivePrimary =
+    primaryUserId && selectedUserIds.includes(primaryUserId)
+      ? primaryUserId
+      : selectedUserIds[0] ?? null;
+
+  // Keep parent in sync if it tracks primary explicitly and our fallback differs
+  useEffect(() => {
+    if (!onPrimaryChange) return;
+    if (primaryUserId === undefined) return;
+    if (selectedUserIds.length === 0 && primaryUserId !== null) {
+      onPrimaryChange(null);
+      return;
+    }
+    if (selectedUserIds.length > 0 && (!primaryUserId || !selectedUserIds.includes(primaryUserId))) {
+      onPrimaryChange(selectedUserIds[0]);
+    }
+  }, [selectedUserIds, primaryUserId, onPrimaryChange]);
+
   const allMembers = boardId
     ? boardMembers?.map((m) => ({
         id: m.id,
@@ -86,7 +109,6 @@ export function AssigneeSelector({
         profile: m.profile,
       }));
 
-  // Filter to only specific user IDs if restrictToUserIds is provided
   const members = restrictToUserIds && restrictToUserIds.length > 0
     ? allMembers?.filter((m) => restrictToUserIds.includes(m.user_id))
     : allMembers;
@@ -102,20 +124,38 @@ export function AssigneeSelector({
     );
   }, [members, search]);
 
+  const setPrimary = (userId: string | null) => {
+    if (onPrimaryChange) onPrimaryChange(userId);
+  };
+
   const toggleUser = (userId: string) => {
     if (selectedUserIds.includes(userId)) {
-      onChange(selectedUserIds.filter((id) => id !== userId));
+      const next = selectedUserIds.filter((id) => id !== userId);
+      onChange(next);
+      // If we removed the primary, promote the next one (or null)
+      if (effectivePrimary === userId) {
+        setPrimary(next[0] ?? null);
+      }
     } else {
+      const next = [...selectedUserIds, userId];
+      onChange(next);
+      // First selection becomes the primary by default
+      if (next.length === 1) setPrimary(userId);
+    }
+  };
+
+  const promoteToPrimary = (userId: string) => {
+    if (!selectedUserIds.includes(userId)) {
+      // also auto-add to selection
       onChange([...selectedUserIds, userId]);
     }
+    setPrimary(userId);
   };
 
   const getInitials = (name: string) => {
     if (!name) return "?";
     const parts = name.trim().split(/\s+/);
-    if (parts.length === 1) {
-      return parts[0].charAt(0).toUpperCase();
-    }
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
   };
 
@@ -123,10 +163,15 @@ export function AssigneeSelector({
     selectedUserIds.includes(m.user_id)
   );
 
+  const primaryMember = selectedMembers?.find((m) => m.user_id === effectivePrimary);
+  const followerMembers = selectedMembers?.filter((m) => m.user_id !== effectivePrimary) ?? [];
+
+  // Available members for the "Acompanhantes" section: selected (non-primary) + filtered list excluding primary
+  const followersAreaMembers = filteredMembers.filter((m) => m.user_id !== effectivePrimary);
+  const primarySectionMembers = filteredMembers; // all visible; we show crown CTA on each
+
   const handleOpen = () => {
-    if (!disabled && (teamId || boardId)) {
-      setOpen(true);
-    }
+    if (!disabled && (teamId || boardId)) setOpen(true);
   };
 
   return (
@@ -146,19 +191,29 @@ export function AssigneeSelector({
       >
         {!hideIcon && <Users className="h-4 w-4 shrink-0" />}
         {selectedUserIds.length > 0 ? (
-          <div className="flex items-center gap-2">
-            <div className="flex -space-x-2">
-              {selectedMembers?.slice(0, 3).map((member) => (
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="flex -space-x-2 shrink-0">
+              {primaryMember && (
+                <div
+                  className="relative h-5 w-5 rounded-full ring-2 ring-primary overflow-hidden bg-muted flex items-center justify-center shrink-0"
+                  title={`Responsável: ${primaryMember.profile?.full_name ?? ""}`}
+                >
+                  {primaryMember.profile?.avatar_url ? (
+                    <img src={primaryMember.profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-[10px] font-medium text-muted-foreground">
+                      {getInitials(primaryMember.profile?.full_name || "?")}
+                    </span>
+                  )}
+                </div>
+              )}
+              {followerMembers.slice(0, 2).map((member) => (
                 <div
                   key={member.user_id}
                   className="h-5 w-5 rounded-full ring-2 ring-background overflow-hidden bg-muted flex items-center justify-center shrink-0"
                 >
                   {member.profile?.avatar_url ? (
-                    <img
-                      src={member.profile.avatar_url}
-                      alt={member.profile?.full_name || ""}
-                      className="h-full w-full object-cover"
-                    />
+                    <img src={member.profile.avatar_url} alt="" className="h-full w-full object-cover" />
                   ) : (
                     <span className="text-[10px] font-medium text-muted-foreground">
                       {getInitials(member.profile?.full_name || "?")}
@@ -167,21 +222,33 @@ export function AssigneeSelector({
                 </div>
               ))}
             </div>
-            <span className="text-sm">
-              {selectedUserIds.length} selecionado
-              {selectedUserIds.length !== 1 ? "s" : ""}
+            <span className="text-sm truncate">
+              {primaryMember ? (
+                <>
+                  <span className="font-medium">{primaryMember.profile?.full_name?.split(" ")[0]}</span>
+                  {followerMembers.length > 0 && (
+                    <span className="text-muted-foreground"> +{followerMembers.length} acomp.</span>
+                  )}
+                </>
+              ) : (
+                `${selectedUserIds.length} selecionado(s)`
+              )}
             </span>
           </div>
         ) : (
-          "Selecionar responsáveis"
+          "Selecionar responsável"
         )}
       </button>
 
-      {/* Dialog with Member Cards */}
+      {/* Dialog */}
       <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setSearch(""); }}>
-        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
+        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
           <DialogHeader>
-            <DialogTitle>Selecionar Responsáveis</DialogTitle>
+            <DialogTitle>Definir Responsável e Acompanhantes</DialogTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Cada demanda tem <strong>1 responsável</strong> (quem deve executar) e pode ter
+              vários <strong>acompanhantes</strong> (que também podem executar e recebem atualizações).
+            </p>
           </DialogHeader>
 
           <div className="relative">
@@ -195,77 +262,129 @@ export function AssigneeSelector({
             />
           </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-5">
             {isLoading ? (
-              <p className="text-sm text-muted-foreground p-4 text-center">
-                Carregando...
-              </p>
-            ) : filteredMembers.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-2">
-                {filteredMembers.map((member) => {
-                  const isSelected = selectedUserIds.includes(member.user_id);
-                  const config = roleConfig[member.role] || roleConfig.requester;
-                  
-                  return (
-                    <button
-                      key={member.id}
-                      type="button"
-                      onClick={() => toggleUser(member.user_id)}
-                      className={cn(
-                        "relative rounded-xl border-2 bg-card overflow-hidden transition-all text-left",
-                        "hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-                        isSelected
-                          ? "border-primary shadow-md"
-                          : "border-border"
-                      )}
-                    >
-                      {/* Colored Banner */}
-                      <div className={`h-10 bg-gradient-to-r ${config.bannerColor}`} />
-                      
-                      {/* Selection indicator */}
-                      {isSelected && (
-                        <div className="absolute top-1.5 right-1.5 h-5 w-5 rounded-full bg-primary flex items-center justify-center shadow-md">
-                          <Check className="h-3 w-3 text-primary-foreground" />
-                        </div>
-                      )}
-
-                      {/* Avatar positioned over banner */}
-                      <div className="relative px-3 pb-3">
-                        <div className="absolute -top-6 left-1/2 -translate-x-1/2">
-                          <Avatar className="h-12 w-12 border-3 border-background shadow-lg">
-                            <AvatarImage
-                              src={member.profile?.avatar_url || undefined}
-                              alt={member.profile?.full_name || ""}
-                              className="object-cover"
-                            />
-                            <AvatarFallback className="text-sm bg-muted font-semibold">
-                              {getInitials(member.profile?.full_name || "?")}
-                            </AvatarFallback>
-                          </Avatar>
-                        </div>
-
-                        {/* Member Info */}
-                        <div className="pt-8 text-center space-y-1.5">
-                          {/* Name */}
-                          <p className="font-semibold text-sm line-clamp-2 min-h-[2.5rem]">
-                            {member.profile?.full_name}
-                          </p>
-
-                          {/* Role Badge */}
-                          <Badge className={cn("text-xs", config.badgeColor)}>
-                            {config.icon}
-                            <span className="ml-1">{config.label}</span>
-                          </Badge>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
+              <p className="text-sm text-muted-foreground p-4 text-center">Carregando...</p>
+            ) : filteredMembers.length === 0 ? (
               <p className="text-sm text-muted-foreground p-8 text-center">
-                {search.trim() ? "Nenhum membro encontrado para essa busca" : "Nenhum membro encontrado"}
+                {search.trim() ? "Nenhum membro encontrado" : "Nenhum membro disponível"}
               </p>
+            ) : (
+              <>
+                {/* SECTION 1: Responsável (1) */}
+                <section>
+                  <div className="flex items-center gap-2 mb-2 px-1">
+                    <Crown className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold">
+                      Responsável <span className="text-muted-foreground font-normal">(escolha 1)</span>
+                    </h3>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-1">
+                    {primarySectionMembers.map((member) => {
+                      const isPrimary = effectivePrimary === member.user_id;
+                      const config = roleConfig[member.role] || roleConfig.requester;
+                      return (
+                        <button
+                          key={`primary-${member.id}`}
+                          type="button"
+                          onClick={() => promoteToPrimary(member.user_id)}
+                          className={cn(
+                            "relative rounded-xl border-2 bg-card overflow-hidden text-left transition-all",
+                            "hover:shadow-md hover:border-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                            isPrimary ? "border-primary shadow-md ring-2 ring-primary/30" : "border-border"
+                          )}
+                        >
+                          <div className={`h-10 bg-gradient-to-r ${config.bannerColor}`} />
+                          {isPrimary && (
+                            <div className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-primary flex items-center justify-center shadow-md">
+                              <Crown className="h-3.5 w-3.5 text-primary-foreground" />
+                            </div>
+                          )}
+                          <div className="relative px-3 pb-3">
+                            <div className="absolute -top-6 left-1/2 -translate-x-1/2">
+                              <Avatar className="h-12 w-12 border-3 border-background shadow-lg">
+                                <AvatarImage src={member.profile?.avatar_url || undefined} alt="" className="object-cover" />
+                                <AvatarFallback className="text-sm bg-muted font-semibold">
+                                  {getInitials(member.profile?.full_name || "?")}
+                                </AvatarFallback>
+                              </Avatar>
+                            </div>
+                            <div className="pt-8 text-center space-y-1.5">
+                              <p className="font-semibold text-sm line-clamp-2 min-h-[2.5rem]">
+                                {member.profile?.full_name}
+                              </p>
+                              <Badge className={cn("text-xs", config.badgeColor)}>
+                                {config.icon}
+                                <span className="ml-1">{config.label}</span>
+                              </Badge>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                {/* SECTION 2: Acompanhantes (N) */}
+                <section>
+                  <div className="flex items-center gap-2 mb-2 px-1">
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="text-sm font-semibold">
+                      Acompanhantes <span className="text-muted-foreground font-normal">(opcional)</span>
+                    </h3>
+                  </div>
+                  {followersAreaMembers.length === 0 ? (
+                    <p className="text-xs text-muted-foreground px-1 py-2">
+                      Selecione um responsável acima para liberar a escolha de acompanhantes.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-1">
+                      {followersAreaMembers.map((member) => {
+                        const isSelected = selectedUserIds.includes(member.user_id);
+                        const config = roleConfig[member.role] || roleConfig.requester;
+                        return (
+                          <button
+                            key={`follower-${member.id}`}
+                            type="button"
+                            onClick={() => toggleUser(member.user_id)}
+                            className={cn(
+                              "relative rounded-xl border-2 bg-card overflow-hidden text-left transition-all",
+                              "hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                              isSelected ? "border-primary shadow-md" : "border-border"
+                            )}
+                          >
+                            <div className={`h-10 bg-gradient-to-r ${config.bannerColor} opacity-80`} />
+                            {isSelected && (
+                              <div className="absolute top-1.5 right-1.5 h-5 w-5 rounded-full bg-primary flex items-center justify-center shadow-md">
+                                <Check className="h-3 w-3 text-primary-foreground" />
+                              </div>
+                            )}
+                            <div className="relative px-3 pb-3">
+                              <div className="absolute -top-6 left-1/2 -translate-x-1/2">
+                                <Avatar className="h-12 w-12 border-3 border-background shadow-lg">
+                                  <AvatarImage src={member.profile?.avatar_url || undefined} alt="" className="object-cover" />
+                                  <AvatarFallback className="text-sm bg-muted font-semibold">
+                                    {getInitials(member.profile?.full_name || "?")}
+                                  </AvatarFallback>
+                                </Avatar>
+                              </div>
+                              <div className="pt-8 text-center space-y-1.5">
+                                <p className="font-semibold text-sm line-clamp-2 min-h-[2.5rem]">
+                                  {member.profile?.full_name}
+                                </p>
+                                <Badge className={cn("text-xs", config.badgeColor)}>
+                                  {config.icon}
+                                  <span className="ml-1">{config.label}</span>
+                                </Badge>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </section>
+              </>
             )}
           </div>
 
@@ -274,8 +393,8 @@ export function AssigneeSelector({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => onChange([])}
-                className="flex-1 sm:flex-none"
+                onClick={() => { onChange([]); setPrimary(null); }}
+                className="flex-1 sm:flex-none hover:bg-white hover:text-primary hover:border-primary"
               >
                 <X className="h-4 w-4 mr-2" />
                 Limpar

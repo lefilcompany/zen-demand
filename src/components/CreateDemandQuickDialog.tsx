@@ -61,6 +61,7 @@ export function CreateDemandQuickDialog({
   const [serviceId, setServiceId] = useState<string>("");
   const [statusId, setStatusId] = useState<string>("");
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
+  const [primaryAssigneeId, setPrimaryAssigneeId] = useState<string | null>(null);
   const [dueDate, setDueDate] = useState<string>("");
   const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
 
@@ -148,9 +149,10 @@ export function CreateDemandQuickDialog({
 
       // Assign responsibles
       if (result?.id && assigneeIds.length > 0) {
+        const primary = primaryAssigneeId && assigneeIds.includes(primaryAssigneeId) ? primaryAssigneeId : assigneeIds[0];
         await supabase
           .from("demand_assignees")
-          .insert(assigneeIds.map((userId) => ({ demand_id: result.id, user_id: userId })));
+          .insert(assigneeIds.map((userId) => ({ demand_id: result.id, user_id: userId, is_primary: userId === primary })));
       }
 
       // Clear draft on success
@@ -319,6 +321,8 @@ export function CreateDemandQuickDialog({
                 boardId={selectedBoardId}
                 selectedUserIds={assigneeIds}
                 onChange={setAssigneeIds}
+                primaryUserId={primaryAssigneeId}
+                onPrimaryChange={setPrimaryAssigneeId}
               />
             </div>
           )}

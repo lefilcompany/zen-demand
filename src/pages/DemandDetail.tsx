@@ -206,6 +206,7 @@ export default function DemandDetail() {
 
   const [editingAssignees, setEditingAssignees] = useState(false);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
+  const [primaryAssignee, setPrimaryAssignee] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   // Open edit dialog automatically if URL has ?edit=1 (used by subdemand "Editar" action)
   useEffect(() => {
@@ -644,6 +645,8 @@ export default function DemandDetail() {
   };
   const handleEditAssignees = () => {
     setSelectedAssignees(assignees?.map(a => a.user_id) || []);
+    const primary = assignees?.find((a) => a.is_primary)?.user_id ?? assignees?.[0]?.user_id ?? null;
+    setPrimaryAssignee(primary);
     setEditingAssignees(true);
   };
   const handleSaveAssignees = () => {
@@ -656,7 +659,8 @@ export default function DemandDetail() {
     }
     setAssignees.mutate({
       demandId: id,
-      userIds: selectedAssignees
+      userIds: selectedAssignees,
+      primaryUserId: primaryAssignee,
     }, {
       onSuccess: () => {
         toast.success("Responsáveis atualizados!");
@@ -1087,7 +1091,7 @@ export default function DemandDetail() {
               </div>
               {editingAssignees ? <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
                   <div className="flex-1">
-                    <AssigneeSelector teamId={demand.team_id} boardId={demand.board_id} selectedUserIds={selectedAssignees} onChange={setSelectedAssignees} />
+                    <AssigneeSelector teamId={demand.team_id} boardId={demand.board_id} selectedUserIds={selectedAssignees} onChange={setSelectedAssignees} primaryUserId={primaryAssignee} onPrimaryChange={setPrimaryAssignee} />
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleSaveAssignees} disabled={setAssignees.isPending} className="flex-1 sm:flex-none">

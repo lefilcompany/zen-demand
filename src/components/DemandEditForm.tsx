@@ -70,6 +70,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
   const [dueDate, setDueDate] = useState(toDateOnly(demand.due_date) || "");
   const [serviceId, setServiceId] = useState(demand.service_id || "");
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
+  const [primaryAssignee, setPrimaryAssignee] = useState<string | null>(null);
   const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
   const [matchedRecurringId, setMatchedRecurringId] = useState<string | null>(null);
 
@@ -107,6 +108,8 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
   useEffect(() => {
     if (currentAssignees) {
       setSelectedAssignees(currentAssignees.map((a) => a.user_id));
+      const primary = currentAssignees.find((a) => a.is_primary)?.user_id ?? currentAssignees[0]?.user_id ?? null;
+      setPrimaryAssignee(primary);
     }
   }, [currentAssignees]);
 
@@ -338,6 +341,7 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
       await setAssignees.mutateAsync({
         demandId: demand.id,
         userIds: selectedAssignees,
+        primaryUserId: primaryAssignee,
       });
 
       // Add new subdemands
@@ -535,6 +539,8 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
                       boardId={demand.board_id}
                       selectedUserIds={selectedAssignees}
                       onChange={setSelectedAssignees}
+                      primaryUserId={primaryAssignee}
+                      onPrimaryChange={setPrimaryAssignee}
                       hideIcon
                     />
                   </div>

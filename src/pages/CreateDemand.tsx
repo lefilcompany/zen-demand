@@ -120,6 +120,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const [dueDate, setDueDate] = useState("");
   const [serviceId, setServiceId] = useState("");
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
+  const [primaryAssigneeId, setPrimaryAssigneeId] = useState<string | null>(null);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
   const [selectedFolderId, setSelectedFolderId] = useState("");
@@ -353,20 +354,23 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
             const parentId = result.parent_id;
 
             if (assigneeIds.length > 0 && parentId) {
+              const primary = primaryAssigneeId && assigneeIds.includes(primaryAssigneeId) ? primaryAssigneeId : assigneeIds[0];
               await supabase
                 .from("demand_assignees")
-                .insert(assigneeIds.map((userId) => ({ demand_id: parentId, user_id: userId })));
+                .insert(assigneeIds.map((userId) => ({ demand_id: parentId, user_id: userId, is_primary: userId === primary })));
             }
 
             if (result.subdemand_ids && result.subdemand_ids.length > 0) {
-              const subAssigneeInserts: { demand_id: string; user_id: string }[] = [];
+              const subAssigneeInserts: { demand_id: string; user_id: string; is_primary: boolean }[] = [];
               sanitizedSubdemands.forEach((sub, idx) => {
                 const subId = result.subdemand_ids[idx];
                 if (subId && sub.assigneeIds && sub.assigneeIds.length > 0) {
-                  // Dedupe per subdemand
                   const uniqueIds = Array.from(new Set(sub.assigneeIds));
-                  uniqueIds.forEach(userId => {
-                    subAssigneeInserts.push({ demand_id: subId, user_id: userId });
+                  const subPrimary = (sub as any).primaryAssigneeId && uniqueIds.includes((sub as any).primaryAssigneeId)
+                    ? (sub as any).primaryAssigneeId
+                    : uniqueIds[0];
+                  uniqueIds.forEach((userId) => {
+                    subAssigneeInserts.push({ demand_id: subId, user_id: userId, is_primary: userId === subPrimary });
                   });
                 }
               });
@@ -437,12 +441,14 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
           const wasCreatedOffline = (demand as any)?._isOffline;
 
           if (!wasCreatedOffline && assigneeIds.length > 0 && demand) {
+            const primary = primaryAssigneeId && assigneeIds.includes(primaryAssigneeId) ? primaryAssigneeId : assigneeIds[0];
             const { error: assignError } = await supabase
               .from("demand_assignees")
               .insert(
                 assigneeIds.map((userId) => ({
                   demand_id: demand.id,
                   user_id: userId,
+                  is_primary: userId === primary,
                 }))
               );
             if (assignError) {
@@ -853,6 +859,8 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                             boardId={activeBoardId}
                             selectedUserIds={assigneeIds}
                             onChange={setAssigneeIds}
+                            primaryUserId={primaryAssigneeId}
+                            onPrimaryChange={setPrimaryAssigneeId}
                             hideIcon
                           />
                         </div>
