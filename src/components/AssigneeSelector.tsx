@@ -412,19 +412,39 @@ export function AssigneeSelector({
                 type="button"
                 variant="outline"
                 onClick={() => { onChange([]); setPrimary(null); }}
-                className="flex-1 sm:flex-none hover:bg-white hover:text-primary hover:border-primary"
+                className="hover:bg-white hover:text-primary hover:border-primary"
               >
                 <X className="h-4 w-4 mr-2" />
                 Limpar
               </Button>
             )}
-            <Button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="flex-1 sm:flex-none"
-            >
-              Confirmar
-            </Button>
+            <div className="flex-1" />
+            {step === 2 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStep(1)}
+                className="hover:bg-white hover:text-primary hover:border-primary"
+              >
+                Voltar
+              </Button>
+            )}
+            {step === 1 ? (
+              <Button
+                type="button"
+                disabled={!effectivePrimary}
+                onClick={() => setStep(2)}
+              >
+                Próximo
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={() => setOpen(false)}
+              >
+                Confirmar
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
