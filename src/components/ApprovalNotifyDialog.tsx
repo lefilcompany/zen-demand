@@ -87,6 +87,7 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
   const [search, setSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [view, setView] = useState<"confirm" | "edit">("confirm");
 
   const allowedRoles = approvalType === "internal" ? INTERNAL_ROLES : EXTERNAL_ROLES;
 
