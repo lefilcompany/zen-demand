@@ -206,6 +206,7 @@ export default function DemandDetail() {
 
   const [editingAssignees, setEditingAssignees] = useState(false);
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]);
+  const [primaryAssignee, setPrimaryAssignee] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   // Open edit dialog automatically if URL has ?edit=1 (used by subdemand "Editar" action)
   useEffect(() => {
