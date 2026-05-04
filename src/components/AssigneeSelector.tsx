@@ -341,8 +341,9 @@ export function AssigneeSelector({
                     })}
                   </div>
                 </section>
+                )}
 
-                {/* SECTION 2: Acompanhantes (N) */}
+                {step === 2 && (
                 <section>
                   <div className="flex items-center gap-2 mb-2 px-1">
                     <Eye className="h-4 w-4 text-muted-foreground" />
