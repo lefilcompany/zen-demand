@@ -321,6 +321,8 @@ export function CreateDemandQuickDialog({
                 boardId={selectedBoardId}
                 selectedUserIds={assigneeIds}
                 onChange={setAssigneeIds}
+                primaryUserId={primaryAssigneeId}
+                onPrimaryChange={setPrimaryAssigneeId}
               />
             </div>
           )}
