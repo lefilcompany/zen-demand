@@ -1091,7 +1091,7 @@ export default function DemandDetail() {
               </div>
               {editingAssignees ? <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
                   <div className="flex-1">
-                    <AssigneeSelector teamId={demand.team_id} boardId={demand.board_id} selectedUserIds={selectedAssignees} onChange={setSelectedAssignees} />
+                    <AssigneeSelector teamId={demand.team_id} boardId={demand.board_id} selectedUserIds={selectedAssignees} onChange={setSelectedAssignees} primaryUserId={primaryAssignee} onPrimaryChange={setPrimaryAssignee} />
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleSaveAssignees} disabled={setAssignees.isPending} className="flex-1 sm:flex-none">
