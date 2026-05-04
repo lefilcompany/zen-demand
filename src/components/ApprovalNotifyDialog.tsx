@@ -87,6 +87,7 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
   const [search, setSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [view, setView] = useState<"confirm" | "edit">("confirm");
 
   const allowedRoles = approvalType === "internal" ? INTERNAL_ROLES : EXTERNAL_ROLES;
 
@@ -114,6 +115,7 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
       setSearch("");
       setSubmitting(false);
       setHydrated(false);
+      setView("confirm");
     }
   }, [open]);
 
@@ -124,10 +126,12 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
       setMode(boardSetting.mode);
       setSelected(new Set(boardSetting.recipient_ids ?? []));
       setIncludeCreator(boardSetting.include_creator);
+      setView("confirm");
     } else {
       setMode("all");
       setSelected(new Set());
       setIncludeCreator(preferences.approvalNotifyIncludeCreator);
+      setView("edit");
     }
     setHydrated(true);
   }, [open, hydrated, settingLoading, boardSetting, preferences.approvalNotifyIncludeCreator]);
@@ -232,164 +236,261 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
             </span>{" "}
             foi movida para{" "}
             <span className="font-medium text-foreground">{approvalLabel}</span>.
-            {boardSetting ? " Lista padrão do quadro pré-selecionada." : " Selecione quem deve ser avisado."}
+            {view === "confirm" && boardSetting
+              ? " Confirme quem será notificado pelo padrão do quadro."
+              : boardSetting
+                ? " Ajuste a lista de destinatários."
+                : " Selecione quem deve ser avisado."}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto space-y-4 py-2">
-          <RadioGroup
-            value={mode}
-            onValueChange={(v) => setMode(v as "all" | "manual")}
-            className="space-y-2"
-          >
-            <div className="flex items-start gap-2 rounded-md border p-3 hover:bg-muted/30 transition-colors">
-              <RadioGroupItem value="all" id="notify-all" className="mt-0.5" />
-              <div className="flex-1">
-                <Label htmlFor="notify-all" className="cursor-pointer font-medium">
-                  Todos os elegíveis do quadro
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  {approvalType === "internal"
-                    ? "Owners e Coordenadores deste quadro"
-                    : "Solicitantes deste quadro"}
-                  {eligibleMembers.length > 0 && ` (${eligibleMembers.length})`}
+        {view === "confirm" && boardSetting ? (
+          <>
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-3 py-2">
+              <div className="rounded-md border bg-muted/20 p-3">
+                <p className="text-xs font-medium text-muted-foreground mb-2">
+                  {finalRecipients.length === 1
+                    ? "1 pessoa será notificada"
+                    : `${finalRecipients.length} pessoas serão notificadas`}
                 </p>
+                <ScrollArea className="max-h-[260px]">
+                  {membersLoading ? (
+                    <div className="flex items-center justify-center py-6">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : finalRecipients.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4 text-center">
+                      Nenhum destinatário no padrão atual.
+                    </p>
+                  ) : (
+                    <ul className="space-y-1.5">
+                      {finalRecipients.map((rid) => {
+                        const member = boardMembers?.find((m) => m.user_id === rid);
+                        const name = member?.profile?.full_name || member?.profile?.email || "Usuário";
+                        const initials = name
+                          .split(" ")
+                          .slice(0, 2)
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase();
+                        const isCreator = rid === demandCreatedBy;
+                        return (
+                          <li key={rid} className="flex items-center gap-3 rounded-md px-2 py-1.5 bg-background">
+                            <Avatar className="h-7 w-7">
+                              <AvatarImage src={member?.profile?.avatar_url || undefined} />
+                              <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{name}</p>
+                              {member?.profile?.job_title && (
+                                <p className="text-xs text-muted-foreground truncate">
+                                  {member.profile.job_title}
+                                </p>
+                              )}
+                            </div>
+                            {member?.role && (
+                              <Badge variant="outline" className={`text-[10px] ${roleBadgeClass(member.role)}`}>
+                                {roleLabel(member.role)}
+                              </Badge>
+                            )}
+                            {isCreator && !member && (
+                              <Badge variant="outline" className="text-[10px]">Criador</Badge>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </ScrollArea>
               </div>
+              <p className="text-xs text-muted-foreground px-1">
+                {boardSetting.mode === "all"
+                  ? "Padrão: todos os elegíveis do quadro."
+                  : "Padrão: lista personalizada do quadro."}
+                {boardSetting.include_creator && " Inclui o criador da demanda."}
+              </p>
             </div>
 
-            <div className="flex items-start gap-2 rounded-md border p-3 hover:bg-muted/30 transition-colors">
-              <RadioGroupItem value="manual" id="notify-manual" className="mt-0.5" />
-              <div className="flex-1">
-                <Label htmlFor="notify-manual" className="cursor-pointer font-medium">
-                  Selecionar manualmente
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Escolha pessoas específicas da lista abaixo.
-                </p>
-              </div>
-            </div>
-          </RadioGroup>
+            <DialogFooter className="flex-shrink-0 gap-2 sm:gap-2 flex-wrap">
+              <Button variant="outline" onClick={handleSkip} disabled={submitting}>
+                Pular
+              </Button>
+              <Button variant="outline" onClick={() => setView("edit")} disabled={submitting}>
+                Alterar seleção
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={submitting || finalRecipients.length === 0}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Notificar ({finalRecipients.length})
+              </Button>
+            </DialogFooter>
+          </>
+        ) : (
+          <>
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-4 py-2">
+              <RadioGroup
+                value={mode}
+                onValueChange={(v) => setMode(v as "all" | "manual")}
+                className="space-y-2"
+              >
+                <div className="flex items-start gap-2 rounded-md border p-3 hover:bg-muted/30 transition-colors">
+                  <RadioGroupItem value="all" id="notify-all" className="mt-0.5" />
+                  <div className="flex-1">
+                    <Label htmlFor="notify-all" className="cursor-pointer font-medium">
+                      Todos os elegíveis do quadro
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      {approvalType === "internal"
+                        ? "Owners e Coordenadores deste quadro"
+                        : "Solicitantes deste quadro"}
+                      {eligibleMembers.length > 0 && ` (${eligibleMembers.length})`}
+                    </p>
+                  </div>
+                </div>
 
-          {mode === "manual" && (
-            <div className="space-y-2">
-              {eligibleMembers.length > 8 && (
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Buscar membro..."
-                    className="pl-8 h-9"
+                <div className="flex items-start gap-2 rounded-md border p-3 hover:bg-muted/30 transition-colors">
+                  <RadioGroupItem value="manual" id="notify-manual" className="mt-0.5" />
+                  <div className="flex-1">
+                    <Label htmlFor="notify-manual" className="cursor-pointer font-medium">
+                      Selecionar manualmente
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Escolha pessoas específicas da lista abaixo.
+                    </p>
+                  </div>
+                </div>
+              </RadioGroup>
+
+              {mode === "manual" && (
+                <div className="space-y-2">
+                  {eligibleMembers.length > 8 && (
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Buscar membro..."
+                        className="pl-8 h-9"
+                      />
+                    </div>
+                  )}
+
+                  <ScrollArea className="h-[200px] rounded-md border">
+                    {membersLoading ? (
+                      <div className="flex items-center justify-center h-[200px]">
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : filteredMembers.length === 0 ? (
+                      <div className="flex items-center justify-center h-[200px] text-sm text-muted-foreground">
+                        Nenhum membro elegível encontrado
+                      </div>
+                    ) : (
+                      <ul className="p-1">
+                        {filteredMembers.map((m) => {
+                          const checked = selected.has(m.user_id);
+                          const initials = (m.profile?.full_name || "?")
+                            .split(" ")
+                            .slice(0, 2)
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase();
+                          return (
+                            <li key={m.user_id}>
+                              <button
+                                type="button"
+                                onClick={() => toggleMember(m.user_id)}
+                                className="w-full flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-muted/40 transition-colors text-left"
+                              >
+                                <Checkbox checked={checked} onCheckedChange={() => toggleMember(m.user_id)} />
+                                <Avatar className="h-7 w-7">
+                                  <AvatarImage src={m.profile?.avatar_url || undefined} />
+                                  <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">
+                                    {m.profile?.full_name || m.profile?.email || "Sem nome"}
+                                  </p>
+                                  {m.profile?.job_title && (
+                                    <p className="text-xs text-muted-foreground truncate">
+                                      {m.profile.job_title}
+                                    </p>
+                                  )}
+                                </div>
+                                <Badge variant="outline" className={`text-[10px] ${roleBadgeClass(m.role)}`}>
+                                  {roleLabel(m.role)}
+                                </Badge>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </ScrollArea>
+                </div>
+              )}
+
+              {demandCreatedBy && demandCreatedBy !== user?.id && (
+                <div className="flex items-center justify-between rounded-md border p-3">
+                  <div>
+                    <Label htmlFor="include-creator" className="cursor-pointer text-sm font-medium">
+                      Notificar também o criador da demanda
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Avisa quem abriu a demanda originalmente.
+                    </p>
+                  </div>
+                  <Checkbox
+                    id="include-creator"
+                    checked={includeCreator}
+                    onCheckedChange={(v) => setIncludeCreator(!!v)}
                   />
                 </div>
               )}
 
-              <ScrollArea className="h-[200px] rounded-md border">
-                {membersLoading ? (
-                  <div className="flex items-center justify-center h-[200px]">
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                  </div>
-                ) : filteredMembers.length === 0 ? (
-                  <div className="flex items-center justify-center h-[200px] text-sm text-muted-foreground">
-                    Nenhum membro elegível encontrado
-                  </div>
-                ) : (
-                  <ul className="p-1">
-                    {filteredMembers.map((m) => {
-                      const checked = selected.has(m.user_id);
-                      const initials = (m.profile?.full_name || "?")
-                        .split(" ")
-                        .slice(0, 2)
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase();
-                      return (
-                        <li key={m.user_id}>
-                          <button
-                            type="button"
-                            onClick={() => toggleMember(m.user_id)}
-                            className="w-full flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-muted/40 transition-colors text-left"
-                          >
-                            <Checkbox checked={checked} onCheckedChange={() => toggleMember(m.user_id)} />
-                            <Avatar className="h-7 w-7">
-                              <AvatarImage src={m.profile?.avatar_url || undefined} />
-                              <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">
-                                {m.profile?.full_name || m.profile?.email || "Sem nome"}
-                              </p>
-                              {m.profile?.job_title && (
-                                <p className="text-xs text-muted-foreground truncate">
-                                  {m.profile.job_title}
-                                </p>
-                              )}
-                            </div>
-                            <Badge variant="outline" className={`text-[10px] ${roleBadgeClass(m.role)}`}>
-                              {roleLabel(m.role)}
-                            </Badge>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </ScrollArea>
-            </div>
-          )}
-
-          {demandCreatedBy && demandCreatedBy !== user?.id && (
-            <div className="flex items-center justify-between rounded-md border p-3">
-              <div>
-                <Label htmlFor="include-creator" className="cursor-pointer text-sm font-medium">
-                  Notificar também o criador da demanda
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Avisa quem abriu a demanda originalmente.
+              {canManageBoardDefault ? (
+                <div className="flex items-center gap-2 rounded-md border border-dashed p-3 bg-muted/20">
+                  <Checkbox
+                    id="save-board-default"
+                    checked={saveAsBoardDefault}
+                    onCheckedChange={(v) => setSaveAsBoardDefault(!!v)}
+                  />
+                  <Label htmlFor="save-board-default" className="cursor-pointer text-xs">
+                    Salvar como padrão deste quadro
+                    <span className="block text-muted-foreground">
+                      Próximas demandas movidas para {approvalLabel.toLowerCase()} virão com essa lista pré-selecionada.
+                    </span>
+                  </Label>
+                </div>
+              ) : boardSetting ? (
+                <p className="text-xs text-muted-foreground px-1">
+                  Lista padrão configurada por um administrador do quadro.
                 </p>
-              </div>
-              <Checkbox
-                id="include-creator"
-                checked={includeCreator}
-                onCheckedChange={(v) => setIncludeCreator(!!v)}
-              />
+              ) : null}
             </div>
-          )}
 
-          {canManageBoardDefault ? (
-            <div className="flex items-center gap-2 rounded-md border border-dashed p-3 bg-muted/20">
-              <Checkbox
-                id="save-board-default"
-                checked={saveAsBoardDefault}
-                onCheckedChange={(v) => setSaveAsBoardDefault(!!v)}
-              />
-              <Label htmlFor="save-board-default" className="cursor-pointer text-xs">
-                Salvar como padrão deste quadro
-                <span className="block text-muted-foreground">
-                  Próximas demandas movidas para {approvalLabel.toLowerCase()} virão com essa lista pré-selecionada.
-                </span>
-              </Label>
-            </div>
-          ) : boardSetting ? (
-            <p className="text-xs text-muted-foreground px-1">
-              Lista padrão configurada por um administrador do quadro.
-            </p>
-          ) : null}
-        </div>
-
-        <DialogFooter className="flex-shrink-0 gap-2 sm:gap-2 flex-wrap">
-          <Button variant="outline" onClick={handleSkip} disabled={submitting}>
-            Pular
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={submitting || upsertBoardSetting.isPending || finalRecipients.length === 0}
-            className="bg-primary hover:bg-primary/90"
-          >
-            {(submitting || upsertBoardSetting.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Notificar ({finalRecipients.length})
-          </Button>
-        </DialogFooter>
+            <DialogFooter className="flex-shrink-0 gap-2 sm:gap-2 flex-wrap">
+              {boardSetting && (
+                <Button variant="ghost" onClick={() => setView("confirm")} disabled={submitting}>
+                  Voltar
+                </Button>
+              )}
+              <Button variant="outline" onClick={handleSkip} disabled={submitting}>
+                Pular
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={submitting || upsertBoardSetting.isPending || finalRecipients.length === 0}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {(submitting || upsertBoardSetting.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Notificar ({finalRecipients.length})
+              </Button>
+            </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
