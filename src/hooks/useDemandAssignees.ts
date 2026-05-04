@@ -5,6 +5,7 @@ export interface Assignee {
   id: string;
   user_id: string;
   assigned_at: string;
+  is_primary: boolean;
   profile: {
     full_name: string;
     avatar_url: string | null;
@@ -23,6 +24,7 @@ export function useDemandAssignees(demandId: string | null) {
           id,
           user_id,
           assigned_at,
+          is_primary,
           profile:profiles(full_name, avatar_url)
         `)
         .eq("demand_id", demandId);
@@ -82,34 +84,44 @@ export function useSetAssignees() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ demandId, userIds }: { demandId: string; userIds: string[] }) => {
+    mutationFn: async ({
+      demandId,
+      userIds,
+      primaryUserId,
+    }: {
+      demandId: string;
+      userIds: string[];
+      primaryUserId?: string | null;
+    }) => {
       // Guard: a demand must always have at least one responsible
       if (!userIds || userIds.length === 0) {
         throw new Error("A demanda precisa ter ao menos um responsável.");
       }
 
-      // Get current assignees
+      // Resolve the primary user. Must be inside userIds; falls back to first.
+      const resolvedPrimary =
+        primaryUserId && userIds.includes(primaryUserId)
+          ? primaryUserId
+          : userIds[0];
+
+      // Get current assignees (incl. is_primary flag)
       const { data: currentAssignees, error: fetchError } = await supabase
         .from("demand_assignees")
-        .select("user_id")
+        .select("user_id, is_primary")
         .eq("demand_id", demandId);
 
       if (fetchError) throw fetchError;
 
-      const currentUserIds = currentAssignees?.map(a => a.user_id) || [];
+      const currentUserIds = (currentAssignees ?? []).map((a) => a.user_id);
       const {
         data: { user },
       } = await supabase.auth.getUser();
       const currentActorId = user?.id ?? null;
-      
-      // Find users to remove and users to add
-      const toRemove = currentUserIds.filter(id => !userIds.includes(id));
-      const toAdd = userIds.filter(id => !currentUserIds.includes(id));
 
-      // Add new assignees (only those not already assigned)
-      // Use upsert with ignoreDuplicates to avoid 500 errors on race conditions
-      // (e.g. double-click, stale local state vs. realtime updates).
-      // Important: add before remove so a current assignee does not lose
+      const toRemove = currentUserIds.filter((id) => !userIds.includes(id));
+      const toAdd = userIds.filter((id) => !currentUserIds.includes(id));
+
+      // Add new assignees first so a current assignee does not lose
       // permission mid-operation when replacing the assignee list.
       if (toAdd.length > 0) {
         const { error: insertError } = await supabase
@@ -118,12 +130,12 @@ export function useSetAssignees() {
             toAdd.map((userId) => ({
               demand_id: demandId,
               user_id: userId,
+              is_primary: false,
             })),
             { onConflict: "demand_id,user_id", ignoreDuplicates: true }
           );
 
         if (insertError) {
-          // Surface a clearer message instead of a generic 500
           const msg = (insertError as any)?.message || "";
           if (msg.includes("row-level security")) {
             throw new Error(
@@ -135,13 +147,12 @@ export function useSetAssignees() {
       }
 
       // Remove assignees that are no longer selected.
-      // If the acting user is removing themselves, do that as the last step
-      // so permission checks continue to pass for the rest of the update.
       if (toRemove.length > 0) {
         const otherUsersToRemove = currentActorId
           ? toRemove.filter((id) => id !== currentActorId)
           : toRemove;
-        const shouldRemoveSelfLast = !!currentActorId && toRemove.includes(currentActorId);
+        const shouldRemoveSelfLast =
+          !!currentActorId && toRemove.includes(currentActorId);
 
         if (otherUsersToRemove.length > 0) {
           const { error: deleteOthersError } = await supabase
@@ -162,6 +173,36 @@ export function useSetAssignees() {
 
           if (deleteSelfError) throw deleteSelfError;
         }
+      }
+
+      // ---- Update is_primary flag ----
+      // Strategy to respect the partial unique index (one primary per demand):
+      //   1) Demote the current primary (if it differs from resolved one).
+      //   2) Promote the new primary.
+      // Check current primary
+      const currentPrimary = (currentAssignees ?? []).find((a) => a.is_primary)
+        ?.user_id;
+
+      if (currentPrimary && currentPrimary !== resolvedPrimary) {
+        // Only demote if it still exists after deletions
+        const stillExists = userIds.includes(currentPrimary);
+        if (stillExists) {
+          const { error: demoteErr } = await supabase
+            .from("demand_assignees")
+            .update({ is_primary: false })
+            .eq("demand_id", demandId)
+            .eq("user_id", currentPrimary);
+          if (demoteErr) throw demoteErr;
+        }
+      }
+
+      if (currentPrimary !== resolvedPrimary) {
+        const { error: promoteErr } = await supabase
+          .from("demand_assignees")
+          .update({ is_primary: true })
+          .eq("demand_id", demandId)
+          .eq("user_id", resolvedPrimary);
+        if (promoteErr) throw promoteErr;
       }
     },
     onSuccess: (_, variables) => {
