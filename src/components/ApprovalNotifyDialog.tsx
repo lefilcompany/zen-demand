@@ -168,16 +168,6 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
     });
   };
 
-  const handleSaveBoardDefaultOnly = async () => {
-    if (!canManageBoardDefault || !boardId) return;
-    try {
-      await persistBoardDefault();
-      toast.success("Configuração padrão do quadro salva");
-    } catch (e) {
-      console.error(e);
-      toast.error("Erro ao salvar configuração do quadro");
-    }
-  };
 
   const handleSkip = () => {
     onOpenChange(false);
