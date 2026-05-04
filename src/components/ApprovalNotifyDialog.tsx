@@ -477,7 +477,12 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
                   Voltar
                 </Button>
               )}
-              <Button variant="outline" onClick={handleSkip} disabled={submitting}>
+              <Button
+                variant="outline"
+                onClick={handleSkip}
+                disabled={submitting}
+                className="hover:bg-white hover:text-primary hover:border-primary"
+              >
                 Pular
               </Button>
               <Button
