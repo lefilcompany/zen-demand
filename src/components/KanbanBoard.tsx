@@ -2386,9 +2386,9 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 }}
                 className={cn(
                   "rounded-lg flex flex-col min-h-0 overflow-hidden",
-                  "transition-all duration-300 ease-out",
+                  "transition-all duration-700 ease-in-out",
                   colorStyle.className,
-                  isActive ? "p-4" : "p-2 cursor-pointer flex-1 hover:flex-[2.2] hover:shadow-lg hover:ring-2 hover:ring-primary/40",
+                  isActive ? "p-4" : "p-2 cursor-pointer flex-1 hover:flex-[2.2] hover:shadow-lg",
                   isDragTarget && "ring-2 ring-primary ring-offset-2 ring-offset-background"
                 )}
                 onClick={() => toggleColumn(column.key)}
@@ -2504,9 +2504,9 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
                 }}
                 className={cn(
                   "rounded-lg flex flex-col min-h-0 overflow-hidden",
-                  "transition-all duration-300 ease-out",
+                  "transition-all duration-700 ease-in-out",
                   colorStyle.className,
-                  isActive ? "p-4" : "p-2 cursor-pointer flex-1 hover:flex-[2.2] hover:shadow-lg hover:ring-2 hover:ring-primary/40",
+                  isActive ? "p-4" : "p-2 cursor-pointer flex-1 hover:flex-[2.2] hover:shadow-lg",
                   isDragTarget && "ring-2 ring-primary ring-offset-2 ring-offset-background"
                 )}
                 onClick={() => toggleColumn(column.key)}
