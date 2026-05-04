@@ -70,6 +70,7 @@ export function AssigneeSelector({
 }: AssigneeSelectorProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [step, setStep] = useState<1 | 2>(1);
 
   const { data: teamMembers, isLoading: loadingTeam } = useTeamMembers(teamId);
   const { data: boardMembers, isLoading: loadingBoard } = useBoardMembers(
