@@ -49,13 +49,17 @@ interface AssigneeSelectorProps {
   boardId?: string | null;
   selectedUserIds: string[];
   onChange: (userIds: string[]) => void;
-  /** Optional: explicit primary (responsible) user. If omitted, defaults to selectedUserIds[0]. */
   primaryUserId?: string | null;
-  /** Optional: callback when the user changes the primary. */
   onPrimaryChange?: (userId: string | null) => void;
   disabled?: boolean;
   hideIcon?: boolean;
   restrictToUserIds?: string[];
+  // Controlled mode
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
+  hideTrigger?: boolean;
+  onConfirm?: () => void | Promise<void>;
+  confirmLoading?: boolean;
 }
 
 export function AssigneeSelector({
@@ -68,8 +72,19 @@ export function AssigneeSelector({
   disabled = false,
   hideIcon = false,
   restrictToUserIds,
+  open: openProp,
+  onOpenChange,
+  hideTrigger = false,
+  onConfirm,
+  confirmLoading,
 }: AssigneeSelectorProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp! : internalOpen;
+  const setOpen = (v: boolean) => {
+    if (isControlled) onOpenChange?.(v);
+    else setInternalOpen(v);
+  };
   const [search, setSearch] = useState("");
   const [step, setStep] = useState<1 | 2>(1);
 
