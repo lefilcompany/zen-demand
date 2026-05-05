@@ -343,6 +343,9 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
   const { selectedTeamId } = useSelectedTeam();
   const createBoard = useCreateBoard();
   const { data: teamServices, isLoading: servicesLoading } = useServices(selectedTeamId);
+  const { data: hierarchicalServices } = useHierarchicalServices(selectedTeamId);
+  const [serviceSearch, setServiceSearch] = useState("");
+  const [openFolders, setOpenFolders] = useState<Set<string>>(new Set());
   const { data: teamMembers } = useTeamMembers(selectedTeamId);
 
   const [stepIdx, setStepIdx] = useState(0);
