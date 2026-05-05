@@ -94,6 +94,7 @@ export default function Settings() {
 
         <main className="min-w-0">
           {active === "profile" && <ProfileSection />}
+          {active === "public-profile" && <PublicProfileSection />}
           {active === "security" && <SecuritySection />}
           {active === "preferences" && <PreferencesSection />}
           {active === "notifications" && <NotificationsSection />}
