@@ -438,6 +438,10 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
               } catch {}
             }
 
+            if (parentId) {
+              await persistApprovalRecipients(parentId);
+            }
+
             setSuccessState({
               demandId: parentId,
               demandTitle: title.trim(),
