@@ -22,7 +22,7 @@ export function FirstBoardModal() {
   return (
     <Dialog open={true} onOpenChange={() => {}}>
       <DialogContent
-        className="sm:max-w-[640px] max-h-[90vh] flex flex-col"
+        className="sm:max-w-[860px] max-h-[90vh] flex flex-col"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >

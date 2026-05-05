@@ -28,7 +28,7 @@ export function CreateBoardDialog({ trigger }: CreateBoardDialogProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[640px] max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-[860px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Criar Novo Quadro</DialogTitle>
           <DialogDescription>
