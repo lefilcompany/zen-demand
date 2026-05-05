@@ -80,12 +80,8 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
   const SKIP_KEY = "soma:demandHistory:skipNavConfirm";
   const skipConfirm = typeof window !== "undefined" && localStorage.getItem(SKIP_KEY) === "1";
 
-  const goToDemand = (boardId: string | null | undefined, demandId: string) => {
-    if (boardId) {
-      navigate(`/kanban/${boardId}`, { state: { openDemandId: demandId } });
-    } else {
-      navigate(`/demands/${demandId}`);
-    }
+  const goToDemand = (_boardId: string | null | undefined, demandId: string) => {
+    navigate(`/demands/${demandId}`);
   };
 
   const handleOpenDemand = (d: any) => {
