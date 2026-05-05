@@ -96,6 +96,7 @@ export default function Profile() {
   const levelInfo = stats ? calculateLevel(stats) : { level: 1, xp: 0, xpForNext: 100, progress: 0 };
   const earnedBadges = stats ? badges.filter((b) => b.requirement(stats)) : [];
   const lockedBadges = stats ? badges.filter((b) => !b.requirement(stats)) : badges;
+  const ownVisibility = resolveVisibility((profile as any)?.profile_visibility, true);
 
   const handleBannerClick = () => {
     bannerInputRef.current?.click();
