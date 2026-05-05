@@ -18,6 +18,15 @@ import {
   CircleDot, ClipboardCheck, UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy,
+  useSortable, arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 const ADJUSTMENT_OPTIONS = [
   { value: "none" as const, label: "Normal", icon: CircleDot, description: "Etapa de trabalho padrão" },
@@ -192,6 +201,7 @@ function AdjustmentTypePicker({ value, onChange, disabled }: AdjustmentTypePicke
 type BoardRole = "admin" | "moderator" | "executor" | "requester";
 
 interface Stage {
+  id: string;
   name: string;
   color: string;
   adjustment_type: AdjustmentType;
@@ -204,12 +214,17 @@ interface SelectedService {
   monthlyLimit: number;
 }
 
+const makeStageId = () =>
+  (typeof crypto !== "undefined" && "randomUUID" in crypto)
+    ? crypto.randomUUID()
+    : `stage-${Math.random().toString(36).slice(2)}-${Date.now()}`;
+
 const DEFAULT_STAGES: Stage[] = [
-  { name: "A Iniciar", color: "#6B7280", adjustment_type: "none" },
-  { name: "Fazendo", color: "#3B82F6", adjustment_type: "none" },
-  { name: "Aprovação Interna", color: "#3B82F6", adjustment_type: "internal" },
-  { name: "Em Ajuste", color: "#9333EA", adjustment_type: "none" },
-  { name: "Entregue", color: "#10B981", adjustment_type: "none", locked: true },
+  { id: makeStageId(), name: "A Iniciar", color: "#6B7280", adjustment_type: "none" },
+  { id: makeStageId(), name: "Fazendo", color: "#3B82F6", adjustment_type: "none" },
+  { id: makeStageId(), name: "Aprovação Interna", color: "#3B82F6", adjustment_type: "internal" },
+  { id: makeStageId(), name: "Em Ajuste", color: "#9333EA", adjustment_type: "none" },
+  { id: makeStageId(), name: "Entregue", color: "#10B981", adjustment_type: "none", locked: true },
 ];
 
 const STAGE_COLORS = ["#6B7280", "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#9333EA", "#F28705", "#EC4899"];
@@ -233,6 +248,89 @@ const STEPS: StepDef[] = [
   { key: "members", label: "Membros", icon: Users },
   { key: "services", label: "Serviços", icon: Package },
 ];
+
+interface SortableStageRowProps {
+  stage: Stage;
+  onChangeColor: (c: string) => void;
+  onChangeName: (n: string) => void;
+  onChangeAdjustment: (v: AdjustmentType) => void;
+  onRemove: () => void;
+}
+
+function SortableStageRow({
+  stage, onChangeColor, onChangeName, onChangeAdjustment, onRemove,
+}: SortableStageRowProps) {
+  const {
+    attributes, listeners, setNodeRef, transform, transition, isDragging, isOver,
+  } = useSortable({ id: stage.id, disabled: stage.locked });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition: transition ?? "transform 220ms cubic-bezier(0.2, 0, 0, 1)",
+    zIndex: isDragging ? 30 : undefined,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "group flex items-center gap-2 rounded-lg border bg-card p-2",
+        "will-change-transform",
+        stage.locked && "border-dashed bg-muted/30",
+        isDragging && "shadow-lg ring-2 ring-primary/40 bg-card cursor-grabbing",
+        !isDragging && isOver && !stage.locked && "ring-1 ring-primary/30",
+      )}
+    >
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        disabled={stage.locked}
+        className={cn(
+          "flex h-8 w-6 items-center justify-center rounded touch-none shrink-0 outline-none",
+          stage.locked
+            ? "cursor-not-allowed text-muted-foreground/30"
+            : "cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary",
+        )}
+        title={stage.locked ? "Etapa fixa" : "Arrastar para reordenar"}
+        aria-label="Reordenar etapa"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+
+      <StageColorPicker value={stage.color} onChange={onChangeColor} disabled={stage.locked} />
+
+      <Input
+        value={stage.name}
+        disabled={stage.locked}
+        onChange={(e) => onChangeName(e.target.value)}
+        className="h-8 flex-1"
+      />
+
+      <AdjustmentTypePicker
+        value={stage.adjustment_type}
+        onChange={onChangeAdjustment}
+        disabled={stage.locked}
+      />
+
+      {stage.locked ? (
+        <div className="flex h-8 w-8 items-center justify-center shrink-0" title="Etapa obrigatória">
+          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+        </div>
+      ) : (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+          onClick={onRemove}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      )}
+    </div>
+  );
+}
 
 interface CreateBoardWizardProps {
   onComplete: () => void;
@@ -303,7 +401,7 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
     const idx = stages.findIndex((s) => s.locked);
     const insertIdx = idx >= 0 ? idx : stages.length;
     const next = [...stages];
-    next.splice(insertIdx, 0, { name: trimmed, color: newStageColor, adjustment_type: "none" });
+    next.splice(insertIdx, 0, { id: makeStageId(), name: trimmed, color: newStageColor, adjustment_type: "none" });
     setStages(next);
     setNewStageName("");
   };
@@ -317,48 +415,24 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
     setStages(stages.map((s, i) => (i === idx ? { ...s, ...patch } : s)));
   };
 
-  // Drag and drop for stages
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  // Drag and drop for stages (smooth, with @dnd-kit)
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
-  const handleDragStart = (e: React.DragEvent, idx: number) => {
-    if (stages[idx].locked) {
-      e.preventDefault();
-      return;
-    }
-    setDragIndex(idx);
-    e.dataTransfer.effectAllowed = "move";
-    // Required for Firefox
-    try { e.dataTransfer.setData("text/plain", String(idx)); } catch { /* ignore */ }
-  };
-
-  const handleDragOver = (e: React.DragEvent, idx: number) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    if (stages[idx].locked) return;
-    if (dragOverIndex !== idx) setDragOverIndex(idx);
-  };
-
-  const handleDragEnd = () => {
-    setDragIndex(null);
-    setDragOverIndex(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, idx: number) => {
-    e.preventDefault();
-    const from = dragIndex;
-    handleDragEnd();
-    if (from === null || from === idx) return;
-    if (stages[idx].locked) return; // can't drop on the locked Entregue
+  const handleStageDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
     setStages((prev) => {
-      const next = [...prev];
-      const [moved] = next.splice(from, 1);
-      // Adjust target if moving down
-      const adjustedTo = from < idx ? idx - 1 : idx;
-      next.splice(adjustedTo, 0, moved);
-      // Re-anchor any locked items to the end
-      const locked = next.filter((s) => s.locked);
-      const unlocked = next.filter((s) => !s.locked);
+      const oldIndex = prev.findIndex((s) => s.id === active.id);
+      const newIndex = prev.findIndex((s) => s.id === over.id);
+      if (oldIndex < 0 || newIndex < 0) return prev;
+      if (prev[oldIndex].locked) return prev;
+      const moved = arrayMove(prev, oldIndex, newIndex);
+      // Always keep locked stages anchored at the end
+      const unlocked = moved.filter((s) => !s.locked);
+      const locked = moved.filter((s) => s.locked);
       return [...unlocked, ...locked];
     });
   };
@@ -500,75 +574,29 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
               Defina as etapas (status) do Kanban deste quadro. Você pode criar novas etapas ou remover as padrões. A etapa <strong>Entregue</strong> é obrigatória e fica sempre por último.
             </p>
 
-            <div className="space-y-2">
-              {stages.map((s, i) => {
-                const isDragOver = dragOverIndex === i && dragIndex !== null && dragIndex !== i && !s.locked;
-                const isDragging = dragIndex === i;
-                return (
-                  <div
-                    key={i}
-                    onDragOver={(e) => handleDragOver(e, i)}
-                    onDrop={(e) => handleDrop(e, i)}
-                    onDragLeave={() => { if (dragOverIndex === i) setDragOverIndex(null); }}
-                    className={cn(
-                      "group flex items-center gap-2 rounded-lg border bg-card p-2 transition-all",
-                      s.locked && "border-dashed bg-muted/30",
-                      isDragging && "opacity-40",
-                      isDragOver && "border-primary ring-2 ring-primary/30"
-                    )}
-                  >
-                    <div
-                      draggable={!s.locked}
-                      onDragStart={(e) => handleDragStart(e, i)}
-                      onDragEnd={handleDragEnd}
-                      className={cn(
-                        "flex h-8 w-6 items-center justify-center rounded touch-none shrink-0",
-                        s.locked
-                          ? "cursor-not-allowed text-muted-foreground/30"
-                          : "cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-foreground hover:bg-muted"
-                      )}
-                      title={s.locked ? "Etapa fixa" : "Arrastar para reordenar"}
-                    >
-                      <GripVertical className="h-4 w-4" />
-                    </div>
-
-                    <StageColorPicker
-                      value={s.color}
-                      onChange={(c) => updateStage(i, { color: c })}
-                      disabled={s.locked}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleStageDragEnd}
+            >
+              <SortableContext
+                items={stages.map((s) => s.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2">
+                  {stages.map((s, i) => (
+                    <SortableStageRow
+                      key={s.id}
+                      stage={s}
+                      onChangeColor={(c) => updateStage(i, { color: c })}
+                      onChangeName={(n) => updateStage(i, { name: n })}
+                      onChangeAdjustment={(v) => updateStage(i, { adjustment_type: v })}
+                      onRemove={() => removeStage(i)}
                     />
-
-                    <Input
-                      value={s.name}
-                      disabled={s.locked}
-                      onChange={(e) => updateStage(i, { name: e.target.value })}
-                      className="h-8 flex-1"
-                    />
-
-                    <AdjustmentTypePicker
-                      value={s.adjustment_type}
-                      onChange={(v) => updateStage(i, { adjustment_type: v })}
-                      disabled={s.locked}
-                    />
-
-                    {s.locked ? (
-                      <div className="flex h-8 w-8 items-center justify-center shrink-0" title="Etapa obrigatória">
-                        <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
-                        onClick={() => removeStage(i)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
 
             <div className="flex items-center gap-2 rounded-lg border border-dashed p-2 bg-muted/20">
               <StageColorPicker value={newStageColor} onChange={setNewStageColor} />
