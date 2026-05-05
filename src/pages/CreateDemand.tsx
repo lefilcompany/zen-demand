@@ -253,6 +253,37 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     setSubdemands(prev => prev.map((s, i) => i === index ? data : s));
   };
 
+  const persistApprovalRecipients = async (demandId: string) => {
+    const rows: { demand_id: string; approval_type: "internal" | "external"; mode: "all" | "manual"; recipient_ids: string[]; include_creator: boolean; created_by: string | null; updated_by: string | null }[] = [];
+    if (internalApprovalRecipients.length > 0) {
+      rows.push({
+        demand_id: demandId,
+        approval_type: "internal",
+        mode: "manual",
+        recipient_ids: internalApprovalRecipients,
+        include_creator: true,
+        created_by: user?.id ?? null,
+        updated_by: user?.id ?? null,
+      });
+    }
+    if (externalApprovalRecipients.length > 0) {
+      rows.push({
+        demand_id: demandId,
+        approval_type: "external",
+        mode: "manual",
+        recipient_ids: externalApprovalRecipients,
+        include_creator: true,
+        created_by: user?.id ?? null,
+        updated_by: user?.id ?? null,
+      });
+    }
+    if (rows.length === 0) return;
+    const { error } = await supabase
+      .from("demand_approval_notify_settings" as any)
+      .insert(rows);
+    if (error) console.error("Error saving approval recipients:", error);
+  };
+
   const handleSubmit = async () => {
     if (!title.trim() || !selectedTeamId || !activeBoardId || !statusId || !canCreate) return;
 
