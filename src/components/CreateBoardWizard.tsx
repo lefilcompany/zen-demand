@@ -516,20 +516,24 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
             const done = i < stepIdx;
             return (
               <div key={s.key} className="flex items-center flex-1 min-w-0">
-                <div
+                <button
+                  type="button"
+                  onClick={() => { if (i < stepIdx) { setError(""); setStepIdx(i); } }}
+                  disabled={i >= stepIdx}
                   className={cn(
-                    "flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+                    "flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium transition-colors outline-none",
                     active && "bg-primary text-primary-foreground",
-                    done && "bg-primary/20 text-primary",
-                    !active && !done && "bg-muted text-muted-foreground"
+                    done && "bg-primary/20 text-primary hover:bg-primary/30 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary",
+                    !active && !done && "bg-muted text-muted-foreground cursor-not-allowed"
                   )}
+                  title={done ? `Voltar para ${s.label}` : s.label}
                 >
                   <div className="flex h-5 w-5 items-center justify-center rounded-full bg-background/30 text-[10px]">
                     {done ? <Check className="h-3 w-3" /> : i + 1}
                   </div>
                   <span className="hidden sm:inline">{s.label}</span>
                   <Icon className="h-3.5 w-3.5 sm:hidden" />
-                </div>
+                </button>
                 {i < STEPS.length - 1 && (
                   <div className={cn("h-px flex-1 mx-1", done ? "bg-primary/40" : "bg-border")} />
                 )}
