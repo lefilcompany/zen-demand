@@ -491,75 +491,29 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
               Defina as etapas (status) do Kanban deste quadro. Você pode criar novas etapas ou remover as padrões. A etapa <strong>Entregue</strong> é obrigatória e fica sempre por último.
             </p>
 
-            <div className="space-y-2">
-              {stages.map((s, i) => {
-                const isDragOver = dragOverIndex === i && dragIndex !== null && dragIndex !== i && !s.locked;
-                const isDragging = dragIndex === i;
-                return (
-                  <div
-                    key={i}
-                    onDragOver={(e) => handleDragOver(e, i)}
-                    onDrop={(e) => handleDrop(e, i)}
-                    onDragLeave={() => { if (dragOverIndex === i) setDragOverIndex(null); }}
-                    className={cn(
-                      "group flex items-center gap-2 rounded-lg border bg-card p-2 transition-all",
-                      s.locked && "border-dashed bg-muted/30",
-                      isDragging && "opacity-40",
-                      isDragOver && "border-primary ring-2 ring-primary/30"
-                    )}
-                  >
-                    <div
-                      draggable={!s.locked}
-                      onDragStart={(e) => handleDragStart(e, i)}
-                      onDragEnd={handleDragEnd}
-                      className={cn(
-                        "flex h-8 w-6 items-center justify-center rounded touch-none shrink-0",
-                        s.locked
-                          ? "cursor-not-allowed text-muted-foreground/30"
-                          : "cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-foreground hover:bg-muted"
-                      )}
-                      title={s.locked ? "Etapa fixa" : "Arrastar para reordenar"}
-                    >
-                      <GripVertical className="h-4 w-4" />
-                    </div>
-
-                    <StageColorPicker
-                      value={s.color}
-                      onChange={(c) => updateStage(i, { color: c })}
-                      disabled={s.locked}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleStageDragEnd}
+            >
+              <SortableContext
+                items={stages.map((s) => s.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2">
+                  {stages.map((s, i) => (
+                    <SortableStageRow
+                      key={s.id}
+                      stage={s}
+                      onChangeColor={(c) => updateStage(i, { color: c })}
+                      onChangeName={(n) => updateStage(i, { name: n })}
+                      onChangeAdjustment={(v) => updateStage(i, { adjustment_type: v })}
+                      onRemove={() => removeStage(i)}
                     />
-
-                    <Input
-                      value={s.name}
-                      disabled={s.locked}
-                      onChange={(e) => updateStage(i, { name: e.target.value })}
-                      className="h-8 flex-1"
-                    />
-
-                    <AdjustmentTypePicker
-                      value={s.adjustment_type}
-                      onChange={(v) => updateStage(i, { adjustment_type: v })}
-                      disabled={s.locked}
-                    />
-
-                    {s.locked ? (
-                      <div className="flex h-8 w-8 items-center justify-center shrink-0" title="Etapa obrigatória">
-                        <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
-                        onClick={() => removeStage(i)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
 
             <div className="flex items-center gap-2 rounded-lg border border-dashed p-2 bg-muted/20">
               <StageColorPicker value={newStageColor} onChange={setNewStageColor} />
