@@ -37,6 +37,11 @@ interface Props {
   onChangeInternal: (ids: string[]) => void;
   onChangeExternal: (ids: string[]) => void;
   disabled?: boolean;
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
+  onSave?: () => void | Promise<void>;
+  saving?: boolean;
+  hideTrigger?: boolean;
 }
 
 export function ApprovalNotificationsModal({
@@ -46,8 +51,19 @@ export function ApprovalNotificationsModal({
   onChangeInternal,
   onChangeExternal,
   disabled,
+  open: openProp,
+  onOpenChange,
+  onSave,
+  saving,
+  hideTrigger,
 }: Props) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp! : internalOpen;
+  const setOpen = (v: boolean) => {
+    if (isControlled) onOpenChange?.(v);
+    else setInternalOpen(v);
+  };
   const [tab, setTab] = useState<ApprovalKind>("internal");
   const [search, setSearch] = useState("");
   const { data: members } = useBoardMembers(boardId ?? null);
