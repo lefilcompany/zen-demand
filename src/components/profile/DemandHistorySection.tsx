@@ -233,6 +233,7 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
       if (type !== "all" && d.services?.id !== type) return false;
       if (statusFilter !== "all" && d.demand_statuses?.id !== statusFilter)
         return false;
+      if (stage !== "all" && getStage(d) !== stage) return false;
       if (q) {
         const hay = [
           d.title,
@@ -247,12 +248,12 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
       }
       return true;
     });
-  }, [demands, period, client, type, statusFilter, search]);
+  }, [demands, period, client, type, statusFilter, stage, search]);
 
   // Reset to page 1 when filters / page size / underlying data change
   useEffect(() => {
     setPage(1);
-  }, [period, client, type, statusFilter, search, pageSize, demands?.length]);
+  }, [period, client, type, statusFilter, stage, search, pageSize, demands?.length]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
