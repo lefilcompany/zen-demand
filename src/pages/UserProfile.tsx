@@ -523,6 +523,14 @@ export default function UserProfile() {
         </Card>
       </div>
 
+      {/* Demand History */}
+      {userId && (
+        <DemandHistorySection
+          userId={userId}
+          isPublic={Boolean((profile as any)?.is_demand_history_public)}
+        />
+      )}
+
       {/* Badges Section - Same as Profile */}
       <Card>
         <CardHeader className="pb-3">
