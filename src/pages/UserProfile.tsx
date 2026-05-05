@@ -567,139 +567,21 @@ export default function UserProfile() {
         )}
       </div>
 
-      {/* Demand History */}
+      {/* Tabbed: history, achievements, teams, boards */}
       {userId && (
-        <DemandHistorySection
+        <ProfileTabsSection
           userId={userId}
           isPublic={Boolean((profile as any)?.is_demand_history_public)}
+          visibility={visibility}
+          earnedBadges={earnedBadges}
+          lockedBadges={lockedBadges}
+          totalBadges={gamificationBadges.length}
+          teams={(userTeams || []) as any}
+          boards={(userBoards || []) as any}
+          getRoleLabel={getRoleLabel}
+          getRoleBadgeVariant={getRoleBadgeVariant}
         />
       )}
-
-      {/* Badges Section - Same as Profile */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Award className="h-5 w-5 text-yellow-500" />
-            Conquistas
-            <Badge variant="secondary" className="ml-2">
-              {earnedBadges.length}/{gamificationBadges.length}
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {(() => {
-            const allBadgesSorted = [...earnedBadges, ...lockedBadges];
-            const displayedBadges = showAllBadges 
-              ? allBadgesSorted 
-              : allBadgesSorted.slice(0, INITIAL_BADGES_COUNT);
-            const hasMoreBadges = allBadgesSorted.length > INITIAL_BADGES_COUNT;
-
-            return (
-              <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  <TooltipProvider>
-                    {displayedBadges.map((badge, index) => {
-                      const isEarned = earnedBadges.some(b => b.id === badge.id);
-                      return (
-                        <AnimatedBadge 
-                          key={badge.id} 
-                          badge={badge} 
-                          isEarned={isEarned} 
-                          index={index} 
-                        />
-                      );
-                    })}
-                  </TooltipProvider>
-                </div>
-                
-                {hasMoreBadges && (
-                  <div className="flex justify-center pt-2">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setShowAllBadges(!showAllBadges)}
-                      className="gap-2"
-                    >
-                      {showAllBadges ? (
-                        <>
-                          <ChevronUp className="h-4 w-4" />
-                          Ver menos
-                        </>
-                      ) : (
-                        <>
-                          <ChevronDown className="h-4 w-4" />
-                          Ver mais conquistas ({allBadgesSorted.length - INITIAL_BADGES_COUNT})
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
-              </>
-            );
-          })()}
-        </CardContent>
-      </Card>
-
-      {/* Teams & Boards Grid */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Teams */}
-        {userTeams && userTeams.length > 0 && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Briefcase className="h-5 w-5 text-primary" />
-                Equipes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {userTeams.map((tm: any) => (
-                  <div 
-                    key={tm.teams?.id} 
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                  >
-                    <div>
-                      <p className="font-medium">{tm.teams?.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Desde {format(new Date(tm.joined_at), "dd/MM/yyyy")}
-                      </p>
-                    </div>
-                    <Badge variant={getRoleBadgeVariant(tm.role)}>
-                      {getRoleLabel(tm.role)}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Boards */}
-        {userBoards && userBoards.length > 0 && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Target className="h-5 w-5 text-primary" />
-                Quadros
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {userBoards.map((bm: any) => (
-                  <div 
-                    key={bm.boards?.id} 
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                  >
-                    <p className="font-medium">{bm.boards?.name}</p>
-                    <Badge variant={getRoleBadgeVariant(bm.role)}>
-                      {getRoleLabel(bm.role)}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
     </div>
   );
 }
