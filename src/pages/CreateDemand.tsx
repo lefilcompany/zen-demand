@@ -20,6 +20,7 @@ import { useBoards } from "@/hooks/useBoards";
 import { useDemandFolders, useAddDemandToFolder } from "@/hooks/useDemandFolders";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
+import { ApprovalRecipientsSelector } from "@/components/ApprovalRecipientsSelector";
 import { ScopeProgressBar } from "@/components/ScopeProgressBar";
 import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/components/InlineFileUploader";
 import { useUploadAttachment } from "@/hooks/useAttachments";
