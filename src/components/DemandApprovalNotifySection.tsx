@@ -179,57 +179,50 @@ export function DemandApprovalNotifySection({ demandId, boardId, canEdit }: Prop
       <Bell className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
       <span className="text-muted-foreground whitespace-nowrap mt-0.5">Notificações:</span>
 
-      {editing ? (
-        <div className="flex flex-col gap-2 flex-1 min-w-0">
-          <ApprovalNotificationsModal
-            boardId={boardId}
-            internalIds={internalIds}
-            externalIds={externalIds}
-            onChangeInternal={setInternalIds}
-            onChangeExternal={setExternalIds}
-          />
-          <div className="flex gap-2">
-            <Button size="sm" onClick={handleSave} disabled={saving}>
-              Salvar
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => setEditing(false)} disabled={saving}>
-              Cancelar
-            </Button>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 flex-1 min-w-0">
+        {hasInternal && (
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Users className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Interna:</span>
+            {renderRecipients(internalMembers, "Padrão (Owners/Coord.)")}
           </div>
-        </div>
-      ) : (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 flex-1 min-w-0">
-          {hasInternal && (
-            <div className="flex items-center gap-1.5 min-w-0">
-              <Users className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-              <span className="text-xs text-muted-foreground whitespace-nowrap">Interna:</span>
-              {renderRecipients(internalMembers, "Padrão (Owners/Coord.)")}
-            </div>
-          )}
-          {hasExternal && (
-            <div className="flex items-center gap-1.5 min-w-0">
-              <Building2 className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-              <span className="text-xs text-muted-foreground whitespace-nowrap">Cliente:</span>
-              {renderRecipients(externalMembers, "Padrão (Solicitantes)")}
-            </div>
-          )}
-          {!hasInternal && !hasExternal && (
-            <span className="text-xs text-muted-foreground italic">
-              Este quadro não possui etapas de aprovação configuradas.
-            </span>
-          )}
-          {canEdit && (hasInternal || hasExternal) && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 px-2 text-xs"
-              onClick={() => setEditing(true)}
-            >
-              Editar
-            </Button>
-          )}
-        </div>
-      )}
+        )}
+        {hasExternal && (
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Building2 className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Cliente:</span>
+            {renderRecipients(externalMembers, "Padrão (Solicitantes)")}
+          </div>
+        )}
+        {!hasInternal && !hasExternal && (
+          <span className="text-xs text-muted-foreground italic">
+            Este quadro não possui etapas de aprovação configuradas.
+          </span>
+        )}
+        {canEdit && (hasInternal || hasExternal) && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 px-2 text-xs"
+            onClick={() => setEditing(true)}
+          >
+            Editar
+          </Button>
+        )}
+      </div>
+
+      <ApprovalNotificationsModal
+        boardId={boardId}
+        internalIds={internalIds}
+        externalIds={externalIds}
+        onChangeInternal={setInternalIds}
+        onChangeExternal={setExternalIds}
+        open={editing}
+        onOpenChange={setEditing}
+        onSave={handleSave}
+        saving={saving}
+        hideTrigger
+      />
     </div>
   );
 }

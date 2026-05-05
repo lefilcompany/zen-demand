@@ -37,6 +37,11 @@ interface Props {
   onChangeInternal: (ids: string[]) => void;
   onChangeExternal: (ids: string[]) => void;
   disabled?: boolean;
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
+  onSave?: () => void | Promise<void>;
+  saving?: boolean;
+  hideTrigger?: boolean;
 }
 
 export function ApprovalNotificationsModal({
@@ -46,8 +51,19 @@ export function ApprovalNotificationsModal({
   onChangeInternal,
   onChangeExternal,
   disabled,
+  open: openProp,
+  onOpenChange,
+  onSave,
+  saving,
+  hideTrigger,
 }: Props) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp! : internalOpen;
+  const setOpen = (v: boolean) => {
+    if (isControlled) onOpenChange?.(v);
+    else setInternalOpen(v);
+  };
   const [tab, setTab] = useState<ApprovalKind>("internal");
   const [search, setSearch] = useState("");
   const { data: members } = useBoardMembers(boardId ?? null);
@@ -119,26 +135,30 @@ export function ApprovalNotificationsModal({
   })();
 
   return (
-    <div className="space-y-2">
-      <Label className="flex items-center gap-2">
-        <Bell className="h-4 w-4" />
-        Notificações de aprovação
-        <InfoTooltip text="Personalize quem deve receber notificações nas etapas de aprovação. Se nada for selecionado, o padrão é notificar todos os Owners/Coordenadores (interna) e todos os Solicitantes (cliente)." />
-      </Label>
-      <button
-        type="button"
-        disabled={disabled || !boardId}
-        onClick={() => setOpen(true)}
-        className={cn(
-          "w-full h-8 flex items-center justify-between gap-2 px-3 rounded-md border border-input bg-background text-sm",
-          "hover:bg-white hover:text-[#F28705] hover:border-[#F28705] transition-colors",
-          "disabled:opacity-50 disabled:pointer-events-none",
-          internalIds.length === 0 && externalIds.length === 0 && "text-muted-foreground",
-        )}
-      >
-        <span className="truncate">{summary}</span>
-        <Bell className="h-3.5 w-3.5 opacity-60" />
-      </button>
+    <div className={hideTrigger ? "" : "space-y-2"}>
+      {!hideTrigger && (
+        <>
+          <Label className="flex items-center gap-2">
+            <Bell className="h-4 w-4" />
+            Notificações de aprovação
+            <InfoTooltip text="Personalize quem deve receber notificações nas etapas de aprovação. Se nada for selecionado, o padrão é notificar todos os Owners/Coordenadores (interna) e todos os Solicitantes (cliente)." />
+          </Label>
+          <button
+            type="button"
+            disabled={disabled || !boardId}
+            onClick={() => setOpen(true)}
+            className={cn(
+              "w-full h-8 flex items-center justify-between gap-2 px-3 rounded-md border border-input bg-background text-sm",
+              "hover:bg-white hover:text-[#F28705] hover:border-[#F28705] transition-colors",
+              "disabled:opacity-50 disabled:pointer-events-none",
+              internalIds.length === 0 && externalIds.length === 0 && "text-muted-foreground",
+            )}
+          >
+            <span className="truncate">{summary}</span>
+            <Bell className="h-3.5 w-3.5 opacity-60" />
+          </button>
+        </>
+      )}
 
       <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setSearch(""); }}>
         <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
@@ -260,10 +280,17 @@ export function ApprovalNotificationsModal({
             </Button>
             <Button
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={async () => {
+                if (onSave) {
+                  await onSave();
+                } else {
+                  setOpen(false);
+                }
+              }}
+              disabled={saving}
               className="!bg-[#F28705] hover:!bg-[#F28705]/80 !text-white !border-transparent"
             >
-              Concluir
+              {saving ? "Salvando..." : onSave ? "Salvar" : "Concluir"}
             </Button>
           </DialogFooter>
         </DialogContent>
