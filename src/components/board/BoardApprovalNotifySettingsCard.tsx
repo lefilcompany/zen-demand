@@ -25,7 +25,7 @@ const INTERNAL_ROLES = new Set(["admin", "moderator"]);
 const EXTERNAL_ROLES = new Set(["requester"]);
 
 const roleLabel = (r: string) =>
-  r === "admin" ? "Owner"
+  r === "admin" ? "Administrador"
   : r === "moderator" ? "Coordenador"
   : r === "executor" ? "Agente"
   : r === "requester" ? "Solicitante"
