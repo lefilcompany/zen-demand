@@ -219,7 +219,7 @@ export function ApprovalNotificationsModal({
             <Button
               type="button"
               onClick={() => setOpen(false)}
-              className="bg-[#F28705] hover:bg-[#F28705]/90 text-white"
+              className="!bg-[#F28705] hover:!bg-[#F28705]/80 !text-white !border-transparent"
             >
               Concluir
             </Button>
