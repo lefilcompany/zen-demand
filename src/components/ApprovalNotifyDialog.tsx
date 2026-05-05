@@ -331,7 +331,7 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
               <Button
                 onClick={handleSubmit}
                 disabled={submitting || finalRecipients.length === 0}
-                className="bg-primary hover:bg-primary/90"
+                className="bg-primary text-primary-foreground border border-transparent hover:bg-white hover:text-primary hover:border-primary"
               >
                 {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Notificar ({finalRecipients.length})
@@ -503,7 +503,7 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
               <Button
                 onClick={handleSubmit}
                 disabled={submitting || upsertBoardSetting.isPending || finalRecipients.length === 0}
-                className="bg-primary hover:bg-primary/90"
+                className="bg-primary text-primary-foreground border border-transparent hover:bg-white hover:text-primary hover:border-primary"
               >
                 {(submitting || upsertBoardSetting.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Notificar ({finalRecipients.length})
