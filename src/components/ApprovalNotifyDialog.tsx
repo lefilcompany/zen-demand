@@ -136,13 +136,13 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
     }
   }, [open]);
 
-  // Hydrate from board setting (or fall back to default) once data arrives
+  // Hydrate from per-demand setting, then board setting, then defaults.
   useEffect(() => {
-    if (!open || hydrated || settingLoading) return;
-    if (boardSetting) {
-      setMode(boardSetting.mode);
-      setSelected(new Set(boardSetting.recipient_ids ?? []));
-      setIncludeCreator(boardSetting.include_creator);
+    if (!open || hydrated || settingLoading || demandSettingLoading) return;
+    if (effectiveSetting) {
+      setMode(effectiveSetting.mode);
+      setSelected(new Set(effectiveSetting.recipient_ids ?? []));
+      setIncludeCreator(effectiveSetting.include_creator);
       setView("confirm");
     } else {
       setMode("all");
@@ -151,7 +151,7 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
       setView("edit");
     }
     setHydrated(true);
-  }, [open, hydrated, settingLoading, boardSetting, preferences.approvalNotifyIncludeCreator]);
+  }, [open, hydrated, settingLoading, demandSettingLoading, effectiveSetting, preferences.approvalNotifyIncludeCreator]);
 
   const toggleMember = (userId: string) => {
     setSelected((prev) => {
