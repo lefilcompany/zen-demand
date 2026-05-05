@@ -39,6 +39,28 @@ interface Props {
 }
 
 type Period = "all" | "today" | "week" | "month";
+type Stage = "all" | "todo" | "doing" | "delivered" | "late";
+
+function getStage(d: any): Exclude<Stage, "all"> {
+  const statusName: string = d?.demand_statuses?.name || "";
+  if (d?.delivered_at) {
+    if (d?.due_date) {
+      const delivered = new Date(d.delivered_at).getTime();
+      const due = new Date(String(d.due_date).substring(0, 10)).getTime();
+      if (delivered > due) return "late";
+    }
+    return "delivered";
+  }
+  if (statusName === "A Iniciar") return "todo";
+  return "doing";
+}
+
+const STAGE_META: Record<Exclude<Stage, "all">, { label: string; cls: string }> = {
+  todo: { label: "A iniciar", cls: "border-muted-foreground/40 text-muted-foreground" },
+  doing: { label: "Em andamento", cls: "border-blue-500/50 text-blue-500" },
+  delivered: { label: "Entregue", cls: "border-emerald-500/60 text-emerald-500" },
+  late: { label: "Entregue com atraso", cls: "border-amber-500/60 text-amber-500" },
+};
 
 function startOf(period: Period): Date | null {
   const now = new Date();
@@ -67,6 +89,7 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
   const canView = isOwn || isPublic;
 
   const [period, setPeriod] = useState<Period>("all");
+  const [stage, setStage] = useState<Stage>("all");
   const [client, setClient] = useState<string>("all");
   const [type, setType] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -105,7 +128,7 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
   const { data: demands, isLoading } = useQuery({
     queryKey: ["demand-history", userId],
     queryFn: async () => {
-      // Get demand IDs where user is creator or assignee, and that are delivered
+      // Get demands where user is creator or assignee (all statuses)
       const [createdRes, assignedRes] = await Promise.all([
         supabase
           .from("demands")
@@ -118,7 +141,6 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
              assigned_profile:profiles!demands_assigned_to_fkey(id, full_name, avatar_url)`
           )
           .eq("created_by", userId)
-          .not("delivered_at", "is", null)
           .eq("archived", false),
         supabase
           .from("demands")
@@ -132,7 +154,6 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
              demand_assignees!inner(user_id)`
           )
           .eq("demand_assignees.user_id", userId)
-          .not("delivered_at", "is", null)
           .eq("archived", false),
       ]);
 
@@ -212,6 +233,7 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
       if (type !== "all" && d.services?.id !== type) return false;
       if (statusFilter !== "all" && d.demand_statuses?.id !== statusFilter)
         return false;
+      if (stage !== "all" && getStage(d) !== stage) return false;
       if (q) {
         const hay = [
           d.title,
@@ -226,12 +248,12 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
       }
       return true;
     });
-  }, [demands, period, client, type, statusFilter, search]);
+  }, [demands, period, client, type, statusFilter, stage, search]);
 
   // Reset to page 1 when filters / page size / underlying data change
   useEffect(() => {
     setPage(1);
-  }, [period, client, type, statusFilter, search, pageSize, demands?.length]);
+  }, [period, client, type, statusFilter, stage, search, pageSize, demands?.length]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -253,7 +275,7 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
               Histórico de demandas
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Acompanhe as demandas concluídas e filtre por período, cliente ou tipo de entrega.
+              Acompanhe suas demandas a iniciar, em andamento e entregues. Filtre por etapa, período, cliente ou tipo.
             </p>
           </div>
           {isOwn && (
@@ -294,17 +316,27 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
             {(() => {
               const activeCount =
                 (period !== "all" ? 1 : 0) +
+                (stage !== "all" ? 1 : 0) +
                 (client !== "all" ? 1 : 0) +
                 (type !== "all" ? 1 : 0) +
                 (statusFilter !== "all" ? 1 : 0) +
                 (search.trim() ? 1 : 0);
               const clearAll = () => {
                 setPeriod("all");
+                setStage("all");
                 setClient("all");
                 setType("all");
                 setStatusFilter("all");
                 setSearch("");
               };
+              const stageCounts = (demands || []).reduce(
+                (acc: Record<string, number>, d: any) => {
+                  const s = getStage(d);
+                  acc[s] = (acc[s] || 0) + 1;
+                  return acc;
+                },
+                {} as Record<string, number>,
+              );
               return (
                 <div className="rounded-xl border bg-muted/30 p-3 space-y-3">
                   {/* Top row: search + clear */}
@@ -355,6 +387,45 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
                             : p === "week"
                             ? "Esta semana"
                             : "Este mês"}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Stage pills */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {(
+                      [
+                        { id: "all", label: "Todas as etapas", cls: "" },
+                        { id: "todo", label: STAGE_META.todo.label, cls: STAGE_META.todo.cls },
+                        { id: "doing", label: STAGE_META.doing.label, cls: STAGE_META.doing.cls },
+                        { id: "delivered", label: STAGE_META.delivered.label, cls: STAGE_META.delivered.cls },
+                        { id: "late", label: STAGE_META.late.label, cls: STAGE_META.late.cls },
+                      ] as { id: Stage; label: string; cls: string }[]
+                    ).map((s) => {
+                      const active = stage === s.id;
+                      const count = s.id === "all"
+                        ? (demands || []).length
+                        : stageCounts[s.id] || 0;
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => setStage(s.id)}
+                          className={`h-7 px-2.5 rounded-full text-xs font-medium border inline-flex items-center gap-1.5 transition-colors ${
+                            active
+                              ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                              : `bg-background hover:bg-muted ${s.cls || "border-border/60 text-muted-foreground"}`
+                          }`}
+                        >
+                          {s.label}
+                          <span
+                            className={`text-[10px] px-1.5 h-4 rounded-full inline-flex items-center ${
+                              active ? "bg-primary-foreground/20" : "bg-muted"
+                            }`}
+                          >
+                            {count}
+                          </span>
                         </button>
                       );
                     })}
@@ -477,18 +548,24 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
                               )}
                             </div>
                           </div>
-                          {d.demand_statuses?.name && (
-                            <Badge
-                              variant="outline"
-                              className="shrink-0"
-                              style={{
-                                borderColor: d.demand_statuses.color,
-                                color: d.demand_statuses.color,
-                              }}
-                            >
-                              {d.demand_statuses.name}
-                            </Badge>
-                          )}
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            {(() => {
+                              const s = getStage(d);
+                              return (
+                                <Badge variant="outline" className={STAGE_META[s].cls}>
+                                  {STAGE_META[s].label}
+                                </Badge>
+                              );
+                            })()}
+                            {d.demand_statuses?.name && (
+                              <span
+                                className="text-[10px] text-muted-foreground"
+                                style={{ color: d.demand_statuses.color }}
+                              >
+                                {d.demand_statuses.name}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </button>
                     );
