@@ -138,7 +138,7 @@ export function ApprovalNotificationsModal({
 
           <p className="text-xs text-muted-foreground px-1">
             {tab === "internal"
-              ? "Mostrando Owners e Coordenadores do quadro (responsáveis pela aprovação interna)."
+              ? "Mostrando Administradores e Coordenadores do quadro (responsáveis pela aprovação interna)."
               : "Mostrando Solicitantes do quadro (responsáveis pela aprovação do cliente)."}
           </p>
 
