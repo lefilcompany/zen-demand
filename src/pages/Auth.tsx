@@ -431,12 +431,14 @@ export default function Auth() {
   return <>
     <SEOHead title="Entrar ou Criar Conta" description="Acesse o SoMA - Sistema Operacional de Marketing. Faça login ou crie sua conta para gerenciar demandas e produtividade." path="/auth" />
     {showClearedCacheNotice && (
-      <div className="fixed top-4 right-4 z-50 max-w-sm rounded-xl border border-primary/30 bg-background/95 backdrop-blur-md shadow-2xl p-4 flex gap-3 items-start animate-in fade-in slide-in-from-top-4 duration-300">
-        <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-        <div className="flex-1 space-y-1">
-          <p className="text-sm font-semibold text-foreground">Sua conta continua aqui!</p>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Detectamos que os dados do navegador foram limpos. Sua conta, equipes e demandas estão preservadas — basta entrar novamente.
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 lg:left-auto lg:right-4 lg:translate-x-0 z-50 w-[calc(100%-2rem)] max-w-sm rounded-xl border border-border bg-background/95 backdrop-blur-md shadow-2xl p-3.5 flex gap-3 items-start animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+          <Info className="h-4 w-4 text-primary" />
+        </div>
+        <div className="flex-1 space-y-0.5 min-w-0">
+          <p className="text-[13px] font-semibold text-foreground">Sua conta continua aqui</p>
+          <p className="text-[11.5px] text-muted-foreground leading-relaxed">
+            Os dados do navegador foram limpos. Basta entrar novamente — sua conta, equipes e demandas estão preservadas.
           </p>
         </div>
         <Button
