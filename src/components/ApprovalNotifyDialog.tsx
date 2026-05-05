@@ -493,15 +493,15 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
                     </span>
                   </Label>
                 </div>
-              ) : boardSetting ? (
+              ) : effectiveSetting ? (
                 <p className="text-xs text-muted-foreground px-1">
-                  Lista padrão configurada por um administrador do quadro.
+                  Lista padrão configurada {demandSetting ? "para esta demanda" : "por um administrador do quadro"}.
                 </p>
               ) : null}
             </div>
 
             <DialogFooter className="flex-shrink-0 gap-2 sm:gap-2 flex-wrap">
-              {boardSetting && (
+              {effectiveSetting && (
                 <Button
                   variant="outline"
                   onClick={() => setView("confirm")}
