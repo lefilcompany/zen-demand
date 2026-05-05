@@ -460,7 +460,9 @@ export default function UserProfile() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
-        <Card className="col-span-1">
+        {v("statDemands") && (
+
+          <Card className="col-span-1">
           <CardContent className="pt-4 pb-4">
             <div className="flex flex-col items-center text-center">
               <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-2">
@@ -472,7 +474,12 @@ export default function UserProfile() {
           </CardContent>
         </Card>
 
-        <Card className="col-span-1">
+        )}
+
+        {v("statDelivered") && (
+
+
+          <Card className="col-span-1">
           <CardContent className="pt-4 pb-4">
             <div className="flex flex-col items-center text-center">
               <div className="h-10 w-10 rounded-full bg-success/10 flex items-center justify-center mb-2">
@@ -484,7 +491,13 @@ export default function UserProfile() {
           </CardContent>
         </Card>
 
-        <Card className="col-span-1">
+
+        )}
+
+        {v("statDemands") && (
+
+
+          <Card className="col-span-1">
           <CardContent className="pt-4 pb-4">
             <div className="flex flex-col items-center text-center">
               <div className="h-10 w-10 rounded-full bg-secondary/10 flex items-center justify-center mb-2">
@@ -496,7 +509,13 @@ export default function UserProfile() {
           </CardContent>
         </Card>
 
-        <Card className="col-span-1">
+
+        )}
+
+        {v("statTime") && (
+
+
+          <Card className="col-span-1">
           <CardContent className="pt-4 pb-4">
             <div className="flex flex-col items-center text-center">
               <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center mb-2">
@@ -508,7 +527,13 @@ export default function UserProfile() {
           </CardContent>
         </Card>
 
-        <Card className="col-span-1">
+
+        )}
+
+        {v("statComments") && (
+
+
+          <Card className="col-span-1">
           <CardContent className="pt-4 pb-4">
             <div className="flex flex-col items-center text-center">
               <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-2">
@@ -520,7 +545,13 @@ export default function UserProfile() {
           </CardContent>
         </Card>
 
-        <Card className="col-span-1">
+
+        )}
+
+        {v("statRecent") && (
+
+
+          <Card className="col-span-1">
           <CardContent className="pt-4 pb-4">
             <div className="flex flex-col items-center text-center">
               <div className="h-10 w-10 rounded-full bg-warning/20 flex items-center justify-center mb-2">
@@ -531,6 +562,9 @@ export default function UserProfile() {
             </div>
           </CardContent>
         </Card>
+
+
+        )}
       </div>
 
       {/* Demand History */}
