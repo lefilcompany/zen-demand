@@ -61,6 +61,11 @@ export default function Auth() {
     password: ""
   }));
   const [showClearedCacheNotice, setShowClearedCacheNotice] = useState(() => looksLikeClearedCache());
+  useEffect(() => {
+    if (!showClearedCacheNotice) return;
+    const timer = setTimeout(() => setShowClearedCacheNotice(false), 7000);
+    return () => clearTimeout(timer);
+  }, [showClearedCacheNotice]);
   const [signupData, setSignupData] = useState({
     fullName: "",
     email: "",
