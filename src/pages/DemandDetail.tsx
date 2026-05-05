@@ -22,6 +22,7 @@ import { useAuth } from "@/lib/auth";
 import { useUserTimerControl } from "@/hooks/useUserTimeTracking";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
+import { DemandApprovalNotifySection } from "@/components/DemandApprovalNotifySection";
 import { DemandEditForm } from "@/components/DemandEditForm";
 import { SubdemandEditForm } from "@/components/SubdemandEditForm";
 import { DemandFolderPicker } from "@/components/DemandFolderPicker";
@@ -1133,6 +1134,13 @@ export default function DemandDetail() {
                     </Button>}
                 </div>}
             </div>
+
+            {/* Approval notification recipients */}
+            <DemandApprovalNotifySection
+              demandId={demand.id}
+              boardId={demand.board_id}
+              canEdit={hasEditPermission}
+            />
           </div>
 
             {/* Status changed by */}
