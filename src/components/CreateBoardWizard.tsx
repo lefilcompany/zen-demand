@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useCreateBoard, type CreateBoardData } from "@/hooks/useBoards";
 import { useSelectedTeam } from "@/contexts/TeamContext";
-import { useServices } from "@/hooks/useServices";
+import { useServices, useHierarchicalServices, type ServiceWithHierarchy } from "@/hooks/useServices";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   Loader2, ArrowLeft, ArrowRight, Check, Plus, Trash2, GripVertical,
   Package, Users, Layers, FileText, Search, AlertCircle, Lock, ShieldCheck, Shield, Wrench, MessageSquare,
+  Folder, FolderOpen, ChevronDown, ChevronRight,
   CircleDot, ClipboardCheck, UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -333,6 +334,189 @@ function SortableStageRow({
   );
 }
 
+interface ServicesPickerProps {
+  hierarchical: ServiceWithHierarchy[] | undefined;
+  allServices: { id: string; name: string; estimated_hours: number; parent_id: string | null }[];
+  selectedServices: SelectedService[];
+  serviceSearch: string;
+  onSearchChange: (v: string) => void;
+  openFolders: Set<string>;
+  onToggleFolder: (id: string) => void;
+  onToggleService: (id: string, name: string, checked: boolean) => void;
+  onSetLimit: (id: string, limit: number) => void;
+  onSelectAll: (checked: boolean) => void;
+}
+
+function ServicesPicker({
+  hierarchical, allServices, selectedServices, serviceSearch, onSearchChange,
+  openFolders, onToggleFolder, onToggleService, onSetLimit, onSelectAll,
+}: ServicesPickerProps) {
+  const search = serviceSearch.trim().toLowerCase();
+  const matchesSearch = (name: string) => !search || name.toLowerCase().includes(search);
+
+  // Compute total selectable leaves (excludes categories)
+  const totalLeaves = allServices.filter((s) => !allServices.some((c) => c.parent_id === s.id)).length;
+  const allSelected = totalLeaves > 0 && selectedServices.length === totalLeaves;
+
+  // Render a single leaf service row
+  const ServiceRow = ({ service, indent = false }: { service: { id: string; name: string; estimated_hours: number }; indent?: boolean }) => {
+    const sel = selectedServices.find((s) => s.serviceId === service.id);
+    return (
+      <div className={cn("rounded-md transition-colors", sel && "bg-primary/5", indent && "pl-6")}>
+        <div className="flex items-center gap-2.5 px-2 py-1.5">
+          <Checkbox
+            checked={!!sel}
+            onCheckedChange={(c) => onToggleService(service.id, service.name, c === true)}
+          />
+          <Wrench className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <label className="flex-1 text-sm cursor-pointer truncate" onClick={() => onToggleService(service.id, service.name, !sel)}>
+            <span className="font-medium">{service.name}</span>
+            <span className="ml-2 text-[11px] text-muted-foreground">{service.estimated_hours}h</span>
+          </label>
+        </div>
+        {sel && (
+          <div className={cn("flex items-center gap-2 pb-2 px-2", indent ? "pl-9" : "pl-9")}>
+            <Label className="text-[11px] text-muted-foreground whitespace-nowrap">Limite mensal</Label>
+            <Input
+              type="number"
+              min={0}
+              value={sel.monthlyLimit}
+              onChange={(e) => onSetLimit(service.id, parseInt(e.target.value) || 0)}
+              className="h-7 w-20 text-xs"
+            />
+            <span className="text-[11px] text-muted-foreground">
+              {sel.monthlyLimit === 0 ? "ilimitado" : "demandas/mês"}
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Folder (category) row with children
+  const FolderRow = ({ folder }: { folder: ServiceWithHierarchy }) => {
+    // visible children (filtered by search)
+    const visibleChildren = folder.children.filter((c) => matchesSearch(c.name) || matchesSearch(folder.name));
+    if (visibleChildren.length === 0 && search && !matchesSearch(folder.name)) return null;
+
+    const isOpen = openFolders.has(folder.id) || !!search;
+    const childIds = folder.children.map((c) => c.id);
+    const selectedCount = selectedServices.filter((s) => childIds.includes(s.serviceId)).length;
+    const allChildrenSelected = childIds.length > 0 && selectedCount === childIds.length;
+
+    return (
+      <div className="rounded-lg border bg-card overflow-hidden">
+        <div className="flex items-center gap-2 px-2 py-2 hover:bg-muted/40 transition-colors">
+          <button
+            type="button"
+            onClick={() => onToggleFolder(folder.id)}
+            className="flex h-6 w-6 items-center justify-center rounded hover:bg-muted shrink-0"
+            aria-label={isOpen ? "Recolher" : "Expandir"}
+          >
+            {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </button>
+          <Checkbox
+            checked={allChildrenSelected}
+            onCheckedChange={(c) => {
+              folder.children.forEach((child) => {
+                const isSel = selectedServices.some((s) => s.serviceId === child.id);
+                if (c === true && !isSel) onToggleService(child.id, child.name, true);
+                if (c !== true && isSel) onToggleService(child.id, child.name, false);
+              });
+            }}
+          />
+          {isOpen ? (
+            <FolderOpen className="h-4 w-4 text-primary shrink-0" />
+          ) : (
+            <Folder className="h-4 w-4 text-primary shrink-0" />
+          )}
+          <button
+            type="button"
+            onClick={() => onToggleFolder(folder.id)}
+            className="flex-1 flex items-center gap-2 text-left min-w-0"
+          >
+            <span className="text-sm font-semibold truncate">{folder.name}</span>
+            <span className="text-[11px] text-muted-foreground shrink-0">
+              {selectedCount}/{childIds.length}
+            </span>
+          </button>
+        </div>
+        {isOpen && (
+          <div className="border-t bg-muted/20 py-1">
+            {visibleChildren.map((child) => (
+              <ServiceRow key={child.id} service={child} indent />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  if (!hierarchical) return null;
+
+  // Split top-level entries into folders (categories) and standalone services
+  const folders = hierarchical.filter((s) => s.isCategory);
+  const standalone = hierarchical.filter((s) => !s.isCategory);
+
+  const visibleFolders = folders.filter(
+    (f) => matchesSearch(f.name) || f.children.some((c) => matchesSearch(c.name)),
+  );
+  const visibleStandalone = standalone.filter((s) => matchesSearch(s.name));
+
+  return (
+    <div className="space-y-3">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar serviço ou pasta..."
+          value={serviceSearch}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="pl-9 h-9"
+        />
+      </div>
+
+      <div className="flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <Checkbox
+            checked={allSelected}
+            onCheckedChange={(c) => onSelectAll(c === true)}
+          />
+          <span className="text-xs font-medium">Selecionar todos os serviços</span>
+        </label>
+        <span className="text-[11px] text-muted-foreground">
+          {selectedServices.length} de {totalLeaves} selecionados
+        </span>
+      </div>
+
+      {visibleFolders.length === 0 && visibleStandalone.length === 0 ? (
+        <p className="text-center py-6 text-sm text-muted-foreground">
+          Nenhum serviço encontrado.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {visibleFolders.map((folder) => (
+            <FolderRow key={folder.id} folder={folder} />
+          ))}
+          {visibleStandalone.length > 0 && (
+            <div className="rounded-lg border bg-card">
+              <div className="px-3 py-1.5 border-b bg-muted/30">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Serviços independentes
+                </span>
+              </div>
+              <div className="py-1">
+                {visibleStandalone.map((s) => (
+                  <ServiceRow key={s.id} service={s} />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface CreateBoardWizardProps {
   onComplete: () => void;
   onCancel?: () => void;
@@ -342,6 +526,9 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
   const { selectedTeamId } = useSelectedTeam();
   const createBoard = useCreateBoard();
   const { data: teamServices, isLoading: servicesLoading } = useServices(selectedTeamId);
+  const { data: hierarchicalServices } = useHierarchicalServices(selectedTeamId);
+  const [serviceSearch, setServiceSearch] = useState("");
+  const [openFolders, setOpenFolders] = useState<Set<string>>(new Set());
   const { data: teamMembers } = useTeamMembers(selectedTeamId);
 
   const [stepIdx, setStepIdx] = useState(0);
@@ -727,50 +914,30 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 pb-2 border-b">
-                  <Checkbox
-                    checked={selectedServices.length === teamServices!.length}
-                    onCheckedChange={(c) => {
-                      if (c) setSelectedServices(teamServices!.map((s) => ({ serviceId: s.id, serviceName: s.name, monthlyLimit: 0 })));
-                      else setSelectedServices([]);
-                    }}
-                  />
-                  <span className="text-xs font-semibold text-muted-foreground">Selecionar todos</span>
-                </div>
-                {teamServices!.map((service) => {
-                  const sel = selectedServices.find((s) => s.serviceId === service.id);
-                  return (
-                    <div key={service.id} className="space-y-1.5">
-                      <div className="flex items-center gap-3">
-                        <Checkbox
-                          checked={!!sel}
-                          onCheckedChange={(c) => toggleService(service.id, service.name, c === true)}
-                        />
-                        <label className="flex-1 text-sm font-medium cursor-pointer">
-                          {service.name}
-                          <span className="ml-2 text-xs text-muted-foreground">({service.estimated_hours}h)</span>
-                        </label>
-                      </div>
-                      {sel && (
-                        <div className="ml-7 flex items-center gap-2">
-                          <Label className="text-xs whitespace-nowrap">Limite mensal:</Label>
-                          <Input
-                            type="number"
-                            min={0}
-                            value={sel.monthlyLimit}
-                            onChange={(e) => setLimit(service.id, parseInt(e.target.value) || 0)}
-                            className="h-7 w-20 text-xs"
-                          />
-                          <span className="text-xs text-muted-foreground">
-                            {sel.monthlyLimit === 0 ? "(ilimitado)" : "demandas/mês"}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  );
+              <ServicesPicker
+                hierarchical={hierarchicalServices}
+                allServices={teamServices!}
+                selectedServices={selectedServices}
+                serviceSearch={serviceSearch}
+                onSearchChange={setServiceSearch}
+                openFolders={openFolders}
+                onToggleFolder={(id) => setOpenFolders((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(id)) next.delete(id); else next.add(id);
+                  return next;
                 })}
-              </div>
+                onToggleService={toggleService}
+                onSetLimit={setLimit}
+                onSelectAll={(checked) => {
+                  if (checked) {
+                    // only leaf services (non-categories)
+                    const leaves = teamServices!.filter((s) => !teamServices!.some((c) => c.parent_id === s.id));
+                    setSelectedServices(leaves.map((s) => ({ serviceId: s.id, serviceName: s.name, monthlyLimit: 0 })));
+                  } else {
+                    setSelectedServices([]);
+                  }
+                }}
+              />
             )}
           </div>
         )}
