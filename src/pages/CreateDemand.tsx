@@ -27,7 +27,7 @@ import { useUploadAttachment } from "@/hooks/useAttachments";
 import { RecurrenceConfig, RecurrenceData, defaultRecurrenceData } from "@/components/RecurrenceConfig";
 import { useCreateRecurringDemand } from "@/hooks/useRecurringDemands";
 import { useCreateDemandWithSubdemands, SubdemandInput, DependencyInput } from "@/hooks/useSubdemands";
-import { AlertTriangle, Ban, WifiOff, Package, CheckCircle2, Plus, ExternalLink, LayoutGrid, FolderOpen, Users, ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
+import { AlertTriangle, Ban, WifiOff, Package, CheckCircle2, Plus, ExternalLink, LayoutGrid, FolderOpen, Users, ChevronLeft, ChevronRight, Loader2, Search, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
@@ -846,7 +846,10 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                                   className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm border border-transparent bg-white hover:bg-white hover:text-[#F28705] hover:border-[#F28705] transition-colors text-left"
                                 >
                                   <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                                  <span className="truncate">{board.name}</span>
+                                  <span className="truncate flex-1">{board.name}</span>
+                                  {formBoardId === board.id && (
+                                    <Check className="h-4 w-4 text-[#F28705] shrink-0" />
+                                  )}
                                 </button>
                               ))
                             )}
