@@ -253,15 +253,17 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
             </span>{" "}
             foi movida para{" "}
             <span className="font-medium text-foreground">{approvalLabel}</span>.
-            {view === "confirm" && boardSetting
-              ? " Confirme quem será notificado pelo padrão do quadro."
-              : boardSetting
+            {view === "confirm" && effectiveSetting
+              ? (demandSetting
+                  ? " Confirme quem será notificado conforme configurado nesta demanda."
+                  : " Confirme quem será notificado pelo padrão do quadro.")
+              : effectiveSetting
                 ? " Ajuste a lista de destinatários."
                 : " Selecione quem deve ser avisado."}
           </DialogDescription>
         </DialogHeader>
 
-        {view === "confirm" && boardSetting ? (
+        {view === "confirm" && effectiveSetting ? (
           <>
             <div className="flex-1 min-h-0 overflow-y-auto space-y-3 py-2">
               <div className="rounded-md border bg-muted/20 p-3">
