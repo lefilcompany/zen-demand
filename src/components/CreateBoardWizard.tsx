@@ -318,7 +318,7 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
     const idx = stages.findIndex((s) => s.locked);
     const insertIdx = idx >= 0 ? idx : stages.length;
     const next = [...stages];
-    next.splice(insertIdx, 0, { name: trimmed, color: newStageColor, adjustment_type: "none" });
+    next.splice(insertIdx, 0, { id: makeStageId(), name: trimmed, color: newStageColor, adjustment_type: "none" });
     setStages(next);
     setNewStageName("");
   };
