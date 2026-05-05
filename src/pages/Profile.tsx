@@ -389,108 +389,88 @@ export default function Profile() {
         </CardContent>
       </Card>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                <Target className="h-6 w-6 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats?.totalDemands || 0}</p>
-                <p className="text-sm text-muted-foreground">Demandas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                <CheckCircle2 className="h-6 w-6 text-green-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats?.deliveredDemands || 0}</p>
-                <p className="text-sm text-muted-foreground">Entregues</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-purple-500/20 flex items-center justify-center">
-                <Clock className="h-6 w-6 text-purple-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats ? formatTime(stats.totalTimeSpent) : "0m"}</p>
-                <p className="text-sm text-muted-foreground">Trabalhado</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-orange-500/20 flex items-center justify-center">
-                <MessageSquare className="h-6 w-6 text-orange-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats?.totalComments || 0}</p>
-                <p className="text-sm text-muted-foreground">Comentários</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Stats Grid - compact */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+        {[
+          {
+            icon: Target,
+            label: "Demandas",
+            value: stats?.totalDemands || 0,
+            color: "text-blue-500",
+            bg: "bg-blue-500/10",
+          },
+          {
+            icon: CheckCircle2,
+            label: "Entregues",
+            value: stats?.deliveredDemands || 0,
+            color: "text-green-500",
+            bg: "bg-green-500/10",
+          },
+          {
+            icon: Clock,
+            label: "Trabalhado",
+            value: stats ? formatTime(stats.totalTimeSpent) : "0m",
+            color: "text-purple-500",
+            bg: "bg-purple-500/10",
+          },
+          {
+            icon: MessageSquare,
+            label: "Comentários",
+            value: stats?.totalComments || 0,
+            color: "text-orange-500",
+            bg: "bg-orange-500/10",
+          },
+          {
+            icon: Users,
+            label: "Equipes",
+            value: stats?.teamsCount || 0,
+            color: "text-muted-foreground",
+            bg: "bg-muted",
+          },
+          {
+            icon: TrendingUp,
+            label: "Quadros",
+            value: stats?.boardsCount || 0,
+            color: "text-muted-foreground",
+            bg: "bg-muted",
+          },
+          {
+            icon: CheckCircle2,
+            label: "Conclusão",
+            value:
+              stats && stats.totalDemands > 0
+                ? `${Math.round((stats.deliveredDemands / stats.totalDemands) * 100)}%`
+                : "-",
+            color: "text-muted-foreground",
+            bg: "bg-muted",
+          },
+        ].map((s, i) => {
+          const Icon = s.icon;
+          return (
+            <Card
+              key={i}
+              className="border-border/60 hover:border-primary/40 hover:shadow-sm transition-all"
+            >
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`h-8 w-8 rounded-lg ${s.bg} flex items-center justify-center shrink-0`}
+                  >
+                    <Icon className={`h-4 w-4 ${s.color}`} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-base font-semibold leading-tight truncate">{s.value}</p>
+                    <p className="text-[11px] text-muted-foreground leading-tight truncate">
+                      {s.label}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
-      {/* Additional Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Users className="h-5 w-5 text-muted-foreground" />
-                <span className="text-muted-foreground">Equipes</span>
-              </div>
-              <span className="text-xl font-bold">{stats?.teamsCount || 0}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <TrendingUp className="h-5 w-5 text-muted-foreground" />
-                <span className="text-muted-foreground">Quadros</span>
-              </div>
-              <span className="text-xl font-bold">{stats?.boardsCount || 0}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
-                <span className="text-muted-foreground">Taxa de conclusão</span>
-              </div>
-              <span className="text-xl font-bold">
-                {stats && stats.totalDemands > 0 
-                  ? `${Math.round((stats.deliveredDemands / stats.totalDemands) * 100)}%`
-                  : "-"
-                }
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Tabs: history, achievements */}
       {user && (
