@@ -24,6 +24,7 @@ import { AnimatedBadge } from "@/components/AnimatedBadge";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { useUserStats, badges, calculateLevel } from "@/hooks/useUserStats";
+import { DemandHistorySection } from "@/components/profile/DemandHistorySection";
 import { SEOHead } from "@/components/SEOHead";
 import { 
   Settings, User, Calendar, MapPin, Briefcase, 
