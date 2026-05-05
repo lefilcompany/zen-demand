@@ -23,6 +23,7 @@ import { useNotificationPreferences } from "@/hooks/useNotificationPreferences";
 import {
   useBoardApprovalNotifySetting,
   useUpsertBoardApprovalNotifySetting,
+  useDemandApprovalNotifySetting,
 } from "@/hooks/useBoardApprovalNotifySettings";
 import { notifyApproval, type ApprovalKind } from "@/lib/approvalNotifications";
 
