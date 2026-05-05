@@ -143,46 +143,44 @@ export function DemandApprovalNotifySection({ demandId, boardId, canEdit }: Prop
     }
   };
 
-  const renderGroup = (label: string, icon: React.ReactNode, list: typeof internalMembers, fallback: string) => (
-    <div className="flex items-start gap-2 flex-wrap">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-[140px]">
-        {icon}
-        <span>{label}:</span>
+  const renderRecipients = (list: typeof internalMembers, fallback: string) => {
+    if (list.length === 0) {
+      return <span className="text-xs text-muted-foreground italic">{fallback}</span>;
+    }
+    return (
+      <div className="flex flex-wrap items-center gap-1">
+        {list.slice(0, 3).map((m) => {
+          const config = roleConfig[m.role] || roleConfig.requester;
+          return (
+            <div
+              key={m.id}
+              className="flex items-center gap-1 pl-0.5 pr-1.5 py-0.5 rounded-full border border-border bg-card"
+              title={`${m.profile?.full_name} • ${config.label}`}
+            >
+              <Avatar className="h-4 w-4">
+                <AvatarImage src={m.profile?.avatar_url || undefined} className="object-cover" />
+                <AvatarFallback className="text-[8px]">{getInitials(m.profile?.full_name || "?")}</AvatarFallback>
+              </Avatar>
+              <span className="text-[11px] font-medium truncate max-w-[100px]">
+                {m.profile?.full_name?.split(" ")[0]}
+              </span>
+            </div>
+          );
+        })}
+        {list.length > 3 && (
+          <span className="text-[11px] text-muted-foreground">+{list.length - 3}</span>
+        )}
       </div>
-      {list.length === 0 ? (
-        <span className="text-xs text-muted-foreground italic">{fallback}</span>
-      ) : (
-        <div className="flex flex-wrap gap-1.5">
-          {list.map((m) => {
-            const config = roleConfig[m.role] || roleConfig.requester;
-            return (
-              <div
-                key={m.id}
-                className="flex items-center gap-1.5 pl-1 pr-2 py-0.5 rounded-full border border-border bg-card"
-              >
-                <Avatar className="h-5 w-5">
-                  <AvatarImage src={m.profile?.avatar_url || undefined} className="object-cover" />
-                  <AvatarFallback className="text-[10px]">{getInitials(m.profile?.full_name || "?")}</AvatarFallback>
-                </Avatar>
-                <span className="text-xs font-medium">{m.profile?.full_name}</span>
-                <Badge className={cn("text-[9px] px-1 py-0", config.badge)}>{config.label}</Badge>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
+    );
+  };
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-start gap-2 text-sm">
-      <div className="flex items-center gap-2 min-w-fit">
-        <Bell className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-        <span className="text-muted-foreground">Notificações de aprovação:</span>
-      </div>
+    <div className="flex items-start gap-2 text-sm min-w-0">
+      <Bell className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+      <span className="text-muted-foreground whitespace-nowrap mt-0.5">Notificações:</span>
 
       {editing ? (
-        <div className="flex flex-col gap-2 flex-1">
+        <div className="flex flex-col gap-2 flex-1 min-w-0">
           <ApprovalNotificationsModal
             boardId={boardId}
             internalIds={internalIds}
@@ -200,30 +198,35 @@ export function DemandApprovalNotifySection({ demandId, boardId, canEdit }: Prop
           </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-1.5 flex-1">
-          {hasInternal && renderGroup(
-            "Aprovação interna",
-            <Users className="h-3.5 w-3.5" />,
-            internalMembers,
-            "Padrão (todos Owners/Coordenadores)",
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 flex-1 min-w-0">
+          {hasInternal && (
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Users className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+              <span className="text-xs text-muted-foreground whitespace-nowrap">Interna:</span>
+              {renderRecipients(internalMembers, "Padrão (Owners/Coord.)")}
+            </div>
           )}
-          {hasExternal && renderGroup(
-            "Aprovação do cliente",
-            <Building2 className="h-3.5 w-3.5" />,
-            externalMembers,
-            "Padrão (todos Solicitantes)",
+          {hasExternal && (
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Building2 className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+              <span className="text-xs text-muted-foreground whitespace-nowrap">Cliente:</span>
+              {renderRecipients(externalMembers, "Padrão (Solicitantes)")}
+            </div>
           )}
           {!hasInternal && !hasExternal && (
             <span className="text-xs text-muted-foreground italic">
               Este quadro não possui etapas de aprovação configuradas.
             </span>
           )}
-          {canEdit && (
-            <div>
-              <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
-                Editar
-              </Button>
-            </div>
+          {canEdit && (hasInternal || hasExternal) && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 px-2 text-xs"
+              onClick={() => setEditing(true)}
+            >
+              Editar
+            </Button>
           )}
         </div>
       )}
