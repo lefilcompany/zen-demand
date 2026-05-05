@@ -6,9 +6,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { InfoTooltip } from "@/components/InfoTooltip";
-import { Bell, Search, Check, ShieldCheck, Shield, User, Users, Building2 } from "lucide-react";
+import { Bell, Search, Check, ShieldCheck, Shield, User, Users, Building2, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBoardMembers } from "@/hooks/useBoardMembers";
+import { useInternalApprovers } from "@/hooks/useInternalApprovers";
 import { supabase } from "@/integrations/supabase/client";
 import type { ApprovalKind } from "@/lib/approvalNotifications";
 
@@ -18,6 +19,7 @@ const ROLE_FILTER: Record<ApprovalKind, Set<string>> = {
 };
 
 const roleConfig: Record<string, { label: string; badge: string; banner: string; icon: React.ReactNode }> = {
+  owner: { label: "Owner", badge: "bg-amber-100 text-amber-800", banner: "from-amber-500/80 via-amber-600 to-amber-500/60", icon: <Crown className="h-3 w-3" /> },
   admin: { label: "Administrador", badge: "bg-red-100 text-red-800", banner: "from-red-500/80 via-red-600 to-red-500/60", icon: <ShieldCheck className="h-3 w-3" /> },
   moderator: { label: "Coordenador", badge: "bg-blue-100 text-blue-800", banner: "from-blue-500/80 via-blue-600 to-blue-500/60", icon: <Shield className="h-3 w-3" /> },
   requester: { label: "Solicitante", badge: "bg-purple-100 text-purple-800", banner: "from-purple-500/80 via-purple-600 to-purple-500/60", icon: <User className="h-3 w-3" /> },
@@ -67,6 +69,7 @@ export function ApprovalNotificationsModal({
   const [tab, setTab] = useState<ApprovalKind>("internal");
   const [search, setSearch] = useState("");
   const { data: members } = useBoardMembers(boardId ?? null);
+  const { data: internalApprovers } = useInternalApprovers(boardId ?? null);
 
   // Discover which approval stages exist in this board's kanban
   const { data: availableKinds } = useQuery({
@@ -108,10 +111,19 @@ export function ApprovalNotificationsModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasInternal, hasExternal]);
 
-  const eligible = useMemo(
-    () => (members || []).filter((m) => ROLE_FILTER[tab].has(m.role)),
-    [members, tab],
-  );
+  const eligible = useMemo(() => {
+    if (tab === "internal") {
+      return (internalApprovers || []).map((a) => ({
+        id: a.id,
+        user_id: a.user_id,
+        role: a.role,
+        profile: a.profile,
+      }));
+    }
+    return (members || [])
+      .filter((m) => ROLE_FILTER.external.has(m.role))
+      .map((m) => ({ id: m.id, user_id: m.user_id, role: m.role, profile: m.profile }));
+  }, [members, internalApprovers, tab]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -200,7 +212,7 @@ export function ApprovalNotificationsModal({
 
           <p className="text-xs text-muted-foreground px-1">
             {tab === "internal"
-              ? "Mostrando Administradores e Coordenadores do quadro (responsáveis pela aprovação interna)."
+              ? "Mostrando Owners da equipe e Administradores/Coordenadores deste quadro (responsáveis pela aprovação interna)."
               : "Mostrando Solicitantes do quadro (responsáveis pela aprovação do cliente)."}
           </p>
 
