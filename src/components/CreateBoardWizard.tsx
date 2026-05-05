@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useCreateBoard, type CreateBoardData } from "@/hooks/useBoards";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useServices, useHierarchicalServices, type ServiceWithHierarchy } from "@/hooks/useServices";
