@@ -327,10 +327,12 @@ export default function UserProfile() {
           )}
           
           {/* Level Badge */}
-          <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full px-4 py-2 z-10 border border-white/10">
-            <Trophy className="h-5 w-5 text-yellow-400 drop-shadow-md" />
-            <span className="text-white font-bold drop-shadow-md">Nível {levelData.level}</span>
-          </div>
+          {v("level") && (
+            <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full px-4 py-2 z-10 border border-white/10">
+              <Trophy className="h-5 w-5 text-yellow-400 drop-shadow-md" />
+              <span className="text-white font-bold drop-shadow-md">Nível {levelData.level}</span>
+            </div>
+          )}
 
           {/* Decorative bottom edge */}
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-secondary to-primary" />
