@@ -115,6 +115,80 @@ function StageColorPicker({ value, onChange, disabled }: StageColorPickerProps) 
 }
 
 type AdjustmentType = "none" | "internal" | "external";
+
+const ADJUSTMENT_STYLES: Record<AdjustmentType, { dot: string; tint: string; ring: string; label: string }> = {
+  none:     { dot: "bg-muted-foreground", tint: "bg-muted/40",         ring: "ring-muted-foreground/40", label: "text-foreground" },
+  internal: { dot: "bg-blue-500",         tint: "bg-blue-500/10",      ring: "ring-blue-500/50",         label: "text-blue-700 dark:text-blue-400" },
+  external: { dot: "bg-purple-500",       tint: "bg-purple-500/10",    ring: "ring-purple-500/50",       label: "text-purple-700 dark:text-purple-400" },
+};
+
+interface AdjustmentTypePickerProps {
+  value: AdjustmentType;
+  onChange: (v: AdjustmentType) => void;
+  disabled?: boolean;
+}
+
+function AdjustmentTypePicker({ value, onChange, disabled }: AdjustmentTypePickerProps) {
+  const current = ADJUSTMENT_OPTIONS.find((o) => o.value === value) ?? ADJUSTMENT_OPTIONS[0];
+  const Icon = current.icon;
+  const style = ADJUSTMENT_STYLES[value];
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          disabled={disabled}
+          className={cn(
+            "group flex h-8 items-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium shrink-0 transition-all w-[150px]",
+            style.tint,
+            style.label,
+            "hover:border-foreground/30 focus:outline-none focus:ring-2",
+            style.ring,
+            disabled && "opacity-50 cursor-not-allowed"
+          )}
+          title={current.description}
+        >
+          <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", style.dot)} />
+          <Icon className="h-3.5 w-3.5 opacity-80 shrink-0" />
+          <span className="flex-1 text-left truncate">{current.label}</span>
+          <svg className="h-3 w-3 opacity-50 group-hover:opacity-80 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-1.5" align="end">
+        <div className="space-y-0.5">
+          {ADJUSTMENT_OPTIONS.map((opt) => {
+            const OptIcon = opt.icon;
+            const s = ADJUSTMENT_STYLES[opt.value];
+            const selected = opt.value === value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => onChange(opt.value)}
+                className={cn(
+                  "w-full flex items-start gap-2.5 rounded-md p-2 text-left transition-colors",
+                  selected ? cn(s.tint, "ring-1", s.ring) : "hover:bg-muted/60"
+                )}
+              >
+                <div className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-md", s.tint)}>
+                  <OptIcon className={cn("h-4 w-4", s.label)} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className={cn("text-sm font-semibold", selected && s.label)}>{opt.label}</span>
+                    {selected && <Check className={cn("h-3.5 w-3.5", s.label)} />}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-snug">{opt.description}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
 type BoardRole = "admin" | "moderator" | "executor" | "requester";
 
 interface Stage {
