@@ -522,6 +522,34 @@ interface CreateBoardWizardProps {
   onCancel?: () => void;
 }
 
+const DRAFT_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const draftKey = (teamId: string | null | undefined) => `create-board-draft:${teamId ?? "none"}`;
+
+interface BoardDraft {
+  savedAt: number;
+  stepIdx: number;
+  name: string;
+  description: string;
+  stages: Stage[];
+  memberRoles: [string, BoardRole][];
+  selectedServices: SelectedService[];
+}
+
+function loadDraft(teamId: string | null | undefined): BoardDraft | null {
+  try {
+    const raw = localStorage.getItem(draftKey(teamId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as BoardDraft;
+    if (!parsed?.savedAt || Date.now() - parsed.savedAt > DRAFT_TTL_MS) {
+      localStorage.removeItem(draftKey(teamId));
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
 export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardProps) {
   const { selectedTeamId } = useSelectedTeam();
   const createBoard = useCreateBoard();
@@ -542,24 +570,63 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
   }, [hierarchicalServices]);
   const { data: teamMembers } = useTeamMembers(selectedTeamId);
 
-  const [stepIdx, setStepIdx] = useState(0);
+  // Initial draft (loaded synchronously to avoid flicker)
+  const initialDraft = useMemo(() => loadDraft(selectedTeamId), [selectedTeamId]);
+
+  const [stepIdx, setStepIdx] = useState(initialDraft?.stepIdx ?? 0);
   const [error, setError] = useState("");
 
   // Step 1
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState(initialDraft?.name ?? "");
+  const [description, setDescription] = useState(initialDraft?.description ?? "");
 
   // Step 2
-  const [stages, setStages] = useState<Stage[]>(DEFAULT_STAGES);
+  const [stages, setStages] = useState<Stage[]>(initialDraft?.stages ?? DEFAULT_STAGES);
   const [newStageName, setNewStageName] = useState("");
   const [newStageColor, setNewStageColor] = useState(STAGE_COLORS[0]);
 
   // Step 3
-  const [memberRoles, setMemberRoles] = useState<Map<string, BoardRole>>(new Map());
+  const [memberRoles, setMemberRoles] = useState<Map<string, BoardRole>>(
+    new Map(initialDraft?.memberRoles ?? [])
+  );
   const [memberSearch, setMemberSearch] = useState("");
 
   // Step 4
-  const [selectedServices, setSelectedServices] = useState<SelectedService[]>([]);
+  const [selectedServices, setSelectedServices] = useState<SelectedService[]>(
+    initialDraft?.selectedServices ?? []
+  );
+
+  // Persist draft (debounced) on any change
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      try {
+        const isPristine =
+          stepIdx === 0 &&
+          !name.trim() &&
+          !description.trim() &&
+          memberRoles.size === 0 &&
+          selectedServices.length === 0 &&
+          JSON.stringify(stages) === JSON.stringify(DEFAULT_STAGES);
+        if (isPristine) {
+          localStorage.removeItem(draftKey(selectedTeamId));
+          return;
+        }
+        const draft: BoardDraft = {
+          savedAt: Date.now(),
+          stepIdx,
+          name,
+          description,
+          stages,
+          memberRoles: Array.from(memberRoles.entries()),
+          selectedServices,
+        };
+        localStorage.setItem(draftKey(selectedTeamId), JSON.stringify(draft));
+      } catch {
+        // ignore quota / serialization errors
+      }
+    }, 400);
+    return () => clearTimeout(handle);
+  }, [selectedTeamId, stepIdx, name, description, stages, memberRoles, selectedServices]);
 
   const filteredMembers = useMemo(() => {
     if (!teamMembers) return [];
