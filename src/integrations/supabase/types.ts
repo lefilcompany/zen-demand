@@ -1821,6 +1821,7 @@ export type Database = {
           full_name: string
           github_url: string | null
           id: string
+          is_demand_history_public: boolean
           job_title: string | null
           linkedin_url: string | null
           location: string | null
@@ -1840,6 +1841,7 @@ export type Database = {
           full_name: string
           github_url?: string | null
           id: string
+          is_demand_history_public?: boolean
           job_title?: string | null
           linkedin_url?: string | null
           location?: string | null
@@ -1859,6 +1861,7 @@ export type Database = {
           full_name?: string
           github_url?: string | null
           id?: string
+          is_demand_history_public?: boolean
           job_title?: string | null
           linkedin_url?: string | null
           location?: string | null

@@ -24,6 +24,7 @@ import { AnimatedBadge } from "@/components/AnimatedBadge";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { useUserStats, badges, calculateLevel } from "@/hooks/useUserStats";
+import { DemandHistorySection } from "@/components/profile/DemandHistorySection";
 import { SEOHead } from "@/components/SEOHead";
 import { 
   Settings, User, Calendar, MapPin, Briefcase, 
@@ -488,6 +489,14 @@ export default function Profile() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Demand History */}
+      {user && (
+        <DemandHistorySection
+          userId={user.id}
+          isPublic={Boolean((profile as any)?.is_demand_history_public)}
+        />
+      )}
 
       {/* Badges Section */}
       <Card>

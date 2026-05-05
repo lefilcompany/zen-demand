@@ -21,6 +21,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { usePresence } from "@/contexts/PresenceContext";
 import { SEOHead } from "@/components/SEOHead";
+import { DemandHistorySection } from "@/components/profile/DemandHistorySection";
 
 const INITIAL_BADGES_COUNT = 12;
 
@@ -522,6 +523,14 @@ export default function UserProfile() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Demand History */}
+      {userId && (
+        <DemandHistorySection
+          userId={userId}
+          isPublic={Boolean((profile as any)?.is_demand_history_public)}
+        />
+      )}
 
       {/* Badges Section - Same as Profile */}
       <Card>
