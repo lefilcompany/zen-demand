@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -61,6 +61,8 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [savingPrivacy, setSavingPrivacy] = useState(false);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [page, setPage] = useState<number>(1);
 
   const { data: demands, isLoading } = useQuery({
     queryKey: ["demand-history", userId],
@@ -187,6 +189,18 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
       return true;
     });
   }, [demands, period, client, type, statusFilter, search]);
+
+  // Reset to page 1 when filters / page size / underlying data change
+  useEffect(() => {
+    setPage(1);
+  }, [period, client, type, statusFilter, search, pageSize, demands?.length]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const paged = useMemo(
+    () => filtered.slice((safePage - 1) * pageSize, safePage * pageSize),
+    [filtered, safePage, pageSize],
+  );
 
   const Wrapper: any = embedded ? "div" : Card;
   const ContentWrapper: any = embedded ? "div" : CardContent;
@@ -326,65 +340,119 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
                 Nenhuma demanda concluída encontrada para os filtros selecionados.
               </div>
             ) : (
-              <div className="space-y-2">
-                {filtered.map((d: any) => {
-                  const date = d.delivered_at || d.updated_at || d.created_at;
-                  return (
-                    <button
-                      key={d.id}
-                      onClick={() => navigate(`/demand/${d.id}`)}
-                      className="w-full text-left p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium truncate">{d.title}</p>
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground mt-1">
-                            {d.boards?.name && <span>{d.boards.name}</span>}
-                            {d.services?.name && (
-                              <>
-                                <span>•</span>
-                                <span>{d.services.name}</span>
-                              </>
-                            )}
-                            {d.assigned_profile?.full_name && (
-                              <>
-                                <span>•</span>
-                                <span>Resp.: {d.assigned_profile.full_name}</span>
-                              </>
-                            )}
-                          </div>
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {format(new Date(date), "dd/MM/yyyy", { locale: ptBR })}
-                            </span>
-                            {d.due_date && (
-                              <span>
-                                Prazo:{" "}
-                                {format(new Date(d.due_date), "dd/MM/yyyy", {
-                                  locale: ptBR,
-                                })}
+              <>
+                <div className="space-y-2">
+                  {paged.map((d: any) => {
+                    const date = d.delivered_at || d.updated_at || d.created_at;
+                    return (
+                      <button
+                        key={d.id}
+                        onClick={() => navigate(`/demand/${d.id}`)}
+                        className="w-full text-left p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium truncate">{d.title}</p>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground mt-1">
+                              {d.boards?.name && <span>{d.boards.name}</span>}
+                              {d.services?.name && (
+                                <>
+                                  <span>•</span>
+                                  <span>{d.services.name}</span>
+                                </>
+                              )}
+                              {d.assigned_profile?.full_name && (
+                                <>
+                                  <span>•</span>
+                                  <span>Resp.: {d.assigned_profile.full_name}</span>
+                                </>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {format(new Date(date), "dd/MM/yyyy", { locale: ptBR })}
                               </span>
-                            )}
+                              {d.due_date && (
+                                <span>
+                                  Prazo:{" "}
+                                  {format(new Date(d.due_date), "dd/MM/yyyy", {
+                                    locale: ptBR,
+                                  })}
+                                </span>
+                              )}
+                            </div>
                           </div>
+                          {d.demand_statuses?.name && (
+                            <Badge
+                              variant="outline"
+                              className="shrink-0"
+                              style={{
+                                borderColor: d.demand_statuses.color,
+                                color: d.demand_statuses.color,
+                              }}
+                            >
+                              {d.demand_statuses.name}
+                            </Badge>
+                          )}
                         </div>
-                        {d.demand_statuses?.name && (
-                          <Badge
-                            variant="outline"
-                            className="shrink-0"
-                            style={{
-                              borderColor: d.demand_statuses.color,
-                              color: d.demand_statuses.color,
-                            }}
-                          >
-                            {d.demand_statuses.name}
-                          </Badge>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Pagination footer */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 mt-2 border-t">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>
+                      {(safePage - 1) * pageSize + 1}–
+                      {Math.min(safePage * pageSize, filtered.length)} de {filtered.length}
+                    </span>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="flex items-center gap-1.5">
+                      Por página:
+                      <Select
+                        value={String(pageSize)}
+                        onValueChange={(v) => setPageSize(Number(v))}
+                      >
+                        <SelectTrigger className="h-7 w-[68px] rounded-full text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[5, 10, 20, 50, 100].map((n) => (
+                            <SelectItem key={n} value={String(n)}>
+                              {n}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 rounded-full"
+                      disabled={safePage <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      Anterior
+                    </Button>
+                    <span className="text-xs text-muted-foreground px-2">
+                      {safePage} / {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 rounded-full"
+                      disabled={safePage >= totalPages}
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    >
+                      Próxima
+                    </Button>
+                  </div>
+                </div>
+              </>
             )}
           </>
         )}
