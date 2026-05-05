@@ -20,6 +20,8 @@ export interface CreateBoardData {
   name: string;
   description?: string | null;
   services?: Array<{ service_id: string; monthly_limit: number }>;
+  stages?: Array<{ name: string; color: string; adjustment_type?: "none" | "internal" | "external" }>;
+  members?: Array<{ user_id: string; role: "admin" | "moderator" | "executor" | "requester" }>;
 }
 
 export interface UpdateBoardData {
