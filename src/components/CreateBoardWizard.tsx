@@ -735,7 +735,11 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
     const err = validateStep();
     if (err) { setError(err); return; }
     setError("");
-    setStepIdx((i) => Math.min(i + 1, STEPS.length - 1));
+    setStepIdx((i) => {
+      const n = Math.min(i + 1, STEPS.length - 1);
+      setMaxStepIdx((m) => Math.max(m, n));
+      return n;
+    });
   };
 
   const prev = () => {
