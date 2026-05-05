@@ -316,17 +316,27 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
             {(() => {
               const activeCount =
                 (period !== "all" ? 1 : 0) +
+                (stage !== "all" ? 1 : 0) +
                 (client !== "all" ? 1 : 0) +
                 (type !== "all" ? 1 : 0) +
                 (statusFilter !== "all" ? 1 : 0) +
                 (search.trim() ? 1 : 0);
               const clearAll = () => {
                 setPeriod("all");
+                setStage("all");
                 setClient("all");
                 setType("all");
                 setStatusFilter("all");
                 setSearch("");
               };
+              const stageCounts = (demands || []).reduce(
+                (acc: Record<string, number>, d: any) => {
+                  const s = getStage(d);
+                  acc[s] = (acc[s] || 0) + 1;
+                  return acc;
+                },
+                {} as Record<string, number>,
+              );
               return (
                 <div className="rounded-xl border bg-muted/30 p-3 space-y-3">
                   {/* Top row: search + clear */}
