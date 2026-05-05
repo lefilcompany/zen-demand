@@ -80,7 +80,7 @@ export function ApprovalNotificationsModal({
     <div className="space-y-2">
       <Label className="flex items-center gap-2">
         <Bell className="h-4 w-4" />
-        Notificações de aprovação (opcional)
+        Notificações de aprovação
         <InfoTooltip text="Personalize quem deve receber notificações nas etapas de aprovação. Se nada for selecionado, o padrão é notificar todos os Owners/Coordenadores (interna) e todos os Solicitantes (cliente)." />
       </Label>
       <button
