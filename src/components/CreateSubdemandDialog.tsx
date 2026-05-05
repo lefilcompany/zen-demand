@@ -286,7 +286,7 @@ export function CreateSubdemandDialog({
             onClick={handleSave}
             disabled={!isFormValid}
             size="sm"
-            className="bg-[#F28705] hover:bg-[#F28705]/90 text-white"
+            className="bg-[#F28705] text-white border border-transparent hover:bg-white hover:text-[#F28705] hover:border-[#F28705]"
           >
             {isEditing ? "Salvar" : "Adicionar"}
           </Button>
