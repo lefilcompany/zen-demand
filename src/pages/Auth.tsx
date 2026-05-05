@@ -439,7 +439,7 @@ export default function Auth() {
   return <>
     <SEOHead title="Entrar ou Criar Conta" description="Acesse o SoMA - Sistema Operacional de Marketing. Faça login ou crie sua conta para gerenciar demandas e produtividade." path="/auth" />
     {showClearedCacheNotice && (
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md rounded-xl border border-border bg-background/95 backdrop-blur-md shadow-2xl p-3.5 flex gap-3 items-start animate-in fade-in slide-in-from-top-4 duration-300">
+      <div className="fixed top-4 right-4 z-50 w-[calc(100%-2rem)] max-w-md rounded-xl border border-border bg-background/95 backdrop-blur-md shadow-2xl p-3.5 flex gap-3 items-start animate-in fade-in slide-in-from-top-4 duration-300">
         <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
           <Info className="h-4 w-4 text-primary" />
         </div>
