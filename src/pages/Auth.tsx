@@ -445,12 +445,12 @@ export default function Auth() {
         <div className="flex-1 flex items-start lg:items-center justify-center px-5 sm:px-8 py-8 lg:px-10 lg:py-10">
           <div className="w-full max-w-[380px]">
             {/* Logo */}
-            <div className="flex justify-center mb-8">
+            <div className="flex justify-center mb-5">
               <img alt="SoMA+" src="/lovable-uploads/9889f524-0819-424e-9185-2cc441526116.png" className="h-14 w-auto" />
             </div>
 
             <Tabs defaultValue="login" className="w-full">
-              <div className="flex justify-center mb-7">
+              <div className="flex justify-center mb-4">
                 <TabsList className="inline-flex h-9 bg-muted/70 p-1 rounded-full gap-0.5">
                   <TabsTrigger value="login" className="text-[13px] font-medium rounded-full px-5 h-7 data-[state=active]:bg-background data-[state=active]:shadow-[0_1px_2px_rgba(0,0,0,0.06)] data-[state=active]:text-foreground text-muted-foreground transition-all">
                     Entrar
@@ -461,7 +461,7 @@ export default function Auth() {
                 </TabsList>
               </div>
 
-              <TabsContent value="login" className="mt-0 space-y-5">
+              <TabsContent value="login" className="mt-0 space-y-3.5">
                 <div className="text-center space-y-1.5">
                   <h1 className="text-[26px] leading-tight font-semibold tracking-tight text-foreground">Entrar na sua conta</h1>
                   <p className="text-[13px] text-muted-foreground">Acesse sua conta da forma mais rápida</p>
@@ -559,7 +559,7 @@ export default function Auth() {
                 </form>
               </TabsContent>
 
-              <TabsContent value="signup" className="mt-0 space-y-5">
+              <TabsContent value="signup" className="mt-0 space-y-3.5">
                 <div className="text-center space-y-1.5">
                   <h1 className="text-[26px] leading-tight font-semibold tracking-tight text-foreground">Criar sua conta</h1>
                   <p className="text-[13px] text-muted-foreground">Comece em segundos</p>
