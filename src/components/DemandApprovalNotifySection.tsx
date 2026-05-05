@@ -175,9 +175,9 @@ export function DemandApprovalNotifySection({ demandId, boardId, canEdit }: Prop
   };
 
   return (
-    <div className="flex items-start gap-2 text-sm min-w-0">
-      <Bell className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-      <span className="text-muted-foreground whitespace-nowrap mt-0.5">Notificações de aprovação:</span>
+    <div className="flex items-center gap-2 text-sm min-w-0">
+      <Bell className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+      <span className="text-muted-foreground whitespace-nowrap">Notificações de aprovação:</span>
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 flex-1 min-w-0">
         {hasInternal && (
