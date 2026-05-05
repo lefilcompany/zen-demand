@@ -1115,21 +1115,25 @@ export default function DemandDetail() {
                 <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <span className="text-muted-foreground">Responsável e acompanhantes:</span>
               </div>
-              {editingAssignees ? <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
-                  <div className="flex-1">
-                    <AssigneeSelector teamId={demand.team_id} boardId={demand.board_id} selectedUserIds={selectedAssignees} onChange={setSelectedAssignees} primaryUserId={primaryAssignee} onPrimaryChange={setPrimaryAssignee} />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={handleSaveAssignees} disabled={setAssignees.isPending} className="flex-1 sm:flex-none">
-                      Salvar
-                    </Button>
-                  </div>
-                </div> : <div className="flex items-center gap-2">
-                  {formattedAssignees.length > 0 ? <AssigneeAvatars assignees={formattedAssignees} size="md" /> : <span className="text-muted-foreground">Nenhum</span>}
-                  {canManageAssignees && <Button size="sm" variant="ghost" onClick={handleEditAssignees}>
-                      Editar
-                    </Button>}
-                </div>}
+              <div className="flex items-center gap-2">
+                {formattedAssignees.length > 0 ? <AssigneeAvatars assignees={formattedAssignees} size="md" /> : <span className="text-muted-foreground">Nenhum</span>}
+                {canManageAssignees && <Button size="sm" variant="ghost" onClick={handleEditAssignees}>
+                    Editar
+                  </Button>}
+              </div>
+              <AssigneeSelector
+                teamId={demand.team_id}
+                boardId={demand.board_id}
+                selectedUserIds={selectedAssignees}
+                onChange={setSelectedAssignees}
+                primaryUserId={primaryAssignee}
+                onPrimaryChange={setPrimaryAssignee}
+                open={editingAssignees}
+                onOpenChange={setEditingAssignees}
+                hideTrigger
+                onConfirm={handleSaveAssignees}
+                confirmLoading={setAssignees.isPending}
+              />
             </div>
 
             {/* Approval notification recipients */}
