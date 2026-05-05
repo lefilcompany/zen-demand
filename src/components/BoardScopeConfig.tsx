@@ -396,24 +396,25 @@ function ServiceGroupSection({
               key={bs.id}
               className="border rounded-xl p-4 bg-card hover:shadow-md transition-shadow relative group"
             >
-              {canEdit && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => handleRemoveService(bs.id)}
-                  disabled={isRemoving}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
-
               <div className="space-y-3">
-                <div>
-                  <h4 className="font-semibold text-sm line-clamp-1">{bs.service?.name}</h4>
-                  <span className="text-xs text-muted-foreground">
-                    {bs.service?.estimated_hours}h estimadas
-                  </span>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-semibold text-sm line-clamp-2 break-words">{bs.service?.name}</h4>
+                    <span className="text-xs text-muted-foreground">
+                      {bs.service?.estimated_hours}h estimadas
+                    </span>
+                  </div>
+                  {canEdit && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0 -mt-1 -mr-1 opacity-60 hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleRemoveService(bs.id)}
+                      disabled={isRemoving}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
