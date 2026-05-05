@@ -1133,6 +1133,13 @@ export default function DemandDetail() {
                     </Button>}
                 </div>}
             </div>
+
+            {/* Approval notification recipients */}
+            <DemandApprovalNotifySection
+              demandId={demand.id}
+              boardId={demand.board_id}
+              canEdit={hasEditPermission}
+            />
           </div>
 
             {/* Status changed by */}
