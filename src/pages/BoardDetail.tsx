@@ -196,6 +196,10 @@ export default function BoardDetail() {
   const { data: myBoardRole } = useBoardRole(boardId || null);
   const { data: myTeamRole } = useTeamRole(board?.team_id || null);
   const { data: teamMembers } = useTeamMembers(board?.team_id || null);
+  const { data: demands } = useDemands(boardId || undefined);
+  const { data: boardServicesUsage } = useBoardServicesWithUsage(boardId || null);
+  const { data: boardStatuses } = useBoardStatuses(boardId || null);
+  const { data: teams } = useTeams();
   const deleteBoard = useDeleteBoard();
   const updateBoard = useUpdateBoard();
   const removeMember = useRemoveBoardMember();
