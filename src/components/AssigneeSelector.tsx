@@ -49,13 +49,17 @@ interface AssigneeSelectorProps {
   boardId?: string | null;
   selectedUserIds: string[];
   onChange: (userIds: string[]) => void;
-  /** Optional: explicit primary (responsible) user. If omitted, defaults to selectedUserIds[0]. */
   primaryUserId?: string | null;
-  /** Optional: callback when the user changes the primary. */
   onPrimaryChange?: (userId: string | null) => void;
   disabled?: boolean;
   hideIcon?: boolean;
   restrictToUserIds?: string[];
+  // Controlled mode
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
+  hideTrigger?: boolean;
+  onConfirm?: () => void | Promise<void>;
+  confirmLoading?: boolean;
 }
 
 export function AssigneeSelector({
@@ -68,8 +72,19 @@ export function AssigneeSelector({
   disabled = false,
   hideIcon = false,
   restrictToUserIds,
+  open: openProp,
+  onOpenChange,
+  hideTrigger = false,
+  onConfirm,
+  confirmLoading,
 }: AssigneeSelectorProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp! : internalOpen;
+  const setOpen = (v: boolean) => {
+    if (isControlled) onOpenChange?.(v);
+    else setInternalOpen(v);
+  };
   const [search, setSearch] = useState("");
   const [step, setStep] = useState<1 | 2>(1);
 
@@ -179,68 +194,70 @@ export function AssigneeSelector({
   return (
     <>
       {/* Trigger Button */}
-      <button
-        type="button"
-        onClick={handleOpen}
-        disabled={disabled || (!teamId && !boardId)}
-        className={cn(
-          "w-full h-8 flex items-center justify-start gap-2 px-3 py-1 rounded-md border border-input bg-background text-sm shadow-none",
-          "hover:bg-white hover:text-[#F28705] hover:border-[#F28705] transition-[border-color,box-shadow,background-color,color] duration-200",
-          "focus-visible:outline-none focus-visible:border-ring focus-visible:[box-shadow:var(--focus-ring)]",
-          "disabled:opacity-50 disabled:pointer-events-none",
-          !selectedUserIds.length && "text-muted-foreground"
-        )}
-      >
-        {!hideIcon && <Users className="h-4 w-4 shrink-0" />}
-        {selectedUserIds.length > 0 ? (
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="flex -space-x-2 shrink-0">
-              {primaryMember && (
-                <div
-                  className="relative h-5 w-5 rounded-full ring-2 ring-primary overflow-hidden bg-muted flex items-center justify-center shrink-0"
-                  title={`Responsável: ${primaryMember.profile?.full_name ?? ""}`}
-                >
-                  {primaryMember.profile?.avatar_url ? (
-                    <img src={primaryMember.profile.avatar_url} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="text-[10px] font-medium text-muted-foreground">
-                      {getInitials(primaryMember.profile?.full_name || "?")}
-                    </span>
-                  )}
-                </div>
-              )}
-              {followerMembers.slice(0, 2).map((member) => (
-                <div
-                  key={member.user_id}
-                  className="h-5 w-5 rounded-full ring-2 ring-background overflow-hidden bg-muted flex items-center justify-center shrink-0"
-                >
-                  {member.profile?.avatar_url ? (
-                    <img src={member.profile.avatar_url} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="text-[10px] font-medium text-muted-foreground">
-                      {getInitials(member.profile?.full_name || "?")}
-                    </span>
-                  )}
-                </div>
-              ))}
+      {!hideTrigger && (
+        <button
+          type="button"
+          onClick={handleOpen}
+          disabled={disabled || (!teamId && !boardId)}
+          className={cn(
+            "w-full h-8 flex items-center justify-start gap-2 px-3 py-1 rounded-md border border-input bg-background text-sm shadow-none",
+            "hover:bg-white hover:text-[#F28705] hover:border-[#F28705] transition-[border-color,box-shadow,background-color,color] duration-200",
+            "focus-visible:outline-none focus-visible:border-ring focus-visible:[box-shadow:var(--focus-ring)]",
+            "disabled:opacity-50 disabled:pointer-events-none",
+            !selectedUserIds.length && "text-muted-foreground"
+          )}
+        >
+          {!hideIcon && <Users className="h-4 w-4 shrink-0" />}
+          {selectedUserIds.length > 0 ? (
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="flex -space-x-2 shrink-0">
+                {primaryMember && (
+                  <div
+                    className="relative h-5 w-5 rounded-full ring-2 ring-primary overflow-hidden bg-muted flex items-center justify-center shrink-0"
+                    title={`Responsável: ${primaryMember.profile?.full_name ?? ""}`}
+                  >
+                    {primaryMember.profile?.avatar_url ? (
+                      <img src={primaryMember.profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-[10px] font-medium text-muted-foreground">
+                        {getInitials(primaryMember.profile?.full_name || "?")}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {followerMembers.slice(0, 2).map((member) => (
+                  <div
+                    key={member.user_id}
+                    className="h-5 w-5 rounded-full ring-2 ring-background overflow-hidden bg-muted flex items-center justify-center shrink-0"
+                  >
+                    {member.profile?.avatar_url ? (
+                      <img src={member.profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-[10px] font-medium text-muted-foreground">
+                        {getInitials(member.profile?.full_name || "?")}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <span className="text-sm truncate">
+                {primaryMember ? (
+                  <>
+                    <span className="font-medium">{primaryMember.profile?.full_name?.split(" ")[0]}</span>
+                    {followerMembers.length > 0 && (
+                      <span className="text-muted-foreground"> +{followerMembers.length} acomp.</span>
+                    )}
+                  </>
+                ) : (
+                  `${selectedUserIds.length} selecionado(s)`
+                )}
+              </span>
             </div>
-            <span className="text-sm truncate">
-              {primaryMember ? (
-                <>
-                  <span className="font-medium">{primaryMember.profile?.full_name?.split(" ")[0]}</span>
-                  {followerMembers.length > 0 && (
-                    <span className="text-muted-foreground"> +{followerMembers.length} acomp.</span>
-                  )}
-                </>
-              ) : (
-                `${selectedUserIds.length} selecionado(s)`
-              )}
-            </span>
-          </div>
-        ) : (
-          "Selecionar responsável"
-        )}
-      </button>
+          ) : (
+            "Selecionar responsável"
+          )}
+        </button>
+      )}
 
       {/* Dialog */}
       <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setSearch(""); setStep(1); } }}>
@@ -442,9 +459,16 @@ export function AssigneeSelector({
             ) : (
               <Button
                 type="button"
-                onClick={() => setOpen(false)}
+                disabled={confirmLoading}
+                onClick={async () => {
+                  if (onConfirm) {
+                    await onConfirm();
+                  } else {
+                    setOpen(false);
+                  }
+                }}
               >
-                Confirmar
+                {confirmLoading ? "Salvando..." : onConfirm ? "Salvar" : "Confirmar"}
               </Button>
             )}
           </DialogFooter>
