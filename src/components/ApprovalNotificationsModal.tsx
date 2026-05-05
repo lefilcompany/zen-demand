@@ -280,10 +280,17 @@ export function ApprovalNotificationsModal({
             </Button>
             <Button
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={async () => {
+                if (onSave) {
+                  await onSave();
+                } else {
+                  setOpen(false);
+                }
+              }}
+              disabled={saving}
               className="!bg-[#F28705] hover:!bg-[#F28705]/80 !text-white !border-transparent"
             >
-              Concluir
+              {saving ? "Salvando..." : onSave ? "Salvar" : "Concluir"}
             </Button>
           </DialogFooter>
         </DialogContent>
