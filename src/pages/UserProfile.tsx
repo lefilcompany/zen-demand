@@ -350,9 +350,11 @@ export default function UserProfile() {
                 showStatus={true}
               />
               {/* Level badge on avatar */}
-              <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-lg border-2 border-background">
-                {levelData.level}
-              </div>
+              {v("level") && (
+                <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-lg border-2 border-background">
+                  {levelData.level}
+                </div>
+              )}
             </div>
           </div>
 
