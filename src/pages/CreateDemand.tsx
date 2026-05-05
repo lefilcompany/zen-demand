@@ -801,7 +801,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                             variant="outline"
                             role="combobox"
                             aria-expanded={boardPopoverOpen}
-                            className="h-8 w-full justify-between font-normal"
+                            className="h-8 w-full justify-between font-normal bg-white hover:bg-white hover:text-[#F28705] hover:border-[#F28705] transition-colors"
                           >
                             <span className="flex items-center gap-2 truncate">
                               <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
