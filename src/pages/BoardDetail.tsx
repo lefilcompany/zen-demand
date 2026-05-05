@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState, useRef, useEffect, useMemo } from "react";
-import { LayoutGrid, Users, Trash2, UserPlus, UserMinus, ArrowLeft, Shield, UserCog, Briefcase, User, ChevronDown, Loader2, Pencil, Check, X, Search, Mail } from "lucide-react";
+import { LayoutGrid, Users, Trash2, UserPlus, UserMinus, ArrowLeft, Shield, UserCog, Briefcase, User, ChevronDown, Loader2, Pencil, Check, X, Search, Mail, ListChecks, AlertTriangle, CheckCircle2, Clock, Package as PackageIcon } from "lucide-react";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +14,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { useBoard, useDeleteBoard, useUpdateBoard } from "@/hooks/useBoards";
 import { useBoardMembers, useBoardRole, useRemoveBoardMember, useUpdateBoardMemberRole, BoardRole } from "@/hooks/useBoardMembers";
+import { useDemands } from "@/hooks/useDemands";
+import { useBoardServicesWithUsage } from "@/hooks/useBoardServices";
+import { useBoardStatuses } from "@/hooks/useBoardStatuses";
+import { useTeams } from "@/hooks/useTeams";
 import { BoardScopeConfig } from "@/components/BoardScopeConfig";
 import { BoardStagesPreview } from "@/components/BoardStagesPreview";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -192,6 +196,10 @@ export default function BoardDetail() {
   const { data: myBoardRole } = useBoardRole(boardId || null);
   const { data: myTeamRole } = useTeamRole(board?.team_id || null);
   const { data: teamMembers } = useTeamMembers(board?.team_id || null);
+  const { data: demands } = useDemands(boardId || undefined);
+  const { data: boardServicesUsage } = useBoardServicesWithUsage(boardId || null);
+  const { data: boardStatuses } = useBoardStatuses(boardId || null);
+  const { data: teams } = useTeams();
   const deleteBoard = useDeleteBoard();
   const updateBoard = useUpdateBoard();
   const removeMember = useRemoveBoardMember();
@@ -212,6 +220,30 @@ export default function BoardDetail() {
   const canManage = effectiveRole === "admin" || effectiveRole === "moderator";
   const isAdmin = effectiveRole === "admin";
   const isRequester = effectiveRole === "requester";
+
+  // Aggregated overview metrics
+  const team = useMemo(
+    () => teams?.find((t: any) => t.id === board?.team_id),
+    [teams, board?.team_id],
+  );
+  const overviewMetrics = useMemo(() => {
+    const list = demands ?? [];
+    const total = list.length;
+    const deliveredStatusIds = new Set(
+      (boardStatuses ?? []).filter((s: any) => s.name === "Entregue").map((s: any) => s.id),
+    );
+    const delivered = list.filter((d: any) => deliveredStatusIds.has(d.status_id)).length;
+    const inProgress = total - delivered;
+    const now = Date.now();
+    const overdue = list.filter((d: any) => {
+      if (deliveredStatusIds.has(d.status_id)) return false;
+      if (!d.due_date) return false;
+      return new Date(d.due_date).getTime() < now;
+    }).length;
+    return { total, delivered, inProgress, overdue };
+  }, [demands, boardStatuses]);
+  const servicesCount = boardServicesUsage?.length ?? 0;
+  const stagesCount = boardStatuses?.length ?? 0;
 
   // Initialize edit values when board loads
   useEffect(() => {
@@ -550,47 +582,141 @@ export default function BoardDetail() {
 
         {/* Overview - quick stats summary */}
         <TabsContent value="overview" className="mt-4 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-3">
+          {/* Demand metrics */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Card
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(`/kanban/${board.id}`)}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate(`/kanban/${board.id}`); } }}
+              className="cursor-pointer transition-all hover:border-primary hover:shadow-md hover:-translate-y-0.5"
+            >
+              <CardHeader className="pb-2">
+                <CardDescription className="flex items-center gap-1.5">
+                  <ListChecks className="h-3.5 w-3.5" /> Demandas
+                </CardDescription>
+                <CardTitle className="text-3xl">{overviewMetrics.total}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">Total ativas no quadro</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription className="flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5 text-blue-500" /> Em andamento
+                </CardDescription>
+                <CardTitle className="text-3xl">{overviewMetrics.inProgress}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">Ainda não entregues</p>
+              </CardContent>
+            </Card>
+
+            <Card className={overviewMetrics.overdue > 0 ? "border-destructive/40" : ""}>
+              <CardHeader className="pb-2">
+                <CardDescription className="flex items-center gap-1.5">
+                  <AlertTriangle className={`h-3.5 w-3.5 ${overviewMetrics.overdue > 0 ? "text-destructive" : "text-muted-foreground"}`} /> Atrasadas
+                </CardDescription>
+                <CardTitle className={`text-3xl ${overviewMetrics.overdue > 0 ? "text-destructive" : ""}`}>
+                  {overviewMetrics.overdue}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">Passaram do prazo</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription className="flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Entregues
+                </CardDescription>
+                <CardTitle className="text-3xl">{overviewMetrics.delivered}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">
+                  {overviewMetrics.total > 0
+                    ? `${Math.round((overviewMetrics.delivered / overviewMetrics.total) * 100)}% concluídas`
+                    : "Nenhuma demanda ainda"}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Configuration metrics */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Card
               role="button"
               tabIndex={0}
               onClick={() => setActiveTab("members")}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setActiveTab("members"); } }}
-              className="cursor-pointer transition-all hover:border-primary hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="cursor-pointer transition-all hover:border-primary hover:shadow-md hover:-translate-y-0.5"
             >
               <CardHeader className="pb-2">
-                <CardDescription>Membros</CardDescription>
-                <CardTitle className="text-3xl">{members?.length ?? 0}</CardTitle>
+                <CardDescription className="flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5" /> Membros
+                </CardDescription>
+                <CardTitle className="text-2xl">{members?.length ?? 0}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-xs text-muted-foreground">Pessoas com acesso ao quadro · Clique para gerenciar</p>
+                <p className="text-xs text-muted-foreground">Pessoas com acesso</p>
               </CardContent>
             </Card>
-            <Card>
+
+            <Card
+              role="button"
+              tabIndex={0}
+              onClick={() => setActiveTab("stages")}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setActiveTab("stages"); } }}
+              className="cursor-pointer transition-all hover:border-primary hover:shadow-md hover:-translate-y-0.5"
+            >
               <CardHeader className="pb-2">
-                <CardDescription>Equipe</CardDescription>
-                <CardTitle className="text-base truncate">{board.team_id ? "Vinculado" : "—"}</CardTitle>
+                <CardDescription className="flex items-center gap-1.5">
+                  <ListOrdered className="h-3.5 w-3.5" /> Etapas
+                </CardDescription>
+                <CardTitle className="text-2xl">{stagesCount}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-xs text-muted-foreground line-clamp-2">
-                  {board.description || "Sem descrição configurada"}
-                </p>
+                <p className="text-xs text-muted-foreground">Configuradas no fluxo</p>
               </CardContent>
             </Card>
+
+            <Card
+              role="button"
+              tabIndex={0}
+              onClick={() => setActiveTab("services")}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setActiveTab("services"); } }}
+              className="cursor-pointer transition-all hover:border-primary hover:shadow-md hover:-translate-y-0.5"
+            >
+              <CardHeader className="pb-2">
+                <CardDescription className="flex items-center gap-1.5">
+                  <PackageIcon className="h-3.5 w-3.5" /> Serviços
+                </CardDescription>
+                <CardTitle className="text-2xl">{servicesCount}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">Disponíveis no quadro</p>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader className="pb-2">
-                <CardDescription>Status do quadro</CardDescription>
-                <CardTitle className="text-base">
-                  {board.is_default ? "Padrão da equipe" : "Quadro personalizado"}
-                </CardTitle>
+                <CardDescription className="flex items-center gap-1.5">
+                  <Briefcase className="h-3.5 w-3.5" /> Equipe
+                </CardDescription>
+                <CardTitle className="text-base truncate">{team?.name || "—"}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-xs text-muted-foreground">
                   Criado em {new Date(board.created_at).toLocaleDateString("pt-BR")}
+                  {board.is_default && " · Padrão"}
                 </p>
               </CardContent>
             </Card>
           </div>
+
           <BoardStagesPreview boardId={board.id} canEdit={canManage} />
         </TabsContent>
 
