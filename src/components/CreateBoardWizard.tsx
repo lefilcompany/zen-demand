@@ -1023,9 +1023,14 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
                 onSetLimit={setLimit}
                 onSelectAll={(checked) => {
                   if (checked) {
-                    // Include ALL services (categories + leaves) — all are real DB rows
+                    // Exclude folders (parents) — they are not real services
+                    const folderIds = new Set(
+                      (teamServices ?? []).filter((s) => s.parent_id).map((s) => s.parent_id as string),
+                    );
                     setSelectedServices(
-                      teamServices!.map((s) => ({ serviceId: s.id, serviceName: s.name, monthlyLimit: 0 })),
+                      (teamServices ?? [])
+                        .filter((s) => !folderIds.has(s.id))
+                        .map((s) => ({ serviceId: s.id, serviceName: s.name, monthlyLimit: 0 })),
                     );
                   } else {
                     setSelectedServices([]);
