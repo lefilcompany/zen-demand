@@ -221,6 +221,30 @@ export default function BoardDetail() {
   const isAdmin = effectiveRole === "admin";
   const isRequester = effectiveRole === "requester";
 
+  // Aggregated overview metrics
+  const team = useMemo(
+    () => teams?.find((t: any) => t.id === board?.team_id),
+    [teams, board?.team_id],
+  );
+  const overviewMetrics = useMemo(() => {
+    const list = demands ?? [];
+    const total = list.length;
+    const deliveredStatusIds = new Set(
+      (boardStatuses ?? []).filter((s: any) => s.name === "Entregue").map((s: any) => s.id),
+    );
+    const delivered = list.filter((d: any) => deliveredStatusIds.has(d.status_id)).length;
+    const inProgress = total - delivered;
+    const now = Date.now();
+    const overdue = list.filter((d: any) => {
+      if (deliveredStatusIds.has(d.status_id)) return false;
+      if (!d.due_date) return false;
+      return new Date(d.due_date).getTime() < now;
+    }).length;
+    return { total, delivered, inProgress, overdue };
+  }, [demands, boardStatuses]);
+  const servicesCount = boardServicesUsage?.length ?? 0;
+  const stagesCount = boardStatuses?.length ?? 0;
+
   // Initialize edit values when board loads
   useEffect(() => {
     if (board) {
