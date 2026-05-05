@@ -108,7 +108,7 @@ function ApprovalEditor({
               Todos os elegíveis do quadro ({eligible.length})
             </Label>
             <p className="text-xs text-muted-foreground">
-              {approvalType === "internal" ? "Owners e Coordenadores" : "Solicitantes"} deste quadro.
+              {approvalType === "internal" ? "Administradores e Coordenadores" : "Solicitantes"} deste quadro.
             </p>
           </div>
         </div>

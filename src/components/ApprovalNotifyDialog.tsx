@@ -43,7 +43,7 @@ const EXTERNAL_ROLES = new Set(["requester"]);
 
 const roleLabel = (role: string) => {
   switch (role) {
-    case "admin": return "Owner";
+    case "admin": return "Administrador";
     case "moderator": return "Coordenador";
     case "executor": return "Agente";
     case "requester": return "Solicitante";
@@ -373,7 +373,7 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
                     </Label>
                     <p className="text-xs text-muted-foreground">
                       {approvalType === "internal"
-                        ? "Owners e Coordenadores deste quadro"
+                        ? "Administradores e Coordenadores deste quadro"
                         : "Solicitantes deste quadro"}
                       {eligibleMembers.length > 0 && ` (${eligibleMembers.length})`}
                     </p>
