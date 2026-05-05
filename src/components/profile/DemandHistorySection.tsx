@@ -39,6 +39,28 @@ interface Props {
 }
 
 type Period = "all" | "today" | "week" | "month";
+type Stage = "all" | "todo" | "doing" | "delivered" | "late";
+
+function getStage(d: any): Exclude<Stage, "all"> {
+  const statusName: string = d?.demand_statuses?.name || "";
+  if (d?.delivered_at) {
+    if (d?.due_date) {
+      const delivered = new Date(d.delivered_at).getTime();
+      const due = new Date(String(d.due_date).substring(0, 10)).getTime();
+      if (delivered > due) return "late";
+    }
+    return "delivered";
+  }
+  if (statusName === "A Iniciar") return "todo";
+  return "doing";
+}
+
+const STAGE_META: Record<Exclude<Stage, "all">, { label: string; cls: string }> = {
+  todo: { label: "A iniciar", cls: "border-muted-foreground/40 text-muted-foreground" },
+  doing: { label: "Em andamento", cls: "border-blue-500/50 text-blue-500" },
+  delivered: { label: "Entregue", cls: "border-emerald-500/60 text-emerald-500" },
+  late: { label: "Entregue com atraso", cls: "border-amber-500/60 text-amber-500" },
+};
 
 function startOf(period: Period): Date | null {
   const now = new Date();
