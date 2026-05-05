@@ -119,7 +119,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Determine if session should be cleared based on remember me / time-based expiry
     const rememberMe = localStorage.getItem("rememberMe") === "true";
     const sessionExpiresAt = localStorage.getItem("sessionExpiresAt");
-    const isShortSessionExpired = !rememberMe && sessionExpiresAt && Date.now() > parseInt(sessionExpiresAt, 10);
+    const isSessionExpired = sessionExpiresAt && Date.now() > parseInt(sessionExpiresAt, 10);
     
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
