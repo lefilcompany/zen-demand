@@ -391,85 +391,96 @@ export default function Profile() {
 
       {/* Stats Grid - compact */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          {
-            icon: Target,
-            label: "Demandas",
-            value: stats?.totalDemands || 0,
-            color: "text-blue-500",
-            bg: "bg-blue-500/10",
-          },
-          {
-            icon: CheckCircle2,
-            label: "Entregues",
-            value: stats?.deliveredDemands || 0,
-            color: "text-green-500",
-            bg: "bg-green-500/10",
-          },
-          {
-            icon: Clock,
-            label: "Trabalhado",
-            value: stats ? formatTime(stats.totalTimeSpent) : "0m",
-            color: "text-purple-500",
-            bg: "bg-purple-500/10",
-          },
-          {
-            icon: MessageSquare,
-            label: "Comentários",
-            value: stats?.totalComments || 0,
-            color: "text-orange-500",
-            bg: "bg-orange-500/10",
-          },
-          {
-            icon: Users,
-            label: "Equipes",
-            value: stats?.teamsCount || 0,
-            color: "text-muted-foreground",
-            bg: "bg-muted",
-          },
-          {
-            icon: TrendingUp,
-            label: "Quadros",
-            value: stats?.boardsCount || 0,
-            color: "text-muted-foreground",
-            bg: "bg-muted",
-          },
-          {
-            icon: CheckCircle2,
-            label: "Conclusão",
-            value:
-              stats && stats.totalDemands > 0
-                ? `${Math.round((stats.deliveredDemands / stats.totalDemands) * 100)}%`
-                : "-",
-            color: "text-muted-foreground",
-            bg: "bg-muted",
-          },
-        ].map((s, i) => {
-          const Icon = s.icon;
-          return (
-            <Card
-              key={i}
-              className="border-border/60 hover:border-primary/40 hover:shadow-sm transition-all"
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`h-10 w-10 rounded-lg ${s.bg} flex items-center justify-center shrink-0`}
-                  >
-                    <Icon className={`h-5 w-5 ${s.color}`} />
+        <div className="sm:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {[
+            {
+              icon: Target,
+              label: "Demandas",
+              value: stats?.totalDemands || 0,
+              color: "text-blue-500",
+              bg: "bg-blue-500/10",
+            },
+            {
+              icon: CheckCircle2,
+              label: "Entregues",
+              value: stats?.deliveredDemands || 0,
+              color: "text-green-500",
+              bg: "bg-green-500/10",
+            },
+            {
+              icon: MessageSquare,
+              label: "Comentários",
+              value: stats?.totalComments || 0,
+              color: "text-orange-500",
+              bg: "bg-orange-500/10",
+            },
+            {
+              icon: Users,
+              label: "Equipes",
+              value: stats?.teamsCount || 0,
+              color: "text-muted-foreground",
+              bg: "bg-muted",
+            },
+            {
+              icon: TrendingUp,
+              label: "Quadros",
+              value: stats?.boardsCount || 0,
+              color: "text-muted-foreground",
+              bg: "bg-muted",
+            },
+            {
+              icon: CheckCircle2,
+              label: "Conclusão",
+              value:
+                stats && stats.totalDemands > 0
+                  ? `${Math.round((stats.deliveredDemands / stats.totalDemands) * 100)}%`
+                  : "-",
+              color: "text-muted-foreground",
+              bg: "bg-muted",
+            },
+          ].map((s, i) => {
+            const Icon = s.icon;
+            return (
+              <Card
+                key={i}
+                className="border-border/60 hover:border-primary/40 hover:shadow-sm transition-all"
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`h-10 w-10 rounded-lg ${s.bg} flex items-center justify-center shrink-0`}
+                    >
+                      <Icon className={`h-5 w-5 ${s.color}`} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xl font-bold leading-tight truncate">{s.value}</p>
+                      <p className="text-xs text-muted-foreground leading-tight truncate">
+                        {s.label}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xl font-bold leading-tight truncate">{s.value}</p>
-                    <p className="text-xs text-muted-foreground leading-tight truncate">
-                      {s.label}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Trabalhado - destaque vertical à direita */}
+        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20 hover:shadow-md transition-all">
+          <CardContent className="p-4 h-full flex flex-col items-center justify-center text-center gap-3">
+            <div className="h-14 w-14 rounded-full bg-purple-500/20 flex items-center justify-center">
+              <Clock className="h-7 w-7 text-purple-500" />
+            </div>
+            <div>
+              <p className="text-3xl font-bold leading-tight">
+                {stats ? formatTime(stats.totalTimeSpent) : "0m"}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">Trabalhado</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
 
 
       {/* Tabs: history, achievements */}
