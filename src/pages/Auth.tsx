@@ -780,7 +780,7 @@ export default function Auth() {
               </DialogContent>
             </Dialog>
 
-            <p className="text-center text-xs text-muted-foreground mt-4">
+            <p className="text-center text-[11px] text-muted-foreground/80 mt-6 leading-relaxed">
               Ao continuar, você concorda com nossa{" "}
               <a href="/privacy-policy" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Política de Privacidade</a>{" "}
               e{" "}
