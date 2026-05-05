@@ -592,8 +592,33 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
       const approvalType = approvalKindFromStatusName(newStatusName);
       if (!approvalType || !user?.id) return;
 
-      // Always open the dialog — it will pre-select the board's saved default
-      // (when present) or fall back to "all eligible".
+      // Try to auto-send using the per-demand saved setting (created at demand creation).
+      // If a setting exists, dispatch silently; otherwise open the manual dialog.
+      try {
+        const { tryAutoNotifyApprovalFromSavedSetting } = await import("@/lib/autoApprovalNotify");
+        const result = await tryAutoNotifyApprovalFromSavedSetting({
+          demandId,
+          demandTitle,
+          demandCreatedBy: demandCreatedBy ?? null,
+          boardId: boardId ?? "",
+          boardName: undefined,
+          approvalType,
+          senderId: user.id,
+        });
+        if (result.handled) {
+          if (result.sent && result.sent > 0) {
+            toast.success(
+              result.sent === 1
+                ? "1 pessoa notificada sobre a aprovação"
+                : `${result.sent} pessoas notificadas sobre a aprovação`,
+            );
+          }
+          return;
+        }
+      } catch (err) {
+        console.error("Auto approval notify failed, falling back to dialog:", err);
+      }
+
       setApprovalDialogState({
         demandId,
         demandTitle,
@@ -601,7 +626,7 @@ export function KanbanBoard({ demands, columns: propColumns, onDemandClick, read
         approvalType,
       });
     },
-    [user?.id],
+    [user?.id, boardId],
   );
 
   // Handle column toggle - no limit, users can open all columns
