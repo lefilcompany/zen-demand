@@ -209,6 +209,8 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     setPendingFiles([]);
     setRecurrence(defaultRecurrenceData);
     setSelectedFolderId("");
+    setInternalApprovalRecipients([]);
+    setExternalApprovalRecipients([]);
     setSubdemandCount(0);
     setSubdemands([]);
     setCurrentStep(0);
