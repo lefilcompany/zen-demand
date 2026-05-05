@@ -107,19 +107,25 @@ export function useCreateBoard() {
         monthly_limit: s.monthly_limit || 0
       }));
 
-      console.log("Criando quadro via RPC:", {
-        team_id: input.team_id,
-        name: input.name.trim(),
-        description: input.description?.trim() || null,
-        services: servicesJson
-      });
+      const stagesJson = (input.stages || []).map(s => ({
+        name: s.name,
+        color: s.color,
+        adjustment_type: s.adjustment_type || "none",
+      }));
+
+      const membersJson = (input.members || []).map(m => ({
+        user_id: m.user_id,
+        role: m.role,
+      }));
 
       const { data, error } = await supabase.rpc("create_board_with_services", {
         p_team_id: input.team_id,
         p_name: input.name.trim(),
         p_description: input.description?.trim() || null,
-        p_services: servicesJson
-      });
+        p_services: servicesJson,
+        p_stages: stagesJson.length ? stagesJson : null,
+        p_members: membersJson,
+      } as any);
 
       if (error) {
         console.error("Erro ao criar quadro:", error);
