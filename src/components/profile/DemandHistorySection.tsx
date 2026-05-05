@@ -457,10 +457,10 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
                           type !== "all" ? "border-primary/60 text-foreground" : "border-border/60"
                         }`}
                       >
-                        <SelectValue placeholder="Tipo" />
+                        <SelectValue placeholder="Serviço" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Todos os tipos</SelectItem>
+                        <SelectItem value="all">Todos os serviços</SelectItem>
                         {typeOptions.map(([id, name]) => (
                           <SelectItem key={id} value={id}>
                             {name}
