@@ -551,45 +551,74 @@ export default function Auth() {
                     </Button>
                   </div>
                 )}
-                <form onSubmit={handleLogin} className="space-y-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="login-email" className="text-[12px] font-medium text-foreground/70">{t("common.email")}</Label>
-                    <Input id="login-email" type="email" placeholder="seu@email.com" className="h-11 rounded-lg text-[14px] placeholder:text-muted-foreground/60" value={loginData.email} onChange={e => setLoginData({
-                    ...loginData,
-                    email: e.target.value
-                  })} required />
-                  </div>
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="login-password" className="text-[12px] font-medium text-foreground/70">{t("common.password")}</Label>
-                      <Button type="button" variant="link" className="p-0 h-auto text-[11.5px] font-medium text-muted-foreground hover:text-primary" onClick={() => setResetDialogOpen(true)}>
-                        Esqueceu a senha?
-                      </Button>
-                    </div>
-                    <div className="relative">
-                      <Input id="login-password" type={showLoginPassword ? "text" : "password"} placeholder="••••••••" className="h-11 pr-10 rounded-lg text-[14px] placeholder:text-muted-foreground/60" value={loginData.password} onChange={e => setLoginData({
+                {loginStep === "email" ? (
+                  <form onSubmit={handleEmailContinue} className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="login-email" className="text-[12px] font-medium text-foreground/70">{t("common.email")}</Label>
+                      <Input id="login-email" type="email" placeholder="seu@email.com" autoFocus className="h-11 rounded-lg text-[14px] placeholder:text-muted-foreground/60" value={loginData.email} onChange={e => setLoginData({
                       ...loginData,
-                      password: e.target.value
+                      email: e.target.value
                     })} required />
-                      <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowLoginPassword(!showLoginPassword)}>
-                        {showLoginPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
-                      </Button>
                     </div>
-                  </div>
-
-                  <div className="flex items-center pt-0.5">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="remember-me" checked={rememberMe} onCheckedChange={checked => setRememberMe(checked === true)} className="h-3.5 w-3.5 rounded-[4px]" />
-                      <Label htmlFor="remember-me" className="text-[12px] text-muted-foreground cursor-pointer font-normal">
-                        Manter conectado
-                      </Label>
+                    <Button type="submit" className="w-full h-11 text-[13.5px] font-semibold rounded-lg mt-1" disabled={isCheckingEmail}>
+                      {isCheckingEmail ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Verificando...
+                        </>
+                      ) : (
+                        "Continuar com e-mail"
+                      )}
+                    </Button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleLogin} className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="login-email" className="text-[12px] font-medium text-foreground/70">{t("common.email")}</Label>
+                      <button
+                        type="button"
+                        onClick={() => { setLoginStep("email"); setLoginData({ ...loginData, password: "" }); }}
+                        className="w-full h-11 rounded-lg border border-input bg-muted/40 px-3 flex items-center justify-between text-[14px] text-foreground hover:bg-muted/60 transition-colors group"
+                      >
+                        <span className="truncate">{loginData.email}</span>
+                        <span className="text-[11.5px] font-medium text-muted-foreground group-hover:text-primary flex items-center gap-1">
+                          <ArrowLeft className="h-3 w-3" />
+                          Trocar
+                        </span>
+                      </button>
                     </div>
-                  </div>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="login-password" className="text-[12px] font-medium text-foreground/70">{t("common.password")}</Label>
+                        <Button type="button" variant="link" className="p-0 h-auto text-[11.5px] font-medium text-muted-foreground hover:text-primary" onClick={() => setResetDialogOpen(true)}>
+                          Esqueceu a senha?
+                        </Button>
+                      </div>
+                      <div className="relative">
+                        <Input id="login-password" type={showLoginPassword ? "text" : "password"} placeholder="••••••••" autoFocus className="h-11 pr-10 rounded-lg text-[14px] placeholder:text-muted-foreground/60" value={loginData.password} onChange={e => setLoginData({
+                        ...loginData,
+                        password: e.target.value
+                      })} required />
+                        <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowLoginPassword(!showLoginPassword)}>
+                          {showLoginPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                        </Button>
+                      </div>
+                    </div>
 
-                  <Button type="submit" className="w-full h-11 text-[13.5px] font-semibold rounded-lg mt-1" disabled={isLoading}>
-                    {isLoading ? t("common.loading") : "Entrar com e-mail"}
-                  </Button>
-                </form>
+                    <div className="flex items-center pt-0.5">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="remember-me" checked={rememberMe} onCheckedChange={checked => setRememberMe(checked === true)} className="h-3.5 w-3.5 rounded-[4px]" />
+                        <Label htmlFor="remember-me" className="text-[12px] text-muted-foreground cursor-pointer font-normal">
+                          Manter conectado
+                        </Label>
+                      </div>
+                    </div>
+
+                    <Button type="submit" className="w-full h-11 text-[13.5px] font-semibold rounded-lg mt-1" disabled={isLoading}>
+                      {isLoading ? t("common.loading") : "Entrar"}
+                    </Button>
+                  </form>
+                )}
               </TabsContent>
 
               <TabsContent value="signup" className="mt-0 space-y-3.5">
