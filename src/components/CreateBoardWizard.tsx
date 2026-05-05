@@ -354,8 +354,10 @@ function ServicesPicker({
   const search = serviceSearch.trim().toLowerCase();
   const matchesSearch = (name: string) => !search || name.toLowerCase().includes(search);
 
-  // Every service in the team is selectable (categories included — they are real services in the DB)
-  const totalLeaves = allServices.length;
+  // Folders (parents) are NOT services — exclude them from selection
+  const folderIdSet = new Set(allServices.filter((s) => s.parent_id).map((s) => s.parent_id as string));
+  const selectableServices = allServices.filter((s) => !folderIdSet.has(s.id));
+  const totalLeaves = selectableServices.length;
   const allSelected = totalLeaves > 0 && selectedServices.length === totalLeaves;
 
   // Render a single leaf service row
