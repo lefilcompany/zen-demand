@@ -247,6 +247,7 @@ const STEPS: StepDef[] = [
   { key: "stages", label: "Etapas", icon: Layers },
   { key: "members", label: "Membros", icon: Users },
   { key: "services", label: "Serviços", icon: Package },
+  { key: "review", label: "Revisão", icon: Check },
 ];
 
 interface SortableStageRowProps {
@@ -767,6 +768,137 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {stepIdx === 4 && (
+          <div className="space-y-4">
+            <p className="text-xs text-muted-foreground">
+              Revise as informações abaixo antes de criar o quadro. Você pode voltar para ajustar qualquer etapa.
+            </p>
+
+            {/* Informações */}
+            <div className="rounded-lg border bg-card p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <FileText className="h-4 w-4 text-primary" />
+                  Informações
+                </div>
+                <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setStepIdx(0)}>
+                  Editar
+                </Button>
+              </div>
+              <div className="text-sm">
+                <p className="font-medium">{name.trim() || <span className="text-muted-foreground italic">Sem nome</span>}</p>
+                {description.trim() ? (
+                  <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{description.trim()}</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic mt-1">Sem descrição</p>
+                )}
+              </div>
+            </div>
+
+            {/* Etapas */}
+            <div className="rounded-lg border bg-card p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <Layers className="h-4 w-4 text-primary" />
+                  Etapas <span className="text-xs font-normal text-muted-foreground">({stages.length})</span>
+                </div>
+                <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setStepIdx(1)}>
+                  Editar
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {stages.map((s) => {
+                  const opt = ADJUSTMENT_OPTIONS.find((o) => o.value === s.adjustment_type);
+                  const OptIcon = opt?.icon;
+                  return (
+                    <span
+                      key={s.id}
+                      className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2 py-1 text-xs"
+                      title={opt?.label}
+                    >
+                      <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                      <span className="font-medium">{s.name}</span>
+                      {OptIcon && s.adjustment_type !== "none" && (
+                        <OptIcon className="h-3 w-3 text-muted-foreground" />
+                      )}
+                      {s.locked && <Lock className="h-3 w-3 text-muted-foreground" />}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Membros */}
+            <div className="rounded-lg border bg-card p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <Users className="h-4 w-4 text-primary" />
+                  Membros adicionais <span className="text-xs font-normal text-muted-foreground">({memberRoles.size})</span>
+                </div>
+                <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setStepIdx(2)}>
+                  Editar
+                </Button>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Você será adicionado como Administrador. Administradores da equipe entram como Coordenadores.
+              </p>
+              {memberRoles.size === 0 ? (
+                <p className="text-xs text-muted-foreground italic">Nenhum membro adicional selecionado.</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {Array.from(memberRoles.entries()).map(([uid, role]) => {
+                    const m = teamMembers?.find((tm) => tm.user_id === uid);
+                    const opt = ROLE_OPTIONS.find((r) => r.value === role);
+                    const Icon = opt?.icon;
+                    return (
+                      <div key={uid} className="flex items-center gap-2 text-sm">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={m?.profile.avatar_url || undefined} />
+                          <AvatarFallback className="text-[10px]">
+                            {(m?.profile.full_name || "?").charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="flex-1 truncate">{m?.profile.full_name || "Membro"}</span>
+                        <span className={cn("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium", opt?.color)}>
+                          {Icon && <Icon className="h-3 w-3" />}
+                          {opt?.short}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Serviços */}
+            <div className="rounded-lg border bg-card p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <Package className="h-4 w-4 text-primary" />
+                  Serviços <span className="text-xs font-normal text-muted-foreground">({selectedServices.length})</span>
+                </div>
+                <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setStepIdx(3)}>
+                  Editar
+                </Button>
+              </div>
+              {selectedServices.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic">Nenhum serviço selecionado.</p>
+              ) : (
+                <div className="space-y-1">
+                  {selectedServices.map((s) => (
+                    <div key={s.serviceId} className="flex items-center justify-between text-sm">
+                      <span className="truncate">{s.serviceName}</span>
+                      <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                        {s.monthlyLimit === 0 ? "Ilimitado" : `${s.monthlyLimit}/mês`}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
