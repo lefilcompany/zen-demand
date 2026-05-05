@@ -61,6 +61,8 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [savingPrivacy, setSavingPrivacy] = useState(false);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [page, setPage] = useState<number>(1);
 
   const { data: demands, isLoading } = useQuery({
     queryKey: ["demand-history", userId],
