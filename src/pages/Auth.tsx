@@ -441,40 +441,43 @@ export default function Auth() {
       </div>
 
       {/* Form Section - Scrollable on mobile */}
-      <div className="flex-1 lg:w-1/2 xl:w-2/5 flex flex-col bg-background overflow-y-auto lg:overflow-y-auto">
-        <div className="flex-1 flex items-start lg:items-center justify-center p-4 sm:p-6 md:p-8 lg:p-12">
-          <div className="w-full max-w-md py-4 pb-8">
-            <div className="mb-6 flex flex-col items-center text-center">
-              <img alt="SoMA+" src="/lovable-uploads/9889f524-0819-424e-9185-2cc441526116.png" className="h-9 w-auto mb-5" />
+      <div className="flex-1 lg:w-1/2 xl:w-2/5 flex flex-col bg-background overflow-y-auto">
+        <div className="flex-1 flex items-start lg:items-center justify-center px-5 sm:px-8 py-8 lg:px-10 lg:py-10">
+          <div className="w-full max-w-[380px]">
+            {/* Logo */}
+            <div className="flex justify-center mb-8">
+              <img alt="SoMA+" src="/lovable-uploads/9889f524-0819-424e-9185-2cc441526116.png" className="h-14 w-auto" />
             </div>
 
             <Tabs defaultValue="login" className="w-full">
-              <TabsList className="inline-flex w-auto mx-auto mb-6 h-9 bg-muted/60 p-1 rounded-full gap-1 justify-center">
-                <TabsTrigger value="login" className="text-xs font-medium rounded-full px-5 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-foreground text-muted-foreground transition-all">
-                  Entrar
-                </TabsTrigger>
-                <TabsTrigger value="signup" className="text-xs font-medium rounded-full px-5 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-foreground text-muted-foreground transition-all">
-                  Cadastrar
-                </TabsTrigger>
-              </TabsList>
+              <div className="flex justify-center mb-7">
+                <TabsList className="inline-flex h-9 bg-muted/70 p-1 rounded-full gap-0.5">
+                  <TabsTrigger value="login" className="text-[13px] font-medium rounded-full px-5 h-7 data-[state=active]:bg-background data-[state=active]:shadow-[0_1px_2px_rgba(0,0,0,0.06)] data-[state=active]:text-foreground text-muted-foreground transition-all">
+                    Entrar
+                  </TabsTrigger>
+                  <TabsTrigger value="signup" className="text-[13px] font-medium rounded-full px-5 h-7 data-[state=active]:bg-background data-[state=active]:shadow-[0_1px_2px_rgba(0,0,0,0.06)] data-[state=active]:text-foreground text-muted-foreground transition-all">
+                    Cadastrar
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
               <TabsContent value="login" className="mt-0 space-y-5">
                 <div className="text-center space-y-1.5">
-                  <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight text-foreground">Entrar na sua conta</h1>
-                  <p className="text-sm text-muted-foreground">Acesse sua conta da forma mais rápida</p>
+                  <h1 className="text-[26px] leading-tight font-semibold tracking-tight text-foreground">Entrar na sua conta</h1>
+                  <p className="text-[13px] text-muted-foreground">Acesse sua conta da forma mais rápida</p>
                 </div>
 
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full h-11 text-sm font-medium gap-3 bg-background border-input hover:bg-muted/50 shadow-sm"
+                  className="w-full h-11 text-[13.5px] font-medium gap-2.5 bg-background border-border/80 hover:bg-muted/40 hover:border-border rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
                   disabled={isLoading || isGoogleLoading}
                   onClick={handleGoogleSignIn}
                 >
                   {isGoogleLoading ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <Loader2 className="h-[18px] w-[18px] animate-spin" />
                   ) : (
-                    <svg className="h-5 w-5" viewBox="0 0 24 24">
+                    <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24">
                       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
                       <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
                       <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
@@ -484,17 +487,17 @@ export default function Auth() {
                   Continuar com Google
                 </Button>
 
-                <div className="relative">
+                <div className="relative py-1">
                   <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-border/60" />
+                    <span className="w-full border-t border-border/50" />
                   </div>
                   <div className="relative flex justify-center text-[11px]">
-                    <span className="bg-background px-3 text-muted-foreground">ou entre com seu e-mail</span>
+                    <span className="bg-background px-3 text-muted-foreground/80">ou entre com seu e-mail</span>
                   </div>
                 </div>
 
                 {showClearedCacheNotice && (
-                  <div className="mb-4 rounded-lg border border-primary/30 bg-primary/5 p-3 flex gap-2.5 items-start animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 flex gap-2.5 items-start animate-in fade-in slide-in-from-top-2 duration-300">
                     <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                     <div className="flex-1 space-y-1">
                       <p className="text-sm font-medium text-foreground">
@@ -515,23 +518,23 @@ export default function Auth() {
                     </Button>
                   </div>
                 )}
-                <form onSubmit={handleLogin} className="space-y-3.5">
+                <form onSubmit={handleLogin} className="space-y-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="login-email" className="text-xs font-medium text-muted-foreground">{t("common.email")}</Label>
-                    <Input id="login-email" type="email" placeholder="seu@email.com" className="h-11" value={loginData.email} onChange={e => setLoginData({
+                    <Label htmlFor="login-email" className="text-[12px] font-medium text-foreground/70">{t("common.email")}</Label>
+                    <Input id="login-email" type="email" placeholder="seu@email.com" className="h-11 rounded-lg text-[14px] placeholder:text-muted-foreground/60" value={loginData.email} onChange={e => setLoginData({
                     ...loginData,
                     email: e.target.value
                   })} required />
                   </div>
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="login-password" className="text-xs font-medium text-muted-foreground">{t("common.password")}</Label>
-                      <Button type="button" variant="link" className="p-0 h-auto text-xs text-muted-foreground hover:text-primary" onClick={() => setResetDialogOpen(true)}>
+                      <Label htmlFor="login-password" className="text-[12px] font-medium text-foreground/70">{t("common.password")}</Label>
+                      <Button type="button" variant="link" className="p-0 h-auto text-[11.5px] font-medium text-muted-foreground hover:text-primary" onClick={() => setResetDialogOpen(true)}>
                         Esqueceu a senha?
                       </Button>
                     </div>
                     <div className="relative">
-                      <Input id="login-password" type={showLoginPassword ? "text" : "password"} placeholder="••••••••" className="h-11 pr-10" value={loginData.password} onChange={e => setLoginData({
+                      <Input id="login-password" type={showLoginPassword ? "text" : "password"} placeholder="••••••••" className="h-11 pr-10 rounded-lg text-[14px] placeholder:text-muted-foreground/60" value={loginData.password} onChange={e => setLoginData({
                       ...loginData,
                       password: e.target.value
                     })} required />
@@ -541,16 +544,16 @@ export default function Auth() {
                     </div>
                   </div>
 
-                  <div className="flex items-center">
+                  <div className="flex items-center pt-0.5">
                     <div className="flex items-center space-x-2">
-                      <Checkbox id="remember-me" checked={rememberMe} onCheckedChange={checked => setRememberMe(checked === true)} />
-                      <Label htmlFor="remember-me" className="text-xs text-muted-foreground cursor-pointer">
+                      <Checkbox id="remember-me" checked={rememberMe} onCheckedChange={checked => setRememberMe(checked === true)} className="h-3.5 w-3.5 rounded-[4px]" />
+                      <Label htmlFor="remember-me" className="text-[12px] text-muted-foreground cursor-pointer font-normal">
                         Manter conectado
                       </Label>
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full h-11 text-sm font-semibold" disabled={isLoading}>
+                  <Button type="submit" className="w-full h-11 text-[13.5px] font-semibold rounded-lg mt-1" disabled={isLoading}>
                     {isLoading ? t("common.loading") : "Entrar com e-mail"}
                   </Button>
                 </form>
