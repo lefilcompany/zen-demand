@@ -2624,6 +2624,7 @@ export type Database = {
         Args: { p_dependencies?: Json; p_parent: Json; p_subdemands?: Json }
         Returns: Json
       }
+      email_exists: { Args: { _email: string }; Returns: boolean }
       get_board_role: {
         Args: { _board_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["team_role"]
