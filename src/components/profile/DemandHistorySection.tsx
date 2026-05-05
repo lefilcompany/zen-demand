@@ -15,7 +15,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { History, Search, Lock, Unlock, Calendar, Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { History, Search, Lock, Unlock, Calendar, Loader2, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -63,6 +74,33 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
   const [savingPrivacy, setSavingPrivacy] = useState(false);
   const [pageSize, setPageSize] = useState<number>(10);
   const [page, setPage] = useState<number>(1);
+  const [confirmTarget, setConfirmTarget] = useState<{ id: string; boardId?: string | null; title: string } | null>(null);
+  const [dontAskAgain, setDontAskAgain] = useState<boolean>(false);
+
+  const SKIP_KEY = "soma:demandHistory:skipNavConfirm";
+  const skipConfirm = typeof window !== "undefined" && localStorage.getItem(SKIP_KEY) === "1";
+
+  const goToDemand = (_boardId: string | null | undefined, demandId: string) => {
+    navigate(`/demands/${demandId}`);
+  };
+
+  const handleOpenDemand = (d: any) => {
+    if (skipConfirm) {
+      goToDemand(d.boards?.id || d.board_id, d.id);
+      return;
+    }
+    setConfirmTarget({ id: d.id, boardId: d.boards?.id || d.board_id, title: d.title });
+  };
+
+  const confirmNavigation = () => {
+    if (!confirmTarget) return;
+    if (dontAskAgain && typeof window !== "undefined") {
+      localStorage.setItem(SKIP_KEY, "1");
+    }
+    goToDemand(confirmTarget.boardId, confirmTarget.id);
+    setConfirmTarget(null);
+    setDontAskAgain(false);
+  };
 
   const { data: demands, isLoading } = useQuery({
     queryKey: ["demand-history", userId],
@@ -403,7 +441,7 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
                     return (
                       <button
                         key={d.id}
-                        onClick={() => navigate(`/demand/${d.id}`)}
+                        onClick={() => handleOpenDemand(d)}
                         className="w-full text-left p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -513,6 +551,45 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
           </>
         )}
       </ContentWrapper>
+
+      <AlertDialog
+        open={!!confirmTarget}
+        onOpenChange={(o) => {
+          if (!o) {
+            setConfirmTarget(null);
+            setDontAskAgain(false);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <ExternalLink className="h-4 w-4 text-primary" />
+              Abrir demanda
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Você será direcionado para a demanda{" "}
+              <span className="font-medium text-foreground">
+                "{confirmTarget?.title}"
+              </span>{" "}
+              e o quadro correspondente. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+            <Checkbox
+              checked={dontAskAgain}
+              onCheckedChange={(v) => setDontAskAgain(Boolean(v))}
+            />
+            Não perguntar novamente
+          </label>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmNavigation}>
+              Ir para demanda
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Wrapper>
   );
 }
