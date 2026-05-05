@@ -784,20 +784,22 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
           {STEPS.map((s, i) => {
             const Icon = s.icon;
             const active = i === stepIdx;
+            const visited = i <= maxStepIdx;
             const done = i < stepIdx;
+            const canJump = visited && i !== stepIdx;
             return (
               <div key={s.key} className="flex items-center flex-1 min-w-0">
                 <button
                   type="button"
-                  onClick={() => { if (i < stepIdx) { setError(""); setStepIdx(i); } }}
-                  disabled={i >= stepIdx}
+                  onClick={() => { if (canJump) { setError(""); setStepIdx(i); } }}
+                  disabled={!canJump && !active}
                   className={cn(
                     "flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium transition-colors outline-none",
                     active && "bg-primary text-primary-foreground",
-                    done && "bg-primary/20 text-primary hover:bg-primary/30 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary",
-                    !active && !done && "bg-muted text-muted-foreground cursor-not-allowed"
+                    !active && visited && "bg-primary/20 text-primary hover:bg-primary/30 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary",
+                    !visited && "bg-muted text-muted-foreground cursor-not-allowed"
                   )}
-                  title={done ? `Voltar para ${s.label}` : s.label}
+                  title={canJump ? `Ir para ${s.label}` : s.label}
                 >
                   <div className="flex h-5 w-5 items-center justify-center rounded-full bg-background/30 text-[10px]">
                     {done ? <Check className="h-3 w-3" /> : i + 1}
@@ -806,7 +808,7 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
                   <Icon className="h-3.5 w-3.5 sm:hidden" />
                 </button>
                 {i < STEPS.length - 1 && (
-                  <div className={cn("h-px flex-1 mx-1", done ? "bg-primary/40" : "bg-border")} />
+                  <div className={cn("h-px flex-1 mx-1", i < maxStepIdx ? "bg-primary/40" : "bg-border")} />
                 )}
               </div>
             );
