@@ -25,7 +25,7 @@ const INTERNAL_ROLES = new Set(["admin", "moderator"]);
 const EXTERNAL_ROLES = new Set(["requester"]);
 
 const roleLabel = (r: string) =>
-  r === "admin" ? "Owner"
+  r === "admin" ? "Administrador"
   : r === "moderator" ? "Coordenador"
   : r === "executor" ? "Agente"
   : r === "requester" ? "Solicitante"
@@ -108,7 +108,7 @@ function ApprovalEditor({
               Todos os elegíveis do quadro ({eligible.length})
             </Label>
             <p className="text-xs text-muted-foreground">
-              {approvalType === "internal" ? "Owners e Coordenadores" : "Solicitantes"} deste quadro.
+              {approvalType === "internal" ? "Administradores e Coordenadores" : "Solicitantes"} deste quadro.
             </p>
           </div>
         </div>

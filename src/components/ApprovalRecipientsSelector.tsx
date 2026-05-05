@@ -18,7 +18,7 @@ const ROLE_FILTER: Record<ApprovalKind, Set<string>> = {
 };
 
 const roleLabel = (r: string) =>
-  r === "admin" ? "Owner"
+  r === "admin" ? "Administrador"
   : r === "moderator" ? "Coordenador"
   : r === "requester" ? "Solicitante"
   : r === "executor" ? "Agente"
@@ -73,7 +73,7 @@ export function ApprovalRecipientsSelector({
 
   const summary =
     selectedIds.length === 0
-      ? `Padrão (todos os ${approvalType === "internal" ? "owners e coordenadores" : "solicitantes"})`
+      ? `Padrão (todos os ${approvalType === "internal" ? "administradores e coordenadores" : "solicitantes"})`
       : `${selectedIds.length} pessoa${selectedIds.length > 1 ? "s" : ""} selecionada${selectedIds.length > 1 ? "s" : ""}`;
 
   return (
