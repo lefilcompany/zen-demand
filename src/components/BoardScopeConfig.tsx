@@ -100,9 +100,18 @@ export function BoardScopeConfig({ boardId, canEdit = false }: BoardScopeConfigP
     }
   };
 
-  // Get services not yet added to the board
+  // Identify folder IDs (services that have children) — folders should not be selectable as services
+  const folderIds = useMemo(() => {
+    const ids = new Set<string>();
+    teamServices?.forEach(s => {
+      if (s.parent_id) ids.add(s.parent_id);
+    });
+    return ids;
+  }, [teamServices]);
+
+  // Get services not yet added to the board (excluding folders)
   const availableServices = teamServices?.filter(
-    ts => !boardServicesUsage?.some(bs => bs.service_id === ts.id)
+    ts => !folderIds.has(ts.id) && !boardServicesUsage?.some(bs => bs.service_id === ts.id)
   ) || [];
 
   if (isLoading) {

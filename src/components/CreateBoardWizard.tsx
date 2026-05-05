@@ -354,8 +354,10 @@ function ServicesPicker({
   const search = serviceSearch.trim().toLowerCase();
   const matchesSearch = (name: string) => !search || name.toLowerCase().includes(search);
 
-  // Every service in the team is selectable (categories included — they are real services in the DB)
-  const totalLeaves = allServices.length;
+  // Folders (parents) are NOT services — exclude them from selection
+  const folderIdSet = new Set(allServices.filter((s) => s.parent_id).map((s) => s.parent_id as string));
+  const selectableServices = allServices.filter((s) => !folderIdSet.has(s.id));
+  const totalLeaves = selectableServices.length;
   const allSelected = totalLeaves > 0 && selectedServices.length === totalLeaves;
 
   // Render a single leaf service row
@@ -400,17 +402,12 @@ function ServicesPicker({
     if (visibleChildren.length === 0 && search && !matchesSearch(folder.name)) return null;
 
     const isOpen = openFolders.has(folder.id) || !!search;
-    // Include the folder itself + its children — all are real services in DB
-    const groupIds = [folder.id, ...folder.children.map((c) => c.id)];
+    // Only children are real selectable services — the folder is just a grouping
+    const groupIds = folder.children.map((c) => c.id);
     const selectedCount = selectedServices.filter((s) => groupIds.includes(s.serviceId)).length;
     const allChildrenSelected = groupIds.length > 0 && selectedCount === groupIds.length;
 
     const toggleAllInGroup = (checked: boolean) => {
-      // Toggle the folder (parent service) itself
-      const folderSelected = selectedServices.some((s) => s.serviceId === folder.id);
-      if (checked && !folderSelected) onToggleService(folder.id, folder.name, true);
-      if (!checked && folderSelected) onToggleService(folder.id, folder.name, false);
-      // Toggle children
       folder.children.forEach((child) => {
         const isSel = selectedServices.some((s) => s.serviceId === child.id);
         if (checked && !isSel) onToggleService(child.id, child.name, true);
@@ -1026,9 +1023,14 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
                 onSetLimit={setLimit}
                 onSelectAll={(checked) => {
                   if (checked) {
-                    // Include ALL services (categories + leaves) — all are real DB rows
+                    // Exclude folders (parents) — they are not real services
+                    const folderIds = new Set(
+                      (teamServices ?? []).filter((s) => s.parent_id).map((s) => s.parent_id as string),
+                    );
                     setSelectedServices(
-                      teamServices!.map((s) => ({ serviceId: s.id, serviceName: s.name, monthlyLimit: 0 })),
+                      (teamServices ?? [])
+                        .filter((s) => !folderIds.has(s.id))
+                        .map((s) => ({ serviceId: s.id, serviceName: s.name, monthlyLimit: 0 })),
                     );
                   } else {
                     setSelectedServices([]);
