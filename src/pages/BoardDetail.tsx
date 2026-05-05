@@ -15,6 +15,9 @@ import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { useBoard, useDeleteBoard, useUpdateBoard } from "@/hooks/useBoards";
 import { useBoardMembers, useBoardRole, useRemoveBoardMember, useUpdateBoardMemberRole, BoardRole } from "@/hooks/useBoardMembers";
 import { BoardScopeConfig } from "@/components/BoardScopeConfig";
+import { BoardStagesPreview } from "@/components/BoardStagesPreview";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LayoutDashboard, ListOrdered, Package } from "lucide-react";
 import { AddBoardMemberDialog } from "@/components/AddBoardMemberDialog";
 import { useAuth } from "@/lib/auth";
 import { useTeamRole } from "@/hooks/useTeamRole";
@@ -523,212 +526,277 @@ export default function BoardDetail() {
         )}
       </div>
 
-      {/* Members - Full width */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <Users className="h-5 w-5 shrink-0" />
-                <span className="truncate">Membros do Quadro</span>
-              </CardTitle>
-              <CardDescription className="text-sm">
-                {members?.length || 0} membros neste quadro
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {members && members.length > 3 && (
-                memberSearchOpen ? (
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      ref={memberSearchRef}
-                      placeholder="Buscar por nome ou cargo..."
-                      value={memberSearch}
-                      onChange={(e) => setMemberSearch(e.target.value)}
-                      className="pl-9 h-9 pr-8 w-[200px] sm:w-[260px]"
-                      autoFocus
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") {
-                          setMemberSearchOpen(false);
-                          setMemberSearch("");
-                        }
-                      }}
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8"
-                      onClick={() => { setMemberSearchOpen(false); setMemberSearch(""); }}
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => { setMemberSearchOpen(true); setTimeout(() => memberSearchRef.current?.focus(), 50); }}
-                  >
-                    <Search className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Buscar</span>
-                  </Button>
-                )
-              )}
-              {canManage && (
-                <AddBoardMemberDialog 
-                  boardId={board.id}
-                  trigger={
-                    <Button size="sm" className="shrink-0">
-                      <UserPlus className="h-4 w-4 sm:mr-2" />
-                      <span className="hidden sm:inline">Adicionar</span>
-                    </Button>
-                  }
-                />
-              )}
-            </div>
+      {/* Tabs - profile-style configuration */}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-4 max-w-2xl">
+          <TabsTrigger value="overview" className="gap-2">
+            <LayoutDashboard className="h-4 w-4" />
+            <span className="hidden sm:inline">Visão geral</span>
+          </TabsTrigger>
+          <TabsTrigger value="members" className="gap-2">
+            <Users className="h-4 w-4" />
+            <span className="hidden sm:inline">Membros</span>
+          </TabsTrigger>
+          <TabsTrigger value="stages" className="gap-2">
+            <ListOrdered className="h-4 w-4" />
+            <span className="hidden sm:inline">Etapas</span>
+          </TabsTrigger>
+          <TabsTrigger value="services" className="gap-2">
+            <Package className="h-4 w-4" />
+            <span className="hidden sm:inline">Serviços</span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Overview - quick stats summary */}
+        <TabsContent value="overview" className="mt-4 space-y-4">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Membros</CardDescription>
+                <CardTitle className="text-3xl">{members?.length ?? 0}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">Pessoas com acesso ao quadro</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Equipe</CardDescription>
+                <CardTitle className="text-base truncate">{board.team_id ? "Vinculado" : "—"}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground line-clamp-2">
+                  {board.description || "Sem descrição configurada"}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Status do quadro</CardDescription>
+                <CardTitle className="text-base">
+                  {board.is_default ? "Padrão da equipe" : "Quadro personalizado"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">
+                  Criado em {new Date(board.created_at).toLocaleDateString("pt-BR")}
+                </p>
+              </CardContent>
+            </Card>
           </div>
-        </CardHeader>
-        <CardContent>
-          {membersLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-32 sm:h-40 rounded-xl" />
-              ))}
-            </div>
-          ) : members && members.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              {members.filter((member) => {
-                if (!memberSearch.trim()) return true;
-                const q = memberSearch.toLowerCase();
-                const name = member.profile?.full_name?.toLowerCase() || "";
-                const roleLabel = roleLabels[member.role]?.toLowerCase() || "";
-                const email = member.profile?.email?.toLowerCase() || "";
-                const tm = teamMembers?.find(m => m.user_id === member.user_id);
-                const positionName = tm?.position?.name?.toLowerCase() || "";
-                return name.includes(q) || roleLabel.includes(q) || email.includes(q) || positionName.includes(q);
-              }).map((member) => {
-                const isCurrentUser = member.user_id === user?.id;
-                // Only admins can change roles, and they can't change their own
-                const canChangeRole = isAdmin && !isCurrentUser;
+          <BoardStagesPreview boardId={board.id} canEdit={canManage} />
+        </TabsContent>
 
-                return (
-                  <div 
-                    key={member.id} 
-                    className="rounded-xl border bg-card shadow-sm hover:shadow-md transition-shadow relative group overflow-hidden"
-                  >
-                    {/* Colored Banner */}
-                    <div className={`h-12 sm:h-14 bg-gradient-to-r ${roleBannerColors[member.role] || "from-primary/80 via-primary to-primary/60"}`} />
-                    
-                    {/* "Você" Badge - top right corner */}
-                    {isCurrentUser && (
-                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2">
-                        <span className="inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-white/90 dark:bg-background/90 text-primary shadow-md backdrop-blur-sm border border-white/50 dark:border-border">
-                          <svg className="h-2.5 w-2.5 sm:h-3 sm:w-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                          </svg>
-                          Você
-                        </span>
+        {/* Members tab */}
+        <TabsContent value="members" className="mt-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <Users className="h-5 w-5 shrink-0" />
+                    <span className="truncate">Membros do Quadro</span>
+                  </CardTitle>
+                  <CardDescription className="text-sm">
+                    {members?.length || 0} membros neste quadro
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {members && members.length > 3 && (
+                    memberSearchOpen ? (
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          ref={memberSearchRef}
+                          placeholder="Buscar por nome ou cargo..."
+                          value={memberSearch}
+                          onChange={(e) => setMemberSearch(e.target.value)}
+                          className="pl-9 h-9 pr-8 w-[200px] sm:w-[260px]"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === "Escape") {
+                              setMemberSearchOpen(false);
+                              setMemberSearch("");
+                            }
+                          }}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8"
+                          onClick={() => { setMemberSearchOpen(false); setMemberSearch(""); }}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
-                    )}
-                    
-                    {/* Remove Button - positioned on banner */}
-                    {canManage && !isCurrentUser && (
-                      <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="secondary" size="icon" className="h-6 w-6 sm:h-7 sm:w-7 bg-background/80 hover:bg-background text-destructive hover:text-destructive">
-                              <UserMinus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Remover Membro</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja remover {member.profile?.full_name} deste quadro?
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => handleRemoveMember(member.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Remover
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    )}
-                    
-                    {/* Avatar positioned over banner */}
-                    <div className="relative px-3 sm:px-4 pb-3 sm:pb-4">
-                      <div className="absolute -top-7 sm:-top-8 left-1/2 -translate-x-1/2">
-                        <Avatar className="h-14 w-14 sm:h-16 sm:w-16 border-[3px] sm:border-4 border-background shadow-lg">
-                          <AvatarImage src={member.profile?.avatar_url || undefined} className="object-cover" />
-                          <AvatarFallback className="text-lg sm:text-xl bg-muted font-semibold">
-                            {getInitials(member.profile?.full_name)}
-                          </AvatarFallback>
-                        </Avatar>
-                      </div>
-                      
-                       {/* Member Info */}
-                       <div className="pt-9 sm:pt-10 text-center flex flex-col items-center gap-1 sm:gap-1.5">
-                         <button
-                           type="button"
-                           onClick={() => navigate(`/user/${member.user_id}`)}
-                           className="font-semibold text-xs sm:text-sm line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] leading-tight w-full text-center hover:text-primary hover:underline decoration-primary cursor-pointer transition-colors"
-                         >
-                           {member.profile?.full_name || "Usuário"}
-                         </button>
-                         {member.profile?.email && (
-                           <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-muted-foreground truncate max-w-full px-1">
-                             <Mail className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0 opacity-60" />
-                             <span className="truncate">{member.profile.email}</span>
-                           </div>
-                         )}
-                         <div className="flex flex-col items-center gap-1.5 pt-0.5">
-                           {(() => {
-                             const tm = teamMembers?.find(m => m.user_id === member.user_id);
-                             return tm?.position ? (
-                               <span
-                                 className="inline-flex items-center gap-1 text-[11px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-full border font-medium"
-                                 style={{
-                                   backgroundColor: `${tm.position.color}15`,
-                                   borderColor: `${tm.position.color}40`,
-                                   color: tm.position.text_color || tm.position.color,
-                                 }}
-                               >
-                                 <Briefcase className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                                 <span className="truncate max-w-[70px] sm:max-w-none">{tm.position.name}</span>
-                               </span>
-                             ) : null;
-                           })()}
-                           <RoleSelector
-                             currentRole={member.role}
-                             onRoleChange={(newRole) => handleRoleChange(member.id, newRole)}
-                             isLoading={updateRole.isPending}
-                             disabled={!canChangeRole}
-                           />
-                         </div>
-                       </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>Nenhum membro neste quadro</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setMemberSearchOpen(true); setTimeout(() => memberSearchRef.current?.focus(), 50); }}
+                      >
+                        <Search className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Buscar</span>
+                      </Button>
+                    )
+                  )}
+                  {canManage && (
+                    <AddBoardMemberDialog
+                      boardId={board.id}
+                      trigger={
+                        <Button size="sm" className="shrink-0">
+                          <UserPlus className="h-4 w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Adicionar</span>
+                        </Button>
+                      }
+                    />
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {membersLoading ? (
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <Skeleton key={i} className="h-32 sm:h-40 rounded-xl" />
+                  ))}
+                </div>
+              ) : members && members.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                  {members.filter((member) => {
+                    if (!memberSearch.trim()) return true;
+                    const q = memberSearch.toLowerCase();
+                    const name = member.profile?.full_name?.toLowerCase() || "";
+                    const roleLabel = roleLabels[member.role]?.toLowerCase() || "";
+                    const email = member.profile?.email?.toLowerCase() || "";
+                    const tm = teamMembers?.find(m => m.user_id === member.user_id);
+                    const positionName = tm?.position?.name?.toLowerCase() || "";
+                    return name.includes(q) || roleLabel.includes(q) || email.includes(q) || positionName.includes(q);
+                  }).map((member) => {
+                    const isCurrentUser = member.user_id === user?.id;
+                    const canChangeRole = isAdmin && !isCurrentUser;
 
-      {/* Services */}
-      <BoardScopeConfig boardId={board.id} canEdit={canManage} />
+                    return (
+                      <div
+                        key={member.id}
+                        className="rounded-xl border bg-card shadow-sm hover:shadow-md transition-shadow relative group overflow-hidden"
+                      >
+                        <div className={`h-12 sm:h-14 bg-gradient-to-r ${roleBannerColors[member.role] || "from-primary/80 via-primary to-primary/60"}`} />
+
+                        {isCurrentUser && (
+                          <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2">
+                            <span className="inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-white/90 dark:bg-background/90 text-primary shadow-md backdrop-blur-sm border border-white/50 dark:border-border">
+                              <svg className="h-2.5 w-2.5 sm:h-3 sm:w-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                              </svg>
+                              Você
+                            </span>
+                          </div>
+                        )}
+
+                        {canManage && !isCurrentUser && (
+                          <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="secondary" size="icon" className="h-6 w-6 sm:h-7 sm:w-7 bg-background/80 hover:bg-background text-destructive hover:text-destructive">
+                                  <UserMinus className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Remover Membro</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja remover {member.profile?.full_name} deste quadro?
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleRemoveMember(member.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Remover
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        )}
+
+                        <div className="relative px-3 sm:px-4 pb-3 sm:pb-4">
+                          <div className="absolute -top-7 sm:-top-8 left-1/2 -translate-x-1/2">
+                            <Avatar className="h-14 w-14 sm:h-16 sm:w-16 border-[3px] sm:border-4 border-background shadow-lg">
+                              <AvatarImage src={member.profile?.avatar_url || undefined} className="object-cover" />
+                              <AvatarFallback className="text-lg sm:text-xl bg-muted font-semibold">
+                                {getInitials(member.profile?.full_name)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
+
+                          <div className="pt-9 sm:pt-10 text-center flex flex-col items-center gap-1 sm:gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/user/${member.user_id}`)}
+                              className="font-semibold text-xs sm:text-sm line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem] leading-tight w-full text-center hover:text-primary hover:underline decoration-primary cursor-pointer transition-colors"
+                            >
+                              {member.profile?.full_name || "Usuário"}
+                            </button>
+                            {member.profile?.email && (
+                              <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-muted-foreground truncate max-w-full px-1">
+                                <Mail className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0 opacity-60" />
+                                <span className="truncate">{member.profile.email}</span>
+                              </div>
+                            )}
+                            <div className="flex flex-col items-center gap-1.5 pt-0.5">
+                              {(() => {
+                                const tm = teamMembers?.find(m => m.user_id === member.user_id);
+                                return tm?.position ? (
+                                  <span
+                                    className="inline-flex items-center gap-1 text-[11px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-full border font-medium"
+                                    style={{
+                                      backgroundColor: `${tm.position.color}15`,
+                                      borderColor: `${tm.position.color}40`,
+                                      color: tm.position.text_color || tm.position.color,
+                                    }}
+                                  >
+                                    <Briefcase className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                    <span className="truncate max-w-[70px] sm:max-w-none">{tm.position.name}</span>
+                                  </span>
+                                ) : null;
+                              })()}
+                              <RoleSelector
+                                currentRole={member.role}
+                                onRoleChange={(newRole) => handleRoleChange(member.id, newRole)}
+                                isLoading={updateRole.isPending}
+                                disabled={!canChangeRole}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>Nenhum membro neste quadro</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Stages tab */}
+        <TabsContent value="stages" className="mt-4">
+          <BoardStagesPreview boardId={board.id} canEdit={canManage} />
+        </TabsContent>
+
+        {/* Services tab */}
+        <TabsContent value="services" className="mt-4">
+          <BoardScopeConfig boardId={board.id} canEdit={canManage} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

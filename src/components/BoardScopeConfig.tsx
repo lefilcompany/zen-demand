@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Save, Loader2, Plus, Trash2, Package, AlertCircle, Infinity, ListPlus } from "lucide-react";
+import { Save, Loader2, Plus, Trash2, Package, AlertCircle, Infinity, ListPlus, Folder, FolderOpen, Boxes } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -138,89 +138,19 @@ export function BoardScopeConfig({ boardId, canEdit = false }: BoardScopeConfigP
           </div>
         ) : (
           <>
-            {/* Current Services - Grid Layout */}
+            {/* Current Services - Grouped by category/folder */}
             {boardServicesUsage && boardServicesUsage.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {boardServicesUsage.map((bs) => {
-                  const progressPercent = bs.monthly_limit > 0 
-                    ? Math.min(100, (bs.currentCount / bs.monthly_limit) * 100)
-                    : 0;
-                  
-                  return (
-                    <div 
-                      key={bs.id} 
-                      className="border rounded-xl p-4 bg-card hover:shadow-md transition-shadow relative group"
-                    >
-                      {canEdit && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => handleRemoveService(bs.id)}
-                          disabled={removeService.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                      
-                      <div className="space-y-3">
-                        <div>
-                          <h4 className="font-semibold text-sm line-clamp-1">{bs.service?.name}</h4>
-                          <span className="text-xs text-muted-foreground">
-                            {bs.service?.estimated_hours}h estimadas
-                          </span>
-                        </div>
-                        
-                        <div className="space-y-1.5">
-                          {bs.monthly_limit > 0 ? (
-                            <>
-                              <Progress value={progressPercent} className="h-2" />
-                              <p className="text-xs text-muted-foreground">
-                                {bs.currentCount}/{bs.monthly_limit} demandas
-                                {bs.isLimitReached && (
-                                  <span className="text-destructive font-medium ml-1">(LIMITE)</span>
-                                )}
-                              </p>
-                            </>
-                          ) : (
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Infinity className="h-3 w-3" />
-                              <span>{bs.currentCount} demandas (ilimitado)</span>
-                            </div>
-                          )}
-                        </div>
-                        
-                        {canEdit && (
-                          <div className="flex items-center gap-2 pt-2 border-t">
-                            <Label className="text-xs whitespace-nowrap text-muted-foreground">Limite:</Label>
-                            <Input
-                              type="number"
-                              min={0}
-                              value={editingLimits[bs.id] ?? bs.monthly_limit}
-                              onChange={(e) => setEditingLimits(prev => ({
-                                ...prev,
-                                [bs.id]: parseInt(e.target.value) || 0
-                              }))}
-                              className="h-7 flex-1 text-xs"
-                            />
-                            {editingLimits[bs.id] !== bs.monthly_limit && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 px-2"
-                                onClick={() => handleUpdateLimit(bs.id, editingLimits[bs.id])}
-                                disabled={updateLimit.isPending}
-                              >
-                                <Save className="h-3 w-3" />
-                              </Button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <GroupedServices
+                boardServicesUsage={boardServicesUsage}
+                teamServices={teamServices ?? []}
+                canEdit={canEdit}
+                editingLimits={editingLimits}
+                setEditingLimits={setEditingLimits}
+                handleUpdateLimit={handleUpdateLimit}
+                handleRemoveService={handleRemoveService}
+                isUpdating={updateLimit.isPending}
+                isRemoving={removeService.isPending}
+              />
             ) : (
               <Alert>
                 <AlertCircle className="h-4 w-4" />
@@ -317,5 +247,216 @@ export function BoardScopeConfig({ boardId, canEdit = false }: BoardScopeConfigP
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// ============================================================================
+// Grouped service rendering: by parent (folder/category) + independents
+// ============================================================================
+import type { Service } from "@/hooks/useServices";
+
+interface GroupedServicesProps {
+  boardServicesUsage: any[];
+  teamServices: Service[];
+  canEdit: boolean;
+  editingLimits: Record<string, number>;
+  setEditingLimits: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  handleUpdateLimit: (id: string, limit: number) => void;
+  handleRemoveService: (id: string) => void;
+  isUpdating: boolean;
+  isRemoving: boolean;
+}
+
+function GroupedServices({
+  boardServicesUsage,
+  teamServices,
+  canEdit,
+  editingLimits,
+  setEditingLimits,
+  handleUpdateLimit,
+  handleRemoveService,
+  isUpdating,
+  isRemoving,
+}: GroupedServicesProps) {
+  // Group by parent service (category/folder). Services with no parent or whose
+  // parent is not present go into "Independentes".
+  const groups = useMemo(() => {
+    const byParent: Record<string, { name: string; items: any[] }> = {};
+    const independents: any[] = [];
+
+    boardServicesUsage.forEach((bs) => {
+      const svc = teamServices.find((s) => s.id === bs.service_id);
+      const parentId = svc?.parent_id;
+      if (parentId) {
+        const parent = teamServices.find((s) => s.id === parentId);
+        const key = parentId;
+        if (!byParent[key]) {
+          byParent[key] = { name: parent?.name || "Categoria", items: [] };
+        }
+        byParent[key].items.push(bs);
+      } else {
+        independents.push(bs);
+      }
+    });
+
+    const folderGroups = Object.entries(byParent)
+      .map(([id, g]) => ({ id, ...g }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    return { folderGroups, independents };
+  }, [boardServicesUsage, teamServices]);
+
+  return (
+    <div className="space-y-5">
+      {groups.folderGroups.map((group) => (
+        <ServiceGroupSection
+          key={group.id}
+          title={group.name}
+          icon={<FolderOpen className="h-4 w-4 text-primary" />}
+          subtitle={`${group.items.length} serviço${group.items.length > 1 ? "s" : ""} nesta pasta`}
+          items={group.items}
+          canEdit={canEdit}
+          editingLimits={editingLimits}
+          setEditingLimits={setEditingLimits}
+          handleUpdateLimit={handleUpdateLimit}
+          handleRemoveService={handleRemoveService}
+          isUpdating={isUpdating}
+          isRemoving={isRemoving}
+        />
+      ))}
+
+      {groups.independents.length > 0 && (
+        <ServiceGroupSection
+          title="Serviços independentes"
+          icon={<Boxes className="h-4 w-4 text-muted-foreground" />}
+          subtitle={`${groups.independents.length} serviço${groups.independents.length > 1 ? "s" : ""} sem categoria`}
+          items={groups.independents}
+          canEdit={canEdit}
+          editingLimits={editingLimits}
+          setEditingLimits={setEditingLimits}
+          handleUpdateLimit={handleUpdateLimit}
+          handleRemoveService={handleRemoveService}
+          isUpdating={isUpdating}
+          isRemoving={isRemoving}
+        />
+      )}
+    </div>
+  );
+}
+
+function ServiceGroupSection({
+  title,
+  subtitle,
+  icon,
+  items,
+  canEdit,
+  editingLimits,
+  setEditingLimits,
+  handleUpdateLimit,
+  handleRemoveService,
+  isRemoving,
+  isUpdating,
+}: {
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+  items: any[];
+  canEdit: boolean;
+  editingLimits: Record<string, number>;
+  setEditingLimits: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  handleUpdateLimit: (id: string, limit: number) => void;
+  handleRemoveService: (id: string) => void;
+  isUpdating: boolean;
+  isRemoving: boolean;
+}) {
+  return (
+    <div className="space-y-2.5">
+      <div className="flex items-center gap-2 px-1">
+        {icon}
+        <h4 className="text-sm font-semibold">{title}</h4>
+        <span className="text-xs text-muted-foreground">· {subtitle}</span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        {items.map((bs) => {
+          const progressPercent = bs.monthly_limit > 0
+            ? Math.min(100, (bs.currentCount / bs.monthly_limit) * 100)
+            : 0;
+
+          return (
+            <div
+              key={bs.id}
+              className="border rounded-xl p-4 bg-card hover:shadow-md transition-shadow relative group"
+            >
+              {canEdit && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => handleRemoveService(bs.id)}
+                  disabled={isRemoving}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+
+              <div className="space-y-3">
+                <div>
+                  <h4 className="font-semibold text-sm line-clamp-1">{bs.service?.name}</h4>
+                  <span className="text-xs text-muted-foreground">
+                    {bs.service?.estimated_hours}h estimadas
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  {bs.monthly_limit > 0 ? (
+                    <>
+                      <Progress value={progressPercent} className="h-2" />
+                      <p className="text-xs text-muted-foreground">
+                        {bs.currentCount}/{bs.monthly_limit} demandas
+                        {bs.isLimitReached && (
+                          <span className="text-destructive font-medium ml-1">(LIMITE)</span>
+                        )}
+                      </p>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Infinity className="h-3 w-3" />
+                      <span>{bs.currentCount} demandas (ilimitado)</span>
+                    </div>
+                  )}
+                </div>
+
+                {canEdit && (
+                  <div className="flex items-center gap-2 pt-2 border-t">
+                    <Label className="text-xs whitespace-nowrap text-muted-foreground">Limite:</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={editingLimits[bs.id] ?? bs.monthly_limit}
+                      onChange={(e) => setEditingLimits((prev) => ({
+                        ...prev,
+                        [bs.id]: parseInt(e.target.value) || 0,
+                      }))}
+                      className="h-7 flex-1 text-xs"
+                    />
+                    {editingLimits[bs.id] !== bs.monthly_limit && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2"
+                        onClick={() => handleUpdateLimit(bs.id, editingLimits[bs.id])}
+                        disabled={isUpdating}
+                      >
+                        <Save className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
