@@ -31,12 +31,13 @@ export function TopbarCreateButton() {
           <Button
             variant="default"
             size="sm"
-            className="h-7 gap-1.5 px-2.5 text-xs font-medium hidden sm:inline-flex"
+            className="group relative overflow-hidden h-7 gap-1.5 px-2.5 text-xs font-medium hidden sm:inline-flex !bg-[#F28705] !text-white !border-transparent hover:!bg-[#F28705]/90 hover:!text-white hover:!border-transparent transition-colors"
             onClick={handleClick}
             aria-label={label}
           >
-            <Plus className="h-3.5 w-3.5" />
-            {label}
+            <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent group-hover:translate-x-full transition-transform duration-700 ease-out" />
+            <Plus className="h-3.5 w-3.5 relative" />
+            <span className="relative">{label}</span>
           </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom">
