@@ -275,7 +275,7 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
               Histórico de demandas
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Acompanhe as demandas concluídas e filtre por período, cliente ou tipo de entrega.
+              Acompanhe suas demandas a iniciar, em andamento e entregues. Filtre por etapa, período, cliente ou tipo.
             </p>
           </div>
           {isOwn && (
