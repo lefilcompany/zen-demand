@@ -247,6 +247,7 @@ const STEPS: StepDef[] = [
   { key: "stages", label: "Etapas", icon: Layers },
   { key: "members", label: "Membros", icon: Users },
   { key: "services", label: "Serviços", icon: Package },
+  { key: "review", label: "Revisão", icon: Check },
 ];
 
 interface SortableStageRowProps {
