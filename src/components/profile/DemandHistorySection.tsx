@@ -548,18 +548,24 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
                               )}
                             </div>
                           </div>
-                          {d.demand_statuses?.name && (
-                            <Badge
-                              variant="outline"
-                              className="shrink-0"
-                              style={{
-                                borderColor: d.demand_statuses.color,
-                                color: d.demand_statuses.color,
-                              }}
-                            >
-                              {d.demand_statuses.name}
-                            </Badge>
-                          )}
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            {(() => {
+                              const s = getStage(d);
+                              return (
+                                <Badge variant="outline" className={STAGE_META[s].cls}>
+                                  {STAGE_META[s].label}
+                                </Badge>
+                              );
+                            })()}
+                            {d.demand_statuses?.name && (
+                              <span
+                                className="text-[10px] text-muted-foreground"
+                                style={{ color: d.demand_statuses.color }}
+                              >
+                                {d.demand_statuses.name}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </button>
                     );
