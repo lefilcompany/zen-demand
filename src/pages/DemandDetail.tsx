@@ -759,7 +759,7 @@ export default function DemandDetail() {
               </div>
               {isEditingTitle ? (
                 <form
-                  className="flex items-center gap-1.5 w-full overflow-hidden"
+                  className="flex items-center gap-1.5 max-w-full overflow-hidden"
                   onSubmit={(e) => {
                     e.preventDefault();
                     if (editingTitle.trim() && editingTitle.trim() !== demand.title) {
@@ -778,18 +778,21 @@ export default function DemandDetail() {
                     }
                   }}
                 >
-                  <Input
-                    autoFocus
-                    value={editingTitle}
-                    onChange={(e) => setEditingTitle(e.target.value)}
-                    className="w-full min-w-0 text-base sm:text-lg md:text-2xl font-semibold h-11 px-3 rounded-md border-input bg-background outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-muted-foreground/30 focus:shadow-none focus-visible:shadow-none"
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") {
-                        setIsEditingTitle(false);
-                        setEditingTitle(demand.title);
-                      }
-                    }}
-                  />
+                  <div className="inline-grid items-center max-w-full text-base sm:text-lg md:text-2xl font-semibold [&>*]:[grid-area:1/1/2/2]">
+                    <span className="invisible whitespace-pre px-3 min-w-[2ch]">{editingTitle || " "}</span>
+                    <Input
+                      autoFocus
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      className="w-full min-w-0 text-base sm:text-lg md:text-2xl font-semibold h-11 px-3 rounded-md border-input bg-background outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-muted-foreground/30 focus:shadow-none focus-visible:shadow-none"
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setIsEditingTitle(false);
+                          setEditingTitle(demand.title);
+                        }
+                      }}
+                    />
+                  </div>
                   <Button type="submit" variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-primary hover:bg-primary/10">
                     <Check className="h-4 w-4" />
                   </Button>
