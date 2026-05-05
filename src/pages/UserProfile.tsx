@@ -437,21 +437,23 @@ export default function UserProfile() {
             </div>
 
             {/* XP Progress bar */}
-            <div className="mt-6 bg-muted/50 rounded-lg p-4">
-              <div className="flex items-center justify-between text-sm mb-2">
-                <span className="font-medium flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  Progresso para Nível {levelData.level + 1}
-                </span>
-                <span className="text-muted-foreground">
-                  {levelData.currentLevelXp} / {levelData.nextLevelXp} XP
-                </span>
+            {v("level") && (
+              <div className="mt-6 bg-muted/50 rounded-lg p-4">
+                <div className="flex items-center justify-between text-sm mb-2">
+                  <span className="font-medium flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                    Progresso para Nível {levelData.level + 1}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {levelData.currentLevelXp} / {levelData.nextLevelXp} XP
+                  </span>
+                </div>
+                <Progress value={levelData.progress} className="h-2" />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Total de {levelData.xp} XP acumulados
+                </p>
               </div>
-              <Progress value={levelData.progress} className="h-2" />
-              <p className="text-xs text-muted-foreground mt-2">
-                Total de {levelData.xp} XP acumulados
-              </p>
-            </div>
+            )}
           </div>
         </CardContent>
       </Card>
