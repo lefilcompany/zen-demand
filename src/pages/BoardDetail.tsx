@@ -200,6 +200,7 @@ export default function BoardDetail() {
   // Edit state
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [memberSearch, setMemberSearch] = useState("");
