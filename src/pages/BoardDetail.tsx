@@ -527,7 +527,7 @@ export default function BoardDetail() {
       </div>
 
       {/* Tabs - profile-style configuration */}
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4 max-w-2xl">
           <TabsTrigger value="overview" className="gap-2">
             <LayoutDashboard className="h-4 w-4" />
