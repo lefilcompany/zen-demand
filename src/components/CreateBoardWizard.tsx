@@ -18,6 +18,15 @@ import {
   CircleDot, ClipboardCheck, UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy,
+  useSortable, arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 const ADJUSTMENT_OPTIONS = [
   { value: "none" as const, label: "Normal", icon: CircleDot, description: "Etapa de trabalho padrão" },
