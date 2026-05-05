@@ -105,7 +105,7 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
   const { data: demands, isLoading } = useQuery({
     queryKey: ["demand-history", userId],
     queryFn: async () => {
-      // Get demand IDs where user is creator or assignee, and that are delivered
+      // Get demands where user is creator or assignee (all statuses)
       const [createdRes, assignedRes] = await Promise.all([
         supabase
           .from("demands")
@@ -118,7 +118,6 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
              assigned_profile:profiles!demands_assigned_to_fkey(id, full_name, avatar_url)`
           )
           .eq("created_by", userId)
-          .not("delivered_at", "is", null)
           .eq("archived", false),
         supabase
           .from("demands")
@@ -132,7 +131,6 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
              demand_assignees!inner(user_id)`
           )
           .eq("demand_assignees.user_id", userId)
-          .not("delivered_at", "is", null)
           .eq("archived", false),
       ]);
 
