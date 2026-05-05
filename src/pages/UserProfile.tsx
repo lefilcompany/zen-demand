@@ -21,7 +21,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { usePresence } from "@/contexts/PresenceContext";
 import { SEOHead } from "@/components/SEOHead";
-import { DemandHistorySection } from "@/components/profile/DemandHistorySection";
+import { ProfileTabsSection } from "@/components/profile/ProfileTabsSection";
+import { resolveVisibility, getBannerGradient, type ProfileFieldKey } from "@/lib/profileCustomization";
 
 const INITIAL_BADGES_COUNT = 12;
 
