@@ -76,7 +76,7 @@ export function ProfileTabsSection({
                 <TabsTrigger
                   key={t.id}
                   value={t.id}
-                  className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none rounded-md px-3 py-2 text-sm gap-2"
+                  className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none hover:bg-muted/60 hover:text-foreground transition-colors rounded-md px-3 py-2 text-sm gap-2"
                 >
                   <Icon className="h-4 w-4" />
                   {t.label}
