@@ -89,8 +89,9 @@ export function UpdateModal() {
           <Button
             onClick={handleUpdate}
             disabled={updating}
-            className="sm:flex-1 h-11 rounded-xl bg-[#F28705] hover:bg-[#D97706] text-white shadow-lg shadow-[#F28705]/25 transition-all"
+            className="group relative overflow-hidden sm:flex-1 h-11 rounded-xl bg-[#F28705] hover:bg-[#F8A04A] text-white hover:text-white shadow-lg shadow-[#F28705]/25 transition-all"
           >
+            <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent group-hover:translate-x-full transition-transform duration-1000 ease-out" aria-hidden="true" />
             <RefreshCw className={`h-4 w-4 mr-2 ${updating ? "animate-spin" : ""}`} />
             {updating ? "Atualizando..." : "Atualizar agora"}
           </Button>
