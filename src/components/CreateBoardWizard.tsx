@@ -759,6 +759,7 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
 
     try {
       await createBoard.mutateAsync(payload);
+      try { localStorage.removeItem(draftKey(selectedTeamId)); } catch { /* noop */ }
       onComplete();
     } catch (e) {
       console.error(e);
