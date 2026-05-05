@@ -529,28 +529,6 @@ export default function Auth() {
                   </div>
                 </div>
 
-                {showClearedCacheNotice && (
-                  <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 flex gap-2.5 items-start animate-in fade-in slide-in-from-top-2 duration-300">
-                    <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium text-foreground">
-                        Sua conta continua aqui!
-                      </p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Detectamos que os dados do navegador foram limpos. Sua conta, equipes e demandas estão preservadas — basta entrar novamente.
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 -mt-1 -mr-1 shrink-0"
-                      onClick={() => setShowClearedCacheNotice(false)}
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                )}
                 {loginStep === "email" ? (
                   <form onSubmit={handleEmailContinue} className="space-y-3">
                     <div className="space-y-1.5">
