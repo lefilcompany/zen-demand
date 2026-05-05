@@ -354,8 +354,8 @@ function ServicesPicker({
   const search = serviceSearch.trim().toLowerCase();
   const matchesSearch = (name: string) => !search || name.toLowerCase().includes(search);
 
-  // Compute total selectable leaves (excludes categories)
-  const totalLeaves = allServices.filter((s) => !allServices.some((c) => c.parent_id === s.id)).length;
+  // Every service in the team is selectable (categories included — they are real services in the DB)
+  const totalLeaves = allServices.length;
   const allSelected = totalLeaves > 0 && selectedServices.length === totalLeaves;
 
   // Render a single leaf service row
@@ -400,9 +400,23 @@ function ServicesPicker({
     if (visibleChildren.length === 0 && search && !matchesSearch(folder.name)) return null;
 
     const isOpen = openFolders.has(folder.id) || !!search;
-    const childIds = folder.children.map((c) => c.id);
-    const selectedCount = selectedServices.filter((s) => childIds.includes(s.serviceId)).length;
-    const allChildrenSelected = childIds.length > 0 && selectedCount === childIds.length;
+    // Include the folder itself + its children — all are real services in DB
+    const groupIds = [folder.id, ...folder.children.map((c) => c.id)];
+    const selectedCount = selectedServices.filter((s) => groupIds.includes(s.serviceId)).length;
+    const allChildrenSelected = groupIds.length > 0 && selectedCount === groupIds.length;
+
+    const toggleAllInGroup = (checked: boolean) => {
+      // Toggle the folder (parent service) itself
+      const folderSelected = selectedServices.some((s) => s.serviceId === folder.id);
+      if (checked && !folderSelected) onToggleService(folder.id, folder.name, true);
+      if (!checked && folderSelected) onToggleService(folder.id, folder.name, false);
+      // Toggle children
+      folder.children.forEach((child) => {
+        const isSel = selectedServices.some((s) => s.serviceId === child.id);
+        if (checked && !isSel) onToggleService(child.id, child.name, true);
+        if (!checked && isSel) onToggleService(child.id, child.name, false);
+      });
+    };
 
     return (
       <div className="rounded-lg border bg-card overflow-hidden">
@@ -417,13 +431,7 @@ function ServicesPicker({
           </button>
           <Checkbox
             checked={allChildrenSelected}
-            onCheckedChange={(c) => {
-              folder.children.forEach((child) => {
-                const isSel = selectedServices.some((s) => s.serviceId === child.id);
-                if (c === true && !isSel) onToggleService(child.id, child.name, true);
-                if (c !== true && isSel) onToggleService(child.id, child.name, false);
-              });
-            }}
+            onCheckedChange={(c) => toggleAllInGroup(c === true)}
           />
           {isOpen ? (
             <FolderOpen className="h-4 w-4 text-primary shrink-0" />
@@ -437,7 +445,7 @@ function ServicesPicker({
           >
             <span className="text-sm font-semibold truncate">{folder.name}</span>
             <span className="text-[11px] text-muted-foreground shrink-0">
-              {selectedCount}/{childIds.length}
+              {selectedCount}/{groupIds.length}
             </span>
           </button>
         </div>
@@ -1018,9 +1026,10 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
                 onSetLimit={setLimit}
                 onSelectAll={(checked) => {
                   if (checked) {
-                    // only leaf services (non-categories)
-                    const leaves = teamServices!.filter((s) => !teamServices!.some((c) => c.parent_id === s.id));
-                    setSelectedServices(leaves.map((s) => ({ serviceId: s.id, serviceName: s.name, monthlyLimit: 0 })));
+                    // Include ALL services (categories + leaves) — all are real DB rows
+                    setSelectedServices(
+                      teamServices!.map((s) => ({ serviceId: s.id, serviceName: s.name, monthlyLimit: 0 })),
+                    );
                   } else {
                     setSelectedServices([]);
                   }
