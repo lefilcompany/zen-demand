@@ -354,8 +354,8 @@ function ServicesPicker({
   const search = serviceSearch.trim().toLowerCase();
   const matchesSearch = (name: string) => !search || name.toLowerCase().includes(search);
 
-  // Compute total selectable leaves (excludes categories)
-  const totalLeaves = allServices.filter((s) => !allServices.some((c) => c.parent_id === s.id)).length;
+  // Every service in the team is selectable (categories included — they are real services in the DB)
+  const totalLeaves = allServices.length;
   const allSelected = totalLeaves > 0 && selectedServices.length === totalLeaves;
 
   // Render a single leaf service row
