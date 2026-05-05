@@ -551,6 +551,45 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
           </>
         )}
       </ContentWrapper>
+
+      <AlertDialog
+        open={!!confirmTarget}
+        onOpenChange={(o) => {
+          if (!o) {
+            setConfirmTarget(null);
+            setDontAskAgain(false);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <ExternalLink className="h-4 w-4 text-primary" />
+              Abrir demanda
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Você será direcionado para a demanda{" "}
+              <span className="font-medium text-foreground">
+                "{confirmTarget?.title}"
+              </span>{" "}
+              e o quadro correspondente. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+            <Checkbox
+              checked={dontAskAgain}
+              onCheckedChange={(v) => setDontAskAgain(Boolean(v))}
+            />
+            Não perguntar novamente
+          </label>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmNavigation}>
+              Ir para demanda
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Wrapper>
   );
 }
