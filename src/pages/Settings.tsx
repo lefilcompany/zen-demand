@@ -11,6 +11,7 @@ import {
   SettingsNavItem,
 } from "@/components/settings/SettingsSidebar";
 import { ProfileSection } from "@/components/settings/ProfileSection";
+import { PublicProfileSection } from "@/components/settings/PublicProfileSection";
 import { SecuritySection } from "@/components/settings/SecuritySection";
 import { PreferencesSection } from "@/components/settings/PreferencesSection";
 import { NotificationsSection } from "@/components/settings/NotificationsSection";
