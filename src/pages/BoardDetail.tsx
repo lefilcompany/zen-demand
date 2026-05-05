@@ -652,8 +652,9 @@ export default function BoardDetail() {
               tabIndex={0}
               onClick={() => setActiveTab("members")}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setActiveTab("members"); } }}
-              className="cursor-pointer transition-all hover:border-primary hover:shadow-md hover:-translate-y-0.5"
+              className="group relative cursor-pointer transition-all hover:border-primary hover:shadow-md hover:-translate-y-0.5"
             >
+              <ArrowUpRight className="absolute top-3 right-3 h-4 w-4 text-muted-foreground transition-all group-hover:text-primary group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               <CardHeader className="pb-2">
                 <CardDescription className="flex items-center gap-1.5">
                   <Users className="h-3.5 w-3.5" /> Membros
@@ -670,8 +671,9 @@ export default function BoardDetail() {
               tabIndex={0}
               onClick={() => setActiveTab("stages")}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setActiveTab("stages"); } }}
-              className="cursor-pointer transition-all hover:border-primary hover:shadow-md hover:-translate-y-0.5"
+              className="group relative cursor-pointer transition-all hover:border-primary hover:shadow-md hover:-translate-y-0.5"
             >
+              <ArrowUpRight className="absolute top-3 right-3 h-4 w-4 text-muted-foreground transition-all group-hover:text-primary group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               <CardHeader className="pb-2">
                 <CardDescription className="flex items-center gap-1.5">
                   <ListOrdered className="h-3.5 w-3.5" /> Etapas
@@ -688,8 +690,9 @@ export default function BoardDetail() {
               tabIndex={0}
               onClick={() => setActiveTab("services")}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setActiveTab("services"); } }}
-              className="cursor-pointer transition-all hover:border-primary hover:shadow-md hover:-translate-y-0.5"
+              className="group relative cursor-pointer transition-all hover:border-primary hover:shadow-md hover:-translate-y-0.5"
             >
+              <ArrowUpRight className="absolute top-3 right-3 h-4 w-4 text-muted-foreground transition-all group-hover:text-primary group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               <CardHeader className="pb-2">
                 <CardDescription className="flex items-center gap-1.5">
                   <PackageIcon className="h-3.5 w-3.5" /> Serviços
