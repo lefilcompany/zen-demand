@@ -945,6 +945,28 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                       </div>
                     </div>
 
+                    {/* Approval notification recipients (optional) */}
+                    {activeBoardId && (
+                      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                        <ApprovalRecipientsSelector
+                          boardId={activeBoardId}
+                          approvalType="internal"
+                          selectedIds={internalApprovalRecipients}
+                          onChange={setInternalApprovalRecipients}
+                          label="Notificar na Aprovação Interna (opcional)"
+                          tooltip="Quando esta demanda entrar em 'Aprovação Interna', estas pessoas serão pré-selecionadas para receber a notificação. Se nada for selecionado, todos os Owners e Coordenadores do quadro serão notificados por padrão."
+                        />
+                        <ApprovalRecipientsSelector
+                          boardId={activeBoardId}
+                          approvalType="external"
+                          selectedIds={externalApprovalRecipients}
+                          onChange={setExternalApprovalRecipients}
+                          label="Notificar na Aprovação do Cliente (opcional)"
+                          tooltip="Quando esta demanda entrar em 'Aprovação do Cliente', estas pessoas serão pré-selecionadas para receber a notificação. Se nada for selecionado, todos os Solicitantes do quadro serão notificados por padrão."
+                        />
+                      </div>
+                    )}
+
                     {/* Subdemand counter */}
                     <SubdemandCountStep count={subdemandCount} onChange={setSubdemandCount} />
 
