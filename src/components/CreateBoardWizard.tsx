@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { useCreateBoard, type CreateBoardData } from "@/hooks/useBoards";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useServices } from "@/hooks/useServices";
@@ -9,14 +9,110 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Loader2, ArrowLeft, ArrowRight, Check, Plus, Trash2, GripVertical,
   Package, Users, Layers, FileText, Search, AlertCircle, Lock, ShieldCheck, Shield, Wrench, MessageSquare,
+  CircleDot, ClipboardCheck, UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const ADJUSTMENT_OPTIONS = [
+  { value: "none" as const, label: "Normal", icon: CircleDot, description: "Etapa de trabalho padrão" },
+  { value: "internal" as const, label: "Aprov. Interna", icon: ClipboardCheck, description: "Aprovação da equipe interna" },
+  { value: "external" as const, label: "Aprov. Externa", icon: UserCheck, description: "Aprovação do cliente" },
+];
+
+const STAGE_PRESET_COLORS = [
+  "#6B7280", "#1D1D1D", "#3B82F6", "#0EA5E9",
+  "#10B981", "#22C55E", "#F59E0B", "#F28705",
+  "#EF4444", "#EC4899", "#9333EA", "#6366F1",
+];
+
+interface StageColorPickerProps {
+  value: string;
+  onChange: (color: string) => void;
+  disabled?: boolean;
+}
+
+function StageColorPicker({ value, onChange, disabled }: StageColorPickerProps) {
+  const [hex, setHex] = useState(value);
+  const isValidHex = /^#[0-9A-Fa-f]{6}$/.test(hex);
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          disabled={disabled}
+          className={cn(
+            "h-8 w-8 rounded-md border border-border shrink-0 shadow-sm transition-all",
+            "hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/40",
+            disabled && "opacity-50 cursor-not-allowed hover:scale-100"
+          )}
+          style={{ backgroundColor: value }}
+          title="Escolher cor"
+          aria-label="Escolher cor"
+        />
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-3" align="start">
+        <div className="space-y-3">
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-2">Cores sugeridas</p>
+            <div className="grid grid-cols-6 gap-1.5">
+              {STAGE_PRESET_COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => { onChange(c); setHex(c); }}
+                  className={cn(
+                    "h-7 w-7 rounded-md border transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary",
+                    value.toUpperCase() === c.toUpperCase()
+                      ? "border-foreground ring-2 ring-primary/50 scale-110"
+                      : "border-border"
+                  )}
+                  style={{ backgroundColor: c }}
+                  aria-label={c}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">Cor personalizada</p>
+            <div className="flex items-center gap-2">
+              <div className="relative h-9 w-9 shrink-0 rounded-md border border-border overflow-hidden">
+                <div className="absolute inset-0" style={{ backgroundColor: value }} />
+                <input
+                  type="color"
+                  value={value}
+                  onChange={(e) => { onChange(e.target.value); setHex(e.target.value); }}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  aria-label="Seletor de cor"
+                />
+              </div>
+              <Input
+                value={hex}
+                onChange={(e) => {
+                  const v = e.target.value.startsWith("#") ? e.target.value : `#${e.target.value}`;
+                  setHex(v.toUpperCase());
+                  if (/^#[0-9A-Fa-f]{6}$/.test(v)) onChange(v);
+                }}
+                placeholder="#RRGGBB"
+                maxLength={7}
+                className="h-9 font-mono uppercase text-xs"
+              />
+            </div>
+            {!isValidHex && hex.length > 0 && (
+              <p className="text-[10px] text-destructive">Formato esperado: #RRGGBB</p>
+            )}
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 type AdjustmentType = "none" | "internal" | "external";
 type BoardRole = "admin" | "moderator" | "executor" | "requester";
