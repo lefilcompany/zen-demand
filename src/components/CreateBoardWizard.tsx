@@ -201,6 +201,7 @@ function AdjustmentTypePicker({ value, onChange, disabled }: AdjustmentTypePicke
 type BoardRole = "admin" | "moderator" | "executor" | "requester";
 
 interface Stage {
+  id: string;
   name: string;
   color: string;
   adjustment_type: AdjustmentType;
@@ -213,12 +214,17 @@ interface SelectedService {
   monthlyLimit: number;
 }
 
+const makeStageId = () =>
+  (typeof crypto !== "undefined" && "randomUUID" in crypto)
+    ? crypto.randomUUID()
+    : `stage-${Math.random().toString(36).slice(2)}-${Date.now()}`;
+
 const DEFAULT_STAGES: Stage[] = [
-  { name: "A Iniciar", color: "#6B7280", adjustment_type: "none" },
-  { name: "Fazendo", color: "#3B82F6", adjustment_type: "none" },
-  { name: "Aprovação Interna", color: "#3B82F6", adjustment_type: "internal" },
-  { name: "Em Ajuste", color: "#9333EA", adjustment_type: "none" },
-  { name: "Entregue", color: "#10B981", adjustment_type: "none", locked: true },
+  { id: makeStageId(), name: "A Iniciar", color: "#6B7280", adjustment_type: "none" },
+  { id: makeStageId(), name: "Fazendo", color: "#3B82F6", adjustment_type: "none" },
+  { id: makeStageId(), name: "Aprovação Interna", color: "#3B82F6", adjustment_type: "internal" },
+  { id: makeStageId(), name: "Em Ajuste", color: "#9333EA", adjustment_type: "none" },
+  { id: makeStageId(), name: "Entregue", color: "#10B981", adjustment_type: "none", locked: true },
 ];
 
 const STAGE_COLORS = ["#6B7280", "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#9333EA", "#F28705", "#EC4899"];
