@@ -390,7 +390,7 @@ export default function Profile() {
       </Card>
 
       {/* Stats Grid - compact */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           {
             icon: Target,
@@ -451,16 +451,16 @@ export default function Profile() {
               key={i}
               className="border-border/60 hover:border-primary/40 hover:shadow-sm transition-all"
             >
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
                   <div
-                    className={`h-8 w-8 rounded-lg ${s.bg} flex items-center justify-center shrink-0`}
+                    className={`h-10 w-10 rounded-lg ${s.bg} flex items-center justify-center shrink-0`}
                   >
-                    <Icon className={`h-4 w-4 ${s.color}`} />
+                    <Icon className={`h-5 w-5 ${s.color}`} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-base font-semibold leading-tight truncate">{s.value}</p>
-                    <p className="text-[11px] text-muted-foreground leading-tight truncate">
+                    <p className="text-xl font-bold leading-tight truncate">{s.value}</p>
+                    <p className="text-xs text-muted-foreground leading-tight truncate">
                       {s.label}
                     </p>
                   </div>
