@@ -332,48 +332,24 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
     setStages(stages.map((s, i) => (i === idx ? { ...s, ...patch } : s)));
   };
 
-  // Drag and drop for stages
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  // Drag and drop for stages (smooth, with @dnd-kit)
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
 
-  const handleDragStart = (e: React.DragEvent, idx: number) => {
-    if (stages[idx].locked) {
-      e.preventDefault();
-      return;
-    }
-    setDragIndex(idx);
-    e.dataTransfer.effectAllowed = "move";
-    // Required for Firefox
-    try { e.dataTransfer.setData("text/plain", String(idx)); } catch { /* ignore */ }
-  };
-
-  const handleDragOver = (e: React.DragEvent, idx: number) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    if (stages[idx].locked) return;
-    if (dragOverIndex !== idx) setDragOverIndex(idx);
-  };
-
-  const handleDragEnd = () => {
-    setDragIndex(null);
-    setDragOverIndex(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, idx: number) => {
-    e.preventDefault();
-    const from = dragIndex;
-    handleDragEnd();
-    if (from === null || from === idx) return;
-    if (stages[idx].locked) return; // can't drop on the locked Entregue
+  const handleStageDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
     setStages((prev) => {
-      const next = [...prev];
-      const [moved] = next.splice(from, 1);
-      // Adjust target if moving down
-      const adjustedTo = from < idx ? idx - 1 : idx;
-      next.splice(adjustedTo, 0, moved);
-      // Re-anchor any locked items to the end
-      const locked = next.filter((s) => s.locked);
-      const unlocked = next.filter((s) => !s.locked);
+      const oldIndex = prev.findIndex((s) => s.id === active.id);
+      const newIndex = prev.findIndex((s) => s.id === over.id);
+      if (oldIndex < 0 || newIndex < 0) return prev;
+      if (prev[oldIndex].locked) return prev;
+      const moved = arrayMove(prev, oldIndex, newIndex);
+      // Always keep locked stages anchored at the end
+      const unlocked = moved.filter((s) => !s.locked);
+      const locked = moved.filter((s) => s.locked);
       return [...unlocked, ...locked];
     });
   };
