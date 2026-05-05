@@ -987,19 +987,19 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                       </div>
                     </div>
 
-                    {/* Approval notification recipients (optional) */}
-                    {activeBoardId && (
-                      <ApprovalNotificationsModal
-                        boardId={activeBoardId}
-                        internalIds={internalApprovalRecipients}
-                        externalIds={externalApprovalRecipients}
-                        onChangeInternal={setInternalApprovalRecipients}
-                        onChangeExternal={setExternalApprovalRecipients}
-                      />
-                    )}
-
-                    {/* Subdemand counter */}
-                    <SubdemandCountStep count={subdemandCount} onChange={setSubdemandCount} />
+                    {/* Approval notifications + Subdemand counter side-by-side */}
+                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                      {activeBoardId && (
+                        <ApprovalNotificationsModal
+                          boardId={activeBoardId}
+                          internalIds={internalApprovalRecipients}
+                          externalIds={externalApprovalRecipients}
+                          onChangeInternal={setInternalApprovalRecipients}
+                          onChangeExternal={setExternalApprovalRecipients}
+                        />
+                      )}
+                      <SubdemandCountStep count={subdemandCount} onChange={setSubdemandCount} />
+                    </div>
 
                     {/* Description */}
                     <div className="space-y-2">
