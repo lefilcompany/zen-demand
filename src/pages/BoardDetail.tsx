@@ -200,6 +200,7 @@ export default function BoardDetail() {
   // Edit state
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [memberSearch, setMemberSearch] = useState("");
@@ -527,7 +528,7 @@ export default function BoardDetail() {
       </div>
 
       {/* Tabs - profile-style configuration */}
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4 max-w-2xl">
           <TabsTrigger value="overview" className="gap-2">
             <LayoutDashboard className="h-4 w-4" />
@@ -550,13 +551,19 @@ export default function BoardDetail() {
         {/* Overview - quick stats summary */}
         <TabsContent value="overview" className="mt-4 space-y-4">
           <div className="grid gap-4 sm:grid-cols-3">
-            <Card>
+            <Card
+              role="button"
+              tabIndex={0}
+              onClick={() => setActiveTab("members")}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setActiveTab("members"); } }}
+              className="cursor-pointer transition-all hover:border-primary hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
               <CardHeader className="pb-2">
                 <CardDescription>Membros</CardDescription>
                 <CardTitle className="text-3xl">{members?.length ?? 0}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-xs text-muted-foreground">Pessoas com acesso ao quadro</p>
+                <p className="text-xs text-muted-foreground">Pessoas com acesso ao quadro · Clique para gerenciar</p>
               </CardContent>
             </Card>
             <Card>
