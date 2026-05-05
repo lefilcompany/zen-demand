@@ -252,79 +252,135 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
           </div>
         ) : (
           <>
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por título, cliente, tipo ou status..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
+            {/* Filter toolbar */}
+            {(() => {
+              const activeCount =
+                (period !== "all" ? 1 : 0) +
+                (client !== "all" ? 1 : 0) +
+                (type !== "all" ? 1 : 0) +
+                (statusFilter !== "all" ? 1 : 0) +
+                (search.trim() ? 1 : 0);
+              const clearAll = () => {
+                setPeriod("all");
+                setClient("all");
+                setType("all");
+                setStatusFilter("all");
+                setSearch("");
+              };
+              return (
+                <div className="rounded-xl border bg-muted/30 p-3 space-y-3">
+                  {/* Top row: search + clear */}
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1 min-w-0">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Buscar por título, cliente, tipo ou status..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-9 h-9 bg-background border-border/60 focus-visible:ring-primary/40"
+                      />
+                    </div>
+                    {activeCount > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearAll}
+                        className="h-9 px-3 text-xs text-muted-foreground hover:text-foreground gap-1.5 shrink-0"
+                      >
+                        <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-primary/15 text-primary text-[10px] font-semibold">
+                          {activeCount}
+                        </span>
+                        Limpar
+                      </Button>
+                    )}
+                  </div>
 
-            {/* Filters */}
-            <div className="flex flex-wrap gap-2">
-              {(["all", "today", "week", "month"] as Period[]).map((p) => (
-                <Button
-                  key={p}
-                  size="sm"
-                  variant={period === p ? "default" : "outline"}
-                  onClick={() => setPeriod(p)}
-                  className="rounded-full h-8"
-                >
-                  {p === "all"
-                    ? "Todos"
-                    : p === "today"
-                    ? "Hoje"
-                    : p === "week"
-                    ? "Esta semana"
-                    : "Este mês"}
-                </Button>
-              ))}
+                  {/* Period segmented control */}
+                  <div className="inline-flex items-center bg-background border border-border/60 rounded-full p-0.5 gap-0.5 max-w-full overflow-x-auto">
+                    {(["all", "today", "week", "month"] as Period[]).map((p) => {
+                      const active = period === p;
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setPeriod(p)}
+                          className={`h-7 px-3 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                            active
+                              ? "bg-primary text-primary-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          {p === "all"
+                            ? "Todos"
+                            : p === "today"
+                            ? "Hoje"
+                            : p === "week"
+                            ? "Esta semana"
+                            : "Este mês"}
+                        </button>
+                      );
+                    })}
+                  </div>
 
-              <Select value={client} onValueChange={setClient}>
-                <SelectTrigger className="h-8 rounded-full w-auto min-w-[140px]">
-                  <SelectValue placeholder="Cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os clientes</SelectItem>
-                  {clientOptions.map(([id, name]) => (
-                    <SelectItem key={id} value={id}>
-                      {name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  {/* Selects */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <Select value={client} onValueChange={setClient}>
+                      <SelectTrigger
+                        className={`h-9 rounded-lg bg-background ${
+                          client !== "all" ? "border-primary/60 text-foreground" : "border-border/60"
+                        }`}
+                      >
+                        <SelectValue placeholder="Cliente" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos os clientes</SelectItem>
+                        {clientOptions.map(([id, name]) => (
+                          <SelectItem key={id} value={id}>
+                            {name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
 
-              <Select value={type} onValueChange={setType}>
-                <SelectTrigger className="h-8 rounded-full w-auto min-w-[140px]">
-                  <SelectValue placeholder="Tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os tipos</SelectItem>
-                  {typeOptions.map(([id, name]) => (
-                    <SelectItem key={id} value={id}>
-                      {name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    <Select value={type} onValueChange={setType}>
+                      <SelectTrigger
+                        className={`h-9 rounded-lg bg-background ${
+                          type !== "all" ? "border-primary/60 text-foreground" : "border-border/60"
+                        }`}
+                      >
+                        <SelectValue placeholder="Tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos os tipos</SelectItem>
+                        {typeOptions.map(([id, name]) => (
+                          <SelectItem key={id} value={id}>
+                            {name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
 
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-8 rounded-full w-auto min-w-[140px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os status</SelectItem>
-                  {statusOptions.map(([id, s]) => (
-                    <SelectItem key={id} value={id}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger
+                        className={`h-9 rounded-lg bg-background ${
+                          statusFilter !== "all" ? "border-primary/60 text-foreground" : "border-border/60"
+                        }`}
+                      >
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos os status</SelectItem>
+                        {statusOptions.map(([id, s]) => (
+                          <SelectItem key={id} value={id}>
+                            {s.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* List */}
             {isLoading ? (
