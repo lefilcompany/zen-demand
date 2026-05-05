@@ -76,6 +76,7 @@ export function useDemandApprovalNotifySetting(
     enabled: !!demandId,
     staleTime: 30_000,
   });
+}
 
 export interface UpsertBoardApprovalNotifyInput {
   boardId: string;
