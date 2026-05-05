@@ -868,7 +868,7 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
                               <button
                                 key={opt.value}
                                 type="button"
-                                onClick={() => setRole(m.user_id, opt.value)}
+                                onClick={(e) => { e.stopPropagation(); setRole(m.user_id, opt.value); }}
                                 className={cn(
                                   "flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors",
                                   active
