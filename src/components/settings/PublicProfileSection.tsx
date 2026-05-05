@@ -18,6 +18,7 @@ import {
   type ProfileFieldKey,
   type ProfileFieldDef,
 } from "@/lib/profileCustomization";
+import { ProfilePreview } from "@/components/profile/ProfilePreview";
 
 export function PublicProfileSection() {
   const { user } = useAuth();
