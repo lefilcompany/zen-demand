@@ -430,6 +430,26 @@ export default function Auth() {
   const passwordsDontMatch = signupData.confirmPassword && signupData.password !== signupData.confirmPassword;
   return <>
     <SEOHead title="Entrar ou Criar Conta" description="Acesse o SoMA - Sistema Operacional de Marketing. Faça login ou crie sua conta para gerenciar demandas e produtividade." path="/auth" />
+    {showClearedCacheNotice && (
+      <div className="fixed top-4 right-4 z-50 max-w-sm rounded-xl border border-primary/30 bg-background/95 backdrop-blur-md shadow-2xl p-4 flex gap-3 items-start animate-in fade-in slide-in-from-top-4 duration-300">
+        <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+        <div className="flex-1 space-y-1">
+          <p className="text-sm font-semibold text-foreground">Sua conta continua aqui!</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Detectamos que os dados do navegador foram limpos. Sua conta, equipes e demandas estão preservadas — basta entrar novamente.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 -mt-1 -mr-1 shrink-0"
+          onClick={() => setShowClearedCacheNotice(false)}
+        >
+          <X className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    )}
     <div className="flex flex-col lg:flex-row min-h-screen lg:h-screen lg:overflow-hidden">
       {/* Mobile/Tablet Header with Image - Fixed height */}
       <div className="lg:hidden relative h-40 sm:h-48 md:h-56 flex-shrink-0 overflow-hidden" style={{
