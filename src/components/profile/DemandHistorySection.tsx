@@ -445,7 +445,7 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
                     return (
                       <button
                         key={d.id}
-                        onClick={() => navigate(`/demand/${d.id}`)}
+                        onClick={() => handleOpenDemand(d)}
                         className="w-full text-left p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex items-start justify-between gap-3">
