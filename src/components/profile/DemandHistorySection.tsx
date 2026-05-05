@@ -191,7 +191,7 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
   }, [demands, period, client, type, statusFilter, search]);
 
   // Reset to page 1 when filters / page size / underlying data change
-  useMemo(() => {
+  useEffect(() => {
     setPage(1);
   }, [period, client, type, statusFilter, search, pageSize, demands?.length]);
 
