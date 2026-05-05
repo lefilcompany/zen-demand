@@ -190,6 +190,18 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
     });
   }, [demands, period, client, type, statusFilter, search]);
 
+  // Reset to page 1 when filters / page size / underlying data change
+  useMemo(() => {
+    setPage(1);
+  }, [period, client, type, statusFilter, search, pageSize, demands?.length]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const paged = useMemo(
+    () => filtered.slice((safePage - 1) * pageSize, safePage * pageSize),
+    [filtered, safePage, pageSize],
+  );
+
   const Wrapper: any = embedded ? "div" : Card;
   const ContentWrapper: any = embedded ? "div" : CardContent;
 
