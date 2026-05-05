@@ -172,8 +172,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // If there's a session but the short session has expired, sign out locally
       const isPasswordResetPage = window.location.pathname === "/reset-password";
       
-      if (existingSession && isShortSessionExpired && !isPasswordResetPage) {
-        console.log("Short session expired, signing out locally");
+      if (existingSession && isSessionExpired && !isPasswordResetPage) {
+        console.log("Session expired, signing out locally");
         localStorage.removeItem("sessionExpiresAt");
         clearUserSessionState();
         supabase.auth.signOut({ scope: 'local' }).then(() => {
