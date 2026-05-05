@@ -459,9 +459,16 @@ export function AssigneeSelector({
             ) : (
               <Button
                 type="button"
-                onClick={() => setOpen(false)}
+                disabled={confirmLoading}
+                onClick={async () => {
+                  if (onConfirm) {
+                    await onConfirm();
+                  } else {
+                    setOpen(false);
+                  }
+                }}
               >
-                Confirmar
+                {confirmLoading ? "Salvando..." : onConfirm ? "Salvar" : "Confirmar"}
               </Button>
             )}
           </DialogFooter>
