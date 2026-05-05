@@ -24,6 +24,7 @@ import { useNavigate } from "react-router-dom";
 interface Props {
   userId: string;
   isPublic: boolean;
+  embedded?: boolean;
 }
 
 type Period = "all" | "today" | "week" | "month";
