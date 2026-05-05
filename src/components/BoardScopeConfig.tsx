@@ -159,13 +159,6 @@ export function BoardScopeConfig({ boardId, canEdit = false }: BoardScopeConfigP
                 </AlertDescription>
               </Alert>
             )}
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Nenhum serviço configurado para este quadro. Adicione serviços para controlar os limites de demandas.
-                </AlertDescription>
-              </Alert>
-            )}
 
             {/* Add New Service */}
             {canEdit && availableServices.length > 0 && (
