@@ -249,6 +249,89 @@ const STEPS: StepDef[] = [
   { key: "services", label: "Serviços", icon: Package },
 ];
 
+interface SortableStageRowProps {
+  stage: Stage;
+  onChangeColor: (c: string) => void;
+  onChangeName: (n: string) => void;
+  onChangeAdjustment: (v: AdjustmentType) => void;
+  onRemove: () => void;
+}
+
+function SortableStageRow({
+  stage, onChangeColor, onChangeName, onChangeAdjustment, onRemove,
+}: SortableStageRowProps) {
+  const {
+    attributes, listeners, setNodeRef, transform, transition, isDragging, isOver,
+  } = useSortable({ id: stage.id, disabled: stage.locked });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition: transition ?? "transform 220ms cubic-bezier(0.2, 0, 0, 1)",
+    zIndex: isDragging ? 30 : undefined,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "group flex items-center gap-2 rounded-lg border bg-card p-2",
+        "will-change-transform",
+        stage.locked && "border-dashed bg-muted/30",
+        isDragging && "shadow-lg ring-2 ring-primary/40 bg-card cursor-grabbing",
+        !isDragging && isOver && !stage.locked && "ring-1 ring-primary/30",
+      )}
+    >
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        disabled={stage.locked}
+        className={cn(
+          "flex h-8 w-6 items-center justify-center rounded touch-none shrink-0 outline-none",
+          stage.locked
+            ? "cursor-not-allowed text-muted-foreground/30"
+            : "cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary",
+        )}
+        title={stage.locked ? "Etapa fixa" : "Arrastar para reordenar"}
+        aria-label="Reordenar etapa"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+
+      <StageColorPicker value={stage.color} onChange={onChangeColor} disabled={stage.locked} />
+
+      <Input
+        value={stage.name}
+        disabled={stage.locked}
+        onChange={(e) => onChangeName(e.target.value)}
+        className="h-8 flex-1"
+      />
+
+      <AdjustmentTypePicker
+        value={stage.adjustment_type}
+        onChange={onChangeAdjustment}
+        disabled={stage.locked}
+      />
+
+      {stage.locked ? (
+        <div className="flex h-8 w-8 items-center justify-center shrink-0" title="Etapa obrigatória">
+          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+        </div>
+      ) : (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+          onClick={onRemove}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      )}
+    </div>
+  );
+}
+
 interface CreateBoardWizardProps {
   onComplete: () => void;
   onCancel?: () => void;
