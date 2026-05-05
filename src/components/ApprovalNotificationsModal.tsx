@@ -151,7 +151,7 @@ export function ApprovalNotificationsModal({
 
           {/* Tabs */}
           <div className="flex items-center gap-2 border-b">
-            {(["internal", "external"] as const).map((k) => {
+            {visibleKinds.map((k) => {
               const active = tab === k;
               const count = k === "internal" ? internalIds.length : externalIds.length;
               return (
