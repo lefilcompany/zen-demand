@@ -323,10 +323,10 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
                 </ScrollArea>
               </div>
               <p className="text-xs text-muted-foreground px-1">
-                {boardSetting.mode === "all"
-                  ? "Padrão: todos os elegíveis do quadro."
-                  : "Padrão: lista personalizada do quadro."}
-                {boardSetting.include_creator && " Inclui o criador da demanda."}
+                {effectiveSetting.mode === "all"
+                  ? (demandSetting ? "Esta demanda: todos os elegíveis do quadro." : "Padrão: todos os elegíveis do quadro.")
+                  : (demandSetting ? "Esta demanda: lista personalizada." : "Padrão: lista personalizada do quadro.")}
+                {effectiveSetting.include_creator && " Inclui o criador da demanda."}
               </p>
             </div>
 
