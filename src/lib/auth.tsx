@@ -23,8 +23,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Token refresh interval (5 minutes before expiry)
 const TOKEN_REFRESH_MARGIN = 5 * 60 * 1000; // 5 minutes in ms
 
-// Session duration without "remember me" (4 hours)
-const SHORT_SESSION_DURATION = 4 * 60 * 60 * 1000;
+// Session duration without "remember me" (24 hours)
+const SHORT_SESSION_DURATION = 24 * 60 * 60 * 1000;
+// Session duration with "remember me" enabled (7 days)
+const LONG_SESSION_DURATION = 7 * 24 * 60 * 60 * 1000;
 
 // Clear per-user UI session state (e.g. Kanban filters) on logout / session expiry
 const clearUserSessionState = () => {
@@ -117,7 +119,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Determine if session should be cleared based on remember me / time-based expiry
     const rememberMe = localStorage.getItem("rememberMe") === "true";
     const sessionExpiresAt = localStorage.getItem("sessionExpiresAt");
-    const isShortSessionExpired = !rememberMe && sessionExpiresAt && Date.now() > parseInt(sessionExpiresAt, 10);
+    const isSessionExpired = sessionExpiresAt && Date.now() > parseInt(sessionExpiresAt, 10);
     
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -170,8 +172,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // If there's a session but the short session has expired, sign out locally
       const isPasswordResetPage = window.location.pathname === "/reset-password";
       
-      if (existingSession && isShortSessionExpired && !isPasswordResetPage) {
-        console.log("Short session expired, signing out locally");
+      if (existingSession && isSessionExpired && !isPasswordResetPage) {
+        console.log("Session expired, signing out locally");
         localStorage.removeItem("sessionExpiresAt");
         clearUserSessionState();
         supabase.auth.signOut({ scope: 'local' }).then(() => {
