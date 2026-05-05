@@ -69,6 +69,7 @@ export default function Settings() {
 
   const items: SettingsNavItem[] = [
     { id: "profile", label: "Perfil", description: "Informações pessoais", icon: User },
+    { id: "public-profile", label: "Perfil público", description: "O que outros veem", icon: Eye },
     { id: "security", label: "Segurança", description: "Senha e autenticação", icon: KeyRound },
     { id: "preferences", label: "Preferências", description: "Aparência e idioma", icon: Palette },
     { id: "notifications", label: "Notificações", description: "Alertas e canais", icon: Bell },
