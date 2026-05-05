@@ -1813,6 +1813,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          banner_gradient: string | null
           banner_url: string | null
           bio: string | null
           city: string | null
@@ -1826,6 +1827,7 @@ export type Database = {
           linkedin_url: string | null
           location: string | null
           phone: string | null
+          profile_visibility: Json
           state: string | null
           trial_ends_at: string | null
           updated_at: string
@@ -1833,6 +1835,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          banner_gradient?: string | null
           banner_url?: string | null
           bio?: string | null
           city?: string | null
@@ -1846,6 +1849,7 @@ export type Database = {
           linkedin_url?: string | null
           location?: string | null
           phone?: string | null
+          profile_visibility?: Json
           state?: string | null
           trial_ends_at?: string | null
           updated_at?: string
@@ -1853,6 +1857,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          banner_gradient?: string | null
           banner_url?: string | null
           bio?: string | null
           city?: string | null
@@ -1866,6 +1871,7 @@ export type Database = {
           linkedin_url?: string | null
           location?: string | null
           phone?: string | null
+          profile_visibility?: Json
           state?: string | null
           trial_ends_at?: string | null
           updated_at?: string
