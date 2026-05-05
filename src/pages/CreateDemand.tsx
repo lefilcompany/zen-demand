@@ -843,7 +843,7 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                                     setBoardPopoverOpen(false);
                                     setBoardSearch("");
                                   }}
-                                  className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm hover:bg-muted transition-colors text-left"
+                                  className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm border border-transparent bg-white hover:bg-white hover:text-[#F28705] hover:border-[#F28705] transition-colors text-left"
                                 >
                                   <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                                   <span className="truncate">{board.name}</span>
