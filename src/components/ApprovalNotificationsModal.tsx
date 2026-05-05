@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -8,6 +9,7 @@ import { InfoTooltip } from "@/components/InfoTooltip";
 import { Bell, Search, Check, ShieldCheck, Shield, User, Users, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBoardMembers } from "@/hooks/useBoardMembers";
+import { supabase } from "@/integrations/supabase/client";
 import type { ApprovalKind } from "@/lib/approvalNotifications";
 
 const ROLE_FILTER: Record<ApprovalKind, Set<string>> = {
@@ -49,6 +51,46 @@ export function ApprovalNotificationsModal({
   const [tab, setTab] = useState<ApprovalKind>("internal");
   const [search, setSearch] = useState("");
   const { data: members } = useBoardMembers(boardId ?? null);
+
+  // Discover which approval stages exist in this board's kanban
+  const { data: availableKinds } = useQuery({
+    queryKey: ["board-approval-stages", boardId],
+    enabled: !!boardId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("board_statuses")
+        .select("adjustment_type, is_active")
+        .eq("board_id", boardId as string)
+        .eq("is_active", true);
+      if (error) throw error;
+      const kinds = new Set<ApprovalKind>();
+      (data || []).forEach((r: any) => {
+        if (r.adjustment_type === "internal") kinds.add("internal");
+        if (r.adjustment_type === "external") kinds.add("external");
+      });
+      return kinds;
+    },
+  });
+
+  const hasInternal = availableKinds?.has("internal") ?? true;
+  const hasExternal = availableKinds?.has("external") ?? true;
+  const visibleKinds = (["internal", "external"] as const).filter(
+    (k) => (k === "internal" ? hasInternal : hasExternal),
+  );
+
+  // If current tab is hidden, switch to first visible
+  useEffect(() => {
+    if (visibleKinds.length > 0 && !visibleKinds.includes(tab)) {
+      setTab(visibleKinds[0]);
+    }
+  }, [visibleKinds, tab]);
+
+  // Clear selections for hidden kinds so they don't get saved
+  useEffect(() => {
+    if (!hasInternal && internalIds.length > 0) onChangeInternal([]);
+    if (!hasExternal && externalIds.length > 0) onChangeExternal([]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasInternal, hasExternal]);
 
   const eligible = useMemo(
     () => (members || []).filter((m) => ROLE_FILTER[tab].has(m.role)),
@@ -109,7 +151,7 @@ export function ApprovalNotificationsModal({
 
           {/* Tabs */}
           <div className="flex items-center gap-2 border-b">
-            {(["internal", "external"] as const).map((k) => {
+            {visibleKinds.map((k) => {
               const active = tab === k;
               const count = k === "internal" ? internalIds.length : externalIds.length;
               return (

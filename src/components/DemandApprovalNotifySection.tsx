@@ -50,6 +50,28 @@ export function DemandApprovalNotifySection({ demandId, boardId, canEdit }: Prop
     },
   });
 
+  // Detect which approval stages exist on this board
+  const { data: availableKinds } = useQuery({
+    queryKey: ["board-approval-stages", boardId],
+    enabled: !!boardId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("board_statuses")
+        .select("adjustment_type, is_active")
+        .eq("board_id", boardId as string)
+        .eq("is_active", true);
+      if (error) throw error;
+      const kinds = new Set<string>();
+      (data || []).forEach((r: any) => {
+        if (r.adjustment_type === "internal") kinds.add("internal");
+        if (r.adjustment_type === "external") kinds.add("external");
+      });
+      return kinds;
+    },
+  });
+  const hasInternal = availableKinds?.has("internal") ?? true;
+  const hasExternal = availableKinds?.has("external") ?? true;
+
   const initialInternal = useMemo(
     () => (settings?.find((s: any) => s.approval_type === "internal")?.recipient_ids as string[]) || [],
     [settings],
@@ -179,17 +201,22 @@ export function DemandApprovalNotifySection({ demandId, boardId, canEdit }: Prop
         </div>
       ) : (
         <div className="flex flex-col gap-1.5 flex-1">
-          {renderGroup(
+          {hasInternal && renderGroup(
             "Aprovação interna",
             <Users className="h-3.5 w-3.5" />,
             internalMembers,
             "Padrão (todos Owners/Coordenadores)",
           )}
-          {renderGroup(
+          {hasExternal && renderGroup(
             "Aprovação do cliente",
             <Building2 className="h-3.5 w-3.5" />,
             externalMembers,
             "Padrão (todos Solicitantes)",
+          )}
+          {!hasInternal && !hasExternal && (
+            <span className="text-xs text-muted-foreground italic">
+              Este quadro não possui etapas de aprovação configuradas.
+            </span>
           )}
           {canEdit && (
             <div>
