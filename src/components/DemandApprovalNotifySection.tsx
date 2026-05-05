@@ -201,17 +201,22 @@ export function DemandApprovalNotifySection({ demandId, boardId, canEdit }: Prop
         </div>
       ) : (
         <div className="flex flex-col gap-1.5 flex-1">
-          {renderGroup(
+          {hasInternal && renderGroup(
             "Aprovação interna",
             <Users className="h-3.5 w-3.5" />,
             internalMembers,
             "Padrão (todos Owners/Coordenadores)",
           )}
-          {renderGroup(
+          {hasExternal && renderGroup(
             "Aprovação do cliente",
             <Building2 className="h-3.5 w-3.5" />,
             externalMembers,
             "Padrão (todos Solicitantes)",
+          )}
+          {!hasInternal && !hasExternal && (
+            <span className="text-xs text-muted-foreground italic">
+              Este quadro não possui etapas de aprovação configuradas.
+            </span>
           )}
           {canEdit && (
             <div>
