@@ -77,7 +77,23 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
   const { preferences } = useNotificationPreferences();
   const { setting: boardSetting, isLoading: settingLoading } =
     useBoardApprovalNotifySetting(open ? boardId ?? null : null, approvalType);
+  const { data: demandSetting, isLoading: demandSettingLoading } =
+    useDemandApprovalNotifySetting(open ? demandId ?? null : null, approvalType);
   const upsertBoardSetting = useUpsertBoardApprovalNotifySetting();
+  // Per-demand setting takes precedence over the board default.
+  const effectiveSetting = demandSetting
+    ? {
+        mode: demandSetting.mode,
+        recipient_ids: demandSetting.recipient_ids ?? [],
+        include_creator: demandSetting.include_creator,
+      }
+    : boardSetting
+      ? {
+          mode: boardSetting.mode,
+          recipient_ids: boardSetting.recipient_ids ?? [],
+          include_creator: boardSetting.include_creator,
+        }
+      : null;
 
   const canManageBoardDefault = myBoardRole === "admin" || myBoardRole === "moderator";
 
