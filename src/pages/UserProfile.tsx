@@ -21,7 +21,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { usePresence } from "@/contexts/PresenceContext";
 import { SEOHead } from "@/components/SEOHead";
-import { DemandHistorySection } from "@/components/profile/DemandHistorySection";
+import { ProfileTabsSection } from "@/components/profile/ProfileTabsSection";
+import { resolveVisibility, getBannerGradient, type ProfileFieldKey } from "@/lib/profileCustomization";
 
 const INITIAL_BADGES_COUNT = 12;
 
@@ -252,6 +253,8 @@ export default function UserProfile() {
   const lockedBadges = badgeStats ? gamificationBadges.filter((b) => !b.requirement(badgeStats)) : gamificationBadges;
 
   const levelData = calculateLevel();
+  const visibility = resolveVisibility((profile as any)?.profile_visibility, isOwnProfile);
+  const v = (k: ProfileFieldKey) => visibility[k];
 
   if (isLoading) {
     return (
@@ -314,7 +317,7 @@ export default function UserProfile() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
             </>
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-secondary/60">
+            <div className={`absolute inset-0 ${getBannerGradient((profile as any)?.banner_gradient).className}`}>
               {/* Pattern overlay for default banner */}
               <div className="absolute inset-0 opacity-10" style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
@@ -324,10 +327,12 @@ export default function UserProfile() {
           )}
           
           {/* Level Badge */}
-          <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full px-4 py-2 z-10 border border-white/10">
-            <Trophy className="h-5 w-5 text-yellow-400 drop-shadow-md" />
-            <span className="text-white font-bold drop-shadow-md">Nível {levelData.level}</span>
-          </div>
+          {v("level") && (
+            <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full px-4 py-2 z-10 border border-white/10">
+              <Trophy className="h-5 w-5 text-yellow-400 drop-shadow-md" />
+              <span className="text-white font-bold drop-shadow-md">Nível {levelData.level}</span>
+            </div>
+          )}
 
           {/* Decorative bottom edge */}
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-secondary to-primary" />
@@ -345,9 +350,11 @@ export default function UserProfile() {
                 showStatus={true}
               />
               {/* Level badge on avatar */}
-              <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-lg border-2 border-background">
-                {levelData.level}
-              </div>
+              {v("level") && (
+                <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-lg border-2 border-background">
+                  {levelData.level}
+                </div>
+              )}
             </div>
           </div>
 
@@ -358,7 +365,7 @@ export default function UserProfile() {
                 <h1 className="text-2xl md:text-3xl font-bold text-foreground">
                   {profile.full_name}
                 </h1>
-                {(profile as any).job_title && (
+                {v("jobTitle") && (profile as any).job_title && (
                   <p className="text-primary font-medium mt-1">{(profile as any).job_title}</p>
                 )}
                 <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
@@ -370,21 +377,21 @@ export default function UserProfile() {
                     <Calendar className="h-4 w-4" />
                     Membro desde {formatDate(profile.created_at)}
                   </span>
-                  {(profile as any).location && (
+                  {v("location") && (profile as any).location && (
                     <span className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
                       {(profile as any).location}
                     </span>
                   )}
                 </div>
-                {(profile as any).bio && (
+                {v("bio") && (profile as any).bio && (
                   <p className="text-muted-foreground mt-3 max-w-2xl">{(profile as any).bio}</p>
                 )}
               </div>
               
               {/* Social links */}
               <div className="flex items-center gap-2">
-                {(profile as any).website && (
+                {v("website") && (profile as any).website && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -398,7 +405,7 @@ export default function UserProfile() {
                     </Tooltip>
                   </TooltipProvider>
                 )}
-                {(profile as any).github_url && (
+                {v("github") && (profile as any).github_url && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -412,7 +419,7 @@ export default function UserProfile() {
                     </Tooltip>
                   </TooltipProvider>
                 )}
-                {(profile as any).linkedin_url && (
+                {v("linkedin") && (profile as any).linkedin_url && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -430,28 +437,32 @@ export default function UserProfile() {
             </div>
 
             {/* XP Progress bar */}
-            <div className="mt-6 bg-muted/50 rounded-lg p-4">
-              <div className="flex items-center justify-between text-sm mb-2">
-                <span className="font-medium flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  Progresso para Nível {levelData.level + 1}
-                </span>
-                <span className="text-muted-foreground">
-                  {levelData.currentLevelXp} / {levelData.nextLevelXp} XP
-                </span>
+            {v("level") && (
+              <div className="mt-6 bg-muted/50 rounded-lg p-4">
+                <div className="flex items-center justify-between text-sm mb-2">
+                  <span className="font-medium flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                    Progresso para Nível {levelData.level + 1}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {levelData.currentLevelXp} / {levelData.nextLevelXp} XP
+                  </span>
+                </div>
+                <Progress value={levelData.progress} className="h-2" />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Total de {levelData.xp} XP acumulados
+                </p>
               </div>
-              <Progress value={levelData.progress} className="h-2" />
-              <p className="text-xs text-muted-foreground mt-2">
-                Total de {levelData.xp} XP acumulados
-              </p>
-            </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
       {/* Stats Cards */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
-        <Card className="col-span-1">
+        {v("statDemands") && (
+
+          <Card className="col-span-1">
           <CardContent className="pt-4 pb-4">
             <div className="flex flex-col items-center text-center">
               <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-2">
@@ -463,7 +474,12 @@ export default function UserProfile() {
           </CardContent>
         </Card>
 
-        <Card className="col-span-1">
+        )}
+
+        {v("statDelivered") && (
+
+
+          <Card className="col-span-1">
           <CardContent className="pt-4 pb-4">
             <div className="flex flex-col items-center text-center">
               <div className="h-10 w-10 rounded-full bg-success/10 flex items-center justify-center mb-2">
@@ -475,7 +491,13 @@ export default function UserProfile() {
           </CardContent>
         </Card>
 
-        <Card className="col-span-1">
+
+        )}
+
+        {v("statDemands") && (
+
+
+          <Card className="col-span-1">
           <CardContent className="pt-4 pb-4">
             <div className="flex flex-col items-center text-center">
               <div className="h-10 w-10 rounded-full bg-secondary/10 flex items-center justify-center mb-2">
@@ -487,7 +509,13 @@ export default function UserProfile() {
           </CardContent>
         </Card>
 
-        <Card className="col-span-1">
+
+        )}
+
+        {v("statTime") && (
+
+
+          <Card className="col-span-1">
           <CardContent className="pt-4 pb-4">
             <div className="flex flex-col items-center text-center">
               <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center mb-2">
@@ -499,7 +527,13 @@ export default function UserProfile() {
           </CardContent>
         </Card>
 
-        <Card className="col-span-1">
+
+        )}
+
+        {v("statComments") && (
+
+
+          <Card className="col-span-1">
           <CardContent className="pt-4 pb-4">
             <div className="flex flex-col items-center text-center">
               <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-2">
@@ -511,7 +545,13 @@ export default function UserProfile() {
           </CardContent>
         </Card>
 
-        <Card className="col-span-1">
+
+        )}
+
+        {v("statRecent") && (
+
+
+          <Card className="col-span-1">
           <CardContent className="pt-4 pb-4">
             <div className="flex flex-col items-center text-center">
               <div className="h-10 w-10 rounded-full bg-warning/20 flex items-center justify-center mb-2">
@@ -522,141 +562,26 @@ export default function UserProfile() {
             </div>
           </CardContent>
         </Card>
+
+
+        )}
       </div>
 
-      {/* Demand History */}
+      {/* Tabbed: history, achievements, teams, boards */}
       {userId && (
-        <DemandHistorySection
+        <ProfileTabsSection
           userId={userId}
           isPublic={Boolean((profile as any)?.is_demand_history_public)}
+          visibility={visibility}
+          earnedBadges={earnedBadges}
+          lockedBadges={lockedBadges}
+          totalBadges={gamificationBadges.length}
+          teams={(userTeams || []) as any}
+          boards={(userBoards || []) as any}
+          getRoleLabel={getRoleLabel}
+          getRoleBadgeVariant={getRoleBadgeVariant}
         />
       )}
-
-      {/* Badges Section - Same as Profile */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Award className="h-5 w-5 text-yellow-500" />
-            Conquistas
-            <Badge variant="secondary" className="ml-2">
-              {earnedBadges.length}/{gamificationBadges.length}
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {(() => {
-            const allBadgesSorted = [...earnedBadges, ...lockedBadges];
-            const displayedBadges = showAllBadges 
-              ? allBadgesSorted 
-              : allBadgesSorted.slice(0, INITIAL_BADGES_COUNT);
-            const hasMoreBadges = allBadgesSorted.length > INITIAL_BADGES_COUNT;
-
-            return (
-              <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  <TooltipProvider>
-                    {displayedBadges.map((badge, index) => {
-                      const isEarned = earnedBadges.some(b => b.id === badge.id);
-                      return (
-                        <AnimatedBadge 
-                          key={badge.id} 
-                          badge={badge} 
-                          isEarned={isEarned} 
-                          index={index} 
-                        />
-                      );
-                    })}
-                  </TooltipProvider>
-                </div>
-                
-                {hasMoreBadges && (
-                  <div className="flex justify-center pt-2">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setShowAllBadges(!showAllBadges)}
-                      className="gap-2"
-                    >
-                      {showAllBadges ? (
-                        <>
-                          <ChevronUp className="h-4 w-4" />
-                          Ver menos
-                        </>
-                      ) : (
-                        <>
-                          <ChevronDown className="h-4 w-4" />
-                          Ver mais conquistas ({allBadgesSorted.length - INITIAL_BADGES_COUNT})
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
-              </>
-            );
-          })()}
-        </CardContent>
-      </Card>
-
-      {/* Teams & Boards Grid */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Teams */}
-        {userTeams && userTeams.length > 0 && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Briefcase className="h-5 w-5 text-primary" />
-                Equipes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {userTeams.map((tm: any) => (
-                  <div 
-                    key={tm.teams?.id} 
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                  >
-                    <div>
-                      <p className="font-medium">{tm.teams?.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Desde {format(new Date(tm.joined_at), "dd/MM/yyyy")}
-                      </p>
-                    </div>
-                    <Badge variant={getRoleBadgeVariant(tm.role)}>
-                      {getRoleLabel(tm.role)}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Boards */}
-        {userBoards && userBoards.length > 0 && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Target className="h-5 w-5 text-primary" />
-                Quadros
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {userBoards.map((bm: any) => (
-                  <div 
-                    key={bm.boards?.id} 
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                  >
-                    <p className="font-medium">{bm.boards?.name}</p>
-                    <Badge variant={getRoleBadgeVariant(bm.role)}>
-                      {getRoleLabel(bm.role)}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
     </div>
   );
 }

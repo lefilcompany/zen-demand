@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Settings as SettingsIcon, User, KeyRound, Palette, Bell, Users, Shield } from "lucide-react";
+import { Settings as SettingsIcon, User, KeyRound, Palette, Bell, Users, Shield, Eye } from "lucide-react";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { SEOHead } from "@/components/SEOHead";
 import { useSelectedTeam } from "@/contexts/TeamContext";
@@ -11,6 +11,7 @@ import {
   SettingsNavItem,
 } from "@/components/settings/SettingsSidebar";
 import { ProfileSection } from "@/components/settings/ProfileSection";
+import { PublicProfileSection } from "@/components/settings/PublicProfileSection";
 import { SecuritySection } from "@/components/settings/SecuritySection";
 import { PreferencesSection } from "@/components/settings/PreferencesSection";
 import { NotificationsSection } from "@/components/settings/NotificationsSection";
@@ -68,6 +69,7 @@ export default function Settings() {
 
   const items: SettingsNavItem[] = [
     { id: "profile", label: "Perfil", description: "Informações pessoais", icon: User },
+    { id: "public-profile", label: "Perfil público", description: "O que outros veem", icon: Eye },
     { id: "security", label: "Segurança", description: "Senha e autenticação", icon: KeyRound },
     { id: "preferences", label: "Preferências", description: "Aparência e idioma", icon: Palette },
     { id: "notifications", label: "Notificações", description: "Alertas e canais", icon: Bell },
@@ -92,6 +94,7 @@ export default function Settings() {
 
         <main className="min-w-0">
           {active === "profile" && <ProfileSection />}
+          {active === "public-profile" && <PublicProfileSection />}
           {active === "security" && <SecuritySection />}
           {active === "preferences" && <PreferencesSection />}
           {active === "notifications" && <NotificationsSection />}
