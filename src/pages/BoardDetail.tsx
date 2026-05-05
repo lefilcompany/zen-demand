@@ -14,6 +14,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { useBoard, useDeleteBoard, useUpdateBoard } from "@/hooks/useBoards";
 import { useBoardMembers, useBoardRole, useRemoveBoardMember, useUpdateBoardMemberRole, BoardRole } from "@/hooks/useBoardMembers";
+import { useDemands } from "@/hooks/useDemands";
+import { useBoardServicesWithUsage } from "@/hooks/useBoardServices";
+import { useBoardStatuses } from "@/hooks/useBoardStatuses";
+import { useTeams } from "@/hooks/useTeams";
 import { BoardScopeConfig } from "@/components/BoardScopeConfig";
 import { BoardStagesPreview } from "@/components/BoardStagesPreview";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
