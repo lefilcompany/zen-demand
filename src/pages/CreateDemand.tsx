@@ -987,8 +987,9 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                       </div>
                     </div>
 
-                    {/* Approval notifications + Subdemand counter side-by-side */}
+                    {/* Subdemand counter + Approval notifications side-by-side */}
                     <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                      <SubdemandCountStep count={subdemandCount} onChange={setSubdemandCount} />
                       {activeBoardId && (
                         <ApprovalNotificationsModal
                           boardId={activeBoardId}
@@ -998,7 +999,6 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                           onChangeExternal={setExternalApprovalRecipients}
                         />
                       )}
-                      <SubdemandCountStep count={subdemandCount} onChange={setSubdemandCount} />
                     </div>
 
                     {/* Description */}
