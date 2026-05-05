@@ -492,75 +492,17 @@ export default function Profile() {
         </Card>
       </div>
 
-      {/* Demand History */}
+      {/* Tabs: history, achievements */}
       {user && (
-        <DemandHistorySection
+        <ProfileTabsSection
           userId={user.id}
           isPublic={Boolean((profile as any)?.is_demand_history_public)}
+          visibility={ownVisibility}
+          earnedBadges={earnedBadges}
+          lockedBadges={lockedBadges}
+          totalBadges={badges.length}
         />
       )}
-
-      {/* Badges Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Award className="h-5 w-5 text-yellow-500" />
-            Conquistas
-            <Badge variant="secondary" className="ml-2">
-              {earnedBadges.length}/{badges.length}
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {(() => {
-            const allBadgesSorted = [...earnedBadges, ...lockedBadges];
-            const displayedBadges = showAllBadges 
-              ? allBadgesSorted 
-              : allBadgesSorted.slice(0, INITIAL_BADGES_COUNT);
-            const hasMoreBadges = allBadgesSorted.length > INITIAL_BADGES_COUNT;
-
-            return (
-              <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {displayedBadges.map((badge, index) => {
-                    const isEarned = earnedBadges.some(b => b.id === badge.id);
-                    return (
-                      <AnimatedBadge 
-                        key={badge.id} 
-                        badge={badge} 
-                        isEarned={isEarned} 
-                        index={index} 
-                      />
-                    );
-                  })}
-                </div>
-                
-                {hasMoreBadges && (
-                  <div className="flex justify-center pt-2">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setShowAllBadges(!showAllBadges)}
-                      className="gap-2"
-                    >
-                      {showAllBadges ? (
-                        <>
-                          <ChevronUp className="h-4 w-4" />
-                          Ver menos
-                        </>
-                      ) : (
-                        <>
-                          <ChevronDown className="h-4 w-4" />
-                          Ver mais conquistas ({allBadgesSorted.length - INITIAL_BADGES_COUNT})
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
-              </>
-            );
-          })()}
-        </CardContent>
-      </Card>
 
       {/* Edit Drawer */}
       <ProfileEditDrawer open={editDrawerOpen} onOpenChange={setEditDrawerOpen} />
