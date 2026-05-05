@@ -68,8 +68,8 @@ export function ProfileTabsSection({
   return (
     <Card>
       <Tabs defaultValue={tabs[0].id} className="w-full">
-        <div className="border-b px-4 pt-3 overflow-x-auto">
-          <TabsList className="bg-transparent h-auto p-0 gap-1">
+        <div className="border-b px-4 pt-3 pb-2 overflow-x-auto">
+          <TabsList className="bg-transparent h-auto p-0 gap-1 mb-1">
             {tabs.map((t) => {
               const Icon = t.icon;
               return (
