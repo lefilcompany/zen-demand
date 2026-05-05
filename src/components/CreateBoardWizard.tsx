@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useCreateBoard, type CreateBoardData } from "@/hooks/useBoards";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useServices, useHierarchicalServices, type ServiceWithHierarchy } from "@/hooks/useServices";
@@ -529,6 +529,17 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
   const { data: hierarchicalServices } = useHierarchicalServices(selectedTeamId);
   const [serviceSearch, setServiceSearch] = useState("");
   const [openFolders, setOpenFolders] = useState<Set<string>>(new Set());
+
+  // Open all folders by default once hierarchical services are loaded
+  useEffect(() => {
+    if (hierarchicalServices && hierarchicalServices.length > 0) {
+      setOpenFolders((prev) => {
+        if (prev.size > 0) return prev;
+        const ids = hierarchicalServices.filter((s) => s.isCategory).map((s) => s.id);
+        return new Set(ids);
+      });
+    }
+  }, [hierarchicalServices]);
   const { data: teamMembers } = useTeamMembers(selectedTeamId);
 
   const [stepIdx, setStepIdx] = useState(0);
