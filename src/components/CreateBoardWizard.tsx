@@ -574,6 +574,7 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
   const initialDraft = useMemo(() => loadDraft(selectedTeamId), [selectedTeamId]);
 
   const [stepIdx, setStepIdx] = useState(initialDraft?.stepIdx ?? 0);
+  const [maxStepIdx, setMaxStepIdx] = useState(initialDraft?.stepIdx ?? 0);
   const [error, setError] = useState("");
 
   // Step 1
