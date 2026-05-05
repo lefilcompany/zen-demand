@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/lib/auth";
 import { useBoardMembers } from "@/hooks/useBoardMembers";
 import { ApprovalNotificationsModal } from "@/components/ApprovalNotificationsModal";
 import { toast } from "sonner";
