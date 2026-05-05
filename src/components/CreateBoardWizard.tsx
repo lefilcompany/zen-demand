@@ -731,50 +731,30 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 pb-2 border-b">
-                  <Checkbox
-                    checked={selectedServices.length === teamServices!.length}
-                    onCheckedChange={(c) => {
-                      if (c) setSelectedServices(teamServices!.map((s) => ({ serviceId: s.id, serviceName: s.name, monthlyLimit: 0 })));
-                      else setSelectedServices([]);
-                    }}
-                  />
-                  <span className="text-xs font-semibold text-muted-foreground">Selecionar todos</span>
-                </div>
-                {teamServices!.map((service) => {
-                  const sel = selectedServices.find((s) => s.serviceId === service.id);
-                  return (
-                    <div key={service.id} className="space-y-1.5">
-                      <div className="flex items-center gap-3">
-                        <Checkbox
-                          checked={!!sel}
-                          onCheckedChange={(c) => toggleService(service.id, service.name, c === true)}
-                        />
-                        <label className="flex-1 text-sm font-medium cursor-pointer">
-                          {service.name}
-                          <span className="ml-2 text-xs text-muted-foreground">({service.estimated_hours}h)</span>
-                        </label>
-                      </div>
-                      {sel && (
-                        <div className="ml-7 flex items-center gap-2">
-                          <Label className="text-xs whitespace-nowrap">Limite mensal:</Label>
-                          <Input
-                            type="number"
-                            min={0}
-                            value={sel.monthlyLimit}
-                            onChange={(e) => setLimit(service.id, parseInt(e.target.value) || 0)}
-                            className="h-7 w-20 text-xs"
-                          />
-                          <span className="text-xs text-muted-foreground">
-                            {sel.monthlyLimit === 0 ? "(ilimitado)" : "demandas/mês"}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  );
+              <ServicesPicker
+                hierarchical={hierarchicalServices}
+                allServices={teamServices!}
+                selectedServices={selectedServices}
+                serviceSearch={serviceSearch}
+                onSearchChange={setServiceSearch}
+                openFolders={openFolders}
+                onToggleFolder={(id) => setOpenFolders((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(id)) next.delete(id); else next.add(id);
+                  return next;
                 })}
-              </div>
+                onToggleService={toggleService}
+                onSetLimit={setLimit}
+                onSelectAll={(checked) => {
+                  if (checked) {
+                    // only leaf services (non-categories)
+                    const leaves = teamServices!.filter((s) => !teamServices!.some((c) => c.parent_id === s.id));
+                    setSelectedServices(leaves.map((s) => ({ serviceId: s.id, serviceName: s.name, monthlyLimit: 0 })));
+                  } else {
+                    setSelectedServices([]);
+                  }
+                }}
+              />
             )}
           </div>
         )}
