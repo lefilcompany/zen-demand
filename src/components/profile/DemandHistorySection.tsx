@@ -506,6 +506,58 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
               </div>
             ) : (
               <>
+                {/* Pagination header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 mb-3 border-b">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>
+                      {(safePage - 1) * pageSize + 1}–
+                      {Math.min(safePage * pageSize, filtered.length)} de {filtered.length}
+                    </span>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="flex items-center gap-1.5">
+                      Por página:
+                      <Select
+                        value={String(pageSize)}
+                        onValueChange={(v) => setPageSize(Number(v))}
+                      >
+                        <SelectTrigger className="h-7 w-[68px] rounded-full text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[5, 10, 20, 50, 100].map((n) => (
+                            <SelectItem key={n} value={String(n)}>
+                              {n}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 rounded-full"
+                      disabled={safePage <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      Anterior
+                    </Button>
+                    <span className="text-xs text-muted-foreground px-2">
+                      {safePage} / {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 rounded-full"
+                      disabled={safePage >= totalPages}
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    >
+                      Próxima
+                    </Button>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   {paged.map((d: any) => {
                     const date = d.delivered_at || d.updated_at || d.created_at;
