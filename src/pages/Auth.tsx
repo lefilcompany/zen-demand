@@ -264,8 +264,10 @@ export default function Auth() {
       if (data === true) {
         setLoginStep("password");
       } else {
-        toast.error("Conta não encontrada", {
-          description: "Não localizamos uma conta com este e-mail. Verifique ou crie uma conta.",
+        setSignupData(prev => ({ ...prev, email }));
+        setActiveTab("signup");
+        toast.info("Vamos criar sua conta", {
+          description: "Não localizamos esse e-mail. Complete o cadastro para continuar.",
         });
       }
     } catch (err: any) {
