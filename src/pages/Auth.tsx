@@ -240,6 +240,36 @@ export default function Auth() {
     
     return "Ocorreu um erro. Por favor, tente novamente.";
   };
+  const handleEmailContinue = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const email = loginData.email.trim();
+    if (!email) return;
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.warning("Email inválido", { description: "Digite um email válido para continuar." });
+      return;
+    }
+
+    setIsCheckingEmail(true);
+    try {
+      const { data, error } = await supabase.rpc("email_exists", { _email: email });
+      if (error) throw error;
+      if (data === true) {
+        setLoginStep("password");
+      } else {
+        toast.error("Conta não encontrada", {
+          description: "Não localizamos uma conta com este e-mail. Verifique ou crie uma conta.",
+        });
+      }
+    } catch (err: any) {
+      // Fail-open: still allow user to try entering password
+      setLoginStep("password");
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
