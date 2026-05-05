@@ -125,6 +125,8 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
   const [selectedFolderId, setSelectedFolderId] = useState("");
+  const [internalApprovalRecipients, setInternalApprovalRecipients] = useState<string[]>([]);
+  const [externalApprovalRecipients, setExternalApprovalRecipients] = useState<string[]>([]);
 
   // Subdemand state
   const [subdemandCount, setSubdemandCount] = useState(0);
