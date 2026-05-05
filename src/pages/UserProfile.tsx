@@ -253,6 +253,8 @@ export default function UserProfile() {
   const lockedBadges = badgeStats ? gamificationBadges.filter((b) => !b.requirement(badgeStats)) : gamificationBadges;
 
   const levelData = calculateLevel();
+  const visibility = resolveVisibility((profile as any)?.profile_visibility, isOwnProfile);
+  const v = (k: ProfileFieldKey) => visibility[k];
 
   if (isLoading) {
     return (
