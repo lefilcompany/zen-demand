@@ -392,6 +392,45 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
                     })}
                   </div>
 
+                  {/* Stage pills */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {(
+                      [
+                        { id: "all", label: "Todas as etapas", cls: "" },
+                        { id: "todo", label: STAGE_META.todo.label, cls: STAGE_META.todo.cls },
+                        { id: "doing", label: STAGE_META.doing.label, cls: STAGE_META.doing.cls },
+                        { id: "delivered", label: STAGE_META.delivered.label, cls: STAGE_META.delivered.cls },
+                        { id: "late", label: STAGE_META.late.label, cls: STAGE_META.late.cls },
+                      ] as { id: Stage; label: string; cls: string }[]
+                    ).map((s) => {
+                      const active = stage === s.id;
+                      const count = s.id === "all"
+                        ? (demands || []).length
+                        : stageCounts[s.id] || 0;
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => setStage(s.id)}
+                          className={`h-7 px-2.5 rounded-full text-xs font-medium border inline-flex items-center gap-1.5 transition-colors ${
+                            active
+                              ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                              : `bg-background hover:bg-muted ${s.cls || "border-border/60 text-muted-foreground"}`
+                          }`}
+                        >
+                          {s.label}
+                          <span
+                            className={`text-[10px] px-1.5 h-4 rounded-full inline-flex items-center ${
+                              active ? "bg-primary-foreground/20" : "bg-muted"
+                            }`}
+                          >
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
                   {/* Selects */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <Select value={client} onValueChange={setClient}>
