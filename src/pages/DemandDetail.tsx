@@ -545,9 +545,34 @@ export default function DemandDetail() {
         if (isEnteringTimerStatus && !isTimerRunning) {
           startTimer();
         }
-        // Approval transition handling — always open dialog (pre-selected with board defaults)
+        // Approval transition handling — try auto-send from per-demand saved setting first.
         const approvalType = approvalKindFromStatusName(status.name);
         if (approvalType && user?.id && demand) {
+          try {
+            const { tryAutoNotifyApprovalFromSavedSetting } = await import("@/lib/autoApprovalNotify");
+            const result = await tryAutoNotifyApprovalFromSavedSetting({
+              demandId: demand.id,
+              demandTitle: demand.title,
+              demandCreatedBy: demand.created_by ?? null,
+              boardId: demand.board_id,
+              boardName: undefined,
+              approvalType,
+              senderId: user.id,
+            });
+            if (result.handled) {
+              if (result.sent && result.sent > 0) {
+                toast.success(
+                  result.sent === 1
+                    ? "1 pessoa notificada sobre a aprovação"
+                    : `${result.sent} pessoas notificadas sobre a aprovação`,
+                );
+              }
+              return;
+            }
+          } catch (err) {
+            console.error("Auto approval notify failed, falling back to dialog:", err);
+          }
+
           setApprovalDialogState({
             demandId: demand.id,
             demandTitle: demand.title,
