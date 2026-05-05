@@ -48,7 +48,7 @@ function startOf(period: Period): Date | null {
   return null;
 }
 
-export function DemandHistorySection({ userId, isPublic }: Props) {
+export function DemandHistorySection({ userId, isPublic, embedded = false }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
