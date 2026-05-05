@@ -836,14 +836,16 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
                   return (
                     <div
                       key={m.user_id}
+                      onClick={() => toggleMember(m.user_id)}
                       className={cn(
-                        "flex items-center gap-3 rounded-lg border p-2.5 transition-colors",
-                        isSelected ? "border-primary bg-primary/5" : "bg-card"
+                        "flex items-center gap-3 rounded-lg border p-2.5 transition-colors cursor-pointer hover:bg-muted/50",
+                        isSelected ? "border-primary bg-primary/5 hover:bg-primary/10" : "bg-card"
                       )}
                     >
                       <Checkbox
                         checked={isSelected}
                         onCheckedChange={() => toggleMember(m.user_id)}
+                        onClick={(e) => e.stopPropagation()}
                       />
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={m.profile.avatar_url || undefined} />
