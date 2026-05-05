@@ -1123,9 +1123,6 @@ export default function DemandDetail() {
                     <Button size="sm" onClick={handleSaveAssignees} disabled={setAssignees.isPending} className="flex-1 sm:flex-none">
                       Salvar
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setEditingAssignees(false)} className="flex-1 sm:flex-none">
-                      Cancelar
-                    </Button>
                   </div>
                 </div> : <div className="flex items-center gap-2">
                   {formattedAssignees.length > 0 ? <AssigneeAvatars assignees={formattedAssignees} size="md" /> : <span className="text-muted-foreground">Nenhum</span>}
