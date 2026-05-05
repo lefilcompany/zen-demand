@@ -2593,59 +2593,33 @@ export type Database = {
         }
         Returns: string
       }
-      create_board_with_services:
-        | {
-            Args: {
-              p_description?: string
-              p_name: string
-              p_services?: Json
-              p_team_id: string
-            }
-            Returns: {
-              created_at: string
-              created_by: string
-              description: string | null
-              id: string
-              is_default: boolean | null
-              monthly_demand_limit: number | null
-              name: string
-              team_id: string
-              updated_at: string
-            }
-            SetofOptions: {
-              from: "*"
-              to: "boards"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: {
-              p_description?: string
-              p_members?: Json
-              p_name: string
-              p_services?: Json
-              p_stages?: Json
-              p_team_id: string
-            }
-            Returns: {
-              created_at: string
-              created_by: string
-              description: string | null
-              id: string
-              is_default: boolean | null
-              monthly_demand_limit: number | null
-              name: string
-              team_id: string
-              updated_at: string
-            }
-            SetofOptions: {
-              from: "*"
-              to: "boards"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
+      create_board_with_services: {
+        Args: {
+          p_description?: string
+          p_members?: Json
+          p_name: string
+          p_services?: Json
+          p_stages?: Json
+          p_team_id: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_default: boolean | null
+          monthly_demand_limit: number | null
+          name: string
+          team_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "boards"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_demand_with_subdemands: {
         Args: { p_dependencies?: Json; p_parent: Json; p_subdemands?: Json }
         Returns: Json

@@ -125,7 +125,7 @@ export function useCreateBoard() {
         p_services: servicesJson,
         p_stages: stagesJson.length ? stagesJson : null,
         p_members: membersJson,
-      } as any);
+      });
 
       if (error) {
         console.error("Erro ao criar quadro:", error);
