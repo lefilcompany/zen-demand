@@ -400,17 +400,12 @@ function ServicesPicker({
     if (visibleChildren.length === 0 && search && !matchesSearch(folder.name)) return null;
 
     const isOpen = openFolders.has(folder.id) || !!search;
-    // Include the folder itself + its children — all are real services in DB
-    const groupIds = [folder.id, ...folder.children.map((c) => c.id)];
+    // Only children are real selectable services — the folder is just a grouping
+    const groupIds = folder.children.map((c) => c.id);
     const selectedCount = selectedServices.filter((s) => groupIds.includes(s.serviceId)).length;
     const allChildrenSelected = groupIds.length > 0 && selectedCount === groupIds.length;
 
     const toggleAllInGroup = (checked: boolean) => {
-      // Toggle the folder (parent service) itself
-      const folderSelected = selectedServices.some((s) => s.serviceId === folder.id);
-      if (checked && !folderSelected) onToggleService(folder.id, folder.name, true);
-      if (!checked && folderSelected) onToggleService(folder.id, folder.name, false);
-      // Toggle children
       folder.children.forEach((child) => {
         const isSel = selectedServices.some((s) => s.serviceId === child.id);
         if (checked && !isSel) onToggleService(child.id, child.name, true);
