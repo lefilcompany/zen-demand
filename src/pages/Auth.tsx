@@ -44,6 +44,8 @@ export default function Auth() {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [resetCooldown, setResetCooldown] = useState(0); // Cooldown in seconds
   const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [loginStep, setLoginStep] = useState<"email" | "password">("email");
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [states, setStates] = useState<IBGEState[]>([]);
