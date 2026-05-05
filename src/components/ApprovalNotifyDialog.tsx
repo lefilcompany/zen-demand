@@ -23,6 +23,7 @@ import { useNotificationPreferences } from "@/hooks/useNotificationPreferences";
 import {
   useBoardApprovalNotifySetting,
   useUpsertBoardApprovalNotifySetting,
+  useDemandApprovalNotifySetting,
 } from "@/hooks/useBoardApprovalNotifySettings";
 import { notifyApproval, type ApprovalKind } from "@/lib/approvalNotifications";
 
@@ -76,7 +77,23 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
   const { preferences } = useNotificationPreferences();
   const { setting: boardSetting, isLoading: settingLoading } =
     useBoardApprovalNotifySetting(open ? boardId ?? null : null, approvalType);
+  const { data: demandSetting, isLoading: demandSettingLoading } =
+    useDemandApprovalNotifySetting(open ? demandId ?? null : null, approvalType);
   const upsertBoardSetting = useUpsertBoardApprovalNotifySetting();
+  // Per-demand setting takes precedence over the board default.
+  const effectiveSetting = demandSetting
+    ? {
+        mode: demandSetting.mode,
+        recipient_ids: demandSetting.recipient_ids ?? [],
+        include_creator: demandSetting.include_creator,
+      }
+    : boardSetting
+      ? {
+          mode: boardSetting.mode,
+          recipient_ids: boardSetting.recipient_ids ?? [],
+          include_creator: boardSetting.include_creator,
+        }
+      : null;
 
   const canManageBoardDefault = myBoardRole === "admin" || myBoardRole === "moderator";
 
@@ -119,13 +136,13 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
     }
   }, [open]);
 
-  // Hydrate from board setting (or fall back to default) once data arrives
+  // Hydrate from per-demand setting, then board setting, then defaults.
   useEffect(() => {
-    if (!open || hydrated || settingLoading) return;
-    if (boardSetting) {
-      setMode(boardSetting.mode);
-      setSelected(new Set(boardSetting.recipient_ids ?? []));
-      setIncludeCreator(boardSetting.include_creator);
+    if (!open || hydrated || settingLoading || demandSettingLoading) return;
+    if (effectiveSetting) {
+      setMode(effectiveSetting.mode);
+      setSelected(new Set(effectiveSetting.recipient_ids ?? []));
+      setIncludeCreator(effectiveSetting.include_creator);
       setView("confirm");
     } else {
       setMode("all");
@@ -134,7 +151,7 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
       setView("edit");
     }
     setHydrated(true);
-  }, [open, hydrated, settingLoading, boardSetting, preferences.approvalNotifyIncludeCreator]);
+  }, [open, hydrated, settingLoading, demandSettingLoading, effectiveSetting, preferences.approvalNotifyIncludeCreator]);
 
   const toggleMember = (userId: string) => {
     setSelected((prev) => {
@@ -236,15 +253,17 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
             </span>{" "}
             foi movida para{" "}
             <span className="font-medium text-foreground">{approvalLabel}</span>.
-            {view === "confirm" && boardSetting
-              ? " Confirme quem será notificado pelo padrão do quadro."
-              : boardSetting
+            {view === "confirm" && effectiveSetting
+              ? (demandSetting
+                  ? " Confirme quem será notificado conforme configurado nesta demanda."
+                  : " Confirme quem será notificado pelo padrão do quadro.")
+              : effectiveSetting
                 ? " Ajuste a lista de destinatários."
                 : " Selecione quem deve ser avisado."}
           </DialogDescription>
         </DialogHeader>
 
-        {view === "confirm" && boardSetting ? (
+        {view === "confirm" && effectiveSetting ? (
           <>
             <div className="flex-1 min-h-0 overflow-y-auto space-y-3 py-2">
               <div className="rounded-md border bg-muted/20 p-3">
@@ -304,10 +323,10 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
                 </ScrollArea>
               </div>
               <p className="text-xs text-muted-foreground px-1">
-                {boardSetting.mode === "all"
-                  ? "Padrão: todos os elegíveis do quadro."
-                  : "Padrão: lista personalizada do quadro."}
-                {boardSetting.include_creator && " Inclui o criador da demanda."}
+                {effectiveSetting.mode === "all"
+                  ? (demandSetting ? "Esta demanda: todos os elegíveis do quadro." : "Padrão: todos os elegíveis do quadro.")
+                  : (demandSetting ? "Esta demanda: lista personalizada." : "Padrão: lista personalizada do quadro.")}
+                {effectiveSetting.include_creator && " Inclui o criador da demanda."}
               </p>
             </div>
 
@@ -474,15 +493,15 @@ export const ApprovalNotifyDialog = React.memo(function ApprovalNotifyDialog({
                     </span>
                   </Label>
                 </div>
-              ) : boardSetting ? (
+              ) : effectiveSetting ? (
                 <p className="text-xs text-muted-foreground px-1">
-                  Lista padrão configurada por um administrador do quadro.
+                  Lista padrão configurada {demandSetting ? "para esta demanda" : "por um administrador do quadro"}.
                 </p>
               ) : null}
             </div>
 
             <DialogFooter className="flex-shrink-0 gap-2 sm:gap-2 flex-wrap">
-              {boardSetting && (
+              {effectiveSetting && (
                 <Button
                   variant="outline"
                   onClick={() => setView("confirm")}

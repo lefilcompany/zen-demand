@@ -20,6 +20,7 @@ import { useBoards } from "@/hooks/useBoards";
 import { useDemandFolders, useAddDemandToFolder } from "@/hooks/useDemandFolders";
 import { ServiceSelector } from "@/components/ServiceSelector";
 import { AssigneeSelector } from "@/components/AssigneeSelector";
+import { ApprovalRecipientsSelector } from "@/components/ApprovalRecipientsSelector";
 import { ScopeProgressBar } from "@/components/ScopeProgressBar";
 import { InlineFileUploader, PendingFile, uploadPendingFiles } from "@/components/InlineFileUploader";
 import { useUploadAttachment } from "@/hooks/useAttachments";
@@ -124,6 +125,8 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [recurrence, setRecurrence] = useState<RecurrenceData>(defaultRecurrenceData);
   const [selectedFolderId, setSelectedFolderId] = useState("");
+  const [internalApprovalRecipients, setInternalApprovalRecipients] = useState<string[]>([]);
+  const [externalApprovalRecipients, setExternalApprovalRecipients] = useState<string[]>([]);
 
   // Subdemand state
   const [subdemandCount, setSubdemandCount] = useState(0);
@@ -206,6 +209,8 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
     setPendingFiles([]);
     setRecurrence(defaultRecurrenceData);
     setSelectedFolderId("");
+    setInternalApprovalRecipients([]);
+    setExternalApprovalRecipients([]);
     setSubdemandCount(0);
     setSubdemands([]);
     setCurrentStep(0);
@@ -246,6 +251,37 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
 
   const handleSubdemandChange = (index: number, data: SubdemandFormData) => {
     setSubdemands(prev => prev.map((s, i) => i === index ? data : s));
+  };
+
+  const persistApprovalRecipients = async (demandId: string) => {
+    const rows: { demand_id: string; approval_type: "internal" | "external"; mode: "all" | "manual"; recipient_ids: string[]; include_creator: boolean; created_by: string | null; updated_by: string | null }[] = [];
+    if (internalApprovalRecipients.length > 0) {
+      rows.push({
+        demand_id: demandId,
+        approval_type: "internal",
+        mode: "manual",
+        recipient_ids: internalApprovalRecipients,
+        include_creator: true,
+        created_by: user?.id ?? null,
+        updated_by: user?.id ?? null,
+      });
+    }
+    if (externalApprovalRecipients.length > 0) {
+      rows.push({
+        demand_id: demandId,
+        approval_type: "external",
+        mode: "manual",
+        recipient_ids: externalApprovalRecipients,
+        include_creator: true,
+        created_by: user?.id ?? null,
+        updated_by: user?.id ?? null,
+      });
+    }
+    if (rows.length === 0) return;
+    const { error } = await supabase
+      .from("demand_approval_notify_settings" as any)
+      .insert(rows);
+    if (error) console.error("Error saving approval recipients:", error);
   };
 
   const handleSubmit = async () => {
@@ -402,6 +438,10 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
               } catch {}
             }
 
+            if (parentId) {
+              await persistApprovalRecipients(parentId);
+            }
+
             setSuccessState({
               demandId: parentId,
               demandTitle: title.trim(),
@@ -506,6 +546,10 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
               console.error("Erro ao adicionar à pasta:", folderError);
               toast.warning("Demanda criada, mas houve um erro ao adicionar à pasta");
             }
+          }
+
+          if (!wasCreatedOffline && demand?.id) {
+            await persistApprovalRecipients(demand.id);
           }
 
           setSuccessState({
@@ -939,6 +983,28 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                         />
                       </div>
                     </div>
+
+                    {/* Approval notification recipients (optional) */}
+                    {activeBoardId && (
+                      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                        <ApprovalRecipientsSelector
+                          boardId={activeBoardId}
+                          approvalType="internal"
+                          selectedIds={internalApprovalRecipients}
+                          onChange={setInternalApprovalRecipients}
+                          label="Notificar na Aprovação Interna (opcional)"
+                          tooltip="Quando esta demanda entrar em 'Aprovação Interna', estas pessoas serão pré-selecionadas para receber a notificação. Se nada for selecionado, todos os Owners e Coordenadores do quadro serão notificados por padrão."
+                        />
+                        <ApprovalRecipientsSelector
+                          boardId={activeBoardId}
+                          approvalType="external"
+                          selectedIds={externalApprovalRecipients}
+                          onChange={setExternalApprovalRecipients}
+                          label="Notificar na Aprovação do Cliente (opcional)"
+                          tooltip="Quando esta demanda entrar em 'Aprovação do Cliente', estas pessoas serão pré-selecionadas para receber a notificação. Se nada for selecionado, todos os Solicitantes do quadro serão notificados por padrão."
+                        />
+                      </div>
+                    )}
 
                     {/* Subdemand counter */}
                     <SubdemandCountStep count={subdemandCount} onChange={setSubdemandCount} />

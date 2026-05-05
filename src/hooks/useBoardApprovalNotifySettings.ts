@@ -44,6 +44,40 @@ export function useBoardApprovalNotifySetting(
   return { setting, ...rest };
 }
 
+export interface DemandApprovalNotifySetting {
+  id: string;
+  demand_id: string;
+  approval_type: ApprovalKind;
+  recipient_ids: string[];
+  include_creator: boolean;
+  mode: "all" | "manual";
+}
+
+export function useDemandApprovalNotifySetting(
+  demandId: string | null | undefined,
+  approvalType: ApprovalKind,
+) {
+  return useQuery({
+    queryKey: ["demand-approval-notify-setting", demandId, approvalType],
+    queryFn: async (): Promise<DemandApprovalNotifySetting | null> => {
+      if (!demandId) return null;
+      const { data, error } = await supabase
+        .from("demand_approval_notify_settings" as any)
+        .select("*")
+        .eq("demand_id", demandId)
+        .eq("approval_type", approvalType)
+        .maybeSingle();
+      if (error) {
+        console.error("Error fetching demand approval notify setting", error);
+        return null;
+      }
+      return (data ?? null) as unknown as DemandApprovalNotifySetting | null;
+    },
+    enabled: !!demandId,
+    staleTime: 30_000,
+  });
+}
+
 export interface UpsertBoardApprovalNotifyInput {
   boardId: string;
   approvalType: ApprovalKind;

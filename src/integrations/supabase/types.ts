@@ -507,6 +507,53 @@ export type Database = {
           },
         ]
       }
+      demand_approval_notify_settings: {
+        Row: {
+          approval_type: string
+          created_at: string
+          created_by: string | null
+          demand_id: string
+          id: string
+          include_creator: boolean
+          mode: string
+          recipient_ids: string[]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          approval_type: string
+          created_at?: string
+          created_by?: string | null
+          demand_id: string
+          id?: string
+          include_creator?: boolean
+          mode?: string
+          recipient_ids?: string[]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          approval_type?: string
+          created_at?: string
+          created_by?: string | null
+          demand_id?: string
+          id?: string
+          include_creator?: boolean
+          mode?: string
+          recipient_ids?: string[]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_approval_notify_settings_demand_id_fkey"
+            columns: ["demand_id"]
+            isOneToOne: false
+            referencedRelation: "demands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demand_assignees: {
         Row: {
           assigned_at: string | null
