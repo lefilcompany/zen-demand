@@ -317,7 +317,7 @@ export default function UserProfile() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
             </>
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-secondary/60">
+            <div className={`absolute inset-0 ${getBannerGradient((profile as any)?.banner_gradient).className}`}>
               {/* Pattern overlay for default banner */}
               <div className="absolute inset-0 opacity-10" style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
@@ -361,7 +361,7 @@ export default function UserProfile() {
                 <h1 className="text-2xl md:text-3xl font-bold text-foreground">
                   {profile.full_name}
                 </h1>
-                {(profile as any).job_title && (
+                {v("jobTitle") && (profile as any).job_title && (
                   <p className="text-primary font-medium mt-1">{(profile as any).job_title}</p>
                 )}
                 <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
@@ -373,21 +373,21 @@ export default function UserProfile() {
                     <Calendar className="h-4 w-4" />
                     Membro desde {formatDate(profile.created_at)}
                   </span>
-                  {(profile as any).location && (
+                  {v("location") && (profile as any).location && (
                     <span className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
                       {(profile as any).location}
                     </span>
                   )}
                 </div>
-                {(profile as any).bio && (
+                {v("bio") && (profile as any).bio && (
                   <p className="text-muted-foreground mt-3 max-w-2xl">{(profile as any).bio}</p>
                 )}
               </div>
               
               {/* Social links */}
               <div className="flex items-center gap-2">
-                {(profile as any).website && (
+                {v("website") && (profile as any).website && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -401,7 +401,7 @@ export default function UserProfile() {
                     </Tooltip>
                   </TooltipProvider>
                 )}
-                {(profile as any).github_url && (
+                {v("github") && (profile as any).github_url && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -415,7 +415,7 @@ export default function UserProfile() {
                     </Tooltip>
                   </TooltipProvider>
                 )}
-                {(profile as any).linkedin_url && (
+                {v("linkedin") && (profile as any).linkedin_url && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
