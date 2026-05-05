@@ -46,6 +46,7 @@ export default function Auth() {
   const [resetCooldown, setResetCooldown] = useState(0); // Cooldown in seconds
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginStep, setLoginStep] = useState<"email" | "password">("email");
+  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
