@@ -46,6 +46,7 @@ export default function Auth() {
   const [resetCooldown, setResetCooldown] = useState(0); // Cooldown in seconds
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginStep, setLoginStep] = useState<"email" | "password">("email");
+  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -263,8 +264,10 @@ export default function Auth() {
       if (data === true) {
         setLoginStep("password");
       } else {
-        toast.error("Conta não encontrada", {
-          description: "Não localizamos uma conta com este e-mail. Verifique ou crie uma conta.",
+        setSignupData(prev => ({ ...prev, email }));
+        setActiveTab("signup");
+        toast.info("Vamos criar sua conta", {
+          description: "Não localizamos esse e-mail. Complete o cadastro para continuar.",
         });
       }
     } catch (err: any) {
@@ -509,7 +512,7 @@ export default function Auth() {
               <img alt="SoMA+" src="/lovable-uploads/9889f524-0819-424e-9185-2cc441526116.png" className="h-14 w-auto" />
             </div>
 
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "login" | "signup")} className="w-full">
               <div className="flex justify-center mb-4">
                 <TabsList className="inline-flex h-9 bg-muted/70 p-1 rounded-full gap-0.5">
                   <TabsTrigger value="login" className="text-[13px] font-medium rounded-full px-5 h-7 data-[state=active]:bg-background data-[state=active]:shadow-[0_1px_2px_rgba(0,0,0,0.06)] data-[state=active]:text-foreground text-muted-foreground transition-all">
