@@ -50,6 +50,28 @@ export function DemandApprovalNotifySection({ demandId, boardId, canEdit }: Prop
     },
   });
 
+  // Detect which approval stages exist on this board
+  const { data: availableKinds } = useQuery({
+    queryKey: ["board-approval-stages", boardId],
+    enabled: !!boardId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("board_statuses")
+        .select("adjustment_type, is_active")
+        .eq("board_id", boardId as string)
+        .eq("is_active", true);
+      if (error) throw error;
+      const kinds = new Set<string>();
+      (data || []).forEach((r: any) => {
+        if (r.adjustment_type === "internal") kinds.add("internal");
+        if (r.adjustment_type === "external") kinds.add("external");
+      });
+      return kinds;
+    },
+  });
+  const hasInternal = availableKinds?.has("internal") ?? true;
+  const hasExternal = availableKinds?.has("external") ?? true;
+
   const initialInternal = useMemo(
     () => (settings?.find((s: any) => s.approval_type === "internal")?.recipient_ids as string[]) || [],
     [settings],
