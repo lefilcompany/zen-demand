@@ -89,6 +89,7 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
   const canView = isOwn || isPublic;
 
   const [period, setPeriod] = useState<Period>("all");
+  const [stage, setStage] = useState<Stage>("all");
   const [client, setClient] = useState<string>("all");
   const [type, setType] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
