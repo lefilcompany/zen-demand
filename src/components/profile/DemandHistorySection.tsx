@@ -188,9 +188,12 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
     });
   }, [demands, period, client, type, statusFilter, search]);
 
+  const Wrapper: any = embedded ? "div" : Card;
+  const ContentWrapper: any = embedded ? "div" : CardContent;
+
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Wrapper>
+      {!embedded && (<><CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -223,8 +226,8 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
             </div>
           )}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+      </CardHeader></>)}
+      <ContentWrapper className={embedded ? "p-4 space-y-3" : "space-y-4"}>
         {!canView ? (
           <div className="py-12 text-center text-muted-foreground">
             <Lock className="h-10 w-10 mx-auto mb-3 opacity-50" />
@@ -385,7 +388,7 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
             )}
           </>
         )}
-      </CardContent>
-    </Card>
+      </ContentWrapper>
+    </Wrapper>
   );
 }
