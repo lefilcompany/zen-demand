@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -8,6 +9,7 @@ import { InfoTooltip } from "@/components/InfoTooltip";
 import { Bell, Search, Check, ShieldCheck, Shield, User, Users, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBoardMembers } from "@/hooks/useBoardMembers";
+import { supabase } from "@/integrations/supabase/client";
 import type { ApprovalKind } from "@/lib/approvalNotifications";
 
 const ROLE_FILTER: Record<ApprovalKind, Set<string>> = {
