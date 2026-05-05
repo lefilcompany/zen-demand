@@ -427,62 +427,97 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
             </p>
 
             <div className="space-y-2">
-              {stages.map((s, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "flex items-center gap-2 rounded-lg border bg-card p-2.5",
-                    s.locked && "border-dashed bg-muted/30"
-                  )}
-                >
-                  <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0" />
-                  <input
-                    type="color"
-                    value={s.color}
-                    disabled={s.locked}
-                    onChange={(e) => updateStage(i, { color: e.target.value })}
-                    className="h-7 w-7 rounded cursor-pointer disabled:cursor-not-allowed"
-                  />
-                  <Input
-                    value={s.name}
-                    disabled={s.locked}
-                    onChange={(e) => updateStage(i, { name: e.target.value })}
-                    className="h-8 flex-1"
-                  />
-                  <select
-                    value={s.adjustment_type}
-                    disabled={s.locked}
-                    onChange={(e) => updateStage(i, { adjustment_type: e.target.value as AdjustmentType })}
-                    className="h-8 rounded-md border bg-background px-2 text-xs disabled:opacity-50"
-                    title="Tipo de aprovação/ajuste"
+              {stages.map((s, i) => {
+                const isDragOver = dragOverIndex === i && dragIndex !== null && dragIndex !== i && !s.locked;
+                const isDragging = dragIndex === i;
+                return (
+                  <div
+                    key={i}
+                    onDragOver={(e) => handleDragOver(e, i)}
+                    onDrop={(e) => handleDrop(e, i)}
+                    onDragLeave={() => { if (dragOverIndex === i) setDragOverIndex(null); }}
+                    className={cn(
+                      "group flex items-center gap-2 rounded-lg border bg-card p-2 transition-all",
+                      s.locked && "border-dashed bg-muted/30",
+                      isDragging && "opacity-40",
+                      isDragOver && "border-primary ring-2 ring-primary/30"
+                    )}
                   >
-                    <option value="none">Normal</option>
-                    <option value="internal">Aprov. Interna</option>
-                    <option value="external">Aprov. Externa</option>
-                  </select>
-                  {s.locked ? (
-                    <Lock className="h-4 w-4 text-muted-foreground shrink-0 mx-1" />
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive shrink-0"
-                      onClick={() => removeStage(i)}
+                    <div
+                      draggable={!s.locked}
+                      onDragStart={(e) => handleDragStart(e, i)}
+                      onDragEnd={handleDragEnd}
+                      className={cn(
+                        "flex h-8 w-6 items-center justify-center rounded touch-none shrink-0",
+                        s.locked
+                          ? "cursor-not-allowed text-muted-foreground/30"
+                          : "cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-foreground hover:bg-muted"
+                      )}
+                      title={s.locked ? "Etapa fixa" : "Arrastar para reordenar"}
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
-                </div>
-              ))}
+                      <GripVertical className="h-4 w-4" />
+                    </div>
+
+                    <StageColorPicker
+                      value={s.color}
+                      onChange={(c) => updateStage(i, { color: c })}
+                      disabled={s.locked}
+                    />
+
+                    <Input
+                      value={s.name}
+                      disabled={s.locked}
+                      onChange={(e) => updateStage(i, { name: e.target.value })}
+                      className="h-8 flex-1"
+                    />
+
+                    <Select
+                      value={s.adjustment_type}
+                      onValueChange={(v) => updateStage(i, { adjustment_type: v as AdjustmentType })}
+                      disabled={s.locked}
+                    >
+                      <SelectTrigger className="h-8 w-[150px] text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ADJUSTMENT_OPTIONS.map((opt) => {
+                          const Icon = opt.icon;
+                          return (
+                            <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                              <div className="flex items-center gap-2">
+                                <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{opt.label}</span>
+                                  <span className="text-[10px] text-muted-foreground">{opt.description}</span>
+                                </div>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+
+                    {s.locked ? (
+                      <div className="flex h-8 w-8 items-center justify-center shrink-0" title="Etapa obrigatória">
+                        <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                      </div>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+                        onClick={() => removeStage(i)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
-            <div className="flex items-center gap-2 rounded-lg border border-dashed p-2.5">
-              <input
-                type="color"
-                value={newStageColor}
-                onChange={(e) => setNewStageColor(e.target.value)}
-                className="h-7 w-7 rounded cursor-pointer"
-              />
+            <div className="flex items-center gap-2 rounded-lg border border-dashed p-2 bg-muted/20">
+              <StageColorPicker value={newStageColor} onChange={setNewStageColor} />
               <Input
                 value={newStageName}
                 onChange={(e) => setNewStageName(e.target.value)}
