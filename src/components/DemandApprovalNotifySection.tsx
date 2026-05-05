@@ -18,7 +18,7 @@ interface Props {
 }
 
 const roleConfig: Record<string, { label: string; badge: string; icon: React.ReactNode }> = {
-  admin: { label: "Owner", badge: "bg-red-100 text-red-800", icon: <ShieldCheck className="h-3 w-3" /> },
+  admin: { label: "Administrador", badge: "bg-red-100 text-red-800", icon: <ShieldCheck className="h-3 w-3" /> },
   moderator: { label: "Coordenador", badge: "bg-blue-100 text-blue-800", icon: <Shield className="h-3 w-3" /> },
   requester: { label: "Solicitante", badge: "bg-purple-100 text-purple-800", icon: <UserIcon className="h-3 w-3" /> },
 };
@@ -184,7 +184,7 @@ export function DemandApprovalNotifySection({ demandId, boardId, canEdit }: Prop
           <div className="flex items-center gap-1.5 min-w-0">
             <Users className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
             <span className="text-xs text-muted-foreground whitespace-nowrap">Interna:</span>
-            {renderRecipients(internalMembers, "Padrão (Owners/Coord.)")}
+            {renderRecipients(internalMembers, "Padrão (Administradores/Coord.)")}
           </div>
         )}
         {hasExternal && (

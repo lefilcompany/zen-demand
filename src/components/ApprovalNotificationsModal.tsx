@@ -18,7 +18,7 @@ const ROLE_FILTER: Record<ApprovalKind, Set<string>> = {
 };
 
 const roleConfig: Record<string, { label: string; badge: string; banner: string; icon: React.ReactNode }> = {
-  admin: { label: "Owner", badge: "bg-red-100 text-red-800", banner: "from-red-500/80 via-red-600 to-red-500/60", icon: <ShieldCheck className="h-3 w-3" /> },
+  admin: { label: "Administrador", badge: "bg-red-100 text-red-800", banner: "from-red-500/80 via-red-600 to-red-500/60", icon: <ShieldCheck className="h-3 w-3" /> },
   moderator: { label: "Coordenador", badge: "bg-blue-100 text-blue-800", banner: "from-blue-500/80 via-blue-600 to-blue-500/60", icon: <Shield className="h-3 w-3" /> },
   requester: { label: "Solicitante", badge: "bg-purple-100 text-purple-800", banner: "from-purple-500/80 via-purple-600 to-purple-500/60", icon: <User className="h-3 w-3" /> },
 };
@@ -141,7 +141,7 @@ export function ApprovalNotificationsModal({
           <Label className="flex items-center gap-2">
             <Bell className="h-4 w-4" />
             Notificações de aprovação
-            <InfoTooltip text="Personalize quem deve receber notificações nas etapas de aprovação. Se nada for selecionado, o padrão é notificar todos os Owners/Coordenadores (interna) e todos os Solicitantes (cliente)." />
+            <InfoTooltip text="Personalize quem deve receber notificações nas etapas de aprovação. Se nada for selecionado, o padrão é notificar todos os Administradores/Coordenadores (interna) e todos os Solicitantes (cliente)." />
           </Label>
           <button
             type="button"
