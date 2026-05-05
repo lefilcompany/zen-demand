@@ -548,6 +548,10 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
             }
           }
 
+          if (!wasCreatedOffline && demand?.id) {
+            await persistApprovalRecipients(demand.id);
+          }
+
           setSuccessState({
             demandId: demand?.id || "",
             demandTitle: title.trim(),
