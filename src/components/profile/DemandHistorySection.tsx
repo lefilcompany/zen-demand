@@ -74,6 +74,37 @@ export function DemandHistorySection({ userId, isPublic, embedded = false }: Pro
   const [savingPrivacy, setSavingPrivacy] = useState(false);
   const [pageSize, setPageSize] = useState<number>(10);
   const [page, setPage] = useState<number>(1);
+  const [confirmTarget, setConfirmTarget] = useState<{ id: string; boardId?: string | null; title: string } | null>(null);
+  const [dontAskAgain, setDontAskAgain] = useState<boolean>(false);
+
+  const SKIP_KEY = "soma:demandHistory:skipNavConfirm";
+  const skipConfirm = typeof window !== "undefined" && localStorage.getItem(SKIP_KEY) === "1";
+
+  const goToDemand = (boardId: string | null | undefined, demandId: string) => {
+    if (boardId) {
+      navigate(`/kanban/${boardId}`, { state: { openDemandId: demandId } });
+    } else {
+      navigate(`/demands/${demandId}`);
+    }
+  };
+
+  const handleOpenDemand = (d: any) => {
+    if (skipConfirm) {
+      goToDemand(d.boards?.id || d.board_id, d.id);
+      return;
+    }
+    setConfirmTarget({ id: d.id, boardId: d.boards?.id || d.board_id, title: d.title });
+  };
+
+  const confirmNavigation = () => {
+    if (!confirmTarget) return;
+    if (dontAskAgain && typeof window !== "undefined") {
+      localStorage.setItem(SKIP_KEY, "1");
+    }
+    goToDemand(confirmTarget.boardId, confirmTarget.id);
+    setConfirmTarget(null);
+    setDontAskAgain(false);
+  };
 
   const { data: demands, isLoading } = useQuery({
     queryKey: ["demand-history", userId],
