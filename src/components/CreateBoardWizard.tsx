@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useCreateBoard, type CreateBoardData } from "@/hooks/useBoards";
 import { useSelectedTeam } from "@/contexts/TeamContext";
-import { useServices } from "@/hooks/useServices";
+import { useServices, useHierarchicalServices, type ServiceWithHierarchy } from "@/hooks/useServices";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
