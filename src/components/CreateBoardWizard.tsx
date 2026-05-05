@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   Loader2, ArrowLeft, ArrowRight, Check, Plus, Trash2, GripVertical,
   Package, Users, Layers, FileText, Search, AlertCircle, Lock, ShieldCheck, Shield, Wrench, MessageSquare,
+  Folder, FolderOpen, ChevronDown, ChevronRight,
   CircleDot, ClipboardCheck, UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
