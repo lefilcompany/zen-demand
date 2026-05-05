@@ -471,31 +471,11 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
                       className="h-8 flex-1"
                     />
 
-                    <Select
+                    <AdjustmentTypePicker
                       value={s.adjustment_type}
-                      onValueChange={(v) => updateStage(i, { adjustment_type: v as AdjustmentType })}
+                      onChange={(v) => updateStage(i, { adjustment_type: v })}
                       disabled={s.locked}
-                    >
-                      <SelectTrigger className="h-8 w-[150px] text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ADJUSTMENT_OPTIONS.map((opt) => {
-                          const Icon = opt.icon;
-                          return (
-                            <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                              <div className="flex items-center gap-2">
-                                <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                                <div className="flex flex-col">
-                                  <span className="font-medium">{opt.label}</span>
-                                  <span className="text-[10px] text-muted-foreground">{opt.description}</span>
-                                </div>
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
+                    />
 
                     {s.locked ? (
                       <div className="flex h-8 w-8 items-center justify-center shrink-0" title="Etapa obrigatória">
