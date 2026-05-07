@@ -166,7 +166,7 @@ function AdjustmentTypePicker({ value, onChange, disabled }: AdjustmentTypePicke
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-1.5" align="end">
-        <div className="space-y-0.5">
+        <div className="space-y-1.5">
           {ADJUSTMENT_OPTIONS.map((opt) => {
             const OptIcon = opt.icon;
             const s = ADJUSTMENT_STYLES[opt.value];
