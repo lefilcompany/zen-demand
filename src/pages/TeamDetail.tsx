@@ -144,7 +144,7 @@ export default function TeamDetail() {
       {/* Breadcrumbs */}
       <PageBreadcrumb
         items={[
-          { label: "Equipes", href: "/teams", icon: Users },
+          
           { label: team.name, isCurrent: true },
         ]}
       />

@@ -407,7 +407,6 @@ export default function ServicesManagement() {
       <SEOHead title="Gerenciar Serviços" path="/services" />
       <PageBreadcrumb
         items={[
-          { label: "Equipes", href: "/teams", icon: Users },
           { label: team?.name || "", href: `/teams/${id}` },
           { label: "Serviços", icon: ShoppingBag, isCurrent: true },
         ]}

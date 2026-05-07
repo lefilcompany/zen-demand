@@ -100,7 +100,7 @@ export default function TeamRequests() {
       <SEOHead title="Solicitações da Equipe" path="/team-requests" />
       <PageBreadcrumb
         items={[
-          { label: "Equipes", href: "/teams", icon: Users },
+          
           { label: "Solicitações de Entrada", icon: UserPlus, isCurrent: true },
         ]}
       />
