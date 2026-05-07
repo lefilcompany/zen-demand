@@ -247,6 +247,46 @@ export function AppSidebar() {
             <SidebarMenu className="gap-1">
 {/* Equipe - Dropdown style like reference image */}
               <SidebarMenuItem data-tour="teams-link">
+                {isTeamView ? (
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div
+                          className={`
+                            flex items-center transition-all duration-200
+                            ${isCollapsed && !isMobile
+                              ? 'w-10 h-10 justify-center rounded-full border border-sidebar-border/50'
+                              : 'w-full gap-3 p-2.5 rounded-xl border border-sidebar-border/50 bg-sidebar-accent/30'
+                            }
+                          `}
+                        >
+                          <div className={`
+                            flex items-center justify-center bg-gradient-to-br from-primary/25 to-primary/10
+                            ${isCollapsed && !isMobile ? 'h-7 w-7 rounded-full' : 'h-8 w-8 rounded-full ring-1 ring-primary/20'}
+                          `}>
+                            <Users className={`text-primary ${isCollapsed && !isMobile ? 'h-3.5 w-3.5' : 'h-4 w-4'}`} />
+                          </div>
+                          {(!isCollapsed || isMobile) && (
+                            <div className="flex-1 text-left min-w-0">
+                              <span className="text-sm font-medium text-sidebar-foreground block truncate">{currentTeam?.name || "Equipe"}</span>
+                              {subscription?.plan?.name && (
+                                <span className="text-[11px] text-muted-foreground truncate block">{subscription.plan.name}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </TooltipTrigger>
+                      {isCollapsed && !isMobile && (
+                        <TooltipContent side="right">
+                          <p className="font-medium">{currentTeam?.name || "Equipe"}</p>
+                          {subscription?.plan?.name && (
+                            <p className="text-xs text-muted-foreground">{subscription.plan.name}</p>
+                          )}
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
                 <DropdownMenu open={popoverOpen} onOpenChange={setPopoverOpen}>
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
