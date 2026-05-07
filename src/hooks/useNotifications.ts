@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useEffect, useRef, useCallback } from "react";
 import { useNotificationSound } from "./useNotificationSound";
+import { notificationToastBus } from "@/lib/notificationToastBus";
 
 // Request browser notification permission
 async function requestNotificationPermission(): Promise<boolean> {
@@ -164,6 +165,7 @@ export function useNotifications() {
             // Show browser push notification when app is not focused
             const newNotification = payload.new as AppNotification;
             if (newNotification) {
+              notificationToastBus.emit(newNotification);
               showBrowserNotification(
                 newNotification.title,
                 newNotification.message,
