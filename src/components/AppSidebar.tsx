@@ -190,15 +190,8 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Active Timers Section - Above Team section */}
-        <SidebarGroup className="mt-4">
-          <SidebarGroupContent>
-            <SidebarActiveTimers />
-          </SidebarGroupContent>
-        </SidebarGroup>
-
         {/* Configurações da Equipe */}
-        <SidebarGroup className="mt-4">
+        <SidebarGroup className="mt-1">
           <SidebarGroupLabel>Configurações da Equipe</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
