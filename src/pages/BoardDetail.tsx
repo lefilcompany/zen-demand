@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState, useRef, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { LayoutGrid, Users, Trash2, UserPlus, UserMinus, ArrowLeft, Shield, UserCog, Briefcase, User, ChevronDown, Loader2, Pencil, Check, X, Search, Mail, ListChecks, AlertTriangle, CheckCircle2, Clock, Package as PackageIcon, ArrowUpRight } from "lucide-react";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { Input } from "@/components/ui/input";
