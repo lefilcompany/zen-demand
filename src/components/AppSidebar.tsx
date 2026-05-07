@@ -70,7 +70,6 @@ export function AppSidebar() {
         { title: "Voltar ao quadro", url: lastBoardRoute, icon: ArrowLeft, isBackAction: true },
         { title: "Visão Geral", url: "/team-demands", icon: Layers },
         { title: "Meus Quadros", url: "/boards", icon: LayoutGrid },
-        { title: "Equipes", url: "/teams", icon: Users, end: true },
         ...(selectedTeamId
           ? [{ title: "Participantes", url: `/teams/${selectedTeamId}`, icon: UsersRound, end: true }]
           : []),
