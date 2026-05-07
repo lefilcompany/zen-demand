@@ -159,6 +159,12 @@ export function SidebarSubscriptionCard() {
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
           
           <div className="relative">
+            {currentTeam?.name && (
+              <div className="mb-2 pb-2 border-b border-border/50 text-left">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block">Equipe</span>
+                <span className="text-sm font-bold text-foreground truncate block">{currentTeam.name}</span>
+              </div>
+            )}
             {/* Header */}
             <div className="flex items-center gap-2.5 mb-2">
               <div className={cn("relative h-9 w-9 rounded-lg bg-gradient-to-br flex items-center justify-center shadow-md", config.iconBg)}>
