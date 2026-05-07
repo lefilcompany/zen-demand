@@ -151,14 +151,14 @@ export function ProtectedLayout() {
               <img
                 src={logoSomaBlack}
                 alt="SoMA"
-                className="h-5 w-auto lg:hidden block dark:hidden"
+                className="h-8 w-auto lg:hidden block dark:hidden"
                 decoding="sync"
                 loading="eager"
               />
               <img
                 src="/logo-soma-sidebar.png"
                 alt="SoMA"
-                className="h-5 w-auto hidden dark:block dark:lg:hidden"
+                className="h-8 w-auto hidden dark:block dark:lg:hidden"
                 decoding="sync"
                 loading="eager"
               />
