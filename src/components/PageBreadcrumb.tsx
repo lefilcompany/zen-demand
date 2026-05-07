@@ -61,15 +61,6 @@ export function PageBreadcrumb({ items, showHome = true }: PageBreadcrumbProps) 
                     </Tooltip>
                   </TooltipProvider>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <Link to="/team-demands" className="flex items-center gap-1 transition-colors duration-200 hover:text-primary">
-                      <Layers className="h-3.5 w-3.5" />
-                      <span className="sr-only sm:not-sr-only">Visão Geral</span>
-                    </Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
                 {items.length > 0 && <BreadcrumbSeparator />}
               </>
             ) : (
