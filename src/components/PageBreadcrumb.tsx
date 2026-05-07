@@ -50,7 +50,7 @@ export function PageBreadcrumb({ items, showHome = true }: PageBreadcrumbProps) 
                         <Link
                           to="/"
                           aria-label="Voltar ao quadro"
-                          className="flex items-center justify-center h-6 w-6 rounded-md text-muted-foreground transition-colors duration-200 hover:text-primary hover:bg-accent"
+                          className="flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground bg-muted/40 border border-border transition-colors duration-200 hover:bg-primary hover:text-primary-foreground hover:border-primary"
                         >
                           <ArrowLeft className="h-3.5 w-3.5" />
                         </Link>
