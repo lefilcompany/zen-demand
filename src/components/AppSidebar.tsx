@@ -255,6 +255,13 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Active Timers Section - below Configurações da Equipe */}
+        <SidebarGroup className="mt-4">
+          <SidebarGroupContent>
+            <SidebarActiveTimers />
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         {/* Team identity - bottom */}
         <SidebarGroup className="mt-auto pb-0">
           <SidebarGroupContent>
