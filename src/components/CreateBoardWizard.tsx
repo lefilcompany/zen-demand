@@ -150,7 +150,7 @@ function AdjustmentTypePicker({ value, onChange, disabled }: AdjustmentTypePicke
           type="button"
           disabled={disabled}
           className={cn(
-            "group flex h-8 items-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium shrink-0 transition-all w-[150px]",
+            "group flex h-8 items-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium shrink-0 transition-all w-[140px]",
             style.tint,
             style.label,
             "hover:border-foreground/30 focus:outline-none focus:ring-2",
