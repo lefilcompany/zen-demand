@@ -59,6 +59,12 @@ export function SidebarSubscriptionCard() {
     return <button onClick={handleClick} className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary/95 to-primary/80 p-[1px] shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
         <div className="relative rounded-[11px] bg-gradient-to-br from-primary via-primary/95 to-primary/85 p-3">
+          {currentTeam?.name && (
+            <div className="mb-2 pb-2 border-b border-primary-foreground/20 text-left">
+              <span className="text-[10px] uppercase tracking-wider text-primary-foreground/60 font-semibold block">Equipe</span>
+              <span className="text-sm font-bold text-primary-foreground truncate block">{currentTeam.name}</span>
+            </div>
+          )}
           <div className="flex items-center gap-2.5">
             <div className="relative">
               <div className="h-9 w-9 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-inner">
@@ -153,6 +159,12 @@ export function SidebarSubscriptionCard() {
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
           
           <div className="relative">
+            {currentTeam?.name && (
+              <div className="mb-2 pb-2 border-b border-border/50 text-left">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block">Equipe</span>
+                <span className="text-sm font-bold text-foreground truncate block">{currentTeam.name}</span>
+              </div>
+            )}
             {/* Header */}
             <div className="flex items-center gap-2.5 mb-2">
               <div className={cn("relative h-9 w-9 rounded-lg bg-gradient-to-br flex items-center justify-center shadow-md", config.iconBg)}>
@@ -213,6 +225,12 @@ export function SidebarSubscriptionCard() {
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
         
         <div className="relative">
+          {currentTeam?.name && (
+            <div className="mb-2 pb-2 border-b border-border/50 text-left">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block">Equipe</span>
+              <span className="text-sm font-bold text-foreground truncate block">{currentTeam.name}</span>
+            </div>
+          )}
           <div className="flex items-center gap-2.5 mb-2">
             <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md shadow-primary/30">
               <Crown className="h-4.5 w-4.5 text-primary-foreground" />
