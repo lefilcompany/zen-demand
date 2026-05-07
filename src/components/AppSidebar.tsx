@@ -62,9 +62,17 @@ export function AppSidebar() {
     location.pathname.startsWith("/teams/") ||
     location.pathname === "/teams";
 
+  // Remember last "board view" route so the back action returns to it
+  useEffect(() => {
+    if (!isTeamView) {
+      try { sessionStorage.setItem("lastBoardRoute", location.pathname + location.search); } catch {}
+    }
+  }, [isTeamView, location.pathname, location.search]);
+  const lastBoardRoute = (typeof window !== "undefined" && sessionStorage.getItem("lastBoardRoute")) || "/";
+
   const teamViewMenuItems: any[] = isTeamView
     ? [
-        { title: "Voltar ao quadro", url: "/", icon: ArrowLeft, isBackAction: true },
+        { title: "Voltar ao quadro", url: lastBoardRoute, icon: ArrowLeft, isBackAction: true },
         { title: "Visão Geral", url: "/team-demands", icon: Layers },
         { title: "Meus Quadros", url: "/boards", icon: LayoutGrid },
         ...(selectedTeamId
