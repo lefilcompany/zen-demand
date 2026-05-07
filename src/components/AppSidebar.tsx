@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, User, Briefcase, Kanban, ChevronUp, Settings, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock, Sparkles, ShoppingCart, Layers, StickyNote, LayoutList } from "lucide-react";
+import { LayoutDashboard, Users, User, Briefcase, Kanban, ChevronUp, Settings, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock, Sparkles, ShoppingCart, Layers, StickyNote, LayoutList, ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 const logoSoma = "/logo-soma-sidebar.png";
 import { NavLink } from "@/components/NavLink";
@@ -17,7 +17,7 @@ import { SidebarSyncIndicator } from "@/components/SidebarSyncIndicator";
 import { SidebarActiveTimers } from "@/components/SidebarActiveTimers";
 import { SidebarSubscriptionCard } from "@/components/SidebarSubscriptionCard";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,6 +54,38 @@ export function AppSidebar() {
   const isBoardAdminOrModerator = boardRole === "admin" || boardRole === "moderator";
   const isBoardAdminModeratorOrExecutor = boardRole === "admin" || boardRole === "moderator" || boardRole === "executor";
   const isRequester = boardRole === "requester" || (!boardRole && teamMembershipRole === "requester");
+
+  // Detect "team view" routes - the team dropdown items
+  const isTeamView =
+    location.pathname === "/team-demands" ||
+    location.pathname === "/boards" ||
+    location.pathname.startsWith("/teams/") ||
+    location.pathname === "/teams";
+
+  // Remember last "board view" route so the back action returns to it
+  useEffect(() => {
+    if (!isTeamView) {
+      try { sessionStorage.setItem("lastBoardRoute", location.pathname + location.search); } catch {}
+    }
+  }, [isTeamView, location.pathname, location.search]);
+  const lastBoardRoute = (typeof window !== "undefined" && sessionStorage.getItem("lastBoardRoute")) || "/";
+
+  const teamViewMenuItems: any[] = isTeamView
+    ? [
+        { title: "Voltar ao quadro", url: lastBoardRoute, icon: ArrowLeft, isBackAction: true },
+        { title: "Visão Geral", url: "/team-demands", icon: Layers },
+        { title: "Meus Quadros", url: "/boards", icon: LayoutGrid },
+        ...(selectedTeamId
+          ? [{ title: "Participantes", url: `/teams/${selectedTeamId}`, icon: UsersRound, end: true }]
+          : []),
+        ...(isTeamAdminOrModerator && selectedTeamId
+          ? [
+              { title: "Serviços", url: `/teams/${selectedTeamId}/services`, icon: Settings },
+              { title: "Solicitações", url: `/teams/${selectedTeamId}/requests`, icon: UserPlus, showJoinRequestBadge: true },
+            ]
+          : []),
+      ]
+    : [];
 
   const baseMenuItems = [{
     title: t("dashboard.title"),
@@ -104,7 +136,9 @@ export function AppSidebar() {
   // Soma Notes - temporarily hidden (keep code for future re-activation)
   const notesMenuItems: typeof baseMenuItems = [];
 
-  const menuItems = [...baseMenuItems, ...adminMenuItems, ...requesterMenuItems, ...aiMenuItems, ...notesMenuItems];
+  const boardMenuItems = [...baseMenuItems, ...adminMenuItems, ...requesterMenuItems, ...aiMenuItems, ...notesMenuItems];
+
+  const menuItems = isTeamView ? teamViewMenuItems : boardMenuItems;
 
   // Keep team section expanded if on team/board routes
   const isOnTeamRoute = location.pathname.startsWith("/boards") || location.pathname.startsWith("/team-config") || location.pathname.includes("/services") || location.pathname.includes("/requests") || location.pathname === "/team-demands" || location.pathname === "/my-demands";
@@ -146,19 +180,19 @@ export function AppSidebar() {
         </NavLink>
 
         <SidebarGroup>
-          <SidebarGroupLabel>{t("common.actions")}</SidebarGroupLabel>
+          <SidebarGroupLabel>{isTeamView ? (currentTeam?.name || "Equipe") : t("common.actions")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
               {menuItems.map(item => {
-              const tourId = item.url === "/" ? "dashboard-link" 
+              const tourId = !isTeamView && item.url === "/" ? "dashboard-link" 
                   : item.url === "/kanban" ? "kanban-link"
                   : item.url === "/demands" ? "demands-link"
                   : undefined;
-                
+                const isBack = (item as any).isBackAction;
                 return (
                 <SidebarMenuItem key={item.title} className="relative" data-tour={tourId}>
                     <SidebarMenuButton asChild tooltip={item.title} size={isMobile ? "lg" : "default"}>
-                      <NavLink to={item.url} end onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[44px] md:min-h-0" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                      <NavLink to={item.url} end={(item as any).end ?? !isTeamView} onClick={closeMobileSidebar} className={`hover:bg-sidebar-accent transition-colors min-h-[44px] md:min-h-0 ${isBack ? 'text-muted-foreground' : ''}`} activeClassName={isBack ? '' : 'bg-sidebar-accent text-sidebar-primary font-medium'}>
                         <item.icon className="h-5 w-5 md:h-4 md:w-4 shrink-0" />
                         {showText && <span className="text-base md:text-sm flex-1">{item.title}</span>}
                       </NavLink>
@@ -166,6 +200,11 @@ export function AppSidebar() {
                     {showText && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
                       <Badge className="absolute right-2 top-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1 rounded-full bg-[#F28705] text-white border-0">
                         {pendingDemandRequests}
+                      </Badge>
+                    )}
+                    {showText && (item as any).showJoinRequestBadge && typeof pendingJoinRequests === "number" && pendingJoinRequests > 0 && (
+                      <Badge variant="destructive" className="absolute right-2 top-1/2 -translate-y-1/2 h-5 min-w-5 flex items-center justify-center text-xs">
+                        {pendingJoinRequests}
                       </Badge>
                     )}
                     {showText && (item as any).showReturnedBadge && typeof returnedRequestsCount === "number" && returnedRequestsCount > 0 && (
@@ -176,6 +215,11 @@ export function AppSidebar() {
                     {isCollapsed && !isMobile && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
                       <Badge className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1 rounded-full bg-[#F28705] text-white border-0">
                         {pendingDemandRequests}
+                      </Badge>
+                    )}
+                    {isCollapsed && !isMobile && (item as any).showJoinRequestBadge && typeof pendingJoinRequests === "number" && pendingJoinRequests > 0 && (
+                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1">
+                        {pendingJoinRequests}
                       </Badge>
                     )}
                     {isCollapsed && !isMobile && (item as any).showReturnedBadge && typeof returnedRequestsCount === "number" && returnedRequestsCount > 0 && (
