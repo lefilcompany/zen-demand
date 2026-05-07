@@ -30,9 +30,9 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 const ADJUSTMENT_OPTIONS = [
-  { value: "none" as const, label: "Sem notificação", icon: CircleDot, description: "Etapa padrão, não dispara notificação de aprovação" },
-  { value: "internal" as const, label: "Notif. Interna", icon: ClipboardCheck, description: "Envia notificação para a equipe interna realizar a aprovação" },
-  { value: "external" as const, label: "Notif. Externa", icon: UserCheck, description: "Envia notificação para o cliente realizar a aprovação" },
+  { value: "none" as const, label: "Nenhuma", icon: CircleDot, description: "Etapa padrão, não dispara notificação de aprovação" },
+  { value: "internal" as const, label: "Interna", icon: ClipboardCheck, description: "Envia notificação para a equipe interna realizar a aprovação" },
+  { value: "external" as const, label: "Externa", icon: UserCheck, description: "Envia notificação para o cliente realizar a aprovação" },
 ];
 
 const STAGE_PRESET_COLORS = [
@@ -150,7 +150,7 @@ function AdjustmentTypePicker({ value, onChange, disabled }: AdjustmentTypePicke
           type="button"
           disabled={disabled}
           className={cn(
-            "group flex h-8 items-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium shrink-0 transition-all w-[150px]",
+            "group flex h-8 items-center gap-1.5 rounded-md border border-border px-2 text-xs font-medium shrink-0 transition-all w-[140px]",
             style.tint,
             style.label,
             "hover:border-foreground/30 focus:outline-none focus:ring-2",
@@ -867,6 +867,13 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
                 strategy={verticalListSortingStrategy}
               >
                 <div className="space-y-2">
+                  <div className="flex items-center gap-2 px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <div className="w-6 shrink-0" />
+                    <div className="w-9 shrink-0">Cor</div>
+                    <div className="flex-1">Etapa</div>
+                    <div className="w-[140px] shrink-0">Notificação</div>
+                    <div className="w-8 shrink-0" />
+                  </div>
                   {stages.map((s, i) => (
                     <SortableStageRow
                       key={s.id}
