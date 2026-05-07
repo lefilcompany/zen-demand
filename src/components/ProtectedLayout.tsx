@@ -147,8 +147,17 @@ export function ProtectedLayout() {
           <header className="flex h-10 sm:h-11 shrink-0 items-center justify-between gap-1 sm:gap-2 bg-background px-2 sm:px-3 md:px-5 border-b border-border rounded-t-xl overflow-visible">
             <div className="flex items-center gap-1 sm:gap-1.5 md:gap-3 min-w-0">
               <SidebarTrigger className="text-foreground hover:bg-muted shrink-0 h-6 w-6 sm:h-7 sm:w-7" />
-              <div className="h-4 w-px bg-border hidden lg:block" />
-              <BoardSelector />
+              {(() => {
+                const p = location.pathname;
+                const isTeamView = p === "/team-demands" || p === "/boards" || p === "/teams" || p.startsWith("/teams/");
+                if (isTeamView) return null;
+                return (
+                  <>
+                    <div className="h-4 w-px bg-border hidden lg:block" />
+                    <BoardSelector />
+                  </>
+                );
+              })()}
             </div>
 
             <div className="flex items-center gap-1 sm:gap-1.5">
