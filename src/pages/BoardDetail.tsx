@@ -159,11 +159,18 @@ function RoleSelector({
         )}
       </button>
 
-      {isOpen && !isLoading && (
-        <div 
-          className={`absolute z-50 left-1/2 -translate-x-1/2 min-w-[160px] bg-popover border rounded-xl shadow-xl py-1.5 animate-scale-in ${
-            openUpward ? "bottom-full mb-2" : "top-full mt-2"
-          }`}
+      {isOpen && !isLoading && menuPos && createPortal(
+        <div
+          ref={menuRef}
+          style={{
+            position: "fixed",
+            top: menuPos.openUpward ? undefined : menuPos.top,
+            bottom: menuPos.openUpward ? window.innerHeight - menuPos.top : undefined,
+            left: menuPos.left,
+            transform: "translateX(-50%)",
+            zIndex: 9999,
+          }}
+          className="min-w-[160px] bg-popover border rounded-xl shadow-xl py-1.5 animate-scale-in"
         >
           {roleOptions.map((role) => {
             const isSelected = role === currentRole;
@@ -176,8 +183,8 @@ function RoleSelector({
                   setIsOpen(false);
                 }}
                 className={`w-full px-3 py-2.5 text-left text-sm flex items-center gap-2.5 transition-all duration-150 ${
-                  isSelected 
-                    ? "bg-primary/10 text-primary font-medium" 
+                  isSelected
+                    ? "bg-primary/10 text-primary font-medium"
                     : "hover:bg-accent text-foreground"
                 }`}
               >
@@ -195,7 +202,8 @@ function RoleSelector({
               </button>
             );
           })}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
