@@ -585,17 +585,17 @@ export default function TeamDemands() {
       {/* Filters and Actions */}
       <Card className="border-border/50">
         <CardContent className="p-4 space-y-3">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="relative flex-1 sm:flex-none">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+            <div className="relative w-full lg:w-[280px] lg:flex-none">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder={t("common.search")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 w-full sm:w-[220px] md:w-[280px]"
+                className="pl-9 w-full"
               />
             </div>
-           <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:ml-auto">
+           <div className="flex items-center gap-2 flex-wrap lg:ml-auto">
               <BoardMultiSelectButton
                 teamId={selectedTeamId}
                 selected={filters.boards}
