@@ -28,6 +28,7 @@ import { useSelectedTeam } from "@/contexts/TeamContext";
 import { useDataPrecache } from "@/hooks/useDataPrecache";
 import { TrialExpiredBlock } from "@/components/TrialExpiredBlock";
 import { NoBoardsScreen } from "@/components/NoBoardsScreen";
+import logoSomaBlack from "@/assets/logo-soma-black.png";
 import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { useTrialStatus } from "@/hooks/useTrialStatus";
 import { useTeamSubscription } from "@/hooks/useSubscription";
@@ -148,9 +149,16 @@ export function ProtectedLayout() {
             <div className="flex items-center gap-1 sm:gap-1.5 md:gap-3 min-w-0">
               <SidebarTrigger className="text-foreground hover:bg-muted shrink-0 h-6 w-6 sm:h-7 sm:w-7" />
               <img
+                src={logoSomaBlack}
+                alt="SoMA"
+                className="h-6 w-auto lg:hidden dark:hidden"
+                decoding="sync"
+                loading="eager"
+              />
+              <img
                 src="/logo-soma-sidebar.png"
                 alt="SoMA"
-                className="h-6 w-auto lg:hidden"
+                className="h-6 w-auto hidden dark:block lg:dark:hidden"
                 decoding="sync"
                 loading="eager"
               />
