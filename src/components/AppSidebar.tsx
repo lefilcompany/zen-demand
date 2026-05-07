@@ -172,19 +172,19 @@ export function AppSidebar() {
         </NavLink>
 
         <SidebarGroup>
-          <SidebarGroupLabel>{t("common.actions")}</SidebarGroupLabel>
+          <SidebarGroupLabel>{isTeamView ? (currentTeam?.name || "Equipe") : t("common.actions")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
               {menuItems.map(item => {
-              const tourId = item.url === "/" ? "dashboard-link" 
+              const tourId = !isTeamView && item.url === "/" ? "dashboard-link" 
                   : item.url === "/kanban" ? "kanban-link"
                   : item.url === "/demands" ? "demands-link"
                   : undefined;
-                
+                const isBack = (item as any).isBackAction;
                 return (
                 <SidebarMenuItem key={item.title} className="relative" data-tour={tourId}>
                     <SidebarMenuButton asChild tooltip={item.title} size={isMobile ? "lg" : "default"}>
-                      <NavLink to={item.url} end onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[44px] md:min-h-0" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                      <NavLink to={item.url} end={(item as any).end ?? !isTeamView} onClick={closeMobileSidebar} className={`hover:bg-sidebar-accent transition-colors min-h-[44px] md:min-h-0 ${isBack ? 'text-muted-foreground' : ''}`} activeClassName={isBack ? '' : 'bg-sidebar-accent text-sidebar-primary font-medium'}>
                         <item.icon className="h-5 w-5 md:h-4 md:w-4 shrink-0" />
                         {showText && <span className="text-base md:text-sm flex-1">{item.title}</span>}
                       </NavLink>
@@ -192,6 +192,11 @@ export function AppSidebar() {
                     {showText && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
                       <Badge className="absolute right-2 top-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1 rounded-full bg-[#F28705] text-white border-0">
                         {pendingDemandRequests}
+                      </Badge>
+                    )}
+                    {showText && (item as any).showJoinRequestBadge && typeof pendingJoinRequests === "number" && pendingJoinRequests > 0 && (
+                      <Badge variant="destructive" className="absolute right-2 top-1/2 -translate-y-1/2 h-5 min-w-5 flex items-center justify-center text-xs">
+                        {pendingJoinRequests}
                       </Badge>
                     )}
                     {showText && (item as any).showReturnedBadge && typeof returnedRequestsCount === "number" && returnedRequestsCount > 0 && (
@@ -202,6 +207,11 @@ export function AppSidebar() {
                     {isCollapsed && !isMobile && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
                       <Badge className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1 rounded-full bg-[#F28705] text-white border-0">
                         {pendingDemandRequests}
+                      </Badge>
+                    )}
+                    {isCollapsed && !isMobile && (item as any).showJoinRequestBadge && typeof pendingJoinRequests === "number" && pendingJoinRequests > 0 && (
+                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1">
+                        {pendingJoinRequests}
                       </Badge>
                     )}
                     {isCollapsed && !isMobile && (item as any).showReturnedBadge && typeof returnedRequestsCount === "number" && returnedRequestsCount > 0 && (
