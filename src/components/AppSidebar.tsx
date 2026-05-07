@@ -17,7 +17,7 @@ import { SidebarSyncIndicator } from "@/components/SidebarSyncIndicator";
 import { SidebarActiveTimers } from "@/components/SidebarActiveTimers";
 import { SidebarSubscriptionCard } from "@/components/SidebarSubscriptionCard";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
