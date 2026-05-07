@@ -1,6 +1,6 @@
 import { Fragment } from "react";
-import { Link } from "react-router-dom";
-import { Home, LucideIcon } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { Home, Layers, ArrowLeft, LucideIcon } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,6 +9,8 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 
 export interface BreadcrumbItemConfig {
   label: string;
@@ -24,27 +26,72 @@ interface PageBreadcrumbProps {
 }
 
 export function PageBreadcrumb({ items, showHome = true }: PageBreadcrumbProps) {
+  const location = useLocation();
+  const { currentBoard } = useSelectedBoardSafe();
+
+  const isTeamView =
+    location.pathname === "/team-demands" ||
+    location.pathname === "/boards" ||
+    location.pathname.startsWith("/boards/") ||
+    location.pathname === "/teams" ||
+    location.pathname.startsWith("/teams/");
+
   return (
     <Breadcrumb className="mb-4">
       <BreadcrumbList>
         {showHome && (
           <>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link to="/" className="flex items-center gap-1 transition-colors duration-200 hover:text-primary">
-                  <Home className="h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only">Dashboard</span>
-                </Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            {items.length > 0 && <BreadcrumbSeparator />}
+            {isTeamView ? (
+              <>
+                <BreadcrumbItem>
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link
+                          to="/"
+                          aria-label="Voltar ao quadro"
+                          className="flex items-center justify-center h-6 w-6 rounded-md text-muted-foreground transition-colors duration-200 hover:text-primary hover:bg-accent"
+                        >
+                          <ArrowLeft className="h-3.5 w-3.5" />
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        Voltar para o quadro{currentBoard?.name ? `: ${currentBoard.name}` : ""}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link to="/team-demands" className="flex items-center gap-1 transition-colors duration-200 hover:text-primary">
+                      <Layers className="h-3.5 w-3.5" />
+                      <span className="sr-only sm:not-sr-only">Visão Geral</span>
+                    </Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                {items.length > 0 && <BreadcrumbSeparator />}
+              </>
+            ) : (
+              <>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link to="/" className="flex items-center gap-1 transition-colors duration-200 hover:text-primary">
+                      <Home className="h-3.5 w-3.5" />
+                      <span className="sr-only sm:not-sr-only">Dashboard</span>
+                    </Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                {items.length > 0 && <BreadcrumbSeparator />}
+              </>
+            )}
           </>
         )}
-        
+
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
           const Icon = item.icon;
-          
+
           return (
             <Fragment key={index}>
               <BreadcrumbItem>
@@ -55,8 +102,8 @@ export function PageBreadcrumb({ items, showHome = true }: PageBreadcrumbProps) 
                   </BreadcrumbPage>
                 ) : (
                   <BreadcrumbLink asChild>
-                    <Link 
-                      to={item.href || "#"} 
+                    <Link
+                      to={item.href || "#"}
                       state={item.state}
                       className="flex items-center gap-1 transition-colors duration-200 hover:text-primary"
                     >
