@@ -67,14 +67,6 @@ export function AppSidebar() {
     title: t("demands.title"),
     url: "/demands",
     icon: LayoutList
-  }, {
-    title: "Visão Geral",
-    url: "/team-demands",
-    icon: Layers
-  }, {
-    title: "Meus Quadros",
-    url: "/boards",
-    icon: LayoutGrid
   }];
 
   // Add demand requests link for admins/moderators/executors OR requesters (they can view)
@@ -210,6 +202,22 @@ export function AppSidebar() {
           <SidebarGroupLabel>Configurações da Equipe</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Visão Geral" size={isMobile ? "lg" : "default"}>
+                  <NavLink to="/team-demands" onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[44px] md:min-h-0" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                    <Layers className="h-5 w-5 md:h-4 md:w-4 shrink-0" />
+                    {showText && <span className="text-base md:text-sm flex-1">Visão Geral</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Meus Quadros" size={isMobile ? "lg" : "default"}>
+                  <NavLink to="/boards" onClick={closeMobileSidebar} className="hover:bg-sidebar-accent transition-colors min-h-[44px] md:min-h-0" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                    <LayoutGrid className="h-5 w-5 md:h-4 md:w-4 shrink-0" />
+                    {showText && <span className="text-base md:text-sm flex-1">Meus Quadros</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               {selectedTeamId && (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Participantes" size={isMobile ? "lg" : "default"}>
