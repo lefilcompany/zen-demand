@@ -867,6 +867,13 @@ export function CreateBoardWizard({ onComplete, onCancel }: CreateBoardWizardPro
                 strategy={verticalListSortingStrategy}
               >
                 <div className="space-y-2">
+                  <div className="flex items-center gap-2 px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <div className="w-6 shrink-0" />
+                    <div className="w-9 shrink-0">Cor</div>
+                    <div className="flex-1">Etapa</div>
+                    <div className="w-[140px] shrink-0">Notificação</div>
+                    <div className="w-8 shrink-0" />
+                  </div>
                   {stages.map((s, i) => (
                     <SortableStageRow
                       key={s.id}
