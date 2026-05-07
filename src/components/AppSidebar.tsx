@@ -429,6 +429,7 @@ export function AppSidebar() {
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
+                )}
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
