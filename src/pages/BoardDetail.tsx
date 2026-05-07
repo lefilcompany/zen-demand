@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState, useRef, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { LayoutGrid, Users, Trash2, UserPlus, UserMinus, ArrowLeft, Shield, UserCog, Briefcase, User, ChevronDown, Loader2, Pencil, Check, X, Search, Mail, ListChecks, AlertTriangle, CheckCircle2, Clock, Package as PackageIcon, ArrowUpRight } from "lucide-react";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { Input } from "@/components/ui/input";
@@ -71,13 +72,18 @@ function RoleSelector({
   disabled: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [openUpward, setOpenUpward] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number; openUpward: boolean } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const t = event.target as Node;
+      if (
+        containerRef.current && !containerRef.current.contains(t) &&
+        menuRef.current && !menuRef.current.contains(t)
+      ) {
         setIsOpen(false);
       }
     };
@@ -88,13 +94,33 @@ function RoleSelector({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
+  const computePos = () => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const dropdownHeight = 200;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openUpward = spaceBelow < dropdownHeight;
+    setMenuPos({
+      top: openUpward ? rect.top - 8 : rect.bottom + 8,
+      left: rect.left + rect.width / 2,
+      openUpward,
+    });
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    computePos();
+    const onScroll = () => computePos();
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [isOpen]);
+
   const handleToggle = () => {
-    if (!isOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const dropdownHeight = 180; // approximate height of dropdown
-      setOpenUpward(spaceBelow < dropdownHeight);
-    }
+    if (!isOpen) computePos();
     setIsOpen(!isOpen);
   };
 
@@ -134,11 +160,18 @@ function RoleSelector({
         )}
       </button>
 
-      {isOpen && !isLoading && (
-        <div 
-          className={`absolute z-50 left-1/2 -translate-x-1/2 min-w-[160px] bg-popover border rounded-xl shadow-xl py-1.5 animate-scale-in ${
-            openUpward ? "bottom-full mb-2" : "top-full mt-2"
-          }`}
+      {isOpen && !isLoading && menuPos && createPortal(
+        <div
+          ref={menuRef}
+          style={{
+            position: "fixed",
+            top: menuPos.openUpward ? undefined : menuPos.top,
+            bottom: menuPos.openUpward ? window.innerHeight - menuPos.top : undefined,
+            left: menuPos.left,
+            transform: "translateX(-50%)",
+            zIndex: 9999,
+          }}
+          className="min-w-[160px] bg-popover border rounded-xl shadow-xl py-1.5 animate-scale-in"
         >
           {roleOptions.map((role) => {
             const isSelected = role === currentRole;
@@ -151,8 +184,8 @@ function RoleSelector({
                   setIsOpen(false);
                 }}
                 className={`w-full px-3 py-2.5 text-left text-sm flex items-center gap-2.5 transition-all duration-150 ${
-                  isSelected 
-                    ? "bg-primary/10 text-primary font-medium" 
+                  isSelected
+                    ? "bg-primary/10 text-primary font-medium"
                     : "hover:bg-accent text-foreground"
                 }`}
               >
@@ -170,7 +203,8 @@ function RoleSelector({
               </button>
             );
           })}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
