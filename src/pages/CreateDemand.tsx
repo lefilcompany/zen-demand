@@ -825,7 +825,11 @@ export default function CreateDemand({ open, onClose }: { open?: boolean; onClos
                               />
                             </div>
                           </div>
-                          <div className="max-h-60 overflow-y-auto p-1">
+                          <div
+                            className="max-h-60 overflow-y-auto overscroll-contain p-1"
+                            onWheel={(e) => e.stopPropagation()}
+                            onTouchMove={(e) => e.stopPropagation()}
+                          >
                             {filteredBoards.length === 0 ? (
                               <div className="px-2 py-4 text-center text-sm text-muted-foreground">
                                 Nenhum quadro encontrado
