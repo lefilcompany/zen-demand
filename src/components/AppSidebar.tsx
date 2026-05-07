@@ -67,14 +67,6 @@ export function AppSidebar() {
     title: t("demands.title"),
     url: "/demands",
     icon: LayoutList
-  }, {
-    title: "Visão Geral",
-    url: "/team-demands",
-    icon: Layers
-  }, {
-    title: "Meus Quadros",
-    url: "/boards",
-    icon: LayoutGrid
   }];
 
   // Add demand requests link for admins/moderators/executors OR requesters (they can view)
