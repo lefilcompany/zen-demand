@@ -55,6 +55,30 @@ export function AppSidebar() {
   const isBoardAdminModeratorOrExecutor = boardRole === "admin" || boardRole === "moderator" || boardRole === "executor";
   const isRequester = boardRole === "requester" || (!boardRole && teamMembershipRole === "requester");
 
+  // Detect "team view" routes - the team dropdown items
+  const isTeamView =
+    location.pathname === "/team-demands" ||
+    location.pathname === "/boards" ||
+    location.pathname.startsWith("/teams/") ||
+    location.pathname === "/teams";
+
+  const teamViewMenuItems: any[] = isTeamView
+    ? [
+        { title: "Voltar ao quadro", url: "/", icon: ArrowLeft, isBackAction: true },
+        { title: "Visão Geral", url: "/team-demands", icon: Layers },
+        { title: "Meus Quadros", url: "/boards", icon: LayoutGrid },
+        ...(selectedTeamId
+          ? [{ title: "Participantes", url: `/teams/${selectedTeamId}`, icon: UsersRound, end: true }]
+          : []),
+        ...(isTeamAdminOrModerator && selectedTeamId
+          ? [
+              { title: "Serviços", url: `/teams/${selectedTeamId}/services`, icon: Settings },
+              { title: "Solicitações", url: `/teams/${selectedTeamId}/requests`, icon: UserPlus, showJoinRequestBadge: true },
+            ]
+          : []),
+      ]
+    : [];
+
   const baseMenuItems = [{
     title: t("dashboard.title"),
     url: "/",
@@ -104,7 +128,9 @@ export function AppSidebar() {
   // Soma Notes - temporarily hidden (keep code for future re-activation)
   const notesMenuItems: typeof baseMenuItems = [];
 
-  const menuItems = [...baseMenuItems, ...adminMenuItems, ...requesterMenuItems, ...aiMenuItems, ...notesMenuItems];
+  const boardMenuItems = [...baseMenuItems, ...adminMenuItems, ...requesterMenuItems, ...aiMenuItems, ...notesMenuItems];
+
+  const menuItems = isTeamView ? teamViewMenuItems : boardMenuItems;
 
   // Keep team section expanded if on team/board routes
   const isOnTeamRoute = location.pathname.startsWith("/boards") || location.pathname.startsWith("/team-config") || location.pathname.includes("/services") || location.pathname.includes("/requests") || location.pathname === "/team-demands" || location.pathname === "/my-demands";
