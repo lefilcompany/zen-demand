@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useTranslation } from "react-i18next";
 import logoSomaIcon from "@/assets/logo-soma-logout.png";
+import { NotificationToastStack } from "@/components/NotificationToastStack";
 
 export function ProtectedLayout() {
   const { user, signOut } = useAuth();
@@ -248,6 +249,9 @@ export function ProtectedLayout() {
           <FloatingCreateButton />
         </main>
       </div>
+
+      {/* Real-time animated notification toast stack */}
+      <NotificationToastStack />
 
       {/* Onboarding Tour */}
       <OnboardingTour steps={steps} isOpen={isOpen} onClose={closeTour} onComplete={completeOnboarding} />
