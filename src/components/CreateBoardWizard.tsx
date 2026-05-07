@@ -30,9 +30,9 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 const ADJUSTMENT_OPTIONS = [
-  { value: "none" as const, label: "Normal", icon: CircleDot, description: "Etapa de trabalho padrão" },
-  { value: "internal" as const, label: "Aprov. Interna", icon: ClipboardCheck, description: "Aprovação da equipe interna" },
-  { value: "external" as const, label: "Aprov. Externa", icon: UserCheck, description: "Aprovação do cliente" },
+  { value: "none" as const, label: "Sem notificação", icon: CircleDot, description: "Etapa padrão, não dispara notificação de aprovação" },
+  { value: "internal" as const, label: "Notif. Interna", icon: ClipboardCheck, description: "Envia notificação para a equipe interna realizar a aprovação" },
+  { value: "external" as const, label: "Notif. Externa", icon: UserCheck, description: "Envia notificação para o cliente realizar a aprovação" },
 ];
 
 const STAGE_PRESET_COLORS = [
