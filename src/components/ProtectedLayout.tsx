@@ -149,7 +149,7 @@ export function ProtectedLayout() {
               <SidebarTrigger className="text-foreground hover:bg-muted shrink-0 h-6 w-6 sm:h-7 sm:w-7" />
               {(() => {
                 const p = location.pathname;
-                const isTeamView = p === "/team-demands" || p === "/boards" || p === "/teams" || p.startsWith("/teams/");
+                const isTeamView = p === "/team-demands" || p === "/boards" || p.startsWith("/boards/") || p === "/teams" || p.startsWith("/teams/");
                 if (isTeamView) return null;
                 return (
                   <>

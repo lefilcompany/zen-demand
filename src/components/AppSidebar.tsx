@@ -59,16 +59,11 @@ export function AppSidebar() {
   const isTeamView =
     location.pathname === "/team-demands" ||
     location.pathname === "/boards" ||
+    location.pathname.startsWith("/boards/") ||
     location.pathname.startsWith("/teams/") ||
     location.pathname === "/teams";
 
-  // Remember last "board view" route so the back action returns to it
-  useEffect(() => {
-    if (!isTeamView) {
-      try { sessionStorage.setItem("lastBoardRoute", location.pathname + location.search); } catch {}
-    }
-  }, [isTeamView, location.pathname, location.search]);
-  const lastBoardRoute = (typeof window !== "undefined" && sessionStorage.getItem("lastBoardRoute")) || "/";
+  const lastBoardRoute = "/";
 
   const teamViewMenuItems: any[] = isTeamView
     ? [
