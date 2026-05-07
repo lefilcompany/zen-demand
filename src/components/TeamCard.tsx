@@ -33,7 +33,7 @@ export function TeamCard({ team }: TeamCardProps) {
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1 flex-1 min-w-0">
             <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
-              <span className="truncate">{team.name}</span>
+              <span className="break-words">{team.name}</span>
               <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
             </CardTitle>
             {team.description && (
