@@ -13,12 +13,6 @@ export default function Teams() {
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in">
       <SEOHead title="Equipes" path="/teams" />
-      {/* Breadcrumbs */}
-      <PageBreadcrumb
-        items={[
-          { label: "Equipes", icon: UsersIcon, isCurrent: true },
-        ]}
-      />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
