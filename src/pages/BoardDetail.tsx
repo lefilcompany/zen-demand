@@ -71,13 +71,18 @@ function RoleSelector({
   disabled: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [openUpward, setOpenUpward] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number; openUpward: boolean } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const t = event.target as Node;
+      if (
+        containerRef.current && !containerRef.current.contains(t) &&
+        menuRef.current && !menuRef.current.contains(t)
+      ) {
         setIsOpen(false);
       }
     };
@@ -88,13 +93,33 @@ function RoleSelector({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
+  const computePos = () => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const dropdownHeight = 200;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openUpward = spaceBelow < dropdownHeight;
+    setMenuPos({
+      top: openUpward ? rect.top - 8 : rect.bottom + 8,
+      left: rect.left + rect.width / 2,
+      openUpward,
+    });
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    computePos();
+    const onScroll = () => computePos();
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [isOpen]);
+
   const handleToggle = () => {
-    if (!isOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const dropdownHeight = 180; // approximate height of dropdown
-      setOpenUpward(spaceBelow < dropdownHeight);
-    }
+    if (!isOpen) computePos();
     setIsOpen(!isOpen);
   };
 
