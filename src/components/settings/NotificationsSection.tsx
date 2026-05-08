@@ -174,18 +174,48 @@ export function NotificationsSection() {
         <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tipos</h4>
 
         {[
-          { key: "demandUpdates" as const, label: "Atualizações de demandas", desc: "Mudanças de status, comentários, etc." },
-          { key: "teamUpdates" as const, label: "Atualizações da equipe", desc: "Novos membros, mudanças no quadro" },
-          { key: "deadlineReminders" as const, label: "Lembretes de prazo", desc: "Alertas antes do vencimento" },
-          { key: "adjustmentRequests" as const, label: "Solicitações de ajuste", desc: "Quando alguém pedir alterações" },
-          { key: "mentionNotifications" as const, label: "Menções", desc: "Quando alguém te mencionar (@)" },
-        ].map(({ key, label, desc }) => (
-          <div key={key} className="flex items-center justify-between">
-            <div>
+          { key: "demandUpdates" as const, label: "Atualizações de demandas", desc: "Mudanças de status, comentários, etc.", testType: "info" as const, testTitle: "🔄 Demanda atualizada", testMessage: "Exemplo: a demanda \"Campanha Verão\" mudou de status.", link: "/settings?tab=notifications" },
+          { key: "teamUpdates" as const, label: "Atualizações da equipe", desc: "Novos membros, mudanças no quadro", testType: "info" as const, testTitle: "👥 Equipe atualizada", testMessage: "Exemplo: um novo membro entrou no quadro.", link: "/settings?tab=notifications" },
+          { key: "deadlineReminders" as const, label: "Lembretes de prazo", desc: "Alertas antes do vencimento", testType: "warning" as const, testTitle: "⏰ Prazo se aproximando", testMessage: "Exemplo: a demanda \"Relatório mensal\" vence em 1 dia.", link: "/settings?tab=notifications" },
+          { key: "adjustmentRequests" as const, label: "Solicitações de ajuste", desc: "Quando alguém pedir alterações", testType: "warning" as const, testTitle: "✏️ Ajuste solicitado", testMessage: "Exemplo: foi solicitado um ajuste em \"Banner home\".", link: "/settings?tab=notifications" },
+          { key: "mentionNotifications" as const, label: "Menções", desc: "Quando alguém te mencionar (@)", testType: "info" as const, testTitle: "💬 Você foi mencionado", testMessage: "Exemplo: @você foi citado em um comentário.", link: "/settings?tab=notifications" },
+        ].map(({ key, label, desc, testType, testTitle, testMessage, link }) => (
+          <div key={key} className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
               <Label className="cursor-pointer">{label}</Label>
               <p className="text-xs text-muted-foreground">{desc}</p>
             </div>
-            <Switch checked={preferences[key]} onCheckedChange={(c) => set(key, c)} disabled={isLoading} />
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                disabled={isSendingInApp}
+                onClick={async () => {
+                  if (!user?.id) return;
+                  setIsSendingInApp(true);
+                  try {
+                    const { error } = await supabase.from("notifications").insert({
+                      user_id: user.id,
+                      title: testTitle,
+                      message: testMessage,
+                      type: testType,
+                      link,
+                    });
+                    if (error) throw error;
+                    toast.success(`Notificação "${label}" enviada!`);
+                  } catch (e: any) {
+                    toast.error("Erro ao enviar: " + (e?.message || "desconhecido"));
+                  } finally {
+                    setIsSendingInApp(false);
+                  }
+                }}
+              >
+                <Send className="mr-1 h-3 w-3" />
+                Testar
+              </Button>
+              <Switch checked={preferences[key]} onCheckedChange={(c) => set(key, c)} disabled={isLoading} />
+            </div>
           </div>
         ))}
       </div>
