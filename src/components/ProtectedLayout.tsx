@@ -227,6 +227,19 @@ export function ProtectedLayout() {
                     <Settings className="h-4 w-4 mr-2" />
                     Configurações
                   </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="sm:hidden"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setTheme(theme === "dark" ? "light" : "dark");
+                    }}
+                  >
+                    {theme === "dark" ? (
+                      <Sun className="h-4 w-4 mr-2" />
+                    ) : (
+                      <Moon className="h-4 w-4 mr-2" />
+                    )}
+                    Alternar tema
                   {hasCompleted && (
                     <DropdownMenuItem onClick={() => resetOnboarding(() => navigate("/"))}>
                       <RotateCcw className="h-4 w-4 mr-2" />
