@@ -223,10 +223,10 @@ export function AppSidebar() {
                 const isBack = (item as any).isBackAction;
                 return (
                 <SidebarMenuItem key={item.title} className="relative" data-tour={tourId}>
-                    <SidebarMenuButton asChild tooltip={item.title} size={isMobile ? "lg" : "default"}>
-                      <NavLink to={item.url} end={(item as any).end ?? !isTeamView} onClick={closeMobileSidebar} className={`hover:bg-sidebar-accent transition-colors min-h-[44px] md:min-h-0 ${isBack ? 'text-muted-foreground' : ''}`} activeClassName={isBack ? '' : 'bg-sidebar-accent text-sidebar-primary font-medium'}>
-                        <item.icon className="h-5 w-5 md:h-4 md:w-4 shrink-0" />
-                        {showText && <span className="text-base md:text-sm flex-1">{item.title}</span>}
+                    <SidebarMenuButton asChild tooltip={item.title} size="default">
+                      <NavLink to={item.url} end={(item as any).end ?? !isTeamView} onClick={closeMobileSidebar} className={`hover:bg-sidebar-accent transition-colors ${isBack ? 'text-muted-foreground' : ''}`} activeClassName={isBack ? '' : 'bg-sidebar-accent text-sidebar-primary font-medium'}>
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        {showText && <span className="text-sm flex-1">{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                     {showText && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
