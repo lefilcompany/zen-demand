@@ -32,6 +32,62 @@ import { ArchivedDemandsModal } from "@/components/ArchivedDemandsModal";
 import { SEOHead } from "@/components/SEOHead";
 type ViewMode = "table" | "grid" | "calendar";
 const TABLET_BREAKPOINT = 1024;
+
+const DEMANDS_FILTERS_LS_KEY = "soma:demands-filters:v1";
+
+const DEFAULT_FILTERS: DemandFiltersState = {
+  status: null,
+  priority: null,
+  assignee: null,
+  service: null,
+  dueDateFrom: null,
+  dueDateTo: null,
+  position: null,
+};
+
+type PersistedDemandsState = {
+  searchQuery: string;
+  viewMode: ViewMode;
+  filters: DemandFiltersState;
+  selectedStatuses: string[];
+  hideDelivered: boolean;
+  showOnlyMine: boolean;
+  showAllBoards: boolean;
+  selectedFolderId: string | null;
+};
+
+const DEFAULT_PERSISTED: PersistedDemandsState = {
+  searchQuery: "",
+  viewMode: "table",
+  filters: DEFAULT_FILTERS,
+  selectedStatuses: [],
+  hideDelivered: false,
+  showOnlyMine: false,
+  showAllBoards: false,
+  selectedFolderId: null,
+};
+
+function loadPersistedDemandsState(): PersistedDemandsState {
+  if (typeof window === "undefined") return DEFAULT_PERSISTED;
+  try {
+    const raw = window.localStorage.getItem(DEMANDS_FILTERS_LS_KEY);
+    if (!raw) return DEFAULT_PERSISTED;
+    const parsed = JSON.parse(raw);
+    return {
+      ...DEFAULT_PERSISTED,
+      ...parsed,
+      filters: {
+        ...DEFAULT_FILTERS,
+        ...(parsed.filters || {}),
+        dueDateFrom: parsed?.filters?.dueDateFrom ? new Date(parsed.filters.dueDateFrom) : null,
+        dueDateTo: parsed?.filters?.dueDateTo ? new Date(parsed.filters.dueDateTo) : null,
+      },
+    };
+  } catch {
+    return DEFAULT_PERSISTED;
+  }
+}
+
 export default function Demands() {
   const {
     t
