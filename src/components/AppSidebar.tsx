@@ -173,24 +173,24 @@ export function AppSidebar() {
           />
         </NavLink>
 
-        {isTeamView && (
-          <div className={`${showText ? 'mx-2 px-2' : 'mx-auto'} pt-2 pb-1 flex ${showText ? 'justify-start' : 'justify-center'}`}>
+        {isTeamView && showText && (
+          <div className="mx-2 px-2 pt-2 pb-1">
             <NavLink
               to={lastBoardRoute}
               onClick={closeMobileSidebar}
-              className={`group inline-flex items-center gap-1.5 min-w-0 text-primary font-semibold uppercase tracking-wide text-[11px] hover:bg-primary/10 rounded-md transition-colors ${showText ? 'w-fit max-w-full underline underline-offset-4 decoration-primary/50 hover:decoration-primary px-1.5 py-1 -ml-1.5' : 'h-8 w-8 justify-center'}`}
+              className="group inline-flex w-fit max-w-full items-center gap-1.5 min-w-0 text-primary font-semibold uppercase tracking-wide text-[11px] underline underline-offset-4 decoration-primary/50 hover:decoration-primary hover:bg-primary/10 rounded-md px-1.5 py-1 -ml-1.5 transition-colors"
               aria-label="Voltar ao quadro"
               title="Voltar ao quadro"
             >
-              <CornerUpLeft className={`${showText ? 'h-3.5 w-3.5' : 'h-4 w-4'} shrink-0 transition-transform group-hover:-translate-x-0.5`} />
-              {showText && <span className="truncate">{currentTeam?.name || "Equipe"}</span>}
+              <CornerUpLeft className="h-3.5 w-3.5 shrink-0 transition-transform group-hover:-translate-x-0.5" />
+              <span className="truncate">{currentTeam?.name || "Equipe"}</span>
             </NavLink>
           </div>
         )}
 
         <SidebarGroup
           className={
-            isTeamView
+            isTeamView && showText
               ? "mx-2 w-auto rounded-lg border border-primary/50 bg-gradient-to-b from-primary/10 to-primary/5 ring-1 ring-primary/20 shadow-[0_4px_12px_-2px_hsl(var(--primary)/0.35),0_2px_6px_-1px_rgba(0,0,0,0.6),inset_0_1px_0_hsl(var(--primary)/0.25)]"
               : undefined
           }
