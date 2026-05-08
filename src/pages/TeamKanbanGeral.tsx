@@ -46,12 +46,6 @@ export default function TeamKanbanGeral() {
   return (
     <div className="space-y-6 p-4 md:p-6 max-w-full overflow-x-hidden">
       <SEOHead title="Kanban Geral" path="/team-kanban" />
-      <PageBreadcrumb
-        items={[
-          { label: currentTeam?.name || "Equipe" },
-          { label: "Kanban Geral", icon: Kanban, isCurrent: true },
-        ]}
-      />
 
       {/* Header */}
       <div className="flex flex-col gap-2">

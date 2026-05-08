@@ -193,11 +193,6 @@ export default function Kanban() {
   return (
     <div className="flex flex-col h-full animate-fade-in space-y-4">
       <SEOHead title="Kanban" path="/kanban" />
-      <PageBreadcrumb
-        items={[
-          { label: "Kanban", icon: KanbanIcon, isCurrent: true },
-        ]}
-      />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between shrink-0 pb-4 md:pb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">

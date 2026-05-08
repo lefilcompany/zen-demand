@@ -205,11 +205,6 @@ export default function Boards() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <SEOHead title="Quadros" path="/boards" />
-      <PageBreadcrumb
-        items={[
-          { label: "Quadros", icon: LayoutGrid, isCurrent: true },
-        ]}
-      />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
