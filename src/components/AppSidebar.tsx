@@ -174,8 +174,16 @@ export function AppSidebar() {
           />
         </NavLink>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>{isTeamView ? (currentTeam?.name || "Equipe") : t("common.actions")}</SidebarGroupLabel>
+        <SidebarGroup
+          className={
+            isTeamView && showText
+              ? "mx-2 rounded-lg border border-primary/30 bg-primary/5 px-1.5 py-1.5 shadow-sm"
+              : undefined
+          }
+        >
+          <SidebarGroupLabel className={isTeamView && showText ? "text-primary font-semibold uppercase tracking-wide text-[11px]" : undefined}>
+            {isTeamView ? (currentTeam?.name || "Equipe") : t("common.actions")}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
               {menuItems.map(item => {
