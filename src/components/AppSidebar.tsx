@@ -190,7 +190,7 @@ export function AppSidebar() {
                   aria-label="Voltar ao quadro"
                   title="Voltar ao quadro"
                 >
-                  <ArrowLeft className="h-3.5 w-3.5" />
+                  <CornerUpLeft className="h-3.5 w-3.5" />
                 </NavLink>
                 <span className="truncate">{currentTeam?.name || "Equipe"}</span>
               </span>
