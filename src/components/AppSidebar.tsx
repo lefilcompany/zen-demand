@@ -175,18 +175,16 @@ export function AppSidebar() {
 
         {isTeamView && showText && (
           <div className="px-2 pt-2 pb-1">
-            <div className="flex items-center gap-1.5 min-w-0 text-primary font-semibold uppercase tracking-wide text-[11px] underline underline-offset-4 decoration-primary/50">
-              <NavLink
-                to={lastBoardRoute}
-                onClick={closeMobileSidebar}
-                className="inline-flex items-center justify-center h-5 w-5 rounded-md hover:bg-primary/15 text-primary shrink-0 transition-colors"
-                aria-label="Voltar ao quadro"
-                title="Voltar ao quadro"
-              >
-                <CornerUpLeft className="h-3.5 w-3.5" />
-              </NavLink>
+            <NavLink
+              to={lastBoardRoute}
+              onClick={closeMobileSidebar}
+              className="group flex items-center gap-1.5 min-w-0 text-primary font-semibold uppercase tracking-wide text-[11px] underline underline-offset-4 decoration-primary/50 hover:decoration-primary hover:bg-primary/10 rounded-md px-1.5 py-1 -mx-1.5 transition-colors"
+              aria-label="Voltar ao quadro"
+              title="Voltar ao quadro"
+            >
+              <CornerUpLeft className="h-3.5 w-3.5 shrink-0 transition-transform group-hover:-translate-x-0.5" />
               <span className="truncate">{currentTeam?.name || "Equipe"}</span>
-            </div>
+            </NavLink>
           </div>
         )}
 
