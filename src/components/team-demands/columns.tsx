@@ -186,7 +186,7 @@ function DueDateCell({ row }: { row: { original: TeamDemandTableRow } }) {
       {isDeliveredLate && (
         <Badge
           variant="outline"
-          className="text-[10px] py-0 h-5 bg-muted/50 text-muted-foreground border-muted-foreground/20 font-normal"
+          className="text-[10px] leading-none px-1.5 py-0.5 h-auto bg-muted/50 text-muted-foreground border-muted-foreground/20 font-normal whitespace-nowrap"
         >
           Concluída com atraso
         </Badge>
