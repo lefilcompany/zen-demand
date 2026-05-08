@@ -176,7 +176,7 @@ export function AppSidebar() {
         <SidebarGroup
           className={
             isTeamView && showText
-              ? "mx-2 rounded-lg border border-primary/30 bg-primary/5 px-1.5 py-1.5 shadow-sm"
+              ? "rounded-lg border border-primary/30 bg-primary/5 shadow-sm"
               : undefined
           }
         >
