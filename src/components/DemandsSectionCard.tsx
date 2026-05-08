@@ -213,14 +213,17 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
                   </ResponsiveContainer>
                 </div>
                 {categoryData.length > 4 ? (
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 w-full">
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-0 w-full">
                     {categoryData.map((item, idx) => (
                       <div
                         key={item.name}
-                        className="flex items-center gap-1.5 text-[10px] md:text-xs py-1 border-b border-border/40 last:border-b-0 [&:nth-last-child(2):nth-child(odd)]:border-b-0"
+                        className="flex items-start gap-1.5 text-[10px] md:text-xs py-1 border-b border-border/40 last:border-b-0 [&:nth-last-child(2):nth-child(odd)]:border-b-0 min-w-0"
+                        title={`${item.name} (${item.value})`}
                       >
-                        <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                        <span className="text-foreground font-medium truncate">{item.name} ({item.value})</span>
+                        <div className="w-2.5 h-2.5 rounded-full shrink-0 mt-0.5" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
+                        <span className="text-foreground font-medium leading-tight break-words min-w-0 flex-1">
+                          {item.name} <span className="text-muted-foreground">({item.value})</span>
+                        </span>
                       </div>
                     ))}
                   </div>
