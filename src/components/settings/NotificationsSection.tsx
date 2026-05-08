@@ -32,6 +32,8 @@ export function NotificationsSection() {
     toast.success(t("toast.settingsSaved"));
   };
 
+  const [isSendingInApp, setIsSendingInApp] = useState(false);
+
   const sendTest = async () => {
     if (!user?.id) return;
     setIsSendingTest(true);
@@ -45,6 +47,26 @@ export function NotificationsSection() {
       toast.error("Erro ao enviar teste");
     } finally {
       setIsSendingTest(false);
+    }
+  };
+
+  const sendInAppTest = async () => {
+    if (!user?.id) return;
+    setIsSendingInApp(true);
+    try {
+      const { error } = await supabase.from("notifications").insert({
+        user_id: user.id,
+        title: "🔔 Teste de notificação in-app",
+        message: "Esta é uma notificação de teste enviada dentro do app.",
+        type: "info",
+        link: "/settings?tab=notifications",
+      });
+      if (error) throw error;
+      toast.success("Notificação in-app enviada!");
+    } catch (e: any) {
+      toast.error("Erro ao enviar: " + (e?.message || "desconhecido"));
+    } finally {
+      setIsSendingInApp(false);
     }
   };
 
@@ -74,8 +96,14 @@ export function NotificationsSection() {
               <p className="text-xs text-muted-foreground">Notificações dentro da plataforma</p>
             </div>
           </div>
-          <Switch checked={preferences.pushNotifications}
-            onCheckedChange={(c) => set("pushNotifications", c)} disabled={isLoading} />
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={sendInAppTest} disabled={isSendingInApp}>
+              {isSendingInApp ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-2 h-3.5 w-3.5" />}
+              Testar
+            </Button>
+            <Switch checked={preferences.pushNotifications}
+              onCheckedChange={(c) => set("pushNotifications", c)} disabled={isLoading} />
+          </div>
         </div>
 
         {isPushSupported && (
