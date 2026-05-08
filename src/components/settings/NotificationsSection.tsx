@@ -109,10 +109,25 @@ export function NotificationsSection() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={sendInAppTest} disabled={isSendingInApp}>
-              {isSendingInApp ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-2 h-3.5 w-3.5" />}
-              Testar
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" disabled={isSendingInApp}>
+                  {isSendingInApp ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-2 h-3.5 w-3.5" />}
+                  Testar
+                  <ChevronDown className="ml-1 h-3.5 w-3.5 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="text-xs">Tipos de notificação</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {TEST_NOTIFICATIONS.map(({ type, label, icon: Icon }) => (
+                  <DropdownMenuItem key={type} onClick={() => sendInAppTest(type)} className="cursor-pointer">
+                    <Icon className="mr-2 h-4 w-4" />
+                    {label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Switch checked={preferences.pushNotifications}
               onCheckedChange={(c) => set("pushNotifications", c)} disabled={isLoading} />
           </div>
