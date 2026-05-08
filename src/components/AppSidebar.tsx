@@ -175,7 +175,7 @@ export function AppSidebar() {
 
         {isTeamView && showText && (
           <div className="px-2 pt-2 pb-1">
-            <div className="flex items-center gap-1.5 min-w-0 text-primary font-semibold uppercase tracking-wide text-[11px]">
+            <div className="flex items-center gap-1.5 min-w-0 text-primary font-semibold uppercase tracking-wide text-[11px] underline underline-offset-4 decoration-primary/50">
               <NavLink
                 to={lastBoardRoute}
                 onClick={closeMobileSidebar}
@@ -185,7 +185,7 @@ export function AppSidebar() {
               >
                 <CornerUpLeft className="h-3.5 w-3.5" />
               </NavLink>
-              <span className="truncate underline underline-offset-4 decoration-primary/50">{currentTeam?.name || "Equipe"}</span>
+              <span className="truncate">{currentTeam?.name || "Equipe"}</span>
             </div>
           </div>
         )}
