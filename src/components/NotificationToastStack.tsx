@@ -57,7 +57,7 @@ export function NotificationToastStack() {
   const isStacked = !expanded && items.length > 1;
 
   return (
-    <div className="fixed top-14 right-3 sm:right-4 z-[100] w-[min(92vw,360px)] pointer-events-none">
+    <div className="fixed top-16 right-4 sm:right-6 z-[100] w-[min(calc(100vw-2rem),360px)] max-w-[360px] pointer-events-none">
       {items.length > 1 && (
         <div className="flex justify-end mb-2 pointer-events-auto gap-2">
           <button
