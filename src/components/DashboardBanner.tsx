@@ -19,7 +19,7 @@ export function DashboardBanner({
         alt="Gestão de demandas" 
         className="absolute inset-0 w-full h-full object-cover"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-foreground/85 via-foreground/60 to-foreground/20"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/20 dark:from-black/90 dark:via-black/75 dark:to-black/40"></div>
       <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-5 md:p-6 lg:p-8">
         <div className="flex-1 min-w-0">
           <h2 className="text-lg md:text-xl lg:text-2xl font-bold mb-1 text-white">
