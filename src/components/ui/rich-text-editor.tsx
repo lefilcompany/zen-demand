@@ -462,6 +462,7 @@ export function RichTextEditor({
       attributes: {
         class: cn(
           "prose prose-sm dark:prose-invert max-w-none focus:outline-none p-3",
+          "[&_p]:mt-0 [&_p]:mb-2 [&_p]:leading-[1.15] [&_p:last-child]:mb-0",
           "min-h-[var(--min-height)]"
         ),
         style: `--min-height: ${minHeight}`,
