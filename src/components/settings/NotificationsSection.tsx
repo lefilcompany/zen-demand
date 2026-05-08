@@ -9,9 +9,20 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useNotificationPreferences, NotificationPreferences } from "@/hooks/useNotificationPreferences";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
-import { Bell, Mail, Smartphone, Send, Loader2 } from "lucide-react";
+import { Bell, Mail, Smartphone, Send, Loader2, Info, CheckCircle2, AlertTriangle, XCircle, Inbox, ChevronDown } from "lucide-react";
+
+type TestNotifType = "info" | "success" | "warning" | "error" | "demand_request";
+
+const TEST_NOTIFICATIONS: { type: TestNotifType; title: string; message: string; icon: any; label: string }[] = [
+  { type: "info", label: "Informação", icon: Info, title: "ℹ️ Notificação informativa", message: "Exemplo de notificação do tipo informação." },
+  { type: "success", label: "Sucesso", icon: CheckCircle2, title: "✅ Operação concluída", message: "Exemplo de notificação de sucesso." },
+  { type: "warning", label: "Aviso", icon: AlertTriangle, title: "⚠️ Atenção necessária", message: "Exemplo de notificação de aviso." },
+  { type: "error", label: "Erro", icon: XCircle, title: "❌ Algo deu errado", message: "Exemplo de notificação de erro." },
+  { type: "demand_request", label: "Solicitação de demanda", icon: Inbox, title: "[Quadro Teste] 📥 Nova solicitação de demanda", message: "Exemplo de notificação de solicitação de demanda." },
+];
 
 export function NotificationsSection() {
   const { t } = useTranslation();
@@ -50,19 +61,20 @@ export function NotificationsSection() {
     }
   };
 
-  const sendInAppTest = async () => {
+  const sendInAppTest = async (variant: TestNotifType) => {
     if (!user?.id) return;
+    const cfg = TEST_NOTIFICATIONS.find((t) => t.type === variant)!;
     setIsSendingInApp(true);
     try {
       const { error } = await supabase.from("notifications").insert({
         user_id: user.id,
-        title: "🔔 Teste de notificação in-app",
-        message: "Esta é uma notificação de teste enviada dentro do app.",
-        type: "info",
+        title: cfg.title,
+        message: cfg.message,
+        type: cfg.type,
         link: "/settings?tab=notifications",
       });
       if (error) throw error;
-      toast.success("Notificação in-app enviada!");
+      toast.success(`Notificação "${cfg.label}" enviada!`);
     } catch (e: any) {
       toast.error("Erro ao enviar: " + (e?.message || "desconhecido"));
     } finally {
@@ -97,10 +109,25 @@ export function NotificationsSection() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={sendInAppTest} disabled={isSendingInApp}>
-              {isSendingInApp ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-2 h-3.5 w-3.5" />}
-              Testar
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" disabled={isSendingInApp}>
+                  {isSendingInApp ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-2 h-3.5 w-3.5" />}
+                  Testar
+                  <ChevronDown className="ml-1 h-3.5 w-3.5 opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="text-xs">Tipos de notificação</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {TEST_NOTIFICATIONS.map(({ type, label, icon: Icon }) => (
+                  <DropdownMenuItem key={type} onClick={() => sendInAppTest(type)} className="cursor-pointer">
+                    <Icon className="mr-2 h-4 w-4" />
+                    {label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Switch checked={preferences.pushNotifications}
               onCheckedChange={(c) => set("pushNotifications", c)} disabled={isLoading} />
           </div>
