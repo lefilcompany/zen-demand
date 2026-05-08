@@ -173,6 +173,23 @@ export function AppSidebar() {
           />
         </NavLink>
 
+        {isTeamView && showText && (
+          <div className="px-2 pt-2 pb-1">
+            <div className="flex items-center gap-1.5 min-w-0 text-primary font-semibold uppercase tracking-wide text-[11px]">
+              <NavLink
+                to={lastBoardRoute}
+                onClick={closeMobileSidebar}
+                className="inline-flex items-center justify-center h-5 w-5 rounded-md hover:bg-primary/15 text-primary shrink-0 transition-colors"
+                aria-label="Voltar ao quadro"
+                title="Voltar ao quadro"
+              >
+                <CornerUpLeft className="h-3.5 w-3.5" />
+              </NavLink>
+              <span className="truncate">{currentTeam?.name || "Equipe"}</span>
+            </div>
+          </div>
+        )}
+
         <SidebarGroup
           className={
             isTeamView && showText
@@ -180,24 +197,9 @@ export function AppSidebar() {
               : undefined
           }
         >
-          <SidebarGroupLabel className={isTeamView && showText ? "text-primary font-semibold uppercase tracking-wide text-[11px]" : undefined}>
-            {isTeamView ? (
-              <span className="flex items-center gap-1.5 min-w-0">
-                <NavLink
-                  to={lastBoardRoute}
-                  onClick={closeMobileSidebar}
-                  className="inline-flex items-center justify-center h-5 w-5 rounded-md hover:bg-primary/15 text-primary shrink-0 transition-colors"
-                  aria-label="Voltar ao quadro"
-                  title="Voltar ao quadro"
-                >
-                  <CornerUpLeft className="h-3.5 w-3.5" />
-                </NavLink>
-                <span className="truncate">{currentTeam?.name || "Equipe"}</span>
-              </span>
-            ) : (
-              t("common.actions")
-            )}
-          </SidebarGroupLabel>
+          {!isTeamView && (
+            <SidebarGroupLabel>{t("common.actions")}</SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
               {menuItems.map(item => {
