@@ -96,8 +96,14 @@ export function NotificationsSection() {
               <p className="text-xs text-muted-foreground">Notificações dentro da plataforma</p>
             </div>
           </div>
-          <Switch checked={preferences.pushNotifications}
-            onCheckedChange={(c) => set("pushNotifications", c)} disabled={isLoading} />
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={sendInAppTest} disabled={isSendingInApp}>
+              {isSendingInApp ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-2 h-3.5 w-3.5" />}
+              Testar
+            </Button>
+            <Switch checked={preferences.pushNotifications}
+              onCheckedChange={(c) => set("pushNotifications", c)} disabled={isLoading} />
+          </div>
         </div>
 
         {isPushSupported && (
