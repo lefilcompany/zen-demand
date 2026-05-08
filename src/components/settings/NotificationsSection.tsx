@@ -32,6 +32,8 @@ export function NotificationsSection() {
     toast.success(t("toast.settingsSaved"));
   };
 
+  const [isSendingInApp, setIsSendingInApp] = useState(false);
+
   const sendTest = async () => {
     if (!user?.id) return;
     setIsSendingTest(true);
@@ -45,6 +47,26 @@ export function NotificationsSection() {
       toast.error("Erro ao enviar teste");
     } finally {
       setIsSendingTest(false);
+    }
+  };
+
+  const sendInAppTest = async () => {
+    if (!user?.id) return;
+    setIsSendingInApp(true);
+    try {
+      const { error } = await supabase.from("notifications").insert({
+        user_id: user.id,
+        title: "🔔 Teste de notificação in-app",
+        message: "Esta é uma notificação de teste enviada dentro do app.",
+        type: "info",
+        link: "/settings?tab=notifications",
+      });
+      if (error) throw error;
+      toast.success("Notificação in-app enviada!");
+    } catch (e: any) {
+      toast.error("Erro ao enviar: " + (e?.message || "desconhecido"));
+    } finally {
+      setIsSendingInApp(false);
     }
   };
 
