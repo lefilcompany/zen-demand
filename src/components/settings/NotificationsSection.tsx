@@ -9,9 +9,20 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useNotificationPreferences, NotificationPreferences } from "@/hooks/useNotificationPreferences";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
-import { Bell, Mail, Smartphone, Send, Loader2 } from "lucide-react";
+import { Bell, Mail, Smartphone, Send, Loader2, Info, CheckCircle2, AlertTriangle, XCircle, Inbox, ChevronDown } from "lucide-react";
+
+type TestNotifType = "info" | "success" | "warning" | "error" | "demand_request";
+
+const TEST_NOTIFICATIONS: { type: TestNotifType; title: string; message: string; icon: any; label: string }[] = [
+  { type: "info", label: "Informação", icon: Info, title: "ℹ️ Notificação informativa", message: "Exemplo de notificação do tipo informação." },
+  { type: "success", label: "Sucesso", icon: CheckCircle2, title: "✅ Operação concluída", message: "Exemplo de notificação de sucesso." },
+  { type: "warning", label: "Aviso", icon: AlertTriangle, title: "⚠️ Atenção necessária", message: "Exemplo de notificação de aviso." },
+  { type: "error", label: "Erro", icon: XCircle, title: "❌ Algo deu errado", message: "Exemplo de notificação de erro." },
+  { type: "demand_request", label: "Solicitação de demanda", icon: Inbox, title: "[Quadro Teste] 📥 Nova solicitação de demanda", message: "Exemplo de notificação de solicitação de demanda." },
+];
 
 export function NotificationsSection() {
   const { t } = useTranslation();
