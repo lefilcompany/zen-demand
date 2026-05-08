@@ -682,6 +682,10 @@ function processContentWithLinks(html: string): string {
   return doc.body.innerHTML;
 }
 
+function preserveEmptyParagraphs(html: string): string {
+  return html.replace(/<p([^>]*)>(?:\s|&nbsp;|<br\s*\/?\s*>)*<\/p>/gi, "<p$1><br /></p>");
+}
+
 // Component for displaying rich text content (read-only) with image lightbox
 interface RichTextDisplayProps {
   content: string | null | undefined;
@@ -693,7 +697,7 @@ export function RichTextDisplay({ content, className }: RichTextDisplayProps) {
 
   if (!content) return null;
 
-  const processedContent = processContentWithLinks(content);
+  const processedContent = preserveEmptyParagraphs(processContentWithLinks(content));
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
@@ -734,7 +738,7 @@ export function RichTextDisplay({ content, className }: RichTextDisplayProps) {
           "[&_a[data-mention]]:no-underline [&_a[data-mention]]:text-inherit",
           "[&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md [&_img]:my-2 [&_img]:inline-block",
           "[&_img]:cursor-pointer [&_img]:hover:ring-2 [&_img]:hover:ring-primary/30 [&_img]:transition-shadow",
-          "[&_p]:my-0 [&_p]:leading-[1.15] [&_p:empty]:before:content-['\\00a0'] [&_p:empty]:min-h-[1.15em]",
+          "[&_p]:my-0 [&_p]:leading-[1.15] [&_p>br:only-child]:block [&_p>br:only-child]:leading-[1.15]",
           className
         )}
         dangerouslySetInnerHTML={{ __html: sanitizeHtml(processedContent) }}
