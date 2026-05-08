@@ -734,7 +734,7 @@ export function RichTextDisplay({ content, className }: RichTextDisplayProps) {
           "[&_a[data-mention]]:no-underline [&_a[data-mention]]:text-inherit",
           "[&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md [&_img]:my-2 [&_img]:inline-block",
           "[&_img]:cursor-pointer [&_img]:hover:ring-2 [&_img]:hover:ring-primary/30 [&_img]:transition-shadow",
-          "[&_p]:my-2 [&_p:empty]:before:content-['\\00a0'] [&_p:empty]:min-h-[1em]",
+          "[&_p]:my-0 [&_p]:leading-[1.15] [&_p:empty]:before:content-['\\00a0'] [&_p:empty]:min-h-[1.15em]",
           className
         )}
         dangerouslySetInnerHTML={{ __html: sanitizeHtml(processedContent) }}
