@@ -562,6 +562,22 @@ export default function Demands() {
                   <TooltipContent>{hideDelivered ? "Demandas entregues estão ocultas. Clique para exibi-las novamente." : "Ocultar demandas já entregues para focar nas pendentes."}</TooltipContent>
                 </Tooltip>
               )}
+
+              {/* Clear filters button — appears when any filter / view differs from default */}
+              {hasActiveFilters && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={clearAllFilters}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium h-8 transition-all duration-200 whitespace-nowrap bg-background border border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      <span>Limpar filtros</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Restaurar filtros e visualização ao padrão.</TooltipContent>
+                </Tooltip>
+              )}
             </div>
 
             {/* Right side: View toggle */}
