@@ -224,10 +224,10 @@ export function AppSidebar() {
                 const hasBadge = (item as any).showDemandRequestBadge || (item as any).showJoinRequestBadge || (item as any).showReturnedBadge;
                 return (
                 <SidebarMenuItem key={item.title} className="relative" data-tour={tourId}>
-                    <SidebarMenuButton asChild tooltip={item.title} size="default" className="h-auto min-h-8 py-1.5 items-start">
-                      <NavLink to={item.url} end={(item as any).end ?? !isTeamView} onClick={closeMobileSidebar} className={`hover:bg-sidebar-accent transition-colors ${isBack ? 'text-muted-foreground' : ''}`} activeClassName={isBack ? '' : 'bg-sidebar-accent text-sidebar-primary font-medium'}>
+                    <SidebarMenuButton asChild tooltip={item.title} size="default" className="h-auto min-h-8 py-1.5 items-start overflow-visible">
+                      <NavLink to={item.url} end={(item as any).end ?? !isTeamView} onClick={closeMobileSidebar} className={`flex w-full items-start gap-2 min-w-0 hover:bg-sidebar-accent transition-colors ${isBack ? 'text-muted-foreground' : ''}`} activeClassName={isBack ? '' : 'bg-sidebar-accent text-sidebar-primary font-medium'}>
                         <item.icon className="h-4 w-4 shrink-0 mt-0.5" />
-                        {showText && <span className={`text-sm flex-1 whitespace-normal break-words leading-snug ${hasBadge ? 'pr-6' : ''}`}>{item.title}</span>}
+                        {showText && <span className={`text-sm flex-1 min-w-0 whitespace-normal break-words leading-snug ${hasBadge ? 'pr-7' : ''}`}>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                     {showText && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
