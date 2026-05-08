@@ -1,6 +1,4 @@
-import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { SectionShell } from "./SectionShell";
@@ -9,25 +7,13 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useNotificationPreferences, NotificationPreferences } from "@/hooks/useNotificationPreferences";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
-import { Bell, Mail, Smartphone, Send, Loader2, Info, CheckCircle2, AlertTriangle, XCircle, Inbox, ChevronDown } from "lucide-react";
-
-type TestNotifType = "info" | "success" | "warning" | "error" | "demand_request";
-
-const TEST_NOTIFICATIONS: { type: TestNotifType; title: string; message: string; icon: any; label: string }[] = [
-  { type: "info", label: "Informação", icon: Info, title: "Notificação informativa", message: "Exemplo de notificação do tipo informação." },
-  { type: "success", label: "Sucesso", icon: CheckCircle2, title: "Operação concluída", message: "Exemplo de notificação de sucesso." },
-  { type: "warning", label: "Aviso", icon: AlertTriangle, title: "Atenção necessária", message: "Exemplo de notificação de aviso." },
-  { type: "error", label: "Erro", icon: XCircle, title: "Algo deu errado", message: "Exemplo de notificação de erro." },
-  { type: "demand_request", label: "Solicitação de demanda", icon: Inbox, title: "[Quadro Teste] Nova solicitação de demanda", message: "Exemplo de notificação de solicitação de demanda." },
-];
+import { Bell, Mail, Smartphone, Loader2 } from "lucide-react";
 
 export function NotificationsSection() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [isSendingTest, setIsSendingTest] = useState(false);
   const { preferences, updatePreferences, isLoading } = useNotificationPreferences();
   const {
     isSupported: isPushSupported,
@@ -41,45 +27,6 @@ export function NotificationsSection() {
   const set = (key: keyof NotificationPreferences, value: boolean) => {
     updatePreferences({ ...preferences, [key]: value });
     toast.success(t("toast.settingsSaved"));
-  };
-
-  const [isSendingInApp, setIsSendingInApp] = useState(false);
-
-  const sendTest = async () => {
-    if (!user?.id) return;
-    setIsSendingTest(true);
-    try {
-      const { error } = await supabase.functions.invoke("send-push-notification", {
-        body: { userId: user.id, title: "🎉 Teste de Notificação", body: "Notificações push estão funcionando!", link: "/settings" },
-      });
-      if (error) throw error;
-      toast.success("Notificação de teste enviada!");
-    } catch {
-      toast.error("Erro ao enviar teste");
-    } finally {
-      setIsSendingTest(false);
-    }
-  };
-
-  const sendInAppTest = async (variant: TestNotifType) => {
-    if (!user?.id) return;
-    const cfg = TEST_NOTIFICATIONS.find((t) => t.type === variant)!;
-    setIsSendingInApp(true);
-    try {
-      const { error } = await supabase.from("notifications").insert({
-        user_id: user.id,
-        title: cfg.title,
-        message: cfg.message,
-        type: cfg.type,
-        link: "/settings?tab=notifications",
-      });
-      if (error) throw error;
-      toast.success(`Notificação "${cfg.label}" enviada!`);
-    } catch (e: any) {
-      toast.error("Erro ao enviar: " + (e?.message || "desconhecido"));
-    } finally {
-      setIsSendingInApp(false);
-    }
   };
 
   return (
@@ -108,29 +55,8 @@ export function NotificationsSection() {
               <p className="text-xs text-muted-foreground">Notificações dentro da plataforma</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" disabled={isSendingInApp}>
-                  {isSendingInApp ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-2 h-3.5 w-3.5" />}
-                  Testar
-                  <ChevronDown className="ml-1 h-3.5 w-3.5 opacity-60" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="text-xs">Tipos de notificação</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {TEST_NOTIFICATIONS.map(({ type, label, icon: Icon }) => (
-                  <DropdownMenuItem key={type} onClick={() => sendInAppTest(type)} className="cursor-pointer">
-                    <Icon className="mr-2 h-4 w-4" />
-                    {label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Switch checked={preferences.pushNotifications}
-              onCheckedChange={(c) => set("pushNotifications", c)} disabled={isLoading} />
-          </div>
+          <Switch checked={preferences.pushNotifications}
+            onCheckedChange={(c) => set("pushNotifications", c)} disabled={isLoading} />
         </div>
 
         {isPushSupported && (
@@ -147,12 +73,6 @@ export function NotificationsSection() {
               </div>
             </div>
             <div className="flex gap-2">
-              {isPushEnabled && (
-                <Button variant="ghost" size="sm" onClick={sendTest} disabled={isSendingTest}>
-                  {isSendingTest ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-2 h-3.5 w-3.5" />}
-                  Testar
-                </Button>
-              )}
               {isPushEnabled ? (
                 <Button variant="outline" size="sm" onClick={disablePushNotifications} disabled={isPushLoading}>
                   {isPushLoading && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}Desativar
@@ -174,48 +94,18 @@ export function NotificationsSection() {
         <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tipos</h4>
 
         {[
-          { key: "demandUpdates" as const, label: "Atualizações de demandas", desc: "Mudanças de status, comentários, etc.", testType: "info" as const, testTitle: "Demanda atualizada", testMessage: "Exemplo: a demanda \"Campanha Verão\" mudou de status.", link: "/settings?tab=notifications" },
-          { key: "teamUpdates" as const, label: "Atualizações da equipe", desc: "Novos membros, mudanças no quadro", testType: "info" as const, testTitle: "Equipe atualizada", testMessage: "Exemplo: um novo membro entrou no quadro.", link: "/settings?tab=notifications" },
-          { key: "deadlineReminders" as const, label: "Lembretes de prazo", desc: "Alertas antes do vencimento", testType: "warning" as const, testTitle: "Prazo se aproximando", testMessage: "Exemplo: a demanda \"Relatório mensal\" vence em 1 dia.", link: "/settings?tab=notifications" },
-          { key: "adjustmentRequests" as const, label: "Solicitações de ajuste", desc: "Quando alguém pedir alterações", testType: "warning" as const, testTitle: "Ajuste solicitado", testMessage: "Exemplo: foi solicitado um ajuste em \"Banner home\".", link: "/settings?tab=notifications" },
-          { key: "mentionNotifications" as const, label: "Menções", desc: "Quando alguém te mencionar (@)", testType: "info" as const, testTitle: "Você foi mencionado", testMessage: "Exemplo: @você foi citado em um comentário.", link: "/settings?tab=notifications" },
-        ].map(({ key, label, desc, testType, testTitle, testMessage, link }) => (
+          { key: "demandUpdates" as const, label: "Atualizações de demandas", desc: "Mudanças de status, comentários, etc." },
+          { key: "teamUpdates" as const, label: "Atualizações da equipe", desc: "Novos membros, mudanças no quadro" },
+          { key: "deadlineReminders" as const, label: "Lembretes de prazo", desc: "Alertas antes do vencimento" },
+          { key: "adjustmentRequests" as const, label: "Solicitações de ajuste", desc: "Quando alguém pedir alterações" },
+          { key: "mentionNotifications" as const, label: "Menções", desc: "Quando alguém te mencionar (@)" },
+        ].map(({ key, label, desc }) => (
           <div key={key} className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <Label className="cursor-pointer">{label}</Label>
               <p className="text-xs text-muted-foreground">{desc}</p>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                disabled={isSendingInApp}
-                onClick={async () => {
-                  if (!user?.id) return;
-                  setIsSendingInApp(true);
-                  try {
-                    const { error } = await supabase.from("notifications").insert({
-                      user_id: user.id,
-                      title: testTitle,
-                      message: testMessage,
-                      type: testType,
-                      link,
-                    });
-                    if (error) throw error;
-                    toast.success(`Notificação "${label}" enviada!`);
-                  } catch (e: any) {
-                    toast.error("Erro ao enviar: " + (e?.message || "desconhecido"));
-                  } finally {
-                    setIsSendingInApp(false);
-                  }
-                }}
-              >
-                <Send className="mr-1 h-3 w-3" />
-                Testar
-              </Button>
-              <Switch checked={preferences[key]} onCheckedChange={(c) => set(key, c)} disabled={isLoading} />
-            </div>
+            <Switch checked={preferences[key]} onCheckedChange={(c) => set(key, c)} disabled={isLoading} />
           </div>
         ))}
       </div>
