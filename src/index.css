@@ -194,19 +194,6 @@ All colors MUST be HSL.
   }
 }
 
-/* Word-like 1.15 line spacing for rich text (editor + display) */
-.ProseMirror p,
-.prose p {
-  margin: 0;
-  line-height: 1.15;
-}
-.ProseMirror p + p,
-.prose p + p {
-  margin-top: 0;
-}
-.ProseMirror p:empty::before {
-  content: "\00a0";
-}
 
 /* --- ESTILIZAÇÃO DA BARRA DE SCROLL --- */
 /* Para navegadores WebKit (Chrome, Safari, Edge) */
