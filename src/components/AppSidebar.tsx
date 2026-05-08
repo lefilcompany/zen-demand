@@ -185,7 +185,7 @@ export function AppSidebar() {
               >
                 <CornerUpLeft className="h-3.5 w-3.5" />
               </NavLink>
-              <span className="truncate">{currentTeam?.name || "Equipe"}</span>
+              <span className="truncate underline underline-offset-4 decoration-primary/50">{currentTeam?.name || "Equipe"}</span>
             </div>
           </div>
         )}
