@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, User, Briefcase, Kanban, ChevronUp, Settings, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock, Sparkles, ShoppingCart, Layers, StickyNote, LayoutList, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Users, User, Briefcase, Kanban, ChevronUp, Settings, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock, Sparkles, ShoppingCart, Layers, StickyNote, LayoutList, CornerUpLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 const logoSoma = "/logo-soma-sidebar.png";
 import { NavLink } from "@/components/NavLink";
@@ -190,7 +190,7 @@ export function AppSidebar() {
                   aria-label="Voltar ao quadro"
                   title="Voltar ao quadro"
                 >
-                  <ArrowLeft className="h-3.5 w-3.5" />
+                  <CornerUpLeft className="h-3.5 w-3.5" />
                 </NavLink>
                 <span className="truncate">{currentTeam?.name || "Equipe"}</span>
               </span>
