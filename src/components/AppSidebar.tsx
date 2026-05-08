@@ -67,7 +67,6 @@ export function AppSidebar() {
 
   const teamViewMenuItems: any[] = isTeamView
     ? [
-        { title: "Voltar ao quadro", url: lastBoardRoute, icon: ArrowLeft, isBackAction: true },
         { title: "Visão Geral", url: "/team-demands", icon: Layers },
         { title: "Meus Quadros", url: "/boards", icon: LayoutGrid },
         ...(selectedTeamId
@@ -182,7 +181,22 @@ export function AppSidebar() {
           }
         >
           <SidebarGroupLabel className={isTeamView && showText ? "text-primary font-semibold uppercase tracking-wide text-[11px]" : undefined}>
-            {isTeamView ? (currentTeam?.name || "Equipe") : t("common.actions")}
+            {isTeamView ? (
+              <span className="flex items-center gap-1.5 min-w-0">
+                <NavLink
+                  to={lastBoardRoute}
+                  onClick={closeMobileSidebar}
+                  className="inline-flex items-center justify-center h-5 w-5 rounded-md hover:bg-primary/15 text-primary shrink-0 transition-colors"
+                  aria-label="Voltar ao quadro"
+                  title="Voltar ao quadro"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                </NavLink>
+                <span className="truncate">{currentTeam?.name || "Equipe"}</span>
+              </span>
+            ) : (
+              t("common.actions")
+            )}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
