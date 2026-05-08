@@ -13,7 +13,7 @@ import { useBoardRole } from "@/hooks/useBoardMembers";
 import { useAuth } from "@/lib/auth";
 import { useMembersByPosition } from "@/hooks/useMembersByPosition";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
-import { Plus, Briefcase, LayoutList, LayoutGrid, List, Search, Eye, EyeOff, CalendarDays, User, Layers, Archive } from "lucide-react";
+import { Plus, Briefcase, LayoutList, LayoutGrid, List, Search, Eye, EyeOff, CalendarDays, User, Layers, Archive, RotateCcw } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { DemandHierarchyTable, HierarchicalDemand } from "@/components/demands/DemandHierarchyTable";
 import { DemandHierarchyGrid } from "@/components/demands/DemandHierarchyGrid";
@@ -32,6 +32,62 @@ import { ArchivedDemandsModal } from "@/components/ArchivedDemandsModal";
 import { SEOHead } from "@/components/SEOHead";
 type ViewMode = "table" | "grid" | "calendar";
 const TABLET_BREAKPOINT = 1024;
+
+const DEMANDS_FILTERS_LS_KEY = "soma:demands-filters:v1";
+
+const DEFAULT_FILTERS: DemandFiltersState = {
+  status: null,
+  priority: null,
+  assignee: null,
+  service: null,
+  dueDateFrom: null,
+  dueDateTo: null,
+  position: null,
+};
+
+type PersistedDemandsState = {
+  searchQuery: string;
+  viewMode: ViewMode;
+  filters: DemandFiltersState;
+  selectedStatuses: string[];
+  hideDelivered: boolean;
+  showOnlyMine: boolean;
+  showAllBoards: boolean;
+  selectedFolderId: string | null;
+};
+
+const DEFAULT_PERSISTED: PersistedDemandsState = {
+  searchQuery: "",
+  viewMode: "table",
+  filters: DEFAULT_FILTERS,
+  selectedStatuses: [],
+  hideDelivered: false,
+  showOnlyMine: false,
+  showAllBoards: false,
+  selectedFolderId: null,
+};
+
+function loadPersistedDemandsState(): PersistedDemandsState {
+  if (typeof window === "undefined") return DEFAULT_PERSISTED;
+  try {
+    const raw = window.localStorage.getItem(DEMANDS_FILTERS_LS_KEY);
+    if (!raw) return DEFAULT_PERSISTED;
+    const parsed = JSON.parse(raw);
+    return {
+      ...DEFAULT_PERSISTED,
+      ...parsed,
+      filters: {
+        ...DEFAULT_FILTERS,
+        ...(parsed.filters || {}),
+        dueDateFrom: parsed?.filters?.dueDateFrom ? new Date(parsed.filters.dueDateFrom) : null,
+        dueDateTo: parsed?.filters?.dueDateTo ? new Date(parsed.filters.dueDateTo) : null,
+      },
+    };
+  } catch {
+    return DEFAULT_PERSISTED;
+  }
+}
+
 export default function Demands() {
   const {
     t
@@ -72,14 +128,18 @@ export default function Demands() {
 
   // Enable realtime updates for demands
   useRealtimeDemands(selectedBoardId || undefined);
-  const [searchQuery, setSearchQuery] = useState("");
 
-  // Initialize viewMode from location state or default to "table"
+  // Load persisted filter state once
+  const persisted = useMemo(() => loadPersistedDemandsState(), []);
+
+  const [searchQuery, setSearchQuery] = useState(persisted.searchQuery);
+
+  // Initialize viewMode from location state (priority) or persisted state
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const stateViewMode = (location.state as {
       viewMode?: ViewMode;
     })?.viewMode;
-    return stateViewMode || "table";
+    return stateViewMode || persisted.viewMode;
   });
 
   // Track calendar month for persistence across navigation
@@ -87,20 +147,65 @@ export default function Demands() {
     const stateMonth = (location.state as { calendarMonth?: string })?.calendarMonth;
     return stateMonth ? new Date(stateMonth) : new Date();
   });
-  const [filters, setFilters] = useState<DemandFiltersState>({
-    status: null,
-    priority: null,
-    assignee: null,
-    service: null,
-    dueDateFrom: null,
-    dueDateTo: null,
-    position: null
-  });
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
-  const [hideDelivered, setHideDelivered] = useState(false);
-  const [showOnlyMine, setShowOnlyMine] = useState(false);
-  const [showAllBoards, setShowAllBoards] = useState(false);
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [filters, setFilters] = useState<DemandFiltersState>(persisted.filters);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(persisted.selectedStatuses);
+  const [hideDelivered, setHideDelivered] = useState(persisted.hideDelivered);
+  const [showOnlyMine, setShowOnlyMine] = useState(persisted.showOnlyMine);
+  const [showAllBoards, setShowAllBoards] = useState(persisted.showAllBoards);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(persisted.selectedFolderId);
+
+  // Persist filter state to localStorage on any change
+  useEffect(() => {
+    try {
+      const payload: PersistedDemandsState = {
+        searchQuery,
+        viewMode,
+        filters: {
+          ...filters,
+          // Date objects serialize to ISO via JSON.stringify automatically
+        },
+        selectedStatuses,
+        hideDelivered,
+        showOnlyMine,
+        showAllBoards,
+        selectedFolderId,
+      };
+      window.localStorage.setItem(DEMANDS_FILTERS_LS_KEY, JSON.stringify(payload));
+    } catch {
+      // ignore quota / serialization errors
+    }
+  }, [searchQuery, viewMode, filters, selectedStatuses, hideDelivered, showOnlyMine, showAllBoards, selectedFolderId]);
+
+  // Detect if any filter / view differs from defaults
+  const hasActiveFilters = useMemo(() => {
+    if (searchQuery.trim() !== "") return true;
+    if (viewMode !== DEFAULT_PERSISTED.viewMode) return true;
+    if (selectedStatuses.length > 0) return true;
+    if (hideDelivered) return true;
+    if (showOnlyMine) return true;
+    if (showAllBoards) return true;
+    if (selectedFolderId) return true;
+    const f = filters;
+    if (f.status || f.priority || f.assignee || f.service || f.position || f.dueDateFrom || f.dueDateTo) return true;
+    return false;
+  }, [searchQuery, viewMode, selectedStatuses, hideDelivered, showOnlyMine, showAllBoards, selectedFolderId, filters]);
+
+  const clearAllFilters = () => {
+    setSearchQuery(DEFAULT_PERSISTED.searchQuery);
+    setViewMode(DEFAULT_PERSISTED.viewMode);
+    setFilters(DEFAULT_FILTERS);
+    setSelectedStatuses([]);
+    setHideDelivered(false);
+    setShowOnlyMine(false);
+    setShowAllBoards(false);
+    setSelectedFolderId(null);
+    try {
+      window.localStorage.removeItem(DEMANDS_FILTERS_LS_KEY);
+    } catch {
+      // ignore
+    }
+  };
+
 
   // Fetch folder demand IDs for filtering
   const { data: folderDemandIds } = useFolderDemandIds(selectedFolderId);
@@ -455,6 +560,22 @@ export default function Demands() {
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>{hideDelivered ? "Demandas entregues estão ocultas. Clique para exibi-las novamente." : "Ocultar demandas já entregues para focar nas pendentes."}</TooltipContent>
+                </Tooltip>
+              )}
+
+              {/* Clear filters button — appears when any filter / view differs from default */}
+              {hasActiveFilters && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={clearAllFilters}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium h-8 transition-all duration-200 whitespace-nowrap bg-background border border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      <span>Limpar filtros</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Restaurar filtros e visualização ao padrão.</TooltipContent>
                 </Tooltip>
               )}
             </div>
