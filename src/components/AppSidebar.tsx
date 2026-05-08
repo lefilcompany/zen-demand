@@ -174,11 +174,11 @@ export function AppSidebar() {
         </NavLink>
 
         {isTeamView && showText && (
-          <div className="px-2 pt-2 pb-1">
+          <div className="mx-2 px-2 pt-2 pb-1">
             <NavLink
               to={lastBoardRoute}
               onClick={closeMobileSidebar}
-              className="group inline-flex w-fit max-w-full items-center gap-1.5 min-w-0 text-primary font-semibold uppercase tracking-wide text-[11px] underline underline-offset-4 decoration-primary/50 hover:decoration-primary hover:bg-primary/10 rounded-md px-1.5 py-1 -mx-1.5 transition-colors"
+              className="group inline-flex w-fit max-w-full items-center gap-1.5 min-w-0 text-primary font-semibold uppercase tracking-wide text-[11px] underline underline-offset-4 decoration-primary/50 hover:decoration-primary hover:bg-primary/10 rounded-md px-1.5 py-1 -ml-1.5 transition-colors"
               aria-label="Voltar ao quadro"
               title="Voltar ao quadro"
             >
