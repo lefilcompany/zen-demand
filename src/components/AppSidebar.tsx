@@ -221,26 +221,27 @@ export function AppSidebar() {
                   : item.url === "/demands" ? "demands-link"
                   : undefined;
                 const isBack = (item as any).isBackAction;
+                const hasBadge = (item as any).showDemandRequestBadge || (item as any).showJoinRequestBadge || (item as any).showReturnedBadge;
                 return (
                 <SidebarMenuItem key={item.title} className="relative" data-tour={tourId}>
-                    <SidebarMenuButton asChild tooltip={item.title} size="default">
+                    <SidebarMenuButton asChild tooltip={item.title} size="default" className="h-auto min-h-8 py-1.5 items-start">
                       <NavLink to={item.url} end={(item as any).end ?? !isTeamView} onClick={closeMobileSidebar} className={`hover:bg-sidebar-accent transition-colors ${isBack ? 'text-muted-foreground' : ''}`} activeClassName={isBack ? '' : 'bg-sidebar-accent text-sidebar-primary font-medium'}>
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        {showText && <span className="text-sm flex-1">{item.title}</span>}
+                        <item.icon className="h-4 w-4 shrink-0 mt-0.5" />
+                        {showText && <span className={`text-sm flex-1 whitespace-normal break-words leading-snug ${hasBadge ? 'pr-6' : ''}`}>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                     {showText && (item as any).showDemandRequestBadge && typeof pendingDemandRequests === "number" && pendingDemandRequests > 0 && (
-                      <Badge className="absolute right-2 top-1 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1 rounded-full bg-[#F28705] text-white border-0">
+                      <Badge className="absolute right-2 top-1/2 -translate-y-1/2 h-4 min-w-4 flex items-center justify-center text-[10px] p-0 px-1 rounded-full bg-[#F28705] text-white border-0 pointer-events-none">
                         {pendingDemandRequests}
                       </Badge>
                     )}
                     {showText && (item as any).showJoinRequestBadge && typeof pendingJoinRequests === "number" && pendingJoinRequests > 0 && (
-                      <Badge variant="destructive" className="absolute right-2 top-1/2 -translate-y-1/2 h-5 min-w-5 flex items-center justify-center text-xs">
+                      <Badge variant="destructive" className="absolute right-2 top-1/2 -translate-y-1/2 h-5 min-w-5 flex items-center justify-center text-xs pointer-events-none">
                         {pendingJoinRequests}
                       </Badge>
                     )}
                     {showText && (item as any).showReturnedBadge && typeof returnedRequestsCount === "number" && returnedRequestsCount > 0 && (
-                      <Badge variant="outline" className="absolute right-2 top-1/2 -translate-y-1/2 h-5 min-w-5 flex items-center justify-center text-xs border-amber-500 text-amber-500 bg-amber-500/10">
+                      <Badge variant="outline" className="absolute right-2 top-1/2 -translate-y-1/2 h-5 min-w-5 flex items-center justify-center text-xs border-amber-500 text-amber-500 bg-amber-500/10 pointer-events-none">
                         {returnedRequestsCount}
                       </Badge>
                     )}
