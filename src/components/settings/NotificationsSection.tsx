@@ -61,19 +61,20 @@ export function NotificationsSection() {
     }
   };
 
-  const sendInAppTest = async () => {
+  const sendInAppTest = async (variant: TestNotifType) => {
     if (!user?.id) return;
+    const cfg = TEST_NOTIFICATIONS.find((t) => t.type === variant)!;
     setIsSendingInApp(true);
     try {
       const { error } = await supabase.from("notifications").insert({
         user_id: user.id,
-        title: "🔔 Teste de notificação in-app",
-        message: "Esta é uma notificação de teste enviada dentro do app.",
-        type: "info",
+        title: cfg.title,
+        message: cfg.message,
+        type: cfg.type,
         link: "/settings?tab=notifications",
       });
       if (error) throw error;
-      toast.success("Notificação in-app enviada!");
+      toast.success(`Notificação "${cfg.label}" enviada!`);
     } catch (e: any) {
       toast.error("Erro ao enviar: " + (e?.message || "desconhecido"));
     } finally {
