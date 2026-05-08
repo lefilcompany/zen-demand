@@ -212,14 +212,28 @@ export function DemandsSectionCard({ demands }: DemandsSectionCardProps) {
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center w-full">
-                  {categoryData.map((item, idx) => (
-                    <div key={item.name} className="flex items-center gap-1.5 text-[10px] md:text-xs">
-                      <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                      <span className="text-foreground font-medium">{item.name} ({item.value})</span>
-                    </div>
-                  ))}
-                </div>
+                {categoryData.length > 4 ? (
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 w-full">
+                    {categoryData.map((item, idx) => (
+                      <div
+                        key={item.name}
+                        className="flex items-center gap-1.5 text-[10px] md:text-xs py-1 border-b border-border/40 last:border-b-0 [&:nth-last-child(2):nth-child(odd)]:border-b-0"
+                      >
+                        <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
+                        <span className="text-foreground font-medium truncate">{item.name} ({item.value})</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center w-full">
+                    {categoryData.map((item, idx) => (
+                      <div key={item.name} className="flex items-center gap-1.5 text-[10px] md:text-xs">
+                        <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
+                        <span className="text-foreground font-medium">{item.name} ({item.value})</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex items-center justify-center h-[120px] text-xs text-muted-foreground">
