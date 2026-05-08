@@ -17,11 +17,11 @@ import { Bell, Mail, Smartphone, Send, Loader2, Info, CheckCircle2, AlertTriangl
 type TestNotifType = "info" | "success" | "warning" | "error" | "demand_request";
 
 const TEST_NOTIFICATIONS: { type: TestNotifType; title: string; message: string; icon: any; label: string }[] = [
-  { type: "info", label: "Informação", icon: Info, title: "ℹ️ Notificação informativa", message: "Exemplo de notificação do tipo informação." },
-  { type: "success", label: "Sucesso", icon: CheckCircle2, title: "✅ Operação concluída", message: "Exemplo de notificação de sucesso." },
-  { type: "warning", label: "Aviso", icon: AlertTriangle, title: "⚠️ Atenção necessária", message: "Exemplo de notificação de aviso." },
-  { type: "error", label: "Erro", icon: XCircle, title: "❌ Algo deu errado", message: "Exemplo de notificação de erro." },
-  { type: "demand_request", label: "Solicitação de demanda", icon: Inbox, title: "[Quadro Teste] 📥 Nova solicitação de demanda", message: "Exemplo de notificação de solicitação de demanda." },
+  { type: "info", label: "Informação", icon: Info, title: "Notificação informativa", message: "Exemplo de notificação do tipo informação." },
+  { type: "success", label: "Sucesso", icon: CheckCircle2, title: "Operação concluída", message: "Exemplo de notificação de sucesso." },
+  { type: "warning", label: "Aviso", icon: AlertTriangle, title: "Atenção necessária", message: "Exemplo de notificação de aviso." },
+  { type: "error", label: "Erro", icon: XCircle, title: "Algo deu errado", message: "Exemplo de notificação de erro." },
+  { type: "demand_request", label: "Solicitação de demanda", icon: Inbox, title: "[Quadro Teste] Nova solicitação de demanda", message: "Exemplo de notificação de solicitação de demanda." },
 ];
 
 export function NotificationsSection() {
@@ -174,11 +174,11 @@ export function NotificationsSection() {
         <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tipos</h4>
 
         {[
-          { key: "demandUpdates" as const, label: "Atualizações de demandas", desc: "Mudanças de status, comentários, etc.", testType: "info" as const, testTitle: "🔄 Demanda atualizada", testMessage: "Exemplo: a demanda \"Campanha Verão\" mudou de status.", link: "/settings?tab=notifications" },
-          { key: "teamUpdates" as const, label: "Atualizações da equipe", desc: "Novos membros, mudanças no quadro", testType: "info" as const, testTitle: "👥 Equipe atualizada", testMessage: "Exemplo: um novo membro entrou no quadro.", link: "/settings?tab=notifications" },
-          { key: "deadlineReminders" as const, label: "Lembretes de prazo", desc: "Alertas antes do vencimento", testType: "warning" as const, testTitle: "⏰ Prazo se aproximando", testMessage: "Exemplo: a demanda \"Relatório mensal\" vence em 1 dia.", link: "/settings?tab=notifications" },
-          { key: "adjustmentRequests" as const, label: "Solicitações de ajuste", desc: "Quando alguém pedir alterações", testType: "warning" as const, testTitle: "✏️ Ajuste solicitado", testMessage: "Exemplo: foi solicitado um ajuste em \"Banner home\".", link: "/settings?tab=notifications" },
-          { key: "mentionNotifications" as const, label: "Menções", desc: "Quando alguém te mencionar (@)", testType: "info" as const, testTitle: "💬 Você foi mencionado", testMessage: "Exemplo: @você foi citado em um comentário.", link: "/settings?tab=notifications" },
+          { key: "demandUpdates" as const, label: "Atualizações de demandas", desc: "Mudanças de status, comentários, etc.", testType: "info" as const, testTitle: "Demanda atualizada", testMessage: "Exemplo: a demanda \"Campanha Verão\" mudou de status.", link: "/settings?tab=notifications" },
+          { key: "teamUpdates" as const, label: "Atualizações da equipe", desc: "Novos membros, mudanças no quadro", testType: "info" as const, testTitle: "Equipe atualizada", testMessage: "Exemplo: um novo membro entrou no quadro.", link: "/settings?tab=notifications" },
+          { key: "deadlineReminders" as const, label: "Lembretes de prazo", desc: "Alertas antes do vencimento", testType: "warning" as const, testTitle: "Prazo se aproximando", testMessage: "Exemplo: a demanda \"Relatório mensal\" vence em 1 dia.", link: "/settings?tab=notifications" },
+          { key: "adjustmentRequests" as const, label: "Solicitações de ajuste", desc: "Quando alguém pedir alterações", testType: "warning" as const, testTitle: "Ajuste solicitado", testMessage: "Exemplo: foi solicitado um ajuste em \"Banner home\".", link: "/settings?tab=notifications" },
+          { key: "mentionNotifications" as const, label: "Menções", desc: "Quando alguém te mencionar (@)", testType: "info" as const, testTitle: "Você foi mencionado", testMessage: "Exemplo: @você foi citado em um comentário.", link: "/settings?tab=notifications" },
         ].map(({ key, label, desc, testType, testTitle, testMessage, link }) => (
           <div key={key} className="flex items-center justify-between gap-3">
             <div className="min-w-0">
