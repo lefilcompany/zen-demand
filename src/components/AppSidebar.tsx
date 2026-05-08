@@ -67,6 +67,7 @@ export function AppSidebar() {
 
   const teamViewMenuItems: any[] = isTeamView
     ? [
+        { title: "Voltar", url: "/", icon: CornerUpLeft, isBackAction: true, end: true },
         { title: "Visão Geral", url: "/team-demands", icon: Layers },
         { title: "Meus Quadros", url: "/boards", icon: LayoutGrid },
         ...(selectedTeamId
