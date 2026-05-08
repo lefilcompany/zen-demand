@@ -240,6 +240,7 @@ export function ProtectedLayout() {
                       <Moon className="h-4 w-4 mr-2" />
                     )}
                     Alternar tema
+                  </DropdownMenuItem>
                   {hasCompleted && (
                     <DropdownMenuItem onClick={() => resetOnboarding(() => navigate("/"))}>
                       <RotateCcw className="h-4 w-4 mr-2" />
