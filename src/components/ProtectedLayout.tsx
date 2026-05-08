@@ -52,6 +52,7 @@ export function ProtectedLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const { theme, setTheme } = useTheme();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const { isOpen, steps, closeTour, completeOnboarding, resetOnboarding, hasCompleted } = useOnboarding();
   const { currentTeam } = useSelectedTeam();
