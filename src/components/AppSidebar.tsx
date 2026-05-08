@@ -67,7 +67,6 @@ export function AppSidebar() {
 
   const teamViewMenuItems: any[] = isTeamView
     ? [
-        { title: "Voltar ao quadro", url: lastBoardRoute, icon: ArrowLeft, isBackAction: true },
         { title: "Visão Geral", url: "/team-demands", icon: Layers },
         { title: "Meus Quadros", url: "/boards", icon: LayoutGrid },
         ...(selectedTeamId
