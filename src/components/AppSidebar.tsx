@@ -190,7 +190,7 @@ export function AppSidebar() {
         )}
 
         {isTeamView && !showText && (
-          <div className="flex justify-center pt-2 pb-1">
+          <div className="flex justify-center pt-1 pb-0.5">
             <NavLink
               to={lastBoardRoute}
               onClick={closeMobileSidebar}
