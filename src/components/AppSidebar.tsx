@@ -189,6 +189,20 @@ export function AppSidebar() {
           </div>
         )}
 
+        {isTeamView && !showText && (
+          <div className="flex justify-center pt-2 pb-1">
+            <NavLink
+              to={lastBoardRoute}
+              onClick={closeMobileSidebar}
+              className="group inline-flex items-center justify-center text-primary hover:bg-primary/10 rounded-md p-1.5 underline underline-offset-4 decoration-primary/50 hover:decoration-primary transition-colors"
+              aria-label="Voltar ao quadro"
+              title="Voltar ao quadro"
+            >
+              <CornerUpLeft className="h-4 w-4 shrink-0 transition-transform group-hover:-translate-x-0.5" />
+            </NavLink>
+          </div>
+        )}
+
         <SidebarGroup
           className={
             isTeamView && showText
