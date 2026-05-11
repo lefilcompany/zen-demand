@@ -1545,6 +1545,7 @@ export default function DemandDetail() {
                 service_id: demand.service_id,
                 team_id: demand.team_id,
                 board_id: demand.board_id,
+                created_by: demand.created_by,
               }}
               onClose={() => setIsEditDialogOpen(false)}
               onSuccess={() => setIsEditDialogOpen(false)}
