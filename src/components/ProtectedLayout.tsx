@@ -185,14 +185,13 @@ export function ProtectedLayout() {
 
               <GlobalSearchBar />
 
-              <div data-tour="notifications-btn">
-                <NotificationDropdown />
-              </div>
-
               <div className="hidden sm:block">
                 <ThemeToggle />
               </div>
 
+              <div data-tour="notifications-btn">
+                <NotificationDropdown />
+              </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-7 w-7 rounded-full p-0">
