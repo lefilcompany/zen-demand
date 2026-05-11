@@ -1143,7 +1143,7 @@ export default function DemandDetail() {
             <DemandApprovalNotifySection
               demandId={demand.id}
               boardId={demand.board_id}
-              canEdit={hasEditPermission}
+              canEdit={boardRole === "admin" || boardRole === "moderator" || isCreator}
             />
           </div>
 
