@@ -38,6 +38,7 @@ interface DemandEditFormProps {
     service_id: string | null;
     team_id: string;
     board_id: string;
+    created_by?: string | null;
   };
   onClose: () => void;
   onSuccess: () => void;
@@ -60,7 +61,12 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
   const deleteRecurring = useDeleteRecurringDemand();
   const addSubdemand = useAddSubdemand();
 
-  const canAssignResponsibles = boardRole !== "requester";
+  const isBoardManager = boardRole === "admin" || boardRole === "moderator";
+  const isCreator = !!user && demand.created_by === user.id;
+  const isResponsible = !!user && !!currentAssignees?.some((a) => a.user_id === user.id);
+  // Only managers, the creator or a current responsible can manage assignees & recurrence.
+  const canManageAssignees = boardRole !== "requester" && (isBoardManager || isCreator || isResponsible);
+  const canAssignResponsibles = canManageAssignees;
 
   // Parent state — pre-populated from demand
   const [title, setTitle] = useState(demand.title);
@@ -338,11 +344,13 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
         service_id: serviceId && serviceId !== "none" ? serviceId : null,
       });
 
-      await setAssignees.mutateAsync({
-        demandId: demand.id,
-        userIds: selectedAssignees,
-        primaryUserId: primaryAssignee,
-      });
+      if (canManageAssignees) {
+        await setAssignees.mutateAsync({
+          demandId: demand.id,
+          userIds: selectedAssignees,
+          primaryUserId: primaryAssignee,
+        });
+      }
 
       // Add new subdemands
       const parentAssigneeSet = new Set(selectedAssignees);
@@ -450,36 +458,38 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
             <DialogTitle className="text-xl font-bold">{getStepTitle()}</DialogTitle>
             <p className="text-sm text-muted-foreground">{getStepDescription()}</p>
           </div>
-          <div
-            className="flex items-center gap-1.5 shrink-0 rounded-md border border-[#F28705]/30 bg-[#F28705]/10 px-2 py-1"
-            title={!isParentValid ? "Preencha os campos obrigatórios da demanda" : "Definir quantidade de subdemandas"}
-          >
-            <GitBranch className="h-3.5 w-3.5 text-[#F28705]" />
-            <span className="text-xs font-medium text-[#F28705] hidden sm:inline mr-1">Subdemandas</span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 text-[#F28705] hover:bg-[#F28705]/20 hover:text-[#F28705]"
-              onClick={() => handleSetSubdemandCount(newSubdemands.length - 1)}
-              disabled={newSubdemands.length <= 0 || !isParentValid}
+          {canManageAssignees && (
+            <div
+              className="flex items-center gap-1.5 shrink-0 rounded-md border border-[#F28705]/30 bg-[#F28705]/10 px-2 py-1"
+              title={!isParentValid ? "Preencha os campos obrigatórios da demanda" : "Definir quantidade de subdemandas"}
             >
-              <Minus className="h-3.5 w-3.5" />
-            </Button>
-            <span className="text-sm font-bold text-[#F28705] min-w-[18px] text-center">
-              {newSubdemands.length}
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 text-[#F28705] hover:bg-[#F28705]/20 hover:text-[#F28705]"
-              onClick={() => handleSetSubdemandCount(newSubdemands.length + 1)}
-              disabled={newSubdemands.length >= 20 || !isParentValid}
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </Button>
-          </div>
+              <GitBranch className="h-3.5 w-3.5 text-[#F28705]" />
+              <span className="text-xs font-medium text-[#F28705] hidden sm:inline mr-1">Subdemandas</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-[#F28705] hover:bg-[#F28705]/20 hover:text-[#F28705]"
+                onClick={() => handleSetSubdemandCount(newSubdemands.length - 1)}
+                disabled={newSubdemands.length <= 0 || !isParentValid}
+              >
+                <Minus className="h-3.5 w-3.5" />
+              </Button>
+              <span className="text-sm font-bold text-[#F28705] min-w-[18px] text-center">
+                {newSubdemands.length}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-[#F28705] hover:bg-[#F28705]/20 hover:text-[#F28705]"
+                onClick={() => handleSetSubdemandCount(newSubdemands.length + 1)}
+                disabled={newSubdemands.length >= 20 || !isParentValid}
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
         </div>
         {newSubdemands.length > 0 && (
           <StepProgress
@@ -603,11 +613,13 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
                 />
               </div>
 
-              {/* Recurrence */}
-              <div className="space-y-2">
-                <Label>Recorrência</Label>
-                <RecurrenceConfig value={recurrence} onChange={setRecurrence} compact />
-              </div>
+              {/* Recurrence — only for managers, creator or responsibles */}
+              {canManageAssignees && (
+                <div className="space-y-2">
+                  <Label>Recorrência</Label>
+                  <RecurrenceConfig value={recurrence} onChange={setRecurrence} compact />
+                </div>
+              )}
             </div>
           )}
 
