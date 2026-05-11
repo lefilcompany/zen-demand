@@ -248,16 +248,7 @@ export function DashboardAIInsights({ boardId, isRequester = false }: DashboardA
   if (error || !data?.insights?.length) return null;
 
   const insights = data.insights;
-  const allExpanded = expandedIndexes.size === insights.length;
-
-  const toggleIndex = (i: number) => {
-    setExpandedIndexes(prev => {
-      const next = new Set(prev);
-      if (next.has(i)) next.delete(i);
-      else next.add(i);
-      return next;
-    });
-  };
+  const allExpanded = expandedIndexes.size === insights.length && insights.length > 0;
 
   const toggleAll = () => {
     if (allExpanded) {
@@ -269,21 +260,13 @@ export function DashboardAIInsights({ boardId, isRequester = false }: DashboardA
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-end">
-        <button
-          onClick={toggleAll}
-          className="text-[11px] font-medium text-primary hover:underline"
-        >
-          {allExpanded ? "Recolher todos" : "Expandir todos"}
-        </button>
-      </div>
       <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         {insights.map((insight, i) => (
           <InsightCard
             key={i}
             insight={insight}
             isExpanded={expandedIndexes.has(i)}
-            onToggle={() => toggleIndex(i)}
+            onToggle={toggleAll}
           />
         ))}
 
