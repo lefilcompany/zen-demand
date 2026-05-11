@@ -179,10 +179,6 @@ export function ProtectedLayout() {
             </div>
 
             <div className="flex items-center gap-1 sm:gap-1.5">
-              <div className="hidden sm:block">
-                <ThemeToggle />
-              </div>
-
               <TopbarCreateButton />
 
               <div className="h-4 w-px bg-border hidden sm:block" />
@@ -191,6 +187,10 @@ export function ProtectedLayout() {
 
               <div data-tour="notifications-btn">
                 <NotificationDropdown />
+              </div>
+
+              <div className="hidden sm:block">
+                <ThemeToggle />
               </div>
 
               <DropdownMenu>
