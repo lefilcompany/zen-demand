@@ -344,11 +344,13 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
         service_id: serviceId && serviceId !== "none" ? serviceId : null,
       });
 
-      await setAssignees.mutateAsync({
-        demandId: demand.id,
-        userIds: selectedAssignees,
-        primaryUserId: primaryAssignee,
-      });
+      if (canManageAssignees) {
+        await setAssignees.mutateAsync({
+          demandId: demand.id,
+          userIds: selectedAssignees,
+          primaryUserId: primaryAssignee,
+        });
+      }
 
       // Add new subdemands
       const parentAssigneeSet = new Set(selectedAssignees);
