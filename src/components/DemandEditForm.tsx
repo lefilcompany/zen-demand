@@ -38,6 +38,7 @@ interface DemandEditFormProps {
     service_id: string | null;
     team_id: string;
     board_id: string;
+    created_by?: string | null;
   };
   onClose: () => void;
   onSuccess: () => void;
