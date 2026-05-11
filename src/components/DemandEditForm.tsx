@@ -611,11 +611,13 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
                 />
               </div>
 
-              {/* Recurrence */}
-              <div className="space-y-2">
-                <Label>Recorrência</Label>
-                <RecurrenceConfig value={recurrence} onChange={setRecurrence} compact />
-              </div>
+              {/* Recurrence — only for managers, creator or responsibles */}
+              {canManageAssignees && (
+                <div className="space-y-2">
+                  <Label>Recorrência</Label>
+                  <RecurrenceConfig value={recurrence} onChange={setRecurrence} compact />
+                </div>
+              )}
             </div>
           )}
 
