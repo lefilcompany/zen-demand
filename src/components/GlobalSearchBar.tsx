@@ -248,43 +248,58 @@ export function GlobalSearchBar() {
   return (
     <>
       <div ref={containerRef} className="relative flex items-center">
-        {/* Collapsed: just the icon button */}
-        {!expanded && (
+        {/* Mobile: simple icon button that opens modal */}
+        {isMobile ? (
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground transition-transform duration-300 ease-out hover:scale-125 active:scale-95"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
             onClick={handleButtonClick}
             title="Pesquisar (⌘K)"
           >
             <Search className="h-4 w-4" />
           </Button>
-        )}
-
-        {/* Expanded: inline search input (desktop only) */}
-        {expanded && !isMobile && (
-          <div className="relative animate-in fade-in slide-in-from-right-2 duration-200">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input
-              ref={inputRef}
-              type="text"
-              placeholder="Buscar demandas, membros..."
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setIsOpen(true);
+        ) : (
+          /* Desktop: container that grows laterally */
+          <div
+            className={cn(
+              "group flex items-center transition-all duration-300 ease-in-out rounded-full border overflow-hidden shrink-0",
+              expanded
+                ? "w-[200px] sm:w-[260px] border-primary/40 bg-background shadow-sm ring-1 ring-primary/10"
+                : "w-7 border-transparent bg-transparent hover:w-32 hover:border-border hover:bg-muted/40 hover:shadow-sm cursor-pointer"
+            )}
+            onClick={() => { if (!expanded) handleButtonClick(); }}
+          >
+            <button
+              type="button"
+              className={cn(
+                "h-7 w-7 shrink-0 flex items-center justify-center transition-colors rounded-l-full",
+                expanded ? "text-primary" : "text-muted-foreground group-hover:text-[#F28705]"
+              )}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (expanded) collapse();
+                else handleButtonClick();
               }}
-              onKeyDown={handleKeyDown}
-              className="pl-8 pr-8 h-7 w-[200px] sm:w-[260px] text-xs bg-muted/50 border-border focus:border-primary focus:bg-background transition-all"
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-5 w-5"
-              onClick={collapse}
+              title="Pesquisar (⌘K)"
             >
-              <X className="h-3 w-3" />
-            </Button>
+              {expanded ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+            </button>
+            {expanded ? (
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Buscar demandas, membros..."
+                value={query}
+                onChange={(e) => { setQuery(e.target.value); setIsOpen(true); }}
+                onKeyDown={handleKeyDown}
+                className="h-7 w-full bg-transparent text-xs outline-none pr-3 text-foreground placeholder:text-muted-foreground/60"
+              />
+            ) : (
+              <span className="text-[11px] text-muted-foreground/70 pr-3 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                Pesquisar
+              </span>
+            )}
           </div>
         )}
 
