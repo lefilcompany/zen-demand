@@ -253,7 +253,7 @@ export function GlobalSearchBar() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground transition-transform duration-300 ease-out hover:scale-125 active:scale-95"
             onClick={handleButtonClick}
             title="Pesquisar (⌘K)"
           >
