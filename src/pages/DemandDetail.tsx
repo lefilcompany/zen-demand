@@ -1113,31 +1113,33 @@ export default function DemandDetail() {
 
 
 
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <span className="text-muted-foreground">Responsável e acompanhantes:</span>
+            {(boardRole === "admin" || boardRole === "moderator" || isCreator || isCurrentAssignee) && (
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="text-muted-foreground">Responsável e acompanhantes:</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {formattedAssignees.length > 0 ? <AssigneeAvatars assignees={formattedAssignees} size="md" /> : <span className="text-muted-foreground">Nenhum</span>}
+                  {canManageAssignees && <Button size="sm" variant="ghost" onClick={handleEditAssignees}>
+                      Editar
+                    </Button>}
+                </div>
+                <AssigneeSelector
+                  teamId={demand.team_id}
+                  boardId={demand.board_id}
+                  selectedUserIds={selectedAssignees}
+                  onChange={setSelectedAssignees}
+                  primaryUserId={primaryAssignee}
+                  onPrimaryChange={setPrimaryAssignee}
+                  open={editingAssignees}
+                  onOpenChange={setEditingAssignees}
+                  hideTrigger
+                  onConfirm={handleSaveAssignees}
+                  confirmLoading={setAssignees.isPending}
+                />
               </div>
-              <div className="flex items-center gap-2">
-                {formattedAssignees.length > 0 ? <AssigneeAvatars assignees={formattedAssignees} size="md" /> : <span className="text-muted-foreground">Nenhum</span>}
-                {canManageAssignees && <Button size="sm" variant="ghost" onClick={handleEditAssignees}>
-                    Editar
-                  </Button>}
-              </div>
-              <AssigneeSelector
-                teamId={demand.team_id}
-                boardId={demand.board_id}
-                selectedUserIds={selectedAssignees}
-                onChange={setSelectedAssignees}
-                primaryUserId={primaryAssignee}
-                onPrimaryChange={setPrimaryAssignee}
-                open={editingAssignees}
-                onOpenChange={setEditingAssignees}
-                hideTrigger
-                onConfirm={handleSaveAssignees}
-                confirmLoading={setAssignees.isPending}
-              />
-            </div>
+            )}
 
             {/* Approval notification recipients */}
             <DemandApprovalNotifySection
