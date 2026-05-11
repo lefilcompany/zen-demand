@@ -185,6 +185,10 @@ export function ProtectedLayout() {
 
               <GlobalSearchBar />
 
+              <div className="hidden sm:block">
+                <ThemeToggle />
+              </div>
+
               <div data-tour="notifications-btn">
                 <NotificationDropdown />
               </div>
