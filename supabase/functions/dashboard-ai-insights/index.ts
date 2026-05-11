@@ -180,6 +180,7 @@ Se não houver dados suficientes, crie insights genéricos sobre boas práticas 
         ],
         generationConfig: {
           responseMimeType: "application/json",
+          maxOutputTokens: 2048,
           responseSchema: {
             type: "OBJECT",
             properties: {
