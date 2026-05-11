@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 // Cache key tied to user's refresh_token — survives access_token rotation (~1h),
 // only invalidated on real logout or refresh_token expiry (~30 days)
-const CACHE_PREFIX = "soma:ai-insights:";
+const CACHE_PREFIX = "soma:ai-insights:v2:";
 const getCacheKey = (userId: string, boardId: string, isRequester: boolean) =>
   `${CACHE_PREFIX}${userId}:${boardId}:${isRequester ? "req" : "adm"}`;
 
