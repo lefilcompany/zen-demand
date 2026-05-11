@@ -61,7 +61,12 @@ export function DemandEditForm({ demand, onClose, onSuccess }: DemandEditFormPro
   const deleteRecurring = useDeleteRecurringDemand();
   const addSubdemand = useAddSubdemand();
 
-  const canAssignResponsibles = boardRole !== "requester";
+  const isBoardManager = boardRole === "admin" || boardRole === "moderator";
+  const isCreator = !!user && demand.created_by === user.id;
+  const isResponsible = !!user && !!currentAssignees?.some((a) => a.user_id === user.id);
+  // Only managers, the creator or a current responsible can manage assignees & recurrence.
+  const canManageAssignees = boardRole !== "requester" && (isBoardManager || isCreator || isResponsible);
+  const canAssignResponsibles = canManageAssignees;
 
   // Parent state — pre-populated from demand
   const [title, setTitle] = useState(demand.title);
