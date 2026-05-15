@@ -135,9 +135,11 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     let recipientEmail = to;
+    let recipientUserId: string | null = null;
 
     // If 'to' is a UUID, lookup the user's email from Supabase Auth
     if (isUUID(to)) {
+      recipientUserId = to;
       console.log(`Looking up email for user_id: ${to}`);
       
       if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
