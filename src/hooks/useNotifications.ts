@@ -188,7 +188,7 @@ export function useNotifications() {
       clearTimeout(mountTimer);
       supabase.removeChannel(channel);
     };
-  }, [user?.id, queryClient, playNotificationSound]);
+  }, [user?.id, queryClient, playNotificationSound, pushEnabled]);
 
   return {
     notifications: notifications || [],
