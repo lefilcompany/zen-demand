@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { useEffect, useRef, useCallback } from "react";
 import { useNotificationSound } from "./useNotificationSound";
 import { notificationToastBus } from "@/lib/notificationToastBus";
+import { useNotificationPreferences } from "./useNotificationPreferences";
 
 // Request browser notification permission
 async function requestNotificationPermission(): Promise<boolean> {
@@ -82,6 +83,8 @@ export function useNotifications() {
   const queryClient = useQueryClient();
   const { playNotificationSound } = useNotificationSound();
   const isInitialMount = useRef(true);
+  const { preferences } = useNotificationPreferences();
+  const pushEnabled = preferences.pushNotifications !== false;
 
   // Request permission on mount
   useEffect(() => {
@@ -89,9 +92,11 @@ export function useNotifications() {
   }, []);
 
   const { data: notifications, isLoading } = useQuery({
-    queryKey: ["notifications", user?.id],
+    queryKey: ["notifications", user?.id, pushEnabled],
     queryFn: async () => {
       if (!user?.id) return [];
+      // Respect user toggle: if in-app notifications are disabled, hide them
+      if (!pushEnabled) return [];
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
@@ -155,6 +160,8 @@ export function useNotifications() {
         },
         (payload) => {
           queryClient.invalidateQueries({ queryKey: ["notifications"] });
+          // Respect user toggle: skip all alerts when in-app notifications are disabled
+          if (!pushEnabled) return;
           // Play sound, vibrate, and show browser notification only after initial mount
           if (!isInitialMount.current) {
             playNotificationSound();
@@ -181,7 +188,7 @@ export function useNotifications() {
       clearTimeout(mountTimer);
       supabase.removeChannel(channel);
     };
-  }, [user?.id, queryClient, playNotificationSound]);
+  }, [user?.id, queryClient, playNotificationSound, pushEnabled]);
 
   return {
     notifications: notifications || [],

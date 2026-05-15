@@ -135,9 +135,11 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     let recipientEmail = to;
+    let recipientUserId: string | null = null;
 
     // If 'to' is a UUID, lookup the user's email from Supabase Auth
     if (isUUID(to)) {
+      recipientUserId = to;
       console.log(`Looking up email for user_id: ${to}`);
       
       if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -173,6 +175,44 @@ const handler = async (req: Request): Promise<Response> => {
 
       recipientEmail = userData.user.email;
       console.log(`Found email for user: ${recipientEmail}`);
+    }
+
+    // Respect recipient notification preferences (emailNotifications toggle)
+    try {
+      if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+        const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        });
+
+        // Resolve user_id from email if needed
+        if (!recipientUserId) {
+          const { data: list } = await adminClient.auth.admin.listUsers();
+          const match = list?.users?.find(
+            (u) => (u.email || "").toLowerCase() === recipientEmail.toLowerCase()
+          );
+          if (match) recipientUserId = match.id;
+        }
+
+        if (recipientUserId) {
+          const { data: prefRow } = await adminClient
+            .from("user_preferences")
+            .select("preference_value")
+            .eq("user_id", recipientUserId)
+            .eq("preference_key", "notification_preferences")
+            .maybeSingle();
+
+          const prefs = (prefRow?.preference_value || {}) as Record<string, unknown>;
+          if (prefs.emailNotifications === false) {
+            console.log(`Skipping email to ${recipientEmail}: emailNotifications disabled`);
+            return new Response(
+              JSON.stringify({ success: true, skipped: true, reason: "emailNotifications disabled" }),
+              { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+            );
+          }
+        }
+      }
+    } catch (prefErr) {
+      console.warn("Could not check notification preferences, proceeding to send:", prefErr);
     }
 
     let emailHtml = html;
