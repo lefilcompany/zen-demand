@@ -83,6 +83,8 @@ export function useNotifications() {
   const queryClient = useQueryClient();
   const { playNotificationSound } = useNotificationSound();
   const isInitialMount = useRef(true);
+  const { preferences } = useNotificationPreferences();
+  const pushEnabled = preferences.pushNotifications !== false;
 
   // Request permission on mount
   useEffect(() => {
@@ -90,9 +92,11 @@ export function useNotifications() {
   }, []);
 
   const { data: notifications, isLoading } = useQuery({
-    queryKey: ["notifications", user?.id],
+    queryKey: ["notifications", user?.id, pushEnabled],
     queryFn: async () => {
       if (!user?.id) return [];
+      // Respect user toggle: if in-app notifications are disabled, hide them
+      if (!pushEnabled) return [];
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
