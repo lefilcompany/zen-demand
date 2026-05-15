@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { useEffect, useRef, useCallback } from "react";
 import { useNotificationSound } from "./useNotificationSound";
 import { notificationToastBus } from "@/lib/notificationToastBus";
+import { useNotificationPreferences } from "./useNotificationPreferences";
 
 // Request browser notification permission
 async function requestNotificationPermission(): Promise<boolean> {
