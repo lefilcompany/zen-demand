@@ -160,6 +160,8 @@ export function useNotifications() {
         },
         (payload) => {
           queryClient.invalidateQueries({ queryKey: ["notifications"] });
+          // Respect user toggle: skip all alerts when in-app notifications are disabled
+          if (!pushEnabled) return;
           // Play sound, vibrate, and show browser notification only after initial mount
           if (!isInitialMount.current) {
             playNotificationSound();
