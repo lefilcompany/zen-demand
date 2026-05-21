@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { useShareToken, useCreateShareToken, useRevokeShareToken } from "@/hooks/useShareDemand";
+import { Switch } from "@/components/ui/switch";
+import { useShareToken, useCreateShareToken, useRevokeShareToken, useUpdateShareTokenAutoJoin } from "@/hooks/useShareDemand";
 import { useAuth } from "@/lib/auth";
-import { Share2, Copy, Check, Link, Trash2, Loader2, Calendar, Clock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useBoardRole } from "@/hooks/useBoardMembers";
+import { Share2, Copy, Check, Link, Trash2, Loader2, Calendar, Clock, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { format, addDays, addHours, addWeeks, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -23,11 +26,32 @@ export function ShareDemandDialog({ demandId, open, onOpenChange }: ShareDemandD
   const [copied, setCopied] = useState(false);
   const [expiration, setExpiration] = useState<ExpirationOption>("never");
   const [customDate, setCustomDate] = useState("");
+  const [autoJoinBoard, setAutoJoinBoard] = useState(false);
+  const [boardId, setBoardId] = useState<string | null>(null);
   const { user } = useAuth();
 
   const { data: existingToken, isLoading: isLoadingToken, refetch } = useShareToken(demandId);
   const createToken = useCreateShareToken();
   const revokeToken = useRevokeShareToken();
+  const updateAutoJoin = useUpdateShareTokenAutoJoin();
+  const { data: boardRole } = useBoardRole(boardId);
+  const canManageAutoJoin = boardRole === "admin" || boardRole === "moderator";
+
+  useEffect(() => {
+    if (!open || !demandId) return;
+    let cancelled = false;
+    supabase
+      .from("demands")
+      .select("board_id")
+      .eq("id", demandId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setBoardId((data?.board_id as string) ?? null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, demandId]);
 
   const shareUrl = existingToken
     ? `${window.location.origin}/shared/${existingToken.token}`
@@ -49,10 +73,16 @@ export function ShareDemandDialog({ demandId, open, onOpenChange }: ShareDemandD
     if (!user) return;
     try {
       const expiresAt = getExpirationDate();
-      await createToken.mutateAsync({ demandId, userId: user.id, expiresAt });
+      await createToken.mutateAsync({
+        demandId,
+        userId: user.id,
+        expiresAt,
+        autoJoinBoard: canManageAutoJoin ? autoJoinBoard : false,
+      });
       toast.success("Link de compartilhamento criado!");
       setExpiration("never");
       setCustomDate("");
+      setAutoJoinBoard(false);
     } catch {
       toast.error("Erro ao criar link de compartilhamento");
     }
@@ -78,6 +108,17 @@ export function ShareDemandDialog({ demandId, open, onOpenChange }: ShareDemandD
       await refetch();
     } catch {
       toast.error("Erro ao revogar link");
+    }
+  };
+
+  const handleToggleExistingAutoJoin = async (checked: boolean) => {
+    if (!existingToken) return;
+    try {
+      await updateAutoJoin.mutateAsync({ tokenId: existingToken.id, autoJoinBoard: checked });
+      toast.success(checked ? "Auto-inclusão no quadro ativada" : "Auto-inclusão no quadro desativada");
+      await refetch();
+    } catch {
+      toast.error("Erro ao atualizar opção");
     }
   };
 
@@ -130,6 +171,25 @@ export function ShareDemandDialog({ demandId, open, onOpenChange }: ShareDemandD
                   {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
+
+              {canManageAutoJoin && (
+                <div className="flex items-start justify-between gap-3 rounded-lg border bg-muted/30 p-3">
+                  <div className="space-y-0.5">
+                    <Label className="flex items-center gap-1.5 text-sm font-medium">
+                      <UserPlus className="h-4 w-4" />
+                      Adicionar ao quadro como Agente
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Quem acessar o link e já pertencer à equipe entra no quadro automaticamente.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={!!existingToken.auto_join_board}
+                    onCheckedChange={handleToggleExistingAutoJoin}
+                    disabled={updateAutoJoin.isPending || !!isExpired}
+                  />
+                </div>
+              )}
 
               <div className="flex gap-2">
                 <Button variant="default" className="flex-1" onClick={handleCopyLink} disabled={!!isExpired}>
@@ -202,6 +262,21 @@ export function ShareDemandDialog({ demandId, open, onOpenChange }: ShareDemandD
                   />
                 )}
               </div>
+
+              {canManageAutoJoin && (
+                <div className="flex items-start justify-between gap-3 rounded-lg border bg-muted/30 p-3">
+                  <div className="space-y-0.5">
+                    <Label className="flex items-center gap-1.5 text-sm font-medium">
+                      <UserPlus className="h-4 w-4" />
+                      Adicionar ao quadro como Agente
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Quem acessar o link e já pertencer à equipe deste quadro será adicionado automaticamente como Agente.
+                    </p>
+                  </div>
+                  <Switch checked={autoJoinBoard} onCheckedChange={setAutoJoinBoard} />
+                </div>
+              )}
 
               <Button
                 onClick={handleCreateLink}

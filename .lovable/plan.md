@@ -1,54 +1,65 @@
-## Problema
+## Objetivo
 
-No modal "Gerenciar Etapas do Kanban", o painel lateral "Criar Nova Etapa / Editar Etapa" não permite digitar no input, selecionar cor, abrir o select de "Tipo de Aprovação" nem rolar a área interna.
+Permitir que admins/coordenadores de um quadro criem um link de compartilhamento de demanda com a opção **"Adicionar automaticamente ao quadro como Agente"**. Quem acessar esse link, estando logado e pertencendo à equipe do quadro, é adicionado automaticamente como membro do quadro com role `executor` (Agente) e redirecionado para a demanda real.
 
-## Causa raiz
+## Regras de negócio
 
-O Radix `Dialog` está configurado com `modal={true}`. Nesse modo o Radix instala uma **focus trap** + **pointer-events guard** que só libera interações para descendentes do `DialogPrimitive.Content`. O painel lateral foi propositalmente renderizado **fora** do `Content` (como um card "irmão" dentro do `DialogPortal`, para visual de dois cards lado a lado). Resultado: o focus trap bloqueia foco em inputs/select/color picker, e o guard intercepta cliques no painel — exatamente o comportamento relatado.
+- Apenas **admin/coordenador do quadro** (board role `admin`/`moderator`) pode marcar a opção "auto-adicionar ao quadro" ao criar o link.
+- A flag é por token: cada link tem ou não o auto-join habilitado.
+- Ao acessar o link compartilhado:
+  - **Não logado** → comportamento atual (modo leitura pública + CTA login).
+  - **Logado, já membro do quadro** → redireciona para `/demands/:id` (já existe hoje).
+  - **Logado, não-membro, token SEM auto-join** → continua no modo leitura (comportamento atual da última iteração).
+  - **Logado, não-membro, token COM auto-join**:
+    - Se **pertence à equipe** do quadro (`team_members`): insere em `board_members` com role `executor` e redireciona para `/demands/:id`.
+    - Se **não pertence à equipe**: mostra mensagem clara ("Você precisa fazer parte da equipe deste quadro para entrar automaticamente"), mantém modo leitura.
+- Operação é idempotente (ON CONFLICT DO NOTHING) — clicar duas vezes não duplica nem rebaixa cargo existente.
 
-`onPointerDown` com `stopPropagation` não resolve porque o bloqueio acontece no nível do guard global do Radix, antes dos handlers do painel.
+## Mudanças
 
-## Solução
+### 1. Banco (migration)
+- `ALTER TABLE demand_share_tokens ADD COLUMN auto_join_board boolean NOT NULL DEFAULT false;`
+- Nova RPC `SECURITY DEFINER` `join_board_via_share_token(p_token text)` que:
+  1. Resolve o token (ativo, não expirado, `auto_join_board = true`).
+  2. Busca `board_id` + `team_id` da demanda.
+  3. Confere `auth.uid()` autenticado.
+  4. Confere que o usuário é membro de `team_members` (qualquer role) do `team_id` do quadro.
+  5. `INSERT INTO board_members (board_id, user_id, role, added_by) VALUES (..., 'executor', criador_do_token) ON CONFLICT DO NOTHING`.
+  6. Retorna `jsonb { success, demand_id, board_id, reason? }` com motivos: `not_authenticated`, `invalid_token`, `not_team_member`, `auto_join_disabled`, `success`, `already_member`.
+- RLS: permitir admins/moderadores do quadro fazerem `UPDATE` da coluna `auto_join_board` no seu próprio token (já têm UPDATE nos próprios tokens; só validar).
 
-1. Trocar `modal={true}` por `modal={false}` no `Dialog` raiz. O modal atualmente já implementa manualmente o que precisa:
-   - Overlay próprio (`DialogOverlay` com `bg-black/60`).
-   - Bloqueio de fechamento por clique fora via `onPointerDownOutside` / `onInteractOutside` (que continuam funcionando).
-   - `pointer-events: none` no wrapper externo + `pointer-events-auto` nos cards — garante que cliques no overlay não interajam com a página atrás.
+### 2. Edge function `shared-demand`
+- Incluir `auto_join_board` no payload retornado para o cliente saber que deve oferecer/disparar o join.
 
-2. Garantir pointer-events explícitos no overlay para que ele continue capturando cliques fora dos cards, mantendo o efeito visual de modal:
-   - Adicionar `pointer-events-auto` ao `DialogOverlay`.
+### 3. Frontend — `ShareDemandDialog.tsx`
+- Mostrar **Switch "Adicionar automaticamente ao quadro como Agente"** apenas se o usuário atual for admin/moderador do quadro da demanda (usar `useBoardRole`).
+- Passar `autoJoinBoard` no `createToken.mutateAsync`.
+- Exibir, quando ativo, indicador visual no link existente ("Auto-join ativo — novos acessos viram Agentes do quadro").
 
-3. Manter `autoFocus` no input "Nome da Etapa" — sem o focus trap do Radix, o `autoFocus` do `<Input>` passa a funcionar normalmente.
+### 4. Frontend — `useShareDemand.ts`
+- Estender `ShareToken` com `auto_join_board`.
+- `useCreateShareToken` aceita `autoJoinBoard?: boolean`.
+- Novo hook `useJoinBoardViaToken()` que chama a RPC.
 
-4. Pequena melhoria: remover o `onPointerDown={(e) => e.stopPropagation()}` do painel lateral, que deixa de ser necessário (sem focus trap, não há mais guard a evitar). O painel passa a ser um nó pointer-events-auto comum dentro do portal.
-
-5. Verificar que `Select` (Radix), `ColorPicker` (popover/inputs) e scroll na área `overflow-y-auto` do `StageForm` voltam a funcionar tanto na visão lado-a-lado (lg+) quanto no fallback mobile.
+### 5. Frontend — `SharedDemand.tsx`
+- Após receber payload e detectar usuário logado **não-membro**:
+  - Se `auto_join_board === true` → chamar RPC `join_board_via_share_token`.
+    - `success`/`already_member` → toast + `navigate('/demands/' + demand.id)`.
+    - `not_team_member` → renderizar tela "Você não faz parte da equipe deste quadro. Peça ao administrador para adicioná-lo à equipe primeiro." (modo leitura mantido).
+    - outros erros → modo leitura atual.
+  - Se `auto_join_board === false` → comportamento da última iteração (modo leitura para logados não-membros).
 
 ## Detalhes técnicos
 
-Arquivo único: `src/components/KanbanStagesManager.tsx`
+- Role inserida: `executor` (mapeada na UI como "Agente" via `BOARD_ROLE_LABELS`).
+- `added_by` = `created_by` do token (admin que gerou o link), para auditoria.
+- Não disparar notificações em massa para evitar spam quando vários entram pelo mesmo link (segue o padrão idempotente — só insere se ainda não é membro).
+- Tokens antigos ficam com `auto_join_board = false` por default — comportamento atual preservado.
 
-```text
-[Dialog modal=false]
-  └─ DialogPortal
-      ├─ DialogOverlay (pointer-events-auto, capta clique fora)
-      └─ <div fixed inset-0 flex pointer-events-none>
-           ├─ DialogPrimitive.Content (pointer-events-auto)  ← lista de etapas
-           └─ <div data-stage-form-panel pointer-events-auto> ← painel lateral
-                └─ <StageForm />  (Input, ColorPicker, Select, scroll OK)
-```
+## Arquivos afetados
 
-Mudanças mínimas:
-
-- Linha 583: `modal={true}` → `modal={false}`.
-- Linha 591: adicionar `pointer-events-auto` ao `DialogOverlay`.
-- Linhas 811-812 e 831-832: remover `onPointerDown`/`onMouseDown` `stopPropagation` (não mais necessários).
-- Os handlers `onPointerDownOutside`/`onInteractOutside` no `Content` continuam tratando o caso de não fechar o modal quando o painel lateral / popovers Radix recebem clique.
-
-## Validação
-
-Após aplicar, testar no preview:
-- Abrir "Etapas" → "Criar Nova Etapa": digitar nome, escolher cor (incluindo input hex), abrir Select de "Tipo de Aprovação", rolar a área do formulário.
-- Editar uma etapa existente: mesmas interações.
-- Clicar fora dos dois cards (no overlay escuro): NÃO deve fechar enquanto o painel está aberto; deve fechar quando só a lista está aberta.
-- Mobile (lg-): o painel substitui o card principal e mantém todas as interações.
+- Migration nova (coluna + RPC).
+- `supabase/functions/shared-demand/index.ts` (devolve `auto_join_board`).
+- `src/hooks/useShareDemand.ts`.
+- `src/components/ShareDemandDialog.tsx`.
+- `src/pages/SharedDemand.tsx`.

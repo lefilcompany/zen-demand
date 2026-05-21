@@ -9,12 +9,14 @@ interface ShareToken {
   created_at: string;
   expires_at: string | null;
   is_active: boolean;
+  auto_join_board: boolean;
 }
 
 interface SharedDemandPayload {
   demand: any;
   interactions: any[];
   attachments: any[];
+  auto_join_board?: boolean;
 }
 
 function generateToken(): string {
@@ -79,6 +81,7 @@ async function fetchSharedDemandPayload(token: string): Promise<SharedDemandPayl
     demand: payload.demand,
     interactions: payload.interactions || [],
     attachments: payload.attachments || [],
+    auto_join_board: !!payload.auto_join_board,
   };
 }
 
@@ -129,7 +132,17 @@ export function useCreateShareToken() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ demandId, userId, expiresAt }: { demandId: string; userId: string; expiresAt?: string | null }) => {
+    mutationFn: async ({
+      demandId,
+      userId,
+      expiresAt,
+      autoJoinBoard,
+    }: {
+      demandId: string;
+      userId: string;
+      expiresAt?: string | null;
+      autoJoinBoard?: boolean;
+    }) => {
       const token = generateToken();
 
       const result = await supabase
@@ -139,6 +152,7 @@ export function useCreateShareToken() {
           token,
           created_by: userId,
           expires_at: expiresAt || null,
+          auto_join_board: !!autoJoinBoard,
         })
         .select()
         .single();
@@ -170,10 +184,33 @@ export function useRevokeShareToken() {
   });
 }
 
+export function useUpdateShareTokenAutoJoin() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ tokenId, autoJoinBoard }: { tokenId: string; autoJoinBoard: boolean }) => {
+      const result = await supabase
+        .from("demand_share_tokens" as any)
+        .update({ auto_join_board: autoJoinBoard })
+        .eq("id", tokenId);
+      if (result.error) throw result.error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["share-token"] });
+    },
+  });
+}
+
 export function useSharedDemand(token: string | null) {
   return useQuery({
     ...sharedPayloadQueryConfig(token),
     select: (payload: SharedDemandPayload) => payload.demand,
+  });
+}
+
+export function useSharedDemandAutoJoin(token: string | null) {
+  return useQuery({
+    ...sharedPayloadQueryConfig(token),
+    select: (payload: SharedDemandPayload) => !!payload.auto_join_board,
   });
 }
 
@@ -191,4 +228,10 @@ export function useSharedDemandAttachments(token: string | null, demandId: strin
     enabled: !!token && !!demandId,
     select: (payload: SharedDemandPayload) => (demandId ? payload.attachments : []),
   });
+}
+
+export async function joinBoardViaShareToken(token: string) {
+  const { data, error } = await supabase.rpc("join_board_via_share_token" as any, { p_token: token });
+  if (error) throw error;
+  return data as { success: boolean; reason?: string; demand_id?: string; board_id?: string };
 }

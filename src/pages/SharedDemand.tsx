@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { RichTextDisplay } from "@/components/ui/rich-text-editor";
-import { useSharedDemand, useSharedDemandInteractions, useSharedDemandAttachments } from "@/hooks/useShareDemand";
+import { useSharedDemand, useSharedDemandInteractions, useSharedDemandAttachments, useSharedDemandAutoJoin, joinBoardViaShareToken } from "@/hooks/useShareDemand";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Calendar, Users, Wrench, ExternalLink, Lock, MessageSquare, Loader2, AlertTriangle, Clock } from "lucide-react";
 import { format } from "date-fns";
@@ -28,9 +28,11 @@ export default function SharedDemand() {
   const { setSelectedBoardId } = useSelectedBoardSafe();
   const redirectedRef = useRef(false);
   const [membershipChecked, setMembershipChecked] = useState(false);
+  const [autoJoinReason, setAutoJoinReason] = useState<string | null>(null);
   const { data: demand, isLoading, error } = useSharedDemand(token || null);
   const { data: interactions } = useSharedDemandInteractions(token || null, demand?.id || null);
   const { data: attachments } = useSharedDemandAttachments(token || null, demand?.id || null);
+  const { data: autoJoinEnabled } = useSharedDemandAutoJoin(token || null);
 
   // Direct membership check - independent of selected team context
   useEffect(() => {
@@ -52,13 +54,35 @@ export default function SharedDemand() {
 
         if (data) {
           redirectedRef.current = true;
-          // Sync team and board context before navigating
           if (teamContext?.setSelectedTeamId && demand.team_id) {
             teamContext.setSelectedTeamId(demand.team_id);
           }
           setSelectedBoardId(demand.board_id);
           navigate(`/demands/${demand.id}`, { replace: true });
           return;
+        }
+
+        // Not a member — try auto-join if enabled on the token
+        if (autoJoinEnabled && token) {
+          try {
+            const result = await joinBoardViaShareToken(token);
+            if (result?.success && (result.reason === "joined" || result.reason === "already_member")) {
+              redirectedRef.current = true;
+              if (result.reason === "joined") {
+                toast.success("Você foi adicionado ao quadro como Agente.");
+              }
+              if (teamContext?.setSelectedTeamId && demand.team_id) {
+                teamContext.setSelectedTeamId(demand.team_id);
+              }
+              setSelectedBoardId(demand.board_id);
+              navigate(`/demands/${demand.id}`, { replace: true });
+              return;
+            }
+            setAutoJoinReason(result?.reason ?? "unknown");
+          } catch (joinErr) {
+            console.error("Auto-join failed:", joinErr);
+            setAutoJoinReason("error");
+          }
         }
       } catch (err) {
         console.error("Error checking board membership:", err);
@@ -67,7 +91,7 @@ export default function SharedDemand() {
     };
 
     checkMembership();
-  }, [demand, session]);
+  }, [demand, session, autoJoinEnabled, token]);
 
   const comments = interactions?.filter((i: any) => i.interaction_type === "comment") || [];
 
@@ -160,9 +184,15 @@ export default function SharedDemand() {
           <Lock className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-amber-800 dark:text-amber-200">
             {session?.user ? (
-              <>
-                <strong>Você não é membro deste quadro.</strong> Está visualizando esta demanda em <strong>modo somente leitura</strong> através de um link de compartilhamento. Para editar, iniciar o timer, comentar ou interagir, peça ao responsável para adicioná-lo(a) como membro do quadro.
-              </>
+              autoJoinReason === "not_team_member" ? (
+                <>
+                  <strong>Você não faz parte da equipe deste quadro.</strong> Para entrar automaticamente no quadro através deste link, você precisa primeiro ser adicionado à equipe pelo administrador. Enquanto isso, está visualizando em <strong>modo somente leitura</strong>.
+                </>
+              ) : (
+                <>
+                  <strong>Você não é membro deste quadro.</strong> Está visualizando esta demanda em <strong>modo somente leitura</strong> através de um link de compartilhamento. Para editar, iniciar o timer, comentar ou interagir, peça ao responsável para adicioná-lo(a) como membro do quadro.
+                </>
+              )
             ) : (
               <>
                 <strong>Modo de visualização:</strong> Você está visualizando esta demanda através de um link de compartilhamento.
