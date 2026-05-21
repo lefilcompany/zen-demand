@@ -297,7 +297,8 @@ export default function DemandDetail() {
   const {
     data: role
   } = useTeamRole(demand?.team_id || null);
-  const { data: boardRole } = useBoardRole(demand?.board_id || null);
+  const { data: boardRole, isLoading: isLoadingBoardRole, isFetched: boardRoleFetched } = useBoardRole(demand?.board_id || null);
+  const isBoardMember = boardRole != null;
   
   // Fetch creator's role in the board
   const { data: creatorBoardRole } = useQuery({
