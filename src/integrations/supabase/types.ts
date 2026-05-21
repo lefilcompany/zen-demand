@@ -1043,6 +1043,7 @@ export type Database = {
       }
       demand_share_tokens: {
         Row: {
+          auto_join_board: boolean
           created_at: string
           created_by: string
           demand_id: string
@@ -1052,6 +1053,7 @@ export type Database = {
           token: string
         }
         Insert: {
+          auto_join_board?: boolean
           created_at?: string
           created_by: string
           demand_id: string
@@ -1061,6 +1063,7 @@ export type Database = {
           token: string
         }
         Update: {
+          auto_join_board?: boolean
           created_at?: string
           created_by?: string
           demand_id?: string
@@ -2780,6 +2783,7 @@ export type Database = {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
+      join_board_via_share_token: { Args: { p_token: string }; Returns: Json }
       join_team_with_code: { Args: { p_code: string }; Returns: string }
       promote_to_admin_by_email: {
         Args: { p_email: string }
