@@ -297,7 +297,8 @@ export default function DemandDetail() {
   const {
     data: role
   } = useTeamRole(demand?.team_id || null);
-  const { data: boardRole } = useBoardRole(demand?.board_id || null);
+  const { data: boardRole, isLoading: isLoadingBoardRole, isFetched: boardRoleFetched } = useBoardRole(demand?.board_id || null);
+  const isBoardMember = boardRole != null;
   
   // Fetch creator's role in the board
   const { data: creatorBoardRole } = useQuery({
@@ -719,6 +720,31 @@ export default function DemandDetail() {
       })} className="mt-4">
           Voltar para {originInfo.label}
         </Button>
+      </div>;
+  }
+  // Block access for authenticated users that are NOT members of the board
+  if (isLoadingBoardRole || !boardRoleFetched) {
+    return <div className="text-center py-12">
+        <div className="animate-pulse">
+          <div className="h-8 bg-muted rounded w-1/3 mx-auto mb-4"></div>
+          <div className="h-4 bg-muted rounded w-1/2 mx-auto"></div>
+        </div>
+      </div>;
+  }
+  if (!isBoardMember) {
+    return <div className="max-w-xl mx-auto text-center py-16 px-4">
+        <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Acesso restrito</h2>
+        <p className="text-muted-foreground mb-1">
+          Você não pertence ao quadro <strong>{currentBoard?.name ?? "desta demanda"}</strong>.
+        </p>
+        <p className="text-muted-foreground mb-6">
+          Para visualizar ou interagir com esta demanda, peça ao responsável pelo quadro para te adicionar como membro.
+        </p>
+        <div className="flex gap-2 justify-center">
+          <Button variant="outline" onClick={() => navigate(-1)}>Voltar</Button>
+          <Button onClick={() => navigate("/")}>Ir para o início</Button>
+        </div>
       </div>;
   }
   const formattedAssignees = assignees?.map(a => ({
