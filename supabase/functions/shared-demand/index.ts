@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
 
     const { data: tokenData, error: tokenError } = await supabase
       .from("demand_share_tokens")
-      .select("id, demand_id, is_active, expires_at")
+      .select("id, demand_id, is_active, expires_at, auto_join_board")
       .eq("token", token)
       .maybeSingle();
 
@@ -162,6 +162,7 @@ Deno.serve(async (req) => {
       demand,
       interactions: interactions || [],
       attachments: attachments || [],
+      auto_join_board: !!tokenData.auto_join_board,
     });
   } catch (error) {
     console.error("Unexpected shared-demand error:", error);
