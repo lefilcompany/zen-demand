@@ -28,6 +28,8 @@ export function ShareDemandDialog({ demandId, open, onOpenChange }: ShareDemandD
   const [customDate, setCustomDate] = useState("");
   const [autoJoinBoard, setAutoJoinBoard] = useState(false);
   const [boardId, setBoardId] = useState<string | null>(null);
+  const [teamId, setTeamId] = useState<string | null>(null);
+  const [isTeamAdmin, setIsTeamAdmin] = useState(false);
   const { user } = useAuth();
 
   const { data: existingToken, isLoading: isLoadingToken, refetch } = useShareToken(demandId);
@@ -35,23 +37,43 @@ export function ShareDemandDialog({ demandId, open, onOpenChange }: ShareDemandD
   const revokeToken = useRevokeShareToken();
   const updateAutoJoin = useUpdateShareTokenAutoJoin();
   const { data: boardRole } = useBoardRole(boardId);
-  const canManageAutoJoin = boardRole === "admin" || boardRole === "moderator";
+  const canManageAutoJoin =
+    boardRole === "admin" || boardRole === "moderator" || isTeamAdmin;
 
   useEffect(() => {
     if (!open || !demandId) return;
     let cancelled = false;
-    supabase
-      .from("demands")
-      .select("board_id")
-      .eq("id", demandId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!cancelled) setBoardId((data?.board_id as string) ?? null);
-      });
+    (async () => {
+      const { data: d } = await supabase
+        .from("demands")
+        .select("board_id, team_id")
+        .eq("id", demandId)
+        .maybeSingle();
+      if (cancelled) return;
+      const bId = (d?.board_id as string) ?? null;
+      const tId = (d?.team_id as string) ?? null;
+      setBoardId(bId);
+      setTeamId(tId);
+
+      if (tId && user?.id) {
+        const { data: tm } = await supabase
+          .from("team_members")
+          .select("role")
+          .eq("team_id", tId)
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (cancelled) return;
+        const r = tm?.role;
+        setIsTeamAdmin(r === "admin" || r === "moderator");
+      } else {
+        setIsTeamAdmin(false);
+      }
+    })();
     return () => {
       cancelled = true;
     };
-  }, [open, demandId]);
+  }, [open, demandId, user?.id]);
+
 
   const shareUrl = existingToken
     ? `${window.location.origin}/shared/${existingToken.token}`
