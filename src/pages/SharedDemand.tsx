@@ -137,15 +137,21 @@ export default function SharedDemand() {
             <img src={logoSoma} alt="Logo" className="h-8" />
             <Badge variant="secondary" className="gap-1">
               <ExternalLink className="h-3 w-3" />
-              Visualização Pública
+              {session?.user ? "Modo Somente Leitura" : "Visualização Pública"}
             </Badge>
           </div>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/auth">
-              <Lock className="mr-2 h-4 w-4" />
-              Fazer login
-            </Link>
-          </Button>
+          {session?.user ? (
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/">Voltar ao sistema</Link>
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/auth">
+                <Lock className="mr-2 h-4 w-4" />
+                Fazer login
+              </Link>
+            </Button>
+          )}
         </div>
       </header>
 
@@ -153,8 +159,16 @@ export default function SharedDemand() {
         <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 flex items-start gap-3">
           <Lock className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-amber-800 dark:text-amber-200">
-            <strong>Modo de visualização:</strong> Você está visualizando esta demanda através de um link de compartilhamento.
-            Para editar ou interagir, faça login no sistema.
+            {session?.user ? (
+              <>
+                <strong>Você não é membro deste quadro.</strong> Está visualizando esta demanda em <strong>modo somente leitura</strong> através de um link de compartilhamento. Para editar, iniciar o timer, comentar ou interagir, peça ao responsável para adicioná-lo(a) como membro do quadro.
+              </>
+            ) : (
+              <>
+                <strong>Modo de visualização:</strong> Você está visualizando esta demanda através de um link de compartilhamento.
+                Para editar ou interagir, faça login no sistema.
+              </>
+            )}
           </div>
         </div>
 
