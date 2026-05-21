@@ -137,15 +137,21 @@ export default function SharedDemand() {
             <img src={logoSoma} alt="Logo" className="h-8" />
             <Badge variant="secondary" className="gap-1">
               <ExternalLink className="h-3 w-3" />
-              Visualização Pública
+              {session?.user ? "Modo Somente Leitura" : "Visualização Pública"}
             </Badge>
           </div>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/auth">
-              <Lock className="mr-2 h-4 w-4" />
-              Fazer login
-            </Link>
-          </Button>
+          {session?.user ? (
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/">Voltar ao sistema</Link>
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/auth">
+                <Lock className="mr-2 h-4 w-4" />
+                Fazer login
+              </Link>
+            </Button>
+          )}
         </div>
       </header>
 
