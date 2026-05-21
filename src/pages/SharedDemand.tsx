@@ -184,9 +184,15 @@ export default function SharedDemand() {
           <Lock className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-amber-800 dark:text-amber-200">
             {session?.user ? (
-              <>
-                <strong>Você não é membro deste quadro.</strong> Está visualizando esta demanda em <strong>modo somente leitura</strong> através de um link de compartilhamento. Para editar, iniciar o timer, comentar ou interagir, peça ao responsável para adicioná-lo(a) como membro do quadro.
-              </>
+              autoJoinReason === "not_team_member" ? (
+                <>
+                  <strong>Você não faz parte da equipe deste quadro.</strong> Para entrar automaticamente no quadro através deste link, você precisa primeiro ser adicionado à equipe pelo administrador. Enquanto isso, está visualizando em <strong>modo somente leitura</strong>.
+                </>
+              ) : (
+                <>
+                  <strong>Você não é membro deste quadro.</strong> Está visualizando esta demanda em <strong>modo somente leitura</strong> através de um link de compartilhamento. Para editar, iniciar o timer, comentar ou interagir, peça ao responsável para adicioná-lo(a) como membro do quadro.
+                </>
+              )
             ) : (
               <>
                 <strong>Modo de visualização:</strong> Você está visualizando esta demanda através de um link de compartilhamento.
