@@ -134,6 +134,17 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Cap raw HTML length to prevent abuse via arbitrary large payloads
+    if (html && html.length > 100_000) {
+      return new Response(
+        JSON.stringify({ error: "HTML content too large (max 100KB)" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
     let recipientEmail = to;
     let recipientUserId: string | null = null;
 
