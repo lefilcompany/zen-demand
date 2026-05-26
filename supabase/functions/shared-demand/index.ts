@@ -126,6 +126,7 @@ Deno.serve(async (req) => {
         profiles(full_name, avatar_url)
       `)
       .eq("demand_id", tokenData.demand_id)
+      .eq("channel", "general")
       .order("created_at", { ascending: false });
 
     if (interactionsError) {
