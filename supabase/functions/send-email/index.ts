@@ -134,6 +134,17 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Cap raw HTML length to prevent abuse via arbitrary large payloads
+    if (html && html.length > 100_000) {
+      return new Response(
+        JSON.stringify({ error: "HTML content too large (max 100KB)" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
     let recipientEmail = to;
     let recipientUserId: string | null = null;
 
@@ -175,6 +186,33 @@ const handler = async (req: Request): Promise<Response> => {
 
       recipientEmail = userData.user.email;
       console.log(`Found email for user: ${recipientEmail}`);
+
+      // Authorization: caller must share a team with the recipient (prevents arbitrary cross-user emails)
+      const { data: sharedTeam } = await supabaseAdmin
+        .from("team_members")
+        .select("team_id")
+        .eq("user_id", userId)
+        .in(
+          "team_id",
+          (
+            await supabaseAdmin
+              .from("team_members")
+              .select("team_id")
+              .eq("user_id", recipientUserId)
+          ).data?.map((r: { team_id: string }) => r.team_id) || []
+        )
+        .limit(1);
+
+      if (userId !== recipientUserId && (!sharedTeam || sharedTeam.length === 0)) {
+        console.warn(`User ${userId} attempted to email user ${recipientUserId} without shared team`);
+        return new Response(
+          JSON.stringify({ error: "Forbidden: recipient not in your team" }),
+          {
+            status: 403,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
     }
 
     // Respect recipient notification preferences (emailNotifications toggle)

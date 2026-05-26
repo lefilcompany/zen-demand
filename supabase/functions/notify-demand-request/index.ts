@@ -364,19 +364,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Notify demand request from user: ${userId}`);
 
-    const {
-      requestId,
-      teamId,
-      boardId,
-      title,
-      description,
-      priority,
-      requesterName,
-    }: NotifyRequest = await req.json();
+    const { requestId }: NotifyRequest = await req.json();
 
-    if (!requestId || !teamId || !boardId || !title) {
+    if (!requestId) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
+        JSON.stringify({ error: "Missing required field: requestId" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -401,6 +393,48 @@ const handler = async (req: Request): Promise<Response> => {
         persistSession: false,
       },
     });
+
+    // Trusted lookup: fetch the demand_request from DB and verify the caller owns it.
+    const { data: requestRecord, error: requestErr } = await supabaseAdmin
+      .from("demand_requests")
+      .select("id, team_id, board_id, title, description, priority, created_by")
+      .eq("id", requestId)
+      .maybeSingle();
+
+    if (requestErr || !requestRecord) {
+      return new Response(
+        JSON.stringify({ error: "Request not found" }),
+        { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (requestRecord.created_by !== userId) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const teamId = requestRecord.team_id as string;
+    const boardId = requestRecord.board_id as string;
+    const title = requestRecord.title as string;
+    const description = (requestRecord.description as string | null) || undefined;
+    const priority = (requestRecord.priority as string) || "média";
+
+    if (!boardId) {
+      return new Response(
+        JSON.stringify({ error: "Request has no board associated" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Derive requesterName from the authenticated user's profile (never trust client input)
+    const { data: requesterProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("full_name")
+      .eq("id", userId)
+      .maybeSingle();
+    const requesterName = requesterProfile?.full_name || "Um usuário";
 
     // Get board name
     const { data: board } = await supabaseAdmin

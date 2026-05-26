@@ -14,6 +14,25 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get("authorization") || "";
+    const cronSecret = Deno.env.get("CRON_SECRET");
+    const isCronCall = !!cronSecret && authHeader === `Bearer ${cronSecret}`;
+    let isServiceRole = false;
+    if (!isCronCall && authHeader.startsWith("Bearer ")) {
+      try {
+        const payload = JSON.parse(atob(authHeader.replace("Bearer ", "").split(".")[1] || ""));
+        isServiceRole = payload?.role === "service_role";
+      } catch {
+        isServiceRole = false;
+      }
+    }
+    if (!isCronCall && !isServiceRole) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
