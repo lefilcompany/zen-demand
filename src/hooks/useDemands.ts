@@ -3,6 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Json } from "@/integrations/supabase/types";
 import { useEffect } from "react";
+import { toast } from "sonner";
+import { usePlansModal } from "@/contexts/PlansModalContext";
+import { showPlanLimitToast } from "@/lib/planLimitErrors";
 import { 
   DemandCreateSchema, 
   DemandUpdateSchema, 
@@ -217,6 +220,7 @@ export function useDemandStatuses() {
 export function useCreateDemand() {
   const queryClient = useQueryClient();
   const { user, refreshSession } = useAuth();
+  const { openPlans } = usePlansModal();
 
   return useMutation({
     mutationFn: async (data: {
@@ -334,6 +338,10 @@ export function useCreateDemand() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["demands"] });
+    },
+    onError: (error: Error) => {
+      if (showPlanLimitToast(error, openPlans)) return;
+      // Other errors are surfaced by callers via toast/UI.
     },
   });
 }

@@ -203,7 +203,11 @@ export function CreateDemandQuickDialog({
         navigate(`/demands/${result.id}`);
       }
     } catch (error) {
-      toast.error("Erro ao criar demanda");
+      // The useCreateDemand hook already shows a friendly toast for plan-limit errors.
+      const msg = error instanceof Error ? error.message : "";
+      if (!/PLAN_LIMIT_/.test(msg)) {
+        toast.error("Erro ao criar demanda");
+      }
       console.error("Error creating demand:", error);
     }
   };
