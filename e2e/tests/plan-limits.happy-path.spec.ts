@@ -9,12 +9,15 @@ test.describe("Plan limits — Happy path (Enterprise)", () => {
     await loginAs(team);
 
     await page.goto("/boards");
-    const cta = page.getByRole("button", { name: /novo quadro/i }).first();
+    await expect(page.getByRole("heading", { name: /meus quadros/i })).toBeVisible({ timeout: 15_000 });
+    const cta = page.getByRole("button", { name: /^novo quadro$/i });
     await cta.waitFor({ state: "visible", timeout: 15_000 });
     await cta.click();
 
-    // Wizard dialog must open and no plan-limit toast appears.
-    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 12_000 });
+    // The create-board wizard should open, not the plans-limit toast.
+    await expect(page.getByRole("dialog", { name: /criar novo quadro/i })).toBeVisible({ timeout: 12_000 });
+    await expect(page.getByText(/nome do quadro é obrigatório/i)).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /ver planos/i })).toHaveCount(0);
     await expect(page.getByText(/permite até .* quadro/i)).toHaveCount(0);
   });
 
