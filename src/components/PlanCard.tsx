@@ -205,7 +205,7 @@ export function PlanCard({
         {/* CTA Button */}
         <Button
           className={cn(
-            "w-full h-14 text-base font-bold tracking-wide uppercase mb-6",
+            "w-full h-14 text-xs sm:text-sm font-bold tracking-wide uppercase mb-6 px-2",
             "bg-gradient-to-r from-primary via-orange-500 to-primary bg-[length:200%_100%] bg-left",
             "text-white border-0 shadow-xl shadow-primary/40",
             "hover:bg-right hover:shadow-2xl hover:shadow-primary/60 hover:-translate-y-0.5 hover:scale-[1.02]",
@@ -218,21 +218,22 @@ export function PlanCard({
         >
           {isCurrentPlan ? (
             <>
-              <Check className="h-5 w-5 mr-2" />
-              {t("pricing.currentPlan")}
+              <Check className="h-4 w-4 mr-1.5 flex-shrink-0" />
+              <span className="truncate">{t("pricing.currentPlan")}</span>
             </>
           ) : plan.slug === "enterprise" ? (
             <>
-              <Sparkles className="h-5 w-5 mr-2" />
-              {t("pricing.contactSales")}
+              <Sparkles className="h-4 w-4 mr-1.5 flex-shrink-0" />
+              <span className="truncate">{t("pricing.contactSales")}</span>
             </>
           ) : (
             <>
-              <Sparkles className="h-5 w-5 mr-2" />
-              {t("pricing.selectPlan")}
+              <Sparkles className="h-4 w-4 mr-1.5 flex-shrink-0" />
+              <span className="truncate">{t("pricing.selectPlan")}</span>
             </>
           )}
         </Button>
+
 
 
         {/* Features List */}
