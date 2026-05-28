@@ -129,7 +129,12 @@ export function useCreateBoard() {
 
       if (error) {
         console.error("Erro ao criar quadro:", error);
-        
+
+        // Plan-limit errors raised by BEFORE INSERT triggers
+        if (error.message && /PLAN_LIMIT_/.test(error.message)) {
+          throw new Error(error.message);
+        }
+
         // Map error codes to user-friendly messages
         if (error.code === "42501" || error.message?.includes("Permission denied")) {
           throw new Error("Você não tem permissão para criar quadros nesta equipe. É necessário ser administrador ou moderador.");
