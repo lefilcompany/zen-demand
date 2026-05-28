@@ -2579,6 +2579,10 @@ export type Database = {
         Returns: boolean
       }
       check_access_code_exists: { Args: { code: string }; Returns: boolean }
+      check_plan_limit: {
+        Args: { _resource: string; _team_id: string }
+        Returns: Json
+      }
       check_subscription_limit: {
         Args: { _resource_type: string; _team_id: string }
         Returns: boolean
