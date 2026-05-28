@@ -24,7 +24,7 @@ async function fetchPlanLimit(teamId: string, resource: PlanResource): Promise<P
     // On error, fail-open so we don't block users due to network issues.
     return { allowed: true };
   }
-  return (data as PlanLimitStatus) ?? { allowed: true };
+  return (data as unknown as PlanLimitStatus) ?? { allowed: true };
 }
 
 export function usePlanLimitStatus(resource: PlanResource, teamId?: string) {
