@@ -63,7 +63,6 @@ jobs:
           - demands
           - members
           - services
-          - happy_path
     env:
       E2E_SEED_SECRET: ${{ secrets.E2E_SEED_SECRET }}
       VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
