@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 3 * * *"
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: "true"
+
+jobs:
+  lint-and-typecheck:
+    name: Lint + Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: latest }
+      - name: Install deps
+        run: bun install --frozen-lockfile
+      - name: ESLint
+        run: bun run lint
+      - name: TypeScript
+        run: bunx tsc --noEmit
+
+  unit:
+    name: Unit tests (Vitest)
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: latest }
+      - name: Install deps
+        run: bun install --frozen-lockfile
+      - name: Run Vitest
+        run: bunx vitest run --reporter=default
+
+  e2e:
+    name: E2E ${{ matrix.spec }}
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        spec:
+          - boards
+          - demands
+          - notes
+          - members
+          - services
+          - happy-path
+    env:
+      E2E_SEED_SECRET: ${{ secrets.E2E_SEED_SECRET }}
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: latest }
+      - name: Install deps
+        run: bun install --frozen-lockfile
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock', 'package.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+      - name: Install Playwright (chromium)
+        run: bunx playwright install --with-deps chromium
+      - name: Write .env for Vite
+        run: |
+          {
+            echo "VITE_SUPABASE_URL=$VITE_SUPABASE_URL"
+            echo "VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY"
+            echo "VITE_SUPABASE_PROJECT_ID=$VITE_SUPABASE_PROJECT_ID"
+          } > .env
+      - name: Run Playwright (${{ matrix.spec }})
+        run: bunx playwright test e2e/tests/plan-limits.${{ matrix.spec }}.spec.ts
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.spec }}
+          path: playwright-report/
+          retention-days: 14
+      - name: Upload traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces-${{ matrix.spec }}
+          path: test-results/
+          retention-days: 7

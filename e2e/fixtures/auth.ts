@@ -33,7 +33,6 @@ export async function primeBrowser(
   selectedTeamId: string,
   baseURL: string,
 ): Promise<void> {
-  // Use addInitScript so the storage is present BEFORE app code reads it.
   const payload = {
     access_token: session.access_token,
     refresh_token: session.refresh_token,
@@ -49,10 +48,21 @@ export async function primeBrowser(
     } catch (e) { console.warn("prime failed", e); }
   `;
   await context.addInitScript({ content: script });
-  // Touch the origin once so storage applies.
+
+  // Touch the origin once so storage applies, then verify the token persisted.
   const page = await context.newPage();
-  await page.goto(baseURL + "/welcome", { waitUntil: "domcontentloaded" }).catch(() => {});
-  await page.close();
+  try {
+    await page.goto(baseURL, { waitUntil: "domcontentloaded" }).catch(() => {});
+    await page
+      .waitForFunction(
+        ([k, t]) => !!window.localStorage.getItem(k) && window.localStorage.getItem("selectedTeamId") === t,
+        [STORAGE_KEY, selectedTeamId],
+        { timeout: 5000 },
+      )
+      .catch(() => {});
+  } finally {
+    await page.close();
+  }
 }
 
 export async function gotoApp(page: Page, path = "/"): Promise<void> {

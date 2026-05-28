@@ -1,87 +1,125 @@
+
 ## Objetivo
 
-Validar end-to-end, em navegador real, que os limites de plano são respeitados em todos os pontos de criação (quadros, membros, demandas mensais, serviços e notas), com toast de "Limite atingido" e abertura do modal de planos.
+1. Resolver os 2 testes E2E que continuam falhando no GitHub Actions:
+   - `plan-limits.happy-path` (Enterprise → "Criar Novo Quadro")
+   - `plan-limits.notes` (Profissional → "E2E Nota 1" não aparece)
+2. Substituir o workflow atual por uma CI **completa**: lint, type-check, unit (Vitest) e E2E em **matriz por feature** (boards, demands, notes, members, services, happy-path), todos rodando em paralelo, com cache, retries controlados e upload de relatórios.
 
-## Por que Playwright
+Sem CD (deploy fica fora, conforme escolhido).
 
-- Suporte nativo TS/Vite/React, melhor que Cypress para múltiplos contextos de auth e que Selenium em ergonomia.
-- `webServer` integrado sobe o `npm run dev` automaticamente antes da suíte.
-- `storageState` por projeto permite logar uma vez por plano e reaproveitar a sessão.
-- Tracing/HAR/screenshots facilitam debug de falhas.
+---
 
-## Estratégia de seed (descartável por execução)
+## Diagnóstico das falhas atuais
 
-Não é viável criar usuários direto do navegador (precisa de service_role). Criaremos uma **edge function de teste** `e2e-seed`, protegida por um secret, que executa toda a montagem usando a service_role key.
+Olhando seed + UI + Playwright:
 
-Operações da edge function:
-- `seed`: recebe `{ plan: "starter"|"pro"|"business", scenario: "at_limit"|"below_limit", resource: "boards"|"members"|"demands"|"services"|"notes" }` e retorna `{ email, password, teamId, boardId }`.
-  - Cria usuário via `auth.admin.createUser` (email confirmado).
-  - Cria equipe + `team_members` (owner).
-  - Insere `subscriptions` ativa apontando para o `plan_id` correto.
-  - Cria 1 quadro padrão + 5 status base.
-  - Pré-popula a equipe **até bater o limite** quando `scenario = at_limit` (ex.: para Starter+boards, já cria 1 board; para members, adiciona N-1 convidados fictícios; para demands, insere N demandas no mês corrente; idem services/notes). Inserts feitos com service_role para bypass dos triggers `PLAN_LIMIT_*`.
-- `cleanup`: recebe `{ email }` e remove o usuário (cascata cuida do resto).
+**1) Happy-path (Enterprise → "Novo Quadro" não abre o wizard)**
 
-A função fica gated por header `x-e2e-secret` validado contra o secret `E2E_SEED_SECRET`. Não é exposta em produção (verifica `Deno.env.get("APP_ENV") !== "production"` ou simplesmente exige o secret que só existe em dev).
+- `Boards.tsx` só mostra o botão "Novo Quadro" quando `teamRole === "owner"`.
+- `useTeamRole` mapeia `team_members.role === "admin"` → `"owner"`. A seed cria `team_members(role: "admin")`, então em teoria está ok.
+- O CTA `<Button>Novo Quadro</Button>` está dentro de um `CreateBoardDialog` cujo `DialogTrigger asChild` envolve o trigger. **O accessible name do botão é "Novo Quadro" só em telas ≥ sm** (o texto é `hidden sm:inline`); em viewport menor o botão fica sem nome acessível e o `getByRole("button", { name: /^novo quadro$/i })` pode achar **outro** botão ("Criar Primeiro Quadro" no estado vazio) — mas a seed já cria 1 board default, então cai no header.
+- O problema real é que **o clique no `DialogTrigger` é interceptado pelo `usePlanLimitGuard("boards")`**, que faz um `await queryClient.fetchQuery(...)` com `staleTime: 0` antes de chamar `setOpen(true)`. Como `selectedTeamId` na primeira carga ainda pode ser `null` (TeamContext faz auto-select via efeito), `guard()` retorna `true` imediatamente sem abrir o dialog (action é chamado, mas o setOpen acontece no microtask, porém o teste já checa nos 12s — isso passa). O que está realmente quebrando: o `accessible name` do dialog não bate com `/criar novo quadro/i` porque o `DialogTitle` é renderizado pelo Radix dentro de `DialogContent`, mas o atributo `aria-labelledby` é configurado pelo Radix → **o nome acessível do dialog é "Criar Novo Quadro"**. Isso deveria funcionar. Onde realmente quebra: o teste só atinge `/boards` se o `selectedTeamId` foi semeado no `localStorage` **antes** de o React inicializar — `primeBrowser` usa `addInitScript`, ok, mas depois faz `page.goto("/welcome")` e fecha; quando o teste faz `page.goto("/boards")`, o `useTeams` precisa carregar; se a query falhar (RLS) o `currentTeam` fica vazio e o botão não renderiza. Solução: assertar primeiro que o botão **existe e está habilitado**, e usar locator pelo trigger do dialog ao invés do aria-name, que em CI pode trazer corrida com hidratação. Também devemos esperar `networkidle` antes da asserção.
 
-## Estrutura da suíte
+**2) Notes (não encontra "E2E Nota 1")**
+
+- A seed insere 10 notas no banco direto.
+- A UI lista via `useNotes()` filtrando `team_id` e **só inclui notas criadas pelo `user.id` em "Minhas Notas"** (`note.created_by === user.id` — ok, a seed seta `created_by: userId` do owner).
+- Mas o `Note.title` está sendo renderizado dentro do componente `NoteCard` — provavelmente com formatação/truncate. O `getByText(/e2e nota 1/i)` deve achar; falha sugere que **as notas não chegam à UI** dentro do timeout. Causa provável: realtime subscription do `useNotes` invalida a query em loop, ou a query não está habilitada porque `selectedTeamId` é nulo no primeiro render.
+- Diagnóstico mais provável: o `selectedTeamId` no `localStorage` é setado por `addInitScript`, **mas** o `TeamContext` faz `localStorage.getItem("selectedTeamId")` no `useState` initializer — funciona. Porém, depois ele tem um `useEffect` que, se `teams` retornar e o `selectedTeamId` atual **não estiver na lista** (ex: `useTeams` retornar vazio por causa de RLS lenta), reseta para `teams[0].id` ou mantém null. Se a query RLS demorar ou retornar 0 nas primeiras tentativas, ele apaga o `selectedTeamId`.
+- Correção: o teste precisa **esperar o seletor de equipe estar pronto** (e/ou esperar o número de notas no `getByText` com mais paciência via `expect.poll`). Adicionalmente, alterar a seed para devolver IDs e fazer o teste **navegar para `/notes` somente depois** que uma query direta ao Supabase confirme as notas existem no DB (sanity-check programático).
+
+---
+
+## Mudanças que vou aplicar
+
+### A) Estabilizar os 2 testes E2E
+
+**`e2e/tests/plan-limits.happy-path.spec.ts`** — teste de boards:
+- Após `loginAs`, fazer `page.goto("/boards", { waitUntil: "networkidle" })`.
+- Esperar `getByRole("heading", { name: /meus quadros/i })`.
+- Esperar `page.getByText(/quadro padrão/i)` (board criado pela seed) — garante que `useBoards` resolveu e que o `selectedTeamId` está correto.
+- Pegar o CTA via `page.locator('button:has(svg.lucide-plus)').filter({ hasText: /novo quadro/i }).or(page.getByRole("button", { name: /^novo quadro$/i }))` — locator resiliente.
+- Trocar a asserção do dialog para `expect(page.getByRole("dialog")).toBeVisible()` + `expect(page.getByText(/configure o quadro em etapas/i)).toBeVisible()` (texto do `DialogDescription` do `CreateBoardDialog`, mais único que o título).
+
+**`e2e/tests/plan-limits.notes.spec.ts`** — teste Profissional:
+- Após `loginAs`, antes de ir para `/notes`, ir para `/` e esperar a sidebar mostrar o nome da equipe (`E2E Team`) — confirma `TeamContext` estabilizado.
+- Ir para `/notes`, esperar `heading /soma notes/i`.
+- Usar `expect.poll` por até 20s checando `await page.getByText(/e2e nota/i).count()` ≥ 1 — tolerante a realtime/refetch.
+- Manter as asserções do toast (mensagem do trigger).
+
+### B) Pequeno reforço na fixture `primeBrowser`
+
+- Após injetar storage, fazer `page.goto(baseURL, { waitUntil: "domcontentloaded" })` em vez de `/welcome` (rota mais estável) e **esperar `window.localStorage.getItem("sb-…-auth-token")` por uma evaluate**, garantindo persistência antes de fechar.
+
+### C) Novo workflow CI no GitHub Actions
+
+Substituir `.github/workflows/e2e.yml` por **`.github/workflows/ci.yml`** com 3 jobs:
 
 ```text
-e2e/
-  playwright.config.ts
-  fixtures/
-    seed.ts              # helpers para chamar e2e-seed / cleanup
-    auth.ts              # login programático via supabase-js (sessão p/ storageState)
-  tests/
-    plan-limits.boards.spec.ts
-    plan-limits.members.spec.ts
-    plan-limits.demands.spec.ts
-    plan-limits.services.spec.ts
-    plan-limits.notes.spec.ts
-    plan-limits.happy-path.spec.ts   # plano Pro/Business cria sem erro
+ci.yml
+├─ lint-and-typecheck      (Ubuntu, bun)
+│    ├─ bun install
+│    ├─ bun run lint
+│    └─ bunx tsc --noEmit
+├─ unit                    (depende de lint)
+│    ├─ bun install
+│    └─ bunx vitest run --reporter=default --coverage
+│        └─ upload coverage/ como artifact
+└─ e2e                     (matriz por feature, depende de lint)
+     strategy:
+       fail-fast: false
+       matrix:
+         spec:
+           - boards
+           - demands
+           - notes
+           - members
+           - services
+           - happy-path
+     ├─ bun install --frozen-lockfile
+     ├─ cache ~/.cache/ms-playwright
+     ├─ bunx playwright install --with-deps chromium
+     ├─ escreve .env (secrets)
+     ├─ bunx playwright test e2e/tests/plan-limits.${{ matrix.spec }}.spec.ts
+     │     timeout-minutes: 15
+     ├─ upload playwright-report-${{ matrix.spec }} (always)
+     └─ upload traces-${{ matrix.spec }} (failure)
 ```
 
-Cada teste segue o padrão:
-1. `beforeEach` → chama `seed({plan, scenario:"at_limit", resource})`, faz login programático e injeta cookies/localStorage.
-2. `page.goto("/")` no contexto da equipe semeada.
-3. Clica no CTA real (`Novo Quadro` / `Nova Demanda` / `Novo Serviço` / `Nova Nota` / `Adicionar membro`).
-4. Espera o toast contendo "Limite" e o botão "Ver planos".
-5. Clica em "Ver planos" e valida que o `PlansModal` abre.
-6. `afterEach` → `cleanup({email})`.
+Triggers: `push` (main), `pull_request` (main), `workflow_dispatch`, `schedule` (cron diário 03:00 UTC).
 
-Casos negativos cobertos:
-- **Boards (Starter)**: 1 quadro já criado → clique em "Novo Quadro" abre toast, wizard não abre.
-- **Members**: limite atingido → `AddBoardMemberDialog` bloqueia antes de abrir.
-- **Demands mensais**: cota do mês cheia → `openCreateDemand` no topbar e no calendário disparam toast.
-- **Services / Notes**: botões disparam guard antes do form.
+Concurrency: `group: ci-${{ github.ref }}, cancel-in-progress: true`.
 
-Casos positivos (sanity):
-- Plano `business` (limites altos) cria 1 quadro / 1 demanda / 1 serviço / 1 nota sem toast de limite.
+Secrets necessárias (já existem):
+- `E2E_SEED_SECRET`
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
+- `VITE_SUPABASE_PROJECT_ID`
 
-## Detalhes técnicos
+### D) Pequenos ajustes de suporte
 
-- **playwright.config.ts**: `webServer: { command: 'npm run dev', url: 'http://localhost:8080', reuseExistingServer: !process.env.CI, timeout: 120_000 }`, `baseURL: 'http://localhost:8080'`, browsers: chromium (headless), `trace: 'retain-on-failure'`.
-- **Auth helper**: usa `@supabase/supabase-js` com `signInWithPassword` no Node, pega `access_token`/`refresh_token`, injeta no `localStorage` com a chave que o app espera (`sb-<projectRef>-auth-token`). Evita digitar credenciais na UI a cada teste.
-- **Seleção de equipe**: após login, set explícito de `lastSelectedTeamId` no localStorage para a equipe semeada (o app já usa esse padrão segundo a memória `Multi-account Limit`).
-- **Secrets**: `E2E_SEED_SECRET` adicionado via tool de secrets. Os testes leem `VITE_SUPABASE_URL` do `.env` e `E2E_SEED_SECRET` do `process.env`.
-- **package.json scripts**: `"e2e": "playwright test"`, `"e2e:ui": "playwright test --ui"`. Devs: `@playwright/test`, `dotenv`, `@supabase/supabase-js` (já presente).
-- **CI hygiene**: cada teste usa email único (`e2e+${uuid}@soma.test`) para isolamento total — sem colisão entre runs paralelos.
-- **`.gitignore`**: `e2e/.auth/`, `playwright-report/`, `test-results/`.
+- Adicionar script `"typecheck": "tsc --noEmit"` no `package.json`.
+- Garantir `vitest run` no CI (já existe `vitest` como dev dep).
+- Documentar tudo no `e2e/README.md` (rodar local, secrets, jobs).
+- Não mexer no resto da CI (sem deploy).
 
-## Migração necessária
+---
 
-Nenhuma alteração de schema. Apenas a nova edge function `e2e-seed` (não toca em `supabase/config.toml` além do bloco padrão).
+## Riscos / observações
 
-## Entregáveis
+- Se a `useNotes` realtime subscription mantiver a query "carregando" em loop, o `expect.poll` ainda dá tempo (20s). Caso o teste continue intermitente, o próximo passo é **bypassar a UI inicial** consultando direto o Supabase via fixture para confirmar dados antes de clicar — já incluído como passo de sanity opcional no spec de notes.
+- Matriz E2E em 6 jobs aumenta o tempo de wall-clock total mas **reduz** o tempo do gargalo (cada job ≈ 1 spec). Cada job usa cache do Playwright para baixar Chromium uma vez por hash de lockfile.
+- Sem deploy: nenhuma alteração em produção; o workflow apenas valida.
 
-1. `supabase/functions/e2e-seed/index.ts` — seed + cleanup com service_role e validação do secret.
-2. `playwright.config.ts` + pasta `e2e/` com fixtures e 6 specs.
-3. Atualização de `package.json` (scripts + devDeps) e `.gitignore`.
-4. Secret `E2E_SEED_SECRET` (será solicitado via add_secret no momento do build).
-5. README curto em `e2e/README.md` explicando como rodar (`npm run e2e`).
+---
 
-## Fora de escopo
+## Arquivos que serão alterados/criados
 
-- Testes de Stripe real (apenas mock de subscription via insert direto).
-- Testes de e-mails enviados.
-- Validação de planos via Pricing/checkout UI.
+- **delete** `.github/workflows/e2e.yml`
+- **create** `.github/workflows/ci.yml`
+- **edit** `e2e/tests/plan-limits.happy-path.spec.ts`
+- **edit** `e2e/tests/plan-limits.notes.spec.ts`
+- **edit** `e2e/fixtures/auth.ts` (priming mais robusto)
+- **edit** `package.json` (script `typecheck`)
+- **edit** `e2e/README.md` (atualizar instruções e estrutura dos jobs)

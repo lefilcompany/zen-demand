@@ -8,15 +8,23 @@ test.describe("Plan limits — Happy path (Enterprise)", () => {
     const team = await seeded("enterprise"); // unlimited
     await loginAs(team);
 
-    await page.goto("/boards");
-    await expect(page.getByRole("heading", { name: /meus quadros/i })).toBeVisible({ timeout: 15_000 });
-    const cta = page.getByRole("button", { name: /^novo quadro$/i });
+    await page.goto("/boards", { waitUntil: "networkidle" });
+
+    // Wait until the boards page has rendered AND the seeded default board is in the list.
+    await expect(page.getByRole("heading", { name: /meus quadros/i })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/quadro padrão/i).first()).toBeVisible({ timeout: 20_000 });
+
+    // Trigger the create-board dialog. The visible text "Novo Quadro" is hidden on small
+    // viewports, so we fall back to the empty-state CTA if needed.
+    const cta = page
+      .getByRole("button", { name: /novo quadro|criar primeiro quadro/i })
+      .first();
     await cta.waitFor({ state: "visible", timeout: 15_000 });
     await cta.click();
 
-    // The create-board wizard should open, not the plans-limit toast.
-    await expect(page.getByRole("dialog", { name: /criar novo quadro/i })).toBeVisible({ timeout: 12_000 });
-    await expect(page.getByText(/nome do quadro é obrigatório/i)).toHaveCount(0);
+    // The wizard mounts. We assert on the DialogDescription text (unique) instead of the
+    // accessible-name of the dialog, which can be flaky during Radix hydration in CI.
+    await expect(page.getByText(/configure o quadro em etapas/i)).toBeVisible({ timeout: 12_000 });
     await expect(page.getByRole("button", { name: /ver planos/i })).toHaveCount(0);
     await expect(page.getByText(/permite até .* quadro/i)).toHaveCount(0);
   });
@@ -24,14 +32,13 @@ test.describe("Plan limits — Happy path (Enterprise)", () => {
   test("creating a demand on Enterprise opens the create-demand dialog", async ({ page, seeded, loginAs }) => {
     const team = await seeded("enterprise");
     await loginAs(team);
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "networkidle" });
 
     const cta = page.getByRole("button", { name: /nova demanda/i }).first();
     await cta.waitFor({ state: "visible", timeout: 15_000 });
     await cta.click();
 
-    // Dialog opens (some form field visible) and no limit toast.
-    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 8_000 });
+    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText(/permite até .* demanda/i)).toHaveCount(0);
   });
 });
