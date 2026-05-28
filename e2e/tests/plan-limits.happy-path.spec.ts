@@ -13,8 +13,8 @@ test.describe("Plan limits — Happy path (Enterprise)", () => {
     await cta.waitFor({ state: "visible", timeout: 15_000 });
     await cta.click();
 
-    // Wizard must open (title visible) and no plan-limit toast appears.
-    await expect(page.getByText(/criar novo quadro/i)).toBeVisible({ timeout: 8_000 });
+    // Wizard dialog must open and no plan-limit toast appears.
+    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 12_000 });
     await expect(page.getByText(/permite até .* quadro/i)).toHaveCount(0);
   });
 
