@@ -95,6 +95,7 @@ export default function Demands() {
   } = useTranslation();
   const navigate = useNavigate();
   const { openCreateDemand } = useCreateDemandModal();
+  const guardDemands = usePlanLimitGuard("demands");
   const location = useLocation();
   const {
     user
