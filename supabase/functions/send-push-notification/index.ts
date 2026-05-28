@@ -291,7 +291,7 @@ Deno.serve(async (req: Request) => {
           .from("team_members")
           .select("user_id")
           .in("team_id", callerTeamIds)
-          .in("user_id", uniqueUserIds);
+          .in("user_id", allowedUserIds);
         const sharedSet = new Set((sharedMembers || []).map((r: { user_id: string }) => r.user_id));
         sharedSet.add(callerUserId);
         allowedUserIds = uniqueUserIds.filter((id) => sharedSet.has(id));
@@ -314,7 +314,7 @@ Deno.serve(async (req: Request) => {
       .from("user_preferences")
       .select("user_id, preference_value")
       .eq("preference_key", "fcm_token")
-      .in("user_id", uniqueUserIds);
+      .in("user_id", allowedUserIds);
 
     if (fcmError) {
       console.error("Error fetching FCM tokens:", fcmError);
@@ -326,7 +326,7 @@ Deno.serve(async (req: Request) => {
       .from("user_preferences")
       .select("user_id, preference_value")
       .eq("preference_key", "notification_preferences")
-      .in("user_id", uniqueUserIds);
+      .in("user_id", allowedUserIds);
 
     if (notifError) {
       console.error("Error fetching notification preferences:", notifError);
