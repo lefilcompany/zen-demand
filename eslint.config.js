@@ -47,6 +47,10 @@ export default tseslint.config(
       "no-irregular-whitespace": "warn",
       "react-hooks/rules-of-hooks": "warn",
       "react-hooks/exhaustive-deps": "warn",
+      "no-shadow-restricted-names": "warn",
+      "prefer-const": "warn",
+      "@typescript-eslint/prefer-as-const": "warn",
+      "no-useless-catch": "warn",
     },
   },
   {
