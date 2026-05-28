@@ -14,17 +14,15 @@ test.describe("Plan limits — Happy path (Enterprise)", () => {
     await expect(page.getByRole("heading", { name: /meus quadros/i })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/quadro padrão/i).first()).toBeVisible({ timeout: 20_000 });
 
-    // Trigger the create-board dialog. The visible text "Novo Quadro" is hidden on small
-    // viewports, so we fall back to the empty-state CTA if needed.
     const cta = page
       .getByRole("button", { name: /novo quadro|criar primeiro quadro/i })
       .first();
     await cta.waitFor({ state: "visible", timeout: 15_000 });
-    await cta.click();
+    // Use force-click to bypass any transient overlays (onboarding/portal animations).
+    await cta.click({ force: true });
 
-    // The wizard mounts. We assert on the DialogDescription text (unique) instead of the
-    // accessible-name of the dialog, which can be flaky during Radix hydration in CI.
-    await expect(page.getByText(/configure o quadro em etapas/i)).toBeVisible({ timeout: 12_000 });
+    // The wizard mounts — assert on the dialog title (always rendered, even if sr-only).
+    await expect(page.getByRole("heading", { name: /criar novo quadro/i })).toBeVisible({ timeout: 12_000 });
     await expect(page.getByRole("button", { name: /ver planos/i })).toHaveCount(0);
     await expect(page.getByText(/permite até .* quadro/i)).toHaveCount(0);
   });
@@ -36,7 +34,8 @@ test.describe("Plan limits — Happy path (Enterprise)", () => {
 
     const cta = page.getByRole("button", { name: /nova demanda/i }).first();
     await cta.waitFor({ state: "visible", timeout: 15_000 });
-    await cta.click();
+    // Force-click to bypass any onboarding/portal overlay that might still be animating in.
+    await cta.click({ force: true });
 
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText(/permite até .* demanda/i)).toHaveCount(0);

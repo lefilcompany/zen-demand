@@ -45,6 +45,8 @@ export async function primeBrowser(
     try {
       window.localStorage.setItem(${JSON.stringify(STORAGE_KEY)}, ${JSON.stringify(JSON.stringify(payload))});
       window.localStorage.setItem("selectedTeamId", ${JSON.stringify(selectedTeamId)});
+      window.localStorage.setItem(${JSON.stringify(`onboarding_completed_${session.user.id}`)}, "true");
+      window.localStorage.setItem("onboarding_completed", "true");
     } catch (e) { console.warn("prime failed", e); }
   `;
   await context.addInitScript({ content: script });
