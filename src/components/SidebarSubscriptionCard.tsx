@@ -42,9 +42,8 @@ function SidebarSubscriptionCardInner({ onOpenPlans }: { onOpenPlans: () => void
     isLoading: subLoading
   } = useTeamSubscription(currentTeam?.id);
   const showText = isMobile || !isCollapsed;
-  const [plansOpen, setPlansOpen] = useState(false);
   const handleClick = () => {
-    setPlansOpen(true);
+    onOpenPlans();
     if (isMobile) {
       setOpenMobile(false);
     }
