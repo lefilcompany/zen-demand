@@ -202,8 +202,31 @@ export function PlanCard({
           )}
         </div>
 
+        {/* CTA Button */}
+        <Button
+          className={cn(
+            "w-full h-12 text-base font-semibold transition-all duration-300 mb-6",
+            isPopular && !isCurrentPlan && "bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 shadow-lg shadow-primary/25",
+            isCurrentPlan && "bg-success hover:bg-success/90"
+          )}
+          variant={isPopular || isCurrentPlan ? "default" : "outline"}
+          onClick={() => onSelect?.(plan)}
+          disabled={isCurrentPlan || isLoading}
+        >
+          {isCurrentPlan ? (
+            <>
+              <Check className="h-4 w-4 mr-2" />
+              {t("pricing.currentPlan")}
+            </>
+          ) : plan.slug === "enterprise" ? (
+            t("pricing.contactSales")
+          ) : (
+            t("pricing.selectPlan")
+          )}
+        </Button>
+
         {/* Features List */}
-        <ul className="mb-6 flex-1 space-y-3">
+        <ul className="flex-1 space-y-3">
           {features.map((feature, index) => (
             <li key={index} className="flex items-start gap-3">
               <div className={cn(
@@ -233,28 +256,6 @@ export function PlanCard({
           ))}
         </ul>
 
-        {/* CTA Button */}
-        <Button
-          className={cn(
-            "w-full h-12 text-base font-semibold transition-all duration-300",
-            isPopular && !isCurrentPlan && "bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 shadow-lg shadow-primary/25",
-            isCurrentPlan && "bg-success hover:bg-success/90"
-          )}
-          variant={isPopular || isCurrentPlan ? "default" : "outline"}
-          onClick={() => onSelect?.(plan)}
-          disabled={isCurrentPlan || isLoading}
-        >
-          {isCurrentPlan ? (
-            <>
-              <Check className="h-4 w-4 mr-2" />
-              {t("pricing.currentPlan")}
-            </>
-          ) : plan.slug === "enterprise" ? (
-            t("pricing.contactSales")
-          ) : (
-            t("pricing.selectPlan")
-          )}
-        </Button>
       </CardContent>
     </Card>
   );
