@@ -119,7 +119,8 @@ export default function ServicesManagement() {
   };
 
   // --- Service dialog ---
-  const openServiceDialog = (service?: typeof editingService) => {
+  const guardServices = usePlanLimitGuard("services");
+  const openServiceDialog = async (service?: typeof editingService) => {
     if (service) {
       setEditingService(service);
       setServiceForm({
@@ -129,12 +130,16 @@ export default function ServicesManagement() {
         price: centsToDecimal(service.price_cents || 0),
         parent_id: service.parent_id,
       });
-    } else {
-      setEditingService(null);
-      setServiceForm({ name: "", description: "", estimated_hours: 24, price: "0,00", parent_id: null });
+      setServiceDialogOpen(true);
+      return;
     }
+    const ok = await guardServices();
+    if (!ok) return;
+    setEditingService(null);
+    setServiceForm({ name: "", description: "", estimated_hours: 24, price: "0,00", parent_id: null });
     setServiceDialogOpen(true);
   };
+
 
   const handleServiceSubmit = () => {
     if (!serviceForm.name.trim() || !id) return;
