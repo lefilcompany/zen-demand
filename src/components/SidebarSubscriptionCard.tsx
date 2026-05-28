@@ -1,5 +1,5 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { useTrialStatus } from "@/hooks/useTrialStatus";
 import { useTeamSubscription } from "@/hooks/useSubscription";
 import { useSelectedTeam } from "@/contexts/TeamContext";
@@ -7,11 +7,11 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { Crown, Sparkles, ArrowRight, Clock, Zap, Star, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { PlansModal } from "@/components/PlansModal";
 export function SidebarSubscriptionCard() {
   const {
     t
   } = useTranslation();
-  const navigate = useNavigate();
   const {
     state,
     isMobile,
@@ -32,8 +32,9 @@ export function SidebarSubscriptionCard() {
     isLoading: subLoading
   } = useTeamSubscription(currentTeam?.id);
   const showText = isMobile || !isCollapsed;
+  const [plansOpen, setPlansOpen] = useState(false);
   const handleClick = () => {
-    navigate("/pricing");
+    setPlansOpen(true);
     if (isMobile) {
       setOpenMobile(false);
     }
