@@ -101,12 +101,16 @@ export default function Notes() {
     });
   }, [sharedNotes, search]);
 
+  const guardNotes = usePlanLimitGuard("notes");
   const handleCreateNote = async () => {
+    const ok = await guardNotes();
+    if (!ok) return;
     const note = await createNote.mutateAsync({});
     if (note) {
       navigate(`/notes/${note.id}`);
     }
   };
+
 
   const toggleTag = (tag: string) => {
     setSelectedTags(prev => 
