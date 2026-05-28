@@ -9,6 +9,16 @@ import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { PlansModal } from "@/components/PlansModal";
 export function SidebarSubscriptionCard() {
+  const [plansOpen, setPlansOpen] = useState(false);
+  return (
+    <>
+      <SidebarSubscriptionCardInner onOpenPlans={() => setPlansOpen(true)} />
+      <PlansModal open={plansOpen} onOpenChange={setPlansOpen} />
+    </>
+  );
+}
+
+function SidebarSubscriptionCardInner({ onOpenPlans }: { onOpenPlans: () => void }) {
   const {
     t
   } = useTranslation();
