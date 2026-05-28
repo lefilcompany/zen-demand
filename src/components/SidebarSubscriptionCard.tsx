@@ -143,7 +143,7 @@ export function SidebarSubscriptionCard() {
           </TooltipContent>
         </Tooltip>;
     }
-    return <button onClick={handleClick} className={cn("group relative w-full overflow-hidden rounded-xl p-[1px] transition-all duration-300", urgency === "critical" && "animate-pulse")}>
+    return <button onClick={handleClick} className={cn("group relative w-full overflow-hidden rounded-xl p-[1px] transition-all duration-300")}>
         {/* Border gradient */}
         <div className={cn("absolute inset-0 rounded-xl bg-gradient-to-br opacity-60", config.gradient)} />
         
