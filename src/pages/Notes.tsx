@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { useNotes, useCreateNote } from "@/hooks/useNotes";
+import { usePlanLimitGuard } from "@/hooks/usePlanLimitCheck";
 import { useSharedWithMeNotes, useLeaveSharedNote, SharedNote } from "@/hooks/useNoteShares";
 import { NoteCard } from "@/components/notes/NoteCard";
 import { Button } from "@/components/ui/button";
