@@ -48,6 +48,12 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
 
+  // Refuse to run unless explicitly in a test environment.
+  const environment = (Deno.env.get("ENVIRONMENT") ?? "").toLowerCase();
+  if (environment !== "test" && environment !== "e2e" && environment !== "staging") {
+    return json(503, { error: "e2e_disabled", message: "e2e-seed is only available in test environments" });
+  }
+
   if (!E2E_SECRET) return json(503, { error: "e2e_disabled", message: "E2E_SEED_SECRET not configured" });
   const provided = req.headers.get("x-e2e-secret") ?? "";
   if (provided !== E2E_SECRET) return json(401, { error: "unauthorized" });
