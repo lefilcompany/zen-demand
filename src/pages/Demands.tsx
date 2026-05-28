@@ -27,6 +27,7 @@ import { CreateRequestQuickDialog } from "@/components/CreateRequestQuickDialog"
 import { useDemandAssignees } from "@/hooks/useDemandAssignees";
 import { ScheduledDemandsModal } from "@/components/ScheduledDemandsModal";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
+import { usePlanLimitGuard } from "@/hooks/usePlanLimitCheck";
 import { useTeamMembershipRole } from "@/hooks/useTeamRole";
 import { ArchivedDemandsModal } from "@/components/ArchivedDemandsModal";
 import { SEOHead } from "@/components/SEOHead";
