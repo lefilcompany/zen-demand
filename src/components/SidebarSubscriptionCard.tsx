@@ -45,8 +45,8 @@ export function SidebarSubscriptionCard() {
     if (!showText) {
       return <Tooltip>
           <TooltipTrigger asChild>
-            <button onClick={handleClick} className="group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/70 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300">
-              <Crown className="h-5 w-5 text-primary-foreground" />
+            <button onClick={handleClick} className="group relative w-8 h-8 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/70 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300">
+              <Crown className="h-4 w-4 text-primary-foreground" />
               <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-white/0 via-white/10 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
           </TooltipTrigger>
@@ -131,8 +131,8 @@ export function SidebarSubscriptionCard() {
     if (!showText) {
       return <Tooltip>
           <TooltipTrigger asChild>
-            <button onClick={handleClick} className={cn("group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br shadow-lg transition-all duration-300 hover:scale-105", config.iconBg, urgency === "critical" ? "shadow-red-500/30 hover:shadow-red-500/50" : "shadow-primary/20")}>
-              <ShoppingBag className="h-5 w-5 text-white" />
+            <button onClick={handleClick} className={cn("group relative w-8 h-8 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br shadow-lg transition-all duration-300 hover:scale-105", config.iconBg, urgency === "critical" ? "shadow-red-500/30 hover:shadow-red-500/50" : "shadow-primary/20")}>
+              <ShoppingBag className="h-4 w-4 text-white" />
               {config.pulse && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white animate-ping" />}
               {config.pulse && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white" />}
             </button>
@@ -194,8 +194,8 @@ export function SidebarSubscriptionCard() {
   if (!showText) {
     return <Tooltip>
         <TooltipTrigger asChild>
-          <button onClick={handleClick} className="group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-accent shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300 animate-pulse">
-            <Crown className="h-5 w-5 text-primary-foreground" />
+          <button onClick={handleClick} className="group relative w-8 h-8 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-accent shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300 animate-pulse">
+            <Crown className="h-4 w-4 text-primary-foreground" />
           </button>
         </TooltipTrigger>
         <TooltipContent side="right">
