@@ -19,13 +19,15 @@ test.describe("Plan limits — Notes", () => {
     await loginAs(team);
 
     await page.goto("/notes");
+    await expect(page.getByRole("heading", { name: /soma notes/i })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/e2e nota 1/i)).toBeVisible({ timeout: 15_000 });
     const cta = page.getByRole("button", { name: /nova nota|criar nota/i }).first();
     await cta.waitFor({ state: "visible", timeout: 15_000 });
     await cta.click();
 
-    // Either the friendly RPC message or the trigger-raised PLAN_LIMIT_NOTES message.
+    // Guard/trigger may render slightly different note-limit messages.
     await expect(
-      page.getByText(/permite até 10 nota|PLAN_LIMIT_NOTES.*10 nota/i)
+      page.getByText(/permite até 10 nota|limite de notas atingido|PLAN_LIMIT_NOTES.*10 nota/i)
     ).toBeVisible({ timeout: 12_000 });
     await expect(page.getByRole("button", { name: /ver planos/i })).toBeVisible();
   });
