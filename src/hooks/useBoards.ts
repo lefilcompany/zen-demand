@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { usePlansModal } from "@/contexts/PlansModalContext";
+import { showPlanLimitToast } from "@/lib/planLimitErrors";
 
 export interface Board {
   id: string;
@@ -86,6 +88,7 @@ export function useBoard(boardId: string | null) {
 export function useCreateBoard() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { openPlans } = usePlansModal();
 
   return useMutation({
     mutationFn: async (input: CreateBoardData): Promise<Board> => {
@@ -161,6 +164,7 @@ export function useCreateBoard() {
     },
     onError: (error: Error) => {
       console.error("Erro no mutation de criar quadro:", error);
+      if (showPlanLimitToast(error, openPlans)) return;
       toast.error(error.message || "Erro ao criar quadro");
     },
   });
