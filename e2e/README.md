@@ -1,55 +1,66 @@
-# E2E Plan Limits — Playwright
+# Testes automatizados — SoMA+
 
-Suíte que valida, em navegador real, que os limites de plano (boards, members, demands mensais, services, notes) são respeitados pela UI e pelos triggers do banco.
+## Pipeline CI (`.github/workflows/ci.yml`)
 
-## Como funciona
+Disparado em `push`/`pull_request` para `main`, manual (`workflow_dispatch`) e diariamente às 03:00 UTC.
 
-1. **Edge function `e2e-seed`** (em `supabase/functions/e2e-seed`) cria, sob demanda, um usuário, uma equipe, uma `subscription` ativa do plano escolhido e pré-popula o recurso alvo até o limite. Protegida por `x-e2e-secret`.
-2. **Fixtures Playwright** (`e2e/fixtures/`):
-   - `seed.ts` → chama a edge function (`seedTeam`, `seedExtraUser`, `cleanupEmails`).
-   - `auth.ts` → login programático via `supabase-js` + injeta `selectedTeamId` no `localStorage`.
-   - `test.ts` → expõe `seeded(plan, fill)` e `loginAs(team)` e faz cleanup automático.
-3. **Specs** em `e2e/tests/`:
-   - `plan-limits.boards.spec.ts`
-   - `plan-limits.demands.spec.ts`
-   - `plan-limits.services.spec.ts`
-   - `plan-limits.notes.spec.ts` (Starter=0 + Profissional=10)
-   - `plan-limits.members.spec.ts` (via RPC `join_team_with_code`)
-   - `plan-limits.happy-path.spec.ts` (Enterprise = sem bloqueios)
+Jobs (todos em paralelo após o lint):
 
-## Pré-requisitos
+```
+lint-and-typecheck   →  eslint + tsc --noEmit
+unit                 →  vitest run (testes em src/**/*.test.{ts,tsx})
+e2e (matriz)         →  playwright para cada spec:
+                         - boards
+                         - demands
+                         - notes
+                         - members
+                         - services
+                         - happy-path
+```
 
-1. Adicione o secret `E2E_SEED_SECRET` no projeto Cloud (qualquer string forte). Ele:
-   - é usado pela edge function para autorizar chamadas.
-   - precisa estar **também no seu shell local** (ou em `.env`) para os testes chamarem a função.
-2. Instale o navegador do Playwright (uma vez):
-   ```bash
-   npx playwright install chromium
-   ```
+Cada job E2E sobe o Vite (`npm run dev`) via `playwright.config.ts > webServer`, faz seed via edge function `e2e-seed` e publica:
+- `playwright-report-<spec>` sempre
+- `playwright-traces-<spec>` em falhas
+
+## Secrets necessários no repositório
+
+Em **Settings → Secrets and variables → Actions**:
+
+- `E2E_SEED_SECRET` — mesmo valor configurado em **Lovable Cloud → Secrets**
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
+- `VITE_SUPABASE_PROJECT_ID`
 
 ## Rodando localmente
 
 ```bash
-# Opcional: export do secret no shell (já presente no Cloud)
-export E2E_SEED_SECRET="o-mesmo-valor-cadastrado-no-cloud"
+# 1. exporte o secret (mesmo cadastrado no Cloud)
+export E2E_SEED_SECRET="..."
 
-# Sobe o Vite em background automaticamente (port 8080) e roda a suíte
-npm run e2e
+# 2. instale o Chromium (uma vez)
+bunx playwright install chromium
+
+# 3. rode tudo
+bun run e2e
+
+# ou um arquivo só
+bunx playwright test e2e/tests/plan-limits.boards.spec.ts
 
 # UI interativa
-npm run e2e:ui
-
-# Apenas um arquivo
-npx playwright test e2e/tests/plan-limits.boards.spec.ts
+bun run e2e:ui
 ```
 
-A configuração (`playwright.config.ts`) usa `webServer` para subir `npm run dev` antes da suíte, então não precisa rodar o dev server manualmente.
+## Scripts úteis
 
-## Limpeza
-
-Cada teste limpa os usuários/equipes que criou via `cleanupEmails`. Se uma rodada cair no meio, basta remover manualmente usuários com prefixo `e2e+` na tabela de auth.
+| Comando | O que faz |
+|---|---|
+| `bun run lint` | ESLint |
+| `bun run typecheck` | `tsc --noEmit` |
+| `bun run test` | Vitest unit suite |
+| `bun run e2e` | Playwright completo |
 
 ## Limitações conhecidas
 
-- Roda serialmente (`workers: 1`) para evitar corrida com os triggers compartilhados.
-- O teste de **members** valida o trigger no nível do RPC `join_team_with_code` em vez do fluxo de aprovação manual (que exige round-trip do admin).
+- Workers Playwright = 1 (seed mutável compartilha estado).
+- O teste de **members** valida via RPC `join_team_with_code` (não o fluxo manual de aprovação).
+- Resíduos após crash: usuários com prefixo `e2e+` podem ser removidos no painel de auth.
