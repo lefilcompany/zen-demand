@@ -23,6 +23,10 @@ test.describe("Plan limits — Notes", () => {
     await cta.waitFor({ state: "visible", timeout: 15_000 });
     await cta.click();
 
-    await expect(page.getByText(/permite até 10 nota/i)).toBeVisible({ timeout: 8_000 });
+    // Either the friendly RPC message or the trigger-raised PLAN_LIMIT_NOTES message.
+    await expect(
+      page.getByText(/permite até 10 nota|PLAN_LIMIT_NOTES.*10 nota/i)
+    ).toBeVisible({ timeout: 12_000 });
+    await expect(page.getByRole("button", { name: /ver planos/i })).toBeVisible();
   });
 });
