@@ -209,6 +209,7 @@ Deno.serve(async (req: Request) => {
     const cronSecret = Deno.env.get("CRON_SECRET");
     const isCronCall = !!cronSecret && authHeader === `Bearer ${cronSecret}`;
 
+    let callerUserId: string | null = null;
     if (!isCronCall) {
       if (!authHeader.startsWith("Bearer ")) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -229,6 +230,7 @@ Deno.serve(async (req: Request) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      callerUserId = userData.user.id;
     }
 
     // Parse service account from environment
