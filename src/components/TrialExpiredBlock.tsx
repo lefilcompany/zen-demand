@@ -90,6 +90,8 @@ export function TrialExpiredBlock() {
                   key={plan.id}
                   plan={plan}
                   isCurrentPlan={false}
+                  onSelect={handleSelectPlan}
+                  isLoading={loadingSlug === plan.slug}
                 />
               ))}
             </div>
