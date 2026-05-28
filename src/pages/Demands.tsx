@@ -351,14 +351,17 @@ export default function Demands() {
   }, [activeDemands, searchQuery, filters, selectedStatuses, hideDelivered, showOnlyMine, user?.id, membersByPosition, selectedFolderId, folderDemandIds]);
 
   // Handle calendar day click — open the standard create demand modal with the chosen date pre-filled
-  const handleDayClick = (date: Date) => {
+  const handleDayClick = async (date: Date) => {
     if (isReadOnly) {
+      const ok = await guardDemands();
+      if (!ok) return;
       setSelectedDateForCreate(date);
       setIsCreateDialogOpen(true);
     } else {
       openCreateDemand({ initialDueDate: date });
     }
   };
+
 
   const updateDemand = useUpdateDemand();
 
