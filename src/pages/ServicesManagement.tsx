@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { usePlanLimitGuard } from "@/hooks/usePlanLimitCheck";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { formatPrice, parsePriceToCents, centsToDecimal } from "@/lib/priceUtils";
 import {
