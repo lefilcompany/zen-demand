@@ -115,11 +115,15 @@ Deno.test("monthly: day_of_month=13 (next month falls on Saturday → Monday)", 
   assertEquals(calculateNextRunDate("monthly", "2026-05-13", null, 13), "2026-06-15");
 });
 
-// FIXME(known-bug): when source date is the 31st and next month is short,
-// JS Date overflow rolls forward an extra month before the clamp runs.
-// Awaiting product decision before changing behaviour.
-Deno.test("monthly: day_of_month=31 — documents current behaviour (overflow bug)", () => {
-  assertEquals(calculateNextRunDate("monthly", "2026-01-31", null, 31), "2026-03-31");
+// Short-month clamp: Jan 31 → Feb 28 (2026), then business-day shift.
+// Feb 28 2026 is a Saturday → adjusted to Mon Mar 2.
+Deno.test("monthly: day_of_month=31 clamps to short-month last day", () => {
+  assertEquals(calculateNextRunDate("monthly", "2026-01-31", null, 31), "2026-03-02");
+});
+
+Deno.test("monthly: day_of_month=31 on a long month keeps the 31st", () => {
+  // Mar 31 → Apr 30 (Apr has 30 days). Apr 30 2026 is Thu.
+  assertEquals(calculateNextRunDate("monthly", "2026-03-31", null, 31), "2026-04-30");
 });
 
 // ---------- calculateNextRunDate: biweekly ----------
