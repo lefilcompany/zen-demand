@@ -122,8 +122,11 @@ export function calculateNextRunDate(
 
   if (frequency === "monthly") {
     const day = dayOfMonth || current.getUTCDate();
+    // Anchor to day 1 BEFORE advancing the month to avoid JS Date overflow
+    // (e.g. Jan 31 + 1 month would otherwise roll into March).
+    current.setUTCDate(1);
     current.setUTCMonth(current.getUTCMonth() + 1);
-    const maxDay = new Date(current.getUTCFullYear(), current.getUTCMonth() + 1, 0).getUTCDate();
+    const maxDay = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth() + 1, 0)).getUTCDate();
     current.setUTCDate(Math.min(day, maxDay));
     return formatDate(adjustToBusinessDay(current));
   }
