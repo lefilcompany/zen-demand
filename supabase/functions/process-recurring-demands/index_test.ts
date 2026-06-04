@@ -1,3 +1,6 @@
+// Prevent the module from starting its HTTP server during tests.
+Deno.env.set("SKIP_SERVE", "1");
+
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { handler } from "./index.ts";
 
