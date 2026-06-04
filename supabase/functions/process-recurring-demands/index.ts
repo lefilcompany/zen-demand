@@ -176,7 +176,10 @@ export const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-// Only auto-start when running as a deployed edge function (not under `deno test`).
-if (import.meta.main) {
+// Auto-start the server when this module is loaded by the Supabase edge runtime.
+// Tests import { handler } from this file without starting the server because
+// `Deno.serve` is invoked lazily here, and the test runner sets
+// `SKIP_SERVE=1` so we don't bind a port during `deno test`.
+if (!Deno.env.get("SKIP_SERVE")) {
   Deno.serve(handler);
 }
