@@ -50,6 +50,18 @@ jobs:
       - name: Run Vitest
         run: bunx vitest run --reporter=default
 
+  edge-functions:
+    name: Edge Function tests (Deno)
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v1
+        with: { deno-version: v1.x }
+      - name: Run Deno tests
+        run: deno test --allow-net --allow-env --allow-read supabase/functions/process-recurring-demands/
+
   e2e:
     name: E2E ${{ matrix.spec }}
     runs-on: ubuntu-latest
