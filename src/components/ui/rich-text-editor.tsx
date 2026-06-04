@@ -58,11 +58,14 @@ const HIGHLIGHT_COLORS = [
 export function sanitizeHtml(html: string): string {
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: [
-      "p", "br", "strong", "em", "u", "s", "span", "img", 
+      "p", "br", "strong", "em", "u", "s", "span", "img",
       "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "mark", "a"
     ],
-    ALLOWED_ATTR: ["style", "src", "alt", "class", "data-color", "href", "target", "rel", "data-mention", "width", "height"],
-    ADD_ATTR: ["style", "data-color", "data-mention"],
+    // NOTE: "style" attribute intentionally NOT allowed to prevent CSS injection
+    // (background-image:url() exfiltration, fixed-position overlay phishing, etc.).
+    // Use class / data-color for highlight colors instead.
+    ALLOWED_ATTR: ["src", "alt", "class", "data-color", "href", "target", "rel", "data-mention", "width", "height"],
+    ADD_ATTR: ["data-color", "data-mention"],
   });
 }
 
