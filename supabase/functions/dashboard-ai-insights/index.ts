@@ -43,13 +43,27 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch board data — for requesters, only their own demands
-    const demandsQuery = supabase
-      .from("demands")
-      .select("id, title, priority, due_date, created_at, delivered_at, is_overdue, status_id, service_id, services(name), demand_statuses(name)")
+    const { board_id, is_requester } = await req.json();
+    if (!board_id) {
+      return new Response(JSON.stringify({ error: "board_id is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Authorization: caller must be a member of the requested board
+    const { data: membership } = await supabase
+      .from("board_members")
+      .select("user_id")
       .eq("board_id", board_id)
-      .eq("archived", false)
-      .order("created_at", { ascending: false })
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!membership) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
       .limit(100);
 
     if (is_requester) {
