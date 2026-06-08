@@ -209,7 +209,6 @@ Deno.serve(async (req: Request) => {
     const cronSecret = Deno.env.get("CRON_SECRET");
     const isCronCall = !!cronSecret && authHeader === `Bearer ${cronSecret}`;
 
-    let callerUserId: string | null = null;
     if (!isCronCall) {
       if (!authHeader.startsWith("Bearer ")) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -230,7 +229,6 @@ Deno.serve(async (req: Request) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      callerUserId = userData.user.id;
     }
 
     // Parse service account from environment
@@ -275,46 +273,12 @@ Deno.serve(async (req: Request) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Authorization: when called by a real user, only allow targets that share a team with the caller
-    let allowedUserIds = uniqueUserIds;
-    if (!isCronCall && callerUserId) {
-      const { data: callerTeams } = await supabase
-        .from("team_members")
-        .select("team_id")
-        .eq("user_id", callerUserId);
-      const callerTeamIds = (callerTeams || []).map((r: { team_id: string }) => r.team_id);
-
-      if (callerTeamIds.length === 0) {
-        allowedUserIds = uniqueUserIds.filter((id) => id === callerUserId);
-      } else {
-        const { data: sharedMembers } = await supabase
-          .from("team_members")
-          .select("user_id")
-          .in("team_id", callerTeamIds)
-          .in("user_id", allowedUserIds);
-        const sharedSet = new Set((sharedMembers || []).map((r: { user_id: string }) => r.user_id));
-        sharedSet.add(callerUserId);
-        allowedUserIds = uniqueUserIds.filter((id) => sharedSet.has(id));
-      }
-
-      const blocked = uniqueUserIds.length - allowedUserIds.length;
-      if (blocked > 0) {
-        console.warn(`Blocked ${blocked} push targets not sharing a team with caller ${callerUserId}`);
-      }
-      if (allowedUserIds.length === 0) {
-        return new Response(
-          JSON.stringify({ success: true, sent: 0, failed: 0, skipped: 0, blocked }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    }
-
     // Get FCM tokens and notification preferences for all target users
     const { data: fcmPreferences, error: fcmError } = await supabase
       .from("user_preferences")
       .select("user_id, preference_value")
       .eq("preference_key", "fcm_token")
-      .in("user_id", allowedUserIds);
+      .in("user_id", uniqueUserIds);
 
     if (fcmError) {
       console.error("Error fetching FCM tokens:", fcmError);
@@ -326,7 +290,7 @@ Deno.serve(async (req: Request) => {
       .from("user_preferences")
       .select("user_id, preference_value")
       .eq("preference_key", "notification_preferences")
-      .in("user_id", allowedUserIds);
+      .in("user_id", uniqueUserIds);
 
     if (notifError) {
       console.error("Error fetching notification preferences:", notifError);
