@@ -148,16 +148,6 @@ const handler = async (req: Request): Promise<Response> => {
     let recipientEmail = to;
     let recipientUserId: string | null = null;
 
-    // Only allow sending to UUIDs (internal user IDs). Block arbitrary email addresses
-    // to prevent abuse of the SoMA+ sender identity for phishing.
-    if (!isUUID(to)) {
-      console.warn(`User ${userId} attempted to send to non-UUID recipient: ${to}`);
-      return new Response(
-        JSON.stringify({ error: "Forbidden: direct email to arbitrary addresses is not allowed" }),
-        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
     // If 'to' is a UUID, lookup the user's email from Supabase Auth
     if (isUUID(to)) {
       recipientUserId = to;

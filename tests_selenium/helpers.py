@@ -86,15 +86,6 @@ def wait_for_app(driver: WebDriver, timeout: float = 20) -> None:
     )
 
 
-def wait_for_dialog(driver: WebDriver, timeout: float = 15) -> WebElement:
-    """Aguarda um Radix Dialog aberto (data-state='open' e role='dialog')."""
-    return WebDriverWait(driver, timeout).until(
-        EC.visibility_of_element_located(
-            (By.CSS_SELECTOR, "[role='dialog'][data-state='open']")
-        )
-    )
-
-
 def count_text(driver: WebDriver, pattern: re.Pattern[str] | str) -> int:
     if isinstance(pattern, str):
         pattern = re.compile(pattern, re.IGNORECASE)
