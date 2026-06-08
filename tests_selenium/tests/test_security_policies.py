@@ -47,7 +47,7 @@ def test_direct_team_member_insert_is_blocked_but_join_rpc_still_works(seeded):
         assert membership.ok, membership.text
         data = membership.json()
         assert len(data) == 1, data
-        assert data[0]["role"] == "member", data
+        assert data[0]["role"] == "requester", data
     finally:
         cleanup_emails([extra["email"]])
 
@@ -191,10 +191,24 @@ def test_board_members_can_view_requests_but_non_board_team_members_cannot(seede
         assert join_outsider.ok, join_outsider.text
         assert join_board_user.ok, join_board_user.text
 
+        board = rest_insert(
+            "boards",
+            {
+                "team_id": team.teamId,
+                "name": f"E2E Sec Board {uuid.uuid4().hex[:6]}",
+                "created_by": team.userId,
+                "is_default": False,
+            },
+            access_token=owner["access_token"],
+            select="id,name,is_default",
+        )
+        assert board.ok, board.text
+        secondary_board_id = board.json()[0]["id"]
+
         member_added = rest_insert(
             "board_members",
             {
-                "board_id": team.boardId,
+                "board_id": secondary_board_id,
                 "user_id": board_user["userId"],
                 "role": "requester",
                 "added_by": team.userId,
@@ -208,7 +222,7 @@ def test_board_members_can_view_requests_but_non_board_team_members_cannot(seede
             "demand_requests",
             {
                 "team_id": team.teamId,
-                "board_id": team.boardId,
+                "board_id": secondary_board_id,
                 "created_by": team.userId,
                 "title": f"E2E Request {uuid.uuid4().hex[:6]}",
                 "priority": "média",
@@ -227,6 +241,7 @@ def test_board_members_can_view_requests_but_non_board_team_members_cannot(seede
         )
         assert visible_to_board.ok, visible_to_board.text
         assert len(visible_to_board.json()) == 1, visible_to_board.json()
+        assert visible_to_board.json()[0]["board_id"] == secondary_board_id
 
         hidden_from_outsider = rest_select(
             "demand_requests",
