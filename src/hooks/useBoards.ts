@@ -2,8 +2,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { usePlansModal } from "@/contexts/PlansModalContext";
-import { showPlanLimitToast } from "@/lib/planLimitErrors";
 
 export interface Board {
   id: string;
@@ -88,7 +86,6 @@ export function useBoard(boardId: string | null) {
 export function useCreateBoard() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { openPlans } = usePlansModal();
 
   return useMutation({
     mutationFn: async (input: CreateBoardData): Promise<Board> => {
@@ -132,12 +129,7 @@ export function useCreateBoard() {
 
       if (error) {
         console.error("Erro ao criar quadro:", error);
-
-        // Plan-limit errors raised by BEFORE INSERT triggers
-        if (error.message && /PLAN_LIMIT_/.test(error.message)) {
-          throw new Error(error.message);
-        }
-
+        
         // Map error codes to user-friendly messages
         if (error.code === "42501" || error.message?.includes("Permission denied")) {
           throw new Error("Você não tem permissão para criar quadros nesta equipe. É necessário ser administrador ou moderador.");
@@ -164,7 +156,6 @@ export function useCreateBoard() {
     },
     onError: (error: Error) => {
       console.error("Erro no mutation de criar quadro:", error);
-      if (showPlanLimitToast(error, openPlans)) return;
       toast.error(error.message || "Erro ao criar quadro");
     },
   });
@@ -194,7 +185,7 @@ export function useUpdateBoard() {
 
       const { data, error } = await supabase
         .from("boards")
-        .update(updateData as never)
+        .update(updateData)
         .eq("id", input.id)
         .select()
         .single();

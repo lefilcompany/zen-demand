@@ -1,13 +1,9 @@
 import { useTranslation } from "react-i18next";
-import { usePlans, Plan } from "@/hooks/usePlans";
+import { usePlans } from "@/hooks/usePlans";
 import { PlanCard } from "@/components/PlanCard";
 import { Button } from "@/components/ui/button";
 import { LogOut, Clock, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { useSelectedTeam } from "@/contexts/TeamContext";
-import { useCreateCheckout } from "@/hooks/useCheckout";
-import { toast } from "sonner";
-import { useState } from "react";
 import logoSoma from "@/assets/logo-soma.png";
 import logoDark from "@/assets/logo-soma-dark.png";
 import { useTheme } from "next-themes";
@@ -17,26 +13,7 @@ export function TrialExpiredBlock() {
   const { signOut } = useAuth();
   const { data: plans, isLoading } = usePlans();
   const { resolvedTheme } = useTheme();
-  const { selectedTeamId } = useSelectedTeam();
-  const createCheckout = useCreateCheckout();
-  const [loadingSlug, setLoadingSlug] = useState<string | null>(null);
   const logo = resolvedTheme === "dark" ? logoDark : logoSoma;
-
-  const handleSelectPlan = async (plan: Plan) => {
-    if (!selectedTeamId) {
-      toast.error("Equipe não encontrada");
-      return;
-    }
-    setLoadingSlug(plan.slug);
-    try {
-      const url = await createCheckout.mutateAsync({ planSlug: plan.slug, teamId: selectedTeamId });
-      window.location.href = url;
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : "Erro ao iniciar checkout";
-      toast.error(msg);
-      setLoadingSlug(null);
-    }
-  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background to-muted/30">
@@ -90,8 +67,6 @@ export function TrialExpiredBlock() {
                   key={plan.id}
                   plan={plan}
                   isCurrentPlan={false}
-                  onSelect={handleSelectPlan}
-                  isLoading={loadingSlug === plan.slug}
                 />
               ))}
             </div>

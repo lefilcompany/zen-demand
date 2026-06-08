@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
-import { usePlanLimitGuard } from "@/hooks/usePlanLimitCheck";
 
 interface CreateDemandContextType {
   isOpen: boolean;
@@ -22,14 +21,11 @@ export function useCreateDemandModal() {
 export function CreateDemandProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [initialDueDate, setInitialDueDate] = useState<Date | null>(null);
-  const guard = usePlanLimitGuard("demands");
 
   const openCreateDemand = useCallback((options?: { initialDueDate?: Date | null }) => {
-    void guard(() => {
-      setInitialDueDate(options?.initialDueDate ?? null);
-      setIsOpen(true);
-    });
-  }, [guard]);
+    setInitialDueDate(options?.initialDueDate ?? null);
+    setIsOpen(true);
+  }, []);
   const closeCreateDemand = useCallback(() => {
     setIsOpen(false);
     setInitialDueDate(null);

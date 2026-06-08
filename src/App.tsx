@@ -8,7 +8,6 @@ import { TeamProvider } from "@/contexts/TeamContext";
 import { BoardProvider } from "@/contexts/BoardContext";
 import { PresenceProvider } from "@/contexts/PresenceContext";
 import { CreateDemandProvider, useCreateDemandModal } from "@/contexts/CreateDemandContext";
-import { PlansModalProvider } from "@/contexts/PlansModalContext";
 import { RequireAuth } from "@/components/RequireAuth";
 import { RequireTeam } from "@/components/RequireTeam";
 import { ProtectedLayout } from "@/components/ProtectedLayout";
@@ -112,7 +111,6 @@ const App = () => (
                 <PresenceProvider>
                   <TeamProvider>
                     <BoardProvider>
-                      <PlansModalProvider>
                       <CreateDemandProvider>
                         <KeyboardShortcutsProvider>
                           <SwipeNavigationProvider>
@@ -181,7 +179,6 @@ const App = () => (
                           </SwipeNavigationProvider>
                         </KeyboardShortcutsProvider>
                       </CreateDemandProvider>
-                      </PlansModalProvider>
                     </BoardProvider>
                   </TeamProvider>
                 </PresenceProvider>

@@ -2579,10 +2579,6 @@ export type Database = {
         Returns: boolean
       }
       check_access_code_exists: { Args: { code: string }; Returns: boolean }
-      check_plan_limit: {
-        Args: { _resource: string; _team_id: string }
-        Returns: Json
-      }
       check_subscription_limit: {
         Args: { _resource_type: string; _team_id: string }
         Returns: boolean
@@ -2663,38 +2659,6 @@ export type Database = {
         Returns: number
       }
       get_shared_board_summary: { Args: { p_token: string }; Returns: Json }
-      get_team_active_plan: {
-        Args: { _team_id: string }
-        Returns: {
-          billing_period: string
-          created_at: string | null
-          currency: string
-          description: string | null
-          features: Json | null
-          id: string
-          is_active: boolean | null
-          max_boards: number | null
-          max_demands_per_month: number | null
-          max_members: number | null
-          max_notes: number | null
-          max_services: number | null
-          max_teams: number | null
-          name: string
-          price_cents: number
-          price_cents_monthly: number
-          price_cents_yearly: number
-          promo_price_cents_monthly: number | null
-          promo_price_cents_yearly: number | null
-          slug: string
-          sort_order: number | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "plans"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
       get_team_by_access_code: {
         Args: { code: string }
         Returns: {

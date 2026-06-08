@@ -202,42 +202,8 @@ export function PlanCard({
           )}
         </div>
 
-        {/* CTA Button */}
-        <Button
-          className={cn(
-            "w-full h-14 text-xs sm:text-sm font-bold tracking-wide uppercase mb-6 px-2",
-            "bg-gradient-to-r from-primary via-orange-500 to-primary bg-[length:200%_100%] bg-left",
-            "text-white border-0 shadow-xl shadow-primary/40",
-            "hover:bg-right hover:shadow-2xl hover:shadow-primary/60 hover:-translate-y-0.5 hover:scale-[1.02]",
-            "transition-all duration-500 ease-out",
-            "ring-2 ring-primary/30 ring-offset-2 ring-offset-background",
-            isCurrentPlan && "bg-gradient-to-r from-success via-emerald-500 to-success shadow-success/40 ring-success/30 hover:shadow-success/60"
-          )}
-          onClick={() => onSelect?.(plan)}
-          disabled={isCurrentPlan || isLoading}
-        >
-          {isCurrentPlan ? (
-            <>
-              <Check className="h-4 w-4 mr-1.5 flex-shrink-0" />
-              <span className="truncate">{t("pricing.currentPlan")}</span>
-            </>
-          ) : plan.slug === "enterprise" ? (
-            <>
-              <Sparkles className="h-4 w-4 mr-1.5 flex-shrink-0" />
-              <span className="truncate">{t("pricing.contactSales")}</span>
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4 mr-1.5 flex-shrink-0" />
-              <span className="truncate">{t("pricing.selectPlan")}</span>
-            </>
-          )}
-        </Button>
-
-
-
         {/* Features List */}
-        <ul className="flex-1 space-y-3">
+        <ul className="mb-6 flex-1 space-y-3">
           {features.map((feature, index) => (
             <li key={index} className="flex items-start gap-3">
               <div className={cn(
@@ -267,6 +233,28 @@ export function PlanCard({
           ))}
         </ul>
 
+        {/* CTA Button */}
+        <Button
+          className={cn(
+            "w-full h-12 text-base font-semibold transition-all duration-300",
+            isPopular && !isCurrentPlan && "bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 shadow-lg shadow-primary/25",
+            isCurrentPlan && "bg-success hover:bg-success/90"
+          )}
+          variant={isPopular || isCurrentPlan ? "default" : "outline"}
+          onClick={() => onSelect?.(plan)}
+          disabled={isCurrentPlan || isLoading}
+        >
+          {isCurrentPlan ? (
+            <>
+              <Check className="h-4 w-4 mr-2" />
+              {t("pricing.currentPlan")}
+            </>
+          ) : plan.slug === "enterprise" ? (
+            t("pricing.contactSales")
+          ) : (
+            t("pricing.selectPlan")
+          )}
+        </Button>
       </CardContent>
     </Card>
   );

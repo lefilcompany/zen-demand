@@ -3,9 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { ServiceCreateSchema, ServiceUpdateSchema, validateData } from "@/lib/validations";
 import { useMemo } from "react";
-import { toast } from "sonner";
-import { usePlansModal } from "@/contexts/PlansModalContext";
-import { showPlanLimitToast } from "@/lib/planLimitErrors";
 
 export interface Service {
   id: string;
@@ -150,7 +147,6 @@ export function usePotentialParentServices(teamId: string | null, excludeId?: st
 
 export function useCreateService() {
   const queryClient = useQueryClient();
-  const { openPlans } = usePlansModal();
 
   return useMutation({
     mutationFn: async (data: {
@@ -184,10 +180,6 @@ export function useCreateService() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["services", variables.team_id] });
-    },
-    onError: (error: Error) => {
-      if (showPlanLimitToast(error, openPlans)) return;
-      toast.error("Erro ao criar serviço: " + error.message);
     },
   });
 }

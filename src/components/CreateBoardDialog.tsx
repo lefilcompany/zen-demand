@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { CreateBoardWizard } from "@/components/CreateBoardWizard";
-import { usePlanLimitGuard } from "@/hooks/usePlanLimitCheck";
 
 interface CreateBoardDialogProps {
   trigger?: React.ReactNode;
@@ -18,18 +17,9 @@ interface CreateBoardDialogProps {
 
 export function CreateBoardDialog({ trigger }: CreateBoardDialogProps) {
   const [open, setOpen] = useState(false);
-  const guard = usePlanLimitGuard("boards");
-
-  const handleOpenChange = async (v: boolean) => {
-    if (v) {
-      await guard(() => setOpen(true));
-    } else {
-      setOpen(false);
-    }
-  };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
           <Button variant="outline" size="sm">

@@ -7,7 +7,6 @@ import { useBoardRole } from "@/hooks/useBoardMembers";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { CreateRequestQuickDialog } from "@/components/CreateRequestQuickDialog";
-import { usePlanLimitGuard } from "@/hooks/usePlanLimitCheck";
 
 export function TopbarCreateButton() {
   const { openCreateDemand } = useCreateDemandModal();
@@ -15,7 +14,6 @@ export function TopbarCreateButton() {
   const { selectedBoardId } = useSelectedBoardSafe();
   const { data: bRole } = useBoardRole(selectedBoardId);
   const [requestDialogOpen, setRequestDialogOpen] = useState(false);
-  const guardDemands = usePlanLimitGuard("demands");
 
   if (!selectedTeamId) return null;
 
@@ -23,10 +21,7 @@ export function TopbarCreateButton() {
   const label = isRequester ? "Nova Solicitação" : "Nova Demanda";
   const tooltip = isRequester ? "Criar nova solicitação" : "Criar nova demanda (Ctrl+Shift+D)";
 
-  const handleClick = isRequester
-    ? async () => { const ok = await guardDemands(); if (ok) setRequestDialogOpen(true); }
-    : () => openCreateDemand();
-
+  const handleClick = isRequester ? () => setRequestDialogOpen(true) : () => openCreateDemand();
 
   return (
     <>

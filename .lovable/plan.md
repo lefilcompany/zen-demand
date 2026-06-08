@@ -1,106 +1,65 @@
+## Objetivo
 
-# Plano — Corrigir agendamento de demandas recorrentes
+Permitir que admins/coordenadores de um quadro criem um link de compartilhamento de demanda com a opção **"Adicionar automaticamente ao quadro como Agente"**. Quem acessar esse link, estando logado e pertencendo à equipe do quadro, é adicionado automaticamente como membro do quadro com role `executor` (Agente) e redirecionado para a demanda real.
 
-## Decisões confirmadas
-- **Opção A**: cron em produção autenticado via `CRON_SECRET`.
-- **Frequência prod**: `0 * * * *` (a cada hora).
-- **Secrets**: `CRON_SECRET` distintos em dev e prod.
-- **Job órfão (jobid 5)**: remover só o cron, manter o `recurring_demand` `7339291f…`.
-- **Backfill**: B3 puro — reset `next_run_date = CURRENT_DATE` e `last_generated_at = NULL` para as 10 recorrências atrasadas; uma geração por recorrência, sem recuperar dias perdidos.
-- **CI**: continuar com `bun`.
+## Regras de negócio
 
-## Passo a passo
+- Apenas **admin/coordenador do quadro** (board role `admin`/`moderator`) pode marcar a opção "auto-adicionar ao quadro" ao criar o link.
+- A flag é por token: cada link tem ou não o auto-join habilitado.
+- Ao acessar o link compartilhado:
+  - **Não logado** → comportamento atual (modo leitura pública + CTA login).
+  - **Logado, já membro do quadro** → redireciona para `/demands/:id` (já existe hoje).
+  - **Logado, não-membro, token SEM auto-join** → continua no modo leitura (comportamento atual da última iteração).
+  - **Logado, não-membro, token COM auto-join**:
+    - Se **pertence à equipe** do quadro (`team_members`): insere em `board_members` com role `executor` e redireciona para `/demands/:id`.
+    - Se **não pertence à equipe**: mostra mensagem clara ("Você precisa fazer parte da equipe deste quadro para entrar automaticamente"), mantém modo leitura.
+- Operação é idempotente (ON CONFLICT DO NOTHING) — clicar duas vezes não duplica nem rebaixa cargo existente.
 
-### 1. Secrets
-1. Gerar `CRON_SECRET` (48 bytes hex) distintos para dev e prod e adicionar via `secrets--add_secret` em cada ambiente.
-2. Validar com `fetch_secrets` em ambos.
+## Mudanças
 
-### 2. Refator do edge function (TDD-friendly)
-Em `supabase/functions/process-recurring-demands/`:
-- Extrair para `lib.ts` (funções puras, sem I/O):
-  - `calculateNextRunDate(frequency, dayOfWeek?, dayOfMonth?, fromDate)`
-  - `adjustToBusinessDay(date)` (regra atual: sábado/domingo → segunda)
-  - `calculateBusinessDueDate(startDate, businessDays)`
-  - `isAuthorized(authHeader, cronSecret)` (pura, retorna boolean)
-- `index.ts` passa a importar de `lib.ts`. Adicionar log estruturado quando 401 (registra prefixo do header recebido, sem expor o secret).
-- Nenhuma mudança de comportamento de geração — apenas separação para testabilidade.
+### 1. Banco (migration)
+- `ALTER TABLE demand_share_tokens ADD COLUMN auto_join_board boolean NOT NULL DEFAULT false;`
+- Nova RPC `SECURITY DEFINER` `join_board_via_share_token(p_token text)` que:
+  1. Resolve o token (ativo, não expirado, `auto_join_board = true`).
+  2. Busca `board_id` + `team_id` da demanda.
+  3. Confere `auth.uid()` autenticado.
+  4. Confere que o usuário é membro de `team_members` (qualquer role) do `team_id` do quadro.
+  5. `INSERT INTO board_members (board_id, user_id, role, added_by) VALUES (..., 'executor', criador_do_token) ON CONFLICT DO NOTHING`.
+  6. Retorna `jsonb { success, demand_id, board_id, reason? }` com motivos: `not_authenticated`, `invalid_token`, `not_team_member`, `auto_join_disabled`, `success`, `already_member`.
+- RLS: permitir admins/moderadores do quadro fazerem `UPDATE` da coluna `auto_join_board` no seu próprio token (já têm UPDATE nos próprios tokens; só validar).
 
-### 3. Limpeza de cron jobs (dev)
-- `DELETE` jobid 4 (`process-recurring-demands-daily`, anon key apontando p/ prod).
-- `DELETE` jobid 5 (`fix-creator-recurrence-once`). Não tocar no registro `7339291f…`.
-- Manter jobid 2 (dev) ajustando para usar `CRON_SECRET` dev.
+### 2. Edge function `shared-demand`
+- Incluir `auto_join_board` no payload retornado para o cliente saber que deve oferecer/disparar o join.
 
-### 4. Cron em produção
-Via `supabase--insert` (não migration), com env `production`:
-```sql
-select cron.schedule(
-  'process-recurring-demands-hourly',
-  '0 * * * *',
-  $$
-  select net.http_post(
-    url:='https://dcojvsftpzwfhgvamdgm.supabase.co/functions/v1/process-recurring-demands',
-    headers:=jsonb_build_object(
-      'Content-Type','application/json',
-      'Authorization','Bearer ' || current_setting('app.cron_secret', true)
-    ),
-    body:='{}'::jsonb
-  );
-  $$
-);
-```
-(O valor do `CRON_SECRET` será gravado como GUC do banco prod via `ALTER DATABASE`/`SET` por meio de uma `supabase--insert` específica, ou embutido literal no `cron.schedule` — definirei a tática segura no momento da execução para não logar o secret.)
+### 3. Frontend — `ShareDemandDialog.tsx`
+- Mostrar **Switch "Adicionar automaticamente ao quadro como Agente"** apenas se o usuário atual for admin/moderador do quadro da demanda (usar `useBoardRole`).
+- Passar `autoJoinBoard` no `createToken.mutateAsync`.
+- Exibir, quando ativo, indicador visual no link existente ("Auto-join ativo — novos acessos viram Agentes do quadro").
 
-### 5. Backfill B3
-`supabase--insert` em **prod**:
-```sql
-UPDATE public.recurring_demands
-SET next_run_date = CURRENT_DATE,
-    last_generated_at = NULL
-WHERE is_active = true
-  AND next_run_date < CURRENT_DATE;
-```
-Após o primeiro tick (≤ 1h), validar com `read_query` que cada recorrência gerou 1 demanda nova.
+### 4. Frontend — `useShareDemand.ts`
+- Estender `ShareToken` com `auto_join_board`.
+- `useCreateShareToken` aceita `autoJoinBoard?: boolean`.
+- Novo hook `useJoinBoardViaToken()` que chama a RPC.
 
-### 6. Testes (TDD vertical — um por vez, RED → GREEN)
-`supabase/functions/process-recurring-demands/lib_test.ts` (Deno):
-- daily → soma 1 dia
-- weekly com `day_of_week` → próxima ocorrência correta
-- monthly com `day_of_month=13` em mês cujo dia cai no sábado → ajusta para segunda
-- monthly com `day_of_month=31` em fevereiro → último dia útil do mês
-- `isAuthorized`: aceita `Bearer <secret>`, rejeita ausente/diferente/prefixo errado
+### 5. Frontend — `SharedDemand.tsx`
+- Após receber payload e detectar usuário logado **não-membro**:
+  - Se `auto_join_board === true` → chamar RPC `join_board_via_share_token`.
+    - `success`/`already_member` → toast + `navigate('/demands/' + demand.id)`.
+    - `not_team_member` → renderizar tela "Você não faz parte da equipe deste quadro. Peça ao administrador para adicioná-lo à equipe primeiro." (modo leitura mantido).
+    - outros erros → modo leitura atual.
+  - Se `auto_join_board === false` → comportamento da última iteração (modo leitura para logados não-membros).
 
-`supabase/functions/process-recurring-demands/index_test.ts` (integração leve):
-- 401 sem header
-- 401 com bearer inválido
-- 200 com bearer válido (mockando supabase client via injeção)
+## Detalhes técnicos
 
-Rodar com `supabase--test_edge_functions`.
-
-### 7. CI (`.github/workflows/ci.yml`)
-Manter `bun` (já confirmado). Adicionar/garantir jobs:
-- `bun install --frozen-lockfile`
-- `bun run lint`
-- `bun run build`
-- `bunx vitest run` (unitários frontend, se existirem)
-- Step Deno: `denoland/setup-deno@v1` + `deno test -A supabase/functions/process-recurring-demands/`
-
-### 8. Validação manual pós-deploy
-- `curl` no endpoint prod sem header → 401.
-- `curl` com `Authorization: Bearer <CRON_SECRET prod>` → 200.
-- `edge_function_logs` (env=production) sem erros.
-- `read_query` em prod confirmando novas linhas em `demands` com `recurring_demand_id` preenchido após o primeiro tick.
+- Role inserida: `executor` (mapeada na UI como "Agente" via `BOARD_ROLE_LABELS`).
+- `added_by` = `created_by` do token (admin que gerou o link), para auditoria.
+- Não disparar notificações em massa para evitar spam quando vários entram pelo mesmo link (segue o padrão idempotente — só insere se ainda não é membro).
+- Tokens antigos ficam com `auto_join_board = false` por default — comportamento atual preservado.
 
 ## Arquivos afetados
-- `supabase/functions/process-recurring-demands/index.ts` (refator)
-- `supabase/functions/process-recurring-demands/lib.ts` (novo)
-- `supabase/functions/process-recurring-demands/lib_test.ts` (novo)
-- `supabase/functions/process-recurring-demands/index_test.ts` (novo)
-- `.github/workflows/ci.yml` (adiciona step Deno)
-- DB: 2 secrets, 3 deletes/inserts em `cron.job`, 1 update em `recurring_demands` (prod).
 
-## Riscos / pontos de atenção
-- Embutir o `CRON_SECRET` literal dentro do corpo do `cron.schedule` o deixa visível em `cron.job` para quem tem acesso ao banco. Mitigação: usar GUC (`app.cron_secret`) ou tabela cifrada. Decidirei a tática segura na execução; se não houver caminho seguro, **paro e pergunto antes de gravar o secret em texto plano**.
-- Não há recuperação de dias perdidos (B3 acordado).
-- Não tocarei no registro `7339291f…` nem em outras lógicas de geração.
-
-Skills aplicadas: **tdd** (slices verticais — um teste por vez) e **caveman** (parar e perguntar diante de conflito/incerteza, sem decidir sozinho).
+- Migration nova (coluna + RPC).
+- `supabase/functions/shared-demand/index.ts` (devolve `auto_join_board`).
+- `src/hooks/useShareDemand.ts`.
+- `src/components/ShareDemandDialog.tsx`.
+- `src/pages/SharedDemand.tsx`.

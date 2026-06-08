@@ -1,6 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
 import { useNotes, useCreateNote } from "@/hooks/useNotes";
-import { usePlanLimitGuard } from "@/hooks/usePlanLimitCheck";
 import { useSharedWithMeNotes, useLeaveSharedNote, SharedNote } from "@/hooks/useNoteShares";
 import { NoteCard } from "@/components/notes/NoteCard";
 import { Button } from "@/components/ui/button";
@@ -102,16 +101,12 @@ export default function Notes() {
     });
   }, [sharedNotes, search]);
 
-  const guardNotes = usePlanLimitGuard("notes");
   const handleCreateNote = async () => {
-    const ok = await guardNotes();
-    if (!ok) return;
     const note = await createNote.mutateAsync({});
     if (note) {
       navigate(`/notes/${note.id}`);
     }
   };
-
 
   const toggleTag = (tag: string) => {
     setSelectedTags(prev => 

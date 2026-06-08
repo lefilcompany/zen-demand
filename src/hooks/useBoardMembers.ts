@@ -3,8 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { notifyBoardMemberChange } from "@/lib/boardMemberNotifications";
-import { usePlansModal } from "@/contexts/PlansModalContext";
-import { showPlanLimitToast } from "@/lib/planLimitErrors";
 
 export type BoardRole = "admin" | "moderator" | "executor" | "requester";
 
@@ -131,7 +129,6 @@ export function useBoardRole(boardId: string | null) {
 // Add member to board with specified role
 export function useAddBoardMember() {
   const queryClient = useQueryClient();
-  const { openPlans } = usePlansModal();
 
   return useMutation({
     mutationFn: async ({
@@ -184,7 +181,6 @@ export function useAddBoardMember() {
       queryClient.invalidateQueries({ queryKey: ["available-team-members"] });
     },
     onError: (error: Error) => {
-      if (showPlanLimitToast(error, openPlans)) return;
       if (error.message.includes("duplicate")) {
         toast.error("Este membro já está no quadro");
       } else {

@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { usePlanLimitGuard } from "@/hooks/usePlanLimitCheck";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { formatPrice, parsePriceToCents, centsToDecimal } from "@/lib/priceUtils";
 import {
@@ -120,8 +119,7 @@ export default function ServicesManagement() {
   };
 
   // --- Service dialog ---
-  const guardServices = usePlanLimitGuard("services");
-  const openServiceDialog = async (service?: typeof editingService) => {
+  const openServiceDialog = (service?: typeof editingService) => {
     if (service) {
       setEditingService(service);
       setServiceForm({
@@ -131,16 +129,12 @@ export default function ServicesManagement() {
         price: centsToDecimal(service.price_cents || 0),
         parent_id: service.parent_id,
       });
-      setServiceDialogOpen(true);
-      return;
+    } else {
+      setEditingService(null);
+      setServiceForm({ name: "", description: "", estimated_hours: 24, price: "0,00", parent_id: null });
     }
-    const ok = await guardServices();
-    if (!ok) return;
-    setEditingService(null);
-    setServiceForm({ name: "", description: "", estimated_hours: 24, price: "0,00", parent_id: null });
     setServiceDialogOpen(true);
   };
-
 
   const handleServiceSubmit = () => {
     if (!serviceForm.name.trim() || !id) return;

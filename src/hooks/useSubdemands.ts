@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { usePlansModal } from "@/contexts/PlansModalContext";
-import { showPlanLimitToast } from "@/lib/planLimitErrors";
 
 export interface Subdemand {
   id: string;
@@ -115,7 +113,6 @@ export interface DependencyInput {
 export function useCreateDemandWithSubdemands() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { openPlans } = usePlansModal();
 
   return useMutation({
     mutationFn: async ({
@@ -160,9 +157,6 @@ export function useCreateDemandWithSubdemands() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["demands"] });
       queryClient.invalidateQueries({ queryKey: ["subdemands"] });
-    },
-    onError: (error: Error) => {
-      showPlanLimitToast(error, openPlans);
     },
   });
 }

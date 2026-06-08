@@ -4,8 +4,6 @@ import { useAuth } from "@/lib/auth";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { toast } from "sonner";
 import { useEffect } from "react";
-import { usePlansModal } from "@/contexts/PlansModalContext";
-import { showPlanLimitToast } from "@/lib/planLimitErrors";
 
 export interface Note {
   id: string;
@@ -105,7 +103,6 @@ export function useCreateNote() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { selectedTeamId } = useSelectedTeam();
-  const { openPlans } = usePlansModal();
 
   return useMutation({
     mutationFn: async (data: { title?: string; content?: string; icon?: string; parent_id?: string }) => {
@@ -158,7 +155,6 @@ export function useCreateNote() {
       queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
     onError: (error: Error) => {
-      if (showPlanLimitToast(error, openPlans)) return;
       toast.error("Erro ao criar nota: " + error.message);
     },
   });
