@@ -191,32 +191,32 @@ def test_board_members_can_view_requests_but_non_board_team_members_cannot(seede
         assert join_outsider.ok, join_outsider.text
         assert join_board_user.ok, join_board_user.text
 
-        board = rest_insert(
-            "boards",
-            {
-                "team_id": team.teamId,
-                "name": f"E2E Sec Board {uuid.uuid4().hex[:6]}",
-                "created_by": team.userId,
-                "is_default": False,
-            },
-            access_token=owner["access_token"],
-            select="id,name,is_default",
-        )
-        assert board.ok, board.text
-        secondary_board_id = board.json()[0]["id"]
-
-        member_added = rest_insert(
+        removed_from_default_board = rest_select(
             "board_members",
-            {
-                "board_id": secondary_board_id,
-                "user_id": board_user["userId"],
-                "role": "requester",
-                "added_by": team.userId,
-            },
             access_token=owner["access_token"],
-            select="board_id,user_id,role",
+            select="id,board_id,user_id",
+            params={
+                "board_id": f"eq.{team.boardId}",
+                "user_id": f"eq.{outsider['userId']}",
+            },
         )
-        assert member_added.ok, member_added.text
+        assert removed_from_default_board.ok, removed_from_default_board.text
+        outsider_rows = removed_from_default_board.json()
+        assert len(outsider_rows) == 1, outsider_rows
+
+        import requests
+        delete_outsider = requests.delete(
+            f"{__import__('tests_selenium.seed', fromlist=['SUPABASE_URL']).SUPABASE_URL}/rest/v1/board_members",
+            headers={
+                "apikey": __import__('tests_selenium.seed', fromlist=['ANON_KEY']).ANON_KEY,
+                "Authorization": f"Bearer {owner['access_token']}",
+            },
+            params={"id": f"eq.{outsider_rows[0]['id']}"},
+            timeout=30,
+        )
+        assert delete_outsider.ok, delete_outsider.text
+
+        secondary_board_id = team.boardId
 
         created_request = rest_insert(
             "demand_requests",
