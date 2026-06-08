@@ -43,14 +43,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { board_id, is_requester } = await req.json();
-    if (!board_id) {
-      return new Response(JSON.stringify({ error: "board_id is required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     // Authorization: caller must be a member of the requested board
     const { data: membership } = await supabase
       .from("board_members")
@@ -64,6 +56,14 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const demandsQuery = supabase
+      .from("demands")
+      .select(
+        "id, title, priority, due_date, delivered_at, created_at, is_overdue, created_by, demand_statuses(name), services(name)",
+      )
+      .eq("board_id", board_id)
+      .order("created_at", { ascending: false })
       .limit(100);
 
     if (is_requester) {
