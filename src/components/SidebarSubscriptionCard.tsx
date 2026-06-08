@@ -1,5 +1,5 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import { useTrialStatus } from "@/hooks/useTrialStatus";
 import { useTeamSubscription } from "@/hooks/useSubscription";
 import { useSelectedTeam } from "@/contexts/TeamContext";
@@ -7,11 +7,21 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { Crown, Sparkles, ArrowRight, Clock, Zap, Star, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { PlansModal } from "@/components/PlansModal";
 export function SidebarSubscriptionCard() {
+  const [plansOpen, setPlansOpen] = useState(false);
+  return (
+    <>
+      <SidebarSubscriptionCardInner onOpenPlans={() => setPlansOpen(true)} />
+      <PlansModal open={plansOpen} onOpenChange={setPlansOpen} />
+    </>
+  );
+}
+
+function SidebarSubscriptionCardInner({ onOpenPlans }: { onOpenPlans: () => void }) {
   const {
     t
   } = useTranslation();
-  const navigate = useNavigate();
   const {
     state,
     isMobile,
@@ -33,7 +43,7 @@ export function SidebarSubscriptionCard() {
   } = useTeamSubscription(currentTeam?.id);
   const showText = isMobile || !isCollapsed;
   const handleClick = () => {
-    navigate("/pricing");
+    onOpenPlans();
     if (isMobile) {
       setOpenMobile(false);
     }
@@ -45,8 +55,8 @@ export function SidebarSubscriptionCard() {
     if (!showText) {
       return <Tooltip>
           <TooltipTrigger asChild>
-            <button onClick={handleClick} className="group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/70 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300">
-              <Crown className="h-5 w-5 text-primary-foreground" />
+            <button onClick={handleClick} className="group relative w-8 h-8 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/70 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300">
+              <Crown className="h-4 w-4 text-primary-foreground" />
               <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-white/0 via-white/10 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
           </TooltipTrigger>
@@ -131,8 +141,8 @@ export function SidebarSubscriptionCard() {
     if (!showText) {
       return <Tooltip>
           <TooltipTrigger asChild>
-            <button onClick={handleClick} className={cn("group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br shadow-lg transition-all duration-300 hover:scale-105", config.iconBg, urgency === "critical" ? "shadow-red-500/30 hover:shadow-red-500/50" : "shadow-primary/20")}>
-              <ShoppingBag className="h-5 w-5 text-white" />
+            <button onClick={handleClick} className={cn("group relative w-8 h-8 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br shadow-lg transition-all duration-300 hover:scale-105", config.iconBg, urgency === "critical" ? "shadow-red-500/30 hover:shadow-red-500/50" : "shadow-primary/20")}>
+              <ShoppingBag className="h-4 w-4 text-white" />
               {config.pulse && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white animate-ping" />}
               {config.pulse && <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-white" />}
             </button>
@@ -143,7 +153,7 @@ export function SidebarSubscriptionCard() {
           </TooltipContent>
         </Tooltip>;
     }
-    return <button onClick={handleClick} className={cn("group relative w-full overflow-hidden rounded-xl p-[1px] transition-all duration-300", urgency === "critical" && "animate-pulse")}>
+    return <button onClick={handleClick} className={cn("group relative w-full overflow-hidden rounded-xl p-[1px] transition-all duration-300")}>
         {/* Border gradient */}
         <div className={cn("absolute inset-0 rounded-xl bg-gradient-to-br opacity-60", config.gradient)} />
         
@@ -194,8 +204,8 @@ export function SidebarSubscriptionCard() {
   if (!showText) {
     return <Tooltip>
         <TooltipTrigger asChild>
-          <button onClick={handleClick} className="group relative w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-accent shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300 animate-pulse">
-            <Crown className="h-5 w-5 text-primary-foreground" />
+          <button onClick={handleClick} className="group relative w-8 h-8 mx-auto flex items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-accent shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:scale-105 transition-all duration-300 animate-pulse">
+            <Crown className="h-4 w-4 text-primary-foreground" />
           </button>
         </TooltipTrigger>
         <TooltipContent side="right">

@@ -27,6 +27,7 @@ import { CreateRequestQuickDialog } from "@/components/CreateRequestQuickDialog"
 import { useDemandAssignees } from "@/hooks/useDemandAssignees";
 import { ScheduledDemandsModal } from "@/components/ScheduledDemandsModal";
 import { useCreateDemandModal } from "@/contexts/CreateDemandContext";
+import { usePlanLimitGuard } from "@/hooks/usePlanLimitCheck";
 import { useTeamMembershipRole } from "@/hooks/useTeamRole";
 import { ArchivedDemandsModal } from "@/components/ArchivedDemandsModal";
 import { SEOHead } from "@/components/SEOHead";
@@ -94,6 +95,7 @@ export default function Demands() {
   } = useTranslation();
   const navigate = useNavigate();
   const { openCreateDemand } = useCreateDemandModal();
+  const guardDemands = usePlanLimitGuard("demands");
   const location = useLocation();
   const {
     user
@@ -349,14 +351,17 @@ export default function Demands() {
   }, [activeDemands, searchQuery, filters, selectedStatuses, hideDelivered, showOnlyMine, user?.id, membersByPosition, selectedFolderId, folderDemandIds]);
 
   // Handle calendar day click — open the standard create demand modal with the chosen date pre-filled
-  const handleDayClick = (date: Date) => {
+  const handleDayClick = async (date: Date) => {
     if (isReadOnly) {
+      const ok = await guardDemands();
+      if (!ok) return;
       setSelectedDateForCreate(date);
       setIsCreateDialogOpen(true);
     } else {
       openCreateDemand({ initialDueDate: date });
     }
   };
+
 
   const updateDemand = useUpdateDemand();
 
