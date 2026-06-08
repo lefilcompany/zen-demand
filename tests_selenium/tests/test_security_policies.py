@@ -177,7 +177,7 @@ def test_shared_demand_exposes_only_general_interactions(seeded):
 
 
 def test_board_members_can_view_requests_but_non_board_team_members_cannot(seeded):
-    team = seeded("starter")
+    team = seeded("profissional")
     owner = signin_password(team.email, team.password)
     outsider = seed_extra_user()
     board_user = seed_extra_user()
