@@ -219,7 +219,7 @@ export function useUpdateSubscription() {
 
       const { data, error } = await supabase
         .from("subscriptions")
-        .update(updates as never)
+        .update(updates)
         .eq("id", subscriptionId)
         .select()
         .single();

@@ -194,7 +194,7 @@ export function useUpdateBoard() {
 
       const { data, error } = await supabase
         .from("boards")
-        .update(updateData as never)
+        .update(updateData)
         .eq("id", input.id)
         .select()
         .single();
