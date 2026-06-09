@@ -2,10 +2,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Json } from "@/integrations/supabase/types";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { usePlansModal } from "@/contexts/PlansModalContext";
 import { showPlanLimitToast } from "@/lib/planLimitErrors";
+import { createRealtimeInstanceId } from "@/lib/realtimeUtils";
 import { 
   DemandCreateSchema, 
   DemandUpdateSchema, 
@@ -152,6 +153,7 @@ export function useDemandById(demandId: string | undefined) {
 
 export function useDemandStatuses() {
   const queryClient = useQueryClient();
+  const channelInstanceId = useRef(createRealtimeInstanceId());
 
   const query = useQuery({
     queryKey: ["demand-statuses"],
@@ -194,9 +196,8 @@ export function useDemandStatuses() {
 
   // Subscribe to realtime updates for demand_statuses
   useEffect(() => {
-    const channelName = `demand-statuses-realtime-${Math.random().toString(36).slice(2)}`;
     const channel = supabase
-      .channel(channelName)
+      .channel(`demand-statuses-realtime-${channelInstanceId.current}`)
       .on(
         "postgres_changes",
         {
@@ -562,22 +563,16 @@ export function useArchiveDeliveredDemands() {
 
   return useMutation({
     mutationFn: async (boardId: string) => {
-      // First, get the "Entregue" status ID scoped to this board (fallback to system status)
-      const { data: boardStatuses, error: statusError } = await supabase
+      // First, get the "Entregue" status ID
+      const { data: statuses, error: statusError } = await supabase
         .from("demand_statuses")
-        .select("id, board_id")
+        .select("id")
         .eq("name", "Entregue")
-        .or(`board_id.eq.${boardId},board_id.is.null`);
+        .single();
 
       if (statusError) throw statusError;
 
-      const deliveredStatus =
-        (boardStatuses || []).find((s: any) => s.board_id === boardId) ||
-        (boardStatuses || []).find((s: any) => s.board_id === null);
-
-      if (!deliveredStatus) throw new Error("Status 'Entregue' não encontrado para este quadro");
-
-      const deliveredStatusId = deliveredStatus.id;
+      const deliveredStatusId = statuses.id;
 
       // Get all delivered demands for this board
       const { data: deliveredDemands, error: fetchError } = await supabase

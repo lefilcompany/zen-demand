@@ -10,9 +10,16 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const E2E_SECRET = Deno.env.get("E2E_SEED_SECRET") ?? "";
+const ALLOWED_E2E_ENVIRONMENTS = new Set([
+  "development",
+  "dev",
+  "test",
+  "e2e",
+  "staging",
+  "preview",
+  "local",
+]);
+const TEST_PROJECT_REF = "dcojvsftpzwfhgvamdgm";
 
 type PlanSlug = "starter" | "profissional" | "business" | "enterprise";
 type Resource = "boards" | "members" | "demands" | "services" | "notes";
@@ -44,15 +51,37 @@ function genAccessCode() {
   return s;
 }
 
-Deno.serve(async (req) => {
+function getRuntimeEnvironment() {
+  return (Deno.env.get("ENVIRONMENT") ?? Deno.env.get("NODE_ENV") ?? "")
+    .toLowerCase()
+    .trim();
+}
+
+function getProjectRefFromUrl(url: string) {
+  const match = url.match(/^https?:\/\/([^.]+)\./i);
+  return match?.[1]?.toLowerCase() ?? "";
+}
+
+function isAllowedE2EEnvironment(environment: string) {
+  return ALLOWED_E2E_ENVIRONMENTS.has(environment);
+}
+
+export const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
 
   // Refuse to run unless explicitly in a test environment.
-  const environment = (Deno.env.get("ENVIRONMENT") ?? "").toLowerCase();
-  if (environment !== "test" && environment !== "e2e" && environment !== "staging") {
+  const environment = getRuntimeEnvironment();
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const projectRef = getProjectRefFromUrl(supabaseUrl);
+  const isKnownTestProject = projectRef === TEST_PROJECT_REF;
+  if (!isAllowedE2EEnvironment(environment) && !isKnownTestProject) {
     return json(503, { error: "e2e_disabled", message: "e2e-seed is only available in test environments" });
   }
+
+  const SUPABASE_URL = supabaseUrl;
+  const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const E2E_SECRET = Deno.env.get("E2E_SEED_SECRET") ?? "";
 
   if (!E2E_SECRET) return json(503, { error: "e2e_disabled", message: "E2E_SEED_SECRET not configured" });
   const provided = req.headers.get("x-e2e-secret") ?? "";
@@ -211,7 +240,11 @@ Deno.serve(async (req) => {
     console.error("e2e-seed error", e);
     return json(500, { error: "seed_failed", message: (e as Error).message });
   }
-});
+};
+
+if (!Deno.env.get("SKIP_SERVE")) {
+  Deno.serve(handler);
+}
 
 async function fillResource(
   admin: ReturnType<typeof createClient>,

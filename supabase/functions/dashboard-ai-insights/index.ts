@@ -43,6 +43,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    const { board_id, is_requester } = await req.json();
+    if (!board_id) {
+      return new Response(JSON.stringify({ error: "board_id is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Authorization: caller must be a member of the requested board
     const { data: membership } = await supabase
       .from("board_members")
@@ -56,14 +64,6 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const demandsQuery = supabase
-      .from("demands")
-      .select(
-        "id, title, priority, due_date, delivered_at, created_at, is_overdue, created_by, demand_statuses(name), services(name)",
-      )
-      .eq("board_id", board_id)
-      .order("created_at", { ascending: false })
       .limit(100);
 
     if (is_requester) {
@@ -217,17 +217,17 @@ Se não houver dados suficientes, crie insights genéricos sobre boas práticas 
 
     if (!aiResponse.ok) {
       const status = aiResponse.status;
-      console.error("Gemini AI error:", status, await aiResponse.text().catch(() => ""));
-      // Always return 200 with empty insights + fallback flag so the client
-      // never crashes / shows a blank screen on transient AI failures.
-      return new Response(
-        JSON.stringify({
-          insights: [],
-          fallback: true,
-          reason: status === 429 ? "rate_limit" : "ai_unavailable",
-        }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      if (status === 429) {
+        return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      console.error("Gemini AI error:", status, await aiResponse.text());
+      return new Response(JSON.stringify({ error: "AI service error" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const aiData = await aiResponse.json();
@@ -253,15 +253,9 @@ Se não houver dados suficientes, crie insights genéricos sobre boas práticas 
     });
   } catch (e) {
     console.error("Error:", e);
-    // Never propagate as 5xx — client treats any throw as a blank screen trigger.
-    return new Response(
-      JSON.stringify({
-        insights: [],
-        fallback: true,
-        reason: "internal_error",
-        message: e instanceof Error ? e.message : "Unknown error",
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });

@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useSelectedTeam } from "@/contexts/TeamContext";
 import { toast } from "sonner";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { createRealtimeInstanceId } from "@/lib/realtimeUtils";
 import { usePlansModal } from "@/contexts/PlansModalContext";
 import { showPlanLimitToast } from "@/lib/planLimitErrors";
 
@@ -31,13 +32,14 @@ export interface Note {
 export function useNotes() {
   const { selectedTeamId } = useSelectedTeam();
   const queryClient = useQueryClient();
+  const instanceId = useRef(createRealtimeInstanceId());
 
   // Realtime subscription for notes
   useEffect(() => {
     if (!selectedTeamId) return;
 
     const channel = supabase
-      .channel(`notes-${selectedTeamId}`)
+      .channel(`notes-${selectedTeamId}-${instanceId.current}`)
       .on(
         'postgres_changes',
         {

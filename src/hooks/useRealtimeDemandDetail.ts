@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { mergeDemandRowIntoCache } from "@/lib/demandRealtimeCache";
+import { createRealtimeInstanceId } from "@/lib/realtimeUtils";
 
 interface RealtimeUpdate {
   type: "demand" | "interaction" | "assignee" | "subtask";
@@ -21,11 +22,13 @@ export function useRealtimeDemandDetail(demandId?: string) {
     setLastUpdate(null);
   }, []);
 
+  const instanceId = useRef(createRealtimeInstanceId());
+
   useEffect(() => {
     if (!user || !demandId) return;
 
     const channel = supabase
-      .channel(`demand-detail-${demandId}`)
+      .channel(`demand-detail-${demandId}-${instanceId.current}`)
       .on(
         'postgres_changes',
         {

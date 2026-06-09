@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { createRealtimeInstanceId } from "@/lib/realtimeUtils";
 export type AdjustmentType = 'none' | 'internal' | 'external';
 
 export type BoardRoleType = 'admin' | 'moderator' | 'executor' | 'requester';
@@ -117,6 +118,8 @@ export function boardStatusToColumn(boardStatus: BoardStatus): KanbanColumn {
 // Fetch active board statuses
 export function useBoardStatuses(boardId: string | null) {
   const queryClient = useQueryClient();
+  const instanceId = useRef(createRealtimeInstanceId());
+
 
   const query = useQuery({
     queryKey: ["board-statuses", boardId],
@@ -157,7 +160,7 @@ export function useBoardStatuses(boardId: string | null) {
     if (!boardId) return;
 
     const channel = supabase
-      .channel(`board-statuses-${boardId}`)
+      .channel(`board-statuses-${boardId}-${instanceId.current}`)
       .on(
         "postgres_changes",
         {

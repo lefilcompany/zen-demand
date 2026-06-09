@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from urllib.parse import urljoin
 from typing import Any, Literal, Optional
 
 import requests
@@ -107,48 +106,5 @@ def rpc(access_token: str, fn: str, params: dict[str, Any]) -> requests.Response
             "Content-Type": "application/json",
         },
         json=params,
-        timeout=30,
-    )
-
-
-def rest_select(
-    table: str,
-    *,
-    access_token: str | None = None,
-    select: str = "*",
-    params: dict[str, Any] | None = None,
-) -> requests.Response:
-    """GET /rest/v1/<table> com auth opcional."""
-    query = {"select": select, **(params or {})}
-    bearer = access_token or ANON_KEY
-    return requests.get(
-        urljoin(f"{SUPABASE_URL}/", f"rest/v1/{table}"),
-        headers={
-            "apikey": ANON_KEY,
-            "Authorization": f"Bearer {bearer}",
-        },
-        params=query,
-        timeout=30,
-    )
-
-
-def rest_insert(
-    table: str,
-    payload: dict[str, Any],
-    *,
-    access_token: str,
-    select: str = "*",
-) -> requests.Response:
-    """POST /rest/v1/<table> autenticado, retornando representação."""
-    return requests.post(
-        urljoin(f"{SUPABASE_URL}/", f"rest/v1/{table}"),
-        headers={
-            "apikey": ANON_KEY,
-            "Authorization": f"Bearer {access_token}",
-            "Content-Type": "application/json",
-            "Prefer": "return=representation",
-        },
-        params={"select": select},
-        json=payload,
         timeout=30,
     )
