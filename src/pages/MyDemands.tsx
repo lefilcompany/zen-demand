@@ -33,6 +33,7 @@ import { isDateOverdue } from "@/lib/dateUtils";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { SelectedBoardChips, BoardMultiSelectButton } from "@/components/TeamDemandsFilters";
 import { SEOHead } from "@/components/SEOHead";
+import { safeDateTimestamp, safeIncludesText } from "@/lib/demandViewSafety";
 import {
   Select,
   SelectContent,
@@ -139,9 +140,9 @@ export default function MyDemands() {
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
         const matchesSearch = 
-          d.title.toLowerCase().includes(query) ||
-          d.description?.toLowerCase().includes(query) ||
-          d.priority?.toLowerCase().includes(query);
+          safeIncludesText(d.title, query) ||
+          safeIncludesText(d.description, query) ||
+          safeIncludesText(d.priority, query);
         if (!matchesSearch) return false;
       }
       
@@ -164,7 +165,12 @@ export default function MyDemands() {
       if (!a.due_date && !b.due_date) return 0;
       if (!a.due_date) return 1;
       if (!b.due_date) return -1;
-      return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+       const dateA = safeDateTimestamp(a.due_date);
+       const dateB = safeDateTimestamp(b.due_date);
+       if (dateA === null && dateB === null) return 0;
+       if (dateA === null) return 1;
+       if (dateB === null) return -1;
+       return dateA - dateB;
     });
   }, [demands, searchQuery, filters, hideDelivered]);
 
