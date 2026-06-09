@@ -253,9 +253,15 @@ Se não houver dados suficientes, crie insights genéricos sobre boas práticas 
     });
   } catch (e) {
     console.error("Error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    // Never propagate as 5xx — client treats any throw as a blank screen trigger.
+    return new Response(
+      JSON.stringify({
+        insights: [],
+        fallback: true,
+        reason: "internal_error",
+        message: e instanceof Error ? e.message : "Unknown error",
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 });
