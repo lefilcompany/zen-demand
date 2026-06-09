@@ -75,7 +75,14 @@ export function WhatsAppSettingsCard() {
       toast.success("Código enviado pelo WhatsApp");
       setStep("code");
     } catch (e: any) {
-      toast.error("Falha ao enviar código", { description: e.message });
+      const msg = e.message || "";
+      if (msg.includes("Telefone inválido")) {
+        toast.error("Número inválido", { description: "Use o formato internacional, ex: +5511999999999" });
+      } else if (msg.includes("vinculado a outra conta")) {
+        toast.error("Número já em uso", { description: "Este telefone já está vinculado a outra conta." });
+      } else {
+        toast.error("Falha ao enviar código", { description: msg });
+      }
     } finally {
       setSending(false);
     }
@@ -96,7 +103,22 @@ export function WhatsAppSettingsCard() {
       setCode("");
       queryClient.invalidateQueries({ queryKey: ["profile-whatsapp"] });
     } catch (e: any) {
-      toast.error("Falha ao verificar", { description: e.message });
+      const msg = e.message || "";
+      if (msg.includes("Código incorreto")) {
+        toast.error("Código errado", { description: "O código digitado está incorreto. Tente novamente." });
+      } else if (msg.includes("expirado")) {
+        toast.error("Código expirado", { description: "O código expirou. Solicite um novo código." });
+      } else if (msg.includes("já utilizado")) {
+        toast.error("Código já usado", { description: "Este código já foi utilizado. Solicite um novo." });
+      } else if (msg.includes("Muitas tentativas")) {
+        toast.error("Muitas tentativas", { description: "Você excedeu o limite de tentativas. Solicite um novo código." });
+      } else if (msg.includes("Solicite um novo código")) {
+        toast.error("Código inválido", { description: "Solicite um novo código e tente novamente." });
+      } else if (msg.includes("Código inválido")) {
+        toast.error("Código inválido", { description: "Digite o código de 6 dígitos enviado por WhatsApp." });
+      } else {
+        toast.error("Falha ao verificar", { description: msg });
+      }
     } finally {
       setVerifying(false);
     }
