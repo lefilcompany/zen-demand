@@ -377,38 +377,6 @@ export type Database = {
           },
         ]
       }
-      board_whatsapp_keywords: {
-        Row: {
-          board_id: string
-          created_at: string
-          created_by: string | null
-          id: string
-          keyword: string
-        }
-        Insert: {
-          board_id: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          keyword: string
-        }
-        Update: {
-          board_id?: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          keyword?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "board_whatsapp_keywords_board_id_fkey"
-            columns: ["board_id"]
-            isOneToOne: false
-            referencedRelation: "boards"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       boards: {
         Row: {
           created_at: string
@@ -420,7 +388,6 @@ export type Database = {
           name: string
           team_id: string
           updated_at: string
-          whatsapp_enabled: boolean
         }
         Insert: {
           created_at?: string
@@ -432,7 +399,6 @@ export type Database = {
           name: string
           team_id: string
           updated_at?: string
-          whatsapp_enabled?: boolean
         }
         Update: {
           created_at?: string
@@ -444,7 +410,6 @@ export type Database = {
           name?: string
           team_id?: string
           updated_at?: string
-          whatsapp_enabled?: boolean
         }
         Relationships: [
           {
@@ -1856,7 +1821,6 @@ export type Database = {
           bio: string | null
           city: string | null
           created_at: string
-          default_whatsapp_board_id: string | null
           email: string | null
           full_name: string
           github_url: string | null
@@ -1871,8 +1835,6 @@ export type Database = {
           trial_ends_at: string | null
           updated_at: string
           website: string | null
-          whatsapp_phone: string | null
-          whatsapp_verified_at: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -1881,7 +1843,6 @@ export type Database = {
           bio?: string | null
           city?: string | null
           created_at?: string
-          default_whatsapp_board_id?: string | null
           email?: string | null
           full_name: string
           github_url?: string | null
@@ -1896,8 +1857,6 @@ export type Database = {
           trial_ends_at?: string | null
           updated_at?: string
           website?: string | null
-          whatsapp_phone?: string | null
-          whatsapp_verified_at?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -1906,7 +1865,6 @@ export type Database = {
           bio?: string | null
           city?: string | null
           created_at?: string
-          default_whatsapp_board_id?: string | null
           email?: string | null
           full_name?: string
           github_url?: string | null
@@ -1921,18 +1879,8 @@ export type Database = {
           trial_ends_at?: string | null
           updated_at?: string
           website?: string | null
-          whatsapp_phone?: string | null
-          whatsapp_verified_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_default_whatsapp_board_id_fkey"
-            columns: ["default_whatsapp_board_id"]
-            isOneToOne: false
-            referencedRelation: "boards"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       recurring_demands: {
         Row: {
@@ -2608,106 +2556,6 @@ export type Database = {
           },
         ]
       }
-      whatsapp_inbound_logs: {
-        Row: {
-          ai_extraction: Json | null
-          created_at: string
-          created_demand_id: string | null
-          created_request_id: string | null
-          error: string | null
-          from_phone: string
-          id: string
-          matched_board_id: string | null
-          matched_user_id: string | null
-          raw_message: string | null
-          status: string
-          to_phone: string | null
-        }
-        Insert: {
-          ai_extraction?: Json | null
-          created_at?: string
-          created_demand_id?: string | null
-          created_request_id?: string | null
-          error?: string | null
-          from_phone: string
-          id?: string
-          matched_board_id?: string | null
-          matched_user_id?: string | null
-          raw_message?: string | null
-          status?: string
-          to_phone?: string | null
-        }
-        Update: {
-          ai_extraction?: Json | null
-          created_at?: string
-          created_demand_id?: string | null
-          created_request_id?: string | null
-          error?: string | null
-          from_phone?: string
-          id?: string
-          matched_board_id?: string | null
-          matched_user_id?: string | null
-          raw_message?: string | null
-          status?: string
-          to_phone?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "whatsapp_inbound_logs_created_demand_id_fkey"
-            columns: ["created_demand_id"]
-            isOneToOne: false
-            referencedRelation: "demands"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "whatsapp_inbound_logs_created_request_id_fkey"
-            columns: ["created_request_id"]
-            isOneToOne: false
-            referencedRelation: "demand_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "whatsapp_inbound_logs_matched_board_id_fkey"
-            columns: ["matched_board_id"]
-            isOneToOne: false
-            referencedRelation: "boards"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      whatsapp_phone_codes: {
-        Row: {
-          attempts: number
-          code_hash: string
-          consumed_at: string | null
-          created_at: string
-          expires_at: string
-          id: string
-          phone: string
-          user_id: string
-        }
-        Insert: {
-          attempts?: number
-          code_hash: string
-          consumed_at?: string | null
-          created_at?: string
-          expires_at: string
-          id?: string
-          phone: string
-          user_id: string
-        }
-        Update: {
-          attempts?: number
-          code_hash?: string
-          consumed_at?: string | null
-          created_at?: string
-          expires_at?: string
-          id?: string
-          phone?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -2780,7 +2628,6 @@ export type Database = {
           name: string
           team_id: string
           updated_at: string
-          whatsapp_enabled: boolean
         }
         SetofOptions: {
           from: "*"

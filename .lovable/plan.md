@@ -1,127 +1,34 @@
-# Integração WhatsApp → @soma cria demanda
+## Causa raiz do publish travado
 
-Permitir que usuários, ao escreverem `@soma` em uma conversa de WhatsApp Business conectada, criem demandas automaticamente no SoMA. A mensagem é interpretada por IA para extrair título, descrição, prazo, responsável e quadro de destino.
+O problema **não está no frontend nem no `.env`** — está na edge function `supabase/functions/dashboard-ai-insights/index.ts`, que está com o código corrompido e quebra o deploy do bundle de funções no publish da branch `main` (e o erro real fica mascarado por trás de uma mensagem genérica de "update").
 
-## Fluxo
+Evidências no arquivo atual:
 
-```text
-WhatsApp Business (Sinch)
-        │  webhook (mensagem recebida)
-        ▼
-Edge Function: whatsapp-webhook
-        │  1. valida assinatura Sinch
-        │  2. detecta menção "@soma"
-        │  3. resolve remetente (telefone → profile)
-        │  4. chama IA p/ extrair título/descrição/quadro/prazo
-        ▼
-   ┌────┴─────┐
-   │          │
-Cadastrado  Desconhecido
-   │          │
-   ▼          ▼
- demands   demand_requests
-(direta)   (vira solicitação p/ aprovação)
-   │          │
-   ▼          ▼
-WhatsApp: resposta de confirmação ("✅ Demanda #1234 criada no quadro Marketing")
-```
+1. **Bloco duplicado de `req.json()`** (linhas 38–44 e 46–52): a mesma destruturação `const { board_id, is_requester }` é declarada duas vezes no mesmo escopo → erro `Cannot redeclare block-scoped variable`.
+2. **Linha 67 órfã**: `.limit(100);` aparece solta logo depois de um `if (!membership) { ... }`, sem nenhuma query encadeada antes → erro de sintaxe.
+3. **`demandsQuery` nunca é declarada**, mas é usada nas linhas 70 (`demandsQuery.eq(...)`) e 74 (dentro do `Promise.all`).
 
-## Etapas
+Qualquer um desses três pontos faz o `deno check` falhar no momento do publish para Live, e o publish é abortado sem aplicar nenhuma alteração — daí a sensação de "não consigo dar update no sistema". Funciona em dev preview porque essa função específica não está sendo chamada lá no fluxo que você testou, mas o deploy para produção valida todas as funções.
 
-### 1. Conectar WhatsApp Business via Sinch
-- Usar `standard_connectors--connect` com o conector WhatsApp Business (Sinch).
-- Usuário precisará ter número WhatsApp Business verificado já provisionado na Sinch.
+## Correção
 
-### 2. Cadastro de telefone no perfil
-- Adicionar coluna `whatsapp_phone` (E.164) em `profiles`, com índice único.
-- UI em **Profile**: campo "WhatsApp" + botão "Verificar" (envia código de 6 dígitos via Sinch, valida, marca `whatsapp_verified_at`).
-- Sem telefone verificado = usuário cai no fluxo "desconhecido".
+Reescrever apenas o trecho quebrado (linhas ~38–71) de `supabase/functions/dashboard-ai-insights/index.ts` para:
 
-### 3. Mapeamento quadro por palavra-chave
-- Nova tabela `board_whatsapp_keywords` (board_id, keyword, created_by).
-- Tela em **Configurações do Quadro → WhatsApp**: lista de palavras-chave (ex.: `#marketing`, `#dev`).
-- Sintaxe aceita: `@soma #marketing <texto livre>`. Se nenhuma keyword for encontrada, usa o "quadro padrão WhatsApp" do usuário (novo campo em `profiles.default_whatsapp_board_id`).
+- Manter **um único** `const { board_id, is_requester } = await req.json();` com a validação.
+- Manter a verificação de `membership` (autorização do board).
+- **Reintroduzir a declaração de `demandsQuery`** que foi perdida — uma query em `demands` filtrada por `board_id`, com `select` dos campos usados depois (`demand_statuses(name)`, `services(name)`, `delivered_at`, `due_date`, `is_overdue`, `created_by`) e `.limit(100)` no final.
+- Manter o `if (is_requester) demandsQuery.eq("created_by", userId);` logo após.
 
-### 4. Edge function `whatsapp-webhook`
-- Endpoint público (sem JWT) que a Sinch chama.
-- Valida assinatura HMAC do payload Sinch.
-- Filtra mensagens que contenham `@soma` (case-insensitive, regex de palavra).
-- Normaliza telefone do remetente e busca em `profiles.whatsapp_phone`.
-- Extrai `#keyword` e resolve `board_id`.
-- Chama Lovable AI (`google/gemini-3-flash-preview`) com `Output.object` (zod) para extrair:
-  - `title` (≤ 120 chars)
-  - `description` (markdown opcional)
-  - `due_date` (ISO, opcional)
-  - `assignee_hint` (nome/menção, opcional)
-- Resolve `assignee_hint` → `user_id` consultando membros do quadro (match por nome).
-- **Híbrido**:
-  - Cadastrado + membro do quadro → `INSERT demands` direto (status inicial padrão, criador = profile do remetente).
-  - Não cadastrado **ou** sem permissão no quadro → `INSERT demand_requests` (vira solicitação para aprovação interna).
-- Anexa mídia: se a mensagem tiver imagem/áudio/documento, baixa pela API Sinch e faz upload para storage, criando `demand_attachments`.
+Nenhuma outra função, hook ou arquivo do frontend será tocado. O resto do arquivo (a partir do `Promise.all`) já está correto e continua igual.
 
-### 5. Resposta no WhatsApp
-- Após criar, edge envia mensagem de confirmação pela Sinch:
-  - Sucesso direto: `✅ Demanda #SEQ criada no quadro <nome>. Ver: <link>`
-  - Solicitação: `📥 Solicitação registrada. Aguardando aprovação do quadro <nome>.`
-  - Erro (sem keyword + sem quadro padrão): `⚠️ Não identifiquei o quadro. Use #palavra-chave ou configure um quadro padrão no seu perfil.`
+## Validação
 
-### 6. Logs e auditoria
-- Nova tabela `whatsapp_inbound_logs` (from_phone, raw_message, matched_board_id, created_demand_id, created_request_id, ai_extraction jsonb, status, error, created_at) com RLS restrita a admins do sistema.
+1. `deno check supabase/functions/dashboard-ai-insights/index.ts` deve passar.
+2. Deploy isolado da função via `supabase--deploy_edge_functions(["dashboard-ai-insights"])` para confirmar que o bundle compila no ambiente real.
+3. Depois disso, o publish da `main` volta a funcionar normalmente.
 
-### 7. Segurança
-- Webhook valida assinatura Sinch (secret `SINCH_WEBHOOK_SECRET`).
-- Rate limit por telefone (máx. 10 demandas/hora) usando contagem em `whatsapp_inbound_logs`.
-- Telefones desconhecidos só geram `demand_request`, nunca demanda direta — evita spam.
-- Quadro precisa estar com "WhatsApp habilitado" (flag `boards.whatsapp_enabled`).
+## Fora de escopo
 
-## Detalhes técnicos
-
-**Schema novo:**
-```sql
-ALTER TABLE profiles
-  ADD COLUMN whatsapp_phone text UNIQUE,
-  ADD COLUMN whatsapp_verified_at timestamptz,
-  ADD COLUMN default_whatsapp_board_id uuid REFERENCES boards(id);
-
-ALTER TABLE boards
-  ADD COLUMN whatsapp_enabled boolean DEFAULT false;
-
-CREATE TABLE board_whatsapp_keywords (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  board_id uuid NOT NULL REFERENCES boards(id) ON DELETE CASCADE,
-  keyword text NOT NULL,
-  created_by uuid REFERENCES auth.users(id),
-  created_at timestamptz DEFAULT now(),
-  UNIQUE (keyword)
-);
-
-CREATE TABLE whatsapp_inbound_logs (...);
-```
-Cada tabela com GRANTs + RLS conforme padrão do projeto.
-
-**Edge functions novas (config.toml com `verify_jwt = false` no webhook):**
-- `whatsapp-webhook` — recebe Sinch.
-- `whatsapp-verify-phone` — envia/valida código OTP.
-- `whatsapp-send-reply` — utilitário interno (chamado pelo webhook).
-
-**Conector e secrets:**
-- Conectar **WhatsApp Business via Sinch** (gateway Lovable).
-- Secrets: `SINCH_WEBHOOK_SECRET` (assinatura do webhook — adicionar via `add_secret`).
-- `LOVABLE_API_KEY` já existe (IA).
-
-**Frontend novo:**
-- `src/pages/Profile.tsx`: seção "WhatsApp" (telefone + verificação + quadro padrão).
-- `src/pages/BoardDetail.tsx` (ou config do quadro): aba "WhatsApp" com toggle + lista de keywords.
-
-## Pontos de atenção / limitações
-- Sinch exige número Business verificado — usuário precisa providenciar antes.
-- Mensagens só podem ser **respondidas** dentro da janela de 24h da última mensagem do usuário (regra do WhatsApp). Confirmações imediatas funcionam; reabrir conversa depois exige template aprovado.
-- Áudios: transcrição não está incluída neste plano (fica como follow-up usando Gemini multimodal).
-- Grupos do WhatsApp Business não recebem mensagens via API oficial — só conversas 1:1. Se o usuário esperava criar demanda a partir de um grupo, isso só é possível com APIs não-oficiais (não escolhidas).
-
-## Entregáveis
-1. Migration com novas colunas/tabelas + RLS + GRANTs.
-2. Conector Sinch linkado + secret `SINCH_WEBHOOK_SECRET`.
-3. Edge functions: `whatsapp-webhook`, `whatsapp-verify-phone`.
-4. UI: seção WhatsApp no Profile e na config do Quadro.
-5. Tabela de logs visível no painel admin.
+- `.env` / `.gitignore`: já estão corretos (`.env` versionado, chaves `VITE_*` presentes).
+- Hooks de realtime: já validados pelos 41 testes da rodada anterior, sem mudança.
+- CI / `ENVIRONMENT` secret: já configurado, sem mudança.

@@ -25,7 +25,6 @@ import { ImageCropDialog } from "@/components/ImageCropDialog";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { useUserStats, badges, calculateLevel } from "@/hooks/useUserStats";
 import { ProfileTabsSection } from "@/components/profile/ProfileTabsSection";
-import { WhatsAppSettingsCard } from "@/components/WhatsAppSettingsCard";
 import { resolveVisibility, getBannerGradient } from "@/lib/profileCustomization";
 import { SEOHead } from "@/components/SEOHead";
 import { 
@@ -482,8 +481,7 @@ export default function Profile() {
         </Card>
       </div>
 
-      {/* WhatsApp integration */}
-      <WhatsAppSettingsCard />
+
 
       {/* Tabs: history, achievements */}
       {user && (
