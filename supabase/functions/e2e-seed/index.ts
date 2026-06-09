@@ -19,6 +19,7 @@ const ALLOWED_E2E_ENVIRONMENTS = new Set([
   "preview",
   "local",
 ]);
+const TEST_PROJECT_REF = "dcojvsftpzwfhgvamdgm";
 
 type PlanSlug = "starter" | "profissional" | "business" | "enterprise";
 type Resource = "boards" | "members" | "demands" | "services" | "notes";
@@ -56,6 +57,11 @@ function getRuntimeEnvironment() {
     .trim();
 }
 
+function getProjectRefFromUrl(url: string) {
+  const match = url.match(/^https?:\/\/([^.]+)\./i);
+  return match?.[1]?.toLowerCase() ?? "";
+}
+
 function isAllowedE2EEnvironment(environment: string) {
   return ALLOWED_E2E_ENVIRONMENTS.has(environment);
 }
@@ -66,11 +72,14 @@ export const handler = async (req: Request): Promise<Response> => {
 
   // Refuse to run unless explicitly in a test environment.
   const environment = getRuntimeEnvironment();
-  if (!isAllowedE2EEnvironment(environment)) {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const projectRef = getProjectRefFromUrl(supabaseUrl);
+  const isKnownTestProject = projectRef === TEST_PROJECT_REF;
+  if (!isAllowedE2EEnvironment(environment) && !isKnownTestProject) {
     return json(503, { error: "e2e_disabled", message: "e2e-seed is only available in test environments" });
   }
 
-  const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+  const SUPABASE_URL = supabaseUrl;
   const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const E2E_SECRET = Deno.env.get("E2E_SEED_SECRET") ?? "";
 
