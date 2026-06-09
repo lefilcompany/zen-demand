@@ -31,6 +31,7 @@ import { usePlanLimitGuard } from "@/hooks/usePlanLimitCheck";
 import { useTeamMembershipRole } from "@/hooks/useTeamRole";
 import { ArchivedDemandsModal } from "@/components/ArchivedDemandsModal";
 import { SEOHead } from "@/components/SEOHead";
+import { safeDateTimestamp, safeIncludesText } from "@/lib/demandViewSafety";
 type ViewMode = "table" | "grid" | "calendar";
 const TABLET_BREAKPOINT = 1024;
 
@@ -279,7 +280,7 @@ export default function Demands() {
       // Search query filter
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
-        const matchesSearch = d.title.toLowerCase().includes(query) || d.description?.toLowerCase().includes(query) || d.priority?.toLowerCase().includes(query);
+        const matchesSearch = safeIncludesText(d.title, query) || safeIncludesText(d.description, query) || safeIncludesText(d.priority, query);
         if (!matchesSearch) return false;
       }
 
@@ -344,8 +345,11 @@ export default function Demands() {
       if (!b.due_date) return -1;
 
       // Both have due dates - sort by closest to now first
-      const dateA = new Date(a.due_date).getTime();
-      const dateB = new Date(b.due_date).getTime();
+      const dateA = safeDateTimestamp(a.due_date);
+      const dateB = safeDateTimestamp(b.due_date);
+      if (dateA === null && dateB === null) return 0;
+      if (dateA === null) return 1;
+      if (dateB === null) return -1;
       return dateA - dateB;
     });
   }, [activeDemands, searchQuery, filters, selectedStatuses, hideDelivered, showOnlyMine, user?.id, membersByPosition, selectedFolderId, folderDemandIds]);
