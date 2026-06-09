@@ -197,11 +197,9 @@ export function DashboardAIInsights({ boardId, isRequester = false }: DashboardA
           body: { board_id: boardId, is_requester: isRequester },
         });
         if (error) {
+          const status = (error as any)?.context?.status ?? 0;
           const msg = typeof error === "object" && "message" in error ? (error as any).message : String(error);
-          if (msg.includes("402") || msg.includes("Payment") || msg.includes("429") || msg.includes("Rate limit")) {
-            return { insights: [] as AIInsight[] };
-          }
-          if (msg.includes("401") || msg.includes("Unauthorized")) {
+          if (status === 401 || msg.includes("401") || msg.includes("Unauthorized")) {
             const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
             if (refreshError || !refreshed.session) return { insights: [] as AIInsight[] };
             const { data: retryData, error: retryError } = await supabase.functions.invoke("dashboard-ai-insights", {
@@ -214,6 +212,7 @@ export function DashboardAIInsights({ boardId, isRequester = false }: DashboardA
             if (result?.insights?.length) writeCache(newKey, result.insights, newFingerprint);
             return result;
           }
+          // 429 rate limit, 402 credits, or any other failure — fail silently
           return { insights: [] as AIInsight[] };
         }
         const result = data as { insights: AIInsight[] };
