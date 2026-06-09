@@ -28,6 +28,8 @@ import { useAuth } from "@/lib/auth";
 import { useTeamRole } from "@/hooks/useTeamRole";
 import { toast } from "sonner";
 import { SEOHead } from "@/components/SEOHead";
+import { BoardWhatsAppSettingsCard } from "@/components/board/BoardWhatsAppSettingsCard";
+import { BoardApprovalNotifySettingsCard } from "@/components/board/BoardApprovalNotifySettingsCard";
 
 const roleLabels: Record<string, string> = {
   admin: "Administrador",
