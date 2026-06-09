@@ -217,17 +217,17 @@ Se não houver dados suficientes, crie insights genéricos sobre boas práticas 
 
     if (!aiResponse.ok) {
       const status = aiResponse.status;
-      if (status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      console.error("Gemini AI error:", status, await aiResponse.text());
-      return new Response(JSON.stringify({ error: "AI service error" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.error("Gemini AI error:", status, await aiResponse.text().catch(() => ""));
+      // Always return 200 with empty insights + fallback flag so the client
+      // never crashes / shows a blank screen on transient AI failures.
+      return new Response(
+        JSON.stringify({
+          insights: [],
+          fallback: true,
+          reason: status === 429 ? "rate_limit" : "ai_unavailable",
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const aiData = await aiResponse.json();
