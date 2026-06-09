@@ -272,7 +272,7 @@ export default function BoardMembers() {
       </Card>
 
       {canManage && boardId && <BoardApprovalNotifySettingsCard boardId={boardId} />}
-      {canManage && boardId && <BoardWhatsAppSettingsCard boardId={boardId} />}
+      {boardId && <BoardWhatsAppSettingsCard boardId={boardId} />}
     </div>
   );
 }
