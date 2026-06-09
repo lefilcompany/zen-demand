@@ -37,6 +37,7 @@ import { DemandsCalendarView } from "@/components/DemandsCalendarView";
 import { isDateOverdue } from "@/lib/dateUtils";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { SEOHead } from "@/components/SEOHead";
+import { safeDateTimestamp, safeIncludesText } from "@/lib/demandViewSafety";
 import {
   Select,
   SelectContent,
@@ -278,9 +279,9 @@ export default function TeamDemands() {
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
         const matchesSearch = 
-          d.title.toLowerCase().includes(query) ||
-          d.description?.toLowerCase().includes(query) ||
-          d.priority?.toLowerCase().includes(query);
+          safeIncludesText(d.title, query) ||
+          safeIncludesText(d.description, query) ||
+          safeIncludesText(d.priority, query);
         if (!matchesSearch) return false;
       }
       
@@ -350,8 +351,11 @@ export default function TeamDemands() {
       if (!a.due_date) return 1;
       if (!b.due_date) return -1;
       
-      const dateA = new Date(a.due_date).getTime();
-      const dateB = new Date(b.due_date).getTime();
+      const dateA = safeDateTimestamp(a.due_date);
+      const dateB = safeDateTimestamp(b.due_date);
+      if (dateA === null && dateB === null) return 0;
+      if (dateA === null) return 1;
+      if (dateB === null) return -1;
       return dateA - dateB;
     });
   }, [demands, searchQuery, filters, selectedStatuses, hideDelivered, membersByPosition]);
