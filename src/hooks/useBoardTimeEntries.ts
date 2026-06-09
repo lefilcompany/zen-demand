@@ -230,6 +230,7 @@ export function useBoardUserTimeStats(boardId: string | null) {
 // NEW: Get ALL board members with their time stats (including those with 0 time)
 export function useBoardMembersWithTime(boardId: string | null) {
   const queryClient = useQueryClient();
+  const instanceId = useRef(createRealtimeInstanceId());
   
   const { data: entries, isLoading: entriesLoading } = useBoardTimeEntries(boardId);
 
