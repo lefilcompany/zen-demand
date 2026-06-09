@@ -5,6 +5,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { useNotificationSound } from "./useNotificationSound";
 import { notificationToastBus } from "@/lib/notificationToastBus";
 import { useNotificationPreferences } from "./useNotificationPreferences";
+import { createRealtimeInstanceId } from "@/lib/realtimeUtils";
 
 // Request browser notification permission
 async function requestNotificationPermission(): Promise<boolean> {
@@ -83,6 +84,7 @@ export function useNotifications() {
   const queryClient = useQueryClient();
   const { playNotificationSound } = useNotificationSound();
   const isInitialMount = useRef(true);
+  const channelInstanceId = useRef(createRealtimeInstanceId());
   const { preferences } = useNotificationPreferences();
   const pushEnabled = preferences.pushNotifications !== false;
 
@@ -149,7 +151,7 @@ export function useNotifications() {
     }, 2000);
 
     const channel = supabase
-      .channel("notifications-changes")
+      .channel(`notifications-changes-${user.id}-${channelInstanceId.current}`)
       .on(
         "postgres_changes",
         {
