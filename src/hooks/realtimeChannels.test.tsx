@@ -64,6 +64,19 @@ vi.mock("@/contexts/PlansModalContext", () => ({
   usePlansModal: () => ({ openPlans: vi.fn() }),
 }));
 
+vi.mock("@/lib/offlineStorage", () => ({
+  isOnline: () => true,
+  saveDemandStatuses: vi.fn(),
+  getCachedDemandStatuses: vi.fn(async () => []),
+  saveDemands: vi.fn(),
+  getCachedDemandsByBoard: vi.fn(async () => []),
+  getCachedDemand: vi.fn(async () => null),
+  updateCachedDemand: vi.fn(),
+  addToSyncQueue: vi.fn(),
+  addCachedDemand: vi.fn(),
+  generateOfflineId: vi.fn(() => "offline-id"),
+}));
+
 vi.mock("sonner", () => ({
   toast: { error: vi.fn(), info: vi.fn() },
 }));
