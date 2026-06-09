@@ -76,7 +76,6 @@ jobs:
           - members
           - services
     env:
-      ENVIRONMENT: test
       E2E_SEED_SECRET: ${{ secrets.E2E_SEED_SECRET }}
       VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
       VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
