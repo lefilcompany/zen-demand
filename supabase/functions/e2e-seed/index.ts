@@ -48,9 +48,22 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
 
-  // Refuse to run unless explicitly in a test environment.
+  // Refuse to run in production. Detection order:
+  // 1) Explicit ENVIRONMENT=production|live secret (highest priority, allows ops to force-disable).
+  // 2) Project-ref allowlist: only the known Test/Dev Supabase project may run this function.
+  //    Live has a different SUPABASE_URL, so this naturally blocks the production deployment
+  //    even though the E2E_SEED_SECRET is synced across environments on publish.
   const environment = (Deno.env.get("ENVIRONMENT") ?? "").toLowerCase();
-  if (environment !== "test" && environment !== "e2e" && environment !== "staging") {
+  if (environment === "production" || environment === "live" || environment === "prod") {
+    return json(503, { error: "e2e_disabled", message: "e2e-seed is disabled in production" });
+  }
+  const TEST_PROJECT_REFS = new Set<string>(["dcojvsftpzwfhgvamdgm"]);
+  const url = SUPABASE_URL ?? "";
+  const refMatch = url.match(/https?:\/\/([a-z0-9]+)\.supabase\.co/i);
+  const projectRef = refMatch?.[1] ?? "";
+  const isKnownTestProject = TEST_PROJECT_REFS.has(projectRef);
+  const isExplicitTestEnv = environment === "test" || environment === "e2e" || environment === "staging";
+  if (!isKnownTestProject && !isExplicitTestEnv) {
     return json(503, { error: "e2e_disabled", message: "e2e-seed is only available in test environments" });
   }
 
