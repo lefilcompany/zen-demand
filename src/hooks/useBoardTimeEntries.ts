@@ -354,7 +354,7 @@ export function useBoardMembersWithTime(boardId: string | null) {
     if (!boardId) return;
 
     const channel = supabase
-      .channel(`board-members-realtime-${boardId}`)
+      .channel(`board-members-realtime-${boardId}-${instanceId.current}`)
       .on(
         'postgres_changes',
         {
