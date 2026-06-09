@@ -50,6 +50,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { useTeamMembershipRole } from "@/hooks/useTeamRole";
 import { cn } from "@/lib/utils";
 import { SEOHead } from "@/components/SEOHead";
+import { safeDateTimestamp } from "@/lib/demandViewSafety";
 
 const priorityColors: Record<string, string> = {
   baixa: "bg-blue-500/20 text-blue-700 border-blue-500/30",
@@ -458,6 +459,12 @@ export default function DemandRequests() {
 
   const getInitials = (name: string) => {
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  };
+
+  const formatDateOrFallback = (value: unknown, pattern: string) => {
+    const timestamp = safeDateTimestamp(value);
+    if (timestamp === null) return "--";
+    return format(new Date(timestamp), pattern, { locale: ptBR });
   };
 
   const getStatusBadge = (status: string) => {
