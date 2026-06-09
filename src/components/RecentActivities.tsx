@@ -63,12 +63,16 @@ export function RecentActivities() {
     queryFn: async () => {
       if (!selectedBoardId) return [];
       
-      const { data: deliveredStatus } = await supabase
+      const { data: statusRows } = await supabase
         .from("demand_statuses")
-        .select("id")
+        .select("id, board_id")
         .eq("name", "Entregue")
-        .single();
-      
+        .or(`board_id.eq.${selectedBoardId},board_id.is.null`);
+
+      const deliveredStatus =
+        (statusRows || []).find((s: any) => s.board_id === selectedBoardId) ||
+        (statusRows || []).find((s: any) => s.board_id === null);
+
       if (!deliveredStatus) return [];
       
       const { data, error } = await supabase
