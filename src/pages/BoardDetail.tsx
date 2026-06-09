@@ -19,7 +19,6 @@ import { useDemands } from "@/hooks/useDemands";
 import { useBoardServicesWithUsage } from "@/hooks/useBoardServices";
 import { useBoardStatuses } from "@/hooks/useBoardStatuses";
 import { useTeams } from "@/hooks/useTeams";
-import { useSelectedBoard } from "@/contexts/BoardContext";
 import { BoardScopeConfig } from "@/components/BoardScopeConfig";
 import { BoardStagesPreview } from "@/components/BoardStagesPreview";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -225,7 +224,6 @@ export default function BoardDetail() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { setSelectedBoardId } = useSelectedBoard();
   
   const { data: board, isLoading: boardLoading } = useBoard(boardId || null);
   const { data: members, isLoading: membersLoading } = useBoardMembers(boardId || null);
@@ -623,11 +621,8 @@ export default function BoardDetail() {
             <Card
               role="button"
               tabIndex={0}
-              onClick={() => {
-                setSelectedBoardId(board.id);
-                navigate("/kanban");
-              }}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedBoardId(board.id); navigate("/kanban"); } }}
+              onClick={() => navigate(`/kanban/${board.id}`)}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate(`/kanban/${board.id}`); } }}
               className="group relative cursor-pointer transition-all hover:border-primary hover:shadow-md hover:-translate-y-0.5"
             >
               <ArrowUpRight className="absolute top-3 right-3 h-4 w-4 text-muted-foreground transition-all group-hover:text-primary group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
