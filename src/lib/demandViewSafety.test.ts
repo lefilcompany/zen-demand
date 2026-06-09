@@ -17,7 +17,7 @@ describe("demand view safety helpers", () => {
 
   it("returns null for invalid dates so demand sorting does not crash", () => {
     expect(safeDateTimestamp(undefined)).toBeNull();
-    expect(safeDateTimestamp(""))toBeNull();
+    expect(safeDateTimestamp("")).toBeNull();
     expect(safeDateTimestamp("not-a-date")).toBeNull();
     expect(typeof safeDateTimestamp("2026-06-09T12:00:00.000Z")).toBe("number");
   });
