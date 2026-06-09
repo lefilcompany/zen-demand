@@ -118,6 +118,8 @@ export function boardStatusToColumn(boardStatus: BoardStatus): KanbanColumn {
 // Fetch active board statuses
 export function useBoardStatuses(boardId: string | null) {
   const queryClient = useQueryClient();
+  const instanceId = useRef(createRealtimeInstanceId());
+
 
   const query = useQuery({
     queryKey: ["board-statuses", boardId],
@@ -158,7 +160,7 @@ export function useBoardStatuses(boardId: string | null) {
     if (!boardId) return;
 
     const channel = supabase
-      .channel(`board-statuses-${boardId}`)
+      .channel(`board-statuses-${boardId}-${instanceId.current}`)
       .on(
         "postgres_changes",
         {

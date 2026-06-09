@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { createRealtimeInstanceId } from "@/lib/realtimeUtils";
 
 export interface BoardTimeEntry {
   id: string;
@@ -66,6 +67,7 @@ export interface BoardMemberWithTime {
 
 export function useBoardTimeEntries(boardId: string | null) {
   const queryClient = useQueryClient();
+  const instanceId = useRef(createRealtimeInstanceId());
 
   const query = useQuery({
     queryKey: ["board-time-entries", boardId],
@@ -116,7 +118,7 @@ export function useBoardTimeEntries(boardId: string | null) {
     if (!boardId) return;
 
     const channel = supabase
-      .channel(`board-time-entries-realtime-${boardId}`)
+      .channel(`board-time-entries-realtime-${boardId}-${instanceId.current}`)
       .on(
         'postgres_changes',
         {
