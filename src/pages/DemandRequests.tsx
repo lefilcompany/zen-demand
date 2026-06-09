@@ -534,7 +534,7 @@ export default function DemandRequests() {
                 {request.creator?.full_name}
               </button>
               {" "}•{" "}
-              {format(new Date(request.created_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
+              {formatDateOrFallback(request.created_at, "dd/MM 'às' HH:mm")}
             </CardDescription>
           </div>
           {getStatusBadge(request.status)}
@@ -618,7 +618,7 @@ export default function DemandRequests() {
               </div>
               <CardTitle className="text-lg">{request.title}</CardTitle>
               <CardDescription>
-                Criada em {format(new Date(request.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                Criada em {formatDateOrFallback(request.created_at, "dd 'de' MMMM 'às' HH:mm")}
               </CardDescription>
             </div>
             <Badge className={`${status.color} border`}>
@@ -660,7 +660,7 @@ export default function DemandRequests() {
                     {request.responder.full_name}
                   </button>
                   {" "}em{" "}
-                  {request.responded_at && format(new Date(request.responded_at), "dd/MM/yyyy 'às' HH:mm")}
+                  {request.responded_at && formatDateOrFallback(request.responded_at, "dd/MM/yyyy 'às' HH:mm")}
                 </p>
               )}
             </div>
@@ -1301,7 +1301,7 @@ export default function DemandRequests() {
                                 {request.profiles?.full_name || "Usuário"}
                               </span>
                               <span>•</span>
-                              <span>{format(new Date(request.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
+                              <span>{formatDateOrFallback(request.created_at, "dd/MM/yyyy HH:mm")}</span>
                             </CardDescription>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
