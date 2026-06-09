@@ -562,16 +562,22 @@ export function useArchiveDeliveredDemands() {
 
   return useMutation({
     mutationFn: async (boardId: string) => {
-      // First, get the "Entregue" status ID
-      const { data: statuses, error: statusError } = await supabase
+      // First, get the "Entregue" status ID scoped to this board (fallback to system status)
+      const { data: boardStatuses, error: statusError } = await supabase
         .from("demand_statuses")
-        .select("id")
+        .select("id, board_id")
         .eq("name", "Entregue")
-        .single();
+        .or(`board_id.eq.${boardId},board_id.is.null`);
 
       if (statusError) throw statusError;
 
-      const deliveredStatusId = statuses.id;
+      const deliveredStatus =
+        (boardStatuses || []).find((s: any) => s.board_id === boardId) ||
+        (boardStatuses || []).find((s: any) => s.board_id === null);
+
+      if (!deliveredStatus) throw new Error("Status 'Entregue' não encontrado para este quadro");
+
+      const deliveredStatusId = deliveredStatus.id;
 
       // Get all delivered demands for this board
       const { data: deliveredDemands, error: fetchError } = await supabase
