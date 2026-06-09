@@ -194,8 +194,9 @@ export function useDemandStatuses() {
 
   // Subscribe to realtime updates for demand_statuses
   useEffect(() => {
+    const channelName = `demand-statuses-realtime-${Math.random().toString(36).slice(2)}`;
     const channel = supabase
-      .channel("demand-statuses-realtime")
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
