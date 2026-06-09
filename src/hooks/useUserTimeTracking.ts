@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { createRealtimeInstanceId } from "@/lib/realtimeUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -368,12 +369,14 @@ export function useUserTimerControl(demandId: string | undefined) {
   const startTimer = useStartUserTimer();
   const stopTimer = useStopUserTimer();
 
+  const channelInstanceId = useRef(createRealtimeInstanceId());
+
   // Subscribe to realtime updates for this demand's time entries
   useEffect(() => {
     if (!demandId) return;
 
     const channel = supabase
-      .channel(`demand-time-entries-${demandId}`)
+      .channel(`demand-time-entries-${demandId}-${channelInstanceId.current}`)
       .on(
         'postgres_changes',
         {

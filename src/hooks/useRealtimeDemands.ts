@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { mergeDemandRowIntoCache } from "@/lib/demandRealtimeCache";
+import { createRealtimeInstanceId } from "@/lib/realtimeUtils";
 
 export interface KanbanMoveNotification {
   demandId: string;
@@ -16,12 +17,13 @@ export interface KanbanMoveNotification {
 export function useRealtimeDemands(boardId?: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const instanceId = useRef(createRealtimeInstanceId());
 
   useEffect(() => {
     if (!user || !boardId) return;
 
     const channel = supabase
-      .channel(`demands-board-${boardId}`)
+      .channel(`demands-board-${boardId}-${instanceId.current}`)
       .on(
         'postgres_changes',
         {
@@ -84,12 +86,13 @@ export function useRealtimeDemands(boardId?: string) {
 export function useRealtimeAllDemands() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const instanceId = useRef(createRealtimeInstanceId());
 
   useEffect(() => {
     if (!user) return;
 
     const channel = supabase
-      .channel('demands-all')
+      .channel(`demands-all-${instanceId.current}`)
       .on(
         'postgres_changes',
         {
@@ -144,11 +147,13 @@ export function useKanbanRealtimeNotifications(boardId?: string) {
     setNotifications([]);
   }, []);
 
+  const instanceId = useRef(createRealtimeInstanceId());
+
   useEffect(() => {
     if (!user || !boardId) return;
 
     const channel = supabase
-      .channel(`kanban-notifications-${boardId}`)
+      .channel(`kanban-notifications-${boardId}-${instanceId.current}`)
       .on(
         'postgres_changes',
         {

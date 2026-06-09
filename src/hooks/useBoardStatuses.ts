@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { createRealtimeInstanceId } from "@/lib/realtimeUtils";
 export type AdjustmentType = 'none' | 'internal' | 'external';
 
 export type BoardRoleType = 'admin' | 'moderator' | 'executor' | 'requester';
