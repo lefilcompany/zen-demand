@@ -2,10 +2,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Json } from "@/integrations/supabase/types";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { usePlansModal } from "@/contexts/PlansModalContext";
 import { showPlanLimitToast } from "@/lib/planLimitErrors";
+import { createRealtimeInstanceId } from "@/lib/realtimeUtils";
 import { 
   DemandCreateSchema, 
   DemandUpdateSchema, 
@@ -152,6 +153,7 @@ export function useDemandById(demandId: string | undefined) {
 
 export function useDemandStatuses() {
   const queryClient = useQueryClient();
+  const channelInstanceId = useRef(createRealtimeInstanceId());
 
   const query = useQuery({
     queryKey: ["demand-statuses"],
@@ -195,7 +197,7 @@ export function useDemandStatuses() {
   // Subscribe to realtime updates for demand_statuses
   useEffect(() => {
     const channel = supabase
-      .channel("demand-statuses-realtime")
+      .channel(`demand-statuses-realtime-${channelInstanceId.current}`)
       .on(
         "postgres_changes",
         {
