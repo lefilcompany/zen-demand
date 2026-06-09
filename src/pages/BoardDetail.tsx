@@ -958,7 +958,13 @@ export default function BoardDetail() {
               )}
             </CardContent>
           </Card>
+
+          <div className="mt-4 space-y-4">
+            {canManage && <BoardApprovalNotifySettingsCard boardId={board.id} />}
+            <BoardWhatsAppSettingsCard boardId={board.id} />
+          </div>
         </TabsContent>
+
 
         {/* Stages tab */}
         <TabsContent value="stages" className="mt-4">
