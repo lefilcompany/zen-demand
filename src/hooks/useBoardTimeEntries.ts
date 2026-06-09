@@ -1,6 +1,14 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+
+const createRealtimeInstanceId = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return Math.random().toString(36).slice(2);
+};
 
 export interface BoardTimeEntry {
   id: string;
@@ -66,6 +74,7 @@ export interface BoardMemberWithTime {
 
 export function useBoardTimeEntries(boardId: string | null) {
   const queryClient = useQueryClient();
+  const timeEntriesChannelInstanceId = useRef(createRealtimeInstanceId());
 
   const query = useQuery({
     queryKey: ["board-time-entries", boardId],
@@ -116,7 +125,7 @@ export function useBoardTimeEntries(boardId: string | null) {
     if (!boardId) return;
 
     const channel = supabase
-      .channel(`board-time-entries-realtime-${boardId}`)
+      .channel(`board-time-entries-realtime-${boardId}-${timeEntriesChannelInstanceId.current}`)
       .on(
         'postgres_changes',
         {
@@ -228,6 +237,7 @@ export function useBoardUserTimeStats(boardId: string | null) {
 // NEW: Get ALL board members with their time stats (including those with 0 time)
 export function useBoardMembersWithTime(boardId: string | null) {
   const queryClient = useQueryClient();
+  const boardMembersChannelInstanceId = useRef(createRealtimeInstanceId());
   
   const { data: entries, isLoading: entriesLoading } = useBoardTimeEntries(boardId);
 
@@ -351,7 +361,7 @@ export function useBoardMembersWithTime(boardId: string | null) {
     if (!boardId) return;
 
     const channel = supabase
-      .channel(`board-members-realtime-${boardId}`)
+      .channel(`board-members-realtime-${boardId}-${boardMembersChannelInstanceId.current}`)
       .on(
         'postgres_changes',
         {
