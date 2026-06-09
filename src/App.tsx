@@ -51,6 +51,7 @@ import UserProfile from "./pages/UserProfile";
 import BoardSummary from "./pages/BoardSummary";
 import Store from "./pages/Store";
 import TeamDemands from "./pages/TeamDemands";
+import TeamKanbanGeral from "./pages/TeamKanbanGeral";
 import MyDemands from "./pages/MyDemands";
 import Notes from "./pages/Notes";
 import NoteDetail from "./pages/NoteDetail";
@@ -167,6 +168,7 @@ const App = () => (
                                 <Route path="/board-summary" element={<BoardSummary />} />
                                 <Route path="/user/:userId" element={<UserProfile />} />
                                 <Route path="/team-demands" element={<TeamDemands />} />
+                                <Route path="/team-kanban" element={<TeamKanbanGeral />} />
                                 <Route path="/my-demands" element={<MyDemands />} />
                                 <Route path="/notes" element={<Notes />} />
                                 <Route path="/notes/:noteId" element={<NoteDetail />} />
