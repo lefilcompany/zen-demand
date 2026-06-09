@@ -35,6 +35,7 @@ import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { Users, Trash2, Shield, UserCog, User, Briefcase, Loader2, LayoutGrid } from "lucide-react";
 import { AddBoardMemberDialog } from "@/components/AddBoardMemberDialog";
 import { BoardApprovalNotifySettingsCard } from "@/components/board/BoardApprovalNotifySettingsCard";
+import { BoardWhatsAppSettingsCard } from "@/components/board/BoardWhatsAppSettingsCard";
 import { SEOHead } from "@/components/SEOHead";
 
 const roleLabels: Record<string, string> = {
@@ -271,6 +272,7 @@ export default function BoardMembers() {
       </Card>
 
       {canManage && boardId && <BoardApprovalNotifySettingsCard boardId={boardId} />}
+      {canManage && boardId && <BoardWhatsAppSettingsCard boardId={boardId} />}
     </div>
   );
 }
