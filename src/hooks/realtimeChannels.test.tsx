@@ -20,6 +20,7 @@ type ChainableBuilder = {
 
 function createQueryBuilder(result: unknown = []) {
   const builder = {} as ChainableBuilder;
+  const resolved = Promise.resolve({ data: result, error: null });
   builder.select = vi.fn(() => builder);
   builder.eq = vi.fn(() => builder);
   builder.is = vi.fn(() => builder);
@@ -30,6 +31,7 @@ function createQueryBuilder(result: unknown = []) {
   builder.single = vi.fn(() => Promise.resolve({ data: null, error: null }));
   builder.insert = vi.fn(() => ({ select: vi.fn(() => ({ single: vi.fn(() => Promise.resolve({ data: null, error: null })) })) }));
   builder.update = vi.fn(() => ({ eq: vi.fn(() => Promise.resolve({ error: null })) }));
+  (builder as ChainableBuilder & PromiseLike<{ data: unknown; error: null }>).then = resolved.then.bind(resolved);
   return builder;
 }
 
