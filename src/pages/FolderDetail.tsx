@@ -225,7 +225,7 @@ export default function FolderDetail() {
       <SEOHead title={`Pasta - ${folder.name}`} />
       <PageBreadcrumb
         items={[
-          { label: "Demandas", href: "/demands", icon: LayoutList },
+          { label: "Projetos", href: "/projects", icon: FolderKanban },
           { label: folder.name, icon: FolderOpen, isCurrent: true },
         ]}
       />
