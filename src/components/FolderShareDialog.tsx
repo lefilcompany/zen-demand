@@ -111,6 +111,14 @@ export function FolderShareDialog({
       next.set(userId, { permission });
       return next;
     });
+
+    const member = members?.find((m: any) => m.user_id === userId);
+    if (member) {
+      const permissionLabel = permission === "edit" ? "edição" : "visualização";
+      toast.success(
+        `Acesso de ${member.profile?.full_name || "Usuário"} alterado para ${permissionLabel} na pasta "${folderName}"`
+      );
+    }
   };
 
   const hasChanges = useMemo(() => {
