@@ -214,7 +214,7 @@ export function FolderShareDialog({
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium truncate text-foreground">{m.profile?.full_name || "Sem nome"}</p>
+            <p className="text-sm font-medium truncate text-foreground group-hover:text-foreground">{m.profile?.full_name || "Sem nome"}</p>
             <div className="flex items-center gap-2 mt-0.5">
               {m.position && (
                 <Badge
