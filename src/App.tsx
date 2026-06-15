@@ -157,6 +157,8 @@ const App = () => (
                                 <Route path="/team-config" element={<TeamConfig />} />
                                 <Route path="/demands" element={<Demands />} />
                                 <Route path="/folders/:folderId" element={<FolderDetail />} />
+                                <Route path="/projects" element={<Projects />} />
+                                <Route path="/projects/:folderId" element={<FolderDetail />} />
                                 <Route path="/demands/create" element={<CreateDemandRoute />} />
                                 <Route path="/demands/request" element={<CreateDemandRequest />} />
                                 <Route path="/demands/:id" element={<DemandDetail />} />
