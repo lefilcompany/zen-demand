@@ -172,10 +172,10 @@ export function FolderShareDialog({
     return (
       <div
         key={m.user_id}
-        className={`flex items-center gap-3 w-full p-3 rounded-lg transition-all duration-150 ${
+        className={`flex items-center gap-3 w-full p-3 rounded-lg transition-all duration-150 cursor-pointer ${
           isShared
-            ? "bg-primary/5 border border-primary/20"
-            : "border border-transparent"
+            ? "bg-primary/5 border border-primary/20 hover:border-[#F28705]/60 hover:bg-[#F28705]/5"
+            : "border border-transparent hover:border-[#F28705]/50 hover:bg-[#F28705]/5"
         }`}
       >
         <button
