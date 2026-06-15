@@ -214,7 +214,7 @@ export function FolderShareDialog({
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium truncate text-foreground">{m.profile?.full_name || "Sem nome"}</p>
+            <p className="text-sm font-medium truncate text-foreground group-hover:text-foreground">{m.profile?.full_name || "Sem nome"}</p>
             <div className="flex items-center gap-2 mt-0.5">
               {m.position && (
                 <Badge
@@ -354,9 +354,9 @@ export function FolderShareDialog({
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges || saving}
-              className="bg-[#F28705] hover:bg-[#D97706] text-white"
+              className="bg-[#F28705] hover:bg-[#D97706] text-white hover:text-white"
             >
-              <Save className="h-4 w-4 mr-1.5" />
+              <Save className="h-4 w-4 mr-1.5 hover:text-white" />
               {saving ? "Salvando..." : "Confirmar"}
             </Button>
           </div>
