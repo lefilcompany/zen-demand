@@ -18,7 +18,16 @@ import {
 } from "@/hooks/useDemandFolders";
 import { CreateFolderDialog } from "@/components/CreateFolderDialog";
 import { FolderShareDialog } from "@/components/FolderShareDialog";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Projects() {
   const { selectedTeamId } = useSelectedTeam();
@@ -157,18 +166,28 @@ export default function Projects() {
       )}
 
       {deleting && (
-        <ConfirmDialog
-          open={true}
-          onOpenChange={(o) => !o && setDeleting(null)}
-          title="Excluir projeto"
-          description={`Tem certeza que deseja excluir o projeto "${deleting.name}"? As demandas vinculadas não serão excluídas.`}
-          confirmText="Excluir"
-          variant="destructive"
-          onConfirm={() => {
-            deleteMutation.mutate(deleting.id);
-            setDeleting(null);
-          }}
-        />
+        <AlertDialog open onOpenChange={(o) => !o && setDeleting(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir projeto</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir o projeto "{deleting.name}"? As demandas vinculadas não serão excluídas.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => {
+                  deleteMutation.mutate(deleting.id);
+                  setDeleting(null);
+                }}
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </div>
   );
