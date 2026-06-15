@@ -91,17 +91,38 @@ export function useUpdateFolder() {
   return useMutation({
     mutationFn: async (params: { id: string; name?: string; color?: string }) => {
       const { id, ...updates } = params;
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("projects")
         .update(updates)
-        .eq("id", id);
+        .eq("id", id)
+        .select()
+        .single();
       if (error) throw error;
+      return data;
+    },
+    onMutate: async (params) => {
+      await qc.cancelQueries({ queryKey: ["demand-folders"] });
+      const snapshots = qc.getQueriesData<DemandFolder[]>({ queryKey: ["demand-folders"] });
+      snapshots.forEach(([key, old]) => {
+        if (!old) return;
+        qc.setQueryData<DemandFolder[]>(key, old.map((f) =>
+          f.id === params.id
+            ? { ...f, ...(params.name !== undefined ? { name: params.name } : {}), ...(params.color !== undefined ? { color: params.color } : {}) }
+            : f
+        ));
+      });
+      return { snapshots };
+    },
+    onError: (_err, _vars, context) => {
+      context?.snapshots?.forEach(([key, data]) => qc.setQueryData(key, data));
+      toast.error("Erro ao atualizar projeto");
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["demand-folders"] });
       toast.success("Projeto atualizado");
     },
-    onError: () => toast.error("Erro ao atualizar projeto"),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ["demand-folders"] });
+    },
   });
 }
 
