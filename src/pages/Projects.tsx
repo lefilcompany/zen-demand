@@ -51,11 +51,18 @@ export default function Projects() {
     return m;
   }, [teamMembers]);
 
+  const accessible = useMemo(() => {
+    if (!user) return [];
+    return projects.filter(
+      (p) => p.is_owner === true || (p.shared_with || []).some((s) => s.user_id === user.id),
+    );
+  }, [projects, user]);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    if (!q) return projects;
-    return projects.filter((p) => p.name.toLowerCase().includes(q));
-  }, [projects, search]);
+    if (!q) return accessible;
+    return accessible.filter((p) => p.name.toLowerCase().includes(q));
+  }, [accessible, search]);
 
   const handleCreate = (name: string, color: string) => {
     if (!selectedTeamId || !user) return;
@@ -125,6 +132,11 @@ export default function Projects() {
             const myShare = project.shared_with?.find((s) => s.user_id === user?.id);
             const canEdit = project.is_owner === true || myShare?.permission === "edit";
             const canDelete = project.is_owner === true;
+            const myAccess: "owner" | "edit" | "view" = project.is_owner
+              ? "owner"
+              : myShare?.permission === "edit"
+              ? "edit"
+              : "view";
             return (
               <ProjectCard
                 key={project.id}
@@ -137,6 +149,7 @@ export default function Projects() {
                 onDelete={() => setDeleting(project)}
                 canManage={canEdit}
                 canDelete={canDelete}
+                myAccess={myAccess}
               />
             );
           })}
@@ -209,9 +222,10 @@ interface ProjectCardProps {
   onDelete: () => void;
   canManage: boolean;
   canDelete?: boolean;
+  myAccess: "owner" | "edit" | "view";
 }
 
-function ProjectCard({ project, memberMap, ownerProfile, onOpen, onEdit, onShare, onDelete, canManage, canDelete }: ProjectCardProps) {
+function ProjectCard({ project, memberMap, ownerProfile, onOpen, onEdit, onShare, onDelete, canManage, canDelete, myAccess }: ProjectCardProps) {
   const sharedUsers = (project.shared_with || []).map((s) => memberMap.get(s.user_id)).filter(Boolean);
   const accessUsers = [ownerProfile, ...sharedUsers].filter(Boolean);
   const visibleAvatars = accessUsers.slice(0, 4);
@@ -259,10 +273,23 @@ function ProjectCard({ project, memberMap, ownerProfile, onOpen, onEdit, onShare
         </DropdownMenu>
       </div>
 
-      <div className="mt-4 flex items-center gap-2 text-xs">
+      <div className="mt-4 flex items-center gap-2 text-xs flex-wrap">
         <Badge variant="secondary" className="font-medium">
           {project.item_count ?? 0} demanda{(project.item_count ?? 0) === 1 ? "" : "s"}
         </Badge>
+        {myAccess === "owner" ? (
+          <Badge className="font-medium bg-[#F28705] hover:bg-[#F28705] text-white border-transparent">
+            Proprietário
+          </Badge>
+        ) : myAccess === "edit" ? (
+          <Badge variant="outline" className="font-medium border-[#F28705]/40 text-[#F28705]">
+            Edição
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="font-medium">
+            Visualização
+          </Badge>
+        )}
       </div>
 
       <div className="mt-4 pt-4 border-t flex items-center justify-between">
