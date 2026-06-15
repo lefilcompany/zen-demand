@@ -177,7 +177,7 @@ export function DemandFolderStrip({ teamId, selectedFolderId, onSelectFolder }: 
             <Plus className="h-4 w-4" />
           </div>
           <span className="text-xs font-medium whitespace-nowrap">
-            {(!folders || folders.length === 0) ? "Criar pasta" : "Nova pasta"}
+            {(!folders || folders.length === 0) ? "Criar projeto" : "Novo projeto"}
           </span>
         </button>
       </div>

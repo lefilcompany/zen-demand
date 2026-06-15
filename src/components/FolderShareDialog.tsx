@@ -99,7 +99,7 @@ export function FolderShareDialog({
       const member = members?.find((m: any) => m.user_id === userId);
       if (member) {
         toast.success(
-          `${member.profile?.full_name || "Usuário"} foi adicionado à pasta "${folderName}" com acesso de visualização`
+          `${member.profile?.full_name || "Usuário"} foi adicionado ao projeto "${folderName}" com acesso de visualização`
         );
       }
     }
@@ -116,7 +116,7 @@ export function FolderShareDialog({
     if (member) {
       const permissionLabel = permission === "edit" ? "edição" : "visualização";
       toast.success(
-        `Acesso de ${member.profile?.full_name || "Usuário"} alterado para ${permissionLabel} na pasta "${folderName}"`
+        `Acesso de ${member.profile?.full_name || "Usuário"} alterado para ${permissionLabel} no projeto "${folderName}"`
       );
     }
   };
@@ -278,7 +278,7 @@ export function FolderShareDialog({
                 <Users className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <span>Compartilhar pasta</span>
+                <span>Compartilhar projeto</span>
                 <p className="text-sm font-normal text-muted-foreground mt-0.5">{folderName}</p>
               </div>
             </DialogTitle>
