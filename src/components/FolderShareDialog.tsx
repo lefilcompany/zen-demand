@@ -354,9 +354,9 @@ export function FolderShareDialog({
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges || saving}
-              className="bg-[#F28705] hover:bg-[#D97706] text-white"
+              className="bg-[#F28705] hover:bg-[#D97706] text-white hover:text-white"
             >
-              <Save className="h-4 w-4 mr-1.5" />
+              <Save className="h-4 w-4 mr-1.5 hover:text-white" />
               {saving ? "Salvando..." : "Confirmar"}
             </Button>
           </div>
