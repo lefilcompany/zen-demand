@@ -288,15 +288,6 @@ function ProjectCard({ project, memberMap, ownerProfile, onOpen, onEdit, onShare
             )}
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => { e.stopPropagation(); onShare(); }}
-          disabled={!canManage}
-          className="text-xs h-7 px-2 text-muted-foreground hover:text-[#F28705]"
-        >
-          <Users className="h-3.5 w-3.5 mr-1" /> Acesso
-        </Button>
       </div>
     </div>
   );
