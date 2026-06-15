@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FolderKanban, Plus, Search, Users, Pencil, Trash2, MoreVertical, Share2 } from "lucide-react";
+import { Briefcase, Plus, Search, Users, Pencil, Trash2, MoreVertical, Share2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -107,7 +107,7 @@ export default function Projects() {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed rounded-2xl bg-muted/20">
           <div className="h-14 w-14 rounded-2xl bg-[#F28705]/10 flex items-center justify-center mb-4">
-            <FolderKanban className="h-7 w-7 text-[#F28705]" />
+            <Briefcase className="h-7 w-7 text-[#F28705]" />
           </div>
           <h3 className="text-base font-semibold mb-1">
             {search ? "Nenhum projeto encontrado" : "Nenhum projeto ainda"}
@@ -244,7 +244,7 @@ function ProjectCard({ project, memberMap, ownerProfile, onOpen, onEdit, onShare
             className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0"
             style={{ backgroundColor: `${project.color}1A` }}
           >
-            <FolderKanban className="h-5 w-5" style={{ color: project.color }} />
+            <Briefcase className="h-5 w-5" style={{ color: project.color }} />
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="font-semibold text-foreground truncate">{project.name}</h3>
