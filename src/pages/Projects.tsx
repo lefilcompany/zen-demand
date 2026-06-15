@@ -273,10 +273,23 @@ function ProjectCard({ project, memberMap, ownerProfile, onOpen, onEdit, onShare
         </DropdownMenu>
       </div>
 
-      <div className="mt-4 flex items-center gap-2 text-xs">
+      <div className="mt-4 flex items-center gap-2 text-xs flex-wrap">
         <Badge variant="secondary" className="font-medium">
           {project.item_count ?? 0} demanda{(project.item_count ?? 0) === 1 ? "" : "s"}
         </Badge>
+        {myAccess === "owner" ? (
+          <Badge className="font-medium bg-[#F28705] hover:bg-[#F28705] text-white border-transparent">
+            Proprietário
+          </Badge>
+        ) : myAccess === "edit" ? (
+          <Badge variant="outline" className="font-medium border-[#F28705]/40 text-[#F28705]">
+            Edição
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="font-medium">
+            Visualização
+          </Badge>
+        )}
       </div>
 
       <div className="mt-4 pt-4 border-t flex items-center justify-between">
