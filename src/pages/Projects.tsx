@@ -263,11 +263,6 @@ function ProjectCard({ project, memberMap, ownerProfile, onOpen, onEdit, onShare
         <Badge variant="secondary" className="font-medium">
           {project.item_count ?? 0} demanda{(project.item_count ?? 0) === 1 ? "" : "s"}
         </Badge>
-        {project.is_owner && (
-          <Badge variant="outline" className="font-medium border-[#F28705]/30 text-[#F28705]">
-            Você é o dono
-          </Badge>
-        )}
       </div>
 
       <div className="mt-4 pt-4 border-t flex items-center justify-between">
