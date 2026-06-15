@@ -18,7 +18,16 @@ import {
 } from "@/hooks/useDemandFolders";
 import { CreateFolderDialog } from "@/components/CreateFolderDialog";
 import { FolderShareDialog } from "@/components/FolderShareDialog";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Projects() {
   const { selectedTeamId } = useSelectedTeam();
