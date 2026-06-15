@@ -40,10 +40,10 @@ export function KanbanCardMenu({ demandId, teamId, boardId, isDelivered, readOnl
   const loadFolderLinks = async () => {
     if (loadedLinks) return;
     const { data } = await supabase
-      .from("demand_folder_items")
-      .select("folder_id")
+      .from("project_demands")
+      .select("project_id")
       .eq("demand_id", demandId);
-    setLinkedFolderIds(new Set((data || []).map(d => d.folder_id)));
+    setLinkedFolderIds(new Set((data || []).map((d: any) => d.project_id)));
     setLoadedLinks(true);
   };
 

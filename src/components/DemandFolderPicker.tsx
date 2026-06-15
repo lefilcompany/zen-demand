@@ -24,14 +24,14 @@ function useDemandFolderLinks(demandId: string | null) {
     queryFn: async () => {
       if (!demandId) return [];
       const { data, error } = await supabase
-        .from("demand_folder_items")
-        .select("folder_id, demand_folders(id, name, color)")
+        .from("project_demands")
+        .select("project_id, projects(id, name, color)")
         .eq("demand_id", demandId);
       if (error) throw error;
       return (data || []).map((item: any) => ({
-        folderId: item.folder_id as string,
-        name: item.demand_folders?.name as string,
-        color: item.demand_folders?.color as string,
+        folderId: item.project_id as string,
+        name: item.projects?.name as string,
+        color: item.projects?.color as string,
       }));
     },
     enabled: !!demandId,
@@ -61,7 +61,7 @@ export function DemandFolderPicker({ demandId, teamId, subdemandIds, canEdit = f
       });
       if (subdemandIds && subdemandIds.length > 0) {
         for (const subId of subdemandIds) {
-          await supabase.from("demand_folder_items").delete().eq("folder_id", folderId).eq("demand_id", subId);
+          await supabase.from("project_demands").delete().eq("project_id", folderId).eq("demand_id", subId);
           queryClient.invalidateQueries({ queryKey: ["demand-folder-links", subId] });
         }
         queryClient.invalidateQueries({ queryKey: ["demand-folders"] });
@@ -71,15 +71,15 @@ export function DemandFolderPicker({ demandId, teamId, subdemandIds, canEdit = f
       addToFolder.mutate({ folder_id: folderId, demand_id: demandId }, {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["demand-folder-links", demandId] });
-          toast.success("Demanda vinculada à pasta!");
+          toast.success("Demanda vinculada ao projeto!");
         }
       });
       if (subdemandIds && subdemandIds.length > 0) {
         for (const subId of subdemandIds) {
           const { data: existing } = await supabase
-            .from("demand_folder_items").select("id").eq("folder_id", folderId).eq("demand_id", subId).maybeSingle();
+            .from("project_demands").select("id").eq("project_id", folderId).eq("demand_id", subId).maybeSingle();
           if (!existing) {
-            await supabase.from("demand_folder_items").insert({ folder_id: folderId, demand_id: subId });
+            await supabase.from("project_demands").insert({ project_id: folderId, demand_id: subId });
             queryClient.invalidateQueries({ queryKey: ["demand-folder-links", subId] });
           }
         }
