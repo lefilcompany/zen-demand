@@ -121,19 +121,25 @@ export default function Projects() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              memberMap={memberMap}
-              ownerProfile={memberMap.get(project.created_by)}
-              onOpen={() => navigate(`/folders/${project.id}`)}
-              onEdit={() => setEditing(project)}
-              onShare={() => setSharing(project)}
-              onDelete={() => setDeleting(project)}
-              canManage={project.is_owner === true}
-            />
-          ))}
+          {filtered.map((project) => {
+            const myShare = project.shared_with?.find((s) => s.user_id === user?.id);
+            const canEdit = project.is_owner === true || myShare?.permission === "edit";
+            const canDelete = project.is_owner === true;
+            return (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                memberMap={memberMap}
+                ownerProfile={memberMap.get(project.created_by)}
+                onOpen={() => navigate(`/folders/${project.id}`)}
+                onEdit={() => setEditing(project)}
+                onShare={() => setSharing(project)}
+                onDelete={() => setDeleting(project)}
+                canManage={canEdit}
+                canDelete={canDelete}
+              />
+            );
+          })}
         </div>
       )}
 
