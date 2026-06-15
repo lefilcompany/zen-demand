@@ -61,7 +61,10 @@ export function AppSidebar() {
     location.pathname === "/boards" ||
     location.pathname.startsWith("/boards/") ||
     location.pathname.startsWith("/teams/") ||
-    location.pathname === "/teams";
+    location.pathname === "/teams" ||
+    location.pathname === "/projects" ||
+    location.pathname.startsWith("/projects/") ||
+    location.pathname.startsWith("/folders/");
 
   const lastBoardRoute = "/";
 
