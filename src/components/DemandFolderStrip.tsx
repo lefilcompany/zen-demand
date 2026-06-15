@@ -121,7 +121,7 @@ export function DemandFolderStrip({ teamId, selectedFolderId, onSelectFolder }: 
                   <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  {isOwner && (
+                  {canEdit && (
                     <>
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setManagingFolder(folder); }}>
                         <ListChecks className="h-4 w-4 mr-2" />
@@ -135,19 +135,23 @@ export function DemandFolderStrip({ teamId, selectedFolderId, onSelectFolder }: 
                         <Pencil className="h-4 w-4 mr-2" />
                         Renomear
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={(e) => { e.stopPropagation(); handleDelete(folder); }}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Excluir
-                      </DropdownMenuItem>
+                      {isOwner && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={(e) => { e.stopPropagation(); handleDelete(folder); }}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </>
+                      )}
                     </>
                   )}
-                  {isShared && (
+                  {!canEdit && (
                     <DropdownMenuItem
-                      onClick={(e) => { e.stopPropagation(); /* could add leave folder */ }}
+                      onClick={(e) => e.stopPropagation()}
                       className="text-muted-foreground"
                       disabled
                     >
