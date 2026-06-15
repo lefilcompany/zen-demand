@@ -132,6 +132,11 @@ export default function Projects() {
             const myShare = project.shared_with?.find((s) => s.user_id === user?.id);
             const canEdit = project.is_owner === true || myShare?.permission === "edit";
             const canDelete = project.is_owner === true;
+            const myAccess: "owner" | "edit" | "view" = project.is_owner
+              ? "owner"
+              : myShare?.permission === "edit"
+              ? "edit"
+              : "view";
             return (
               <ProjectCard
                 key={project.id}
@@ -144,6 +149,7 @@ export default function Projects() {
                 onDelete={() => setDeleting(project)}
                 canManage={canEdit}
                 canDelete={canDelete}
+                myAccess={myAccess}
               />
             );
           })}
