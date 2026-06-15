@@ -22,7 +22,7 @@ import { FolderShareDialog } from "@/components/FolderShareDialog";
 import { FolderDemandManager } from "@/components/FolderDemandManager";
 import {
   Search, LayoutGrid, List, CalendarDays, ChevronDown, ChevronRight,
-  FolderOpen, ArrowLeft, Eye, EyeOff, User, Pencil, Check, X, Users, Plus, Layers, LayoutList
+  FolderOpen, ArrowLeft, Eye, EyeOff, User, Pencil, Check, X, Users, Plus, Layers, LayoutList, FolderKanban
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
@@ -225,7 +225,7 @@ export default function FolderDetail() {
       <SEOHead title={`Pasta - ${folder.name}`} />
       <PageBreadcrumb
         items={[
-          { label: "Demandas", href: "/demands", icon: LayoutList },
+          { label: "Projetos", href: "/projects", icon: FolderKanban },
           { label: folder.name, icon: FolderOpen, isCurrent: true },
         ]}
       />
