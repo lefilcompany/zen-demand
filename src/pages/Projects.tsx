@@ -121,19 +121,25 @@ export default function Projects() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              memberMap={memberMap}
-              ownerProfile={memberMap.get(project.created_by)}
-              onOpen={() => navigate(`/folders/${project.id}`)}
-              onEdit={() => setEditing(project)}
-              onShare={() => setSharing(project)}
-              onDelete={() => setDeleting(project)}
-              canManage={project.is_owner === true}
-            />
-          ))}
+          {filtered.map((project) => {
+            const myShare = project.shared_with?.find((s) => s.user_id === user?.id);
+            const canEdit = project.is_owner === true || myShare?.permission === "edit";
+            const canDelete = project.is_owner === true;
+            return (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                memberMap={memberMap}
+                ownerProfile={memberMap.get(project.created_by)}
+                onOpen={() => navigate(`/folders/${project.id}`)}
+                onEdit={() => setEditing(project)}
+                onShare={() => setSharing(project)}
+                onDelete={() => setDeleting(project)}
+                canManage={canEdit}
+                canDelete={canDelete}
+              />
+            );
+          })}
         </div>
       )}
 
@@ -202,9 +208,10 @@ interface ProjectCardProps {
   onShare: () => void;
   onDelete: () => void;
   canManage: boolean;
+  canDelete?: boolean;
 }
 
-function ProjectCard({ project, memberMap, ownerProfile, onOpen, onEdit, onShare, onDelete, canManage }: ProjectCardProps) {
+function ProjectCard({ project, memberMap, ownerProfile, onOpen, onEdit, onShare, onDelete, canManage, canDelete }: ProjectCardProps) {
   const sharedUsers = (project.shared_with || []).map((s) => memberMap.get(s.user_id)).filter(Boolean);
   const accessUsers = [ownerProfile, ...sharedUsers].filter(Boolean);
   const visibleAvatars = accessUsers.slice(0, 4);
@@ -245,7 +252,7 @@ function ProjectCard({ project, memberMap, ownerProfile, onOpen, onEdit, onShare
               <Pencil className="h-4 w-4 mr-2" /> Editar
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onDelete} disabled={!canManage} className="text-destructive focus:text-destructive">
+            <DropdownMenuItem onClick={onDelete} disabled={!(canDelete ?? canManage)} className="text-destructive focus:text-destructive">
               <Trash2 className="h-4 w-4 mr-2" /> Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>
