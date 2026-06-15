@@ -252,7 +252,7 @@ function ProjectCard({ project, memberMap, ownerProfile, onOpen, onEdit, onShare
               <Pencil className="h-4 w-4 mr-2" /> Editar
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onDelete} disabled={!canManage} className="text-destructive focus:text-destructive">
+            <DropdownMenuItem onClick={onDelete} disabled={!(canDelete ?? canManage)} className="text-destructive focus:text-destructive">
               <Trash2 className="h-4 w-4 mr-2" /> Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>
