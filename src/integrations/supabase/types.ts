@@ -722,126 +722,6 @@ export type Database = {
           },
         ]
       }
-      demand_folder_items: {
-        Row: {
-          added_at: string
-          demand_id: string
-          folder_id: string
-          id: string
-        }
-        Insert: {
-          added_at?: string
-          demand_id: string
-          folder_id: string
-          id?: string
-        }
-        Update: {
-          added_at?: string
-          demand_id?: string
-          folder_id?: string
-          id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "demand_folder_items_demand_id_fkey"
-            columns: ["demand_id"]
-            isOneToOne: false
-            referencedRelation: "demands"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "demand_folder_items_folder_id_fkey"
-            columns: ["folder_id"]
-            isOneToOne: false
-            referencedRelation: "demand_folders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      demand_folder_shares: {
-        Row: {
-          folder_id: string
-          id: string
-          permission: string
-          shared_at: string
-          user_id: string
-        }
-        Insert: {
-          folder_id: string
-          id?: string
-          permission?: string
-          shared_at?: string
-          user_id: string
-        }
-        Update: {
-          folder_id?: string
-          id?: string
-          permission?: string
-          shared_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "demand_folder_shares_folder_id_fkey"
-            columns: ["folder_id"]
-            isOneToOne: false
-            referencedRelation: "demand_folders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "demand_folder_shares_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      demand_folders: {
-        Row: {
-          color: string
-          created_at: string
-          created_by: string
-          id: string
-          name: string
-          team_id: string
-          updated_at: string
-        }
-        Insert: {
-          color?: string
-          created_at?: string
-          created_by: string
-          id?: string
-          name: string
-          team_id: string
-          updated_at?: string
-        }
-        Update: {
-          color?: string
-          created_at?: string
-          created_by?: string
-          id?: string
-          name?: string
-          team_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "demand_folders_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "demand_folders_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       demand_interactions: {
         Row: {
           channel: string
@@ -1934,6 +1814,126 @@ export type Database = {
           },
         ]
       }
+      project_demands: {
+        Row: {
+          added_at: string
+          demand_id: string
+          id: string
+          project_id: string
+        }
+        Insert: {
+          added_at?: string
+          demand_id: string
+          id?: string
+          project_id: string
+        }
+        Update: {
+          added_at?: string
+          demand_id?: string
+          id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_folder_items_demand_id_fkey"
+            columns: ["demand_id"]
+            isOneToOne: false
+            referencedRelation: "demands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demand_folder_items_folder_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_shares: {
+        Row: {
+          id: string
+          permission: string
+          project_id: string
+          shared_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          permission?: string
+          project_id: string
+          shared_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          permission?: string
+          project_id?: string
+          shared_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_folder_shares_folder_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demand_folder_shares_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          color: string
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_folders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demand_folders_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recurring_demands: {
         Row: {
           assignee_ids: string[] | null
@@ -2907,6 +2907,14 @@ export type Database = {
         Args: { _folder_id: string; _user_id: string }
         Returns: boolean
       }
+      has_project_access: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
+      has_project_edit_access: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2946,6 +2954,10 @@ export type Database = {
       is_note_shared: { Args: { note_id_param: string }; Returns: boolean }
       is_note_shared_with_user: {
         Args: { _note_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_project_owner: {
+        Args: { _project_id: string; _user_id: string }
         Returns: boolean
       }
       is_team_admin: {
