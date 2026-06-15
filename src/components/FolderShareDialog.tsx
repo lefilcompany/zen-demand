@@ -84,6 +84,7 @@ export function FolderShareDialog({
   }, [members, search, user?.id, draft]);
 
   const handleToggle = (userId: string) => {
+    const wasShared = draft.has(userId);
     setDraft((prev) => {
       const next = new Map(prev);
       if (next.has(userId)) {
@@ -93,6 +94,15 @@ export function FolderShareDialog({
       }
       return next;
     });
+
+    if (!wasShared) {
+      const member = members?.find((m: any) => m.user_id === userId);
+      if (member) {
+        toast.success(
+          `${member.profile?.full_name || "Usuário"} foi adicionado à pasta "${folderName}" com acesso de visualização`
+        );
+      }
+    }
   };
 
   const handlePermissionChange = (userId: string, permission: FolderPermission) => {
@@ -101,6 +111,14 @@ export function FolderShareDialog({
       next.set(userId, { permission });
       return next;
     });
+
+    const member = members?.find((m: any) => m.user_id === userId);
+    if (member) {
+      const permissionLabel = permission === "edit" ? "edição" : "visualização";
+      toast.success(
+        `Acesso de ${member.profile?.full_name || "Usuário"} alterado para ${permissionLabel} na pasta "${folderName}"`
+      );
+    }
   };
 
   const hasChanges = useMemo(() => {
