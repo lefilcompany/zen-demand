@@ -51,11 +51,18 @@ export default function Projects() {
     return m;
   }, [teamMembers]);
 
+  const accessible = useMemo(() => {
+    if (!user) return [];
+    return projects.filter(
+      (p) => p.is_owner === true || (p.shared_with || []).some((s) => s.user_id === user.id),
+    );
+  }, [projects, user]);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    if (!q) return projects;
-    return projects.filter((p) => p.name.toLowerCase().includes(q));
-  }, [projects, search]);
+    if (!q) return accessible;
+    return accessible.filter((p) => p.name.toLowerCase().includes(q));
+  }, [accessible, search]);
 
   const handleCreate = (name: string, color: string) => {
     if (!selectedTeamId || !user) return;
