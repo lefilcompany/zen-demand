@@ -66,6 +66,10 @@ export function DemandFolderStrip({ teamId, selectedFolderId, onSelectFolder }: 
           const isOwner = folder.is_owner;
           const isShared = !isOwner;
           const hasShares = (folder.shared_with?.length || 0) > 0;
+          const myShare = !isOwner
+            ? folder.shared_with?.find((s) => s.user_id === user?.id)
+            : undefined;
+          const canEdit = isOwner || myShare?.permission === "edit";
 
           return (
             <div
