@@ -301,6 +301,15 @@ export function useUpdateFolderSharePermission() {
         .update({ permission: params.permission } as any)
         .eq("project_id", params.folder_id)
         .eq("user_id", params.user_id);
+      if (error && shouldFallbackToLegacyFolders(error)) {
+        const legacy = await (supabase as any)
+          .from("demand_folder_shares")
+          .update({ permission: params.permission })
+          .eq("folder_id", params.folder_id)
+          .eq("user_id", params.user_id);
+        if (legacy.error) throw legacy.error;
+        return;
+      }
       if (error) throw error;
     },
     onSuccess: () => {
@@ -320,6 +329,15 @@ export function useUnshareFolder() {
         .delete()
         .eq("project_id", params.folder_id)
         .eq("user_id", params.user_id);
+      if (error && shouldFallbackToLegacyFolders(error)) {
+        const legacy = await (supabase as any)
+          .from("demand_folder_shares")
+          .delete()
+          .eq("folder_id", params.folder_id)
+          .eq("user_id", params.user_id);
+        if (legacy.error) throw legacy.error;
+        return;
+      }
       if (error) throw error;
     },
     onSuccess: () => {
