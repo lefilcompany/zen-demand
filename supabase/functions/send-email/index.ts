@@ -14,12 +14,18 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const DEFAULT_FROM = "SoMA+ <noreply@pla.soma.lefil.com.br>";
+
+const ALLOWED_ACTION_URL_HOSTS = new Set([
+  "pla.soma.lefil.com.br",
+  "zen-demand.lovable.app",
+]);
+
+const PREVIEW_HOST_PATTERN = /^id-preview--[a-f0-9-]+\.lovable\.app$/i;
+
 interface EmailRequest {
   to: string; // Can be email or user_id (UUID)
   subject: string;
-  html?: string;
-  from?: string;
-  // For template-based emails
   template?: 'notification';
   templateData?: {
     title: string;
@@ -29,6 +35,51 @@ interface EmailRequest {
     userName?: string;
     type?: 'info' | 'success' | 'warning' | 'error';
   };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function validateBoundedString(value: unknown, field: string, maxLength: number, required = true): string | undefined {
+  if (value === undefined || value === null || value === "") {
+    if (required) throw new Error(`${field} is required`);
+    return undefined;
+  }
+
+  if (typeof value !== "string") {
+    throw new Error(`${field} must be a string`);
+  }
+
+  const trimmed = value.trim();
+  if (required && !trimmed) {
+    throw new Error(`${field} is required`);
+  }
+  if (trimmed.length > maxLength) {
+    throw new Error(`${field} too long (max ${maxLength} characters)`);
+  }
+
+  return trimmed || undefined;
+}
+
+function validateActionUrl(value: unknown): string | undefined {
+  const rawUrl = validateBoundedString(value, "templateData.actionUrl", 2048, false);
+  if (!rawUrl) return undefined;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    throw new Error("templateData.actionUrl must be an absolute URL");
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+  const isAllowedHost = ALLOWED_ACTION_URL_HOSTS.has(hostname) || PREVIEW_HOST_PATTERN.test(hostname);
+  if (parsed.protocol !== "https:" || !isAllowedHost) {
+    throw new Error("templateData.actionUrl must use an approved app domain");
+  }
+
+  return parsed.toString();
 }
 
 // Check if string is a valid UUID
