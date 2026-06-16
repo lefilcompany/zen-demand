@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Briefcase, Plus, Search, Users, Pencil, Trash2, MoreVertical, Share2 } from "lucide-react";
+import { FolderKanban, Plus, Search, Users, Pencil, Trash2, MoreVertical, Share2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,18 +51,11 @@ export default function Projects() {
     return m;
   }, [teamMembers]);
 
-  const accessible = useMemo(() => {
-    if (!user) return [];
-    return projects.filter(
-      (p) => p.is_owner === true || (p.shared_with || []).some((s) => s.user_id === user.id),
-    );
-  }, [projects, user]);
-
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    if (!q) return accessible;
-    return accessible.filter((p) => p.name.toLowerCase().includes(q));
-  }, [accessible, search]);
+    if (!q) return projects;
+    return projects.filter((p) => p.name.toLowerCase().includes(q));
+  }, [projects, search]);
 
   const handleCreate = (name: string, color: string) => {
     if (!selectedTeamId || !user) return;
@@ -107,7 +100,7 @@ export default function Projects() {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed rounded-2xl bg-muted/20">
           <div className="h-14 w-14 rounded-2xl bg-[#F28705]/10 flex items-center justify-center mb-4">
-            <Briefcase className="h-7 w-7 text-[#F28705]" />
+            <FolderKanban className="h-7 w-7 text-[#F28705]" />
           </div>
           <h3 className="text-base font-semibold mb-1">
             {search ? "Nenhum projeto encontrado" : "Nenhum projeto ainda"}
@@ -132,11 +125,6 @@ export default function Projects() {
             const myShare = project.shared_with?.find((s) => s.user_id === user?.id);
             const canEdit = project.is_owner === true || myShare?.permission === "edit";
             const canDelete = project.is_owner === true;
-            const myAccess: "owner" | "edit" | "view" = project.is_owner
-              ? "owner"
-              : myShare?.permission === "edit"
-              ? "edit"
-              : "view";
             return (
               <ProjectCard
                 key={project.id}
@@ -149,7 +137,6 @@ export default function Projects() {
                 onDelete={() => setDeleting(project)}
                 canManage={canEdit}
                 canDelete={canDelete}
-                myAccess={myAccess}
               />
             );
           })}
@@ -222,10 +209,9 @@ interface ProjectCardProps {
   onDelete: () => void;
   canManage: boolean;
   canDelete?: boolean;
-  myAccess: "owner" | "edit" | "view";
 }
 
-function ProjectCard({ project, memberMap, ownerProfile, onOpen, onEdit, onShare, onDelete, canManage, canDelete, myAccess }: ProjectCardProps) {
+function ProjectCard({ project, memberMap, ownerProfile, onOpen, onEdit, onShare, onDelete, canManage, canDelete }: ProjectCardProps) {
   const sharedUsers = (project.shared_with || []).map((s) => memberMap.get(s.user_id)).filter(Boolean);
   const accessUsers = [ownerProfile, ...sharedUsers].filter(Boolean);
   const visibleAvatars = accessUsers.slice(0, 4);
@@ -244,7 +230,7 @@ function ProjectCard({ project, memberMap, ownerProfile, onOpen, onEdit, onShare
             className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0"
             style={{ backgroundColor: `${project.color}1A` }}
           >
-            <Briefcase className="h-5 w-5" style={{ color: project.color }} />
+            <FolderKanban className="h-5 w-5" style={{ color: project.color }} />
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="font-semibold text-foreground truncate">{project.name}</h3>
@@ -273,21 +259,13 @@ function ProjectCard({ project, memberMap, ownerProfile, onOpen, onEdit, onShare
         </DropdownMenu>
       </div>
 
-      <div className="mt-4 flex items-center gap-2 text-xs flex-wrap">
+      <div className="mt-4 flex items-center gap-2 text-xs">
         <Badge variant="secondary" className="font-medium">
           {project.item_count ?? 0} demanda{(project.item_count ?? 0) === 1 ? "" : "s"}
         </Badge>
-        {myAccess === "owner" ? (
-          <Badge className="font-medium bg-[#F28705] hover:bg-[#F28705] text-white border-transparent">
-            Proprietário
-          </Badge>
-        ) : myAccess === "edit" ? (
-          <Badge variant="outline" className="font-medium border-[#F28705]/40 text-[#F28705]">
-            Edição
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="font-medium">
-            Visualização
+        {project.is_owner && (
+          <Badge variant="outline" className="font-medium border-[#F28705]/30 text-[#F28705]">
+            Você é o dono
           </Badge>
         )}
       </div>
@@ -315,6 +293,15 @@ function ProjectCard({ project, memberMap, ownerProfile, onOpen, onEdit, onShare
             )}
           </div>
         </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => { e.stopPropagation(); onShare(); }}
+          disabled={!canManage}
+          className="text-xs h-7 px-2 text-muted-foreground hover:text-[#F28705]"
+        >
+          <Users className="h-3.5 w-3.5 mr-1" /> Acesso
+        </Button>
       </div>
     </div>
   );

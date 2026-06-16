@@ -4,6 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 interface SendEmailParams {
   to: string;
   subject: string;
+  html?: string;
+  from?: string;
+  // For template-based emails
   template?: 'notification';
   templateData?: {
     title: string;
@@ -17,9 +20,9 @@ interface SendEmailParams {
 
 export function useSendEmail() {
   return useMutation({
-    mutationFn: async ({ to, subject, template, templateData }: SendEmailParams) => {
+    mutationFn: async ({ to, subject, html, from, template, templateData }: SendEmailParams) => {
       const { data, error } = await supabase.functions.invoke("send-email", {
-        body: { to, subject, template, templateData },
+        body: { to, subject, html, from, template, templateData },
       });
 
       if (error) throw error;

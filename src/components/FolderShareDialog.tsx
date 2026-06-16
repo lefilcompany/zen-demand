@@ -84,7 +84,6 @@ export function FolderShareDialog({
   }, [members, search, user?.id, draft]);
 
   const handleToggle = (userId: string) => {
-    const wasShared = draft.has(userId);
     setDraft((prev) => {
       const next = new Map(prev);
       if (next.has(userId)) {
@@ -94,15 +93,6 @@ export function FolderShareDialog({
       }
       return next;
     });
-
-    if (!wasShared) {
-      const member = members?.find((m: any) => m.user_id === userId);
-      if (member) {
-        toast.success(
-          `${member.profile?.full_name || "Usuário"} foi adicionado ao projeto "${folderName}" com acesso de visualização`
-        );
-      }
-    }
   };
 
   const handlePermissionChange = (userId: string, permission: FolderPermission) => {
@@ -111,14 +101,6 @@ export function FolderShareDialog({
       next.set(userId, { permission });
       return next;
     });
-
-    const member = members?.find((m: any) => m.user_id === userId);
-    if (member) {
-      const permissionLabel = permission === "edit" ? "edição" : "visualização";
-      toast.success(
-        `Acesso de ${member.profile?.full_name || "Usuário"} alterado para ${permissionLabel} no projeto "${folderName}"`
-      );
-    }
   };
 
   const hasChanges = useMemo(() => {
@@ -190,10 +172,10 @@ export function FolderShareDialog({
     return (
       <div
         key={m.user_id}
-        className={`flex items-center gap-3 w-full p-3 rounded-lg transition-all duration-150 cursor-pointer ${
+        className={`flex items-center gap-3 w-full p-3 rounded-lg transition-all duration-150 ${
           isShared
-            ? "bg-primary/5 border border-primary/20 hover:border-[#F28705]/60 hover:bg-[#F28705]/5"
-            : "border border-transparent hover:border-[#F28705]/50 hover:bg-[#F28705]/5"
+            ? "bg-primary/5 border border-primary/20"
+            : "border border-transparent"
         }`}
       >
         <button
@@ -214,7 +196,7 @@ export function FolderShareDialog({
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium truncate text-foreground group-hover:text-foreground">{m.profile?.full_name || "Sem nome"}</p>
+            <p className="text-sm font-medium truncate text-foreground">{m.profile?.full_name || "Sem nome"}</p>
             <div className="flex items-center gap-2 mt-0.5">
               {m.position && (
                 <Badge
@@ -278,7 +260,7 @@ export function FolderShareDialog({
                 <Users className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <span>Compartilhar projeto</span>
+                <span>Compartilhar pasta</span>
                 <p className="text-sm font-normal text-muted-foreground mt-0.5">{folderName}</p>
               </div>
             </DialogTitle>
@@ -354,9 +336,9 @@ export function FolderShareDialog({
               size="sm"
               onClick={handleSave}
               disabled={!hasChanges || saving}
-              className="bg-[#F28705] hover:bg-[#D97706] text-white hover:text-white"
+              className="bg-[#F28705] hover:bg-[#D97706] text-white"
             >
-              <Save className="h-4 w-4 mr-1.5 hover:text-white" />
+              <Save className="h-4 w-4 mr-1.5" />
               {saving ? "Salvando..." : "Confirmar"}
             </Button>
           </div>
