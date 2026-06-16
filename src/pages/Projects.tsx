@@ -143,7 +143,7 @@ export default function Projects() {
                 project={project}
                 memberMap={memberMap}
                 ownerProfile={memberMap.get(project.created_by)}
-                onOpen={() => navigate(`/folders/${project.id}`)}
+                onOpen={() => navigate(`/projects/${project.id}`)}
                 onEdit={() => setEditing(project)}
                 onShare={() => setSharing(project)}
                 onDelete={() => setDeleting(project)}
