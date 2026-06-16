@@ -28,8 +28,8 @@ type NotificationType = 'info' | 'success' | 'warning' | 'error';
 interface EmailRequest {
   to: string; // Can be email or user_id (UUID)
   subject: string;
-  template?: 'notification';
-  templateData?: {
+  template: 'notification';
+  templateData: {
     title: string;
     message: string;
     actionUrl?: string;
@@ -214,7 +214,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { to, subject, template, templateData } = payload;
+    const { to, subject, templateData } = payload;
 
     let recipientEmail = to;
     let recipientUserId: string | null = null;
