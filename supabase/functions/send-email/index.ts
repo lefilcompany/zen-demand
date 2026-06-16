@@ -335,7 +335,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log('Rendering notification template for:', templateData.title);
-    const emailHtml = render(
+    const emailHtml = await render(
       React.createElement(NotificationEmail, {
         title: templateData.title,
         message: templateData.message,

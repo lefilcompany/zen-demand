@@ -529,7 +529,7 @@ const handler = async (req: Request): Promise<Response> => {
     const actionUrl = `${appUrl}/demand-requests`;
 
     // Render email template
-    const emailHtml = render(
+    const emailHtml = await render(
       React.createElement(DemandRequestEmail, {
         title,
         description,
