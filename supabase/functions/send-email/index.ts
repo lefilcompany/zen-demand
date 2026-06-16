@@ -201,7 +201,7 @@ const handler = async (req: Request): Promise<Response> => {
           actionUrl: validateActionUrl(rawTemplateData.actionUrl),
           actionText: validateBoundedString(rawTemplateData.actionText, "templateData.actionText", 80, false),
           userName: validateBoundedString(rawTemplateData.userName, "templateData.userName", 120, false),
-          type: type as EmailRequest["templateData"]["type"],
+          type: type as NotificationType | undefined,
         },
       };
     } catch (validationError) {
