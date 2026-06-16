@@ -111,6 +111,15 @@ export function useCreateFolder() {
         .insert(params)
         .select()
         .single();
+      if (error && shouldFallbackToLegacyFolders(error)) {
+        const legacy = await (supabase as any)
+          .from("demand_folders")
+          .insert(params)
+          .select()
+          .single();
+        if (legacy.error) throw legacy.error;
+        return legacy.data;
+      }
       if (error) throw error;
       return data;
     },
@@ -133,6 +142,16 @@ export function useUpdateFolder() {
         .eq("id", id)
         .select()
         .single();
+      if (error && shouldFallbackToLegacyFolders(error)) {
+        const legacy = await (supabase as any)
+          .from("demand_folders")
+          .update(updates)
+          .eq("id", id)
+          .select()
+          .single();
+        if (legacy.error) throw legacy.error;
+        return legacy.data;
+      }
       if (error) throw error;
       return data;
     },
@@ -170,6 +189,14 @@ export function useDeleteFolder() {
         .from("projects")
         .delete()
         .eq("id", folderId);
+      if (error && shouldFallbackToLegacyFolders(error)) {
+        const legacy = await (supabase as any)
+          .from("demand_folders")
+          .delete()
+          .eq("id", folderId);
+        if (legacy.error) throw legacy.error;
+        return;
+      }
       if (error) throw error;
     },
     onSuccess: () => {
