@@ -22,7 +22,7 @@ import { FolderShareDialog } from "@/components/FolderShareDialog";
 import { FolderDemandManager } from "@/components/FolderDemandManager";
 import {
   Search, LayoutGrid, List, CalendarDays, ChevronDown, ChevronRight,
-  FolderOpen, ArrowLeft, Eye, EyeOff, User, Pencil, Check, X, Users, Plus, Layers, LayoutList, FolderKanban
+  FolderOpen, ArrowLeft, Eye, EyeOff, User, Pencil, Check, X, Users, Plus, Layers, LayoutList, Briefcase
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
@@ -212,7 +212,7 @@ export default function FolderDetail() {
   if (!folder) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <p className="text-muted-foreground">Pasta não encontrada</p>
+        <p className="text-muted-foreground">Projeto não encontrado</p>
         <Button variant="outline" onClick={() => navigate("/demands")}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Voltar para demandas
         </Button>
@@ -222,10 +222,10 @@ export default function FolderDetail() {
 
   return (
     <div className="space-y-4 max-w-[1400px] mx-auto">
-      <SEOHead title={`Pasta - ${folder.name}`} />
+      <SEOHead title={`Projeto - ${folder.name}`} />
       <PageBreadcrumb
         items={[
-          { label: "Projetos", href: "/projects", icon: FolderKanban },
+          { label: "Projetos", href: "/projects", icon: Briefcase },
           { label: folder.name, icon: FolderOpen, isCurrent: true },
         ]}
       />
@@ -291,10 +291,10 @@ export default function FolderDetail() {
                   className="flex items-center gap-1.5 p-2 md:px-3 md:py-1.5 rounded-lg border border-border/60 hover:bg-muted/60 transition-colors"
                 >
                   <Users className="h-4 w-4 text-muted-foreground" />
-                  <span className="hidden md:inline text-xs font-medium text-muted-foreground">Compartilhar pasta</span>
+                  <span className="hidden md:inline text-xs font-medium text-muted-foreground">Compartilhar projeto</span>
                 </button>
               </TooltipTrigger>
-              <TooltipContent className="md:hidden">Compartilhar pasta</TooltipContent>
+              <TooltipContent className="md:hidden">Compartilhar projeto</TooltipContent>
             </Tooltip>
           )}
         </div>
@@ -478,7 +478,7 @@ export default function FolderDetail() {
               <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
               <p className="text-sm text-muted-foreground">
                 {folderDemandIds?.length === 0
-                  ? "Nenhuma demanda nesta pasta ainda"
+                  ? "Nenhuma demanda neste projeto ainda"
                   : "Nenhuma demanda encontrada com os filtros atuais"}
               </p>
             </div>
@@ -535,7 +535,7 @@ export default function FolderDetail() {
               <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
               <p className="text-sm text-muted-foreground">
                 {folderDemandIds?.length === 0
-                  ? "Nenhuma demanda nesta pasta ainda"
+                  ? "Nenhuma demanda neste projeto ainda"
                   : "Nenhuma demanda encontrada com os filtros atuais"}
               </p>
             </div>

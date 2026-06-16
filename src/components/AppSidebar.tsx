@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, User, Briefcase, Kanban, ChevronUp, Settings, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock, Sparkles, ShoppingCart, Layers, StickyNote, LayoutList, CornerUpLeft, FolderKanban } from "lucide-react";
+import { LayoutDashboard, Users, User, Briefcase, Kanban, ChevronUp, Settings, FileText, Send, LayoutGrid, UserPlus, UsersRound, Clock, Sparkles, ShoppingCart, Layers, StickyNote, LayoutList, CornerUpLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 const logoSoma = "/logo-soma-sidebar.png";
 import { NavLink } from "@/components/NavLink";
@@ -61,7 +61,10 @@ export function AppSidebar() {
     location.pathname === "/boards" ||
     location.pathname.startsWith("/boards/") ||
     location.pathname.startsWith("/teams/") ||
-    location.pathname === "/teams";
+    location.pathname === "/teams" ||
+    location.pathname === "/projects" ||
+    location.pathname.startsWith("/projects/") ||
+    location.pathname.startsWith("/folders/");
 
   const lastBoardRoute = "/";
 
@@ -70,7 +73,7 @@ export function AppSidebar() {
         
         { title: "Visão Geral", url: "/team-demands", icon: Layers },
         { title: "Meus Quadros", url: "/boards", icon: LayoutGrid },
-        { title: "Projetos", url: "/projects", icon: FolderKanban },
+        { title: "Projetos", url: "/projects", icon: Briefcase },
         ...(selectedTeamId
           ? [{ title: "Participantes", url: `/teams/${selectedTeamId}`, icon: UsersRound, end: true }]
           : []),
@@ -421,7 +424,7 @@ export function AppSidebar() {
                         className="flex items-center gap-3 cursor-pointer py-2.5 px-3 rounded-lg transition-all duration-200 hover:bg-gray-100 dark:hover:bg-zinc-800 w-full"
                         activeClassName="bg-gray-100 dark:bg-zinc-800 text-primary font-medium"
                       >
-                        <FolderKanban className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                        <Briefcase className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                         <span className="text-sm text-gray-700 dark:text-gray-200">Projetos</span>
                       </NavLink>
                     </DropdownMenuItem>

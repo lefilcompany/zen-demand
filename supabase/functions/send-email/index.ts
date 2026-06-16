@@ -14,14 +14,22 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const DEFAULT_FROM = "SoMA+ <noreply@pla.soma.lefil.com.br>";
+
+const ALLOWED_ACTION_URL_HOSTS = new Set([
+  "pla.soma.lefil.com.br",
+  "zen-demand.lovable.app",
+]);
+
+const PREVIEW_HOST_PATTERN = /^id-preview--[a-f0-9-]+\.lovable\.app$/i;
+
+type NotificationType = 'info' | 'success' | 'warning' | 'error';
+
 interface EmailRequest {
   to: string; // Can be email or user_id (UUID)
   subject: string;
-  html?: string;
-  from?: string;
-  // For template-based emails
-  template?: 'notification';
-  templateData?: {
+  template: 'notification';
+  templateData: {
     title: string;
     message: string;
     actionUrl?: string;
@@ -29,6 +37,51 @@ interface EmailRequest {
     userName?: string;
     type?: 'info' | 'success' | 'warning' | 'error';
   };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function validateBoundedString(value: unknown, field: string, maxLength: number, required = true): string | undefined {
+  if (value === undefined || value === null || value === "") {
+    if (required) throw new Error(`${field} is required`);
+    return undefined;
+  }
+
+  if (typeof value !== "string") {
+    throw new Error(`${field} must be a string`);
+  }
+
+  const trimmed = value.trim();
+  if (required && !trimmed) {
+    throw new Error(`${field} is required`);
+  }
+  if (trimmed.length > maxLength) {
+    throw new Error(`${field} too long (max ${maxLength} characters)`);
+  }
+
+  return trimmed || undefined;
+}
+
+function validateActionUrl(value: unknown): string | undefined {
+  const rawUrl = validateBoundedString(value, "templateData.actionUrl", 2048, false);
+  if (!rawUrl) return undefined;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    throw new Error("templateData.actionUrl must be an absolute URL");
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+  const isAllowedHost = ALLOWED_ACTION_URL_HOSTS.has(hostname) || PREVIEW_HOST_PATTERN.test(hostname);
+  if (parsed.protocol !== "https:" || !isAllowedHost) {
+    throw new Error("templateData.actionUrl must use an approved app domain");
+  }
+
+  return parsed.toString();
 }
 
 // Check if string is a valid UUID
@@ -101,11 +154,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Email request from authenticated user: ${userId}`);
 
-    const { to, subject, html, from, template, templateData }: EmailRequest = await req.json();
-
-    if (!to || !subject) {
+    const rawPayload = await req.json().catch(() => null);
+    if (!isRecord(rawPayload)) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields: to, subject" }),
+        JSON.stringify({ error: "Invalid JSON payload" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -113,10 +165,9 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Validate input lengths to prevent abuse
-    if (subject.length > 200) {
+    if ("html" in rawPayload || "from" in rawPayload) {
       return new Response(
-        JSON.stringify({ error: "Subject too long (max 200 characters)" }),
+        JSON.stringify({ error: "Raw HTML and custom sender fields are not allowed" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -124,9 +175,38 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    if (templateData?.message && templateData.message.length > 5000) {
+    let payload: EmailRequest;
+    try {
+      const to = validateBoundedString(rawPayload.to, "to", 64);
+      const subject = validateBoundedString(rawPayload.subject, "subject", 200);
+      const template = rawPayload.template;
+      if (template !== "notification" || !isRecord(rawPayload.templateData)) {
+        throw new Error("A valid notification template is required");
+      }
+
+      const rawTemplateData = rawPayload.templateData;
+      const rawType = rawTemplateData.type;
+      const type = rawType === undefined ? undefined : String(rawType);
+      if (type && !["info", "success", "warning", "error"].includes(type)) {
+        throw new Error("templateData.type is invalid");
+      }
+
+      payload = {
+        to: to!,
+        subject: subject!,
+        template: "notification",
+        templateData: {
+          title: validateBoundedString(rawTemplateData.title, "templateData.title", 200)!,
+          message: validateBoundedString(rawTemplateData.message, "templateData.message", 5000)!,
+          actionUrl: validateActionUrl(rawTemplateData.actionUrl),
+          actionText: validateBoundedString(rawTemplateData.actionText, "templateData.actionText", 80, false),
+          userName: validateBoundedString(rawTemplateData.userName, "templateData.userName", 120, false),
+          type: type as NotificationType | undefined,
+        },
+      };
+    } catch (validationError) {
       return new Response(
-        JSON.stringify({ error: "Message too long (max 5000 characters)" }),
+        JSON.stringify({ error: validationError instanceof Error ? validationError.message : "Invalid email payload" }),
         {
           status: 400,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -134,16 +214,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Cap raw HTML length to prevent abuse via arbitrary large payloads
-    if (html && html.length > 100_000) {
-      return new Response(
-        JSON.stringify({ error: "HTML content too large (max 100KB)" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
+    const { to, subject, templateData } = payload;
 
     let recipientEmail = to;
     let recipientUserId: string | null = null;
@@ -263,32 +334,17 @@ const handler = async (req: Request): Promise<Response> => {
       console.warn("Could not check notification preferences, proceeding to send:", prefErr);
     }
 
-    let emailHtml = html;
-
-    // If using template, render React Email
-    if (template === 'notification' && templateData) {
-      console.log('Rendering notification template for:', templateData.title);
-      emailHtml = render(
-        React.createElement(NotificationEmail, {
-          title: templateData.title,
-          message: templateData.message,
-          actionUrl: templateData.actionUrl,
-          actionText: templateData.actionText,
-          userName: templateData.userName,
-          type: templateData.type,
-        })
-      );
-    }
-
-    if (!emailHtml) {
-      return new Response(
-        JSON.stringify({ error: "Missing email content: provide html or template with templateData" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
+    console.log('Rendering notification template for:', templateData.title);
+    const emailHtml = render(
+      React.createElement(NotificationEmail, {
+        title: templateData.title,
+        message: templateData.message,
+        actionUrl: templateData.actionUrl,
+        actionText: templateData.actionText,
+        userName: templateData.userName,
+        type: templateData.type,
+      })
+    );
 
     console.log(`Sending email to ${recipientEmail} with subject: ${subject}`);
 
@@ -302,7 +358,7 @@ const handler = async (req: Request): Promise<Response> => {
             Authorization: `Bearer ${RESEND_API_KEY}`,
           },
           body: JSON.stringify({
-            from: from || "SoMA+ <noreply@pla.soma.lefil.com.br>",
+            from: DEFAULT_FROM,
             to: [recipientEmail],
             subject,
             html: emailHtml,

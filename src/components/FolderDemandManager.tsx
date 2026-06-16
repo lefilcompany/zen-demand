@@ -173,7 +173,7 @@ export function FolderDemandManager({
                     <span className="flex items-center gap-1.5 shrink-0">
                       {boardSelected > 0 && (
                         <Badge className="text-[10px] h-5 px-1.5 bg-[#F28705] hover:bg-[#F28705] text-white border-0">
-                          {boardSelected} na pasta
+                          {boardSelected} no projeto
                         </Badge>
                       )}
                       <span className="text-[10px] text-muted-foreground">{group.demands.length} total</span>
