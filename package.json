@@ -13,6 +13,10 @@
     "test:watch": "vitest",
     "preview": "vite preview"
   },
+  "overrides": {
+    "workbox-build": "7.3.0",
+    "workbox-window": "7.3.0"
+  },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
