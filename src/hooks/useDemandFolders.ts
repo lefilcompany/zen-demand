@@ -17,6 +17,36 @@ export interface DemandFolder {
   shared_with?: { user_id: string; shared_at: string; permission: FolderPermission }[];
 }
 
+const shouldFallbackToLegacyFolders = (error: any) => {
+  const message = `${error?.message || ""} ${error?.details || ""} ${error?.hint || ""}`.toLowerCase();
+  return (
+    ["PGRST200", "PGRST201", "PGRST204", "PGRST205"].includes(error?.code) ||
+    message.includes("project") && (
+      message.includes("does not exist") ||
+      message.includes("not find") ||
+      message.includes("schema cache") ||
+      message.includes("relationship") ||
+      message.includes("relation")
+    )
+  );
+};
+
+const normalizeProjectRows = (data: any[] | null, userId?: string) =>
+  (data || []).map((f: any) => ({
+    ...f,
+    item_count: f.project_demands?.length || f.demand_folder_items?.length || 0,
+    is_owner: f.created_by === userId,
+    shared_with: (f.project_shares || f.demand_folder_shares || []).map((s: any) => ({
+      user_id: s.user_id,
+      shared_at: s.shared_at,
+      permission: (s.permission || "view") as FolderPermission,
+    })),
+    project_demands: undefined,
+    project_shares: undefined,
+    demand_folder_items: undefined,
+    demand_folder_shares: undefined,
+  })) as DemandFolder[];
+
 // NOTE: tables were renamed in the DB (demand_folders→projects, demand_folder_items→project_demands,
 // demand_folder_shares→project_shares, folder_id→project_id). The hook keeps the legacy public
 // API (`folder_id` arg names, "demand-folders" query keys) to avoid touching every caller — it just
@@ -32,19 +62,17 @@ export function useDemandFolders(teamId: string | null, userId?: string) {
         .select("*, project_demands(id), project_shares(user_id, shared_at, permission)")
         .eq("team_id", teamId)
         .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data || []).map((f: any) => ({
-        ...f,
-        item_count: f.project_demands?.length || 0,
-        is_owner: f.created_by === userId,
-        shared_with: (f.project_shares || []).map((s: any) => ({
-          user_id: s.user_id,
-          shared_at: s.shared_at,
-          permission: (s.permission || "view") as FolderPermission,
-        })),
-        project_demands: undefined,
-        project_shares: undefined,
-      })) as DemandFolder[];
+      if (!error) return normalizeProjectRows(data, userId);
+
+      if (!shouldFallbackToLegacyFolders(error)) throw error;
+
+      const legacy = await (supabase as any)
+        .from("demand_folders")
+        .select("*, demand_folder_items(id), demand_folder_shares(user_id, shared_at, permission)")
+        .eq("team_id", teamId)
+        .order("created_at", { ascending: false });
+      if (legacy.error) throw legacy.error;
+      return normalizeProjectRows(legacy.data, userId);
     },
     enabled: !!teamId,
   });
@@ -59,6 +87,14 @@ export function useFolderDemandIds(folderId: string | null) {
         .from("project_demands")
         .select("demand_id")
         .eq("project_id", folderId);
+      if (error && shouldFallbackToLegacyFolders(error)) {
+        const legacy = await (supabase as any)
+          .from("demand_folder_items")
+          .select("demand_id")
+          .eq("folder_id", folderId);
+        if (legacy.error) throw legacy.error;
+        return (legacy.data || []).map((d: any) => d.demand_id as string);
+      }
       if (error) throw error;
       return (data || []).map((d: any) => d.demand_id as string);
     },
