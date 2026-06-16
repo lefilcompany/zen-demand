@@ -14,6 +14,7 @@
     "preview": "vite preview"
   },
   "overrides": {
+    "smob": "1.4.0",
     "workbox-build": "7.3.0",
     "workbox-window": "7.3.0"
   },
