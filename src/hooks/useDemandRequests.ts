@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useSelectedTeam } from "@/contexts/TeamContext";
-import { useSelectedBoard, useSelectedBoardSafe } from "@/contexts/BoardContext";
+import { useSelectedBoardSafe } from "@/contexts/BoardContext";
 import { sendDemandRequestPushNotification } from "./useSendPushNotification";
 
 interface DemandRequest {
@@ -38,7 +38,7 @@ interface DemandRequest {
 
 // Fetch pending requests for admins/moderators - filtered by board
 export function usePendingDemandRequests() {
-  const { selectedBoardId } = useSelectedBoard();
+  const { selectedBoardId } = useSelectedBoardSafe();
 
   return useQuery({
     queryKey: ["demand-requests", "pending", selectedBoardId],
@@ -66,7 +66,7 @@ export function usePendingDemandRequests() {
 
 // Fetch approved requests - filtered by board
 export function useApprovedDemandRequests() {
-  const { selectedBoardId } = useSelectedBoard();
+  const { selectedBoardId } = useSelectedBoardSafe();
 
   return useQuery({
     queryKey: ["demand-requests", "approved", selectedBoardId],
@@ -95,7 +95,7 @@ export function useApprovedDemandRequests() {
 
 // Fetch returned requests - filtered by board
 export function useReturnedDemandRequests() {
-  const { selectedBoardId } = useSelectedBoard();
+  const { selectedBoardId } = useSelectedBoardSafe();
 
   return useQuery({
     queryKey: ["demand-requests", "returned", selectedBoardId],
@@ -125,7 +125,7 @@ export function useReturnedDemandRequests() {
 // Fetch user's own requests (for Solicitantes) - filtered by board
 export function useMyDemandRequests() {
   const { user } = useAuth();
-  const { selectedBoardId } = useSelectedBoard();
+  const { selectedBoardId } = useSelectedBoardSafe();
 
   return useQuery({
     queryKey: ["demand-requests", "my", user?.id, selectedBoardId],
