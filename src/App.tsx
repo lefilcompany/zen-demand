@@ -55,6 +55,7 @@ import MyDemands from "./pages/MyDemands";
 import Notes from "./pages/Notes";
 import NoteDetail from "./pages/NoteDetail";
 import FolderDetail from "./pages/FolderDetail";
+import Projects from "./pages/Projects";
 import NotFound from "./pages/NotFound";
 import Pricing from "./pages/Pricing";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
