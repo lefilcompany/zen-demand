@@ -66,10 +66,6 @@ export function DemandFolderStrip({ teamId, selectedFolderId, onSelectFolder }: 
           const isOwner = folder.is_owner;
           const isShared = !isOwner;
           const hasShares = (folder.shared_with?.length || 0) > 0;
-          const myShare = !isOwner
-            ? folder.shared_with?.find((s) => s.user_id === user?.id)
-            : undefined;
-          const canEdit = isOwner || myShare?.permission === "edit";
 
           return (
             <div
@@ -121,7 +117,7 @@ export function DemandFolderStrip({ teamId, selectedFolderId, onSelectFolder }: 
                   <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  {canEdit && (
+                  {isOwner && (
                     <>
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setManagingFolder(folder); }}>
                         <ListChecks className="h-4 w-4 mr-2" />
@@ -135,23 +131,19 @@ export function DemandFolderStrip({ teamId, selectedFolderId, onSelectFolder }: 
                         <Pencil className="h-4 w-4 mr-2" />
                         Renomear
                       </DropdownMenuItem>
-                      {isOwner && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={(e) => { e.stopPropagation(); handleDelete(folder); }}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </>
-                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={(e) => { e.stopPropagation(); handleDelete(folder); }}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Excluir
+                      </DropdownMenuItem>
                     </>
                   )}
-                  {!canEdit && (
+                  {isShared && (
                     <DropdownMenuItem
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={(e) => { e.stopPropagation(); /* could add leave folder */ }}
                       className="text-muted-foreground"
                       disabled
                     >
@@ -177,7 +169,7 @@ export function DemandFolderStrip({ teamId, selectedFolderId, onSelectFolder }: 
             <Plus className="h-4 w-4" />
           </div>
           <span className="text-xs font-medium whitespace-nowrap">
-            {(!folders || folders.length === 0) ? "Criar projeto" : "Novo projeto"}
+            {(!folders || folders.length === 0) ? "Criar pasta" : "Nova pasta"}
           </span>
         </button>
       </div>

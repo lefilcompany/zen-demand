@@ -19,58 +19,57 @@ import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { SwipeNavigationProvider } from "@/components/SwipeNavigationProvider";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { UpdateModal } from "@/components/UpdateModal";
-import { lazy, Suspense, useEffect } from "react";
-
-const Index = lazy(() => import("./pages/Index"));
-const Auth = lazy(() => import("./pages/Auth"));
-const Welcome = lazy(() => import("./pages/Welcome"));
-const Teams = lazy(() => import("./pages/Teams"));
-const TeamDetail = lazy(() => import("./pages/TeamDetail"));
-const TeamRequests = lazy(() => import("./pages/TeamRequests"));
-const ServicesManagement = lazy(() => import("./pages/ServicesManagement"));
-const Demands = lazy(() => import("./pages/Demands"));
-const CreateDemand = lazy(() => import("./pages/CreateDemand"));
-const CreateDemandRequest = lazy(() => import("./pages/CreateDemandRequest"));
-const CreateTeam = lazy(() => import("./pages/CreateTeam"));
-const JoinTeam = lazy(() => import("./pages/JoinTeam"));
-const DemandRequests = lazy(() => import("./pages/DemandRequests"));
-const DemandDetail = lazy(() => import("./pages/DemandDetail"));
-const SharedDemand = lazy(() => import("./pages/SharedDemand"));
-const SharedNote = lazy(() => import("./pages/SharedNote"));
-const SharedBoardSummary = lazy(() => import("./pages/SharedBoardSummary"));
-const Kanban = lazy(() => import("./pages/Kanban"));
-const BoardMembers = lazy(() => import("./pages/BoardMembers"));
-const Boards = lazy(() => import("./pages/Boards"));
-const BoardDetail = lazy(() => import("./pages/BoardDetail"));
-const TeamConfig = lazy(() => import("./pages/TeamConfig"));
-const Reports = lazy(() => import("./pages/Reports"));
-const Profile = lazy(() => import("./pages/Profile"));
-const Settings = lazy(() => import("./pages/Settings"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const TimeManagement = lazy(() => import("./pages/TimeManagement"));
-const UserProfile = lazy(() => import("./pages/UserProfile"));
-const BoardSummary = lazy(() => import("./pages/BoardSummary"));
-const Store = lazy(() => import("./pages/Store"));
-const TeamDemands = lazy(() => import("./pages/TeamDemands"));
-const MyDemands = lazy(() => import("./pages/MyDemands"));
-const Notes = lazy(() => import("./pages/Notes"));
-const NoteDetail = lazy(() => import("./pages/NoteDetail"));
-const FolderDetail = lazy(() => import("./pages/FolderDetail"));
-const Projects = lazy(() => import("./pages/Projects"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const Pricing = lazy(() => import("./pages/Pricing"));
-const SubscriptionSuccess = lazy(() => import("./pages/SubscriptionSuccess"));
-const GetStarted = lazy(() => import("./pages/GetStarted"));
-const CompleteProfile = lazy(() => import("./pages/CompleteProfile"));
-const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
-const TermsOfService = lazy(() => import("./pages/TermsOfService"));
-const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
-const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
-const AdminCoupons = lazy(() => import("./pages/admin/AdminCoupons"));
-const AdminTeams = lazy(() => import("./pages/admin/AdminTeams"));
-const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
-const AdminPlans = lazy(() => import("./pages/admin/AdminPlans"));
-const AdminProfile = lazy(() => import("./pages/admin/AdminProfile"));
+import Index from "./pages/Index";
+import Auth from "./pages/Auth";
+import Welcome from "./pages/Welcome";
+import Teams from "./pages/Teams";
+import TeamDetail from "./pages/TeamDetail";
+import TeamRequests from "./pages/TeamRequests";
+import ServicesManagement from "./pages/ServicesManagement";
+import Demands from "./pages/Demands";
+import CreateDemand from "./pages/CreateDemand";
+import CreateDemandRequest from "./pages/CreateDemandRequest";
+import CreateTeam from "./pages/CreateTeam";
+import JoinTeam from "./pages/JoinTeam";
+import DemandRequests from "./pages/DemandRequests";
+import DemandDetail from "./pages/DemandDetail";
+import SharedDemand from "./pages/SharedDemand";
+import SharedNote from "./pages/SharedNote";
+import SharedBoardSummary from "./pages/SharedBoardSummary";
+import Kanban from "./pages/Kanban";
+import ArchivedDemands from "./pages/ArchivedDemands";
+import BoardMembers from "./pages/BoardMembers";
+import Boards from "./pages/Boards";
+import BoardDetail from "./pages/BoardDetail";
+import TeamConfig from "./pages/TeamConfig";
+import Reports from "./pages/Reports";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import ResetPassword from "./pages/ResetPassword";
+import TimeManagement from "./pages/TimeManagement";
+import UserProfile from "./pages/UserProfile";
+import BoardSummary from "./pages/BoardSummary";
+import Store from "./pages/Store";
+import TeamDemands from "./pages/TeamDemands";
+import MyDemands from "./pages/MyDemands";
+import Notes from "./pages/Notes";
+import NoteDetail from "./pages/NoteDetail";
+import FolderDetail from "./pages/FolderDetail";
+import NotFound from "./pages/NotFound";
+import Pricing from "./pages/Pricing";
+import SubscriptionSuccess from "./pages/SubscriptionSuccess";
+import GetStarted from "./pages/GetStarted";
+import CompleteProfile from "./pages/CompleteProfile";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminCoupons from "./pages/admin/AdminCoupons";
+import AdminTeams from "./pages/admin/AdminTeams";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminPlans from "./pages/admin/AdminPlans";
+import AdminProfile from "./pages/admin/AdminProfile";
+import { useEffect } from "react";
 
 function CreateDemandGlobal() {
   return <CreateDemand />;
@@ -121,7 +120,6 @@ const App = () => (
                             <CommandMenu />
                             <PWAInstallPrompt />
                             <CreateDemandGlobal />
-                            <Suspense fallback={<div className="flex min-h-0 flex-1 items-center justify-center" />}>
                             <Routes>
                               <Route path="/auth" element={<Auth />} />
                               <Route path="/get-started" element={<GetStarted />} />
@@ -182,7 +180,6 @@ const App = () => (
 
                               <Route path="*" element={<NotFound />} />
                             </Routes>
-                            </Suspense>
                           </SwipeNavigationProvider>
                         </KeyboardShortcutsProvider>
                       </CreateDemandProvider>
