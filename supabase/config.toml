@@ -12,7 +12,11 @@ verify_jwt = false
 [functions.refresh-overdue-demands]
 verify_jwt = false
 
+[functions.shared-attachment-url]
+verify_jwt = false
+
+[functions.shared-demand]
+verify_jwt = false
+
 [functions.e2e-seed]
 verify_jwt = false
-# You might want to skip deploying this to production entirely
-# skip_deploy = true
