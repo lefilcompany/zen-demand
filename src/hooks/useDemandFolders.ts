@@ -214,6 +214,13 @@ export function useAddDemandToFolder() {
       const { error } = await supabase
         .from("project_demands")
         .insert({ project_id: params.folder_id, demand_id: params.demand_id });
+      if (error && shouldFallbackToLegacyFolders(error)) {
+        const legacy = await (supabase as any)
+          .from("demand_folder_items")
+          .insert({ folder_id: params.folder_id, demand_id: params.demand_id });
+        if (legacy.error) throw legacy.error;
+        return;
+      }
       if (error) throw error;
     },
     onSuccess: (_, vars) => {
@@ -233,6 +240,15 @@ export function useRemoveDemandFromFolder() {
         .delete()
         .eq("project_id", params.folder_id)
         .eq("demand_id", params.demand_id);
+      if (error && shouldFallbackToLegacyFolders(error)) {
+        const legacy = await (supabase as any)
+          .from("demand_folder_items")
+          .delete()
+          .eq("folder_id", params.folder_id)
+          .eq("demand_id", params.demand_id);
+        if (legacy.error) throw legacy.error;
+        return;
+      }
       if (error) throw error;
     },
     onSuccess: (_, vars) => {
@@ -255,6 +271,17 @@ export function useShareFolder() {
           user_id: params.user_id,
           permission: params.permission || "view",
         } as any);
+      if (error && shouldFallbackToLegacyFolders(error)) {
+        const legacy = await (supabase as any)
+          .from("demand_folder_shares")
+          .insert({
+            folder_id: params.folder_id,
+            user_id: params.user_id,
+            permission: params.permission || "view",
+          });
+        if (legacy.error) throw legacy.error;
+        return;
+      }
       if (error) throw error;
     },
     onSuccess: () => {
