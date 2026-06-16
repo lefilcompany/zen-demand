@@ -23,6 +23,8 @@ const ALLOWED_ACTION_URL_HOSTS = new Set([
 
 const PREVIEW_HOST_PATTERN = /^id-preview--[a-f0-9-]+\.lovable\.app$/i;
 
+type NotificationType = 'info' | 'success' | 'warning' | 'error';
+
 interface EmailRequest {
   to: string; // Can be email or user_id (UUID)
   subject: string;
@@ -332,32 +334,17 @@ const handler = async (req: Request): Promise<Response> => {
       console.warn("Could not check notification preferences, proceeding to send:", prefErr);
     }
 
-    let emailHtml = html;
-
-    // If using template, render React Email
-    if (template === 'notification' && templateData) {
-      console.log('Rendering notification template for:', templateData.title);
-      emailHtml = render(
-        React.createElement(NotificationEmail, {
-          title: templateData.title,
-          message: templateData.message,
-          actionUrl: templateData.actionUrl,
-          actionText: templateData.actionText,
-          userName: templateData.userName,
-          type: templateData.type,
-        })
-      );
-    }
-
-    if (!emailHtml) {
-      return new Response(
-        JSON.stringify({ error: "Missing email content: provide html or template with templateData" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
+    console.log('Rendering notification template for:', templateData.title);
+    const emailHtml = render(
+      React.createElement(NotificationEmail, {
+        title: templateData.title,
+        message: templateData.message,
+        actionUrl: templateData.actionUrl,
+        actionText: templateData.actionText,
+        userName: templateData.userName,
+        type: templateData.type,
+      })
+    );
 
     console.log(`Sending email to ${recipientEmail} with subject: ${subject}`);
 
@@ -371,7 +358,7 @@ const handler = async (req: Request): Promise<Response> => {
             Authorization: `Bearer ${RESEND_API_KEY}`,
           },
           body: JSON.stringify({
-            from: from || "SoMA+ <noreply@pla.soma.lefil.com.br>",
+            from: DEFAULT_FROM,
             to: [recipientEmail],
             subject,
             html: emailHtml,
