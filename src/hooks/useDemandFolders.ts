@@ -53,7 +53,7 @@ const normalizeProjectRows = (data: any[] | null, userId?: string) =>
 // translates to the new schema internally.
 
 export function useDemandFolders(teamId: string | null, userId?: string) {
-  return useQuery({
+  return useQuery<DemandFolder[]>({
     queryKey: ["demand-folders", teamId],
     queryFn: async () => {
       if (!teamId) return [];
@@ -79,7 +79,7 @@ export function useDemandFolders(teamId: string | null, userId?: string) {
 }
 
 export function useFolderDemandIds(folderId: string | null) {
-  return useQuery({
+  return useQuery<string[]>({
     queryKey: ["folder-demand-ids", folderId],
     queryFn: async () => {
       if (!folderId) return [];
