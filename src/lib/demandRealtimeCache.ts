@@ -85,14 +85,16 @@ function applyToDemandQueries(
   updater: (item: DemandLike) => DemandLike
 ) {
   queryClient.setQueriesData({ queryKey: ["demand"] }, (old: unknown) => {
-    if (!old || typeof old !== "object") return old;
+    if (!old || Array.isArray(old) || typeof old !== "object") return old;
+    if (typeof (old as Partial<DemandLike>).id !== "string") return old;
     return updater(old as DemandLike);
   });
 
   const patchArray = (old: unknown) => {
     if (!Array.isArray(old)) return old;
     return old.map((item) => {
-      if (!item || typeof item !== "object") return item;
+      if (!item || Array.isArray(item) || typeof item !== "object") return item;
+      if (typeof (item as Partial<DemandLike>).id !== "string") return item;
       return updater(item as DemandLike);
     });
   };
