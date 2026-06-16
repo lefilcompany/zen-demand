@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "prompt",
-      includeAssets: ["favicon.png", "icons/**/*", "splash/**/*", "lovable-uploads/**/*"],
+      includeAssets: ["favicon.png", "icons/**/*", "splash/**/*", "lovable-uploads/8967ad53-156a-4e31-a5bd-b472b7cde839.png"],
       manifest: {
         name: "SoMA - Gerenciamento de Demandas",
         short_name: "SoMA",
