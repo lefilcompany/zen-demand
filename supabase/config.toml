@@ -19,4 +19,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.e2e-seed]
+# Test-only helper that uses the service-role key; do not deploy/serve it from shared environments.
+enabled = false
 verify_jwt = false
