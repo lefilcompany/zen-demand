@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useTranslation } from "react-i18next";
 import logoSomaIcon from "@/assets/logo-soma-logout.png";
+import logoSomaWhite from "@/assets/logo-soma-white.png.asset.json";
 import { NotificationToastStack } from "@/components/NotificationToastStack";
 
 export function ProtectedLayout() {
