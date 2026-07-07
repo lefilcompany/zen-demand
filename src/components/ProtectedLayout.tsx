@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useTranslation } from "react-i18next";
 import logoSomaIcon from "@/assets/logo-soma-logout.png";
+import logoSomaWhite from "@/assets/logo-soma-white.png.asset.json";
 import { NotificationToastStack } from "@/components/NotificationToastStack";
 
 export function ProtectedLayout() {
@@ -52,7 +53,8 @@ export function ProtectedLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const logoutLogo = resolvedTheme === "dark" ? logoSomaWhite.url : logoSomaIcon;
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const { isOpen, steps, closeTour, completeOnboarding, resetOnboarding, hasCompleted } = useOnboarding();
   const { currentTeam } = useSelectedTeam();
@@ -277,7 +279,7 @@ export function ProtectedLayout() {
           <div className="flex flex-col items-center text-center pt-2 pb-2 relative">
             <div className="absolute top-4 h-32 w-32 rounded-full bg-primary/5 blur-2xl -z-10" />
             <div className="mb-6 flex items-center justify-center">
-              <img src={logoSomaIcon} alt="SoMA+" loading="eager" decoding="sync" fetchPriority="high" className="h-20 w-auto object-contain drop-shadow-sm" />
+              <img src={logoutLogo} alt="SoMA+" loading="eager" decoding="sync" fetchPriority="high" className="h-20 w-auto object-contain drop-shadow-sm" />
             </div>
             <AlertDialogHeader className="space-y-3">
               <AlertDialogTitle className="text-2xl font-semibold tracking-tight">
